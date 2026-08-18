@@ -1,0 +1,325 @@
+/* Countertrace parser */
+package de.uni_freiburg.informatik.ultimate.countertrace.parser;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import com.github.jhoenicke.javacup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.SimpleSymbolFactory;
+
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
+
+parser CtParser;
+option symbols = CtSymbols;
+option java15, compact_red, newpositions;
+
+parser code {:
+
+	private String mFilename;
+	private ILogger mLogger;
+
+	public CtParser(final ILogger logger, final Reader reader, final String filename) throws IOException {
+		this(new CtLexer(reader));
+		mLogger = logger;
+		mFilename = filename;
+	}
+
+	@Override
+	public void report_error(final String s, final Object sym) {
+		String location;
+		if (sym instanceof SimpleSymbolFactory.LineColumnSymbol) {
+			final SimpleSymbolFactory.LineColumnSymbol bsym = (SimpleSymbolFactory.LineColumnSymbol) sym;
+			location = bsym.getLocation();
+		} else if ((sym instanceof Symbol) && ((Symbol) sym).sym == CtSymbols.EOF) {
+			location = "EOF";
+		} else {
+			location = "UNKNOWN";
+		}
+		final String filename = mFilename == null ? "" : (mFilename + ":");
+		mLogger.error(filename + location + ": " + s);
+	}
+
+	public void report_error(final String s) {
+		report_error(s, cur_token);
+	}
+
+	@Override
+	public void syntax_error(final Symbol sym) {
+		report_error("Syntax Error", sym);
+	}
+
+	/**
+	 * Parse a file containing one or more countertrace entries (one per line).
+	 * Each line may optionally start with an ID followed by a colon (e.g.,
+	 * {@code ID001: ⌈R⌉;true}), analogous to the {@code .req} file format.
+	 * The rest of the line is a bare countertrace phase;...;phase;true.
+	 * Lines may also be variable/constant declarations (e.g.,
+	 * {@code Input R is bool}, {@code Const c is 5}), analogous to {@code .req} files.
+	 * Empty lines and lines starting with {@code //} are skipped.
+	 *
+	 * @param logger
+	 *            The logger to use for error reporting.
+	 * @param fileName
+	 *            Path to the .ct file.
+	 * @return A {@link CountertraceFileResult} containing declarations and
+	 *         countertraces.
+	 */
+	public static CountertraceFileResult parseFile(final ILogger logger, final String fileName) throws Exception {
+		final List<DeclarationPattern> declarations = new ArrayList<>();
+		final List<CountertraceParserResult> countertraces = new ArrayList<>();
+		final List<String> lines = Files.readAllLines(Paths.get(fileName), StandardCharsets.UTF_8);
+		int lineNum = 0;
+		for (final String rawLine : lines) {
+			lineNum++;
+			String line = rawLine.trim();
+			if (line.isEmpty() || line.startsWith("//")) {
+				continue;
+			}
+			try (final StringReader reader = new StringReader(line)) {
+				final CtParser parser = new CtParser(logger, reader, fileName);
+				final Symbol goal = parser.parse();
+				final Object entry = goal.value;
+				if (entry instanceof DeclarationPattern) {
+					declarations.add((DeclarationPattern) entry);
+				} else if (entry instanceof CountertraceParserResult) {
+					countertraces.add((CountertraceParserResult) entry);
+				}
+			} catch (final Exception ex) {
+				logger.error(fileName + ":" + lineNum + ": " + ex.getMessage());
+				throw ex;
+			}
+		}
+		return new CountertraceFileResult(declarations, countertraces);
+	}
+
+:}
+
+action code {:
+	public CtLocation getLocation(Symbol sBegin, Symbol sEnd) {
+		int startLine = sBegin.left;
+		int endLine = sEnd.right;
+		int startColumn = 0;
+		int endColumn = 0;
+		return new CtLocation(parser.mFilename, startLine, endLine, startColumn, endColumn);
+	}
+:}
+
+scan with {: return getScanner().next_token(); :}
+
+/* ===== Non-terminals ===== */
+non terminal Object entry;
+non terminal CounterTrace countertrace_formula;
+non terminal DeclarationPattern declaration;
+non terminal String propid;
+non terminal List<DCPhase> phases, phase_list;
+non terminal DCPhase phase;
+non terminal Expression expr1NI, expr2NI, exprImpliesNI, exprAndNI, exprOrNI, expr3NI, expr5NI,
+                   expr6NI, expr7NI, expr9NI;
+non terminal String cid;
+non terminal boolean bool;
+non terminal List<Expression> exprCommaStar, exprCommaPlus;
+non terminal int relop, subzero_relop;
+
+/* ===== Terminals ===== */
+terminal LCEIL, RCEIL, SEMI, CAND, ELL;
+terminal LE, GREATER, LTEQ, GTEQ, EQ, NEQ;
+terminal LE_SUBZERO, LTEQ_SUBZERO, GTEQ_SUBZERO, GREATER_SUBZERO;
+terminal PLUS, MINUS, TIMES, DIVIDE, MOD;
+terminal LNOT, LAND, LOR, LIMPLIES;
+terminal LPAR, RPAR, COMMA, DOT, COLON;
+terminal TRUE, FALSE;
+terminal INPUT, OUTPUT, INTERNAL, CONST, IS;
+terminal String ID;
+terminal String NUMBER;
+terminal String REALNUMBER;
+
+/* ===== Grammar ===== */
+
+entry ::= propid?:id countertrace_formula:ct
+	{: RESULT = new CountertraceParserResult(id, ct); :}
+	| declaration:d
+	{: RESULT = d; :}
+	;
+
+declaration ::=
+	INPUT cid:i IS ID:t
+	{: RESULT = new DeclarationPattern(i, t, DeclarationPattern.VariableCategory.IN); :}
+	| OUTPUT cid:i IS ID:t
+	{: RESULT = new DeclarationPattern(i, t, DeclarationPattern.VariableCategory.OUT); :}
+	| INTERNAL cid:i IS ID:t
+	{: RESULT = new DeclarationPattern(i, t, DeclarationPattern.VariableCategory.HIDDEN); :}
+	| CONST cid:i IS NUMBER:v
+	{: RESULT = new DeclarationPattern(i, "int", DeclarationPattern.VariableCategory.CONST,
+			new IntegerLiteral(getLocation(v$,v$), BoogieType.TYPE_INT, v)); :}
+	| CONST cid:i IS REALNUMBER:v
+	{: RESULT = new DeclarationPattern(i, "real", DeclarationPattern.VariableCategory.CONST,
+			new RealLiteral(getLocation(v$,v$), BoogieType.TYPE_REAL, v)); :}
+	| CONST cid:i IS MINUS NUMBER:v
+	{: RESULT = new DeclarationPattern(i, "int", DeclarationPattern.VariableCategory.CONST,
+			new UnaryExpression(getLocation(v$,v$), UnaryExpression.Operator.ARITHNEGATIVE,
+					new IntegerLiteral(getLocation(v$,v$), BoogieType.TYPE_INT, v))); :}
+	| CONST cid:i IS MINUS REALNUMBER:v
+	{: RESULT = new DeclarationPattern(i, "real", DeclarationPattern.VariableCategory.CONST,
+			new UnaryExpression(getLocation(v$,v$), UnaryExpression.Operator.ARITHNEGATIVE,
+					new RealLiteral(getLocation(v$,v$), BoogieType.TYPE_REAL, v))); :}
+	| CONST cid:i IS bool:v
+	{: RESULT = new DeclarationPattern(i, "bool", DeclarationPattern.VariableCategory.CONST,
+			new BooleanLiteral(getLocation(v$,v$), BoogieType.TYPE_BOOL, v)); :}
+	;
+
+propid ::= ID:id COLON
+	{: RESULT = id; :}
+	;
+
+	countertrace_formula ::= phases:ps
+	{: RESULT = new CounterTrace(ps.toArray(new DCPhase[ps.size()])); :}
+	;
+
+phase_list ::= phase:p
+	{: RESULT = new ArrayList<DCPhase>(); RESULT.add(p); :}
+	| phase_list:ps SEMI phase:p
+	{: ps.add(p); RESULT = ps; :}
+	;
+
+		phases ::= phase_list:ps SEMI TRUE
+	{: ps.add(new DCPhase()); RESULT = ps; :}
+	;
+
+	phase ::= TRUE
+	{: RESULT = new DCPhase(); :}
+	| LCEIL expr1NI:e RCEIL
+	{: RESULT = new DCPhase(BoogieBooleanExpressionDecision.create(e)); :}
+	| LCEIL expr1NI:e RCEIL CAND ELL relop:bt NUMBER:b
+	{: RESULT = new DCPhase(BoogieBooleanExpressionDecision.create(e), bt, Integer.parseInt(b)); :}
+	| LCEIL expr1NI:e RCEIL CAND ELL subzero_relop:bt NUMBER:b
+	{: RESULT = new DCPhase(CDD.TRUE, BoogieBooleanExpressionDecision.create(e), bt, Integer.parseInt(b), Collections.emptySet(), true); :}
+	;
+
+relop ::= LE {: RESULT = CounterTrace.BOUND_LESS; :}
+	| LTEQ {: RESULT = CounterTrace.BOUND_LESSEQUAL; :}
+	| GTEQ {: RESULT = CounterTrace.BOUND_GREATEREQUAL; :}
+	| GREATER {: RESULT = CounterTrace.BOUND_GREATER; :}
+	;
+
+subzero_relop ::= LE_SUBZERO {: RESULT = CounterTrace.BOUND_LESS; :}
+	| LTEQ_SUBZERO {: RESULT = CounterTrace.BOUND_LESSEQUAL; :}
+	| GTEQ_SUBZERO {: RESULT = CounterTrace.BOUND_GREATEREQUAL; :}
+	| GREATER_SUBZERO {: RESULT = CounterTrace.BOUND_GREATER; :}
+	;
+
+/* ===== Expression grammar (adapted from Requirements.cup) ===== */
+
+exprCommaStar ::=
+	/* empty */ {: RESULT = Collections.emptyList(); :}
+	| exprCommaPlus:l {: RESULT = l; :}
+	;
+
+exprCommaPlus ::=
+	expr1NI:e
+	{: RESULT = new ArrayList<Expression>(); RESULT.add(e); :}
+	| exprCommaPlus:el COMMA expr1NI:e
+	{: el.add(e); RESULT = el; :}
+	;
+
+expr1NI ::= expr2NI:e1 LIMPLIES exprImpliesNI:e2
+	{: RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICIMPLIES, e1, e2); :}
+	| expr2NI:e {: RESULT = e; :}
+	;
+
+exprImpliesNI ::= expr2NI:e1 LIMPLIES exprImpliesNI:e2
+	{: RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICIMPLIES, e1, e2); :}
+	| expr2NI:e {: RESULT = e; :}
+	;
+
+expr2NI ::= expr3NI:e1 LAND exprAndNI:e2
+	{: RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICAND, e1, e2); :}
+	| expr3NI:e1 LOR exprOrNI:e2
+	{: RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICOR, e1, e2); :}
+	| expr3NI:e {: RESULT = e; :}
+	;
+
+exprAndNI ::= expr3NI:e1 LAND exprAndNI:e2
+	{: RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICAND, e1, e2); :}
+	| expr3NI:e {: RESULT = e; :}
+	;
+
+exprOrNI ::= expr3NI:e1 LOR exprOrNI:e2
+	{: RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.LOGICOR, e1, e2); :}
+	| expr3NI:e {: RESULT = e; :}
+	;
+
+expr3NI ::= expr5NI:e1 LE expr5NI:e2
+	{: RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPLT, e1, e2); :}
+	| expr5NI:e1 GREATER expr5NI:e2
+	{: RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPGT, e1, e2); :}
+	| expr5NI:e1 LTEQ expr5NI:e2
+	{: RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPLEQ, e1, e2); :}
+	| expr5NI:e1 GTEQ expr5NI:e2
+	{: RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPGEQ, e1, e2); :}
+	| expr5NI:e1 EQ expr5NI:e2
+	{: RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPEQ, e1, e2); :}
+	| expr5NI:e1 NEQ expr5NI:e2
+	{: RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.COMPNEQ, e1, e2); :}
+	| expr5NI:e {: RESULT = e; :}
+	;
+
+expr5NI ::= expr5NI:e1 PLUS expr6NI:e2
+	{: RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHPLUS, e1, e2); :}
+	| expr5NI:e1 MINUS expr6NI:e2
+	{: RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHMINUS, e1, e2); :}
+	| expr6NI:e {: RESULT = e; :}
+	;
+
+expr6NI ::= expr6NI:e1 TIMES expr7NI:e2
+	{: RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHMUL, e1, e2); :}
+	| expr6NI:e1 DIVIDE expr7NI:e2
+	{: RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHDIV, e1, e2); :}
+	| expr6NI:e1 MOD expr7NI:e2
+	{: RESULT = new BinaryExpression(getLocation(e1$,e2$), BinaryExpression.Operator.ARITHMOD, e1, e2); :}
+	| expr7NI:e {: RESULT = e; :}
+	;
+
+expr7NI ::= LNOT expr7NI:e
+	{: RESULT = new UnaryExpression(getLocation(e$,e$), UnaryExpression.Operator.LOGICNEG, e); :}
+	| MINUS expr7NI:e
+	{: RESULT = new UnaryExpression(getLocation(e$,e$), UnaryExpression.Operator.ARITHNEGATIVE, e); :}
+	| expr9NI:e {: RESULT = e; :}
+	;
+
+expr9NI ::= REALNUMBER:n {: RESULT = new RealLiteral(getLocation(n$,n$), BoogieType.TYPE_REAL, n); :}
+	| NUMBER:n {: RESULT = new IntegerLiteral(getLocation(n$,n$), BoogieType.TYPE_INT, n); :}
+	| cid:i {: RESULT = new IdentifierExpression(getLocation(i$,i$), i); :}
+	| bool:b {: RESULT = new BooleanLiteral(getLocation(b$,b$), BoogieType.TYPE_BOOL, b); :}
+	| LPAR expr1NI:e RPAR {: RESULT = e; :}
+	| ID:i LPAR exprCommaStar:args RPAR
+	{: RESULT = new FunctionApplication(getLocation(i$,args$), i, args.toArray(new Expression[args.size()])); :}
+	;
+
+cid ::= ID:id {: RESULT = id; :}
+	| cid:c DOT ID:id {: RESULT = c + "." + id; :}
+	;
+
+bool ::= TRUE {: RESULT = true; :}
+	| FALSE {: RESULT = false; :}
+	;
