@@ -169,6 +169,7 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 			}
 
 			if (mPrefs.getBoolean(CivlizerPreferenceInitializer.LABEL_RUN_CIVL_ON_OUTPUT)) {
+				mLogger.info("Running Civl on civlized program...");
 				final String workingDir = mPrefs.getString(CivlizerPreferenceInitializer.LABEL_CIVL_WORKING_DIRECTORY);
 				final String civlCommand = mPrefs.getString(CivlizerPreferenceInitializer.LABEL_CIVL_COMMAND);
 				final int timeout = mPrefs.getInt(CivlizerPreferenceInitializer.LABEL_CIVL_TIMEOUT);
@@ -176,6 +177,8 @@ public class Civlizer implements IAnalysis, IUnmanagedObserver {
 				final var runner = new CivlRunner(mServices, Paths.get(workingDir), civlCommand, timeout);
 				final var result = runner.runOnFile(outputFile);
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
+			} else {
+				mLogger.info("Running Civl is disabled via settings.");
 			}
 		}
 
