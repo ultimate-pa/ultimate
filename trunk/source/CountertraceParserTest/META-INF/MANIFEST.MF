@@ -7,9 +7,7 @@ Bundle-Version: 0.3.1
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.junit,
  de.uni_freiburg.informatik.ultimate.core,
- de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.pea,
- de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.lib.srparse,
  com.github.jhoenicke.javacup
 Fragment-Host: de.uni_freiburg.informatik.ultimate.countertrace.parser

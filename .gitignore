@@ -286,6 +286,9 @@ trunk/examples/witness-generation-validation/regression/**/*.yml
 /trunk/source/Library-srParse/src/de/uni_freiburg/informatik/ultimate/lib/srparse/ReqParser.java
 /trunk/source/Library-srParse/src/de/uni_freiburg/informatik/ultimate/lib/srparse/ReqLexer.java
 /trunk/source/Library-srParse/src/de/uni_freiburg/informatik/ultimate/lib/srparse/ReqSymbols.java
+/trunk/source/CountertraceParser/src/de/uni_freiburg/informatik/ultimate/countertrace/parser/CtLexer.java
+/trunk/source/CountertraceParser/src/de/uni_freiburg/informatik/ultimate/countertrace/parser/CtParser.java
+/trunk/source/CountertraceParser/src/de/uni_freiburg/informatik/ultimate/countertrace/parser/CtSymbols.java
 
 /trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/parser/CrocLexer.java
 /trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/parser/CrocLexer.java~

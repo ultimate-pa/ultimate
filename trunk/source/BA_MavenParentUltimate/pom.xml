@@ -148,6 +148,9 @@
 			**/src/de/uni_freiburg/informatik/ultimate/crocotta/parser/CrocParser.java,
 			**/src/de/uni_freiburg/informatik/ultimate/crocotta/parser/CrocSymbols.java,
 			**/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/*.java,
+			**/src/de/uni_freiburg/informatik/ultimate/countertrace/parser/CtLexer.java,
+			**/src/de/uni_freiburg/informatik/ultimate/countertrace/parser/CtParser.java,
+			**/src/de/uni_freiburg/informatik/ultimate/countertrace/parser/CtSymbols.java,
 		</sonar.exclusions>
 
 		<!-- Exclude from sonar duplication analysis -->
@@ -278,6 +281,7 @@
 		<module>../ChcToBoogie</module>
 		<module>../CodeCheck</module>
 		<module>../CoreRCP</module>
+		<module>../CountertraceParser</module>
 		<module>../Crocotta</module>
 		<module>../GUIGeneratedPreferencePages</module>
 		<module>../GUILoggingWindow</module>
@@ -358,6 +362,7 @@
 		<module>../Library-MSODTest</module>
 		<module>../Library-SMTLIBTest</module>
 		<module>../Library-srParseTest</module>
+		<module>../CountertraceParserTest</module>
 		<module>../Library-UltimateTestTest</module>
 		<module>../Library-UltimateUtilTest</module>
 		<module>../Library-PathExpressionsTest</module>
