@@ -226,6 +226,7 @@ final class BodyTransformer extends BoogieTransformer {
 					annotation, mTidNeedsLinearity);
 			final var annotationCheck = Translator.callYieldInvariant(yieldInvariant, mCurrentTids, annotation);
 
+			// FIXME This doesn't always work correctly for ghost updates on AtomicStatements
 			final List<CallStatement> positiveGhostUpdates = createGhostUpdateAssignments(
 					ghostUpdateMap.get(new GhostUpdateLocation(statement.getLocation(), false)));
 
@@ -400,6 +401,8 @@ final class BodyTransformer extends BoogieTransformer {
 			return processSimpleStatement(assumeStmt);
 		case final HavocStatement havocStmt:
 			return processSimpleStatement(havocStmt);
+		case final AtomicStatement atomicStmt:
+			return processSimpleStatement(atomicStmt);
 
 		case final GotoStatement gotoStmt:
 			throw new UnsupportedOperationException("Goto statements not yet supported");
@@ -407,8 +410,6 @@ final class BodyTransformer extends BoogieTransformer {
 			throw new UnsupportedOperationException("Break statements not yet supported");
 		case final ReturnStatement retStmt:
 			throw new UnsupportedOperationException("Return statements not yet supported");
-		case final AtomicStatement stomicStmt:
-			throw new UnsupportedOperationException("Atomic statements not yet supported");
 		case final CallStatement callStmt:
 			throw new UnsupportedOperationException("Procedure calls in concurrent programs must be inlined");
 
@@ -452,11 +453,14 @@ final class BodyTransformer extends BoogieTransformer {
 	private Statement processSimpleStatement(final Statement statement) {
 		assert statement instanceof AssertStatement || statement instanceof AssignmentStatement
 				|| statement instanceof AssumeStatement || statement instanceof HavocStatement
-				: "statement is not a simple statement: " + statement;
+				|| statement instanceof AtomicStatement : "statement is not a simple statement: " + statement;
 
 		final Statement newStatement;
 		final var variableCollector = new BoogieVariableCollector(statement);
-		if (variableCollector.usesGlobalVariables()) {
+		if (variableCollector.usesGlobalVariables() || statement instanceof AtomicStatement) {
+			// NOTE: As an improvement, we could inline the body of an atomic statement if it does not modify globals.
+			// This would have to be handled in processStatements().
+			// However, as atomics that don't modify globals are likely a rare corner case, we omit this for now.
 			final var statementProc =
 					mTranslator.addAtomicStatement(mProcedureName, mAtomicStatementCounter, statement);
 			newStatement = Translator.callAtomicStatement(statementProc, statement);

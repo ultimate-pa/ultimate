@@ -34,12 +34,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVariableCollector;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVariableCollector.IdentifierExpressionOccurrence;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.boogie.MustAssignAnalysis;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -458,7 +461,12 @@ public final class Translator {
 	static CallStatement callAtomicStatement(final YieldProcedure statementProc, final Statement statement) {
 		final var variableCollector = new BoogieVariableCollector(statement);
 
-		final var inParams = variableCollector.nonGlobalVariablesRead()
+		// See comment in #addAtomicStatement below about inParams
+		final var mustAssign = MustAssignAnalysis.mustAssign(statement);
+		final var inParams = Stream
+				.concat(variableCollector.nonGlobalVariablesRead(),
+						variableCollector.nonGlobalVariablesAssigned().filter(Predicate.not(mustAssign::contains)))
+				.distinct()
 				.map(occ -> new IdentifierExpression(null, occ.type(), occ.identifier(), occ.declarationInformation()))
 				.toList();
 		final var outParams = variableCollector.nonGlobalVariablesAssigned()
@@ -475,21 +483,33 @@ public final class Translator {
 		final var assignedLocalVariables =
 				variableCollector.nonGlobalVariablesAssigned().map(occ -> occ.identifier()).collect(Collectors.toSet());
 
-		// declare in and out parameters (based on local variables)
-		final var inParams = variableCollector.nonGlobalVariablesRead()
+		// A variable is considered as "read" if it is explicitly read by the statement, or it is written on some (but
+		// not all) code paths.
+		//
+		// NOTE: This analysis is overapproximative, as it ignores control flow. E.g. if a variable is always written
+		// *before* being read, we do not need to consider it as "read". But this is left for future optimization.
+		final var mustAssign = MustAssignAnalysis.mustAssign(statement);
+		final var inParams = Stream
+				.concat(variableCollector.nonGlobalVariablesRead(),
+						variableCollector.nonGlobalVariablesAssigned().filter(Predicate.not(mustAssign::contains)))
+				.distinct()
+				//
+				// For each "read" variable, declare a corresponding parameter.
 				.map(occ -> new ParameterDeclaration(
 						assignedLocalVariables.contains(occ.identifier()) ? occ.identifier() + "_in" : occ.identifier(),
 						occ.type().toASTType(null), Linearity.NONE))
 				.toList();
+
 		final var outParams = variableCollector.nonGlobalVariablesAssigned()
 				.map(occ -> new ParameterDeclaration(occ.identifier(), occ.type().toASTType(null), Linearity.NONE))
 				.toList();
 
 		// for local variables that are both read and written, initialize the out parameter to the in parameter
-		final var prologue = outParams.stream().filter(param -> readLocalVariables.contains(param.getIdentifier()))
+		final var prologue = variableCollector.nonGlobalVariablesAssigned()
+				.filter(param -> readLocalVariables.contains(param.identifier()) || !mustAssign.contains(param))
 				.map(param -> new AssignmentStatement(null,
-						new LeftHandSide[] { new VariableLHS(null, param.getIdentifier()) },
-						new Expression[] { new IdentifierExpression(null, param.getIdentifier() + "_in") }))
+						new LeftHandSide[] { new VariableLHS(null, param.identifier()) },
+						new Expression[] { new IdentifierExpression(null, param.identifier() + "_in") }))
 				.toList();
 
 		final var body = new ArrayList<Statement>();
