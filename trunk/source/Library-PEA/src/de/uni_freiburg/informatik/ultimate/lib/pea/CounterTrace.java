@@ -91,6 +91,26 @@ public class CounterTrace {
 		return Arrays.stream(getPhases()).map(a -> a.toString(true)).collect(Collectors.joining(";"));
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.hashCode(mPhases);
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		final CounterTrace other = (CounterTrace) obj;
+		return Arrays.equals(mPhases, other.mPhases);
+	}
+
 	public static class DCPhase {
 
 		private final CDD mEntryEvents;
@@ -264,6 +284,61 @@ public class CounterTrace {
 
 		public int getBound() {
 			return mBound;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + (mAllowEmpty ? 1231 : 1237);
+			result = prime * result + mBound;
+			result = prime * result + mBoundType;
+			result = prime * result + ((mEntryEvents == null) ? 0 : mEntryEvents.hashCode());
+			result = prime * result + ((mForbid == null) ? 0 : mForbid.hashCode());
+			result = prime * result + ((mInvariant == null) ? 0 : mInvariant.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null || getClass() != obj.getClass()) {
+				return false;
+			}
+			final DCPhase other = (DCPhase) obj;
+			if (mAllowEmpty != other.mAllowEmpty) {
+				return false;
+			}
+			if (mBound != other.mBound) {
+				return false;
+			}
+			if (mBoundType != other.mBoundType) {
+				return false;
+			}
+			if (mEntryEvents == null) {
+				if (other.mEntryEvents != null) {
+					return false;
+				}
+			} else if (!mEntryEvents.equals(other.mEntryEvents)) {
+				return false;
+			}
+			if (mForbid == null) {
+				if (other.mForbid != null) {
+					return false;
+				}
+			} else if (!mForbid.equals(other.mForbid)) {
+				return false;
+			}
+			if (mInvariant == null) {
+				if (other.mInvariant != null) {
+					return false;
+				}
+			} else if (!mInvariant.equals(other.mInvariant)) {
+				return false;
+			}
+			return true;
 		}
 
 	}
