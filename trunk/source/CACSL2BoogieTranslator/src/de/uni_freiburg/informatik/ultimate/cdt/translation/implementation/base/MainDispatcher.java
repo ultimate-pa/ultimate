@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
@@ -141,6 +140,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Requires;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedFunctionContract;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedGhostUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedCorrectnessWitness;
@@ -456,18 +456,11 @@ public class MainDispatcher implements IDispatcher {
 	}
 
 	@Override
-	public List<ACSLNode> getFunctionContractFromWitness(final IASTNode node) {
+	public Set<ExtractedFunctionContract> getFunctionContractFromWitness(final IASTNode node) {
 		if (mWitness == null) {
-			return List.of();
+			return Set.of();
 		}
-		final List<ACSLNode> functionContracts = mWitness.getFunctionContracts(node).stream()
-				.flatMap(x -> x.getAcslContractClauses().stream()).collect(Collectors.toList());
-		// TODO: Implement function contracts properly as hints in ExtractedFunctionContract
-		if (!functionContracts.isEmpty() && !mSettings.checkWitnesses()) {
-			mLogger.warn("Ignoring function contract: " + functionContracts);
-			return List.of();
-		}
-		return functionContracts;
+		return mWitness.getFunctionContracts(node);
 	}
 
 	@Override

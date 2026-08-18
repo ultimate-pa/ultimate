@@ -259,6 +259,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.ICACSL2BoogieBacktranslatorMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.LTLExpressionExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryStructure;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedFunctionContract;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -1746,9 +1747,16 @@ public class CHandler {
 
 		mCurrentDeclaredTypes.pop();
 		assert declResult.getDeclaration().getType() instanceof CFunction;
-		mContract.addAll(main.getFunctionContractFromWitness(node));
+		final Set<ExtractedFunctionContract> contracts = main.getFunctionContractFromWitness(node);
+		final Set<ExtractedFunctionContract> hints;
+		if (mSettings.checkWitnesses()) {
+			mContract.addAll(extractSpecifications(contracts));
+			hints = Set.of();
+		} else {
+			hints = contracts;
+		}
 		return mFunctionHandler.handleFunctionDefinition(main, mMemoryHandler, node, declResult.getDeclaration(),
-				mContract, mIsInLibraryMode);
+				mContract, mIsInLibraryMode, hints);
 	}
 
 	public Result visit(final IDispatcher main, final IASTGotoStatement node) {
@@ -2386,8 +2394,11 @@ public class CHandler {
 				if (!declResult.hasNoSideEffects()) {
 					throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
 				}
-
-				mContract.addAll(main.getFunctionContractFromWitness(node));
+				if (mSettings.checkWitnesses()) {
+					mContract.addAll(extractSpecifications(main.getFunctionContractFromWitness(node)));
+				} else {
+					mLogger.warn("Hints for declarations are currently not supported");
+				}
 				// update functionHandler.procedures instead of symbol table
 				mFunctionHandler.handleFunctionDeclarator(main, mLocationFactory.createCLocation(declarator), mContract,
 						cDec, declarator);
@@ -3788,5 +3799,9 @@ public class CHandler {
 		// take care for behavior and completeness
 		clearContract();
 		return spec.toArray(LoopInvariantSpecification[]::new);
+	}
+
+	private static List<ACSLNode> extractSpecifications(final Set<ExtractedFunctionContract> contract) {
+		return contract.stream().flatMap(x -> x.getAcslContractClauses().stream()).toList();
 	}
 }

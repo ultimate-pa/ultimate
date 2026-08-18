@@ -93,6 +93,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedFunctionContract;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedWitnessDeclaration;
 
 public class PRDispatcher implements IDispatcher {
@@ -198,8 +199,8 @@ public class PRDispatcher implements IDispatcher {
 	}
 
 	@Override
-	public List<ACSLNode> getFunctionContractFromWitness(final IASTNode node) {
-		return List.of();
+	public Set<ExtractedFunctionContract> getFunctionContractFromWitness(final IASTNode node) {
+		return Set.of();
 	}
 
 	@Override
