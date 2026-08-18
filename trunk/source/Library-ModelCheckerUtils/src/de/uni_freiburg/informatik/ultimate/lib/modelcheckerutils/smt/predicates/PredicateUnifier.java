@@ -96,7 +96,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	 * If enabled, writes a file if we found two syntactically different formulas that are logically equivalent.
 	 * (Rationale: identifies opportunities to improve formula simplification.)
 	 */
-	private static final boolean DEBUG_DUMP_SIMPLIFICATION_OPPORTUNITIES = false;
+	private static final boolean DEBUG_DUMP_SIMPLIFICATION_OPPORTUNITIES = true;
 
 	protected final ManagedScript mMgdScript;
 	private final BasicPredicateFactory mPredicateFactory;
