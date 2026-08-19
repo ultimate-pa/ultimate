@@ -27,11 +27,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.AbsencePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndEntryConditionPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ConditionalResponseBoundL1Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ConstrainedChainPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.CountertracePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DurationBoundLPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DurationBoundUPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.EdgeResponseBoundL2Pattern;
@@ -168,6 +171,9 @@ terminal LE, GREATER, LTEQ, GTEQ, NEQ, EQ, PARTORDER;
 terminal PLUS, MINUS;
 terminal TIMES, DIVIDE, MOD;
 terminal TRUE, FALSE;
+/* Countertrace notation */
+terminal LCEIL, RCEIL, SEMI, ELL;
+terminal LE_SUBZERO, LTEQ_SUBZERO, GTEQ_SUBZERO, GREATER_SUBZERO;
 terminal String ID;
 terminal String TYPE;
 terminal String REALNUMBER;
@@ -187,6 +193,11 @@ non terminal List<Expression> exprCommaPlus, exprCommaStar;
 non terminal Expression exprImplies, exprImpliesNI, exprAnd, exprAndNI, exprOr, exprOrNI;
 non terminal Expression expr1NI, expr2NI, expr3NI, expr5NI; 
 non terminal Expression expr6NI, expr7NI, expr9NI;
+/* Countertrace non-terminals */
+non terminal CounterTrace countertrace_formula;
+non terminal List<DCPhase> phases, phase_list;
+non terminal DCPhase phase;
+non terminal int relop, subzero_relop;
 
 precedence left LOR;
 precedence left LAND;
@@ -200,6 +211,8 @@ patternset ::=
 
 property ::= propid?:id scope:s COMMA? pattern:p DOT?
                {: p.setScope(s).setId(id); RESULT = parser.registerNonInitPattern(p.build(parser.mDurations)); :}
+            | propid?:id countertrace_formula:ct DOT?
+               {: RESULT = parser.registerNonInitPattern(new CountertracePattern(id, ct)); :}
             | error
                {: RESULT = null; :}
           	| INPUT cid:i IS ID:t
@@ -426,3 +439,41 @@ num ::= NUMBER:n {: RESULT = SmtUtils.toRational(Integer.parseInt(n)); :}
       | QUOTE NUMBER:n QUOTE {: RESULT = SmtUtils.toRational(Integer.parseInt(n)); :}
       | QUOTE REALNUMBER:n QUOTE {: RESULT = SmtUtils.toRational(BigDecimal.valueOf(Double.parseDouble(n))); :}
       ;
+
+/* ===== Countertrace notation (DC phases) ===== */
+
+countertrace_formula ::= phases:ps
+	{: RESULT = new CounterTrace(ps.toArray(new DCPhase[ps.size()])); :}
+	;
+
+phases ::= phase_list:ps SEMI TRUE
+	{: ps.add(new DCPhase()); RESULT = ps; :}
+	;
+
+phase_list ::= phase:p
+	{: RESULT = new ArrayList<DCPhase>(); RESULT.add(p); :}
+	| phase_list:ps SEMI phase:p
+	{: ps.add(p); RESULT = ps; :}
+	;
+
+phase ::= TRUE
+	{: RESULT = new DCPhase(); :}
+	| LCEIL expr1NI:e RCEIL
+	{: RESULT = new DCPhase(BoogieBooleanExpressionDecision.create(e)); :}
+	| LCEIL expr1NI:e RCEIL LAND ELL relop:bt NUMBER:b
+	{: RESULT = new DCPhase(BoogieBooleanExpressionDecision.create(e), bt, Integer.parseInt(b)); :}
+	| LCEIL expr1NI:e RCEIL LAND ELL subzero_relop:bt NUMBER:b
+	{: RESULT = new DCPhase(CDD.TRUE, BoogieBooleanExpressionDecision.create(e), bt, Integer.parseInt(b), Collections.emptySet(), true); :}
+	;
+
+relop ::= LE {: RESULT = CounterTrace.BOUND_LESS; :}
+	| LTEQ {: RESULT = CounterTrace.BOUND_LESSEQUAL; :}
+	| GTEQ {: RESULT = CounterTrace.BOUND_GREATEREQUAL; :}
+	| GREATER {: RESULT = CounterTrace.BOUND_GREATER; :}
+	;
+
+subzero_relop ::= LE_SUBZERO {: RESULT = CounterTrace.BOUND_LESS; :}
+	| LTEQ_SUBZERO {: RESULT = CounterTrace.BOUND_LESSEQUAL; :}
+	| GTEQ_SUBZERO {: RESULT = CounterTrace.BOUND_GREATEREQUAL; :}
+	| GREATER_SUBZERO {: RESULT = CounterTrace.BOUND_GREATER; :}
+	;

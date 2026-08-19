@@ -132,6 +132,21 @@ RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
   "."             { return symbol(ReqSymbols.DOT); }
   ":"             { return symbol(ReqSymbols.IDSEP); }
   
+  ";"             { return symbol(ReqSymbols.SEMI); }
+
+  /* Countertrace phase delimiters: ⌈ ... ⌉ (Unicode only) */
+  "\u2308"        { return symbol(ReqSymbols.LCEIL); }
+  "\u2309"        { return symbol(ReqSymbols.RCEIL); }
+
+  /* Duration variable ℓ (Unicode only) */
+  "\u2113"        { return symbol(ReqSymbols.ELL); }
+
+  /* Subzero comparison operators (Unicode only, must come before regular ops for longest match) */
+  "<\u2080"        { return symbol(ReqSymbols.LE_SUBZERO); }
+  "\u2264\u2080"   { return symbol(ReqSymbols.LTEQ_SUBZERO); }
+  "\u2265\u2080"   { return symbol(ReqSymbols.GTEQ_SUBZERO); }
+  ">\u2080"        { return symbol(ReqSymbols.GREATER_SUBZERO); }
+
   "true"          { return symbol(ReqSymbols.TRUE); }
   "false"         { return symbol(ReqSymbols.FALSE); }
   

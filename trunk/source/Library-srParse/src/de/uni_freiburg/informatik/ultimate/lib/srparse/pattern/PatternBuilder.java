@@ -193,6 +193,9 @@ public class PatternBuilder {
 		if (p instanceof DeclarationPattern) {
 			return p;
 		}
+		if (p instanceof CountertracePattern) {
+			return p;
+		}
 		final PatternBuilder pb = new PatternBuilder();
 		pb.mId = p.getId();
 		pb.mScope = p.getScope();
