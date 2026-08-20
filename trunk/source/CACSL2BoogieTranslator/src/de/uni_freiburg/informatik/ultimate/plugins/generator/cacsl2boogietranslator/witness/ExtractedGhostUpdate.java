@@ -34,6 +34,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
+import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -172,8 +173,9 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 	}
 
 	private boolean isAssignment() {
-		return getExpression() instanceof final IASTBinaryExpression binEx
-				&& ASSIGNMENT_OPERATORS.contains(binEx.getOperator());
+		return (getExpression() instanceof final IASTBinaryExpression binEx
+				&& ASSIGNMENT_OPERATORS.contains(binEx.getOperator()))
+				|| mMatchedAstNode instanceof IASTDeclarationStatement;
 	}
 
 	@Override
