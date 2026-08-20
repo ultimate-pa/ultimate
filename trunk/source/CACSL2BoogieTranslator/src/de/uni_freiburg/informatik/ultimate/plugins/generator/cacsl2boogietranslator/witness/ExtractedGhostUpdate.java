@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
@@ -116,23 +117,27 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 		return null;
 	}
 
-	private static List<Statement> annotateAtomicCall(final ILocation loc, final List<Statement> programStatements,
-			final List<Statement> ghostUpdate, final String functionName) {
-		final List<Statement> result = new ArrayList<>();
+	private static List<Statement> annotateLastOccurence(final ILocation loc, final List<Statement> programStatements,
+			final List<Statement> ghostUpdate, final Predicate<Statement> predicate, final boolean makeAtomic) {
+		final List<Statement> result = new ArrayList<>(programStatements);
 		boolean isAnnotated = false;
-		for (final Statement st : programStatements) {
-			if (isAnnotated || !(st instanceof AtomicStatement)) {
-				result.add(st);
-				continue;
-			}
-			final Statement[] atomicBody = ((AtomicStatement) st).getBody();
-			if (Arrays.stream(atomicBody).anyMatch(
-					x -> x instanceof CallStatement && ((CallStatement) x).getMethodName().equals(functionName))) {
+		for (int i = programStatements.size() - 1; i >= 0; i--) {
+			final Statement current = programStatements.get(i);
+			if (predicate.test(current)) {
 				isAnnotated = true;
-				result.add(StatementFactory.constructAtomicStatement(loc,
-						Stream.concat(ghostUpdate.stream(), Arrays.stream(atomicBody))));
-			} else {
-				result.add(st);
+				if (makeAtomic) {
+					// Create an atomic block with the matching statement and the ghost update
+					// Try to avoid nested atomic statements here
+					final Stream<Statement> currentStatements =
+							current instanceof final AtomicStatement atomic ? Arrays.stream(atomic.getBody())
+									: Stream.of(current);
+					result.set(i, StatementFactory.constructAtomicStatement(loc,
+							Stream.concat(currentStatements, ghostUpdate.stream())));
+				} else {
+					// Insert the ghost update just before the matching statement
+					result.add(i, StatementFactory.constructAtomicStatement(loc, ghostUpdate));
+				}
+				break;
 			}
 		}
 		if (!isAnnotated) {
@@ -141,21 +146,14 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 		return result;
 	}
 
-	private static List<Statement> annotateFork(final ILocation loc, final List<Statement> programStatements,
-			final List<Statement> ghostUpdate) {
-		final List<Statement> result = new ArrayList<>();
-		boolean isAnnotated = false;
-		for (final Statement st : programStatements) {
-			if (!isAnnotated && st instanceof ForkStatement) {
-				isAnnotated = true;
-				result.add(StatementFactory.constructAtomicStatement(loc, ghostUpdate));
-			}
-			result.add(st);
-		}
-		if (!isAnnotated) {
-			throw new UnsupportedOperationException("No statement found to annotate with the expected ghost update");
-		}
-		return result;
+	private static boolean isAtomicCall(final Statement st, final String functionName) {
+		return st instanceof final AtomicStatement atomic && Arrays.stream(atomic.getBody())
+				.anyMatch(x -> x instanceof CallStatement && ((CallStatement) x).getMethodName().equals(functionName));
+	}
+
+	private static List<Statement> annotateAtomicCall(final ILocation loc, final List<Statement> programStatements,
+			final List<Statement> ghostUpdate, final String functionName) {
+		return annotateLastOccurence(loc, programStatements, ghostUpdate, x -> isAtomicCall(x, functionName), true);
 	}
 
 	@Override
@@ -206,7 +204,8 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 			// TODO: Maybe we should do this atomically, but the CFG builder crashes for that case
 			// We are not sure, if this does have any different semantics.
 			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
-					.resetStatements(annotateFork(loc, expressionResult.getStatements(), witness.getStatements()))
+					.resetStatements(annotateLastOccurence(loc, expressionResult.getStatements(),
+							witness.getStatements(), ForkStatement.class::isInstance, false))
 					.build();
 		default:
 			throw new UnsupportedOperationException(
