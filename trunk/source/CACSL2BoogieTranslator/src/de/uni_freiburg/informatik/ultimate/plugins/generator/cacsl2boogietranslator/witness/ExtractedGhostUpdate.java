@@ -97,20 +97,21 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 		return (ExpressionResult) dispatcher.dispatch(acslNode, mMatchedAstNode);
 	}
 
-	private String getNameOfCalledFunction() {
-		final IASTExpression expr;
-		if (mMatchedAstNode instanceof IASTExpression) {
-			expr = (IASTExpression) mMatchedAstNode;
-		} else if (mMatchedAstNode instanceof IASTExpressionStatement) {
-			expr = ((IASTExpressionStatement) mMatchedAstNode).getExpression();
-		} else {
+	private IASTExpression getExpression() {
+		switch (mMatchedAstNode) {
+		case final IASTExpression expr:
+			return expr;
+		case final IASTExpressionStatement exprSt:
+			return exprSt.getExpression();
+		default:
 			return null;
 		}
-		if (expr instanceof IASTFunctionCallExpression) {
-			final IASTExpression function = ((IASTFunctionCallExpression) expr).getFunctionNameExpression();
-			if (function instanceof IASTIdExpression) {
-				return ((IASTIdExpression) function).getName().toString();
-			}
+	}
+
+	private String getNameOfCalledFunction() {
+		if (getExpression() instanceof final IASTFunctionCallExpression call
+				&& call.getFunctionNameExpression() instanceof final IASTIdExpression id) {
+			return id.getName().toString();
 		}
 		return null;
 	}
