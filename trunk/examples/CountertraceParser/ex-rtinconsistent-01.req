@@ -4,6 +4,6 @@ Input B is bool
 Input C is bool
 
 // req1: Globally, it is always the case that if "A" holds then "!C" holds for at least "10" time units.
-req1: ⌈true⌉;⌈A⌉;⌈true⌉ ∧ ℓ < 10;⌈C⌉;true
+req1: true;⌈A⌉;⌈true⌉ ∧ ℓ < 11;⌈C⌉;true
 // req2: Globally, it is always the case that if "B" holds then "C" holds after at most "5" time units.
-req2: ⌈true⌉;⌈B && !C⌉;⌈!C⌉ ∧ ℓ > 5;true
+req2: true;⌈B && !C⌉;⌈!C⌉ ∧ ℓ > 5;true
