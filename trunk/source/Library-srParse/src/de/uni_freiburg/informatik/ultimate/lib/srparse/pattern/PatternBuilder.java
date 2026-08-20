@@ -194,7 +194,7 @@ public class PatternBuilder {
 			return p;
 		}
 		if (p instanceof CountertracePattern) {
-			return p;
+			return ((CountertracePattern) p).normalize(durations);
 		}
 		final PatternBuilder pb = new PatternBuilder();
 		pb.mId = p.getId();

@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvarianceBoundL2
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvarianceDelayPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PhaseRecipe;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PersistencePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedencePattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedenceChain12Pattern;
@@ -194,9 +195,9 @@ non terminal Expression exprImplies, exprImpliesNI, exprAnd, exprAndNI, exprOr, 
 non terminal Expression expr1NI, expr2NI, expr3NI, expr5NI; 
 non terminal Expression expr6NI, expr7NI, expr9NI;
 /* Countertrace non-terminals */
-non terminal CounterTrace countertrace_formula;
-non terminal List<DCPhase> phases, phase_list;
-non terminal DCPhase phase;
+non terminal List<PhaseRecipe> countertrace_formula;
+non terminal List<PhaseRecipe> phases, phase_list;
+non terminal PhaseRecipe phase;
 non terminal int relop, subzero_relop;
 
 precedence left LOR;
@@ -443,27 +444,27 @@ num ::= NUMBER:n {: RESULT = SmtUtils.toRational(Integer.parseInt(n)); :}
 /* ===== Countertrace notation (DC phases) ===== */
 
 countertrace_formula ::= phases:ps
-	{: RESULT = new CounterTrace(ps.toArray(new DCPhase[ps.size()])); :}
+	{: RESULT = ps; :}
 	;
 
 phases ::= phase_list:ps SEMI TRUE
-	{: ps.add(new DCPhase()); RESULT = ps; :}
+	{: ps.add(PhaseRecipe.truePhase()); RESULT = ps; :}
 	;
 
 phase_list ::= phase:p
-	{: RESULT = new ArrayList<DCPhase>(); RESULT.add(p); :}
+	{: RESULT = new ArrayList<PhaseRecipe>(); RESULT.add(p); :}
 	| phase_list:ps SEMI phase:p
 	{: ps.add(p); RESULT = ps; :}
 	;
 
 phase ::= TRUE
-	{: RESULT = new DCPhase(); :}
+	{: RESULT = PhaseRecipe.truePhase(); :}
 	| LCEIL expr1NI:e RCEIL
-	{: RESULT = new DCPhase(BoogieBooleanExpressionDecision.create(e)); :}
-	| LCEIL expr1NI:e RCEIL LAND ELL relop:bt NUMBER:b
-	{: RESULT = new DCPhase(BoogieBooleanExpressionDecision.create(e), bt, Integer.parseInt(b)); :}
-	| LCEIL expr1NI:e RCEIL LAND ELL subzero_relop:bt NUMBER:b
-	{: RESULT = new DCPhase(CDD.TRUE, BoogieBooleanExpressionDecision.create(e), bt, Integer.parseInt(b), Collections.emptySet(), true); :}
+	{: RESULT = PhaseRecipe.invariant(BoogieBooleanExpressionDecision.create(e)); :}
+	| LCEIL expr1NI:e RCEIL LAND ELL relop:bt num:b
+	{: RESULT = PhaseRecipe.bounded(BoogieBooleanExpressionDecision.create(e), bt, b, false); :}
+	| LCEIL expr1NI:e RCEIL LAND ELL subzero_relop:bt num:b
+	{: RESULT = PhaseRecipe.bounded(BoogieBooleanExpressionDecision.create(e), bt, b, true); :}
 	;
 
 relop ::= LE {: RESULT = CounterTrace.BOUND_LESS; :}

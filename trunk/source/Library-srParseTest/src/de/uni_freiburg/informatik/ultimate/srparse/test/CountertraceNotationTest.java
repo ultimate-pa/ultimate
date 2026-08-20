@@ -310,4 +310,57 @@ public class CountertraceNotationTest {
 		Assert.assertEquals("!R", ct.getPhases()[0].getInvariant().toString());
 		Assert.assertTrue(ct.getPhases()[1].isAllowEmpty());
 	}
+
+	// ===== Real duration tests =====
+
+	@Test
+	public void testRealDurationBound() throws Exception {
+		final CountertracePattern pat = parseCountertrace(
+				"req1: " + CEIL + "!R" + RFLOOR + " " + AND + " " + ELL + " " + LEQ + " 11.12;true");
+		// Before normalization, getDurations() should return the Rational bound
+		final List<de.uni_freiburg.informatik.ultimate.logic.Rational> durations = pat.getDurations();
+		Assert.assertEquals(1, durations.size());
+		// 11.12 as Rational = 278/25
+		final de.uni_freiburg.informatik.ultimate.logic.Rational r = durations.get(0);
+		Assert.assertEquals(java.math.BigInteger.valueOf(278), r.numerator());
+		Assert.assertEquals(java.math.BigInteger.valueOf(25), r.denominator());
+	}
+
+	@Test
+	public void testRealDurationBoundScaling() throws Exception {
+		// Two patterns: one with integer bound, one with real bound.
+		// The real bound forces a scaling factor, so the integer bound must also be scaled.
+		final String input = "Input A is bool\n"
+				+ "req1: " + CEIL + "A" + RFLOOR + " " + AND + " " + ELL + " <= 10;true\n"
+				+ "req2: " + CEIL + "A" + RFLOOR + " " + AND + " " + ELL + " <= 5.5;true\n";
+		final PatternType<?>[] patterns = parse(input);
+		CountertracePattern ct1 = null;
+		CountertracePattern ct2 = null;
+		for (final PatternType<?> p : patterns) {
+			if (p instanceof CountertracePattern) {
+				if (ct1 == null) {
+					ct1 = (CountertracePattern) p;
+				} else {
+					ct2 = (CountertracePattern) p;
+				}
+			}
+		}
+		Assert.assertNotNull(ct1);
+		Assert.assertNotNull(ct2);
+		// Normalize with a Durations that collects all bounds
+		final de.uni_freiburg.informatik.ultimate.lib.srparse.Durations durations =
+				new de.uni_freiburg.informatik.ultimate.lib.srparse.Durations();
+		for (final PatternType<?> p : patterns) {
+			if (p instanceof CountertracePattern) {
+				durations.addNonInitPattern((CountertracePattern) p);
+			}
+		}
+		ct1 = ct1.normalize(durations);
+		ct2 = ct2.normalize(durations);
+		// 5.5 = 11/2, so scaling factor = 2; 10*2=20 and 5.5*2=11
+		final DCPhase p1 = ct1.getCounterTrace().getPhases()[0];
+		final DCPhase p2 = ct2.getCounterTrace().getPhases()[0];
+		Assert.assertEquals(20, p1.getBound());
+		Assert.assertEquals(11, p2.getBound());
+	}
 }

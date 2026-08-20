@@ -25,28 +25,30 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
- * A {@link PatternType} that wraps a pre-built {@link CounterTrace} from countertrace notation in a {@code .req} file.
+ * A {@link PatternType} backed by a list of {@link PhaseRecipe}s parsed from countertrace notation in a {@code .req}
+ * file.
  *
  * <p>
  * Unlike regular srParse patterns (e.g., {@code AbsencePattern}) which construct their {@link CounterTrace}
- * programmatically from CDDs and durations in {@link #transform(CDD[], int[])}, a {@link CountertracePattern} already
- * has the fully parsed {@link CounterTrace} available. {@link #transform(CDD[], int[])} simply returns it.
- * </p>
- *
- * <p>
- * This allows the {@code ReqCheck} toolchain (PEAtoBoogie etc.) to process countertrace entries the same way it
- * processes regular requirement patterns — the downstream code is completely transparent to the difference.
+ * programmatically from CDDs and durations in {@link #transform(CDD[], int[])}, a {@link CountertracePattern} stores
+ * phase recipes with {@link Rational} time bounds. This allows the bounds to participate in the duration-normalization
+ * mechanism (scaling factor) just like regular pattern durations. The {@link CounterTrace} is only materialized in
+ * {@link #constructCounterTrace()}, after normalization has scaled all bounds to integers.
  * </p>
  *
  * @author University of Freiburg
@@ -55,38 +57,71 @@ public class CountertracePattern extends PatternType<CountertracePattern> {
 
 	private static final SrParseScopeGlobally GLOBALLY_SCOPE = new SrParseScopeGlobally();
 
-	private final CounterTrace mCounterTrace;
+	private final List<PhaseRecipe> mRecipes;
 
-	public CountertracePattern(final String id, final CounterTrace counterTrace) {
-		this(GLOBALLY_SCOPE, id, counterTrace);
+	public CountertracePattern(final String id, final List<PhaseRecipe> recipes) {
+		this(GLOBALLY_SCOPE, id, recipes);
 	}
 
-	public CountertracePattern(final SrParseScope<?> scope, final String id, final CounterTrace counterTrace) {
+	public CountertracePattern(final SrParseScope<?> scope, final String id, final List<PhaseRecipe> recipes) {
 		super(scope, id, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
-		mCounterTrace = Objects.requireNonNull(counterTrace);
+		mRecipes = List.copyOf(Objects.requireNonNull(recipes));
 	}
 
 	/**
-	 * @return The pre-built {@link CounterTrace} wrapped by this pattern.
+	 * Returns the time bounds of all bounded phases as {@link Rational}s. This allows
+	 * {@link Durations#addNonInitPattern(PatternType)} to include countertrace bounds in the scaling-factor
+	 * computation.
+	 *
+	 * @return unmodifiable list of non-null bounds
 	 */
-	public CounterTrace getCounterTrace() {
-		return mCounterTrace;
+	@Override
+	public List<Rational> getDurations() {
+		return mRecipes.stream().map(PhaseRecipe::getBound).filter(Objects::nonNull).collect(Collectors.toList());
+	}
+
+	/**
+	 * Materializes the {@link CounterTrace} from the (normalized) recipes. Overrides
+	 * {@link PatternType#constructCounterTrace()} to bypass {@code getDurationsAsIntArray()} and build {@link DCPhase}s
+	 * directly from the recipes.
+	 */
+	@Override
+	public List<CounterTrace> constructCounterTrace() {
+		final DCPhase[] phases = new DCPhase[mRecipes.size()];
+		for (int i = 0; i < mRecipes.size(); i++) {
+			phases[i] = mRecipes.get(i).toDCPhase();
+		}
+		return Collections.singletonList(new CounterTrace(phases));
 	}
 
 	@Override
 	protected List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
-		return Collections.singletonList(mCounterTrace);
+		return constructCounterTrace();
+	}
+
+	/**
+	 * Scales all recipe bounds by the scaling factor computed from {@link Durations}. Returns {@code this} if the
+	 * scaling factor is {@code 1}.
+	 */
+	public CountertracePattern normalize(final Durations durations) {
+		final Rational scale = durations.computeScalingFactor();
+		if (scale.equals(Rational.ONE)) {
+			return this;
+		}
+		final List<PhaseRecipe> scaled =
+				mRecipes.stream().map(r -> r.scaleBound(scale)).collect(Collectors.toList());
+		return new CountertracePattern(getScope(), getId(), scaled);
 	}
 
 	@Override
 	public CountertracePattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
 			final List<Rational> durations, final List<String> durationNames) {
-		return new CountertracePattern(scope, id, mCounterTrace);
+		return new CountertracePattern(scope, id, mRecipes);
 	}
 
 	@Override
 	public CountertracePattern rename(final String newName) {
-		return new CountertracePattern(getScope(), newName, mCounterTrace);
+		return new CountertracePattern(getScope(), newName, mRecipes);
 	}
 
 	@Override
@@ -101,12 +136,19 @@ public class CountertracePattern extends PatternType<CountertracePattern> {
 
 	@Override
 	public String toString() {
-		return getId() + ": " + mCounterTrace.toString();
+		return getId() + ": " + constructCounterTrace().get(0).toString();
+	}
+
+	/**
+	 * Convenience method that materializes and returns the single {@link CounterTrace}.
+	 */
+	public CounterTrace getCounterTrace() {
+		return constructCounterTrace().get(0);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.hashCode(), mCounterTrace);
+		return Objects.hash(super.hashCode(), mRecipes);
 	}
 
 	@Override
@@ -115,6 +157,6 @@ public class CountertracePattern extends PatternType<CountertracePattern> {
 			return false;
 		}
 		final CountertracePattern other = (CountertracePattern) obj;
-		return Objects.equals(mCounterTrace, other.mCounterTrace);
+		return Objects.equals(mRecipes, other.mRecipes);
 	}
 }
