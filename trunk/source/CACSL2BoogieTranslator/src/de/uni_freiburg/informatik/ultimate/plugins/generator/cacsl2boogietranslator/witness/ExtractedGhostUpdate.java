@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -42,6 +43,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
@@ -51,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
@@ -61,6 +64,13 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
  *
  */
 public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
+	private static final List<Integer> ASSIGNMENT_OPERATORS = List.of(IASTBinaryExpression.op_assign,
+			IASTBinaryExpression.op_multiplyAssign, IASTBinaryExpression.op_divideAssign,
+			IASTBinaryExpression.op_moduloAssign, IASTBinaryExpression.op_plusAssign,
+			IASTBinaryExpression.op_minusAssign, IASTBinaryExpression.op_shiftLeftAssign,
+			IASTBinaryExpression.op_shiftRightAssign, IASTBinaryExpression.op_binaryAndAssign,
+			IASTBinaryExpression.op_binaryXorAssign, IASTBinaryExpression.op_binaryOrAssign);
+
 	private final IASTNode mMatchedAstNode;
 	private final String mStatement;
 
@@ -156,16 +166,32 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 		return annotateLastOccurence(loc, programStatements, ghostUpdate, x -> isAtomicCall(x, functionName), true);
 	}
 
+	private boolean isAssignmentOrMemoryWrite(final Statement st) {
+		return st instanceof AssignmentStatement
+				|| (st instanceof final CallStatement call && call.getMethodName().startsWith(SFO.WRITE_PREFIX));
+	}
+
+	private boolean isAssignment() {
+		return getExpression() instanceof final IASTBinaryExpression binEx
+				&& ASSIGNMENT_OPERATORS.contains(binEx.getOperator());
+	}
+
 	@Override
 	public ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
 			final ExpressionResult expressionResult) {
+		final ExpressionResult witness = instrument(loc, dispatcher);
+		if (isAssignment()) {
+			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
+					.resetStatements(annotateLastOccurence(loc, expressionResult.getStatements(),
+							witness.getStatements(), this::isAssignmentOrMemoryWrite, true))
+					.build();
+		}
 		final String functionName = getNameOfCalledFunction();
 		if (functionName == null) {
 			// TODO: Support other statements, also not only function calls
 			throw new UnsupportedOperationException(
 					"The following statement is not yet supported for ghost updates: " + loc);
 		}
-		final ExpressionResult witness = instrument(loc, dispatcher);
 		switch (functionName) {
 		case "__VERIFIER_atomic_begin":
 			// Insert the ghost update after the begin of the atomic block to ensure that it is executed atomically.
