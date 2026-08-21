@@ -183,6 +183,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 
 	protected final TaskIdentifier mTaskIdentifier;
 
+	protected Dumper mDumper;
+
 	/**
 	 * Unique mName of this CEGAR loop to distinguish this instance from other instances in a complex verification task.
 	 * Important only for debugging and debugging output written to files.
@@ -353,6 +355,11 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			mLogger.info("Settings: %s", ReflectionUtil.instanceFieldsToString(mPref));
 			mLogger.info("Starting to check reachability of %s error locations.", mErrorLocs.size());
 		}
+		// initialize dump of debugging output to files if necessary
+		if (mPref.dumpAutomata()) {
+			final TaskIdentifier tid = new SubtaskIterationIdentifier(null, mIteration);
+			mDumper = new Dumper(mLogger, getDumpAutomataPath(tid.toString()));
+		}
 		try {
 			if (!computeInitialAbstraction()) {
 				iterate();
@@ -415,6 +422,14 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			boolean updateBudget = true;
 			try {
 				mCegarLoopBenchmark.announceNextIteration();
+
+				if (mDumper != null) {
+					mDumper.close();
+				}
+				if (mPref.dumpAutomata()) {
+					final TaskIdentifier tid = new SubtaskIterationIdentifier(null, mIteration);
+					mDumper = new Dumper(mLogger, getDumpAutomataPath(tid.toString()));
+				}
 
 				try {
 					final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible();
