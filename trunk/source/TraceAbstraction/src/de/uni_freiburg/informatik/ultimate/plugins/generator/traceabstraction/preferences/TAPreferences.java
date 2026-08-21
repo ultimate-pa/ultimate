@@ -75,6 +75,10 @@ public final class TAPreferences {
 	private final String mDumpAutomataFilename;
 	private final boolean mDumpAutomataBesideFile;
 	private final boolean mDumpOnlyReuseAutomata;
+	private final boolean mDumpDebugInfo;
+	private final String mDumpDebugInfoDirectory;
+	private final String mDumpDebugInfoFilename;
+	private final boolean mDumpDebugInfoBesideFile;
 	private final InterpolantAutomatonEnhancement mDeterminiation;
 	private final Minimization mMinimize;
 	private final Concurrency mAutomataTypeConcurrency;
@@ -151,6 +155,13 @@ public final class TAPreferences {
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_AUTOMATA_BESIDE_FILE);
 		mDumpOnlyReuseAutomata =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_AUTOMATA_ONLY_REUSE);
+
+		mDumpDebugInfo = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_DEBUG_INFO);
+		mDumpDebugInfoDirectory =
+				mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMP_DEBUG_INFO_DIRECTORY);
+		mDumpDebugInfoFilename = mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMP_DEBUG_INFO_FILENAME);
+		mDumpDebugInfoBesideFile =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_DEBUG_INFO_BESIDE_FILE);
 
 		mDeterminiation = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT,
 				InterpolantAutomatonEnhancement.class);
@@ -353,6 +364,34 @@ public final class TAPreferences {
 	 */
 	public boolean dumpOnlyReuseAutomata() {
 		return mDumpAutomata && mDumpOnlyReuseAutomata;
+	}
+
+	/**
+	 * @return The debug information dump flag.
+	 */
+	public boolean dumpDebugInfo() {
+		return mDumpDebugInfo;
+	}
+
+	/**
+	 * @return The debug information dump directory.
+	 */
+	public String dumpDebugInfoDirectory() {
+		return mDumpDebugInfoDirectory;
+	}
+
+	/**
+	 * @return The debug information dump filename.
+	 */
+	public String dumpDebugInfoFilename() {
+		return mDumpDebugInfoFilename;
+	}
+
+	/**
+	 * @return The debug information dump besides input file flag.
+	 */
+	public boolean dumpDebugInfoBesideFile() {
+		return mDumpDebugInfoBesideFile;
 	}
 
 	/**

@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -35,6 +34,9 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramDumper.InputMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
@@ -52,6 +54,8 @@ public class PathProgramDumpController<L extends IIcfgTransition<?>> {
 
 	private final IUltimateServiceProvider mServices;
 	private final TAPreferences mPref;
+	private final String mInputFilename;
+	private final DebugIdentifier mTaskDebugIdentifier;
 	private final IIcfg<?> mIcfg;
 	private final Set<Set<L>> mAlreadyDumped = new HashSet<>();
 	private final boolean mEnabled;
@@ -60,9 +64,11 @@ public class PathProgramDumpController<L extends IIcfgTransition<?>> {
 	private final PathProgramDumpStop mDumpStopMode;
 
 	public PathProgramDumpController(final IUltimateServiceProvider services, final TAPreferences pref,
-			final IIcfg<?> icfgContainer) {
+			final String inputFilename, final DebugIdentifier name, final IIcfg<?> icfgContainer) {
 		mServices = services;
 		mPref = pref;
+		mInputFilename = inputFilename;
+		mTaskDebugIdentifier = name;
 		mIcfg = icfgContainer;
 
 		mDumpIfNotPerfect = services.getPreferenceProvider(Activator.PLUGIN_ID)
@@ -79,7 +85,7 @@ public class PathProgramDumpController<L extends IIcfgTransition<?>> {
 
 	public void reportPathProgram(final IRun<L, ?> cex, final boolean somePerfectSequenceFound, final int iteration) {
 		if (shouldDumpPathProgram(somePerfectSequenceFound, cex)) {
-			doDump(cex, iteration);
+			doDump(cex, iteration, mTaskDebugIdentifier);
 		}
 	}
 
@@ -98,14 +104,20 @@ public class PathProgramDumpController<L extends IIcfgTransition<?>> {
 		return false;
 	}
 
-	private void doDump(final IRun<L, ?> counterexample, final int iteration) {
+	private String getDumpPath(final DebugIdentifier name, final String suffix) {
+		return TraceAbstractionUtils.constructDumpPath(mPref.dumpDebugInfoBesideFile(), mInputFilename,
+				mPref.dumpDebugInfoDirectory(), mPref.dumpDebugInfoFilename(), name, suffix);
+	}
+
+	private void doDump(final IRun<L, ?> counterexample, final int iteration, final DebugIdentifier name) {
 		final boolean wasNew = mAlreadyDumped.add(new HashSet<>(counterexample.getWord().asList()));
 		if (mDumpStopMode == PathProgramDumpStop.BEFORE_FIRST_DUPLICATE && !wasNew) {
 			final String message = "stopped before dumping similar path program twice";
 			throw createToolchainCanceledException(message, iteration);
 		}
 
-		final String filename = mPref.dumpAutomataDirectory() + File.separator + mIcfg.getIdentifier() + "_" + iteration + ".bpl";
+		final TaskIdentifier tid = new SubtaskIterationIdentifier(null, iteration);
+		final String filename = getDumpPath(name, tid.toString()) + ".bpl";
 		new PathProgramDumper(mIcfg, mServices, counterexample, filename, DUMP_PATH_PROGRAMS_INPUT_MODE);
 
 		if (mDumpStopMode == PathProgramDumpStop.AFTER_FIRST_DUMP) {

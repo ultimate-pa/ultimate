@@ -189,7 +189,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		if (mCounterexample == null) {
 			return true;
 		}
-		if (mPref.dumpAutomata()) {
+		if (mPref.dumpDebugInfo()) {
 			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
 			mDumper.dumpNestedRun(mCounterexample);
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
