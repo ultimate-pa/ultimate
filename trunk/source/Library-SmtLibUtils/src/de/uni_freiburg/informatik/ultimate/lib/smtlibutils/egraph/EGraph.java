@@ -251,6 +251,31 @@ public class EGraph {
 		return unioned;
 	}
 
+	public enum Implication {
+		IMPLIED, UNKNOWN
+	}
+
+	public Implication isImplied(final Term term) {
+		final BinaryEqualityRelation binaryEqRelation = BinaryEqualityRelation.convert(term);
+		if (binaryEqRelation != null) {
+			final Term lhs = binaryEqRelation.getLhs();
+			final Term rhs = binaryEqRelation.getRhs();
+
+			final RelationSymbol termRelationSymbol = binaryEqRelation.getRelationSymbol();
+			final Relation relation = getRelation(lhs, rhs);
+
+			if ((relation == Relation.EQUAL && termRelationSymbol == RelationSymbol.EQ)
+					|| (relation == Relation.DISTINCT && termRelationSymbol == RelationSymbol.DISTINCT)) {
+				return Implication.IMPLIED;
+			} else {
+				return Implication.UNKNOWN;
+			}
+
+		} else {
+			throw new AssertionError("term is not a binary equality relation");
+		}
+	}
+
 	public boolean areEquivalent(final Term a, final Term b) {
 		if (mUnionFind.find(a) == null) {
 			return false;
