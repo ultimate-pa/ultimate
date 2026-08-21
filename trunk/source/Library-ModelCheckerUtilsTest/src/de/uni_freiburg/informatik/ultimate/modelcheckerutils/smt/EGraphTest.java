@@ -98,41 +98,54 @@ public class EGraphTest {
 		}
 	}
 
-//	@Test
-//	public void ddaExample6() {
-//		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x"), };
-//		final String formulaAsString = "(and (distinct x 1) (or (<= x 0) (> x 2) (= x 1)))";
-//		final String expectedResultAsString = "(and (not (= x 1)) (or (< 2 x) (< x 1)))";
-//		runEGraphTest(funDecls, formulaAsString, expectedResultAsString, mServices, mLogger, mMgdScript);
-//	}
-
-//	@Test
-//	public void dda2TestExample01() {
-//		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
-//		final String formulaAsString =
-//				"(or (and (or (> x 1) (= (+ y z) 1)) (<= y 2)) (and (< x 2) (or (< x 5) (>= z 2))))";
-//		final String expectedResultAsString = "(or (< y 3) (< x 2))";
-//		runEGraphTest(funDecls, formulaAsString, expectedResultAsString, mServices, mLogger, mMgdScript);
-//	}
-
-//	@Test
-//	public void egraphTestExampleTransitivity() {
-//		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
-//		final String formulaAsString = "(and (= x y) (= y 5) (= (+ x 5) z))";
-//		final String expectedResultAsString = "(or (< y 3) (< x 2))";
-//		runEGraphTest(funDecls, formulaAsString, expectedResultAsString, mServices, mLogger, mMgdScript);
-//	}
-
-//	@Test
-//	public void egraphTestExampleSelectCongruence() {
-//		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j", "x", "y"),
-//				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
-//		final String formulaAsString = "(and (= i (select a x)) (= x y) (= j (select a y)))";
-//		final String expectedResultAsString = "(or (< y 3) (< x 2))";
-//		runEGraphTest(funDecls, formulaAsString, expectedResultAsString, mServices, mLogger, mMgdScript);
-//	}
+	@Test
+	// most basic transitivity test
+	public void egraphTestExampleTransitivity() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
+		final String formulaAsString = "(and (= x y) (= y 5))";
+		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
+		expectedRelations.add(new ExpectedRelation("x", "5", EGraph.Relation.EQUAL));
+		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
+	}
 
 	@Test
+	// basic select congruence test with the same arrays and indices that are found to be equivalent
+	public void egraphTestExampleSelectCongruence() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j", "x", "y"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
+		final String formulaAsString = "(and (= i (select a x)) (= x y) (= j (select a y)))";
+		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
+		expectedRelations.add(new ExpectedRelation("i", "j", EGraph.Relation.EQUAL));
+		expectedRelations.add(new ExpectedRelation("(select a x)", "(select a y)", EGraph.Relation.EQUAL));
+		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	// basic select congruence test with the same indices and arrays that are found to be equivalent
+	public void egraphTestExampleSelectCongruence02() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j", "x"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a", "b"), };
+		final String formulaAsString = "(and (= i (select a x)) (= a b) (= j (select b x)))";
+		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
+		expectedRelations.add(new ExpectedRelation("i", "j", EGraph.Relation.EQUAL));
+		expectedRelations.add(new ExpectedRelation("(select a x)", "(select b x)", EGraph.Relation.EQUAL));
+		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	// basic select congruence test where both the indices and arrays are found to be equivalent
+	public void egraphTestExampleSelectCongruence03() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j", "x", "y"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a", "b"), };
+		final String formulaAsString = "(and (= i (select a x)) (= a b) (= x y) (= j (select b y)))";
+		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
+		expectedRelations.add(new ExpectedRelation("i", "j", EGraph.Relation.EQUAL));
+		expectedRelations.add(new ExpectedRelation("(select a x)", "(select b y)", EGraph.Relation.EQUAL));
+		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	// most basic disequality test
 	public void egraphTestExampleDistinct() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
 		final String formulaAsString = "(and (distinct x y) (= y z))";
