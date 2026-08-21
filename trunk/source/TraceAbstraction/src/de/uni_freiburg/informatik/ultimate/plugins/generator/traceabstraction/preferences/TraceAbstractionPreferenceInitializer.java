@@ -378,6 +378,28 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			"When dumping automata is enabled, we only dump the interpolant automaton and add to that file if it "
 					+ "exists s.t. it can be reused by later verification runs.";
 
+	// Debug information dumping
+	// ========================================================================
+
+	public static final String LABEL_DUMP_DEBUG_INFO = "Dump debug information";
+	private static final boolean DEF_DUMP_DEBUG_INFO = false;
+	private static final String DESC_DUMP_DEBUG_INFO = "Dump debug information to files.";
+
+	public static final String LABEL_DUMP_DEBUG_INFO_DIRECTORY = "Dump debug information directory";
+	private static final String DEF_DUMP_DEBUG_INFO_DIRECTORY = ".";
+	private static final String DESC_DUMP_DEBUG_INFO_DIRECTORY = "Dump debug information to the specified directory.";
+
+	public static final String LABEL_DUMP_DEBUG_INFO_FILENAME = "Dump debug information filename";
+	private static final String DEF_DUMP_DEBUG_INFO_FILENAME = "debug";
+	private static final String DESC_DUMP_DEBUG_INFO_FILENAME =
+			"The filename of the dumped debug information (without file extension).";
+
+	public static final String LABEL_DUMP_DEBUG_INFO_BESIDE_FILE = "Dump debug information besides input file";
+	private static final boolean DEF_DUMP_DEBUG_INFO_BESIDE_FILE = true;
+	private static final String DESC_DUMP_DEBUG_INFO_BESIDE_FILE =
+			"Dump debug information as \"<inputfilename>-debug.txt\" in the same directory as the input file. "
+					+ "All other output options are ignored.";
+
 	// ========================================================================
 
 	public static final String LABEL_HOARE_TRIPLE_CHECKS = "Hoare triple checks";
@@ -699,6 +721,16 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 								DESC_DUMP_AUTOMATA_BESIDE_FILE, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_DUMP_AUTOMATA_ONLY_REUSE, DEF_DUMP_AUTOMATA_ONLY_REUSE,
 								DESC_DUMP_AUTOMATA_ONLY_REUSE, PreferenceType.Boolean)),
+
+				new UltimatePreferenceItemGroup("Debug Information Dumping",
+						new UltimatePreferenceItem<>(LABEL_DUMP_DEBUG_INFO, DEF_DUMP_DEBUG_INFO, DESC_DUMP_DEBUG_INFO,
+								PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_DUMP_DEBUG_INFO_DIRECTORY, DEF_DUMP_DEBUG_INFO_DIRECTORY,
+								DESC_DUMP_DEBUG_INFO_DIRECTORY, PreferenceType.Directory),
+						new UltimatePreferenceItem<>(LABEL_DUMP_DEBUG_INFO_FILENAME, DEF_DUMP_DEBUG_INFO_FILENAME,
+								DESC_DUMP_DEBUG_INFO_FILENAME, PreferenceType.String),
+						new UltimatePreferenceItem<>(LABEL_DUMP_DEBUG_INFO_BESIDE_FILE, DEF_DUMP_DEBUG_INFO_BESIDE_FILE,
+								DESC_DUMP_DEBUG_INFO_BESIDE_FILE, PreferenceType.Boolean)),
 
 				new UltimatePreferenceItem<>(LABEL_LANGUAGE_OPERATION, LanguageOperation.DIFFERENCE,
 						PreferenceType.Combo, LanguageOperation.values()),

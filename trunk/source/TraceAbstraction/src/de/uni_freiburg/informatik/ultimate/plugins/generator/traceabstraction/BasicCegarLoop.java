@@ -166,7 +166,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(services, name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs);
-		mPathProgramDumpController = new PathProgramDumpController<>(getServices(), mPref, mIcfg);
+		mPathProgramDumpController =
+				new PathProgramDumpController<>(getServices(), mPref, mTaskFilename, mTaskDebugIdentifier, mIcfg);
 		InterpolationTechnique interpolation = taPrefs.interpolation();
 		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1
 				&& interpolation == InterpolationTechnique.FPandBP) {
@@ -199,8 +200,9 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			// Construct an empty file. We need this empty file in cases where
 			// the CFG does not have error location and no automaton is dumped.
 			mLogger.info("Dumping reuse automata for " + mTaskIdentifier.toString());
-			final String fullAutomataPath = getDumpAutomataPath(new SubtaskStringIdentifier(null, "reuse").toString())
-					+ "." + mPref.dumpAutomataFormat().getFormat().getFileEnding();
+			final String fullAutomataPath = getDumpPath(mPref.dumpAutomataBesideFile(), mPref.dumpDebugInfoDirectory(),
+					mPref.dumpAutomataFilename(), new SubtaskStringIdentifier(null, "reuse").toString()) + "."
+					+ mPref.dumpAutomataFormat().getFormat().getFileEnding();
 			final File file = new File(fullAutomataPath);
 			try {
 				final FileWriter fw = new FileWriter(file, false);
@@ -523,9 +525,10 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			} else {
 				printedAutomaton = automaton;
 			}
-			final String fullAutomataPath = getDumpAutomataPath(new SubtaskStringIdentifier(null, "reuse").toString());
+			final String fullAutomataPath = getDumpPath(mPref.dumpAutomataBesideFile(), mPref.dumpAutomataDirectory(),
+					mPref.dumpAutomataFilename(), new SubtaskStringIdentifier(null, "reuse").toString());
 			new AutomatonDefinitionPrinter<String, String>(services, "nwa" + getIteration(), fullAutomataPath,
-					mDumpAutomataFormat, "", !mFirstReuseDump, printedAutomaton);
+					mPref.dumpAutomataFormat(), "", !mFirstReuseDump, printedAutomaton);
 			mFirstReuseDump = false;
 			mLogger.info("Finished dumping");
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);

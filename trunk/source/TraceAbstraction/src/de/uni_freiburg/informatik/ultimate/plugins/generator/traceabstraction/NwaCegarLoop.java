@@ -190,7 +190,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			return true;
 		}
 
-		if (mPref.dumpAutomata()) {
+		if (mPref.dumpDebugInfo()) {
 			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
 			mDumper.dumpNestedRun(mCounterexample);
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);

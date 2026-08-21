@@ -27,8 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.io.File;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -45,13 +43,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.NamedAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaBasis;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
@@ -171,8 +166,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	// used for debugging only
 	protected IAutomaton<L, IPredicate> mArtifactAutomaton;
 
-	protected final Format mDumpAutomataFormat;
-
 	protected CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
 	protected IUltimateServiceProvider mServices;
@@ -216,7 +209,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
-		mDumpAutomataFormat = taPrefs.dumpAutomataFormat();
 		mName = name;
 		mAbstraction = initialAbstraction;
 		mIcfg = rootNode;
@@ -356,9 +348,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			mLogger.info("Starting to check reachability of %s error locations.", mErrorLocs.size());
 		}
 		// initialize dump of debugging output to files if necessary
-		if (mPref.dumpAutomata()) {
+		if (mPref.dumpDebugInfo()) {
 			final TaskIdentifier tid = new SubtaskIterationIdentifier(null, mIteration);
-			mDumper = new Dumper(mLogger, getDumpAutomataPath(tid.toString()));
+			mDumper = new Dumper(mLogger, getDumpPath(mPref.dumpDebugInfoBesideFile(), mPref.dumpDebugInfoDirectory(),
+					mPref.dumpDebugInfoFilename(), tid.toString()));
 		}
 		try {
 			if (!computeInitialAbstraction()) {
@@ -426,9 +419,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 				if (mDumper != null) {
 					mDumper.close();
 				}
-				if (mPref.dumpAutomata()) {
+				if (mPref.dumpDebugInfo()) {
 					final TaskIdentifier tid = new SubtaskIterationIdentifier(null, mIteration);
-					mDumper = new Dumper(mLogger, getDumpAutomataPath(tid.toString()));
+					mDumper = new Dumper(mLogger, getDumpPath(mPref.dumpDebugInfoBesideFile(),
+							mPref.dumpDebugInfoDirectory(), mPref.dumpDebugInfoFilename(), tid.toString()));
 				}
 
 				try {
@@ -634,26 +628,19 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		return mResultBuilder.addResultForAllRemaining(res, null, e, null).getResult();
 	}
 
-	protected String getDumpAutomataPath(final String suffix) {
-		String filePath = null;
-
-		if (mPref.dumpAutomataBesideFile()) {
-			assert Paths.get(mTaskFilename).isAbsolute();
-			filePath = mTaskFilename;
-		} else {
-			filePath = mPref.dumpAutomataDirectory() + File.separator + mPref.dumpAutomataFilename();
-		}
-
-		filePath += TaskIdentifier.SEPARATOR + mTaskDebugIdentifier.toString();
-
-		return (suffix != null && !suffix.isEmpty()) ? filePath + TaskIdentifier.SEPARATOR + suffix : filePath;
+	protected String getDumpPath(final boolean besideInputFile, final String directory, final String filename,
+			final String suffix) {
+		return TraceAbstractionUtils.constructDumpPath(besideInputFile, mTaskFilename, directory, filename,
+				mTaskDebugIdentifier, suffix);
 	}
 
 	protected void writeAutomatonToFile(final IAutomaton<L, IPredicate> automaton, final TaskIdentifier tid) {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
-		final String fullAutomataPath = getDumpAutomataPath(tid.toString());
+		final String fullAutomataPath = getDumpPath(mPref.dumpAutomataBesideFile(), mPref.dumpAutomataDirectory(),
+				mPref.dumpAutomataFilename(), tid.toString());
 		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(getServices()),
-				determineAutomatonName(automaton), fullAutomataPath, mDumpAutomataFormat, "", automaton);
+				TraceAbstractionUtils.determineAutomatonName(automaton), fullAutomataPath, mPref.dumpAutomataFormat(),
+				"", automaton);
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
 	}
 
@@ -676,9 +663,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	protected void writeAutomataToFile(final TaskIdentifier tid, final String atsHeaderMessage,
 			final String atsCommands, final NamedAutomaton<L, IPredicate>... automata) {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
-		final String fullAutomataPath = getDumpAutomataPath(tid.toString());
+		final String fullAutomataPath = getDumpPath(mPref.dumpAutomataBesideFile(), mPref.dumpAutomataDirectory(),
+				mPref.dumpAutomataFilename(), tid.toString());
 		AutomatonDefinitionPrinter.writeAutomatonToFile(new AutomataLibraryServices(getServices()), fullAutomataPath,
-				mDumpAutomataFormat, atsHeaderMessage, atsCommands, automata);
+				mPref.dumpAutomataFormat(), atsHeaderMessage, atsCommands, automata);
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
 	}
 
@@ -686,19 +674,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			final String atsCommands, final NamedAutomaton<L, IPredicate>... automata) {
 		final TaskIdentifier tid = new SubtaskStringIdentifier(new SubtaskIterationIdentifier(null, iteration), suffix);
 		writeAutomataToFile(tid, atsHeaderMessage, atsCommands, automata);
-	}
-
-	private String determineAutomatonName(final IAutomaton<L, IPredicate> automaton) {
-		String result;
-		if (automaton instanceof INwaBasis) {
-			result = "nwa";
-		} else if (automaton instanceof IPetriNet) {
-			result = "net";
-		} else {
-			throw new UnsupportedOperationException(
-					"unknown kind of automaton " + automaton.getClass().getSimpleName());
-		}
-		return result;
 	}
 
 	protected void abortIfTimeout() {
