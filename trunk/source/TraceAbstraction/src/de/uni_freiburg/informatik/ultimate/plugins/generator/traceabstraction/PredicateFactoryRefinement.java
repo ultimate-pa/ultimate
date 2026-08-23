@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithHistory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -83,8 +84,11 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 			final IcfgLocation[] pps = ((IMLPredicate) p1).getProgramPoints();
 			// assert mCsToolkit.isDontCare(p2);
 			if (Arrays.stream(pps).anyMatch(mHoareAnnotationProgramPoints::contains)) {
-				Term conjunction = mPredicateFactory.and(p1, p2).getFormula();
-				conjunction = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(conjunction);
+				final Term conjunction = mPredicateFactory.and(p1, p2).getFormula();
+				// FIXME 2026-08-23 Matthias: Replaced transformation to CommuhashNormalForm with this
+				// sanity check, since term should already be in normal form here. Remove if it hasn't
+				// fired within two months.
+				assert CommuhashUtils.isInCommuhashNormalForm(conjunction) : "Not in CommuhashNormalForm";
 				// TODO (2020-09-03 Dominik) Possibly support DEBUG_COMPUTE_HISTORY like below?
 				return mPredicateFactory.newMLPredicate(pps, conjunction);
 			}
@@ -153,8 +157,11 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 		if (someElement instanceof ISLPredicate) {
 			final IcfgLocation pp = ((ISLPredicate) someElement).getProgramPoint();
 			if (mHoareAnnotationProgramPoints.contains(pp)) {
-				Term disjunction = mPredicateFactory.or(states).getFormula();
-				disjunction = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(disjunction);
+				final Term disjunction = mPredicateFactory.or(states).getFormula();
+				// FIXME 2026-08-23 Matthias: Replaced transformation to CommuhashNormalForm with this
+				// sanity check, since term should already be in normal form here. Remove if it hasn't
+				// fired within two months.
+				assert CommuhashUtils.isInCommuhashNormalForm(disjunction) : "Not in CommuhashNormalForm";
 				return mPredicateFactory.newSPredicate(pp, disjunction);
 			}
 			return mPredicateFactory.newDontCarePredicate(pp);
