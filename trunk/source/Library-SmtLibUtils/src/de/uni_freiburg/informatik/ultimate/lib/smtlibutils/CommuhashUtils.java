@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -52,8 +53,8 @@ public class CommuhashUtils {
 	/**
 	 * Dangerous! A function may be commutative in some theory but it is not in e.g., QF_UF
 	 */
-	public static final String[] COMMUTATIVE_OPERATORS =
-			{ "and", "or", "=", "distinct", "+", "*", "bvadd", "bvmul", "bvand", "bvor", "bvxor" };
+	public static final Set<String> COMMUTATIVE_OPERATORS =
+			Set.of("and", "or", "=", "distinct", "+", "*", "bvadd", "bvmul", "bvand", "bvor", "bvxor");
 
 	/**
 	 * Orders {@link Term}s by hash code, using {@code toString()} as a tie-breaker for distinct instances whose hash
@@ -80,22 +81,7 @@ public class CommuhashUtils {
 	 * @return
 	 */
 	public static boolean isKnownToBeCommutative(final String name) {
-		switch (name) {
-		case "and":
-		case "or":
-		case "=":
-		case "distinct":
-		case "+":
-		case "*":
-		case "bvadd":
-		case "bvmul":
-		case "bvand":
-		case "bvor":
-		case "bvxor":
-			return true;
-		default:
-			return false;
-		}
+		return COMMUTATIVE_OPERATORS.contains(name);
 	}
 
 	public static Term[] sortByHashCode(final Term... params) {
@@ -121,7 +107,7 @@ public class CommuhashUtils {
 		final boolean result;
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (Arrays.asList(COMMUTATIVE_OPERATORS).contains(appTerm.getFunction().getName())) {
+			if (COMMUTATIVE_OPERATORS.contains(appTerm.getFunction().getName())) {
 				result = areParamsSorted(appTerm.getParameters());
 			} else {
 				result = true;
