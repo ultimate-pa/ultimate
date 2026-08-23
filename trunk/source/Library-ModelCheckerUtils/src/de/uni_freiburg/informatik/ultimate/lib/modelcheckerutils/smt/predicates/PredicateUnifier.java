@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator.PredicateUnifierStatisticsType;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtTestGenerationUtils;
@@ -361,9 +362,12 @@ public class PredicateUnifier implements IPredicateUnifier {
 				return p;
 			}
 		}
-		final Term commuNF = new CommuhashNormalForm(mServices, mScript).transform(withoutAnnotation);
+		// FIXME 2026-08-23 Matthias: Replaced transformation to CommuhashNormalForm with this
+		// sanity check, since term should already be in normal form here. Remove if it hasn't
+		// fired within two month.
+		assert CommuhashUtils.isInCommuhashNormalForm(withoutAnnotation) : "Not in CommuhashNormalForm";
 		{
-			IPredicate p = mTerm2Predicates.get(commuNF);
+			IPredicate p = mTerm2Predicates.get(withoutAnnotation);
 			if (p != null) {
 				if (mDeprecatedPredicates.containsKey(p)) {
 					p = mDeprecatedPredicates.get(p);
@@ -375,21 +379,21 @@ public class PredicateUnifier implements IPredicateUnifier {
 		}
 
 		final PredicateComparison pc =
-				new PredicateComparison(commuNF, tvp.getVars(), impliedPredicates, expliedPredicates);
+				new PredicateComparison(withoutAnnotation, tvp.getVars(), impliedPredicates, expliedPredicates);
 		if (pc.isEquivalentToExistingPredicateWithLeqQuantifiers()) {
 			mPredicateUnifierBenchmarkGenerator.incrementSemanticMatches();
 			mPredicateUnifierBenchmarkGenerator.stopTime();
 			return pc.getEquivalantLeqQuantifiedPredicate();
 		}
-		assert !SmtUtils.isTrueLiteral(commuNF) : "illegal predicate: true";
-		assert !SmtUtils.isFalseLiteral(commuNF) : "illegal predicate: false";
-		assert !mTerm2Predicates.containsKey(commuNF);
+		assert !SmtUtils.isTrueLiteral(withoutAnnotation) : "illegal predicate: true";
+		assert !SmtUtils.isFalseLiteral(withoutAnnotation) : "illegal predicate: false";
+		assert !mTerm2Predicates.containsKey(withoutAnnotation);
 		final Term simplifiedTerm;
 		if (pc.isIntricatePredicate()) {
-			simplifiedTerm = commuNF;
+			simplifiedTerm = withoutAnnotation;
 		} else {
 			try {
-				final Term tmp = SmtUtils.simplify(mMgdScript, commuNF, mServices, mSimplificationTechnique);
+				final Term tmp = SmtUtils.simplify(mMgdScript, withoutAnnotation, mServices, mSimplificationTechnique);
 				simplifiedTerm = new CommuhashNormalForm(mServices, mScript).transform(tmp);
 			} catch (final ToolchainCanceledException tce) {
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), "unifying predicates"));
