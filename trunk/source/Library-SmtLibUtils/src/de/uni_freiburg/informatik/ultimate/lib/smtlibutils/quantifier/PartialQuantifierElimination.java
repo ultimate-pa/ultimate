@@ -71,8 +71,7 @@ public class PartialQuantifierElimination {
 		final Term chnf = new CommuhashNormalForm(services, mgdScript.getScript()).transform(nnf);
 		final Term result = QuantifierPushTermWalker.eliminate(services, mgdScript, false, PqeTechniques.LIGHT,
 				SimplificationTechnique.NONE, chnf);
-		assert (CommuhashUtils.isInCommuhashNormalForm(result, CommuhashUtils.COMMUTATIVE_OPERATORS))
-				: "Output not in commuhash form";
+		assert (CommuhashUtils.isInCommuhashNormalForm(result)) : "Output not in commuhash form";
 		return result;
 	}
 

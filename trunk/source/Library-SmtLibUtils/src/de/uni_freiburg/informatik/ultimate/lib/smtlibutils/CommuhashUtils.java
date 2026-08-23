@@ -112,16 +112,16 @@ public class CommuhashUtils {
 		return script.term(funcname, indices, returnSort, params);
 	}
 
-	public static boolean isInCommuhashNormalForm(final Term term, final String... operators) {
-		final Predicate<Term> property = (x -> !rootInCommuhashNormalForm(x, operators));
+	public static boolean isInCommuhashNormalForm(final Term term) {
+		final Predicate<Term> property = (x -> !rootInCommuhashNormalForm(x));
 		return !new SubtermPropertyChecker(property).isSatisfiedBySomeSubterm(term);
 	}
 
-	private static boolean rootInCommuhashNormalForm(final Term term, final String... operators) {
+	private static boolean rootInCommuhashNormalForm(final Term term) {
 		final boolean result;
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (Arrays.asList(operators).contains(appTerm.getFunction().getName())) {
+			if (Arrays.asList(COMMUTATIVE_OPERATORS).contains(appTerm.getFunction().getName())) {
 				result = areParamsSorted(appTerm.getParameters());
 			} else {
 				result = true;
