@@ -96,6 +96,10 @@ public class SupportingInvariant extends AffineFunction {
 	@Override
 	public Term asTerm(final Script script) throws SMTLIBException {
 		final Term t = super.asTerm(script);
-		return script.term(strict ? ">" : ">=", t, SmtUtils.constructIntValue(script, BigInteger.ZERO));
+		if (strict) {
+			return SmtUtils.greater(script, t, SmtUtils.constructIntValue(script, BigInteger.ZERO));
+		} else {
+			return SmtUtils.geq(script, t, SmtUtils.constructIntValue(script, BigInteger.ZERO));
+		}
 	}
 }
