@@ -65,13 +65,11 @@ public class CommuhashUtils {
 	public final static Comparator<Term> HASH_BASED_COMPERATOR = (arg0, arg1) -> {
 		if (arg0 == arg1) {
 			return 0;
-		} else {
-			if (arg0.hashCode() == arg1.hashCode()) {
-				return arg0.toString().compareTo(arg1.toString());
-			} else {
-				return Integer.compare(arg0.hashCode(), arg1.hashCode());
-			}
 		}
+		if (arg0.hashCode() == arg1.hashCode()) {
+			return arg0.toString().compareTo(arg1.toString());
+		}
+		return Integer.compare(arg0.hashCode(), arg1.hashCode());
 	};
 
 	/**
