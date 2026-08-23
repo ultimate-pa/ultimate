@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithHistory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -99,8 +98,11 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 				checkIfVariablesArePermissible(pp, p2);
 			}
 			if (mHoareAnnotationProgramPoints.contains(pp)) {
-				Term conjunction = mPredicateFactory.and(p1, p2).getFormula();
-				conjunction = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(conjunction);
+				final Term conjunction = mPredicateFactory.and(p1, p2).getFormula();
+				// FIXME 2026-08-23 Matthias: Replaced transformation to CommuhashNormalForm with this
+				// sanity check, since term should already be in normal form here. Remove if it hasn't
+				// fired within two months.
+				assert CommuhashUtils.isInCommuhashNormalForm(conjunction) : "Not in CommuhashNormalForm";
 				final IPredicate result;
 				if (DEBUG_COMPUTE_HISTORY) {
 					assert p1 instanceof PredicateWithHistory;
