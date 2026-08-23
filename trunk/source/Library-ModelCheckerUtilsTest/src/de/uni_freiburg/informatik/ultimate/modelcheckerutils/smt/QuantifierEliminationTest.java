@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.DeclarableFunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -219,7 +220,8 @@ public class QuantifierEliminationTest {
 
 		final String formulaAsString =
 				"(exists ((v_a (Array Int (Array Int Int)))) " + "(= a (store v_a i ((as const (Array Int Int)) 0))))";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		final Term formulaAsTerm = new CommuhashNormalForm(mServices, mScript)
+				.transform(TermParseUtils.parseTerm(mScript, formulaAsString));
 		// mLogger.info("Input: " + formulaAsTerm.toStringDirect());
 		final Term result = PartialQuantifierElimination.eliminate(mServices, mMgdScript, formulaAsTerm,
 				SimplificationTechnique.SIMPLIFY_DDA);
