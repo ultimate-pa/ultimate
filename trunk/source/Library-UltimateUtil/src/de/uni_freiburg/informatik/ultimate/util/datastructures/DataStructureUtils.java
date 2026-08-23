@@ -112,12 +112,19 @@ public class DataStructureUtils {
 
 	/**
 	 * Construct a {@link Set} that contains all elements of set1 that are not in set2.
+	 *
+	 * The returned set is not guaranteed to be mutable.
+	 *
+	 * Future changes to the sets a and b will not be reflected in the returned set.
 	 */
 	public static <T> Set<T> difference(final Set<T> a, final Set<T> b) {
 		if (a.isEmpty()) {
 			return Collections.emptySet();
 		}
 		if (b.isEmpty()) {
+			if (a instanceof ImmutableSet<?>) {
+				return a;
+			}
 			return new HashSet<>(a);
 		}
 		return a.stream().filter(elem -> !b.contains(elem)).collect(Collectors.toSet());

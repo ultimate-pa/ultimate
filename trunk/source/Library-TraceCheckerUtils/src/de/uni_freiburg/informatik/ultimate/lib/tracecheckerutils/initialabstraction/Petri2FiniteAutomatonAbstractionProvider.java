@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.LazyPetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
@@ -47,11 +48,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareProofSettings;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.NaiveOwickiGries;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesSettings;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -138,7 +144,9 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 	public static class Eager<L extends IIcfgTransition<?>>
 			extends Petri2FiniteAutomatonAbstractionProvider<L, INestedWordAutomaton<L, IPredicate>> {
 		private INestedWordAutomaton<L, IPredicate> mAbstraction;
+		private IPetriNet<L, IPredicate> mPetriNet;
 		private CfgSmtToolkit mCsToolkit;
+		private Map<Marking<IPredicate>, IPredicate> mMarking2State;
 
 		/**
 		 * Create a new instance of the provider.
@@ -161,11 +169,13 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 				getInitialAbstraction(final IIcfg<LOC> icfg, final Set<LOC> errorLocs) throws AutomataLibraryException {
 			mCsToolkit = icfg.getCfgSmtToolkit();
 
-			final IPetriNet<L, IPredicate> net = mUnderlying.getInitialAbstraction(icfg, errorLocs);
+			mPetriNet = mUnderlying.getInitialAbstraction(icfg, errorLocs);
 			try {
 				final Map<IcfgLocation, Boolean> hopelessCache = new HashMap<>();
-				mAbstraction = new PetriNet2FiniteAutomaton<>(mAutomataServices, mStateFactory, net,
-						s -> areAllLocationsHopeless(hopelessCache, errorLocs, s)).getResult();
+				final var petri2FA = new PetriNet2FiniteAutomaton<>(mAutomataServices, mStateFactory, mPetriNet,
+						s -> areAllLocationsHopeless(hopelessCache, errorLocs, s));
+				mAbstraction = petri2FA.getResult();
+				mMarking2State = petri2FA.getStateMap();
 				return mAbstraction;
 			} catch (final PetriNetNot1SafeException e) {
 				final Collection<?> unsafePlaces = e.getUnsafePlaces();
@@ -182,6 +192,13 @@ public abstract class Petri2FiniteAutomatonAbstractionProvider<L extends IIcfgTr
 				final HoareProofSettings hoarePrefs) {
 			return new NwaHoareProofProducer<>(mServices, mAbstraction, mCsToolkit, predicateFactory, hoarePrefs,
 					mAbstraction.getStates());
+		}
+
+		public OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, Marking<IPredicate>> backtranslateProof(
+				final IFloydHoareAnnotation<IPredicate> inputProof, final BasicPredicateFactory predicateFactory,
+				final OwickiGriesSettings settings) {
+			return new NaiveOwickiGries<>(mServices, predicateFactory, mCsToolkit, mPetriNet, settings)
+					.<IPredicate> createProofConverter(mMarking2State).apply(inputProof);
 		}
 	}
 

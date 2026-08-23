@@ -5,22 +5,28 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostDeclaration;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessGhostUpdate;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FormatVersion;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.FunctionContract;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostUpdate;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
@@ -57,16 +63,59 @@ public class YamlCorrectnessWitnessGenerator {
 	}
 
 	private Witness getWitness() {
-		final List<IcfgLocation> allProgramPoints = mIcfg.getProgramPoints().values().stream()
-				.flatMap(x -> x.values().stream()).collect(Collectors.toList());
+		final var allProgramPoints = IcfgUtils.getAllLocations(mIcfg).toList();
+		final var allTransitions = new IcfgEdgeIterator(mIcfg).asStream().toList();
+
 		// TODO: Should we sort these entries somehow (for consistent result in validation and to improve readability)
 		// e.g. by line number and/or entry type?
 		final var invariants = extractInvariants(allProgramPoints);
 		final var functionContracts = extractFunctionContracts(allProgramPoints);
-		return new Witness(DataStructureUtils.concat(invariants, functionContracts));
+		final var ghostDeclarations = extractGhostDeclarations();
+		final var ghostUpdates = extractGhostUpdates(allTransitions);
+		return new Witness(DataStructureUtils.concat(
+				DataStructureUtils.concat(DataStructureUtils.concat(invariants, functionContracts), ghostDeclarations),
+				ghostUpdates));
 	}
 
-	private List<WitnessEntry> extractInvariants(final List<IcfgLocation> programPoints) {
+	private List<WitnessEntry> extractGhostDeclarations() {
+		final var declaration = WitnessGhostDeclaration.getAnnotation(mIcfg);
+		if (declaration == null) {
+			return List.of();
+		}
+
+		final List<WitnessEntry> result = new ArrayList<>();
+
+		for (final var entry : declaration.getGhostAndInitialValues().entrySet()) {
+			// TODO avoid assuming these defaults
+			result.add(new GhostVariable(entry.getKey(), entry.getValue().toString(), "C", "global", "int"));
+		}
+
+		return result;
+	}
+
+	private List<WitnessEntry> extractGhostUpdates(final List<IcfgEdge> transitions) {
+		final List<WitnessEntry> result = new ArrayList<>();
+		for (final IcfgEdge edge : transitions) {
+			final var update = WitnessGhostUpdate.getAnnotation(edge);
+			if (update == null) {
+				continue;
+			}
+
+			final ILocation loc = ILocation.getAnnotation(edge);
+			if (loc == null) {
+				mLogger.warn("Omitting ghost update because no location found for edge %s", edge);
+				continue;
+			}
+
+			for (final var assignment : update.getUpdate().entrySet()) {
+				result.add(new GhostUpdate(assignment.getKey(), assignment.getValue().toString(), "C",
+						getWitnessLocation(loc)));
+			}
+		}
+		return result;
+	}
+
+	private List<WitnessEntry> extractInvariants(final List<? extends IcfgLocation> programPoints) {
 		final List<WitnessEntry> result = new ArrayList<>();
 		for (final IcfgLocation pp : programPoints) {
 			final ILocation loc = ILocation.getAnnotation(pp);
@@ -87,7 +136,7 @@ public class YamlCorrectnessWitnessGenerator {
 		return result;
 	}
 
-	private List<WitnessEntry> extractFunctionContracts(final List<IcfgLocation> programPoints) {
+	private List<WitnessEntry> extractFunctionContracts(final List<? extends IcfgLocation> programPoints) {
 		final List<WitnessEntry> result = new ArrayList<>();
 		for (final IcfgLocation pp : programPoints) {
 			final ILocation loc = ILocation.getAnnotation(pp);

@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -72,8 +73,11 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareUtils
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareValidityCheck.MissingAnnotationBehaviour;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IcfgFloydHoareValidityCheck;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -115,6 +119,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	private final Map<IcfgLocation, IResult> mResultsPerLocation;
 	private final CegarLoopResultReporter<L> mResultReporter;
 	private final IWitnessTransformer<L> mWitnessTransformer;
+
+	// TODO #proofRefactor This is only supposed to be a temporary workaround.
+	private Map<L, L> mTransitionMap;
+	private UnaryOperator<TermVariable> mUnpetrifyVariable;
 
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
 			final IWitnessTransformer<L> witnessTransformer,
@@ -185,8 +193,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				ProofAnnotation.addProof(icfg, proof);
 			}
 
-			// Currently, we can only work with Floyd-Hoare annotations.
-			// In the future, e.g. Owicki-Gries annotations may be supported as well.
+			// Currently, we support Floyd-Hoare annotations and Owicki-Gries annotations.
 			if (proof instanceof IFloydHoareAnnotation<?>) {
 				final var annotation = (IFloydHoareAnnotation<IcfgLocation>) proof;
 				assert new IcfgFloydHoareValidityCheck<>(mServices, icfg, annotation, true,
@@ -198,6 +205,12 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 					FloydHoareUtils.createProcedureContractResults(mServices, Activator.PLUGIN_NAME, icfg, annotation,
 							backTranslatorService, mResultReporter::reportResult);
 				}
+			} else if (proof instanceof OwickiGriesAnnotation<?, ?, ?>) {
+				final var annotation = (OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>>) proof;
+				// TODO assert validity of annotation
+
+				OwickiGriesUtils.createResultsAndAnnotateIcfg(mServices, Activator.PLUGIN_NAME, icfg, annotation,
+						backTranslatorService, mResultReporter::reportResult);
 			} else if (result.getProof() != null) {
 				mLogger.warn("Unknown type of proof: " + result.getProof().getClass());
 			}
@@ -234,17 +247,55 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			mResultsPerLocation.clear();
 
 			final var results = analyseProgram(petrifiedIcfg, TraceAbstractionStarter::hasSufficientThreadInstances);
+
 			// Stop if either every in-use error location is unreachable or any other error locations is reachable
 			if (resultsHaveSufficientInstances(results)) {
 				mLogger.info("Analysis of concurrent program completed with " + numberOfThreadInstances
 						+ " thread instances");
-				return results;
+
+				// backtranslate proofs of results over IcfgPetrifier
+				return unpetrifyProofs(results);
 			}
 			assert IcfgUtils.isConcurrent(icfg) : "Insufficient thread instances for sequential program";
 			mLogger.warn(numberOfThreadInstances
 					+ " thread instances were not sufficient, I will increase this number and restart the analysis");
 			numberOfThreadInstances++;
 		}
+	}
+
+	private List<ProvenCegarLoopResult<L>> unpetrifyProofs(final List<ProvenCegarLoopResult<L>> results) {
+		return results.stream().map(r -> new ProvenCegarLoopResult<L>(r, unpetrifyProof(r.getProof()))).toList();
+	}
+
+	private IProof unpetrifyProof(final IProof proof) {
+		if (proof == null) {
+			return null;
+		}
+		if (!(proof instanceof OwickiGriesAnnotation<?, ?, ?>)) {
+			mLogger.warn("Unknown proof type for concurrent program: %s. Unpetrification not supported.",
+					proof.getClass().getSimpleName());
+			return proof;
+		}
+
+		final var petrifiedProof = (OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>>) proof;
+
+		// TODO unpetrify IPredicates themselves
+		final var unpetrifiedFormulas = petrifiedProof.getAnnotationMap().entrySet().stream().map(e -> {
+			final var originalLoc = mLocationMap.get(e.getKey());
+			if (originalLoc == null) {
+				mLogger.warn("Unknown original location for %s", e.getKey());
+				return null;
+			}
+			return new Pair<>(originalLoc, e.getValue());
+		}).filter(x -> x != null).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+		// TODO unpetrify RHS of updates
+		final var unpetrifiedUpdates = petrifiedProof.getGhostUpdateMap().entrySet().stream()
+				.map(e -> new Pair<>(mTransitionMap.get(e.getKey()), e.getValue()))
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+		return new OwickiGriesAnnotation<>(null /* TODO */, null /* TODO */, null /* TODO */, unpetrifiedFormulas,
+				petrifiedProof.getInitialGhostValues(), unpetrifiedUpdates);
 	}
 
 	private static <L extends IIcfgTransition<?>> boolean
@@ -487,8 +538,15 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		mLogger.info("Constructing petrified ICFG for " + numberOfThreadInstances + " thread instances.");
 		final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg, numberOfThreadInstances, false);
 		final IIcfg<IcfgLocation> petrifiedIcfg = icfgPetrifier.getPetrifiedIcfg();
-		mLocationMap = ((BlockEncodingBacktranslator) icfgPetrifier.getBacktranslator()).getLocationMapping();
-		mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
+
+		final var backtranslator = (BlockEncodingBacktranslator) icfgPetrifier.getBacktranslator();
+
+		mLocationMap = backtranslator.getLocationMapping();
+		mServices.getBacktranslationService().addTranslator(backtranslator);
+
+		mTransitionMap = (Map) backtranslator.getEdgeMapping();
+		mUnpetrifyVariable = x -> (TermVariable) backtranslator.translateExpression(x);
+
 		return petrifiedIcfg;
 	}
 

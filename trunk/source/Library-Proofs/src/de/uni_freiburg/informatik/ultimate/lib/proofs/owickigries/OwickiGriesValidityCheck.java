@@ -1,0 +1,354 @@
+/*
+ * Copyright (C) 2020 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Proofs Library.
+ *
+ * The ULTIMATE Proofs Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Proofs Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Proofs Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Proofs Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Proofs Library grant you additional permission
+ * to convey the resulting work.
+ */
+package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.BasicInternalAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.ThreadModularPrePostSpecification;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.CnfTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.util.statistics.MinMaxMed;
+
+/**
+ * TODO
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
+ *
+ * @param <T>
+ * @param <P>
+ */
+public abstract class OwickiGriesValidityCheck<T, P> {
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
+	private final ManagedScript mManagedScript;
+	private final Script mScript;
+	private final IHoareTripleChecker mHoareTripleChecker;
+	private final MonolithicImplicationChecker mImplicationChecker;
+	private final BasicPredicateFactory mPredicateFactory;
+
+	private final List<Integer> mInterferingActions = new ArrayList<>();
+
+	private Validity mIsInductive;
+	private Validity mIsInterferenceFree;
+	private Validity mIsProgramSafe;
+
+	private final OwickiGriesAnnotation<T, P, ?> mAnnotation;
+	private final IPossibleInterferences<T, P> mPossibleInterferences;
+
+	public OwickiGriesValidityCheck(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
+			final OwickiGriesAnnotation<T, P, ?> annotation) {
+		this(services, csToolkit.getManagedScript(), new MonolithicHoareTripleChecker(csToolkit), annotation);
+	}
+
+	public OwickiGriesValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final ModifiableGlobalsTable modifiableGlobals, final OwickiGriesAnnotation<T, P, ?> annotation) {
+		this(services, mgdScript, new MonolithicHoareTripleChecker(mgdScript, modifiableGlobals), annotation);
+	}
+
+	public OwickiGriesValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final IHoareTripleChecker htc, final OwickiGriesAnnotation<T, P, ?> annotation) {
+		mServices = services;
+		mLogger = services.getLoggingService().getLogger(OwickiGriesValidityCheck.class);
+		mManagedScript = mgdScript;
+		mHoareTripleChecker = htc;
+		mImplicationChecker = new MonolithicImplicationChecker(mServices, mManagedScript);
+		mPredicateFactory = new BasicPredicateFactory(services, mManagedScript, annotation.getSymbolTable());
+		mScript = mgdScript.getScript();
+
+		mAnnotation = annotation;
+		mPossibleInterferences = annotation.getPossibleInterferences();
+	}
+
+	protected abstract Collection<P> getProgramLocations();
+
+	protected abstract Collection<T> getProgramTransitions();
+
+	protected abstract Set<P> getPredecessors(T transition);
+
+	protected abstract Set<P> getSuccessors(T transition);
+
+	protected abstract UnmodifiableTransFormula getTransformula(T transition);
+
+	private Validity checkInductivity() {
+		Validity result = Validity.VALID;
+		for (final T transition : getProgramTransitions()) {
+			final var check = isInductive(transition);
+			result = result.and(check);
+
+			if (result == Validity.INVALID) {
+				break;
+			}
+		}
+		return result;
+	}
+
+	private Validity isInductive(final T transition) {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			throw new ToolchainCanceledException(getClass(), "checking inductivity of Owicki-Gries proof");
+		}
+
+		final var precondition = getPrecondition(transition);
+		final var postcondition = getPostcondition(transition);
+		final var composedAction = getTransitionSeqAction(transition);
+
+		final var inductivity = mHoareTripleChecker.checkInternal(precondition, composedAction, postcondition);
+		if (inductivity == Validity.INVALID) {
+			final var simplePre = SmtUtils.simplify(mManagedScript, precondition.getFormula(), mServices,
+					SimplificationTechnique.SIMPLIFY_DDA);
+			final var cnfPre = new CnfTransformer(mManagedScript, mServices).transform(simplePre);
+			final var verySimplePre =
+					SmtUtils.simplify(mManagedScript, cnfPre, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+
+			final var simplePost = SmtUtils.simplify(mManagedScript, postcondition.getFormula(), mServices,
+					SimplificationTechnique.SIMPLIFY_DDA);
+			final var cnfPost = new CnfTransformer(mManagedScript, mServices).transform(simplePost);
+			final var verySimplePost =
+					SmtUtils.simplify(mManagedScript, cnfPost, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+
+			mLogger.warn(
+					"Non-inductive transition %s. Invalid Hoare triple:\n"
+							+ "\tprecondition %s\n\ttransition %s\n\tpostcondition %s",
+					transition, verySimplePre.toStringDirect(), composedAction, verySimplePost.toStringDirect());
+		}
+
+		return inductivity;
+	}
+
+	private Validity checkNonInterference() {
+		Validity result = Validity.VALID;
+
+		for (final P place : getProgramLocations()) {
+			final var check = isInterferenceFree(place);
+			result = result.and(check);
+
+			if (result == Validity.INVALID) {
+				break;
+			}
+		}
+
+		final var minMaxMed = new MinMaxMed();
+		minMaxMed.report(mInterferingActions, Integer::longValue);
+		mLogger.info("Interfering actions: min=%d, max=%d, median=%d", minMaxMed.getMinimum(), minMaxMed.getMaximum(),
+				minMaxMed.getMedian());
+
+		return result;
+	}
+
+	private Validity isInterferenceFree(final P place) {
+		Validity result = Validity.VALID;
+
+		final var interferingActions = mPossibleInterferences.getInterferingActions(place);
+		mInterferingActions.add(interferingActions.size());
+		for (final T transition : interferingActions) {
+			final var check = isInterferenceFreeForTransition(place, transition);
+			result = result.and(check);
+
+			if (result == Validity.INVALID) {
+				break;
+			}
+		}
+
+		return result;
+	}
+
+	private Validity isInterferenceFreeForTransition(final P place, final T transition) {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			throw new ToolchainCanceledException(getClass(), "checking interference-freedom of Owicki-Gries proof");
+		}
+
+		final var annotation = getPlacePredicate(place);
+		final var precondition = getPrecondition(transition);
+		final var conjunction = Arrays.asList(precondition, annotation);
+		final var action = getTransitionSeqAction(transition);
+
+		final var result = mHoareTripleChecker.checkInternal(mPredicateFactory.and(conjunction), action, annotation);
+		if (result == Validity.INVALID) {
+			mLogger.warn(
+					"Annotation %s of place %s is not interference-free under transition %s. Invalid Hoare triple:\n"
+							+ "\tprecondition %s\n\ttransition %s\n\tpostcondition %s",
+					annotation, place, transition, conjunction, action, annotation);
+		}
+
+		return result;
+	}
+
+	// TODO possibly cache?
+	private IPredicate getPrecondition(final T transition) {
+		return mPredicateFactory
+				.and(getPredecessors(transition).stream().map(this::getPlacePredicate).collect(Collectors.toSet()));
+	}
+
+	// TODO possibly cache?
+	private IPredicate getPostcondition(final T transition) {
+		return mPredicateFactory
+				.and(getSuccessors(transition).stream().map(this::getPlacePredicate).collect(Collectors.toSet()));
+	}
+
+	private IPredicate getPlacePredicate(final P place) {
+		return mAnnotation.getAnnotationMap().get(place);
+	}
+
+	// TODO possibly cache?
+	private IInternalAction getTransitionSeqAction(final T transition) {
+		final var transitionTf = getTransformula(transition);
+		UnmodifiableTransFormula combinedTf;
+
+		final var ghostUpdate = mAnnotation.getGhostUpdateMap().get(transition);
+		if (ghostUpdate == null) {
+			combinedTf = transitionTf;
+		} else {
+			final var ghostTransition = ghostUpdate.makeTransitionFormula(mManagedScript, mAnnotation.getSymbolTable());
+			combinedTf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, false, false,
+					false, null, Arrays.asList(transitionTf, ghostTransition));
+		}
+
+		return new BasicInternalAction(null, null, combinedTf);
+	}
+
+	private Validity checkSafety() {
+		final var preImpliesInitial = checkInitImplication(mAnnotation.getSpecification());
+		if (preImpliesInitial == Validity.INVALID) {
+			return preImpliesInitial;
+		}
+
+		return preImpliesInitial.and(checkAcceptFormula());
+	}
+
+	private <M extends Iterable<P>> Validity checkInitImplication(final ThreadModularPrePostSpecification<P, M> spec) {
+
+		final var ghostInitialization = getGhostInitializationFormula();
+
+		Validity result = Validity.VALID;
+		for (final var initialMarking : spec.getInitialStates()) {
+			final var precondition = spec.getPrecondition(initialMarking);
+			final var check = checkInitImplication(initialMarking, precondition, ghostInitialization);
+			result = result.and(check);
+			if (result == Validity.INVALID) {
+				break;
+			}
+		}
+		return result;
+	}
+
+	private Validity checkInitImplication(final Iterable<P> initialLocations, final IPredicate precondition,
+			final IPredicate ghostInitialization) {
+		Validity result = Validity.VALID;
+		for (final P place : initialLocations) {
+			final var predicate = getPlacePredicate(place);
+			final var check = mImplicationChecker.checkImplication(
+					mPredicateFactory.and(precondition, ghostInitialization), false, predicate, false);
+			result = result.and(check);
+
+			if (result == Validity.INVALID) {
+				mLogger.warn("Annotation %s of initial place %s not implied by ghost variable initialization %s",
+						predicate, place, precondition);
+				break;
+			}
+		}
+		return result;
+	}
+
+	private IPredicate getGhostInitializationFormula() {
+		final List<IPredicate> terms = new ArrayList<>();
+		for (final IProgramVar var : mAnnotation.getInitialGhostValues().keySet()) {
+			terms.add(mPredicateFactory.newPredicate(
+					SmtUtils.binaryEquality(mScript, var.getTerm(), mAnnotation.getInitialGhostValues().get(var))));
+		}
+		return mPredicateFactory.and(terms);
+	}
+
+	private Validity checkAcceptFormula() {
+		final IPredicate postcondition = mAnnotation.getSpecification().getPostcondition();
+
+		Validity result = Validity.VALID;
+		for (final P place : getProgramLocations()) {
+			if (!mAnnotation.getSpecification().isFinalThreadState(place)) {
+				continue;
+			}
+
+			final var predicate = getPlacePredicate(place);
+			final var check = mImplicationChecker.checkImplication(predicate, false, postcondition, false);
+			result = result.and(check);
+
+			if (result == Validity.INVALID) {
+				mLogger.warn("Annotation %s of error place %s does not imply postcondition %s", predicate, place,
+						postcondition);
+				break;
+			}
+		}
+		return result;
+	}
+
+	public Validity isInductive() {
+		if (mIsInductive == null) {
+			mIsInductive = checkInductivity();
+		}
+		return mIsInductive;
+	}
+
+	public Validity isInterferenceFree() {
+		if (mIsInterferenceFree == null) {
+			mIsInterferenceFree = checkNonInterference();
+		}
+		return mIsInterferenceFree;
+	}
+
+	public Validity isProgramSafe() {
+		if (mIsProgramSafe == null) {
+			mIsProgramSafe = checkSafety();
+		}
+		return mIsProgramSafe;
+	}
+
+	public Validity isValid() {
+		return isInductive().and(this::isInterferenceFree).and(this::isProgramSafe);
+	}
+}

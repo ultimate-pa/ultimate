@@ -348,7 +348,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	private void computeAutomataDifference(final INestedWordAutomaton<L, IPredicate> minuend,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahendBeforeEnhancement,
-			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
+			final IPredicateUnifier predicateUnifier, final boolean exploitSigmaStarConcatOfIA,
 			final IHoareTripleChecker htc, final InterpolantAutomatonEnhancement enhanceMode,
 			final boolean useErrorAutomaton, final AutomatonType automatonType)
 			throws AutomataLibraryException, AssertionError {
@@ -363,7 +363,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 							minuend, subtrahend, psd, false);
 				} else {
 					diff = new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
-							minuend, subtrahend, psd, explointSigmaStarConcatOfIA);
+							minuend, subtrahend, psd, exploitSigmaStarConcatOfIA);
 				}
 				mCegarLoopBenchmark.reportInterpolantAutomatonStates(subtrahend.size());
 			} catch (final AutomataOperationCanceledException | ToolchainCanceledException tce) {

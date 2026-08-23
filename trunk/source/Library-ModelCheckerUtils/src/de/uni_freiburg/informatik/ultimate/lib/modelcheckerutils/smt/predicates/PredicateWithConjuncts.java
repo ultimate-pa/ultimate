@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates;
 
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
@@ -132,5 +133,12 @@ public class PredicateWithConjuncts implements IPredicate {
 	@Override
 	public String toString() {
 		return mSerial + "#" + mConjuncts.toString();
+	}
+
+	public static List<IPredicate> flatten(final IPredicate predicate) {
+		if (predicate instanceof final PredicateWithConjuncts conjunction) {
+			return conjunction.getConjuncts();
+		}
+		return List.of(predicate);
 	}
 }

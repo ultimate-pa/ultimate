@@ -394,6 +394,11 @@ public class RCFGBacktranslator extends
 	}
 
 	@Override
+	public Expression declareAndTranslateAuxiliaryVariable(final Term variable) {
+		return mTerm2Expression.declareAndTranslateAuxiliaryVariable((TermVariable) variable);
+	}
+
+	@Override
 	public String targetExpressionToString(final Expression expression) {
 		return BoogiePrettyPrinter.print(expression);
 	}

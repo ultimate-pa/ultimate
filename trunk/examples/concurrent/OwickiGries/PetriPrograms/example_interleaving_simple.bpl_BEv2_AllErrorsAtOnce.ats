@@ -1,0 +1,85 @@
+// Testfile dumped by Ultimate at 2023/11/28 20:46:30
+//
+// 
+
+//@ variables (set_xThread1of1ForFork0_thidvar0 Int) (y Int) (x Int)
+//@ semantics [1] {x} (= x 0)
+//@ semantics [2] {} true
+//@ semantics [3] {} true
+//@ semantics [4] {set_xThread1of1ForFork0_thidvar0} (= set_xThread1of1ForFork0_thidvar0 1)
+//@ semantics [5] {} (= set_xThread1of1ForFork0_thidvar0 1)
+//@ semantics [6] {y} (= y 0)
+//@ semantics [7] {} (not (= y x))
+//@ semantics [8] {} (= y x)
+//@ semantics [9] {} true
+
+
+PetriNet program = (
+	alphabet = {"[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" "[8]" "[9]" },
+	places = {l0 l1 l2 l3 l4 l5 l6 l7 l8 l9 },
+	transitions = {
+		({l3 } "[6]" {l1 })
+		({l0 l8 l1 } "[5]" {l7 l9 })
+		({l4 l7 } "[4]" {l3 l5 l8 })
+		({l5 } "[1]" {l6 })
+		({l9 } "[7]" {l2 })
+		({l6 } "[2]" {l0 })
+	},
+	initialMarking = {l4 l7 },
+	acceptingPlaces = {l2 }
+);
+FiniteAutomaton proof1 = (
+	alphabet = {"[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" "[8]" "[9]" },
+	states = {"false" "(= y 0)" "true" "(and (= y 0) (= x 0))" },
+	initialStates = {"true" },
+	finalStates = {"false" },
+	transitions = {
+		("false" "[2]" "false")
+		("false" "[3]" "false")
+		("false" "[9]" "false")
+		("(= y 0)" "[1]" "(and (= y 0) (= x 0))")
+		("(= y 0)" "[2]" "(= y 0)")
+		("(= y 0)" "[3]" "(= y 0)")
+		("(= y 0)" "[5]" "(= y 0)")
+		("(= y 0)" "[7]" "(= y 0)")
+		("(= y 0)" "[9]" "(= y 0)")
+		("true" "[1]" "true")
+		("true" "[2]" "true")
+		("true" "[3]" "true")
+		("true" "[4]" "true")
+		("true" "[6]" "(= y 0)")
+		("true" "[9]" "true")
+		("(and (= y 0) (= x 0))" "[2]" "(and (= y 0) (= x 0))")
+		("(and (= y 0) (= x 0))" "[3]" "(and (= y 0) (= x 0))")
+		("(and (= y 0) (= x 0))" "[5]" "(and (= y 0) (= x 0))")
+		("(and (= y 0) (= x 0))" "[7]" "false")
+		("(and (= y 0) (= x 0))" "[9]" "(and (= y 0) (= x 0))")
+	}
+);
+FiniteAutomaton proof2 = (
+	alphabet = {"[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" "[8]" "[9]" },
+	states = {"(= x 0)" "(and (= y 0) (= x 0))" "true" "false" },
+	initialStates = {"true" },
+	finalStates = {"false" },
+	transitions = {
+		("(= x 0)" "[2]" "(= x 0)")
+		("(= x 0)" "[3]" "(= x 0)")
+		("(= x 0)" "[5]" "(= x 0)")
+		("(= x 0)" "[6]" "(and (= y 0) (= x 0))")
+		("(= x 0)" "[9]" "(= x 0)")
+		("(and (= y 0) (= x 0))" "[2]" "(and (= y 0) (= x 0))")
+		("(and (= y 0) (= x 0))" "[3]" "(and (= y 0) (= x 0))")
+		("(and (= y 0) (= x 0))" "[5]" "(and (= y 0) (= x 0))")
+		("(and (= y 0) (= x 0))" "[7]" "false")
+		("(and (= y 0) (= x 0))" "[9]" "(and (= y 0) (= x 0))")
+		("true" "[1]" "(= x 0)")
+		("true" "[2]" "true")
+		("true" "[3]" "true")
+		("true" "[4]" "true")
+		("true" "[6]" "true")
+		("true" "[9]" "true")
+		("false" "[2]" "false")
+		("false" "[3]" "false")
+		("false" "[9]" "false")
+	}
+);

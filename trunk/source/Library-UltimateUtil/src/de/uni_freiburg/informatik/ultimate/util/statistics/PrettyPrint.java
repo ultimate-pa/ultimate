@@ -74,5 +74,4 @@ public final class PrettyPrint {
 		return (key, data) -> pprinter.apply(key,
 				((List) data).stream().map(elemPrinter).collect(Collectors.joining(", ", "[ ", " ]")));
 	}
-
 }

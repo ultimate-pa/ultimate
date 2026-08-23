@@ -1,0 +1,41 @@
+// Simple scalable test for computation of Owicki-Gries annotation for Petri Net with a main thread and a temporary worker thread
+// ------------------------------------------------------------------------------------------------------------------------------
+
+//@ variables (x Int) (z1 Int) (z2 Int)
+
+//@ semantics [0] {x} (= x 0)
+//@ semantics [1] {z1,z2} (and (= z1 1) (= z2 1))
+//@ semantics [2] {x} (= x (+ |old(x)| z1 z2))
+//@ semantics [3] {x} (= x (* |old(x)| 10))
+//@ semantics [4] { } (distinct x 20)
+
+PetriNet program = (
+  alphabet    = { "[0]" "[1]" "[2]" "[3]" "[4]" },
+  places      = { "m.l0" "m.l1" "m.l2" "m.l3" "t.l0" "t.l1" "e" },
+  transitions = {
+    ({ "m.l0" } "[0]" { "m.l1" "t.l0" })
+    ({ "t.l0" } "[1]" { "t.l1" })
+    ({ "m.l1" "t.l1" } "[2]" { "m.l2" })
+    ({ "m.l2" } "[3]" { "m.l3" })
+    ({ "m.l3" } "[4]" { "e" })
+  },
+  initialMarking = { "m.l0" },
+  acceptingPlaces = { "e" }
+);
+
+FiniteAutomaton proof = (
+     alphabet      = { "[0]" "[1]" "[2]" "[3]" "[4]" },
+     states        = { "true" "(= x 0)" "(and (= x 0) (= z1 1) (= z2 1))" "(= x 2)" "(= x 20)" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+       ("true" "[0]" "(= x 0)")
+       ("(= x 0)" "[1]" "(and (= x 0) (= z1 1) (= z2 1))")
+       ("(and (= x 0) (= z1 1) (= z2 1))" "[2]" "(= x 2)")
+       ("(= x 2)" "[3]" "(= x 20)")
+       ("(= x 20)" "[4]" "false")
+     }
+);
+
+
+

@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.Hoa
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareProofSettings;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesSettings;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesSettings.OwickiGriesComputation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
@@ -588,6 +590,14 @@ public final class TAPreferences {
 
 	public HoareProofSettings getHoareSettings() {
 		return new HoareProofSettings(getHoareAnnotationPositions(), getSimplificationTechnique());
+	}
+
+	public OwickiGriesSettings getOwickiGriesSettings() {
+		return new OwickiGriesSettings(
+				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_OWICKI_GRIES_COMPUTATION,
+						OwickiGriesComputation.class),
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_OG_HITTING_SET_OPTIMIZATION),
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_OG_COVERING_SIMPLIFICATION));
 	}
 
 	public int getThreadLimit() {

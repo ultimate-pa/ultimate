@@ -26,20 +26,35 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction;
 
+import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireOwickiGries;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireOwickiGries.FocusComputation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPetriNetProofProducer;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.NaiveOwickiGries;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesSettings;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesUnpetrifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 
 /**
@@ -58,6 +73,10 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	private final IUltimateServiceProvider mServices;
 	private final PredicateFactory mPredicateFactory;
 	private final boolean mRemoveDeadEnds;
+
+	private IIcfg<?> mIcfg;
+	private BoundedPetriNet<L, IPredicate> mAbstraction;
+	private Set<IPredicate> mThreadMonitorPlaces;
 
 	/**
 	 * Create a new instance.
@@ -79,21 +98,54 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	@Override
 	public <LOC extends IcfgLocation> BoundedPetriNet<L, IPredicate> getInitialAbstraction(final IIcfg<LOC> icfg,
 			final Set<LOC> errorLocs) throws AutomataOperationCanceledException {
-		final BoundedPetriNet<L, IPredicate> net =
-				Cfg2Automaton.constructPetriNetWithSPredicates(mServices, icfg, errorLocs, mPredicateFactory);
+		mIcfg = icfg;
+		mAbstraction = Cfg2Automaton.constructPetriNetWithSPredicates(mServices, icfg, errorLocs, mPredicateFactory);
+		mThreadMonitorPlaces =
+				mAbstraction.getPlaces().stream().filter(DebugPredicate.class::isInstance).collect(Collectors.toSet());
+
 		if (!mRemoveDeadEnds) {
-			return net;
+			return mAbstraction;
 		}
 
 		try {
-			return new RemoveDead<>(new AutomataLibraryServices(mServices), net, null, KEEP_USELESS_SUCCESSOR_PLACES)
-					.getResult();
+			mAbstraction = new RemoveDead<>(new AutomataLibraryServices(mServices), mAbstraction, null,
+					KEEP_USELESS_SUCCESSOR_PLACES).getResult();
+			return mAbstraction;
 		} catch (final AutomataOperationCanceledException aoce) {
-			final String taskDescription = "removing dead transitions from Petri net that has " + net.sizeInformation();
+			final String taskDescription =
+					"removing dead transitions from Petri net that has " + mAbstraction.sizeInformation();
 			aoce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 			throw aoce;
 		} catch (final PetriNetNot1SafeException e) {
 			throw new AssertionError(e);
 		}
+	}
+
+	public IPetriNetProofProducer<L, IPredicate> getProofProducer(final OwickiGriesSettings settings) {
+		return switch (settings.computationMode()) {
+		// Naive computation (primarily as baseline for comparison)
+		case NAIVE ->
+				new NaiveOwickiGries<>(mServices, mPredicateFactory, mIcfg.getCfgSmtToolkit(), mAbstraction, settings)
+						.createProofProducer(Function.identity());
+
+		// Current state-of-the-art (as of POPL'26 paper)
+		case EMPIRE -> new EmpireOwickiGries<>(mServices, mAbstraction, mIcfg.getCfgSmtToolkit(), mPredicateFactory,
+				FocusComputation.UNFOCUSED);
+		case LEGAL_FOCUS -> new EmpireOwickiGries<>(mServices, mAbstraction, mIcfg.getCfgSmtToolkit(),
+				mPredicateFactory, FocusComputation.MODULAR);
+
+		// Unfinished future work
+		case DIR_LEGAL_FOCUS ->
+				throw new UnsupportedOperationException("Unimplemented case: " + settings.computationMode());
+
+		case NONE -> null;
+		};
+	}
+
+	public OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>> backtranslateProof(
+			final OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, Marking<IPredicate>> ogForPn) {
+		return new OwickiGriesUnpetrifier(mServices, mIcfg, mAbstraction, ogForPn,
+				p -> PredicateUtils.getSingleLocation((IPredicate) p), UnaryOperator.identity(),
+				UnaryOperator.identity(), mThreadMonitorPlaces).getResult();
 	}
 }

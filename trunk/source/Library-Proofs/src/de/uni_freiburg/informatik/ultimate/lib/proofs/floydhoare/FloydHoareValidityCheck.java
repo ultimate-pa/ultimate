@@ -30,6 +30,7 @@ import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -59,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *            The type of states which are annotated
  */
 public abstract class FloydHoareValidityCheck<S> {
+	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
 	private final MonolithicImplicationChecker mImplChecker;
 	private final IHoareTripleChecker mHoareTripleChecker;
@@ -97,6 +99,7 @@ public abstract class FloydHoareValidityCheck<S> {
 			final IHoareTripleChecker hoareTripleChecker, final IFloydHoareAnnotation<S> annotation,
 			final boolean assertValidity, final MissingAnnotationBehaviour missingAnnotations,
 			final boolean checkSafety) {
+		mServices = services;
 		mLogger = services.getLoggingService().getLogger(FloydHoareValidityCheck.class);
 		mImplChecker = new MonolithicImplicationChecker(services, mgdScript);
 		mHoareTripleChecker = hoareTripleChecker;
@@ -171,6 +174,10 @@ public abstract class FloydHoareValidityCheck<S> {
 	private Validity checkInductivity() {
 		Validity result = Validity.VALID;
 		while (!mWorklist.isEmpty()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(getClass(), "checking inductivity of Floyd-Hoare proof");
+			}
+
 			final S state = mWorklist.pop();
 			final IPredicate pre = getAnnotation(state);
 			checkSafe(state, pre);

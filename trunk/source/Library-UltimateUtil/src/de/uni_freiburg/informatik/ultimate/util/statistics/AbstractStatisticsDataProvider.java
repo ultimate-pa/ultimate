@@ -36,6 +36,7 @@ import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
+import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -75,6 +76,10 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 		declare(key, getter::getAsInt, KeyType.COUNTER);
 	}
 
+	protected final void declareCounter(final String key, final LongSupplier getter) {
+		declare(key, getter::getAsLong, KeyType.COUNTER);
+	}
+
 	protected final void declare(final String key, final Supplier<Object> getter,
 			final BinaryOperator<Object> aggregator, final BiFunction<String, Object, String> printer) {
 		assert !mSuppliers.containsKey(key);
@@ -84,6 +89,12 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 		mSuppliers.put(key, getter);
 		mAggregators.put(key, aggregator);
 		mPrinters.put(key, printer);
+	}
+
+	protected void declareMinMaxMed(final String keySuffix, final MinMaxMed value) {
+		declare("Min " + keySuffix, value::getMinimum, KeyType.COUNTER);
+		declare("Max " + keySuffix, value::getMaximum, KeyType.COUNTER);
+		declare("Median " + keySuffix, value::getMedian, KeyType.COUNTER);
 	}
 
 	protected final void forward(final String key, final Supplier<IStatisticsDataProvider> statistics) {
@@ -111,7 +122,9 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 
 	private static StatisticsData toStatisticsData(final IStatisticsDataProvider statistics) {
 		final StatisticsData data = new StatisticsData();
-		data.aggregateBenchmarkData(statistics);
+		if (statistics != null) {
+			data.aggregateBenchmarkData(statistics);
+		}
 		return data;
 	}
 
