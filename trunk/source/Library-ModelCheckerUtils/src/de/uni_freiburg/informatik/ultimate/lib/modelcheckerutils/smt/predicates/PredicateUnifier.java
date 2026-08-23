@@ -364,7 +364,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 		}
 		// FIXME 2026-08-23 Matthias: Replaced transformation to CommuhashNormalForm with this
 		// sanity check, since term should already be in normal form here. Remove if it hasn't
-		// fired within two month.
+		// fired within two months.
 		assert CommuhashUtils.isInCommuhashNormalForm(withoutAnnotation) : "Not in CommuhashNormalForm";
 		{
 			IPredicate p = mTerm2Predicates.get(withoutAnnotation);
