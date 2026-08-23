@@ -55,6 +55,13 @@ public class CommuhashUtils {
 	public static final String[] COMMUTATIVE_OPERATORS =
 			{ "and", "or", "=", "distinct", "+", "*", "bvadd", "bvmul", "bvand", "bvor", "bvxor" };
 
+	/**
+	 * Orders {@link Term}s by hash code, using {@code toString()} as a tie-breaker for distinct instances whose hash
+	 * codes collide.
+	 * <p>
+	 * A {@link Term} with a smaller hash code is considered smaller; if hash codes are equal, terms are ordered
+	 * lexicographically by their {@code toString()} value.
+	 */
 	public final static Comparator<Term> HASH_BASED_COMPERATOR = (arg0, arg1) -> {
 		if (arg0 == arg1) {
 			return 0;
