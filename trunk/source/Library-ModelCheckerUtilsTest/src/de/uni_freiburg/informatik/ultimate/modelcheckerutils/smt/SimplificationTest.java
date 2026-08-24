@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -1304,11 +1304,11 @@ public class SimplificationTest {
 		logger.info("CDC code output: " + CondisDepthCode.of(result));
 		csvWriter.reportEliminationSuccess(result, testId, (StatisticsScript) mgdScript.getScript());
 		if (expectedResultAsString != null) {
-			final CommuhashNormalForm cnft = new CommuhashNormalForm(services, mgdScript.getScript());
-			final Term cnfResult = cnft.transform(result);
+			final Term cnfResult = CommuhashNormalFormTransformer.apply(mgdScript.getScript(), result);
 			final Term expectedResultAsTerm = new FormulaUnLet()
 					.transform(TermParseUtils.parseTerm(mgdScript.getScript(), expectedResultAsString));
-			final Term cnfExpectedResultAsTerm = cnft.transform(expectedResultAsTerm);
+			final Term cnfExpectedResultAsTerm =
+					CommuhashNormalFormTransformer.apply(mgdScript.getScript(), expectedResultAsTerm);
 			MatcherAssert.assertThat(cnfResult, IsEqual.equalTo(cnfExpectedResultAsTerm));
 		}
 		assert checkLogicalEquivalence(mgdScript.getScript(), result, formulaAsTerm);

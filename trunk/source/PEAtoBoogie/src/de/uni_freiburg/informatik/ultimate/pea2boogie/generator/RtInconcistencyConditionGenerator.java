@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.DotWriterNew;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
@@ -504,7 +504,7 @@ public class RtInconcistencyConditionGenerator {
 	private Term toNormalform(final Term t) {
 		final Term withoutIte = new IteRemover(mManagedScript).transform(t);
 		final Term nnf = new NnfTransformer(mManagedScript, mServices, QuantifierHandling.KEEP).transform(withoutIte);
-		return new CommuhashNormalForm(mServices, mManagedScript.getScript()).transform(nnf);
+		return CommuhashNormalFormTransformer.apply(mManagedScript.getScript(), nnf);
 	}
 
 	private Term handleInconsistentStateInvariant(final Map<PatternType<?>, Term> terms, final Term invariant)
