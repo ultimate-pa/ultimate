@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -64,13 +63,13 @@ public class PartialQuantifierElimination {
 
 	public static Term eliminateLight(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final Term term) {
+		// Check input for CommuhashNormalForm. Inputs from Ultimate are already in this form, but e.g., formulas that
+		// are directly obtained from a parser may violate this form.
+		assert CommuhashUtils.isInCommuhashNormalForm(term) : "Not in CommuhashNormalForm";
 		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
-		// FIXME 20230601 Matthias: The following line seems useless. The input should
-		// always be in CommuHash Normal Form.
-		final Term chnf = new CommuhashNormalForm(services, mgdScript.getScript()).transform(nnf);
 		final Term result = QuantifierPushTermWalker.eliminate(services, mgdScript, false, PqeTechniques.LIGHT,
-				SimplificationTechnique.NONE, chnf);
+				SimplificationTechnique.NONE, nnf);
 		assert (CommuhashUtils.isInCommuhashNormalForm(result)) : "Output not in commuhash form";
 		return result;
 	}
