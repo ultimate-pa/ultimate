@@ -49,8 +49,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbol
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator.PredicateUnifierStatisticsType;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtTestGenerationUtils;
@@ -344,7 +342,6 @@ public class PredicateUnifier implements IPredicateUnifier {
 	private IPredicate getOrConstructPredicate(final Term term, final HashMap<IPredicate, Validity> impliedPredicates,
 			final HashMap<IPredicate, Validity> expliedPredicates, final IPredicate originalPredicate,
 			final UnaryOperator<IPredicate> predicatePostProcessor) {
-
 		final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(term, mMgdScript, mSymbolTable);
 		mPredicateUnifierBenchmarkGenerator.continueTime();
 		mPredicateUnifierBenchmarkGenerator.incrementGetRequests();
@@ -362,10 +359,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 				return p;
 			}
 		}
-		// FIXME 2026-08-23 Matthias: Replaced transformation to CommuhashNormalForm with this
-		// sanity check, since term should already be in normal form here. Remove if it hasn't
-		// fired within two months.
-		assert CommuhashUtils.isInCommuhashNormalForm(withoutAnnotation) : "Not in CommuhashNormalForm";
+
 		{
 			IPredicate p = mTerm2Predicates.get(withoutAnnotation);
 			if (p != null) {
@@ -393,8 +387,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 			simplifiedTerm = withoutAnnotation;
 		} else {
 			try {
-				final Term tmp = SmtUtils.simplify(mMgdScript, withoutAnnotation, mServices, mSimplificationTechnique);
-				simplifiedTerm = new CommuhashNormalForm(mServices, mScript).transform(tmp);
+				simplifiedTerm = SmtUtils.simplify(mMgdScript, withoutAnnotation, mServices, mSimplificationTechnique);
 			} catch (final ToolchainCanceledException tce) {
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), "unifying predicates"));
 				throw tce;
