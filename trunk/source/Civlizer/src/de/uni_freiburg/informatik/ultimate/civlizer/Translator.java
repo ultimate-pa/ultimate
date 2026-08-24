@@ -117,6 +117,12 @@ public final class Translator {
 	public static final int LAYER_TOP = LAYER_GHOST_VARS;
 
 	private static final String JOIN_POOL_NAME = "join_pool";
+
+	// As of April 19 2026, Civl uses a UnitMap type for permissions instead of sets.
+	// https://github.com/boogie-org/boogie/pull/1119
+	private static final String JOIN_POOL_TYPE_NAME = "UnitMap";
+	private static final String JOIN_POOL_CONTAINS_FUNCTION = "Map_Contains";
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ProgramAndProof mProgramAndProof;
@@ -277,7 +283,7 @@ public final class Translator {
 	private YieldProcedure addJoin() {
 		final var tidParam = new ParameterDeclaration("tid", makeOne(mTidType), Linearity.OUT);
 
-		final var setContain = new FunctionApplication(null, "Set_Contains",
+		final var setContain = new FunctionApplication(null, JOIN_POOL_CONTAINS_FUNCTION,
 				new Expression[] { getJoinPoolExpression(), getParameterExpression(tidParam) });
 
 		final var assume = new AssumeStatement(null, setContain);
@@ -316,7 +322,7 @@ public final class Translator {
 	private VariableDeclaration declareJoinPool() {
 		final var attributes = new Attribute[] { CivlUtils.createLayerAttribute(LAYER_BASE, LAYER_TOP),
 				CivlUtils.createLinearityAttribute(Linearity.INOUT) };
-		final ASTType poolType = new NamedType(null, "Set", new ASTType[] { makeOne(mTidType) });
+		final ASTType poolType = new NamedType(null, JOIN_POOL_TYPE_NAME, new ASTType[] { makeOne(mTidType) });
 		final var joinPoolDecl = new VariableDeclaration(null, attributes,
 				new VarList[] { new VarList(null, new String[] { JOIN_POOL_NAME }, poolType) });
 		return joinPoolDecl;
@@ -411,7 +417,7 @@ public final class Translator {
 
 				preserves
 						.add(new BinaryExpression(null, BinaryExpression.Operator.LOGICIMPLIES,
-								new FunctionApplication(null, "Set_Contains", new Expression[] {
+								new FunctionApplication(null, JOIN_POOL_CONTAINS_FUNCTION, new Expression[] {
 										getJoinPoolExpression(), new IdentifierExpression(null, tid.toString()) }),
 								invariant));
 			}
