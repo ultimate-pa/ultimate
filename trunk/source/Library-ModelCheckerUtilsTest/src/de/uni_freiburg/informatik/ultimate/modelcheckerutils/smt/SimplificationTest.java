@@ -1304,12 +1304,11 @@ public class SimplificationTest {
 		logger.info("CDC code output: " + CondisDepthCode.of(result));
 		csvWriter.reportEliminationSuccess(result, testId, (StatisticsScript) mgdScript.getScript());
 		if (expectedResultAsString != null) {
-			final Term cnfResult = CommuhashNormalFormTransformer.apply(mgdScript.getScript(), result);
 			final Term expectedResultAsTerm = new FormulaUnLet()
 					.transform(TermParseUtils.parseTerm(mgdScript.getScript(), expectedResultAsString));
 			final Term cnfExpectedResultAsTerm =
 					CommuhashNormalFormTransformer.apply(mgdScript.getScript(), expectedResultAsTerm);
-			MatcherAssert.assertThat(cnfResult, IsEqual.equalTo(cnfExpectedResultAsTerm));
+			MatcherAssert.assertThat(result, IsEqual.equalTo(cnfExpectedResultAsTerm));
 		}
 		assert checkLogicalEquivalence(mgdScript.getScript(), result, formulaAsTerm);
 	}
