@@ -130,7 +130,8 @@ public final class PatternUtil {
 
 				if (withoutNotImplemented) {
 					try {
-						final ReqPeas pea = pattern.transformToPea(dummyLogger, duration2bounds);
+						final ReqPeas pea = pattern.transformToPea(dummyLogger, duration2bounds,
+								Collections.singletonList(pattern));
 						dummyLogger.info(pea);
 					} catch (final PatternScopeNotImplemented ex) {
 						continue;

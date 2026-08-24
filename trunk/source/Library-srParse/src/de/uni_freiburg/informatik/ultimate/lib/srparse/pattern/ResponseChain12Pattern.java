@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
@@ -49,7 +50,9 @@ public class ResponseChain12Pattern extends PatternType<ResponseChain12Pattern> 
 	}
 
 	@Override
-	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
+	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations,
+			final List<PatternType<?>> allPatterns,
+			final ILogger logger) {
 		assert cdds.length == 3 && durations.length == 0;
 
 		// P and Q are reserved for scope.

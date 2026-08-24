@@ -62,6 +62,19 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TriggerResponseBo
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TriggerResponseDelayBoundL1Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityDelayPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitialLocPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TransitionPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TransitionGPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TransitionLPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TransitionUPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TransitionEPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TransitionLGPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TransitionUGPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TransitionGEPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TransitionLEPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TransitionUEPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TransitionLGEPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TransitionUGEPattern;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 parser ReqParser;
@@ -160,6 +173,7 @@ terminal ONCE, BECOMES, SATISFIED, FOR, EVERY, LATER;
 terminal MOST, LEAST, LESS, THAN;
 terminal TIME, UNITS, SEC, USEC, MSEC;
 terminal THERE, ONE, EXECUTION, SEQUENCE, SUCH;
+terminal LOCATION, INITIAL, ENABLED, TRANSITION, FIRES, GUARD, EVENT, AN;
 /* Other Symbols */
 terminal DOT, COMMA, IDSEP;
 terminal LAND, LOR, LNOT, LIMPLIES;
@@ -178,7 +192,7 @@ non terminal String propid;
 non terminal CDD expression, expr;
 non terminal String atom, cid, duration;
 non terminal PatternType<?> property;
-non terminal PatternBuilder pattern, opattern, rtpattern;
+non terminal PatternBuilder pattern, opattern, rtpattern, autpattern;
 non terminal SrParseScope<?> scope;
 non terminal PatternType<?>[] patternset;
 non terminal Rational num;
@@ -255,6 +269,8 @@ pattern ::=	IT IS NEVER THE CASE THAT expression:r HOLDS
 			{: RESULT = r; :}
 	  	| IT IS ALWAYS THE CASE THAT rtpattern:r
 	  		{: RESULT = r; :}
+	  	| autpattern:r
+	  		{: RESULT = r; :}
 	  	;
   
 opattern ::= IF expression:r HOLDS COMMA? THEN expression:s PREVIOUSLY HELD
@@ -311,6 +327,35 @@ rtpattern ::= ONCE expression:r BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST d
 			| AFTER expression:r HOLDS FOR AT LEAST duration:c1 COMMA? AND expression:s HOLDS COMMA? THEN expression:t HOLDS AFTER AT MOST duration:c2
 				{: RESULT = new PatternBuilder().setType(TriggerResponseDelayBoundL1Pattern.class).addCdd(t,s,r).addDuration(c1, c2); :}	
   			;
+
+autpattern ::=
+		  LOCATION expression:r IS AN INITIAL LOCATION
+			{: RESULT = new PatternBuilder().setType(InitialLocPattern.class).addCdd(r); :}
+		| IF IN LOCATION expression:r THEN TRANSITION TO expression:s IS ENABLED
+			{: RESULT = new PatternBuilder().setType(TransitionPattern.class).addCdd(s,r); :}
+		| IF IN LOCATION expression:r THEN TRANSITION TO expression:s IS ENABLED IF GUARD expression:v HOLDS
+			{: RESULT = new PatternBuilder().setType(TransitionGPattern.class).addCdd(v,s,r); :}
+		| IF IN LOCATION expression:r FOR AT LEAST duration:t TRANSITION TO expression:s IS ENABLED
+			{: RESULT = new PatternBuilder().setType(TransitionLPattern.class).addCdd(s,r).addDuration(t); :}
+		| IF IN LOCATION expression:r FOR AT MOST duration:t TRANSITION TO expression:s IS ENABLED
+			{: RESULT = new PatternBuilder().setType(TransitionUPattern.class).addCdd(s,r).addDuration(t); :}
+		| IF IN LOCATION expression:r THEN TRANSITION TO expression:s IF EVENT expression:u FIRES
+			{: RESULT = new PatternBuilder().setType(TransitionEPattern.class).addCdd(u,s,r); :}
+		| IF IN LOCATION expression:r FOR AT LEAST duration:t TRANSITION TO expression:s IS ENABLED IF GUARD expression:v HOLDS
+			{: RESULT = new PatternBuilder().setType(TransitionLGPattern.class).addCdd(v,s,r).addDuration(t); :}
+		| IF IN LOCATION expression:r FOR AT MOST duration:t TRANSITION TO expression:s IS ENABLED IF GUARD expression:v HOLDS
+			{: RESULT = new PatternBuilder().setType(TransitionUGPattern.class).addCdd(v,s,r).addDuration(t); :}
+		| IF IN LOCATION expression:r THEN TRANSITION TO expression:s IF EVENT expression:u FIRES AND GUARD expression:v HOLDS
+			{: RESULT = new PatternBuilder().setType(TransitionGEPattern.class).addCdd(v,u,s,r); :}
+		| IF IN LOCATION expression:r FOR AT LEAST duration:t TRANSITION TO expression:s IF EVENT expression:u FIRES
+			{: RESULT = new PatternBuilder().setType(TransitionLEPattern.class).addCdd(u,s,r).addDuration(t); :}
+		| IF IN LOCATION expression:r FOR AT MOST duration:t TRANSITION TO expression:s IF EVENT expression:u FIRES
+			{: RESULT = new PatternBuilder().setType(TransitionUEPattern.class).addCdd(u,s,r).addDuration(t); :}
+		| IF IN LOCATION expression:r FOR AT LEAST duration:t TRANSITION TO expression:s IF EVENT expression:u FIRES AND GUARD expression:v HOLDS
+			{: RESULT = new PatternBuilder().setType(TransitionLGEPattern.class).addCdd(v,u,s,r).addDuration(t); :}
+		| IF IN LOCATION expression:r FOR AT MOST duration:t TRANSITION TO expression:s IF EVENT expression:u FIRES AND GUARD expression:v HOLDS
+			{: RESULT = new PatternBuilder().setType(TransitionUGEPattern.class).addCdd(v,u,s,r).addDuration(t); :}
+		;
 
 expression ::= QUOTE expr:e QUOTE {: RESULT = e; :}
  			;
