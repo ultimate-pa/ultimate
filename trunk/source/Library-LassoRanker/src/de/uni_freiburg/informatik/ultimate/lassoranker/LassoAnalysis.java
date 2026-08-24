@@ -281,7 +281,6 @@ public class LassoAnalysis {
 		return new LassoPreprocessor[] { new StemAndLoopPreprocessor(mMgdScript, new MatchInOutVars()),
 				new StemAndLoopPreprocessor(mMgdScript,
 						new AddSymbols(lassoBuilder.getReplacementVarFactory(), mSmtSymbols)),
-				new StemAndLoopPreprocessor(mMgdScript, new CommuHashPreprocessor(mServices)),
 				mPreferences.isEnablePartitioneer() ? new LassoPartitioneerPreprocessor(mMgdScript, mServices) : null,
 				mapElimination, new StemAndLoopPreprocessor(mMgdScript, new MatchInOutVars()),
 				mPreferences.isEnablePartitioneer() ? new LassoPartitioneerPreprocessor(mMgdScript, mServices) : null,
