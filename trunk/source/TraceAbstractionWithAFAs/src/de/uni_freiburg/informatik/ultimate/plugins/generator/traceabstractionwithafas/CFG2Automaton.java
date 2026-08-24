@@ -42,6 +42,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Summary;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -54,13 +59,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer.CodeBlockSize;
 
 public abstract class CFG2Automaton<LETTER extends IIcfgTransition<?>, RESULT> {
 
@@ -93,8 +93,8 @@ public abstract class CFG2Automaton<LETTER extends IIcfgTransition<?>, RESULT> {
 	public abstract RESULT getResult();
 
 	protected void constructProcedureAutomata() {
-		final CodeBlockSize codeBlockSize = RcfgPreferenceInitializer.getPreferences(mServices).getEnum(
-				RcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE, RcfgPreferenceInitializer.CodeBlockSize.class);
+		final CodeBlockSize codeBlockSize = IcfgPreferenceInitializer.getPreferences(mServices).getEnum(
+				IcfgPreferenceInitializer.LABEL_CODE_BLOCK_SIZE, IcfgPreferenceInitializer.CodeBlockSize.class);
 		if (codeBlockSize != CodeBlockSize.SingleStatement) {
 			throw new IllegalArgumentException("Concurrent programs reqire" + "atomic block encoding.");
 		}
@@ -143,7 +143,8 @@ public abstract class CFG2Automaton<LETTER extends IIcfgTransition<?>, RESULT> {
 
 		// TODO: This cast to letter will probably not fail if nothing in this method failed before
 		return (LETTER) boogieIcfg.getCodeBlockFactory().constructSequentialCompositionAndDisconnectEdges(entry, exit,
-				true, false, codeBlocks, mSimplificationTechnique);
+				true, false, codeBlocks, mSimplificationTechnique,
+				IcfgPreferenceInitializer.getPreferences(mServices).getBoolean(IcfgPreferenceInitializer.LABEL_CNF));
 	}
 
 	/**

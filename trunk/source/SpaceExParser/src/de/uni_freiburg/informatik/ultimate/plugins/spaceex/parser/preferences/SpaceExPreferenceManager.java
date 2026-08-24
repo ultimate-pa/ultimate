@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslatorConstants;
 
@@ -105,26 +105,26 @@ public class SpaceExPreferenceManager {
 				de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator.PLUGIN_ID;
 		final IPreferenceProvider traceAbstractionPreferences =
 				mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID);
-		mSolverMode = traceAbstractionPreferences.getEnum(RcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
+		mSolverMode = traceAbstractionPreferences.getEnum(IcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
 		mFakeNonIncrementalScript = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
-				.getBoolean(RcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
+				.getBoolean(IcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
 
 		mDumpSmtScriptToFile = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
-				.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_TO_FILE);
+				.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_TO_FILE);
 		mPathOfDumpedScript = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
-				.getString(RcfgPreferenceInitializer.LABEL_DUMP_PATH);
+				.getString(IcfgPreferenceInitializer.LABEL_DUMP_PATH);
 
 		mCommandExternalSolver = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
-				.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND);
+				.getString(IcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND);
 
 		mDumpUsatCoreTrackBenchmark = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
-				.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_UNSAT_CORE_BENCHMARK);
+				.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_UNSAT_CORE_BENCHMARK);
 
 		mDumpMainTrackBenchmark = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
-				.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_MAIN_TRACK_BENCHMARK);
+				.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_MAIN_TRACK_BENCHMARK);
 
 		mLogicForExternalSolver = Logics.valueOf(mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
-				.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
+				.getString(IcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
 
 		mSolverSettings = SolverBuilder.constructSolverSettings().setSolverMode(mSolverMode)
 				.setUseFakeIncrementalScript(mFakeNonIncrementalScript)

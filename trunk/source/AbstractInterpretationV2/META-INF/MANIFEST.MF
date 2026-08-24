@@ -13,7 +13,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.boogie.parser,
  de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
+  de.uni_freiburg.informatik.ultimate.lib.icfg,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies,
  de.uni_freiburg.informatik.ultimate.lib.automata
 Bundle-RequiredExecutionEnvironment: JavaSE-21
