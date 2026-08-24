@@ -89,9 +89,9 @@ public class EGraphTest {
 	private static class ExpectedRelation {
 		public String term1;
 		public String term2;
-		public EGraph.Relation relation;
+		public EGraph.EquivalenceState relation;
 
-		public ExpectedRelation(final String term1, final String term2, final EGraph.Relation relation) {
+		public ExpectedRelation(final String term1, final String term2, final EGraph.EquivalenceState relation) {
 			this.term1 = term1;
 			this.term2 = term2;
 			this.relation = relation;
@@ -104,7 +104,7 @@ public class EGraphTest {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
 		final String formulaAsString = "(and (= x y) (= y 5))";
 		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
-		expectedRelations.add(new ExpectedRelation("x", "5", EGraph.Relation.EQUAL));
+		expectedRelations.add(new ExpectedRelation("x", "5", EGraph.EquivalenceState.EQUAL));
 		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
 	}
 
@@ -115,8 +115,8 @@ public class EGraphTest {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
 		final String formulaAsString = "(and (= i (select a x)) (= x y) (= j (select a y)))";
 		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
-		expectedRelations.add(new ExpectedRelation("i", "j", EGraph.Relation.EQUAL));
-		expectedRelations.add(new ExpectedRelation("(select a x)", "(select a y)", EGraph.Relation.EQUAL));
+		expectedRelations.add(new ExpectedRelation("i", "j", EGraph.EquivalenceState.EQUAL));
+		expectedRelations.add(new ExpectedRelation("(select a x)", "(select a y)", EGraph.EquivalenceState.EQUAL));
 		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
 	}
 
@@ -127,8 +127,8 @@ public class EGraphTest {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a", "b"), };
 		final String formulaAsString = "(and (= i (select a x)) (= a b) (= j (select b x)))";
 		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
-		expectedRelations.add(new ExpectedRelation("i", "j", EGraph.Relation.EQUAL));
-		expectedRelations.add(new ExpectedRelation("(select a x)", "(select b x)", EGraph.Relation.EQUAL));
+		expectedRelations.add(new ExpectedRelation("i", "j", EGraph.EquivalenceState.EQUAL));
+		expectedRelations.add(new ExpectedRelation("(select a x)", "(select b x)", EGraph.EquivalenceState.EQUAL));
 		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
 	}
 
@@ -139,8 +139,20 @@ public class EGraphTest {
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a", "b"), };
 		final String formulaAsString = "(and (= i (select a x)) (= a b) (= x y) (= j (select b y)))";
 		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
-		expectedRelations.add(new ExpectedRelation("i", "j", EGraph.Relation.EQUAL));
-		expectedRelations.add(new ExpectedRelation("(select a x)", "(select b y)", EGraph.Relation.EQUAL));
+		expectedRelations.add(new ExpectedRelation("i", "j", EGraph.EquivalenceState.EQUAL));
+		expectedRelations.add(new ExpectedRelation("(select a x)", "(select b y)", EGraph.EquivalenceState.EQUAL));
+		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	// nested select congruence test
+	// note that replacing the variable j by y causes this test to fail
+	public void egraphTestExampleSelectCongruence04p5() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "j"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
+		final String formulaAsString = "(and (= x (select a x)) (= j (select a (select a x))))";
+		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
+		expectedRelations.add(new ExpectedRelation("(select a (select a x))", "x", EGraph.EquivalenceState.EQUAL));
 		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
 	}
 
@@ -150,7 +162,29 @@ public class EGraphTest {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
 		final String formulaAsString = "(and (distinct x y) (= y z))";
 		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
-		expectedRelations.add(new ExpectedRelation("x", "z", EGraph.Relation.DISTINCT));
+		expectedRelations.add(new ExpectedRelation("x", "z", EGraph.EquivalenceState.DISTINCT));
+		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	// basic disequality test to see if we are adding nonimplied disequalities
+	public void egraphTestExampleDistinct02() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
+		final String formulaAsString = "(and (distinct x y) (distinct x z)))";
+		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
+		expectedRelations.add(new ExpectedRelation("y", "z", EGraph.EquivalenceState.UNKNOWN));
+		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	// select disequality test, where distinct values should imply distinct indices
+	// this is currently not detectable
+	public void egraphTestExampleDistinctSelect03() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j", "x", "y"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
+		final String formulaAsString = "(and (= i (select a x)) (not (= i j)) (= j (select a y)))";
+		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
+		expectedRelations.add(new ExpectedRelation("x", "y", EGraph.EquivalenceState.DISTINCT));
 		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
 	}
 
@@ -170,7 +204,7 @@ public class EGraphTest {
 		for (final ExpectedRelation expectedRelation : expectedRelations) {
 			final Term term1 = TermParseUtils.parseTerm(mgdScript.getScript(), expectedRelation.term1);
 			final Term term2 = TermParseUtils.parseTerm(mgdScript.getScript(), expectedRelation.term2);
-			final EGraph.Relation relationResult = egraph.getRelation(term1, term2);
+			final EGraph.EquivalenceState relationResult = egraph.getRelation(term1, term2);
 			if (relationResult != expectedRelation.relation) {
 				final String errorMessage = "Expected relation between " + term1 + " and " + term2 + ": "
 						+ expectedRelation.relation + ", got: " + relationResult;
