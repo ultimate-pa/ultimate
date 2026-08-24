@@ -2,12 +2,14 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.egraph;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
@@ -15,6 +17,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Relati
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.CrossProducts;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -24,23 +28,37 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class EGraph {
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
+
 	/**
-	 * Internal Union find data structure to partition terms into equivalence classes
+	 * Internal {@link UnionFind} data structure to partition {@link Term}s into equivalence classes.
 	 **/
 	private final UnionFind<Term> mUnionFind;
 
-	private final ArrayList<ApplicationTerm> mSelectTerms;
+	/**
+	 * Keeps track of {@link Term}s we know to be distinct.
+	 **/
 	private final HashMap<ImmutableSet<Term>, HashSet<Term>> mDistinctSets;
 
+	/**
+	 * Partition of all select terms by their array.
+	 *
+	 * This is represented with a map from a set containing an array and all arrays in its equivalence class, to a set
+	 * of all select terms which contain the array (or an equivalent array) as its array argument.
+	 **/
 	private final HashMap<ImmutableSet<Term>, Set<ApplicationTerm>> mSelectArrayPartition;
+	/**
+	 * Partition of all select terms by their index.
+	 *
+	 * This is represented with a map from a set containing an index of an array and all indices in its equivalence
+	 * class, to a set of all select terms which contain the index (or an equivalent index) as its index argument.
+	 **/
 	private final HashMap<ImmutableSet<Term>, Set<ApplicationTerm>> mSelectIndexPartition;
 
 	/**
-	 * Constructs a new empty e graph
+	 * Constructs a new empty egraph
 	 **/
 	public EGraph(final ManagedScript mgdScript, final IUltimateServiceProvider services) {
-		mUnionFind = new UnionFind<>();
-		mSelectTerms = new ArrayList<>();
+		mUnionFind = new UnionFind<>(new MinimalSizeElementComparator());
 		mDistinctSets = new HashMap<>();
 		mSelectArrayPartition = new HashMap<>();
 		mSelectIndexPartition = new HashMap<>();
@@ -50,6 +68,74 @@ public class EGraph {
 
 	}
 
+	/**
+	 * Comparator which orders {@link Term}s by increasing size. If two Terms of size one are ordered using the order
+	 * literal < constant symbol < variable. Otherwise, in all other cases we order the Terms using
+	 * {@link CommuhashUtils#HASH_BASED_COMPERATOR}
+	 **/
+	private static class MinimalSizeElementComparator implements Comparator<Term> {
+		private final DAGSize mDagSize;
+
+		public MinimalSizeElementComparator() {
+			mDagSize = new DAGSize();
+		}
+
+		/**
+		 * Helper method that ranks {@link Term}s of size one, using the order literal < constant symbol < variable.
+		 **/
+		private static int rankTermOfSizeOne(final Term term) {
+			if (SmtUtils.isFalseLiteral(term)) {
+				return 0;
+			} else if (SmtUtils.isTrueLiteral(term)) {
+				return 1;
+			} else if (term instanceof ConstantTerm) {
+				return 2;
+			} else if (SmtUtils.isConstant(term)) {
+				return 3;
+			} else if (term instanceof TermVariable) {
+				return 4;
+			} else {
+				throw new AssertionError("Unexpected term of size one");
+			}
+		}
+
+		/**
+		 * Helper method that compares two {@link Term}s of size one using the order literal < constant symbol <
+		 * variable, breaking ties lexicographically.
+		 **/
+		private static int compareTermsOfSizeOne(final Term term1, final Term term2) {
+			if (rankTermOfSizeOne(term1) < rankTermOfSizeOne(term2)) {
+				return -1;
+			} else if (rankTermOfSizeOne(term1) > rankTermOfSizeOne(term2)) {
+				return 1;
+			} else {
+				return term1.toString().compareTo(term2.toString());
+			}
+		}
+
+		@Override
+		public int compare(final Term term1, final Term term2) {
+			if (term1.equals(term2)) {
+				return 0;
+			}
+			if (mDagSize.treesize(term1) < mDagSize.treesize(term2)) {
+				return -1;
+			} else if (mDagSize.treesize(term1) > mDagSize.treesize(term2)) {
+				return 1;
+			} else { // tiebreaking
+				if (mDagSize.treesize(term1) == 1) {
+					return compareTermsOfSizeOne(term1, term2);
+				} else {
+					return CommuhashUtils.HASH_BASED_COMPERATOR.compare(term1, term2);
+				}
+			}
+		}
+
+	}
+
+	/**
+	 * Adds select terms to the datastructure, creating new partitions for their arguments if necessary.
+	 **/
 	// assumes select term arguments have already been added
 	private void addSelectTerm(final ApplicationTerm selectTerm) {
 		assert selectTerm.getFunction().getName().equals("select");
@@ -88,6 +174,9 @@ public class EGraph {
 
 	}
 
+	/**
+	 * Adds terms to the datastructure.
+	 **/
 	private void addTerm(final Term term) {
 		if ((term instanceof ConstantTerm)) {
 			mUnionFind.findAndConstructEquivalenceClassIfNeeded(term); // we add terms that do not appear on either side
@@ -113,6 +202,9 @@ public class EGraph {
 
 	}
 
+	/**
+	 * Creates an egraph-like datastructure from a formula which is assumed to be of the form of a list of conjuncts.
+	 **/
 	public void addFormula(final Term formula) {
 		final Term[] conjuncts = SmtUtils.getConjuncts(formula);
 
@@ -152,18 +244,25 @@ public class EGraph {
 		}
 	}
 
+	/**
+	 * Triple representing a union operation where E is the union of A and B.
+	 **/
+	// custom triple as there are no triples in java
 	private static class UnionOperation {
-		public ImmutableSet<Term> A;
-		public ImmutableSet<Term> B;
-		public ImmutableSet<Term> E;
+		public ImmutableSet<Term> mA;
+		public ImmutableSet<Term> mB;
+		public ImmutableSet<Term> mE;
 
 		public UnionOperation(final ImmutableSet<Term> A, final ImmutableSet<Term> B, final ImmutableSet<Term> E) {
-			this.A = A;
-			this.B = B;
-			this.E = E;
+			mA = A;
+			mB = B;
+			mE = E;
 		}
 	}
 
+	/**
+	 * This method finds all possible unions of select terms following a union of two terms.
+	 **/
 	private void findImpliedSelectUnions(final ImmutableSet<Term> A, final ImmutableSet<Term> B,
 			final ImmutableSet<Term> E) {
 
@@ -200,10 +299,13 @@ public class EGraph {
 		}
 
 		for (final UnionOperation unionOp : unions) {
-			findImpliedSelectUnions(unionOp.A, unionOp.B, unionOp.E);
+			findImpliedSelectUnions(unionOp.mA, unionOp.mB, unionOp.mE);
 		}
 	}
 
+	/**
+	 * Method that unions two sets of select terms while maintaining the required array and index partitions
+	 **/
 	private void unionSelectTerms(final ImmutableSet<Term> A, final ImmutableSet<Term> B, final ImmutableSet<Term> E) {
 		final Set<ApplicationTerm> newArrayPartionElement =
 				DataStructureUtils.union(mSelectArrayPartition.getOrDefault(A, new HashSet<>()),
@@ -219,6 +321,9 @@ public class EGraph {
 		mSelectIndexPartition.put(E, newIndexPartionElement);
 	}
 
+	/**
+	 * Method that maintains the distinct terms datastructure for a given union.
+	 **/
 	private void unionDistinctTerms(final ImmutableSet<Term> A, final ImmutableSet<Term> B,
 			final ImmutableSet<Term> E) {
 		final HashSet<Term> newDistinct = mDistinctSets.getOrDefault(A, new HashSet<>());
@@ -228,6 +333,9 @@ public class EGraph {
 		mDistinctSets.put(E, newDistinct);
 	}
 
+	/**
+	 * Union two terms that are on either side of an equality
+	 **/
 	private void unionWithImplied(final Term a, final Term b) {
 		final ImmutableSet<Term> A = mUnionFind.getContainingSet(a);
 		final ImmutableSet<Term> B = mUnionFind.getContainingSet(b);
@@ -238,6 +346,9 @@ public class EGraph {
 		}
 	}
 
+	/**
+	 * Union two terms and create A, B, and E sets for select and distinct handling
+	 **/
 	private boolean union(final Term a, final Term b) {
 		final ImmutableSet<Term> A = mUnionFind.getContainingSet(a);
 		final ImmutableSet<Term> B = mUnionFind.getContainingSet(b);
@@ -251,10 +362,16 @@ public class EGraph {
 		return unioned;
 	}
 
+	/**
+	 * Whether a term is implied by the egraph or we do not know if it is implied.
+	 **/
 	public enum Implication {
 		IMPLIED, UNKNOWN
 	}
 
+	/**
+	 * Method that given a term, returns IMPLIED or UNKNOWN after checking if the given term is implied by the egraph
+	 **/
 	public Implication isImplied(final Term term) {
 		final BinaryEqualityRelation binaryEqRelation = BinaryEqualityRelation.convert(term);
 		if (binaryEqRelation != null) {
@@ -262,10 +379,10 @@ public class EGraph {
 			final Term rhs = binaryEqRelation.getRhs();
 
 			final RelationSymbol termRelationSymbol = binaryEqRelation.getRelationSymbol();
-			final Relation relation = getRelation(lhs, rhs);
+			final EquivalenceState relation = getRelation(lhs, rhs);
 
-			if ((relation == Relation.EQUAL && termRelationSymbol == RelationSymbol.EQ)
-					|| (relation == Relation.DISTINCT && termRelationSymbol == RelationSymbol.DISTINCT)) {
+			if ((relation == EquivalenceState.EQUAL && termRelationSymbol == RelationSymbol.EQ)
+					|| (relation == EquivalenceState.DISTINCT && termRelationSymbol == RelationSymbol.DISTINCT)) {
 				return Implication.IMPLIED;
 			} else {
 				return Implication.UNKNOWN;
@@ -276,6 +393,9 @@ public class EGraph {
 		}
 	}
 
+	/**
+	 * Checks if both terms are in the same equivalence class
+	 **/
 	public boolean areEquivalent(final Term a, final Term b) {
 		if (mUnionFind.find(a) == null) {
 			return false;
@@ -283,6 +403,9 @@ public class EGraph {
 		return mUnionFind.getContainingSet(a).equals(mUnionFind.getContainingSet(b));
 	}
 
+	/**
+	 * Checks if two terms are known to be distinct.
+	 **/
 	public boolean areDistinct(final Term a, final Term b) {
 		if (!(mDistinctSets.containsKey(mUnionFind.getContainingSet(a)))
 				|| !(mDistinctSets.containsKey(mUnionFind.getContainingSet(b)))) {
@@ -293,18 +416,21 @@ public class EGraph {
 
 	}
 
-	public enum Relation {
+	/**
+	 * Whether two terms can be found by the egraph to be equivalent, distinct, or we know nothing about their
+	 * equivalence.
+	 **/
+	public enum EquivalenceState {
 		EQUAL, DISTINCT, UNKNOWN
 	}
 
-	public Relation getRelation(final Term a, final Term b) {
-
+	public EquivalenceState getRelation(final Term a, final Term b) {
 		if (areEquivalent(a, b)) {
-			return Relation.EQUAL;
+			return EquivalenceState.EQUAL;
 		} else if (areDistinct(a, b)) {
-			return Relation.DISTINCT;
+			return EquivalenceState.DISTINCT;
 		} else {
-			return Relation.UNKNOWN;
+			return EquivalenceState.UNKNOWN;
 		}
 	}
 
