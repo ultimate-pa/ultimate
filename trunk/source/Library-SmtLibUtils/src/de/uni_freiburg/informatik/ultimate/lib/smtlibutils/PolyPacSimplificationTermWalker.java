@@ -191,8 +191,14 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 		final Term result;
 		try {
 			final Comparator<Term> siblingOrder = null;
-			result = TermContextTransformationEngine.transform(new PolyPacSimplificationTermWalker(services, mgdScript),
-					siblingOrder, context, term);
+			final Term tmp = TermContextTransformationEngine
+					.transform(new PolyPacSimplificationTermWalker(services, mgdScript), siblingOrder, context, term);
+			// The PolyPac simplification applies the PolyPoNe simplifications (including normal form for integer
+			// inequalities) only while ascending back to the root node. Hence these simplifications (and normal form
+			// rewritings) are not applied if the input is a single atom, or term was simplified to a single atom. Here
+			// we apply the simplifications for this case. Convention: Single atoms are treated like conjuncts, so e.g.,
+			// `0 < x` is converted to `1<=x`.
+			result = PolyPoNeUtils.and(mgdScript.getScript(), context, List.of(tmp));
 		} catch (final ToolchainCanceledException tce) {
 			final CondisDepthCode termCdc = CondisDepthCode.of(term);
 			final String taskDescription = String.format("simplifying a %s term", termCdc);
