@@ -61,8 +61,6 @@ public class UltimateNormalFormTest {
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private ILogger mLogger;
-	private Term mTrue;
-	private Term mFalse;
 
 	@Before
 	public void setUp() {
@@ -71,8 +69,6 @@ public class UltimateNormalFormTest {
 		mLogger = mServices.getLoggingService().getLogger("lol");
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
-		mTrue = mScript.term("true");
-		mFalse = mScript.term("false");
 	}
 
 	@Test
