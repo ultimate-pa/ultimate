@@ -52,9 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDept
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
@@ -1310,29 +1308,7 @@ public class SimplificationTest {
 					CommuhashNormalFormTransformer.apply(mgdScript.getScript(), expectedResultAsTerm);
 			MatcherAssert.assertThat(result, IsEqual.equalTo(cnfExpectedResultAsTerm));
 		}
-		assert checkLogicalEquivalence(mgdScript.getScript(), result, formulaAsTerm);
-	}
-
-	private static boolean checkLogicalEquivalence(final Script script, final Term result, final Term input) {
-		script.echo(new QuotedObject("Start correctness check for simplification."));
-		final LBool lbool = SmtUtils.checkEquivalence(result, input, script);
-		script.echo(new QuotedObject("Finished correctness check for simplification. Result: " + lbool));
-		final String errorMessage;
-		switch (lbool) {
-		case SAT:
-			errorMessage = "Not logically equivalent to expected result: " + result;
-			break;
-		case UNKNOWN:
-			errorMessage = "Insufficient ressources for checking equivalence to expected result: " + result;
-			break;
-		case UNSAT:
-			errorMessage = null;
-			break;
-		default:
-			throw new AssertionError("unknown value " + lbool);
-		}
-		MatcherAssert.assertThat(errorMessage, lbool == LBool.UNSAT);
-		return lbool == LBool.UNSAT;
+		assert SmtTestUtils.checkLogicalEquivalence(mgdScript.getScript(), result, formulaAsTerm);
 	}
 
 }
