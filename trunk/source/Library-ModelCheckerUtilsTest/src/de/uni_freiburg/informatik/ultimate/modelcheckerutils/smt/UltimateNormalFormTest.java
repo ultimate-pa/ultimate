@@ -30,17 +30,21 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.core.IsEqual;
 import org.junit.Before;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -157,6 +161,32 @@ public class UltimateNormalFormTest {
 		final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
 		final Term result = new IteRemover(mMgdScript).transform(letFree);
 		Assert.isTrue(UltimateNormalFormUtils.respectsUltimateNormalForm(result));
+	}
+
+	@Test
+	public void bvugtConstantFolding() {
+		final FunDecl[] funDecls = {};
+		final String formulaAsString = "(bvugt (_ bv0 8) (_ bv1 8))";
+		final String expected = "false";
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	static void runUnfTest(final FunDecl[] funDecls, final String eliminationInputAsString,
+			final String expectedResultAsString, final ManagedScript mgdScript) {
+		for (final FunDecl funDecl : funDecls) {
+			funDecl.declareFuns(mgdScript.getScript());
+		}
+		final Term formulaAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), eliminationInputAsString);
+		final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
+		final Term unf = new UnfTransformer(mgdScript.getScript()).transform(letFree);
+
+		final Term expectedResultAsTerm =
+				new FormulaUnLet().transform(TermParseUtils.parseTerm(mgdScript.getScript(), expectedResultAsString));
+		final Term cnfExpectedResultAsTerm =
+				CommuhashNormalFormTransformer.apply(mgdScript.getScript(), expectedResultAsTerm);
+		MatcherAssert.assertThat(unf, IsEqual.equalTo(cnfExpectedResultAsTerm));
+
+		assert SmtTestUtils.checkLogicalEquivalence(mgdScript.getScript(), unf, formulaAsTerm);
 	}
 
 }
