@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.function.BiFunction;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -801,25 +802,24 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 			return script.term("true");
 		} else if (mLower.isInfinity()) {
 			final Term value = mUpper.getTerm(sort, script);
-			return script.term("<=", var, value);
+			return SmtUtils.leq(script, var, value);
 		} else if (mUpper.isInfinity()) {
 			final Term value = mLower.getTerm(sort, script);
-			return script.term(">=", var, value);
+			return SmtUtils.geq(script, var, value);
 		} else {
 			final int cmp = mUpper.compareTo(mLower);
 			if (cmp == 0) {
 				// point-interval
 				final Term value = mLower.getTerm(sort, script);
-				return script.term("=", var, value);
+				return SmtUtils.equality(script, var, value);
 			} else if (cmp < 0) {
 				// upper less than lower, i.e. empty intervall
 				return script.term("false");
 			} else {
 				// its a normal interval
-				final Term upper = script.term("<=", var, mUpper.getTerm(sort, script));
-				final Term lower = script.term(">=", var, mLower.getTerm(sort, script));
-				// return SmtUtils.and(script, lower, upper);
-				return script.term("and", lower, upper);
+				final Term upper = SmtUtils.leq(script, var, mUpper.getTerm(sort, script));
+				final Term lower = SmtUtils.geq(script, var, mLower.getTerm(sort, script));
+				return SmtUtils.and(script, lower, upper);
 			}
 		}
 	}
