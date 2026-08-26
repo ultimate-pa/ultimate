@@ -300,30 +300,6 @@ public class UltimateNormalFormTest {
 	}
 
 	@Test
-	public void bvxorNilpotencePairCancelsDuringUnfTransformer() {
-		// This test isolates the exact call that hits the finalArgs.isEmpty() branch in
-		// BitvectorUtils.simplifyBvxor, in case a breakpoint placed later
-		// (e.g. inside SmtUtils.simplifyWithStatistics, which runs AFTER UnfTransformer in runSimplificationTest)
-		// never triggers: for a plain "(bvxor x x)" formula the whole term is already fully resolved to the
-		// zero-constant during the UnfTransformer pass, before simplifyWithStatistics even gets to see it. There
-		// is nothing left for the later simplification technique to do, so a breakpoint placed there will never
-		// fire for this input - the branch was already executed earlier, right here.
-		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
-		final Script script = mMgdScript.getScript();
-		for (final FunDecl funDecl : funDecls) {
-			funDecl.declareFuns(script);
-		}
-
-		final Term formulaAsTerm = TermParseUtils.parseTerm(script, "(bvxor x x)");
-		final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
-
-		final Term unf = new UnfTransformer(script).transform(letFree);
-
-		final Term expected = TermParseUtils.parseTerm(script, "(_ bv0 8)");
-		MatcherAssert.assertThat(unf, IsEqual.equalTo(expected));
-	}
-
-	@Test
 	public void bvxorNilpotencePairCancels() {
 		// Nilpotence for XOR: (x XOR x) -> 0. Both occurrences cancel out completely, so finalArgs is empty and the
 		// zero-constant edge case (BitvectorUtils.constructTerm with BigInteger.ZERO) must kick in.
