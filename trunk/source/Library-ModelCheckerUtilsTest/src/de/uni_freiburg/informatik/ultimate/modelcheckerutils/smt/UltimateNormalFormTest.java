@@ -171,6 +171,433 @@ public class UltimateNormalFormTest {
 		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
 	}
 
+	// --- N-ary bvand/bvor/bvxor simplification (BitvectorUtils) ---
+
+	@Test
+	public void bvaddAbsorption() { // Testing new class allowing multiple elements
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvand (_ bv2 8) x (_ bv1 8))";
+		final String simplified = "(_ bv0 8)";
+
+		runUnfTest(funDecls, formulaAsString, simplified, mMgdScript);
+	}
+
+	@Test
+	public void bvandFlatteningOnlyVariables() {
+		// x, y, z are declared as free (unconstrained) variables so that FormulaUnLet cannot substitute them away
+		// before simplification runs. This actually exercises BitvectorUtils.simplifyBvand.
+		// Also tests duplicate elimination (idempotence): y occurs twice and must collapse to a single occurrence.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y", "z") };
+		final String formulaAsString = "(bvand x (bvand y (bvand y z)))";
+		final String expected = "(bvand x y z)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvandIdentityElimination() {
+		// x is a free variable, so (x AND 255) must simplify to x via absorption (255 is the all-ones element).
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvand x (_ bv255 8))";
+		final String expected = "x";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvorAbsorptionMax() {
+		// Tests absorption for OR: (x OR 255) -> 255
+		// For an 8-bit vector, 255 (0xFF, i.e. all ones) is the absorbing element.
+		// x is a free variable so this actually exercises the annihilation branch in BitvectorUtils.simplifyBvor.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvor x (_ bv255 8))";
+		final String expected = "(_ bv255 8)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvxorFlattening() {
+		// Tests whether nested XOR operations are flattened: (x XOR (y XOR z)) -> x XOR y XOR z
+		// x, y, z are free variables so FormulaUnLet cannot collapse them and flattening is actually exercised.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y", "z") };
+		final String formulaAsString = "(bvxor x (bvxor y z))";
+		final String expected = "(bvxor x y z)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvorIdentityZero() {
+		// Tests the neutral element for OR: (x OR 0) -> x
+		// The zero must vanish from the operation completely.
+		// x is a free variable, so the expected result is unambiguously x (not a constant).
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvor x (_ bv0 8))";
+		final String expected = "x";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvxorLiteralEvaluation() {
+		// Tests pre-evaluation of literals for XOR: (12 XOR x XOR 3) -> (15 XOR x)
+		// Since 12 (1100) XOR 3 (0011) = 15 (1111)
+		// x is a free variable so the two literals must actually be folded together by BitvectorUtils.simplifyBvxor.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvxor (_ bv12 8) x (_ bv3 8))";
+		final String expected = "(bvxor (_ bv15 8) x)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvxorIdentityZero() {
+		// Tests that 0 vanishes for XOR: (x XOR 0) -> x
+		// x is a free variable, so the expected result is unambiguously x (not a constant).
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvxor x (_ bv0 8))";
+		final String expected = "x";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvxorLiteralEvaluationWithVariable() {
+		// 1. Get the underlying script
+		final Script script = mMgdScript.getScript();
+
+		// 2. Declare x as a global 8-bit bitvector directly in the SMT context
+		final de.uni_freiburg.informatik.ultimate.logic.Sort bvSort = script.sort("BitVec", new String[] { "8" });
+		script.declareFun("x", new de.uni_freiburg.informatik.ultimate.logic.Sort[0], bvSort);
+
+		// 3. The nested test formula: (12 XOR (x XOR 3))
+		final String formulaAsString = "(bvxor (_ bv12 8) (bvxor x (_ bv3 8)))";
+		final String expected = "(bvxor (_ bv15 8) x)";
+
+		// 4. Pass an empty array for FunDecl, since x is already declared!
+		runUnfTest(new FunDecl[0], formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvandDuplicateElimination() {
+		// Idempotence for AND: (x AND x) -> x. The duplicate must be removed, not merged into an operator.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvand x x)";
+		final String expected = "x";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvorDuplicateElimination() {
+		// Idempotence for OR: (x OR x OR y) -> (x OR y). One occurrence of x must be dropped, y stays untouched.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
+		final String formulaAsString = "(bvor x x y)";
+		final String expected = "(bvor x y)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvxorNilpotencePairCancelsDuringUnfTransformer() {
+		// This test isolates the exact call that hits the finalArgs.isEmpty() branch in
+		// BitvectorUtils.simplifyBvxor, in case a breakpoint placed later
+		// (e.g. inside SmtUtils.simplifyWithStatistics, which runs AFTER UnfTransformer in runSimplificationTest)
+		// never triggers: for a plain "(bvxor x x)" formula the whole term is already fully resolved to the
+		// zero-constant during the UnfTransformer pass, before simplifyWithStatistics even gets to see it. There
+		// is nothing left for the later simplification technique to do, so a breakpoint placed there will never
+		// fire for this input - the branch was already executed earlier, right here.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final Script script = mMgdScript.getScript();
+		for (final FunDecl funDecl : funDecls) {
+			funDecl.declareFuns(script);
+		}
+
+		final Term formulaAsTerm = TermParseUtils.parseTerm(script, "(bvxor x x)");
+		final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
+
+		final Term unf = new UnfTransformer(script).transform(letFree);
+
+		final Term expected = TermParseUtils.parseTerm(script, "(_ bv0 8)");
+		MatcherAssert.assertThat(unf, IsEqual.equalTo(expected));
+	}
+
+	@Test
+	public void bvxorNilpotencePairCancels() {
+		// Nilpotence for XOR: (x XOR x) -> 0. Both occurrences cancel out completely, so finalArgs is empty and the
+		// zero-constant edge case (BitvectorUtils.constructTerm with BigInteger.ZERO) must kick in.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvxor x x)";
+		final String expected = "(_ bv0 8)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvxorNilpotenceWithRemainder() {
+		// Nilpotence for XOR with a surviving variable: (x XOR x XOR y) -> y. The x-pair cancels (even count), y is
+		// unpaired (odd count) and must remain; since only one term is left, no operator node is needed at all.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
+		final String formulaAsString = "(bvxor x x y)";
+		final String expected = "y";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvandLiteralEvaluation() {
+		// Tests pre-evaluation of literals for AND: (12 AND x AND 14) -> (12 AND x)
+		// Since 12 (00001100) AND 14 (00001110) = 12 (00001100), which is neither 0 nor 255, the operator stays.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvand (_ bv12 8) x (_ bv14 8))";
+		final String expected = "(bvand (_ bv12 8) x)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvandLiteralEvaluationTriggersAnnihilation() {
+		// Tests the interplay of literal folding and annihilation for AND: (12 AND x AND 3) -> 0
+		// Since 12 (00001100) AND 3 (00000011) = 0, annihilation (X AND 0 = 0) kicks in and x is dropped
+		// entirely, even though x itself is unknown. Important: literal folding must run BEFORE the annihilation
+		// check, otherwise this case would not be detected.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvand (_ bv12 8) x (_ bv3 8))";
+		final String expected = "(_ bv0 8)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvorLiteralEvaluation() {
+		// Tests pre-evaluation of literals for OR: (12 OR x OR 3) -> (15 OR x)
+		// Since 12 (00001100) OR 3 (00000011) = 15 (00001111), which is neither 0 nor 255, the operator stays.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvor (_ bv12 8) x (_ bv3 8))";
+		final String expected = "(bvor (_ bv15 8) x)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvorIdentityZeroWithMultipleVariables() {
+		// Tests that 0 also vanishes for OR when several variables remain:
+		// (x OR 0 OR y) -> (x OR y). Unlike bvorIdentityZero, the operator is kept here, since after the 0 drops
+		// out there are still two terms left (no finalArgs.size() == 1 special case).
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
+		final String formulaAsString = "(bvor x (_ bv0 8) y)";
+		final String expected = "(bvor x y)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	// --- Step 1 (flatten): additional edge cases ---
+
+	@Test
+	public void bvandDifferentOperatorsNotFlattened() {
+		// Flattening must only unwrap applications of the SAME operator. (bvor y z) is a different operator than
+		// the outer bvand, so it must stay intact as one non-literal argument instead of being exploded into y, z.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y", "z") };
+		final String formulaAsString = "(bvand x (bvor y z))";
+		final String expected = "(bvand x (bvor y z))";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvorNestedApplicationResolvesBottomUp() {
+		// A literal nested inside a sub-application never reaches the outer flatten() unresolved: since terms are
+		// built bottom-up, the inner (bvor (_ bv0 8) y) is fully simplified to "y" (absorption of 0) before the
+		// outer bvor ever sees it. This is exactly why flatten() does not need to recurse (see its comment).
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
+		final String formulaAsString = "(bvor x (bvor (_ bv0 8) y))";
+		final String expected = "(bvor x y)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	// --- Step 2 (split, sort): additional edge cases ---
+
+	@Test
+	public void bvorNonAdjacentDuplicateElimination() {
+		// Unlike the other duplicate-elimination tests, the two occurrences of y are NOT adjacent in the raw
+		// input. This only collapses correctly if sortByHashCode actually brings them together before the
+		// duplicate-collecting step counts runs.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
+		final String formulaAsString = "(bvor y x y)";
+		final String expected = "(bvor x y)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvandOrderIndependence() {
+		// The expected-result comparison in runSimplificationTest normalizes both sides via CommuhashNormalForm
+		// before comparing, which would mask a broken sort. This test instead compares two raw post-UnfTransformer
+		// results directly against each other: (bvand y x) and (bvand x y) must produce the identical term.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
+		final Script script = mMgdScript.getScript();
+		for (final FunDecl funDecl : funDecls) {
+			funDecl.declareFuns(script);
+		}
+
+		final Term firstOrder = new UnfTransformer(script)
+				.transform(new FormulaUnLet().transform(TermParseUtils.parseTerm(script, "(bvand y x)")));
+		final Term secondOrder = new UnfTransformer(script)
+				.transform(new FormulaUnLet().transform(TermParseUtils.parseTerm(script, "(bvand x y)")));
+
+		MatcherAssert.assertThat(firstOrder, IsEqual.equalTo(secondOrder));
+	}
+
+	// --- Step 3 (constant folding): additional edge cases ---
+
+	@Test
+	public void bvandLiteralEvaluationThreeLiterals() {
+		// Tests that folding generalizes past the first pair of literals: (1 AND x AND 3 AND 5) -> (1 AND x).
+		// 1 (00000001) AND 3 (00000011) = 1, then 1 AND 5 (00000101) = 1, which is neither 0 nor 255.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvand (_ bv1 8) x (_ bv3 8) (_ bv5 8))";
+		final String expected = "(bvand (_ bv1 8) x)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	// --- Step 4 (duplicate collectors): additional edge cases ---
+
+	@Test
+	public void bvandIdempotenceThreeCopies() {
+		// Idempotence collapses ANY number of copies (not just pairs) to one: (x AND x AND x) -> x. Contrasts with
+		// bvxorNilpotenceThreeCopies below, where an odd count also survives but for a different reason (parity).
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvand x x x)";
+		final String expected = "x";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvxorNilpotenceThreeCopies() {
+		// Nilpotence is a parity check, not a presence check: an odd run length (here 3) leaves exactly one copy,
+		// not zero and not three: (x XOR x XOR x) -> x.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvxor x x x)";
+		final String expected = "x";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvxorTwoSeparateDuplicatePairs() {
+		// Two independent duplicate pairs must each cancel on their own run, without interfering with each other:
+		// (x XOR x XOR y XOR y XOR z) -> z.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y", "z") };
+		final String formulaAsString = "(bvxor x x y y z)";
+		final String expected = "z";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	// --- Step 5 (absorption, annihilation): additional edge cases ---
+
+	@Test
+	public void bvorAnnihilationViaFoldedAllOnes() {
+		// The all-ones value does not need to be written directly: it can also emerge from folding several
+		// literals. 200 (11001000) OR 55 (00110111) = 255, which then annihilates the whole bvor, dropping x.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvor (_ bv200 8) x (_ bv55 8))";
+		final String expected = "(_ bv255 8)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvxorAbsorptionViaFoldedZero() {
+		// Same idea for bvxor's neutral element: 12 XOR 12 folds to 0, which is then absorbed (dropped), leaving
+		// only x: (12 XOR 12 XOR x) -> x.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvxor (_ bv12 8) (_ bv12 8) x)";
+		final String expected = "x";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvxorAllOnesPreserved() {
+		// Negative-space guard: unlike bvand/bvor, bvxor has no special rule for the all-ones constant, so it must
+		// be kept as-is rather than accidentally dropped or annihilated: (x XOR 255) stays (x XOR 255).
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvxor x (_ bv255 8))";
+		final String expected = "(bvxor x (_ bv255 8))";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvandWidth1AllOnesAbsorption() {
+		// isAllOnes depends on the bit width (2^width - 1), so it needs coverage away from the usual 8-bit sort.
+		// At width 1 the all-ones value is 1 itself: (x AND 1) -> x.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort1, "x") };
+		final String formulaAsString = "(bvand x (_ bv1 1))";
+		final String expected = "x";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvorWidth1IdentityZero() {
+		// Companion to bvandWidth1AllOnesAbsorption: confirms the zero-check itself (width-independent) still
+		// works correctly at the same tiny width, right next to the all-ones boundary: (x OR 0) -> x.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort1, "x") };
+		final String formulaAsString = "(bvor x (_ bv0 1))";
+		final String expected = "x";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvorWidth32AnnihilationMax() {
+		// isAllOnes must also generalize to wider bit widths: at width 32 the all-ones value is 2^32 - 1, which
+		// annihilates bvor just like 255 does at width 8.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "x") };
+		final String formulaAsString = "(bvor x (_ bv4294967295 32))";
+		final String expected = "(_ bv4294967295 32)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	// --- Step 6 (assembly): additional edge cases ---
+
+	@Test
+	public void bvxorNilpotenceWithNonzeroLiteralSurvivor() {
+		// The single surviving finalArgs entry can also be the literal, not just a variable: both x's cancel via
+		// nilpotence, leaving only the constant 5 to be unwrapped: (5 XOR x XOR x) -> 5.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvxor (_ bv5 8) x x)";
+		final String expected = "(_ bv5 8)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvandNoSimplificationPassThrough() {
+		// Minimal regression guard: two distinct free variables and no literals means there is nothing to fold,
+		// absorb, or deduplicate. The pipeline must leave this case intact instead of mis-simplifying it.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
+		final String formulaAsString = "(bvand x y)";
+		final String expected = "(bvand x y)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvConstantsCase() {
+		final String formulaAsString = "(bvand (_ bv1 8) (_ bv3 8) (_ bv7 8))";
+		final String expected = "(_ bv1 8)";
+
+		runUnfTest(new FunDecl[0], formulaAsString, expected, mMgdScript);
+	}
+
 	static void runUnfTest(final FunDecl[] funDecls, final String eliminationInputAsString,
 			final String expectedResultAsString, final ManagedScript mgdScript) {
 		for (final FunDecl funDecl : funDecls) {
