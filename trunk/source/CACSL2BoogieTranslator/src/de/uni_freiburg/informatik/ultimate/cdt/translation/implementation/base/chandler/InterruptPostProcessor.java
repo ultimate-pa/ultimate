@@ -210,26 +210,6 @@ public class InterruptPostProcessor implements IPostProcessor {
 		body.setBlock(newBlock.toArray(new Statement[0]));
 	}
 
-	private void addForksToRequestEnableAll(final Procedure mainProcedure) {
-		if (mainProcedure == null) {
-			return;
-		}
-		final var statements = new ArrayList<Statement>();
-		for (final var isr : mInterruptFuncHandler.getIsrs()) {
-			final var irq = getIrqNum(isr);
-			final var proc = mThreadProcedures.get(irq);
-			if (proc == null) {
-				continue;
-			}
-			final var fork = constructForkStatements(mainProcedure, List.of(proc), -irq);
-			final var ifStmt = constructForkIfStatement(constructEnabledExpression(irq), fork, true);
-			statements.add(ifStmt);
-		}
-		final var body = mainProcedure.getBody();
-		statements.addAll(Arrays.asList(body.getBlock()));
-		body.setBlock(statements.toArray(new Statement[0]));
-	}
-
 	private void addForksToRequestEnable(final Map<Integer, Procedure> intEnabledProcedures) {
 		for (final Entry<Integer, Procedure> entry : intEnabledProcedures.entrySet()) {
 			final var irq = entry.getKey();
@@ -349,15 +329,6 @@ public class InterruptPostProcessor implements IPostProcessor {
 			}
 		}
 		return result;
-	}
-
-	private void annotateRequestAllProcedures(final Procedure intEnabledProcedure, final boolean enabled) {
-		if (intEnabledProcedure == null) {
-			return;
-		}
-		final var allLhs = mInterruptFuncHandler.getIsrs().stream().map(isr -> constructEnabledLhs(getIrqNum(isr)))
-				.collect(Collectors.toList());
-		annotateAuxVarAssignment(intEnabledProcedure, enabled, allLhs);
 	}
 
 	private void annotateAuxVarAssignment(final Procedure intEnableProcedure, final boolean newValue,
