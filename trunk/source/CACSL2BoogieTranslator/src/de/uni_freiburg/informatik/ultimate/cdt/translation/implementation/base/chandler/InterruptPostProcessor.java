@@ -169,9 +169,8 @@ public class InterruptPostProcessor implements IPostProcessor {
 
 		// Construct thread procedures for each ISR (stored for later use in fork/join)
 		mThreadProcedures = constructThreadProcedures(isrs);
-		final var threadProcedures = mThreadProcedures.values().stream()
-				.filter(java.util.Objects::nonNull)
-				.collect(Collectors.toList());
+		final var threadProcedures =
+				mThreadProcedures.values().stream().filter(java.util.Objects::nonNull).collect(Collectors.toList());
 		decl.addAll(threadProcedures);
 
 		// Add fork statements to the main procedure
@@ -180,10 +179,10 @@ public class InterruptPostProcessor implements IPostProcessor {
 		}
 
 		// Resolve masking functions to (irqNum, procedure) pairs, expanding AllInterrupts references
-		final Map<Integer, Procedure> reqEnableFuncs = resolveMaskingFunctionProcedures(
-				InterruptMaskingFunction.Operation.ENABLE);
-		final Map<Integer, Procedure> reqDisableFuncs = resolveMaskingFunctionProcedures(
-				InterruptMaskingFunction.Operation.DISABLE);
+		final Map<Integer, Procedure> reqEnableFuncs =
+				resolveMaskingFunctionProcedures(InterruptMaskingFunction.Operation.ENABLE);
+		final Map<Integer, Procedure> reqDisableFuncs =
+				resolveMaskingFunctionProcedures(InterruptMaskingFunction.Operation.DISABLE);
 
 		// Add atomic block and variable assignment true to request enabled functions
 		annotateRequestProcedures(reqEnableFuncs, isrs, true);
@@ -206,9 +205,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 		}
 
 		// Add initialization statements (set all enabled variables to false)
-		final var initLhs = isrs.stream()
-				.map(isr -> constructEnabledLhs(getIrqNum(isr)))
-				.collect(Collectors.toList());
+		final var initLhs = isrs.stream().map(isr -> constructEnabledLhs(getIrqNum(isr))).collect(Collectors.toList());
 		mAdditionalInitializations.add(constructAuxVarEnabledInitializations(initLhs));
 
 		return decl;
@@ -253,7 +250,8 @@ public class InterruptPostProcessor implements IPostProcessor {
 			final var thrNum = -irq;
 			final List<Statement> fork = constructForkStatements(proc, List.of(threadProc), thrNum);
 
-			final var newBlock = new ArrayList<>(List.of(constructForkIfStatement(constructEnabledExpression(irq), fork, true)));
+			final var newBlock =
+					new ArrayList<>(List.of(constructForkIfStatement(constructEnabledExpression(irq), fork, true)));
 			final var body = proc.getBody();
 			newBlock.addAll(Arrays.asList(body.getBlock()));
 			body.setBlock(newBlock.toArray(new Statement[0]));
@@ -268,7 +266,8 @@ public class InterruptPostProcessor implements IPostProcessor {
 				continue;
 			}
 			final List<Statement> join = constructJoinStatement(proc, -irq);
-			final var newBlock = new ArrayList<>(List.of(constructForkIfStatement(constructEnabledExpression(irq), join, false)));
+			final var newBlock =
+					new ArrayList<>(List.of(constructForkIfStatement(constructEnabledExpression(irq), join, false)));
 			final var body = proc.getBody();
 			newBlock.addAll(Arrays.asList(body.getBlock()));
 			body.setBlock(newBlock.toArray(new Statement[0]));
@@ -365,8 +364,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 		if (intEnabledProcedure == null) {
 			return;
 		}
-		final var allLhs = mInterruptFuncHandler.getIsrs().stream()
-				.map(isr -> constructEnabledLhs(getIrqNum(isr)))
+		final var allLhs = mInterruptFuncHandler.getIsrs().stream().map(isr -> constructEnabledLhs(getIrqNum(isr)))
 				.collect(Collectors.toList());
 		annotateAuxVarAssignment(intEnabledProcedure, enabled, allLhs);
 	}
@@ -568,8 +566,8 @@ public class InterruptPostProcessor implements IPostProcessor {
 	}
 
 	private VariableLHS constructEnabledLhs(final int irqNum) {
-		return ExpressionFactory.constructVariableLHS(mIgnoreLoc, BoogieType.TYPE_BOOL,
-				constructEnabledVarName(irqNum), DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		return ExpressionFactory.constructVariableLHS(mIgnoreLoc, BoogieType.TYPE_BOOL, constructEnabledVarName(irqNum),
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 	private VariableDeclaration constructEnabledDeclaration(final int irqNum) {

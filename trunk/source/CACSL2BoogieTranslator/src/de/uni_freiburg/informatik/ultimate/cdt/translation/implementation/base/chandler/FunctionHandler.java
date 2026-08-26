@@ -1062,7 +1062,8 @@ public class FunctionHandler {
 
 		final Attribute[] attr = {};
 		final String[] typeParams = {};
-		Specification[] spec = handleSpecFromACSLContract(main, contract, procInfo, hook, null);
+		final ArrayList<IInterruptFunction> interruptFuncs = new ArrayList<>();
+		Specification[] spec = handleSpecFromACSLContract(main, contract, procInfo, hook, interruptFuncs);
 
 		if (funcType.getResultType().isVoidType()) {
 			if (mProcedureManager.isCalledBeforeDeclared(procInfo)) {
