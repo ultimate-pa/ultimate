@@ -574,6 +574,61 @@ public class UltimateNormalFormTest {
 		runUnfTest(new FunDecl[0], formulaAsString, expected, mMgdScript);
 	}
 
+	// --- Extract-over-extend simplification (BitvectorUtils) ---
+
+	@Test
+	public void bvExtractOverSignExtend() {
+		// extract exactly undoes sign_extend when the width matches: ((_ extract 7 0) ((_ sign_extend 24) x)) -> x.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "((_ extract 7 0) ((_ sign_extend 24) x))";
+		final String expected = "x";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvExtractOverZeroExtend() {
+		// Same no-op for zero_extend: ((_ extract 7 0) ((_ zero_extend 24) x)) -> x.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "((_ extract 7 0) ((_ zero_extend 24) x))";
+		final String expected = "x";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvExtractOverSignExtendPartialReduction() {
+		// Extracting MORE than the original width but LESS than the full extended width keeps some padding bits,
+		// which is equivalent to a smaller extend, not the bare original value:
+		// ((_ extract 15 0) ((_ sign_extend 24) x)) -> ((_ sign_extend 8) x), for an 8-bit x.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "((_ extract 15 0) ((_ sign_extend 24) x))";
+		final String expected = "((_ sign_extend 8) x)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvExtractOfFullExtendedWidthNotHandledByThisRule() {
+		// Guard: extracting the ENTIRE extended width (bit 31 of a 32-bit result) is out of scope for this rule -
+		// it's a different ("extract of full range") simplification, not yet implemented - so it must stay as-is.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "((_ extract 31 0) ((_ sign_extend 24) x))";
+		final String expected = "((_ extract 31 0) ((_ sign_extend 24) x))";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvExtractOfPlainVariableNotSimplified() {
+		// Guard: no sign_extend/zero_extend underneath at all, so the rule must not touch it.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "y") };
+		final String formulaAsString = "((_ extract 7 0) y)";
+		final String expected = "((_ extract 7 0) y)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
 	static void runUnfTest(final FunDecl[] funDecls, final String eliminationInputAsString,
 			final String expectedResultAsString, final ManagedScript mgdScript) {
 		for (final FunDecl funDecl : funDecls) {
