@@ -33,7 +33,6 @@ public class EGraphTest {
 	 * Warning: each test will overwrite the SMT script of the preceding test.
 	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
-	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
 	private static final long TEST_TIMEOUT_MILLISECONDS = 200_000_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 //	private static final String SOLVER_COMMAND = "cvc4 --incremental --lang smt";
@@ -44,22 +43,13 @@ public class EGraphTest {
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private ILogger mLogger;
-	private static QuantifierEliminationTestCsvWriter mCsvWriter;
 
 	@BeforeClass
 	public static void beforeAllTests() {
-//		mCsvWriter = new QuantifierEliminationTestCsvWriter(SimplificationTest.class.getSimpleName());
 	}
 
 	@AfterClass
 	public static void afterAllTests() {
-//		if (WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY) {
-//			try {
-////				mCsvWriter.writeCsv();
-//			} catch (final IOException e) {
-//				throw new AssertionError(e);
-//			}
-//		}
 	}
 
 	@Before
@@ -83,7 +73,6 @@ public class EGraphTest {
 	@After
 	public void tearDown() {
 		mScript.exit();
-//		mCsvWriter.reportTestFinished();
 	}
 
 	private static class ExpectedRelation {
