@@ -368,8 +368,7 @@ public class BitvectorFactory {
 		case bvmul:
 			yield bConst.isOne();
 		case bvand:
-			// TODO: Is this correct?
-			yield bConst.equals(BitvectorConstant.maxValue(bConst.getIndex()));
+			yield bConst.isAllOnes();
 		case bvxor:
 		case bvudiv:
 		case bvashr:

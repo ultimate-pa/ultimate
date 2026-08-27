@@ -37,7 +37,7 @@ import java.util.TreeMap;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskStringIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
@@ -110,6 +111,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Term
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.InterpolationPreferenceChecker;
@@ -132,6 +134,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
 	protected final String mIdentifier;
+	protected final String mTaskFilename;
 	protected final boolean mIsConcurrent;
 
 	/**
@@ -197,6 +200,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		mIdentifier = icfg.getIdentifier();
 		// TODO: TaskIdentifier should probably be provided by caller
 		mTaskIdentifier = new SubtaskFileIdentifier(null, mIdentifier);
+		mTaskFilename = ILocation.getAnnotation(icfg).getFileName();
 		mIsConcurrent = IcfgUtils.isConcurrent(icfg);
 
 		mServices = services;
@@ -316,9 +320,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		mLogger.info("======== Iteration %s == of CEGAR loop == %s ========", mIteration, name);
 
 		if (mPref.dumpAutomata()) {
-			final String filename = mIdentifier + "_" + name + "Abstraction" + mIteration;
-			BuchiAutomizerUtils.writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename,
-					mPref.getAutomataFormat(), "");
+			writeAutomatonToFile(mAbstraction, "BuchiInitialAbstraction");
 		}
 		boolean initalAbstractionCorrect;
 		try {
@@ -432,9 +434,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 
 				if (mPref.dumpAutomata()) {
-					final String filename = mIdentifier + "_" + name + "Abstraction" + mIteration;
-					BuchiAutomizerUtils.writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename,
-							mPref.getAutomataFormat(), "");
+					writeAutomatonToFile(mAbstraction, mIteration, "BuchiAbstraction");
 				}
 
 			} catch (final AutomataLibraryException e) {
@@ -447,6 +447,39 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		return BuchiCegarLoopResult.constructTimeoutResult(
 				new ToolchainCanceledException(getClass(), "exceeding the number of iterations"), mMDBenchmark,
 				mTermcompProofBenchmark);
+	}
+
+	protected String getDumpPath(final boolean besideInputFile, final String directory, final String filename,
+			final String suffix) {
+		return TraceAbstractionUtils.constructDumpPath(besideInputFile, mTaskFilename, directory, filename, null,
+				suffix);
+	}
+
+	protected void writeAutomatonToFile(final IAutomaton<L, IPredicate> automaton, final TaskIdentifier tid,
+			final String message) {
+		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.DumpTime);
+		final String fullAutomataPath = getDumpPath(mPref.dumpAutomataBesideFile(), mPref.dumpAutomataDirectory(),
+				mPref.dumpAutomataFilename(), tid.toString());
+		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices),
+				TraceAbstractionUtils.determineAutomatonName(automaton), fullAutomataPath, mPref.dumpAutomataFormat(),
+				message, automaton);
+		mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.DumpTime);
+	}
+
+	protected void writeAutomatonToFile(final IAutomaton<L, IPredicate> automaton, final int iteration,
+			final String suffix, final String message) {
+		final TaskIdentifier tid = new SubtaskStringIdentifier(new SubtaskIterationIdentifier(null, iteration), suffix);
+		writeAutomatonToFile(automaton, tid, message);
+	}
+
+	protected void writeAutomatonToFile(final IAutomaton<L, IPredicate> automaton, final int iteration,
+			final String suffix) {
+		writeAutomatonToFile(automaton, iteration, suffix, "");
+	}
+
+	protected void writeAutomatonToFile(final IAutomaton<L, IPredicate> automaton, final String suffix) {
+		final TaskIdentifier tid = new SubtaskStringIdentifier(null, suffix);
+		writeAutomatonToFile(automaton, tid, "");
 	}
 
 	@SuppressWarnings("unchecked")
@@ -484,9 +517,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		}
 		determinized.switchToReadonlyMode();
 		if (mPref.dumpAutomata()) {
-			final String filename = mIdentifier + "_" + "interpolAutomatonUsedInRefinement" + mIteration + "after";
-			BuchiAutomizerUtils.writeAutomatonToFile(mServices, interpolAutomaton, mPref.dumpPath(), filename,
-					mPref.getAutomataFormat(), "");
+			writeAutomatonToFile(interpolAutomaton, mIteration, "BuchiInterpolantAutomatonUsedInRefinementAfter");
 		}
 		if (mConstructTermcompProof) {
 			mTermcompProofBenchmark.reportFiniteModule(mIteration, interpolAutomaton);
@@ -528,10 +559,6 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		assert !SmtUtils.isFalseLiteral(hondaPredicate.getFormula());
 		assert !SmtUtils.isFalseLiteral(rankEqAndSi.getFormula());
 
-		final boolean dumpAutomata = mPref.dumpAutomata();
-		final String dumpPath = mPref.dumpPath();
-		final Format format = mPref.getAutomataFormat();
-
 		final RankingFunction rankingFunction = bspmResult.getTerminationArgument().getRankingFunction();
 		final Script script = mCsToolkitWithRankVars.getManagedScript().getScript();
 		mMDBenchmark.reportRankingFunction(mIteration, rankingFunction, script);
@@ -568,9 +595,8 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 						mInterpolantAutomatonBuilder.constructInterpolantAutomaton(bspmResult.getStemPrecondition(),
 								mCounterexample, stemInterpolants, hondaPredicate, loopInterpolants,
 								BuchiAutomizerUtils.getVpAlphabet(mAbstraction), mDefaultStateFactory);
-				if (dumpAutomata) {
-					final String filename = mIdentifier + "_" + "InterpolantAutomatonBuchi" + mIteration;
-					BuchiAutomizerUtils.writeAutomatonToFile(mServices, inputAutomaton, dumpPath, filename, format,
+				if (mPref.dumpAutomata()) {
+					writeAutomatonToFile(inputAutomaton, mIteration, "BuchiInterpolantAutomaton",
 							constructionStyle.toString());
 				}
 				final IHoareTripleChecker ehtc =
@@ -608,16 +634,14 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			} catch (final AutomataLibraryException e) {
 				throw new AssertionError(e.getMessage());
 			}
-			if (dumpAutomata) {
+			if (mPref.dumpAutomata()) {
 				final String automatonString;
 				if (interpolantAutomaton.getVpAlphabet().getCallAlphabet().isEmpty()) {
-					automatonString = "interpolBuchiAutomatonUsedInRefinement";
+					automatonString = "InterpolantBuchiAutomatonUsedInRefinementAfter";
 				} else {
-					automatonString = "interpolBuchiNestedWordAutomatonUsedInRefinement";
+					automatonString = "InterpolantBuchiNestedWordAutomatonUsedInRefinementAfter";
 				}
-				final String filename = mIdentifier + "_" + automatonString + mIteration + "after";
-				BuchiAutomizerUtils.writeAutomatonToFile(mServices, interpolantAutomaton, dumpPath, filename, format,
-						constructionStyle.toString());
+				writeAutomatonToFile(interpolantAutomaton, mIteration, automatonString, constructionStyle.toString());
 			}
 			final boolean tacasDump = false;
 			if (tacasDump) {
@@ -628,23 +652,21 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				final boolean isDeterministic =
 						new IsDeterministic<>(new AutomataLibraryServices(mServices), interpolantAutomaton).getResult();
 				if (isDeterministic) {
-					determinicity = "deterministic";
+					determinicity = "Deterministic";
 					assert isSemiDeterministic : "but semi deterministic";
 				} else if (isSemiDeterministic) {
-					determinicity = "semideterministic";
+					determinicity = "Semideterministic";
 				} else {
-					determinicity = "nondeterministic";
+					determinicity = "Nondeterministic";
 				}
 				final String automatonString;
 				if (interpolantAutomaton.getVpAlphabet().getCallAlphabet().isEmpty()) {
-					automatonString = "interpolBuchiAutomatonUsedInRefinement";
+					automatonString = "BuchiInterpolantAutomatonUsedInRefinement";
 				} else {
-					automatonString = "interpolBuchiNestedWordAutomatonUsedInRefinement";
+					automatonString = "BuchiInterpolantNestedWordAutomatonUsedInRefinement";
 				}
-				final String filename = mIdentifier + "_" + determinicity + automatonString + mIteration + "after";
-				BuchiAutomizerUtils.writeAutomatonToFile(mServices, interpolantAutomaton, dumpPath, filename, format,
+				writeAutomatonToFile(interpolantAutomaton, mIteration, determinicity + automatonString,
 						constructionStyle.toString());
-
 			}
 			if (isUseful) {
 				if (mConstructTermcompProof) {

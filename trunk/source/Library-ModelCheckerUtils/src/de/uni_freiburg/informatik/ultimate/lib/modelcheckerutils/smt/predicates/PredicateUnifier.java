@@ -87,11 +87,16 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 public class PredicateUnifier implements IPredicateUnifier {
 
 	/**
-	 * Option for writing a file if we find a quantified formula and a quantifier-free formula that are equivalent.
-	 * (Rationale: case where quantifier elimination is possible but our quantifier elimination is not successful.)
-	 *
+	 * If enabled, writes a file if we found a quantified formula and a quantifier-free formula that are logically
+	 * equivalent. (Rationale: identifies opportunities to improve quantifier elimination.)
 	 */
-	private static final boolean DUMP_UNEXPLOITED_ELIMININATION_POSSIBILITIES = false;
+	private static final boolean DEBUG_DUMP_ELIMINATION_OPPORTUNITIES = false;
+
+	/**
+	 * If enabled, writes a file if we found two syntactically different formulas that are logically equivalent.
+	 * (Rationale: identifies opportunities to improve formula simplification.)
+	 */
+	private static final boolean DEBUG_DUMP_SIMPLIFICATION_OPPORTUNITIES = false;
 
 	protected final ManagedScript mMgdScript;
 	private final BasicPredicateFactory mPredicateFactory;
@@ -977,6 +982,9 @@ public class PredicateUnifier implements IPredicateUnifier {
 					mExpliedPredicates.put(other, explies);
 				}
 				if (implies == Validity.VALID && explies == Validity.VALID) {
+					if (DEBUG_DUMP_SIMPLIFICATION_OPPORTUNITIES) {
+						dumpSimplificationPossibility(mTerm, other.getFormula());
+					}
 					if (mDeprecatedPredicates.containsKey(other)) {
 						return mDeprecatedPredicates.get(other);
 					}
@@ -986,22 +994,8 @@ public class PredicateUnifier implements IPredicateUnifier {
 						return other;
 					}
 					mEquivalentGtQuantifiedPredicates.add(other);
-					if (DUMP_UNEXPLOITED_ELIMININATION_POSSIBILITIES) {
-						final String name = String.format("UnexploitedEliminationPossibility_%s_%s_Size%s",
-								Integer.toHexString(other.getFormula().hashCode()),
-								Integer.toHexString(mTerm.hashCode()), new DAGSize().treesize(other.getFormula()));
-						final String testString = SmtTestGenerationUtils.generateQuantifierEliminationTest(name,
-								other.getFormula(), mTerm);
-						try (FileWriter fw = new FileWriter(name + ".txt");
-								BufferedWriter bw = new BufferedWriter(fw);
-								PrintWriter out = new PrintWriter(bw)) {
-							out.println(testString);
-							out.close();
-							bw.close();
-							fw.close();
-						} catch (final IOException e) {
-							throw new AssertionError(e);
-						}
+					if (DEBUG_DUMP_ELIMINATION_OPPORTUNITIES) {
+						dumpEliminationOpportunities(mTerm, other.getFormula());
 					}
 				}
 			}
@@ -1027,6 +1021,61 @@ public class PredicateUnifier implements IPredicateUnifier {
 				result = "quantifier-free";
 			}
 			return result;
+		}
+
+		private static void dumpSimplificationPossibility(final Term newTerm, final Term existingTerm) {
+			final long largerTermSize;
+			final long smallerTermSize;
+			final Term largerTerm;
+			final Term smallerTerm;
+			{
+				final long sizeNewTerm = new DAGSize().treesize(newTerm);
+				final long sizeExistingTerm = new DAGSize().treesize(existingTerm);
+				if (sizeNewTerm >= sizeExistingTerm) {
+					largerTermSize = sizeNewTerm;
+					largerTerm = newTerm;
+					smallerTermSize = sizeExistingTerm;
+					smallerTerm = existingTerm;
+				} else {
+					largerTermSize = sizeExistingTerm;
+					largerTerm = existingTerm;
+					smallerTermSize = sizeNewTerm;
+					smallerTerm = newTerm;
+				}
+			}
+
+			final String name = String.format("SimplifiableFormula_%s_%s_Treesizes_%s_%s",
+					Integer.toHexString(smallerTerm.hashCode()), Integer.toHexString(largerTerm.hashCode()),
+					smallerTermSize, largerTermSize);
+			final String testString = SmtTestGenerationUtils.generateSimplificationTest(name, largerTerm, smallerTerm);
+			try (FileWriter fw = new FileWriter(name + ".txt");
+					BufferedWriter bw = new BufferedWriter(fw);
+					PrintWriter out = new PrintWriter(bw)) {
+				out.println(testString);
+				out.close();
+				bw.close();
+				fw.close();
+			} catch (final IOException e) {
+				throw new AssertionError(e);
+			}
+		}
+
+		private static void dumpEliminationOpportunities(final Term newTerm, final Term existingTerm) {
+			final String name =
+					String.format("EliminationOpportunities_%s_%s_Size%s", Integer.toHexString(existingTerm.hashCode()),
+							Integer.toHexString(newTerm.hashCode()), new DAGSize().treesize(existingTerm));
+			final String testString =
+					SmtTestGenerationUtils.generateQuantifierEliminationTest(name, existingTerm, newTerm);
+			try (FileWriter fw = new FileWriter(name + ".txt");
+					BufferedWriter bw = new BufferedWriter(fw);
+					PrintWriter out = new PrintWriter(bw)) {
+				out.println(testString);
+				out.close();
+				bw.close();
+				fw.close();
+			} catch (final IOException e) {
+				throw new AssertionError(e);
+			}
 		}
 	}
 

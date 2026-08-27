@@ -730,7 +730,7 @@ public class SimplificationTest {
 		final FunDecl[] funDecls =
 				{ new FunDecl(SmtSortUtils::getIntSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "B") };
 		final String formulaAsString = "(or (>= x 24) (>= x 23) (>= x 22))";
-		final String simplified = "(< 21 x)";
+		final String simplified = "(<= 22 x)";
 		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
 				mLogger, mMgdScript, mCsvWriter);
 	}

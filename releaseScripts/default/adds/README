@@ -37,9 +37,9 @@ This archive also contains binaries for the following theorem provers.
 
 * MathSAT5 (<http://mathsat.fbk.eu>)  
   * Linux (mathsat)
-    MathSAT5 version 5.6.11 (1a1154baf0ab) (Aug  9 2024 08:45:22, gmp 6.2.0, gcc 7.5.0, 64-bit, reentrant)
-  * Windows (mathsat.exe, mpir.dll, mathsat.dll)
-    MathSAT5 version 5.6.11 (968f05bc5839) (Aug  9 2024 10:46:25, gmp 6.0.0/mpir 3.0.0, msvc 19.12, 64-bit)
+    MathSAT5 version 5.6.17 (006e357b0a0e) (Jun  9 2026 17:21:08, gmp 6.2.0, gcc 9.4.0, 64-bit, reentrant)
+  * Windows (mathsat.exe, gmp.dll, mathsat.dll)
+    MathSAT5 version 5.6.17 (7c1b8284717f) (Jun  9 2026 17:44:03, gmp 6.3.0, msvc 19.50, 64-bit, reentrant)
 
 For each of these theorem provers, a corresponding license file (z3-LICENSE,
 cvc4-LICENSE, mathsat-LICENSE) can be found in our archive. Please consult

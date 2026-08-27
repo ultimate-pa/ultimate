@@ -84,7 +84,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
@@ -191,7 +190,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			return true;
 		}
 
-		if (mPref.dumpAutomata()) {
+		if (mPref.dumpDebugInfo()) {
 			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
 			mDumper.dumpNestedRun(mCounterexample);
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
@@ -394,9 +393,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			}
 
 			if (mPref.dumpAutomata()) {
-				final String filename =
-						new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()) + "AbstractionAfterDifference";
-				super.writeAutomatonToFile(subtrahend, filename);
+				writeAutomatonToFile(subtrahend, getIteration(), "AbstractionAfterDifference");
 			}
 			dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, predicateUnifier);
 
@@ -416,9 +413,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			}
 			mAbstraction = diff.getResult();
 			if (mPref.dumpAutomata()) {
-				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
-						+ "AbstractionAfterDifferenceAndDeadEndRemoval";
-				super.writeAutomatonToFile(mAbstraction, filename);
+				writeAutomatonToFile(mAbstraction, getIteration(), "AbstractionAfterDifferenceAndDeadEndRemoval");
 			}
 
 		} finally {

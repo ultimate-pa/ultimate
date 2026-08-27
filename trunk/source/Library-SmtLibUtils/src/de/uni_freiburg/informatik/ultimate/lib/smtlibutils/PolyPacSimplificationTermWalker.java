@@ -73,7 +73,7 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	 * ∨ φ(l)`, where l is a literal (of sort Real, Int, or BitVec) and x is a variable in a {@link PolynomialRelation}
 	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a select term `(select a k)`.)
 	 */
-	private static final boolean APPLY_CONSTANT_FOLDING = true;
+	private static final boolean APPLY_CONSTANT_PROPAGATION = true;
 
 	/**
 	 * Try to simplify modulo terms.
@@ -131,8 +131,8 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 			return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 		}
 		Term result = term;
-		if (APPLY_CONSTANT_FOLDING) {
-			result = SimplificationUtils.applyConstantFolding(mMgdScript, context, result);
+		if (APPLY_CONSTANT_PROPAGATION) {
+			result = SimplificationUtils.applyConstantPropagation(mMgdScript, context, result);
 		}
 		if (APPLY_MODULO_SIMPLIFICATION) {
 			result = SimplificationUtils.tryModSimplification(mMgdScript,
@@ -191,8 +191,14 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 		final Term result;
 		try {
 			final Comparator<Term> siblingOrder = null;
-			result = TermContextTransformationEngine.transform(new PolyPacSimplificationTermWalker(services, mgdScript),
-					siblingOrder, context, term);
+			final Term tmp = TermContextTransformationEngine
+					.transform(new PolyPacSimplificationTermWalker(services, mgdScript), siblingOrder, context, term);
+			// The PolyPac simplification applies the PolyPoNe simplifications (including normal form for integer
+			// inequalities) only while ascending back to the root node. Hence these simplifications (and normal form
+			// rewritings) are not applied if the input is a single atom, or term was simplified to a single atom. Here
+			// we apply the simplifications for this case. Convention: Single atoms are treated like conjuncts, so e.g.,
+			// `0 < x` is converted to `1<=x`.
+			result = PolyPoNeUtils.and(mgdScript.getScript(), context, List.of(tmp));
 		} catch (final ToolchainCanceledException tce) {
 			final CondisDepthCode termCdc = CondisDepthCode.of(term);
 			final String taskDescription = String.format("simplifying a %s term", termCdc);

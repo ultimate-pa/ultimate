@@ -131,9 +131,8 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 				new PowersetDeterminizer<>(reuseAut, true, mPredicateFactoryInterpolantAutomata);
 		final boolean explointSigmaStarConcatOfIA = true;
 		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff =
-				new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
-						(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, reuseAut, psd,
-						explointSigmaStarConcatOfIA);
+				new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement, mAbstraction,
+						reuseAut, psd, explointSigmaStarConcatOfIA);
 
 		if (reuseAut instanceof AbstractInterpolantAutomaton) {
 			final AbstractInterpolantAutomaton<L> aiReuseAut = (AbstractInterpolantAutomaton<L>) reuseAut;
@@ -147,8 +146,7 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 				predicateUnifier);
 
 		if (mPref.dumpAutomata()) {
-			final String filename = "DiffAfterEagerReuse" + oneBasedi;
-			writeAutomatonToFile(diff.getResult(), filename);
+			writeAutomatonToFile(diff.getResult(), "DiffAfterEagerReuse" + oneBasedi);
 		}
 
 		dumpOrAppendAutomatonForReuseIfEnabled(reuseAut, predicateUnifier);

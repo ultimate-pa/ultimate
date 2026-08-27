@@ -563,7 +563,7 @@ public class QuantifierEliminationRegressionTest {
 			};
 		final String formulaAsString = "(exists ((a (Array Int (Array Int Int))) (b2 (Array Int Int)) (b3 Int) (b1 (Array Int Int))) (let ((.cse0 (select (select a k) 0))) (and (not (= .cse0 k)) (= (store (store a .cse0 b1) k (store (select (store a .cse0 b2) k) 4 b3)) mem))))";
 		final String expectedResultAsString = "(let ((.cse1 (select mem k))) (let ((.cse0 (select .cse1 0))) (and (exists ((v_DerPreprocessor_1 (Array Int Int)) (v_arrayElimArr_3 (Array Int Int))) (and (= (select mem .cse0) (select (store (store (store (store mem .cse0 v_DerPreprocessor_1) k v_arrayElimArr_3) .cse0 v_DerPreprocessor_1) k v_arrayElimArr_3) .cse0)) (= (select .cse1 4) (select v_arrayElimArr_3 4)))) (not (= k .cse0)))))";
-		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, false, mServices, mLogger, mMgdScript, mCsvWriter);
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	/**
