@@ -75,16 +75,7 @@ public class EGraphTest {
 		mScript.exit();
 	}
 
-	private static class ExpectedRelation {
-		public String term1;
-		public String term2;
-		public EGraph.EquivalenceState relation;
-
-		public ExpectedRelation(final String term1, final String term2, final EGraph.EquivalenceState relation) {
-			this.term1 = term1;
-			this.term2 = term2;
-			this.relation = relation;
-		}
+	private static record ExpectedRelation(String term1, String term2, EGraph.EquivalenceState relation) {
 	}
 
 	@Test
