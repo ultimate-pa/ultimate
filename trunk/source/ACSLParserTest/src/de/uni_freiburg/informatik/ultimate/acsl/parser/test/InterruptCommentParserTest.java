@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026 Matthias Zumkeller
+ * Copyright (C) 2026 Manuel Bentele
  * Copyright (C) 2026 University of Freiburg
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
@@ -22,7 +22,7 @@
  * CACSL2BoogieTranslator plug-in grant you additional permission to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
+package de.uni_freiburg.informatik.ultimate.acsl.parser.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLAllExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptMasking;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptServiceRoutine;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral;
 
 /**
@@ -48,11 +47,11 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral;
  * </ul>
  *
  * <p>
- * These tests exercise the ACSL lexer and parser (CUP grammar) to verify that interrupt comments are correctly parsed
+ * These tests exercise the ACSL lexer and parser (CUP grammar) to validate that interrupt comments are correctly parsed
  * into the corresponding {@link InterruptStatement} AST nodes.
  * </p>
  *
- * @author Matthias Zumkeller
+ * @author Manuel Bentele
  */
 public class InterruptCommentParserTest {
 
@@ -78,7 +77,7 @@ public class InterruptCommentParserTest {
 
 	@Test
 	public void testParseIsrGpio() throws Exception {
-		final var stmts = parseInterrupts("lstart interrupt service routine GPIO ;");
+		final var stmts = parseInterrupts("lstart interrupt service routine GPIO;");
 		assertEquals(1, stmts.length);
 		assertTrue(stmts[0] instanceof InterruptServiceRoutine);
 
@@ -89,7 +88,7 @@ public class InterruptCommentParserTest {
 
 	@Test
 	public void testParseIsrAdc0() throws Exception {
-		final var stmts = parseInterrupts("lstart interrupt service routine ADC0 ;");
+		final var stmts = parseInterrupts("lstart interrupt service routine ADC0;");
 		assertEquals(1, stmts.length);
 		assertTrue(stmts[0] instanceof InterruptServiceRoutine);
 
@@ -99,8 +98,7 @@ public class InterruptCommentParserTest {
 
 	@Test
 	public void testParseMultipleIsrs() throws Exception {
-		final var stmts =
-				parseInterrupts("lstart interrupt service routine GPIO ; interrupt service routine ADC0 ;");
+		final var stmts = parseInterrupts("lstart interrupt service routine GPIO; interrupt service routine ADC0;");
 		assertEquals(2, stmts.length);
 
 		// The CUP grammar is right-recursive: statements appear in reverse input order
@@ -115,19 +113,18 @@ public class InterruptCommentParserTest {
 
 	@Test
 	public void testParseMaskingEnableAll() throws Exception {
-		final var stmts = parseInterrupts("lstart interrupt masking enable \\all ;");
+		final var stmts = parseInterrupts("lstart interrupt masking enable \\all;");
 		assertEquals(1, stmts.length);
 		assertTrue(stmts[0] instanceof InterruptMasking);
 
 		final var masking = (InterruptMasking) stmts[0];
 		assertTrue("enable should be true", masking.getEnabled());
-		assertTrue("Identifier should be ACSLAllExpression",
-				masking.getIdentifier() instanceof ACSLAllExpression);
+		assertTrue("Identifier should be ACSLAllExpression", masking.getIdentifier() instanceof ACSLAllExpression);
 	}
 
 	@Test
 	public void testParseMaskingDisableAll() throws Exception {
-		final var stmts = parseInterrupts("lstart interrupt masking disable \\all ;");
+		final var stmts = parseInterrupts("lstart interrupt masking disable \\all;");
 		assertEquals(1, stmts.length);
 		assertTrue(stmts[0] instanceof InterruptMasking);
 
@@ -140,7 +137,7 @@ public class InterruptCommentParserTest {
 
 	@Test
 	public void testParseMaskingEnableGpio() throws Exception {
-		final var stmts = parseInterrupts("lstart interrupt masking enable GPIO ;");
+		final var stmts = parseInterrupts("lstart interrupt masking enable GPIO;");
 		assertEquals(1, stmts.length);
 		assertTrue(stmts[0] instanceof InterruptMasking);
 
@@ -152,7 +149,7 @@ public class InterruptCommentParserTest {
 
 	@Test
 	public void testParseMaskingDisableGpio() throws Exception {
-		final var stmts = parseInterrupts("lstart interrupt masking disable GPIO ;");
+		final var stmts = parseInterrupts("lstart interrupt masking disable GPIO;");
 		assertEquals(1, stmts.length);
 		assertTrue(stmts[0] instanceof InterruptMasking);
 
@@ -179,20 +176,16 @@ public class InterruptCommentParserTest {
 
 	@Test
 	public void testParseAllAnnotationTypes() throws Exception {
-		final var acsl = "lstart "
-				+ "interrupt service routine GPIO ; "
-				+ "interrupt service routine ADC0 ; "
-				+ "interrupt masking enable \\all ; "
-				+ "interrupt masking disable \\all ; "
-				+ "interrupt masking enable GPIO ; "
-				+ "interrupt masking disable GPIO ; "
-				+ "interrupt masking enable irq ;";
+		final var acsl = "lstart " + "interrupt service routine GPIO; " + "interrupt service routine ADC0; "
+				+ "interrupt masking enable \\all; " + "interrupt masking disable \\all; "
+				+ "interrupt masking enable GPIO; " + "interrupt masking disable GPIO; "
+				+ "interrupt masking enable irq;";
 		final var stmts = parseInterrupts(acsl);
 		assertEquals(7, stmts.length);
 
 		// The CUP grammar is right-recursive: statements appear in reverse input order
 		// Input order: ISR GPIO, ISR ADC0, enable \all, disable \all, enable GPIO, disable GPIO, enable irq
-		// List order:  enable irq, disable GPIO, enable GPIO, disable \all, enable \all, ISR ADC0, ISR GPIO
+		// List order: enable irq, disable GPIO, enable GPIO, disable \all, enable \all, ISR ADC0, ISR GPIO
 
 		// enable irq (parameter-based) — last in input, first in list
 		assertTrue(stmts[0] instanceof InterruptMasking);
@@ -232,7 +225,7 @@ public class InterruptCommentParserTest {
 
 	@Test
 	public void testParseGlobalContext() throws Exception {
-		final var stmts = parseInterrupts("gstart interrupt service routine GPIO ;");
+		final var stmts = parseInterrupts("gstart interrupt service routine GPIO;");
 		assertEquals(1, stmts.length);
 		assertTrue(stmts[0] instanceof InterruptServiceRoutine);
 		assertEquals("GPIO", ((StringLiteral) ((InterruptServiceRoutine) stmts[0]).getIdentifier()).getValue());
@@ -240,7 +233,7 @@ public class InterruptCommentParserTest {
 
 	@Test
 	public void testParseMixedWithRequires() throws Exception {
-		final var acsl = "lstart requires \\true ; interrupt service routine GPIO ;";
+		final var acsl = "lstart requires \\true ; interrupt service routine GPIO;";
 		final var contract = parseContract(acsl);
 		assertNotNull(contract.getInterruptStmt());
 		assertEquals(1, contract.getInterruptStmt().length);
@@ -251,7 +244,7 @@ public class InterruptCommentParserTest {
 
 	@Test
 	public void testParseNoInterrupts() throws Exception {
-		final var contract = parseContract("lstart requires \\true ;");
+		final var contract = parseContract("lstart requires \\true;");
 		final var stmts = contract.getInterruptStmt();
 		assertEquals("Expected empty interrupt array, not null", 0, stmts.length);
 	}

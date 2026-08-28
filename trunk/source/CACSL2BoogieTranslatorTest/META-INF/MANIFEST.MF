@@ -5,6 +5,6 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl
 Bundle-Vendor: Ultimate Program Analysis Team
 Bundle-Version: 0.3.1
 Fragment-Host: de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator
-Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.junit
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.test

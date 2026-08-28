@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026 Matthias Zumkeller
+ * Copyright (C) 2026 Manuel Bentele
  * Copyright (C) 2026 University of Freiburg
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
@@ -22,29 +22,25 @@
  * CACSL2BoogieTranslator plug-in grant you additional permission to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.List;
-
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InterruptPostProcessor;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.IInterruptFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptMaskingFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptServiceFunction;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequest;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequestHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference.AllInterrupts;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference.IInterruptReference;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference.StaticInterrupt;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -52,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLAllExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptMasking;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptServiceRoutine;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral;
 
 /**
@@ -72,9 +67,9 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral;
  * </li>
  * </ol>
  *
- * @author Matthias Zumkeller
+ * @author Manuel Bentele
  */
-public class InterruptPostProcessorFunctionTest {
+public class InterruptPostProcessorTest {
 
 	private static final ILocation IGNORE_LOC = LocationFactory.createIgnoreCLocation();
 
@@ -130,7 +125,7 @@ public class InterruptPostProcessorFunctionTest {
 	public void testGetIsrsSingleGpio() throws Exception {
 		final var funcHandler = new InterruptFunctionHandler();
 		final var irqHandler = new InterruptRequestHandler();
-		parseAndRegister("lstart interrupt service routine GPIO ;", funcHandler, irqHandler);
+		parseAndRegister("lstart interrupt service routine GPIO;", funcHandler, irqHandler);
 
 		final var isrs = funcHandler.getIsrs();
 		assertEquals(1, isrs.size());
@@ -142,7 +137,7 @@ public class InterruptPostProcessorFunctionTest {
 	public void testGetIsrsMultiple() throws Exception {
 		final var funcHandler = new InterruptFunctionHandler();
 		final var irqHandler = new InterruptRequestHandler();
-		parseAndRegister("lstart interrupt service routine GPIO ; interrupt service routine ADC0 ;", funcHandler,
+		parseAndRegister("lstart interrupt service routine GPIO; interrupt service routine ADC0;", funcHandler,
 				irqHandler);
 
 		final var isrs = funcHandler.getIsrs();
@@ -157,7 +152,7 @@ public class InterruptPostProcessorFunctionTest {
 		final var funcHandler = new InterruptFunctionHandler();
 		final var irqHandler = new InterruptRequestHandler();
 		parseAndRegister(
-				"lstart interrupt service routine GPIO ; interrupt masking enable GPIO ; interrupt masking disable GPIO ;",
+				"lstart interrupt service routine GPIO; interrupt masking enable GPIO; interrupt masking disable GPIO;",
 				funcHandler, irqHandler);
 
 		final var isrs = funcHandler.getIsrs();
@@ -171,7 +166,7 @@ public class InterruptPostProcessorFunctionTest {
 	public void testGetMaskingFunctionsEnableAll() throws Exception {
 		final var funcHandler = new InterruptFunctionHandler();
 		final var irqHandler = new InterruptRequestHandler();
-		parseAndRegister("lstart interrupt masking enable \\all ;", funcHandler, irqHandler);
+		parseAndRegister("lstart interrupt masking enable \\all;", funcHandler, irqHandler);
 
 		final var maskingFuncs = funcHandler.getFunctions(InterruptMaskingFunction.class);
 		assertEquals(1, maskingFuncs.size());
@@ -183,7 +178,7 @@ public class InterruptPostProcessorFunctionTest {
 	public void testGetMaskingFunctionsDisableAll() throws Exception {
 		final var funcHandler = new InterruptFunctionHandler();
 		final var irqHandler = new InterruptRequestHandler();
-		parseAndRegister("lstart interrupt masking disable \\all ;", funcHandler, irqHandler);
+		parseAndRegister("lstart interrupt masking disable \\all;", funcHandler, irqHandler);
 
 		final var maskingFuncs = funcHandler.getFunctions(InterruptMaskingFunction.class);
 		assertEquals(1, maskingFuncs.size());
@@ -195,7 +190,7 @@ public class InterruptPostProcessorFunctionTest {
 	public void testGetMaskingFunctionsEnableGpio() throws Exception {
 		final var funcHandler = new InterruptFunctionHandler();
 		final var irqHandler = new InterruptRequestHandler();
-		parseAndRegister("lstart interrupt masking enable GPIO ;", funcHandler, irqHandler);
+		parseAndRegister("lstart interrupt masking enable GPIO;", funcHandler, irqHandler);
 
 		final var maskingFuncs = funcHandler.getFunctions(InterruptMaskingFunction.class);
 		assertEquals(1, maskingFuncs.size());
@@ -209,14 +204,14 @@ public class InterruptPostProcessorFunctionTest {
 		final var funcHandler = new InterruptFunctionHandler();
 		final var irqHandler = new InterruptRequestHandler();
 		parseAndRegister(
-				"lstart interrupt masking enable GPIO ; interrupt masking disable GPIO ; interrupt masking enable \\all ;",
+				"lstart interrupt masking enable GPIO; interrupt masking disable GPIO; interrupt masking enable \\all;",
 				funcHandler, irqHandler);
 
 		final var allMasking = funcHandler.getFunctions(InterruptMaskingFunction.class);
 		assertEquals(3, allMasking.size());
 
-		final var enableFuncs = allMasking.stream()
-				.filter(f -> f.getOperation() == InterruptMaskingFunction.Operation.ENABLE).toList();
+		final var enableFuncs =
+				allMasking.stream().filter(f -> f.getOperation() == InterruptMaskingFunction.Operation.ENABLE).toList();
 		assertEquals(2, enableFuncs.size());
 
 		final var disableFuncs = allMasking.stream()
@@ -228,7 +223,7 @@ public class InterruptPostProcessorFunctionTest {
 	public void testGetMaskingFunctionsExcludesIsrs() throws Exception {
 		final var funcHandler = new InterruptFunctionHandler();
 		final var irqHandler = new InterruptRequestHandler();
-		parseAndRegister("lstart interrupt service routine GPIO ; interrupt masking enable GPIO ;", funcHandler,
+		parseAndRegister("lstart interrupt service routine GPIO; interrupt masking enable GPIO;", funcHandler,
 				irqHandler);
 
 		final var maskingFuncs = funcHandler.getFunctions(InterruptMaskingFunction.class);
@@ -241,7 +236,7 @@ public class InterruptPostProcessorFunctionTest {
 	public void testResolveStaticInterruptGpio() throws Exception {
 		final var funcHandler = new InterruptFunctionHandler();
 		final var irqHandler = new InterruptRequestHandler();
-		parseAndRegister("lstart interrupt service routine GPIO ;", funcHandler, irqHandler);
+		parseAndRegister("lstart interrupt service routine GPIO;", funcHandler, irqHandler);
 
 		final var isrs = funcHandler.getIsrs();
 		final var ref = isrs.get(0).getIrqReference();
@@ -259,7 +254,7 @@ public class InterruptPostProcessorFunctionTest {
 		final var funcHandler = new InterruptFunctionHandler();
 		final var irqHandler = new InterruptRequestHandler();
 		parseAndRegister(
-				"lstart interrupt service routine GPIO ; interrupt service routine ADC0 ; interrupt masking enable \\all ;",
+				"lstart interrupt service routine GPIO; interrupt service routine ADC0; interrupt masking enable \\all;",
 				funcHandler, irqHandler);
 
 		final var maskingFuncs = funcHandler.getFunctions(InterruptMaskingFunction.class);
@@ -279,7 +274,7 @@ public class InterruptPostProcessorFunctionTest {
 		final var funcHandler = new InterruptFunctionHandler();
 		final var irqHandler = new InterruptRequestHandler();
 		parseAndRegister(
-				"lstart interrupt service routine GPIO ; interrupt service routine ADC0 ; interrupt masking enable ADC0 ;",
+				"lstart interrupt service routine GPIO; interrupt service routine ADC0; interrupt masking enable ADC0;",
 				funcHandler, irqHandler);
 
 		final var maskingFuncs = funcHandler.getFunctions(InterruptMaskingFunction.class);
@@ -302,10 +297,8 @@ public class InterruptPostProcessorFunctionTest {
 	public void testResolveMaskingProceduresEnableSpecific() throws Exception {
 		final var funcHandler = new InterruptFunctionHandler();
 		final var irqHandler = new InterruptRequestHandler();
-		parseAndRegister(
-				"lstart interrupt service routine GPIO ; interrupt service routine ADC0 ; "
-						+ "interrupt masking enable GPIO ;",
-				funcHandler, irqHandler);
+		parseAndRegister("lstart interrupt service routine GPIO; interrupt service routine ADC0; "
+				+ "interrupt masking enable GPIO;", funcHandler, irqHandler);
 
 		// Simulate resolveMaskingFunctionProcedures(ENABLE)
 		final var enableFuncs = funcHandler.getFunctions(InterruptMaskingFunction.class).stream()
@@ -323,10 +316,8 @@ public class InterruptPostProcessorFunctionTest {
 	public void testResolveMaskingProceduresEnableAllExpands() throws Exception {
 		final var funcHandler = new InterruptFunctionHandler();
 		final var irqHandler = new InterruptRequestHandler();
-		parseAndRegister(
-				"lstart interrupt service routine GPIO ; interrupt service routine ADC0 ; "
-						+ "interrupt masking enable \\all ;",
-				funcHandler, irqHandler);
+		parseAndRegister("lstart interrupt service routine GPIO; interrupt service routine ADC0; "
+				+ "interrupt masking enable \\all;", funcHandler, irqHandler);
 
 		// Simulate resolveMaskingFunctionProcedures(ENABLE)
 		final var enableFuncs = funcHandler.getFunctions(InterruptMaskingFunction.class).stream()
@@ -342,10 +333,8 @@ public class InterruptPostProcessorFunctionTest {
 	public void testResolveMaskingProceduresDisableSeparate() throws Exception {
 		final var funcHandler = new InterruptFunctionHandler();
 		final var irqHandler = new InterruptRequestHandler();
-		parseAndRegister(
-				"lstart interrupt service routine GPIO ; interrupt service routine ADC0 ; "
-						+ "interrupt masking enable GPIO ; interrupt masking disable ADC0 ;",
-				funcHandler, irqHandler);
+		parseAndRegister("lstart interrupt service routine GPIO; interrupt service routine ADC0; "
+				+ "interrupt masking enable GPIO; interrupt masking disable ADC0;", funcHandler, irqHandler);
 
 		final var enableFuncs = funcHandler.getFunctions(InterruptMaskingFunction.class).stream()
 				.filter(f -> f.getOperation() == InterruptMaskingFunction.Operation.ENABLE).toList();
@@ -365,14 +354,10 @@ public class InterruptPostProcessorFunctionTest {
 	public void testFullUserExample() throws Exception {
 		final var funcHandler = new InterruptFunctionHandler();
 		final var irqHandler = new InterruptRequestHandler();
-		parseAndRegister("lstart "
-				+ "interrupt service routine GPIO ; "
-				+ "interrupt service routine ADC0 ; "
-				+ "interrupt masking enable \\all ; "
-				+ "interrupt masking disable \\all ; "
-				+ "interrupt masking enable GPIO ; "
-				+ "interrupt masking disable GPIO ; "
-				+ "interrupt masking enable irq ;", funcHandler, irqHandler);
+		parseAndRegister("lstart " + "interrupt service routine GPIO; " + "interrupt service routine ADC0; "
+				+ "interrupt masking enable \\all; " + "interrupt masking disable \\all; "
+				+ "interrupt masking enable GPIO; " + "interrupt masking disable GPIO; "
+				+ "interrupt masking enable irq;", funcHandler, irqHandler);
 
 		// Verify ISRs
 		final var isrs = funcHandler.getIsrs();
@@ -393,25 +378,20 @@ public class InterruptPostProcessorFunctionTest {
 		assertEquals(2, disableFuncs.size());
 
 		// Verify \all expands to all registered IRQs (irq=1, GPIO=2, ADC0=3 due to right-recursive grammar)
-		final var allEnable = enableFuncs.stream()
-				.filter(f -> f.getIrqReference() instanceof AllInterrupts).toList();
+		final var allEnable = enableFuncs.stream().filter(f -> f.getIrqReference() instanceof AllInterrupts).toList();
 		assertEquals(1, allEnable.size());
 		final var allResolved = allEnable.get(0).getIrqReference().resolve(irqHandler);
 		assertEquals(3, allResolved.size());
 
 		// Verify GPIO masking resolves to IRQ 2 (registered second due to reversed grammar order)
-		final var gpioEnable = enableFuncs.stream()
-				.filter(f -> f.getIrqReference() instanceof StaticInterrupt
-						&& ((StaticInterrupt) f.getIrqReference()).getIrq().getName().equals("GPIO"))
-				.toList();
+		final var gpioEnable = enableFuncs.stream().filter(f -> f.getIrqReference() instanceof StaticInterrupt
+				&& ((StaticInterrupt) f.getIrqReference()).getIrq().getName().equals("GPIO")).toList();
 		assertEquals(1, gpioEnable.size());
 		assertEquals(2, gpioEnable.get(0).getIrqReference().resolve(irqHandler).get(0).getNum());
 
 		// Verify irq parameter resolves to IRQ 1 (registered first due to reversed grammar order)
-		final var irqEnable = enableFuncs.stream()
-				.filter(f -> f.getIrqReference() instanceof StaticInterrupt
-						&& ((StaticInterrupt) f.getIrqReference()).getIrq().getName().equals("irq"))
-				.toList();
+		final var irqEnable = enableFuncs.stream().filter(f -> f.getIrqReference() instanceof StaticInterrupt
+				&& ((StaticInterrupt) f.getIrqReference()).getIrq().getName().equals("irq")).toList();
 		assertEquals(1, irqEnable.size());
 		assertEquals(1, irqEnable.get(0).getIrqReference().resolve(irqHandler).get(0).getNum());
 	}
@@ -422,7 +402,7 @@ public class InterruptPostProcessorFunctionTest {
 	public void testProcedureAssignmentOnIsr() throws Exception {
 		final var funcHandler = new InterruptFunctionHandler();
 		final var irqHandler = new InterruptRequestHandler();
-		parseAndRegister("lstart interrupt service routine GPIO ;", funcHandler, irqHandler);
+		parseAndRegister("lstart interrupt service routine GPIO;", funcHandler, irqHandler);
 
 		final var isrs = funcHandler.getIsrs();
 		final var isr = isrs.get(0);
@@ -437,7 +417,7 @@ public class InterruptPostProcessorFunctionTest {
 	public void testProcedureAssignmentOnMaskingFunction() throws Exception {
 		final var funcHandler = new InterruptFunctionHandler();
 		final var irqHandler = new InterruptRequestHandler();
-		parseAndRegister("lstart interrupt masking enable GPIO ;", funcHandler, irqHandler);
+		parseAndRegister("lstart interrupt masking enable GPIO;", funcHandler, irqHandler);
 
 		final var maskingFuncs = funcHandler.getFunctions(InterruptMaskingFunction.class);
 		final var func = maskingFuncs.get(0);

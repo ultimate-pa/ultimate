@@ -349,6 +349,7 @@
 		<module>../Library-UltimateTest</module>
 		<!-- modules containing unit tests -->
 		<module>../AbstractInterpretationV2Test</module>
+		<module>../ACSLParserTest</module>
 		<module>../BoogiePreprocessorTest</module>
 		<module>../CACSL2BoogieTranslatorTest</module>
 		<module>../CoreRCPTest</module>
