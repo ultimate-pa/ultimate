@@ -2262,5 +2262,54 @@ public class QuantifierEliminationRegressionTest {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void nestedStoreSequence00() {
+		final FunDecl[] funDecls = {
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "idx1"),
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "val"),
+		};
+		final String formulaAsString = "(exists ((a (Array (_ BitVec 32) (_ BitVec 8)))) (and (= (store a idx1 (_ bv5 8)) a) (= (select a idx1) val)))";
+		final String expectedResult = "(= (_ bv5 8) val)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void nestedStoreSequence01() {
+		final FunDecl[] funDecls = {
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "idx1"),
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "idx2"),
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "val"),
+		};
+		final String formulaAsString = "(exists ((a (Array (_ BitVec 32) (_ BitVec 8)))) (and (= (store (store a idx1 (_ bv5 8)) idx2 (_ bv0 8)) a) (= (select a idx1) val)))";
+		final String expectedResult = "(and (=> (= idx1 idx2) (= (_ bv0 8) val)) (=> (distinct idx1 idx2) (= (_ bv5 8) val)))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void nestedStoreSequence02() {
+		final FunDecl[] funDecls = {
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "idx1"),
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "idx2"),
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "idx3"),
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "val"),
+		};
+		final String formulaAsString = "(exists ((a (Array (_ BitVec 32) (_ BitVec 8)))) (and (= (store (store (store a idx1 (_ bv5 8)) idx2 (_ bv0 8)) idx3 (_ bv23 8)) a) (= (select a idx1) val)))";
+		final String expectedResult = "(and (=> (and (= idx1 idx2) (distinct idx1 idx3)) (= (_ bv0 8) val)) (=> (and (distinct idx1 idx2) (distinct idx1 idx3)) (= (_ bv5 8) val)) (=> (= idx1 idx3) (= (_ bv23 8) val)))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void nestedStoreSequence03() {
+		final FunDecl[] funDecls = {
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "idx1"),
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "idx2"),
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "idx3"),
+			new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "val"),
+		};
+		final String formulaAsString = "(not (exists ((a (Array (_ BitVec 32) (_ BitVec 8)))) (and (= (store (store (store a idx1 (_ bv5 8)) idx2 (_ bv0 8)) idx3 (_ bv23 8)) a) (= (select a idx1) val))))";
+		final String expectedResult = "(not (and (=> (and (= idx1 idx2) (distinct idx1 idx3)) (= (_ bv0 8) val)) (=> (and (distinct idx1 idx2) (distinct idx1 idx3)) (= (_ bv5 8) val)) (=> (= idx1 idx3) (= (_ bv23 8) val))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	//@formatter:on
 }
