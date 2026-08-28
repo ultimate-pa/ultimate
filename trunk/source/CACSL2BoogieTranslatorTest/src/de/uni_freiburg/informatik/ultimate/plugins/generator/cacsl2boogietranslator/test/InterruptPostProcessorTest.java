@@ -31,7 +31,9 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InterruptPostProcessor;
@@ -41,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.i
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.function.InterruptServiceFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.InterruptRequestHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference.AllInterrupts;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference.IInterruptReference;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps.irq.reference.StaticInterrupt;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -48,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLAllExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptMasking;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptServiceRoutine;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral;
 
 /**

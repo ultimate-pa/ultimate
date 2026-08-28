@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLAllExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptMasking;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptServiceRoutine;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.InterruptStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral;
 
 /**
