@@ -41,9 +41,11 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
@@ -91,11 +93,13 @@ public class FunctionModelHelper {
 	private final IMemoryPointer mMemoryPointer;
 	private final boolean mCheckMemoryLeakInMain;
 	private final boolean mSvcompMemtrackCompatibilityMode;
+	private final boolean mAssumeHeapAllocationAlwaysSucceeds;
 
 	public FunctionModelHelper(final AuxVarInfoBuilder auxVarInfoBuilder,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizes typeSizes, final ITypeHandler typeHandler, final boolean checkMemoryLeakInMain,
-			final boolean svcompMemtrackCompatibilityMode, final IMemoryPointer memoryPointer) {
+			final boolean svcompMemtrackCompatibilityMode, final IMemoryPointer memoryPointer,
+			final boolean assumeHeapAllocationAlwaysSucceeds) {
 		mExpressionTranslation = expressionTranslation;
 		mMemoryHandler = memoryHandler;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
@@ -104,6 +108,7 @@ public class FunctionModelHelper {
 		mCheckMemoryLeakInMain = checkMemoryLeakInMain;
 		mSvcompMemtrackCompatibilityMode = svcompMemtrackCompatibilityMode;
 		mMemoryPointer = memoryPointer;
+		mAssumeHeapAllocationAlwaysSucceeds = assumeHeapAllocationAlwaysSucceeds;
 	}
 
 	/**
@@ -340,6 +345,13 @@ public class FunctionModelHelper {
 						len.getExp(), sizeT, mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ZERO),
 						sizeT)));
 		body.add(mMemoryHandler.getUltimateMemAllocCall(len.getExp(), retvar.getLhs(), loc, MemoryArea.HEAP));
+
+		if (!mAssumeHeapAllocationAlwaysSucceeds) {
+			// Assume that the allocation succeeds, there is already the case above for the function to return null
+			body.add(new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ,
+					retvar.getExp(),
+					mMemoryPointer.constructNullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents()))));
+		}
 
 		final var nullChar = mTypeSizes.constructLiteralForIntegerType(loc, charType, BigInteger.ZERO);
 		final var lastChar = mMemoryHandler.lastCharOfString(loc, sizeT, len.getExp(), retvar.getExp());

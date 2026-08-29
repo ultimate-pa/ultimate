@@ -63,8 +63,8 @@ public class SimpleIncreasingStrategy extends MemoryManagementStrategyBase {
 
 	public SimpleIncreasingStrategy(final TypeSizes typeSizes, final ExpressionTranslation expressionTranslation,
 			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final boolean isBitVectorTranslation) {
-		super(typeSizes, expressionTranslation, typeHandler, typeSizeAndOffsetComputer);
+			final boolean isBitVectorTranslation, final boolean assumeAllocAlwaysSucceeds) {
+		super(typeSizes, expressionTranslation, typeHandler, typeSizeAndOffsetComputer, assumeAllocAlwaysSucceeds);
 		mIsBitVectorTranslation = isBitVectorTranslation;
 	}
 
@@ -101,14 +101,20 @@ public class SimpleIncreasingStrategy extends MemoryManagementStrategyBase {
 				ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogieTypeForSizeT(), SFO.SIZE,
 						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, memoryAreaName));
 
-		// #res!base == old(counterExpression);
+		final boolean canAllocFail = memoryArea == MemoryArea.HEAP && !mAssumeAllocAlwaysSucceeds;
+		final Expression resIsNull = canAllocFail
+				? ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, resBaseExpr, zeroNumericValueExpr)
+				: ExpressionFactory.createBooleanLiteral(tuLoc, false);
+
+		// #res!base == 0 || #res!base == old(counterExpression);
 		final var baseEqualCounterExpr = ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, resBaseExpr,
 				ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, counterExpression));
-		expressions.add(new Pair<>(baseEqualCounterExpr, Collections.emptySet()));
+		expressions
+				.add(new Pair<>(ExpressionFactory.or(tuLoc, resIsNull, baseEqualCounterExpr), Collections.emptySet()));
 
-		// #res!base > 0;
+		// #res!base >= 0;
 		final var baseGreaterZeroExpr = mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
-				IASTBinaryExpression.op_greaterThan,
+				canAllocFail ? IASTBinaryExpression.op_greaterEqual : IASTBinaryExpression.op_greaterThan,
 				ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_BASE),
 				cTypeOfPointerComponent, zeroNumericValueExpr, cTypeOfPointerComponent);
 
@@ -154,15 +160,15 @@ public class SimpleIncreasingStrategy extends MemoryManagementStrategyBase {
 			expressions.add(new Pair<>(stackAllocationsGreaterThanBarrier, Collections.emptySet()));
 		}
 
-		// res!base > #InitialAllocation
+		// #res!base == 0 || res!base > #InitialAllocation
 		final var baseGreaterThanInitialAllocsExpr = mExpressionTranslation.constructBinaryComparisonIntegerExpression(
 				tuLoc, IASTBinaryExpression.op_greaterThan,
 				ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_BASE),
 				cTypeOfPointerComponent, initialAllocCounterExpr, cTypeOfPointerComponent);
-		expressions.add(new Pair<>(baseGreaterThanInitialAllocsExpr, Collections.emptySet()));
+		expressions.add(new Pair<>(ExpressionFactory.or(tuLoc, resIsNull, baseGreaterThanInitialAllocsExpr),
+				Collections.emptySet()));
 
 		// StackAllocations == old(StackAllocations) + ~size
-		// HeapAllocations == old(HeapAllocations) + ~size
 		final var oldExpr =
 				ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, counterExpression);
 		final var sumExpr = mExpressionTranslation.constructArithmeticExpression(tuLoc, IASTBinaryExpression.op_plus,
@@ -170,8 +176,20 @@ public class SimpleIncreasingStrategy extends MemoryManagementStrategyBase {
 		final var counterUpdateValueExpr =
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, counterExpression, sumExpr);
 
-		expressions.add(new Pair<>(counterUpdateValueExpr,
-				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(counterExpression))));
+		if (canAllocFail) {
+			// #res!Base == 0 || HeapAllocations == old(HeapAllocations) + ~size
+			expressions.add(new Pair<>(ExpressionFactory.or(tuLoc, resIsNull, counterUpdateValueExpr),
+					Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(counterExpression))));
+			// #res!Base != 0 || HeapAllocations == old(HeapAllocations)
+			expressions.add(new Pair<>(
+					ExpressionFactory.or(tuLoc, ExpressionFactory.not(tuLoc, resIsNull),
+							ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, counterExpression, oldExpr)),
+					Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(counterExpression))));
+		} else {
+			// HeapAllocations == old(HeapAllocations) + ~size
+			expressions.add(new Pair<>(counterUpdateValueExpr,
+					Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(counterExpression))));
+		}
 
 		return expressions;
 	}
