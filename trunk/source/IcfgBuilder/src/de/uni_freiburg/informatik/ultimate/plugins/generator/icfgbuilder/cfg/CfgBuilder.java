@@ -760,7 +760,7 @@ public class CfgBuilder {
 					mRemovedAssumeTrueStatements++;
 					continue;
 				}
-				if (st instanceof final Label laSt && BoogieUtils.isAuxiliaryLabel(laSt)) {
+				if (st instanceof final Label laSt && canLabelBeRemoved(laSt)) {
 					final int gotoTarget = mGotoTargetCounter.getOrDefault(laSt.getName(), 0);
 					if (gotoTarget == 0) {
 						// not target of a goto
@@ -810,6 +810,11 @@ public class CfgBuilder {
 				currentLocation = endStatementSequence((StatementSequence) currentLocation);
 			}
 			return currentLocation;
+		}
+
+		private boolean canLabelBeRemoved(final Label label) {
+			return mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(
+					IcfgPreferenceInitializer.LABEL_REMOVE_UNNECESSARY_LABELS) || BoogieUtils.isAuxiliaryLabel(label);
 		}
 
 		private BoogieIcfgLocation buildIf(final BoogieIcfgLocation currentLocation, final IfStatement st) {
