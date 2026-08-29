@@ -4,7 +4,7 @@
       label="BA_FeatureDependenciesDebugE4"
       version="0.3.1"
       provider-name="Ultimate Program Analysis Team"
-      arch="x86_64">
+      arch="aarch64,x86_64">
 
    <requires>
       <import feature="BA_FeatureDependenciesCommon"/>
@@ -225,10 +225,24 @@
          version="0.0.0"/>
 
    <plugin
+         id="org.eclipse.swt.cocoa.macosx.aarch64"
+         os="macosx"
+         ws="cocoa"
+         arch="aarch64"
+         version="0.0.0"/>
+
+   <plugin
          id="org.eclipse.swt.cocoa.macosx.x86_64"
          os="macosx"
          ws="cocoa"
          arch="x86_64"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.swt.gtk.linux.aarch64"
+         os="linux"
+         ws="gtk"
+         arch="aarch64"
          version="0.0.0"/>
 
    <plugin
