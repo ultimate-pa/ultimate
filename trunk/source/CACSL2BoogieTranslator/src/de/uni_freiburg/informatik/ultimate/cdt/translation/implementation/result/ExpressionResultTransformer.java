@@ -264,9 +264,7 @@ public class ExpressionResultTransformer {
 			final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(expr);
 			final RValue newValue;
 			if (underlyingType instanceof CPrimitive || underlyingType instanceof CPointer) {
-				final ExpressionResult rex =
-						unchecked ? mMemoryHandler.getReadUnchecked(hlv.getAddress(), underlyingType)
-								: mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType);
+				final ExpressionResult rex = readAsExpressionResult(hlv.getAddress(), unchecked, underlyingType);
 				newValue = (RValue) rex.getLrValue();
 				erb.addAllExceptLrValue(rex);
 			} else if (underlyingType instanceof final CArray cArray) {
@@ -391,8 +389,8 @@ public class ExpressionResultTransformer {
 					throw new UnsupportedOperationException("Bitfield read struct from heap");
 				}
 
-				final var newAddress = mMemoryHandler.constructAddressForStructField(loc, structOnHeapAddress,
-						innerStructOffset, mExprTrans.getCTypeOfPointerComponents());
+				final var newAddress =
+						mMemoryHandler.constructAddressForStructField(loc, structOnHeapAddress, innerStructOffset);
 
 				final ExpressionResult fieldRead =
 						readStructFromHeap(old, loc, newAddress, cStructOrUnion, hook, unchecked);
@@ -471,10 +469,8 @@ public class ExpressionResultTransformer {
 			final ExpressionResult readRex;
 			if (arrayValueType instanceof final CStructOrUnion cStructOrUnion) {
 				readRex = readStructFromHeap(old, loc, addressExpr, cStructOrUnion, hook, unchecked);
-			} else if (unchecked) {
-				readRex = mMemoryHandler.getReadUnchecked(addressExpr, arrayType.getValueType());
 			} else {
-				readRex = mMemoryHandler.getReadCall(addressExpr, arrayType.getValueType());
+				readRex = readAsExpressionResult(addressExpr, unchecked, arrayType.getValueType());
 			}
 			builder.addAllExceptLrValue(readRex);
 			builder.setOrResetLrValue(readRex.getLrValue());
@@ -490,6 +486,15 @@ public class ExpressionResultTransformer {
 		}
 		builder.setOrResetLrValue(resultValue);
 		return builder.build();
+	}
+
+	private ExpressionResult readAsExpressionResult(final Expression addressExpr, final boolean unchecked,
+			final ICType resultType) {
+		if (unchecked) {
+			final Expression read = mMemoryHandler.getReadUnchecked(addressExpr, resultType);
+			return new ExpressionResult(new RValue(read, resultType));
+		}
+		return mMemoryHandler.getReadCall(addressExpr, resultType);
 	}
 
 	/**

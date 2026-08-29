@@ -53,12 +53,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * This strategy is the default strategy for the 2D-memory addressing scheme. The generic parameter is used to ensure
- * that this strategy is only instanciated within the 2D addressing class because it is not compatible with other modes.
+ * that this strategy is only instantiated within the 2D addressing class because it is not compatible with other modes.
  * Memory addresses get a non-deterministic value, which is not used yet.
  *
  * @author Jan Körner
@@ -77,8 +75,8 @@ public class NonDetStrategy2D<T extends MemoryAddressing2D> extends MemoryManage
 	}
 
 	@Override
-	public List<Pair<Expression, Set<VariableLHS>>> constructMallocSpecificationExpressions(final ILocation tuLoc,
-			final MemoryArea memoryArea, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public AllocationProcedureSpec constructMallocSpecification(final ILocation tuLoc, final MemoryArea memoryArea,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 
 		final var memoryAreaName = memoryArea.getMemoryStructureDeclaration().getName();
@@ -104,7 +102,7 @@ public class NonDetStrategy2D<T extends MemoryAddressing2D> extends MemoryManage
 
 		final var resBaseExpr = ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_BASE);
 
-		final ArrayList<Pair<Expression, Set<VariableLHS>>> expressions = new ArrayList<>();
+		final ArrayList<Expression> expressions = new ArrayList<>();
 
 		// old(#valid)[#res!base] == false
 		final var freshLocationCurrentlyNotValidExpr = ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
@@ -112,32 +110,30 @@ public class NonDetStrategy2D<T extends MemoryAddressing2D> extends MemoryManage
 						ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, validArrayExpr),
 						new Expression[] { resBaseExpr }),
 				falseExpr);
-
-		expressions.add(new Pair<>(freshLocationCurrentlyNotValidExpr, Collections.emptySet()));
+		expressions.add(freshLocationCurrentlyNotValidExpr);
 
 		// #valid == old(#valid)[#res!base := true]
 		final var validUpdateExpr =
 				MemoryModelExpressionHelper.ensuresArrayUpdate(tuLoc, trueExpr, resBaseExpr, validArrayExpr);
-		expressions.add(new Pair<>(validUpdateExpr,
-				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(validArrayExpr))));
+		expressions.add(validUpdateExpr);
 
 		// #res!offset == 0
 		final var offsetEqualZeroExpr = ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
 				mMemoryAddressing.mMemoryPointer.pointerOffset(resultExpr, tuLoc), zeroNumericValueExpr);
-		expressions.add(new Pair<>(offsetEqualZeroExpr, Collections.emptySet()));
+		expressions.add(offsetEqualZeroExpr);
 
 		// #res!base != 0
 		final var baseNotEqualZeroExpr = baseNotEqualZeroExpr(tuLoc, resultExpr, zeroNumericValueExpr);
-		expressions.add(new Pair<>(baseNotEqualZeroExpr, Collections.emptySet()));
+		expressions.add(baseNotEqualZeroExpr);
 
 		if (memoryArea == MemoryArea.STACK) {
 			// #StackHeapBarrier < res!base
 			final var baseGreaterThanBarrierExpr = baseGreaterThanBarrier(tuLoc, stackHeapBarrierExpr, resultExpr);
-			expressions.add(new Pair<>(baseGreaterThanBarrierExpr, Collections.emptySet()));
+			expressions.add(baseGreaterThanBarrierExpr);
 		} else if (memoryArea == MemoryArea.HEAP) {
 			// res!base < #StackHeapBarrier
 			final var baseSmallerThanBarrierExpr = baseSmallerThanBarrier(tuLoc, stackHeapBarrierExpr, resultExpr);
-			expressions.add(new Pair<>(baseSmallerThanBarrierExpr, Collections.emptySet()));
+			expressions.add(baseSmallerThanBarrierExpr);
 		}
 
 		// #length == old(#length)[#res!base := ~size]
@@ -148,15 +144,16 @@ public class NonDetStrategy2D<T extends MemoryAddressing2D> extends MemoryManage
 										tuLoc, ExpressionFactory.constructUnaryExpression(tuLoc,
 												UnaryExpression.Operator.OLD, lengthArrayExpr),
 										new Expression[] { resBaseExpr }, sizeExpr));
-		expressions.add(new Pair<>(lengthUpdateExpr,
-				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(lengthArrayExpr))));
+		expressions.add(lengthUpdateExpr);
 
-		return expressions;
+		final var validArrayLHS = (VariableLHS) CTranslationUtil.convertExpressionToLHS(validArrayExpr);
+		final var lengthArrayLHS = (VariableLHS) CTranslationUtil.convertExpressionToLHS(lengthArrayExpr);
+		return new AllocationProcedureSpec(expressions, Set.of(validArrayLHS, lengthArrayLHS));
 	}
 
 	@Override
-	public List<Triple<Expression, Set<VariableLHS>, Boolean>> constructDeallocSpecificationExpressions(
-			final ILocation tuLoc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public AllocationProcedureSpec constructDeallocSpecification(final ILocation tuLoc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 
 		final var falseExpr = mBooleanArrayHelper.constructFalse();
@@ -178,8 +175,8 @@ public class NonDetStrategy2D<T extends MemoryAddressing2D> extends MemoryManage
 		final Expression updateValidArrayExpr =
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, validArrayExpr, arrayStoreExpr);
 
-		return Collections.singletonList(new Triple<>(updateValidArrayExpr,
-				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(validArrayExpr)), true));
+		return new AllocationProcedureSpec(Collections.emptyList(), List.of(updateValidArrayExpr),
+				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(validArrayExpr)));
 	}
 
 	@Override
@@ -236,10 +233,9 @@ public class NonDetStrategy2D<T extends MemoryAddressing2D> extends MemoryManage
 	}
 
 	@Override
-	public List<Pair<Expression, Set<VariableLHS>>> constructAllocInitSpecificationExpressions(final ILocation tuLoc,
+	public AllocationProcedureSpec constructAllocInitSpecification(final ILocation tuLoc,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		final var pointerBaseIdentifier = "ptrBase";
 		final var procedureIdentifier = MemoryModelDeclarations.ULTIMATE_ALLOC_INIT.getName();
 
 		final var trueExpr = mBooleanArrayHelper.constructTrue();
@@ -251,21 +247,18 @@ public class NonDetStrategy2D<T extends MemoryAddressing2D> extends MemoryManage
 				SFO.SIZE, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
 
 		final var ptrBase = ExpressionFactory.constructIdentifierExpression(tuLoc,
-				mTypeHandler.getBoogieTypeForPointerComponents(), pointerBaseIdentifier,
+				mTypeHandler.getBoogieTypeForPointerComponents(), SFO.ALLOCINIT_PTRBASE,
 				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
 
-		final ArrayList<Pair<Expression, Set<VariableLHS>>> expressions = new ArrayList<>();
 		// ensures #valid[ptrBase] == true;
 		final var validPtrBaseExpr =
 				MemoryModelExpressionHelper.ensuresArrayHasValue(tuLoc, trueExpr, ptrBase, validArrayExpr);
-		expressions.add(new Pair<>(validPtrBaseExpr, Collections.emptySet()));
 
 		// ensures #length[ptrBase] == size;
 		final var lengthPtrBaseSize =
 				MemoryModelExpressionHelper.ensuresArrayHasValue(tuLoc, size, ptrBase, lengthArrayExpr);
-		expressions.add(new Pair<>(lengthPtrBaseSize, Collections.emptySet()));
 
-		return expressions;
+		return new AllocationProcedureSpec(List.of(validPtrBaseExpr, lengthPtrBaseSize), Collections.emptySet());
 	}
 
 }

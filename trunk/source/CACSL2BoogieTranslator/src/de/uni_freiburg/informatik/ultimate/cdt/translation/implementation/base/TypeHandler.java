@@ -865,7 +865,6 @@ public class TypeHandler implements ITypeHandler {
 						|| cPrimitive.getType() == CPrimitives.SCHAR);
 	}
 
-	@Override
 	public IMemoryPointer getMemoryPointer() {
 		return mMemoryPointer;
 	}

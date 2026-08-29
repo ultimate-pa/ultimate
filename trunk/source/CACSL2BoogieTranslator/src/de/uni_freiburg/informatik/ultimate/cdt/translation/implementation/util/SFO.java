@@ -180,13 +180,13 @@ public final class SFO {
 	public static final String MEMCPY_DEST = "dest";
 	public static final String MEMCPY_SRC = "src";
 	public static final String MEMCPY_SIZE = "size";
-	public static final String MEMCPY = "#memcpy";
 
 	public static final String STRCPY_DEST = "dest";
 	public static final String STRCPY_SRC = "src";
 
+	public static final String ALLOCINIT_PTRBASE = "ptrBase";
+
 	public static final String TO_INT = "#to_int";
-	public static final String MEMSET = "ULTIMATE.memset";
 
 	/**
 	 * used for detecting data races

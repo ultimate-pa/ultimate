@@ -44,9 +44,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
-import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -58,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
@@ -220,14 +217,13 @@ public class ProcedureManager {
 				// model is required. Maybe we can require the memory model if the list of functions for which we
 				// check memory neutrality is not empty.
 
-				final Expression vIe = memoryHandler.getValidArray(loc);
+				final Expression neutrality = memoryHandler.constructMemoryNeutralityCheckExpr(loc);
+
 				final int nrSpec = newSpec.length;
 				final Check check = new Check(Spec.MEMORY_NEUTRAL);
 				final ILocation ensLoc = LocationFactory.createLocation(loc);
 				newSpecWithExtraEnsuresClauses = Arrays.copyOf(newSpec, nrSpec + 1);
-				newSpecWithExtraEnsuresClauses[nrSpec] = new EnsuresSpecification(ensLoc, false,
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, vIe,
-								ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.OLD, vIe)));
+				newSpecWithExtraEnsuresClauses[nrSpec] = new EnsuresSpecification(ensLoc, false, neutrality);
 				check.annotate(newSpecWithExtraEnsuresClauses[nrSpec]);
 				if (mSettings.isSvcompMemtrackCompatibilityMode()) {
 					new Overapprox(Collections.singletonMap("memtrack", ensLoc))
@@ -457,7 +453,11 @@ public class ProcedureManager {
 		return new EnsuresSpecification(loc, isFree, formula);
 	}
 
-	public void addSpecificationsToCurrentProcedure(final List<Specification> specs) {
+	public void addModifiedGlobalsToCurrentProcedure(final Set<VariableLHS> modifiedGlobals) {
+		mCurrentProcedureInfo.addModifiedGlobals(modifiedGlobals);
+	}
+
+	public void addSpecificationsToCurrentProcedure(final List<? extends Specification> specs) {
 		assert !isGlobalScope();
 		final BoogieProcedureInfo procInfo = mCurrentProcedureInfo;
 		final Procedure oldDecl = procInfo.getDeclaration();
