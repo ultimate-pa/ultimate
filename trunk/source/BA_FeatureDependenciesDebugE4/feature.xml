@@ -7,7 +7,7 @@
       arch="x86_64">
 
    <requires>
-      <import feature="BA_FeatureDependenciesCommon"/>
+      <import feature="BA_FeatureUltimateCommon"/>
    </requires>
 
    <plugin
@@ -60,14 +60,6 @@
 
    <plugin
          id="org.apache.commons.commons-jxpath"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.xalan"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.xmlgraphics"
          version="0.0.0"/>
 
    <plugin
