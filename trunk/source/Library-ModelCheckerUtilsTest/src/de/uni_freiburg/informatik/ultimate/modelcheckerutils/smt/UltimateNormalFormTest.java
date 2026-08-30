@@ -574,6 +574,68 @@ public class UltimateNormalFormTest {
 		runUnfTest(new FunDecl[0], formulaAsString, expected, mMgdScript);
 	}
 
+	// --- Operator mirroring (bvugt/bvuge/bvsgt/bvsge -> bvult/bvule/bvslt/bvsle) ---
+
+	@Test
+	public void bvugtMirroredToBvult() {
+		// Unsigned "greater than" is eliminated by swapping operands into "less than": (x bvugt 1) -> (1 bvult x).
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvugt x (_ bv1 8))";
+		final String expected = "(bvult (_ bv1 8) x)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvugeMirroredToBvule() {
+		// Same mirroring for the non-strict unsigned variant: (x bvuge 1) -> (1 bvule x).
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvuge x (_ bv1 8))";
+		final String expected = "(bvule (_ bv1 8) x)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvsgtMirroredToBvslt() {
+		// Signed "greater than" is mirrored the same way as the unsigned case: (x bvsgt 1) -> (1 bvslt x).
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvsgt x (_ bv1 8))";
+		final String expected = "(bvslt (_ bv1 8) x)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvsgeMirroredToBvsle() {
+		// Same mirroring for the non-strict signed variant: (x bvsge 1) -> (1 bvsle x).
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvsge x (_ bv1 8))";
+		final String expected = "(bvsle (_ bv1 8) x)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvugtConstantFoldingAfterMirroring() {
+		// Guards against a purely syntactic swap: mirroring to bvult must still trigger the existing constant
+		// folding, not just rewrite the operator. Both operands are literals here, so the result must be "true",
+		// not an unevaluated (bvult (_ bv3 8) (_ bv5 8)) term.
+		final String formulaAsString = "(bvugt (_ bv5 8) (_ bv3 8))";
+		final String expected = "true";
+
+		runUnfTest(new FunDecl[0], formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvsgtConstantFoldingAfterMirroring() {
+		// Same guard for the signed variant, to confirm signed constant folding also still works after mirroring.
+		final String formulaAsString = "(bvsgt (_ bv5 8) (_ bv3 8))";
+		final String expected = "true";
+
+		runUnfTest(new FunDecl[0], formulaAsString, expected, mMgdScript);
+	}
+
 	static void runUnfTest(final FunDecl[] funDecls, final String eliminationInputAsString,
 			final String expectedResultAsString, final ManagedScript mgdScript) {
 		for (final FunDecl funDecl : funDecls) {
