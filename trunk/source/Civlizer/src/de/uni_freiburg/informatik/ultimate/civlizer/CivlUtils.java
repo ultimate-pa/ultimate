@@ -26,21 +26,158 @@
  */
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.civlizer.model.ParameterDeclaration.Linearity;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 public class CivlUtils {
 	private static final Expression[] EMPTY_EXPRESSIONS = {};
 
 	private CivlUtils() {
 		// static utility class should not be instantiated
+	}
+
+	static class ExpressionUpdater extends BoogieTransformer {
+		static Expression updates(final Expression expr, final CallStatement update) {
+			final ExpressionUpdater exprUpdater = new ExpressionUpdater(update);
+			return exprUpdater.processExpression(expr);
+		}
+
+		private final CallStatement update;
+
+		ExpressionUpdater(final CallStatement update) {
+			this.update = update;
+		}
+
+		@Override
+		protected Expression processExpression(final Expression expr) {
+			Expression newExpr = null;
+			if (expr instanceof final BinaryExpression binexp) {
+				final Expression left = processExpression(binexp.getLeft());
+				final Expression right = processExpression(binexp.getRight());
+				if (left != binexp.getLeft() || right != binexp.getRight()) {
+					newExpr = new BinaryExpression(expr.getLocation(), binexp.getType(), binexp.getOperator(), left,
+							right);
+				}
+			} else if (expr instanceof final UnaryExpression unexp) {
+				final Expression subexpr = processExpression(unexp.getExpr());
+				if (subexpr != unexp.getExpr()) {
+					newExpr = new UnaryExpression(expr.getLocation(), unexp.getType(), unexp.getOperator(), subexpr);
+				}
+			} else if (expr instanceof final ArrayAccessExpression aaexpr) {
+				final Expression arr = processExpression(aaexpr.getArray());
+				final Expression[] indices = aaexpr.getIndices();
+				final Expression[] newIndices = processExpressions(indices);
+				if (arr != aaexpr.getArray() || indices != newIndices) {
+					newExpr = new ArrayAccessExpression(aaexpr.getLocation(), aaexpr.getType(), arr, newIndices);
+				}
+			} else if (expr instanceof final ArrayStoreExpression aaexpr) {
+				final Expression arr = processExpression(aaexpr.getArray());
+				final Expression value = processExpression(aaexpr.getValue());
+				final Expression[] indices = aaexpr.getIndices();
+				final Expression[] newIndices = processExpressions(indices);
+				if (arr != aaexpr.getArray() || indices != newIndices || value != aaexpr.getValue()) {
+					newExpr = new ArrayStoreExpression(aaexpr.getLocation(), aaexpr.getType(), arr, newIndices, value);
+				}
+			} else if (expr instanceof final BitVectorAccessExpression bvaexpr) {
+				final Expression bv = processExpression(bvaexpr.getBitvec());
+				if (bv != bvaexpr.getBitvec()) {
+					newExpr = new BitVectorAccessExpression(bvaexpr.getLocation(), bvaexpr.getType(), bv,
+							bvaexpr.getEnd(), bvaexpr.getStart());
+				}
+			} else if (expr instanceof final FunctionApplication app) {
+				final String name = app.getIdentifier();
+				final Expression[] args = processExpressions(app.getArguments());
+				if (args != app.getArguments()) {
+					newExpr = new FunctionApplication(app.getLocation(), app.getType(), name, args);
+				}
+			} else if (expr instanceof final IfThenElseExpression ite) {
+				final Expression cond = processExpression(ite.getCondition());
+				final Expression thenPart = processExpression(ite.getThenPart());
+				final Expression elsePart = processExpression(ite.getElsePart());
+				if (cond != ite.getCondition() || thenPart != ite.getThenPart() || elsePart != ite.getElsePart()) {
+					newExpr = new IfThenElseExpression(ite.getLocation(), thenPart.getType(), cond, thenPart, elsePart);
+				}
+			} else if (expr instanceof final QuantifierExpression quant) {
+				final Attribute[] attrs = quant.getAttributes();
+				final Attribute[] newAttrs = processAttributes(attrs);
+				final VarList[] params = quant.getParameters();
+				final VarList[] newParams = processVarLists(params);
+				final Expression subform = processExpression(quant.getSubformula());
+				if (subform != quant.getSubformula() || attrs != newAttrs || params != newParams) {
+					newExpr = new QuantifierExpression(quant.getLocation(), quant.getType(), quant.isUniversal(),
+							quant.getTypeParams(), newParams, newAttrs, subform);
+				}
+			} else if (expr instanceof final StructConstructor sConst) {
+				final Expression[] fieldValues = processExpressions(sConst.getFieldValues());
+				if (fieldValues != sConst.getFieldValues()) {
+					newExpr = new StructConstructor(sConst.getLocation(), sConst.getType(),
+							sConst.getFieldIdentifiers(), fieldValues);
+				}
+			} else if (expr instanceof final StructAccessExpression sae) {
+				final Expression struct = processExpression(sae.getStruct());
+				if (struct != sae.getStruct()) {
+					newExpr = new StructAccessExpression(sae.getLocation(), sae.getType(), struct, sae.getField());
+				}
+			} else if (expr instanceof BooleanLiteral) {
+			} else if (expr instanceof IntegerLiteral) {
+			} else if (expr instanceof BitvecLiteral) {
+			} else if (expr instanceof StringLiteral) {
+			} else if (expr instanceof IdentifierExpression) {
+			} else if (expr instanceof WildcardExpression) {
+			} else if (expr instanceof RealLiteral) {
+			} else if (expr == null) {
+				throw new IllegalArgumentException("expression may not be null");
+			} else {
+				throw new UnsupportedOperationException("unknown expression " + expr.getClass().getName());
+			}
+
+			if (newExpr == null || newExpr == expr) {
+				/*
+				 * BooleanLiteral, IntegerLiteral, BitvecLiteral, StringLiteral, IdentifierExpression and
+				 * WildcardExpression do not need recursion, and recursion can leave the expression unchanged.
+				 */
+				return expr;
+			}
+			ModelUtils.copyAnnotations(expr, newExpr);
+			return newExpr;
+		}
+
+	}
+
+	static Expression updateAnnotation(final Expression annotation, final List<CallStatement> ghostUpdates) {
+		// TODO finish
+		for (final var ghostUpdate : ghostUpdates) {
+
+		}
+
+		return annotation;
 	}
 
 	static Attribute createLinearityAttribute(final Linearity linearity) {

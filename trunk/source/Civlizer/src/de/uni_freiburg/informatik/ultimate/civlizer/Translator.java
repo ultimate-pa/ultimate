@@ -368,7 +368,7 @@ public final class Translator {
 				params.toArray(Expression[]::new));
 	}
 
-	YieldInvariant addYieldInvariant(final String procName, final int counter, final Expression annotation,
+	YieldInvariant addYieldInvariant(final String procName, final int counter, final Expression[] annotations,
 			final Set<Tid> tidNeedsLinearity) {
 		final var params = new ArrayList<ParameterDeclaration>();
 		if (BoogieUtils.START_PROCEDURE.equals(procName)) {
@@ -381,13 +381,8 @@ public final class Translator {
 					tidNeedsLinearity.contains(tid) ? Linearity.INOUT : Linearity.NONE));
 		}
 
-		for (final var localVariable : collectLocalVariables(annotation)) {
-			assert !localVariable.inOldContext() : "Old() expressions not yet supported";
-			final ASTType type = localVariable.type().toASTType(null);
-			params.add(new ParameterDeclaration(localVariable.identifier(), type, Linearity.NONE));
-		}
-
 		final var preserves = new ArrayList<Expression>();
+
 		if (BoogieUtils.START_PROCEDURE.equals(procName)) {
 			preserves.add(new BinaryExpression(null, BinaryExpression.Operator.COMPEQ,
 					new StructAccessExpression(null, new IdentifierExpression(null, "start_tid"), "val"),
@@ -401,8 +396,16 @@ public final class Translator {
 					new IdentifierExpression(null, "const_" + tid.toString())));
 		}
 
-		if (annotation != null) {
-			preserves.add(annotation);
+		for (final var annotation : annotations) {
+			for (final var localVariable : collectLocalVariables(annotation)) {
+				assert !localVariable.inOldContext() : "Old() expressions not yet supported";
+				final ASTType type = localVariable.type().toASTType(null);
+				params.add(new ParameterDeclaration(localVariable.identifier(), type, Linearity.NONE));
+			}
+
+			if (annotation != null) {
+				preserves.add(annotation);
+			}
 		}
 
 		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
@@ -545,7 +548,8 @@ public final class Translator {
 
 		final Expression annotation =
 				mProgramAndProof.getTemplateVisitor().getEntryAnnotationMap().get(decl.getIdentifier());
-		final var yieldInv = addYieldInvariant(decl.getIdentifier(), 0, annotation, tidNeedsLinearity);
+		final var yieldInv =
+				addYieldInvariant(decl.getIdentifier(), 0, new Expression[] { annotation }, tidNeedsLinearity);
 
 		final var requires = callYieldInvariant(yieldInv,
 				inParams.stream().map(Translator::getParameterExpression).toArray(IdentifierExpression[]::new),

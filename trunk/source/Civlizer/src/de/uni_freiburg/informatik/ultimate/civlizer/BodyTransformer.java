@@ -163,8 +163,8 @@ final class BodyTransformer extends BoogieTransformer {
 
 		final Expression annotation =
 				mTranslator.getProgramAndProof().getTemplateVisitor().getExitAnnotationMap().get(mProcedureName);
-		final var yieldInvariant =
-				mTranslator.addYieldInvariant(mProcedureName, mAtomicStatementCounter, annotation, mTidNeedsLinearity);
+		final var yieldInvariant = mTranslator.addYieldInvariant(mProcedureName, mAtomicStatementCounter,
+				new Expression[] { annotation }, mTidNeedsLinearity);
 		newStatements.add(Translator.callYieldInvariant(yieldInvariant, mCurrentTids, annotation));
 
 		if (mProcedureName != BoogieUtils.START_PROCEDURE) {
@@ -221,9 +221,37 @@ final class BodyTransformer extends BoogieTransformer {
 		for (final Statement statement : statements) {
 			mAtomicStatementCounter += 1;
 
+			// special handling for Fork
+			if (statement instanceof final ForkStatement forkStmt) {
+
+				final var annotation = annotationMap.get(statement.getLoc());
+
+				// FIXME This doesn't always work correctly for ghost updates on AtomicStatements
+				final List<CallStatement> positiveGhostUpdates = createGhostUpdateAssignments(
+						ghostUpdateMap.get(new GhostUpdateLocation(statement.getLocation(), false)));
+
+				final var annotationFork = mTranslator.getProgramAndProof().getTemplateVisitor().getEntryAnnotationMap()
+						.get(forkStmt.getProcedureName());
+
+				// TODO change
+				// update(annotation, ghost update)
+
+				final var yieldInvariantFork = mTranslator.addYieldInvariant(mProcedureName, mAtomicStatementCounter,
+						new Expression[] { annotation, annotationFork }, mTidNeedsLinearity);
+				final var annotationCheckFork =
+						Translator.callYieldInvariant(yieldInvariantFork, mCurrentTids, annotation);
+
+				newStatements.addAll(positiveGhostUpdates);
+				newStatements.add(annotationCheckFork);
+				newStatements.add(processStatement(statement));
+
+				mTidNeedsLinearity.clear();
+				continue;
+			}
+
 			final var annotation = annotationMap.get(statement.getLoc());
 			final var yieldInvariant = mTranslator.addYieldInvariant(mProcedureName, mAtomicStatementCounter,
-					annotation, mTidNeedsLinearity);
+					new Expression[] { annotation }, mTidNeedsLinearity);
 			final var annotationCheck = Translator.callYieldInvariant(yieldInvariant, mCurrentTids, annotation);
 
 			// FIXME This doesn't always work correctly for ghost updates on AtomicStatements
