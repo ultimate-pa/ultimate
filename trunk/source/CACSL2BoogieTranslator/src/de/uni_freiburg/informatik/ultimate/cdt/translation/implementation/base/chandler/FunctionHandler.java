@@ -420,6 +420,7 @@ public class FunctionHandler {
 		// Implementation -> Specification always null!
 		final Procedure impl = new Procedure(loc, proc.getAttributes(), definedProcName, proc.getTypeParams(), in,
 				proc.getOutParams(), null, body);
+		definedProcInfo.setImplementation(impl);
 
 		mProcedureManager.endProcedureScope(mCHandler);
 

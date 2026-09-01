@@ -346,6 +346,15 @@ public class ProcedureManager {
 	}
 
 	/**
+	 * Returns the implementation (body) of the procedure with the given name, or {@code null} if no implementation
+	 * exists (i.e., the function was declared but not defined).
+	 */
+	public Procedure getProcedureImplementation(final String procedureName) {
+		final BoogieProcedureInfo procInfo = getProcedureInfo(procedureName);
+		return procInfo.getImplementation();
+	}
+
+	/**
 	 *
 	 * @return true iff we (the translation) are currently in global scope. (We are in global scope if we are not
 	 *         currently translating the body of a function)

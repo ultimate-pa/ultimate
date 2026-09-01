@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
@@ -116,6 +117,8 @@ public class InterruptPostProcessor implements IPostProcessor {
 
 	private Map<Integer, Procedure> mThreadProcedures = null;
 
+	private final List<Procedure> mCreatedImplementations = new ArrayList<>();
+
 	private final List<Statement> mAdditionalInitializations = new ArrayList<>();
 
 	public InterruptPostProcessor(final ILogger logger, final TranslationSettings settings,
@@ -145,12 +148,17 @@ public class InterruptPostProcessor implements IPostProcessor {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final var realization3 = mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN;
 
-		// Get main procedure of program
+		// Get main procedure implementation of program
 		final Procedure mainProcedure;
 		if (!mEntryFunction.equals(SFO.EMPTY) && mProcedureManager.hasProcedure(mEntryFunction)) {
-			mainProcedure = mProcedureManager.getProcedureDeclaration(mEntryFunction);
+			mainProcedure = mProcedureManager.getProcedureImplementation(mEntryFunction);
 		} else {
 			// Abort interrupt post processing if there is no main function
+			return List.of();
+		}
+		if (mainProcedure == null || mainProcedure.getBody() == null) {
+			mLogger.warn("Entry function %s has no implementation, skipping interrupt post processing",
+					mEntryFunction);
 			return List.of();
 		}
 
@@ -199,6 +207,9 @@ public class InterruptPostProcessor implements IPostProcessor {
 		// Add initialization statements (set all enabled variables to false)
 		final var initLhs = isrs.stream().map(isr -> constructEnabledLhs(getIrqNum(isr))).collect(Collectors.toList());
 		mAdditionalInitializations.add(constructAuxVarEnabledInitializations(initLhs));
+
+		// Add implementations created for declared-but-not-defined masking functions
+		decl.addAll(mCreatedImplementations);
 
 		return decl;
 	}
@@ -324,11 +335,37 @@ public class InterruptPostProcessor implements IPostProcessor {
 			if (irqRefs == null) {
 				continue;
 			}
+			final var procName = func.getProcedure().getIdentifier();
+			final var impl = ensureImplementation(procName);
 			for (final InterruptRequest irq : irqRefs) {
-				result.putIfAbsent(irq.getNum(), func.getProcedure());
+				result.putIfAbsent(irq.getNum(), impl);
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Ensures that the procedure with the given name has an implementation (body). If the function was declared but not
+	 * defined, a minimal empty-body implementation is created and stored. The created implementation is also added to
+	 * {@link #mCreatedImplementations} so it can be returned by {@link #postProcess}.
+	 */
+	private Procedure ensureImplementation(final String procName) {
+		final var procInfo = mProcedureManager.getProcedureInfo(procName);
+		final var existingImpl = procInfo.getImplementation();
+		if (existingImpl != null) {
+			return existingImpl;
+		}
+		// Create a minimal implementation for a declared-but-not-defined function
+		final var decl = procInfo.getDeclaration();
+		mProcedureManager.beginProcedureScope(mCHandler, procInfo);
+		final var body = mProcedureManager.constructBody(mIgnoreLoc, new VariableDeclaration[0],
+				new Statement[0], procName);
+		mProcedureManager.endProcedureScope(mCHandler);
+		final var impl = new Procedure(mIgnoreLoc, decl.getAttributes(), procName, decl.getTypeParams(),
+				decl.getInParams(), decl.getOutParams(), null, body);
+		procInfo.setImplementation(impl);
+		mCreatedImplementations.add(impl);
+		return impl;
 	}
 
 	private void annotateAuxVarAssignment(final Procedure intEnableProcedure, final boolean newValue,
@@ -463,17 +500,17 @@ public class InterruptPostProcessor implements IPostProcessor {
 	}
 
 	private List<Statement> getIsrBlock(final List<Statement> ifStatements, final InterruptServiceFunction isr) {
-		if (mAnnotateInterrupts) {
-			return ifStatements;
-		}
-		return List.of(StatementFactory.constructAtomicStatement(mIgnoreLoc, ifStatements));
+		// Note: We do not wrap ISR statements in atomic blocks here because these statements
+		// are inside a while loop in the thread procedure, and the IcfgBuilder does not support
+		// atomic blocks that span loop back edges.
+		return ifStatements;
 	}
 
 	private Statement[] getIsrBlock(final Statement ifStatement, final InterruptServiceFunction isr) {
-		if (mAnnotateInterrupts) {
-			return new Statement[] { ifStatement };
-		}
-		return new Statement[] { StatementFactory.constructAtomicStatement(mIgnoreLoc, List.of(ifStatement)) };
+		// Note: We do not wrap ISR statements in atomic blocks here because these statements
+		// are inside a while loop in the thread procedure, and the IcfgBuilder does not support
+		// atomic blocks that span loop back edges.
+		return new Statement[] { ifStatement };
 	}
 
 	private Statement getIfStatement(final InterruptServiceFunction isr, final Expression enabledExpr) {
