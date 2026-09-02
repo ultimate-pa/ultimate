@@ -1097,6 +1097,14 @@ public class FunctionHandler {
 		procInfo.resetDeclaration(newDeclaration);
 		// end scope for retranslation of ACSL specification
 		mProcedureManager.endProcedureScope(mCHandler);
+
+		// Register interrupt functions parsed from the ACSL contract of this declaration.
+		// This is needed for declared-but-not-defined functions (e.g., interrupt masking functions
+		// like enable_gpio()) whose interrupt annotations would otherwise be lost.
+		for (final IInterruptFunction interruptFunc : interruptFuncs) {
+			interruptFunc.setProcedure(procInfo.getDeclaration());
+			mInterruptFuncHandler.register(interruptFunc);
+		}
 	}
 
 	private static CFunction updateVarArgsForDeclaration(final IASTNode node, final CFunction funcType,
