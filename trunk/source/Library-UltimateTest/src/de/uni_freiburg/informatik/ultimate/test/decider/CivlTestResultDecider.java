@@ -32,7 +32,11 @@ import java.util.regex.Pattern;
 import de.uni_freiburg.informatik.ultimate.civlizer.results.CivlFailureResult;
 import de.uni_freiburg.informatik.ultimate.civlizer.results.CivlSuccessResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
@@ -42,7 +46,7 @@ public class CivlTestResultDecider extends ThreeTierTestResultDecider<CivlTestRe
 	private static final String CIVLIZER_PLUGIN_ID = "de.uni_freiburg.informatik.ultimate.civlizer";
 
 	public enum CivlOverallResult {
-		VERIFIED, CIVL_ERRORS, CRASH
+		VERIFIED, CIVL_ERRORS, CRASH, SYNTAX_ERROR, TIMEOUT
 	}
 
 	public CivlTestResultDecider(final UltimateRunDefinition urd) {
@@ -93,18 +97,36 @@ public class CivlTestResultDecider extends ThreeTierTestResultDecider<CivlTestRe
 
 		@Override
 		public void evaluateOverallResult(final IResultService resultService) {
+			for (final var entry : resultService.getResults().entrySet()) {
+				for (final var result : entry.getValue()) {
+					if (result instanceof final ExceptionOrErrorResult e) {
+						mOverallResult = CivlOverallResult.CRASH;
+						mOverallMessage = e.getLongDescription();
+						mMostSignificantResult = e;
+						return;
+					}
+					if (result instanceof TypeErrorResult || result instanceof SyntaxErrorResult
+							|| result instanceof UnsupportedSyntaxResult) {
+						mOverallResult = CivlOverallResult.SYNTAX_ERROR;
+						mOverallMessage = result.getLongDescription();
+						mMostSignificantResult = result;
+						return;
+					}
+					if (result instanceof ITimeoutResult) {
+						mOverallResult = CivlOverallResult.TIMEOUT;
+						mOverallMessage = result.getLongDescription();
+						mMostSignificantResult = result;
+						return;
+					}
+				}
+			}
+
 			final var results = resultService.getResults().get(CIVLIZER_PLUGIN_ID);
 			if (results == null || results.isEmpty()) {
 				throw new IllegalStateException("No Civlizer results found. Did you configure Civlizer to run Civl?");
 			}
 
 			for (final var result : results) {
-				if (result instanceof final ExceptionOrErrorResult e) {
-					mOverallResult = CivlOverallResult.CRASH;
-					mOverallMessage = e.getLongDescription();
-					mMostSignificantResult = e;
-					break;
-				}
 				if (result instanceof final CivlSuccessResult s) {
 					mOverallResult = CivlOverallResult.VERIFIED;
 					mOverallMessage = s.getLongDescription();
