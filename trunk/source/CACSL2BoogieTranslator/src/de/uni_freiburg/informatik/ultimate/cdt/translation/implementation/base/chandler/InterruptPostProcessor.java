@@ -310,26 +310,33 @@ public class InterruptPostProcessor implements IPostProcessor {
 				assignments);
 	}
 
-	private void annotateMaskingProcedures(final Map<Integer, Procedure> intEnabledProcedures,
+	private void annotateMaskingProcedures(final Map<Integer, Procedure> maskingProcedures,
 			final List<InterruptServiceFunction> isrs, final boolean enabled) {
-		if (intEnabledProcedures == null) {
+		if (maskingProcedures == null) {
 			return;
 		}
 
 		final String funcOp = enabled ? "enable" : "disable";
 
+		// Group all ISR enabled flag LHSs by their masking procedure so that all flags for the same
+		// procedure (e.g., a disable_all function) are wrapped in a single atomic block.
+		final Map<Procedure, List<VariableLHS>> procToLhs = new HashMap<>();
 		for (final var isr : isrs) {
 			final var irqNum = getIrqNum(isr);
 			final var irqName = getIrqName(isr);
 
-			final var intEnableProcedure = intEnabledProcedures.get(irqNum);
-			if (intEnableProcedure == null) {
+			final var maskingProc = maskingProcedures.get(irqNum);
+			if (maskingProc == null) {
 				mLogger.warn(String.format("There exists no IRQ %s function for ISR '%s'", funcOp, irqName));
 				continue;
 			}
 
 			mLogger.info(String.format("Adding IRQ %s function for ISR '%s'", funcOp, irqName));
-			annotateAuxVarAssignment(intEnableProcedure, enabled, List.of(constructEnabledLhs(irqNum)));
+			procToLhs.computeIfAbsent(maskingProc, k -> new ArrayList<>()).add(constructEnabledLhs(irqNum));
+		}
+
+		for (final Entry<Procedure, List<VariableLHS>> entry : procToLhs.entrySet()) {
+			annotateAuxVarAssignment(entry.getKey(), enabled, entry.getValue());
 		}
 	}
 
