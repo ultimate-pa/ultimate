@@ -167,8 +167,8 @@ public class InterruptPostProcessor implements IPostProcessor {
 
 		// Construct thread procedures for each ISR (stored for later use in fork/join)
 		mThreadProcedures = constructThreadProcedures(isrs);
-		final var threadProcedures = mThreadProcedures.values().stream().filter(java.util.Objects::nonNull)
-				.distinct().collect(Collectors.toList());
+		final var threadProcedures = mThreadProcedures.values().stream().filter(java.util.Objects::nonNull).distinct()
+				.collect(Collectors.toList());
 		decl.addAll(threadProcedures);
 
 		// Add fork statements to the main procedure
