@@ -399,14 +399,14 @@ public class InterruptPostProcessor implements IPostProcessor {
 		final var block = body.getBlock();
 		final List<Statement> assignmentStatements =
 				intEnabledLhs.stream()
-						.map(i -> (Statement) StatementFactory.constructSingleAssignmentStatement(mIgnoreLoc, i,
+						.map(i -> StatementFactory.constructSingleAssignmentStatement(mIgnoreLoc, i,
 								ExpressionFactory.createBooleanLiteral(mIgnoreLoc, newValue)))
 						.collect(Collectors.toList());
 		// Only the ISR enabled flag assignments are wrapped in an atomic block.
 		// Existing statements of the masking function are kept as-is and the atomic block is appended.
-		final var atomic = StatementFactory.constructAtomicStatement(mIgnoreLoc, assignmentStatements);
+		final var atomicAssignments = StatementFactory.constructAtomicStatement(mIgnoreLoc, assignmentStatements);
 		final var newBlock = new ArrayList<>(Arrays.asList(block));
-		newBlock.add(atomic);
+		newBlock.add(atomicAssignments);
 		final var newBody = mProcedureManager.constructBody(mIgnoreLoc, new VariableDeclaration[0],
 				newBlock.toArray(new Statement[0]), intEnableProcedure.getIdentifier());
 		body.setBlock(newBody.getBlock());
