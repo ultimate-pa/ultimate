@@ -569,16 +569,18 @@ public class InterruptPostProcessor implements IPostProcessor {
 	}
 
 	private Statement[] labelIsrStatement(final Statement isrStatement, final InterruptServiceFunction isr) {
-		final String irqNum = Integer.toString(isr.getIrqReference().getIrq().getNum());
+		final String irqNum = Integer.toString(getIrqNum(isr));
+		final String irqName = getIrqName(isr);
 		final var labelName = "~isr" + irqNum;
 		final var isrNumAttribute = new NamedAttribute(mIgnoreLoc, irqNum, new Expression[0]);
+		final var isrNameAttribute = new NamedAttribute(mIgnoreLoc, irqName, new Expression[0]);
 		final var isrAttribute = new NamedAttribute(mIgnoreLoc, "isr_label", new Expression[0]);
 		final var entryAttribute = new NamedAttribute(mIgnoreLoc, "entry", new Expression[0]);
 		final var exitAttribute = new NamedAttribute(mIgnoreLoc, "exit", new Expression[0]);
 		final var entryLabel = new Label(mIgnoreLoc, labelName + "Entry",
-				new NamedAttribute[] { isrAttribute, entryAttribute, isrNumAttribute });
+				new NamedAttribute[] { isrAttribute, entryAttribute, isrNumAttribute, isrNameAttribute });
 		final var exitLabel = new Label(mIgnoreLoc, labelName + "Exit",
-				new NamedAttribute[] { isrAttribute, exitAttribute, isrNumAttribute });
+				new NamedAttribute[] { isrAttribute, exitAttribute, isrNumAttribute, isrNameAttribute });
 		return new Statement[] { entryLabel, isrStatement, exitLabel };
 	}
 

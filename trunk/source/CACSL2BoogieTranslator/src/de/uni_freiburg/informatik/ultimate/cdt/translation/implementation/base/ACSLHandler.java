@@ -755,11 +755,8 @@ public class ACSLHandler implements IACSLHandler {
 		if (CEnum.replaceEnumWithInt(symbol.getCType()).getUnderlyingType().isIntegerType() && symbol
 				.getConstantValue() instanceof final de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral specifier) {
 			final int irqNum = Integer.parseInt(specifier.getValue());
-			if (mIrqHandler.register(irqName, irqNum)) {
-				return new StaticInterrupt(mIrqHandler.getIrq(irqName));
-			}
-
-			throw new UnsupportedSyntaxException(loc, "Interrupt identifier '" + irqName + "' cannot be registered");
+			mIrqHandler.register(irqName, irqNum);
+			return new StaticInterrupt(mIrqHandler.getIrq(irqName));
 		}
 
 		throw new IncorrectSyntaxException(loc, "Incorrect interrupt identifier: " + irqName);

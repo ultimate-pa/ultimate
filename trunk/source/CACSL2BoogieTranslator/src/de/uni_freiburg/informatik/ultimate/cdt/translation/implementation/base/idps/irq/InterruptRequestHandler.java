@@ -56,7 +56,7 @@ public class InterruptRequestHandler {
 			return true;
 		}
 
-		throw new AssertionError("IRQ mapping contains already an registered IRQ with number " + num);
+		return false;
 	}
 
 	public List<InterruptRequest> getIrqs() {

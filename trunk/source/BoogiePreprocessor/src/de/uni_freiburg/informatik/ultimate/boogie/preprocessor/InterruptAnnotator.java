@@ -61,8 +61,10 @@ public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObser
 					visit(proc);
 				}
 			}
+
 			return false;
 		}
+
 		return true;
 	}
 
@@ -72,6 +74,7 @@ public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObser
 		if (body == null) {
 			return;
 		}
+
 		processStatements(body.getBlock());
 	}
 
@@ -88,6 +91,7 @@ public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObser
 				assert !isISRLabel(statement, "exit");
 				return;
 			}
+
 			final var newInterruptAnno = new InterruptAnnotation(ISRLocation.ISR, getIsr(statement));
 			mContext = new VisitorContext(VisitorMode.ISR_INNER, newInterruptAnno);
 		} else {
@@ -95,8 +99,10 @@ public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObser
 				assert !isISRLabel(statement, "entry");
 				return;
 			}
+
 			mContext = new VisitorContext(VisitorMode.NORMAL, null);
 		}
+
 		super.visit(statement);
 	}
 
@@ -106,14 +112,16 @@ public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObser
 		} else if (InterruptAnnotation.hasAnnotation(statement)) {
 			return;
 		}
+
 		mContext.currentAnnotation.annotate(statement);
 	}
 
 	private static boolean isISRLabel(final Label label, final String isrLabelPosition) {
 		final var attributes = label.getAttributes();
-		if (attributes == null || attributes.length != 3) {
+		if (attributes == null || attributes.length != 4) {
 			return false;
 		}
+
 		final var attributeName = attributes[0].getName();
 		final var positionAttribute = attributes[1].getName();
 		return attributeName.equals("isr_label") && positionAttribute.equals(isrLabelPosition);
@@ -121,8 +129,8 @@ public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObser
 
 	private static InterruptServiceFunction getIsr(final Label label) {
 		final NamedAttribute[] attributes = label.getAttributes();
-		final String irqNameStr = attributes[2].getName();
-		final String irqNumStr = attributes[4].getName();
+		final String irqNumStr = attributes[2].getName();
+		final String irqNameStr = attributes[3].getName();
 		return new InterruptServiceFunction(
 				new StaticInterrupt(new InterruptRequest(irqNameStr, Integer.parseInt(irqNumStr))));
 	}
@@ -141,19 +149,16 @@ public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObser
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels)
 			throws Throwable {
-		// TODO Auto-generated method stub
-
+		// Nothing to be initialized!
 	}
 
 	@Override
 	public void finish() throws Throwable {
-		// TODO Auto-generated method stub
-
+		// Nothing to be finished!
 	}
 
 	@Override
 	public boolean performedChanges() {
-		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 }
