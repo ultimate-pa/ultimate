@@ -183,14 +183,14 @@ public class InterruptPostProcessor implements IPostProcessor {
 				resolveMaskingFunctionProcedures(InterruptMaskingFunction.Operation.DISABLE);
 
 		// Add atomic block and variable assignment true to request enabled functions
-		annotateRequestProcedures(reqEnableFuncs, isrs, true);
+		annotateMaskingProcedures(reqEnableFuncs, isrs, true);
 
 		// Add fork statements in request enable procedure instead of the main procedure
 		if (realization3) {
 			addForksToRequestEnable(reqEnableFuncs);
 		}
 		// Add atomic block and variable assignment false to request disabled functions
-		annotateRequestProcedures(reqDisableFuncs, isrs, false);
+		annotateMaskingProcedures(reqDisableFuncs, isrs, false);
 
 		// Add join statements to request disable procedure
 		if (realization3) {
@@ -227,6 +227,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 		for (final Entry<Integer, Procedure> entry : intEnabledProcedures.entrySet()) {
 			final var irq = entry.getKey();
 			final var proc = entry.getValue();
+
 			final var threadProc = mThreadProcedures.get(irq);
 			if (threadProc == null) {
 				continue;
@@ -246,9 +247,11 @@ public class InterruptPostProcessor implements IPostProcessor {
 		for (final Entry<Integer, Procedure> entry : intDisabledProcedures.entrySet()) {
 			final var irq = entry.getKey();
 			final var proc = entry.getValue();
+
 			if (!mThreadProcedures.containsKey(irq)) {
 				continue;
 			}
+
 			final List<Statement> join = constructJoinStatement(proc, -irq);
 			final var newBlock =
 					new ArrayList<>(List.of(constructForkIfStatement(constructEnabledExpression(irq), join, false)));
@@ -307,7 +310,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 				assignments);
 	}
 
-	private void annotateRequestProcedures(final Map<Integer, Procedure> intEnabledProcedures,
+	private void annotateMaskingProcedures(final Map<Integer, Procedure> intEnabledProcedures,
 			final List<InterruptServiceFunction> isrs, final boolean enabled) {
 		if (intEnabledProcedures == null) {
 			return;
@@ -337,10 +340,12 @@ public class InterruptPostProcessor implements IPostProcessor {
 			if (func.getOperation() != op) {
 				continue;
 			}
+
 			final var irqRefs = func.getIrqReference().resolve(mIrqHandler);
 			if (irqRefs == null) {
 				continue;
 			}
+
 			final var procName = func.getProcedure().getIdentifier();
 			final var impl = ensureImplementation(procName);
 			for (final InterruptRequest irq : irqRefs) {
@@ -352,9 +357,13 @@ public class InterruptPostProcessor implements IPostProcessor {
 	}
 
 	/**
-	 * Ensures that the procedure with the given name has an implementation (body). If the function was declared but not
-	 * defined, a minimal empty-body implementation is created and stored. The created implementation is also added to
-	 * {@link #mCreatedImplementations} so it can be returned by {@link #postProcess}.
+	 * Ensures that the procedure with the given name has an implementation (body).
+	 *
+	 * If the function was declared but not defined, a minimal empty-body implementation is created and stored. The
+	 * created implementation is also added to {@link #mCreatedImplementations} so it can be returned by
+	 * {@link #postProcess}.
+	 *
+	 * @return Implementation (body) of the specified procedure.
 	 */
 	private Procedure ensureImplementation(final String procName) {
 		final var procInfo = mProcedureManager.getProcedureInfo(procName);
