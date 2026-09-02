@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
@@ -157,8 +156,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 			return List.of();
 		}
 		if (mainProcedure == null || mainProcedure.getBody() == null) {
-			mLogger.warn("Entry function %s has no implementation, skipping interrupt post processing",
-					mEntryFunction);
+			mLogger.warn("Entry function %s has no implementation, skipping interrupt post processing", mEntryFunction);
 			return List.of();
 		}
 
@@ -310,23 +308,27 @@ public class InterruptPostProcessor implements IPostProcessor {
 		if (intEnabledProcedures == null) {
 			return;
 		}
-		final String func = enabled ? " enable " : " disable ";
+
+		final String funcOp = enabled ? " enable " : " disable ";
 		for (final var isr : isrs) {
-			final var irq = getIrqNum(isr);
+			final var irqNum = getIrqNum(isr);
+			final var irqName = getIrqName(isr);
 
-			mLogger.info("Adding IRQ" + func + "function for ISR " + irq);
+			mLogger.info(String.format("Adding IRQ %s function for ISR '%s'", funcOp, irqName));
 
-			final var intEnableProcedure = intEnabledProcedures.get(irq);
+			final var intEnableProcedure = intEnabledProcedures.get(irqNum);
 			if (intEnableProcedure == null) {
-				mLogger.warn("There exists no IRQ" + func + "function for ISR " + irq);
+				mLogger.warn(String.format("There exists no IRQ %s function for ISR '%s'", funcOp, irqName));
 				continue;
 			}
-			annotateAuxVarAssignment(intEnableProcedure, enabled, List.of(constructEnabledLhs(irq)));
+
+			annotateAuxVarAssignment(intEnableProcedure, enabled, List.of(constructEnabledLhs(irqNum)));
 		}
 	}
 
 	private Map<Integer, Procedure> resolveMaskingFunctionProcedures(final InterruptMaskingFunction.Operation op) {
 		final var result = new HashMap<Integer, Procedure>();
+
 		for (final var func : mInterruptFuncHandler.getFunctions(InterruptMaskingFunction.class)) {
 			if (func.getOperation() != op) {
 				continue;
@@ -341,6 +343,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 				result.putIfAbsent(irq.getNum(), impl);
 			}
 		}
+
 		return result;
 	}
 
@@ -352,15 +355,18 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private Procedure ensureImplementation(final String procName) {
 		final var procInfo = mProcedureManager.getProcedureInfo(procName);
 		final var existingImpl = procInfo.getImplementation();
+
 		if (existingImpl != null) {
 			return existingImpl;
 		}
+
 		// Create a minimal implementation for a declared-but-not-defined function
 		final var decl = procInfo.getDeclaration();
 		mProcedureManager.beginProcedureScope(mCHandler, procInfo);
-		final var body = mProcedureManager.constructBody(mIgnoreLoc, new VariableDeclaration[0],
-				new Statement[0], procName);
+		final var body =
+				mProcedureManager.constructBody(mIgnoreLoc, new VariableDeclaration[0], new Statement[0], procName);
 		mProcedureManager.endProcedureScope(mCHandler);
+
 		final var impl = new Procedure(mIgnoreLoc, decl.getAttributes(), procName, decl.getTypeParams(),
 				decl.getInParams(), decl.getOutParams(), null, body);
 		procInfo.setImplementation(impl);
@@ -373,6 +379,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 		if (intEnableProcedure == null) {
 			return;
 		}
+
 		mProcedureManager.beginProcedureScope(mCHandler,
 				mProcedureManager.getProcedureInfo(intEnableProcedure.getIdentifier()));
 		final var body = intEnableProcedure.getBody();
@@ -394,20 +401,21 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private Map<Integer, Procedure> constructThreadProcedures(final List<InterruptServiceFunction> isrs) {
 		assert mTranslationMode != InterruptTranslationMode.NONE : "The chosen interrupt translation mode is NONE";
 		final var result = new HashMap<Integer, Procedure>();
-		final boolean oneThreadPerISR = mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR
-				|| mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN;
-		if (oneThreadPerISR) {
-			mLogger.info("Source-to-source translation of interrupt program with realization 1");
+
+		if (mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR
+				|| mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN) {
+			mLogger.info("Translation of interrupt-driven program with realization 1: One thread per ISR");
 			for (final var isr : isrs) {
 				result.put(getIrqNum(isr), constructOneThreadPerIsr(isr));
 			}
 		} else {
-			mLogger.info("Source-to-source translation of interrupt program with realization 2");
+			mLogger.info("Translation of interrupt-driven program with realization 2: One thread for all ISRs");
 			final var allThreadProc = constructOneThreadForAllIsrs(isrs);
 			for (final var isr : isrs) {
 				result.put(getIrqNum(isr), allThreadProc);
 			}
 		}
+
 		return result;
 	}
 
@@ -415,10 +423,13 @@ public class InterruptPostProcessor implements IPostProcessor {
 	private Procedure constructOneThreadPerIsr(final InterruptServiceFunction isr) {
 		final int irqNum = getIrqNum(isr);
 		final String procName = constructThreadName(irqNum, isr.getProcedure().getIdentifier());
-		mLogger.info("Adding auxilliary ISR-Thread function " + procName + " for IRQ "
-				+ isr.getIrqReference().getIrq().getName());
+
+		mLogger.info(String.format("Adding auxilliary ISR-thread function '%s' for IRQ '%s'", procName,
+				isr.getIrqReference().getIrq().getName()));
+
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
 				new VarList[0], new Specification[0], null);
+
 		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final var whileStmt = constructIsrWhileLoop(isr);
@@ -427,6 +438,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 				builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
 				builder.getStatements().toArray(new Statement[builder.getStatements().size()]), procName);
 		mProcedureManager.endCustomProcedure(mCHandler, procName);
+
 		return new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0], new VarList[0],
 				null, body);
 	}
@@ -434,9 +446,12 @@ public class InterruptPostProcessor implements IPostProcessor {
 	// Realization 2
 	private Procedure constructOneThreadForAllIsrs(final List<InterruptServiceFunction> isrs) {
 		final var procName = constructThreadName("all");
-		mLogger.info("Adding auxilliary ISR-Thread function " + procName + " for all IRQs");
+
+		mLogger.info(String.format("Adding auxilliary ISR-thread function '%s' for all IRQs", procName));
+
 		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
 				new VarList[0], new Specification[0], null);
+
 		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final var nondetVarInfo = getHavocAuxVar(builder);
@@ -446,6 +461,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 				builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
 				builder.getStatements().toArray(new Statement[builder.getStatements().size()]), procName);
 		mProcedureManager.endCustomProcedure(mCHandler, procName);
+
 		return new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0], new VarList[0],
 				null, body);
 	}
@@ -552,6 +568,10 @@ public class InterruptPostProcessor implements IPostProcessor {
 
 	private static int getIrqNum(final InterruptServiceFunction isr) {
 		return isr.getIrqReference().getIrq().getNum();
+	}
+
+	private static String getIrqName(final InterruptServiceFunction isr) {
+		return isr.getIrqReference().getIrq().getName();
 	}
 
 	private static String constructEnabledVarName(final int irqNum) {

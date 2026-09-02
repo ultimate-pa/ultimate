@@ -346,11 +346,16 @@ public class ProcedureManager {
 	}
 
 	/**
-	 * Returns the implementation (body) of the procedure with the given name, or {@code null} if no implementation
-	 * exists (i.e., the function was declared but not defined).
+	 * Returns the implementation of the procedure with the given name.
+	 *
+	 * @return The implementation of the procedure, or {@code null} if no implementation exists (i.e., the procedure was
+	 *         declared but not defined).
 	 */
 	public Procedure getProcedureImplementation(final String procedureName) {
 		final BoogieProcedureInfo procInfo = getProcedureInfo(procedureName);
+		if (!procInfo.hasDeclaration()) {
+			throw new IllegalArgumentException("a procedure of the requested name is not yet known: " + procedureName);
+		}
 		return procInfo.getImplementation();
 	}
 
