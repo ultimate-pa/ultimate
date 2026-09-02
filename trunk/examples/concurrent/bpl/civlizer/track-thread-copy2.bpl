@@ -3,7 +3,7 @@ var x : int;
 procedure ULTIMATE.start()
 modifies x;
 {
-  ​x := 0;
+  x := 0;
   fork 1 t();
   join 1;
 

@@ -14,6 +14,7 @@ modifies x;
     
     while (x > 0) {
         fork 0 dec();
+        x := x - 1;
     }
     
     while (x < 3) {
