@@ -531,17 +531,19 @@ public class InterruptPostProcessor implements IPostProcessor {
 	}
 
 	private List<Statement> getIsrBlock(final List<Statement> ifStatements, final InterruptServiceFunction isr) {
-		// Note: We do not wrap ISR statements in atomic blocks here because these statements
-		// are inside a while loop in the thread procedure, and the IcfgBuilder does not support
-		// atomic blocks that span loop back edges.
-		return ifStatements;
+		if (mAnnotateInterrupts) {
+			return ifStatements;
+		}
+
+		return List.of(StatementFactory.constructAtomicStatement(mIgnoreLoc, ifStatements));
 	}
 
 	private Statement[] getIsrBlock(final Statement ifStatement, final InterruptServiceFunction isr) {
-		// Note: We do not wrap ISR statements in atomic blocks here because these statements
-		// are inside a while loop in the thread procedure, and the IcfgBuilder does not support
-		// atomic blocks that span loop back edges.
-		return new Statement[] { ifStatement };
+		if (mAnnotateInterrupts) {
+			return new Statement[] { ifStatement };
+		}
+
+		return new Statement[] { StatementFactory.constructAtomicStatement(mIgnoreLoc, List.of(ifStatement)) };
 	}
 
 	private Statement getIfStatement(final InterruptServiceFunction isr, final Expression enabledExpr) {
