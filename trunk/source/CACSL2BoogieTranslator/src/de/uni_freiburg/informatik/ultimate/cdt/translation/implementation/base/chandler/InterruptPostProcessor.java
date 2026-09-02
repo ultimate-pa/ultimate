@@ -309,12 +309,11 @@ public class InterruptPostProcessor implements IPostProcessor {
 			return;
 		}
 
-		final String funcOp = enabled ? " enable " : " disable ";
+		final String funcOp = enabled ? "enable" : "disable";
+
 		for (final var isr : isrs) {
 			final var irqNum = getIrqNum(isr);
 			final var irqName = getIrqName(isr);
-
-			mLogger.info(String.format("Adding IRQ %s function for ISR '%s'", funcOp, irqName));
 
 			final var intEnableProcedure = intEnabledProcedures.get(irqNum);
 			if (intEnableProcedure == null) {
@@ -322,6 +321,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 				continue;
 			}
 
+			mLogger.info(String.format("Adding IRQ %s function for ISR '%s'", funcOp, irqName));
 			annotateAuxVarAssignment(intEnableProcedure, enabled, List.of(constructEnabledLhs(irqNum)));
 		}
 	}

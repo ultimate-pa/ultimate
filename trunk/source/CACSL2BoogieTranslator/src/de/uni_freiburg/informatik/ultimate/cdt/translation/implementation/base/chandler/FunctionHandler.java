@@ -1099,8 +1099,7 @@ public class FunctionHandler {
 		mProcedureManager.endProcedureScope(mCHandler);
 
 		// Register interrupt functions parsed from the ACSL contract of this declaration.
-		// This is needed for declared-but-not-defined functions (e.g., interrupt masking functions
-		// like enable_gpio()) whose interrupt annotations would otherwise be lost.
+		// This is needed for declared-but-not-defined functions (e.g., interrupt masking functions)
 		for (final IInterruptFunction interruptFunc : interruptFuncs) {
 			interruptFunc.setProcedure(procInfo.getDeclaration());
 			mInterruptFuncHandler.register(interruptFunc);
