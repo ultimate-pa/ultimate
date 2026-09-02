@@ -213,7 +213,11 @@ public class InterruptPostProcessor implements IPostProcessor {
 	}
 
 	private void addForksToProcedure(final Procedure mainProcedure, final List<Procedure> threadProcedures) {
-		final List<Statement> newBlock = constructForkStatements(mainProcedure, threadProcedures, -1);
+		final List<Statement> newBlock = new ArrayList<>();
+		for (final Procedure threadProc : threadProcedures) {
+			final int irqNum = findIrqNumForThread(threadProc);
+			newBlock.addAll(constructForkStatements(mainProcedure, List.of(threadProc), -irqNum));
+		}
 		final var body = mainProcedure.getBody();
 		newBlock.addAll(Arrays.asList(body.getBlock()));
 		body.setBlock(newBlock.toArray(new Statement[0]));
@@ -572,6 +576,19 @@ public class InterruptPostProcessor implements IPostProcessor {
 
 	private static String getIrqName(final InterruptServiceFunction isr) {
 		return isr.getIrqReference().getIrq().getName();
+	}
+
+	/**
+	 * Finds the IRQ number associated with the given thread procedure by looking up the procedure in
+	 * {@link #mThreadProcedures}.
+	 */
+	private int findIrqNumForThread(final Procedure threadProc) {
+		for (final Entry<Integer, Procedure> entry : mThreadProcedures.entrySet()) {
+			if (java.util.Objects.equals(entry.getValue(), threadProc)) {
+				return entry.getKey();
+			}
+		}
+		throw new IllegalArgumentException("No IRQ number found for thread procedure " + threadProc.getIdentifier());
 	}
 
 	private static String constructEnabledVarName(final int irqNum) {
