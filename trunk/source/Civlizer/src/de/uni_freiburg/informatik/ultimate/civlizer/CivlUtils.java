@@ -69,10 +69,21 @@ public class CivlUtils {
 			return exprUpdater.processExpression(expr);
 		}
 
-		private final CallStatement update;
+		private final String mGhostVariable;
+		private Expression mCondition = null;
 
 		ExpressionUpdater(final CallStatement update) {
-			this.update = update;
+			mGhostVariable = update.getMethodName();
+			if (update.getArguments()[0] instanceof final IfThenElseExpression ite) {
+				mCondition = processExpression(ite.getCondition());
+				final Expression thenPart = processExpression(ite.getThenPart());
+				final Expression elsePart = processExpression(ite.getElsePart());
+				if (mCondition != ite.getCondition() || thenPart != ite.getThenPart()
+						|| elsePart != ite.getElsePart()) {
+					final Expression newExpr = new IfThenElseExpression(ite.getLocation(), thenPart.getType(),
+							mCondition, thenPart, elsePart);
+				}
+			}
 		}
 
 		@Override

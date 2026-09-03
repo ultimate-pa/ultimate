@@ -546,10 +546,25 @@ public final class Translator {
 			inParams.add(new ParameterDeclaration(tid.toString(), makeOne(mTidType), Linearity.IN));
 		}
 
+		// Maybe need to be optimize
+		final var ghostDeclarations = WitnessGhostDeclaration.getAnnotation(mProgramAndProof.getIcfg());
+		final var ghostDeclarationsExpression = new ArrayList<Expression>();
+		if (ghostDeclarations != null) {
+			for (final var entry : ghostDeclarations.getGhostAndInitialValues().entrySet()) {
+				// ne marche pas necessite conversion entry.getKey()
+				ghostDeclarationsExpression.add(new BinaryExpression(null, BinaryExpression.Operator.COMPEQ,
+						new IdentifierExpression(null, entry.getKey()), (Expression) entry.getValue()));
+			}
+		}
+		//
+
 		final Expression annotation =
 				mProgramAndProof.getTemplateVisitor().getEntryAnnotationMap().get(decl.getIdentifier());
-		final var yieldInv =
-				addYieldInvariant(decl.getIdentifier(), 0, new Expression[] { annotation }, tidNeedsLinearity);
+		final var yieldInv = addYieldInvariant(decl.getIdentifier(), 0,
+				BoogieUtils.START_PROCEDURE.equals(decl.getIdentifier())
+						? ghostDeclarationsExpression.toArray(new Expression[0])
+						: new Expression[] { annotation },
+				tidNeedsLinearity);
 
 		final var requires = callYieldInvariant(yieldInv,
 				inParams.stream().map(Translator::getParameterExpression).toArray(IdentifierExpression[]::new),
