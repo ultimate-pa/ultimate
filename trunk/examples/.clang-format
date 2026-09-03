@@ -1,0 +1,76 @@
+---
+BasedOnStyle: Google
+AccessModifierOffset: '4'
+AlignAfterOpenBracket: Align
+AlignConsecutiveMacros: None
+AlignConsecutiveAssignments: None
+AlignConsecutiveBitFields: None
+AlignConsecutiveDeclarations: None
+AlignConsecutiveShortCaseStatements:
+    Enabled: 'false'
+AlignEscapedNewlines: Left
+AlignTrailingComments: 'false'
+AllowAllArgumentsOnNextLine: 'false'
+AllowAllConstructorInitializersOnNextLine: 'false'
+AllowAllParametersOfDeclarationOnNextLine: 'false'
+AllowShortEnumsOnASingleLine: 'false'
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: Inline
+BinPackArguments: 'true'
+BinPackParameters: 'true'
+BreakBeforeBraces: Custom
+BraceWrapping:
+    AfterCaseLabel: 'false'
+    AfterClass: 'false'
+    AfterControlStatement: Never
+    AfterEnum: 'false'
+    AfterFunction: 'true'
+    AfterNamespace: 'false'
+    AfterStruct: 'false'
+    AfterUnion: 'false'
+    AfterExternBlock: 'false'
+    BeforeCatch: 'false'
+    BeforeElse: 'false'
+    BeforeLambdaBody: 'false'
+    BeforeWhile: 'false'
+    IndentBraces: 'false'
+    SplitEmptyFunction: 'true'
+    SplitEmptyRecord: 'true'
+    SplitEmptyNamespace: 'true'
+BreakBeforeTernaryOperators: 'false'
+BreakConstructorInitializers: AfterColon
+ColumnLimit: '120'
+ContinuationIndentWidth: '4'
+Cpp11BracedListStyle: 'false'
+FixNamespaceComments: 'true'
+IndentCaseLabels: 'true'
+IndentPPDirectives: None
+IndentWidth: '4'
+InsertBraces: 'true'
+InsertNewlineAtEOF: 'true'
+Language: Cpp
+MaxEmptyLinesToKeep: '1'
+NamespaceIndentation: None
+PointerAlignment: Right
+ReflowComments: 'true'
+SortIncludes: 'true'
+SortUsingDeclarations: 'true'
+SpaceAfterCStyleCast: 'false'
+SpaceAfterTemplateKeyword: 'false'
+SpaceBeforeAssignmentOperators: 'true'
+SpaceBeforeCpp11BracedList: 'true'
+SpaceBeforeCtorInitializerColon: 'true'
+SpaceBeforeInheritanceColon: 'true'
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: 'true'
+SpaceInEmptyParentheses: 'false'
+SpacesBeforeTrailingComments: '2'
+SpacesInAngles: 'false'
+SpacesInCStyleCastParentheses: 'false'
+SpacesInContainerLiterals: 'false'
+SpacesInParentheses: 'false'
+SpacesInSquareBrackets: 'false'
+Standard: Cpp11
+TabWidth: '4'
+UseTab: Never
