@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.RangeDecision;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TestCasePositivePattern;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
@@ -431,6 +432,14 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			sb.append(entry.getValue().getName() + "_");
 		}
 		return sb.toString();
+	}
+
+	@Override
+	public List<Statement> getTestCaseCheck(final BoogieLocation bl, final PatternType<?> pattern,
+			final Expression notYetElapsedExpr) {
+		final Spec spec = pattern instanceof TestCasePositivePattern ? Spec.TESTCASE_POS : Spec.TESTCASE_NEG;
+		final ReqCheck check = new ReqCheck(spec, new String[] { pattern.getId() }, new String[] { pattern.getId() });
+		return Collections.singletonList(createAssert(notYetElapsedExpr, check, "TESTCASE_" + pattern.getId()));
 	}
 
 	private static AssertStatement createAssert(final Expression expr, final ReqCheck check, final String label) {

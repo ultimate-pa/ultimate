@@ -28,8 +28,11 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 
 /**
@@ -46,6 +49,8 @@ public interface IReq2PeaAnnotator {
 	List<Statement> getPreChecks();
 
 	List<Statement> getPostTransitionChecks();
+
+	List<Statement> getTestCaseCheck(BoogieLocation bl, PatternType<?> pattern, Expression notYetElapsedExpr);
 
 	PeaResultUtil getPeaResultUtil();
 

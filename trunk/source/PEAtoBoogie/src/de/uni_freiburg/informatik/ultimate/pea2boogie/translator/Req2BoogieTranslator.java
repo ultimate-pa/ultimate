@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -58,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -70,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -96,7 +93,6 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2Pea;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaAnnotator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaTransformer;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.Req2Pea;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.testgen.ReqInOutGuesser;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
@@ -579,6 +575,13 @@ public class Req2BoogieTranslator {
 			}
 		}
 
+		final Rational totalDuration = boundaries.isEmpty() ? Rational.ZERO : boundaries.get(boundaries.size() - 1);
+
+		final Expression notYetElapsed = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, clock,
+				new RealLiteral(bl, toDoubleString(totalDuration)));
+
+		stmtList.addAll(mReqCheckAnnotator.getTestCaseCheck(bl, pattern, notYetElapsed));
+
 		for (final ReqPeas reqpea : relevantReqPeas) {
 			for (final Entry<CounterTrace, PhaseEventAutomata> ct2pea : reqpea.getCounterTrace2Pea()) {
 				final PhaseEventAutomata pea = ct2pea.getValue();
@@ -587,16 +590,6 @@ public class Req2BoogieTranslator {
 		}
 
 		stmtList.addAll(genStateVarsAssign(getRelevantStateVars(relevantReqPeas, pattern)));
-
-		// reachability trap
-		final Rational totalDuration = boundaries.isEmpty() ? Rational.ZERO : boundaries.get(boundaries.size() - 1);
-
-		final Expression totalElapsed = new BinaryExpression(bl, BinaryExpression.Operator.COMPGEQ, clock,
-				new RealLiteral(bl, toDoubleString(totalDuration)));
-
-		final Statement[] thenStmts = { createTestCaseAssert(bl, pattern) };
-
-		stmtList.add(new IfStatement(bl, totalElapsed, thenStmts, new Statement[0]));
 
 		return stmtList.toArray(new Statement[stmtList.size()]);
 	}
@@ -627,19 +620,6 @@ public class Req2BoogieTranslator {
 		}
 
 		return stmts;
-	}
-
-	// Reachability trap for a TestCase.
-
-	private static AssertStatement createTestCaseAssert(final BoogieLocation bl, final PatternType<?> pattern) {
-		final Spec spec = pattern instanceof TestCasePositivePattern ? Spec.TESTCASE_POS : Spec.TESTCASE_NEG;
-		final ReqCheck check = new ReqCheck(spec, new String[] { pattern.getId() }, new String[] { pattern.getId() });
-		final CheckedReqLocation loc = new CheckedReqLocation(check);
-		final NamedAttribute[] attr =
-				{ new NamedAttribute(loc, "check_TESTCASE_" + pattern.getId(), new Expression[] {}) };
-		final AssertStatement rtr = new AssertStatement(loc, attr, new BooleanLiteral(bl, false));
-		check.annotate(rtr);
-		return rtr;
 	}
 
 	private static String toDoubleString(final Rational r) {
