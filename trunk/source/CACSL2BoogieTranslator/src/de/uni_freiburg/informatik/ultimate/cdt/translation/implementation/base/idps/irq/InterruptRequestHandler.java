@@ -49,14 +49,14 @@ public class InterruptRequestHandler {
 	}
 
 	public boolean register(final String name, final int num) {
-		final InterruptRequest irq = new InterruptRequest(name, mIrqFreeNum);
+		final boolean containsIrq = mIrqs.values().stream().anyMatch(irq -> irq.getName().equals(name));
 
-		if (mIrqs.putIfAbsent(num, irq) == null) {
+		if (!containsIrq) {
+			mIrqs.putIfAbsent(num, new InterruptRequest(name, mIrqFreeNum));
 			mIrqFreeNum += 1;
-			return true;
 		}
 
-		return false;
+		return true;
 	}
 
 	public List<InterruptRequest> getIrqs() {

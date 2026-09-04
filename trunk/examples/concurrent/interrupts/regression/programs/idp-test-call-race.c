@@ -1,4 +1,4 @@
-// #UNSAFE
+//#Unsafe
 /*-----------------------------------------------------------------------------
  * Interrupt-Driven Program (IDP) for testing IDP verification
  *-----------------------------------------------------------------------------
@@ -33,9 +33,6 @@ int steps_in_app = 0;
 /*-----------------------------------------------------------------------------
  * Function declarations
  *---------------------------------------------------------------------------*/
-extern void __VERIFIER_atomic_begin();
-extern void __VERIFIER_atomic_end();
-
 void HAL_GPIO_Init(void);
 bool HAL_GPIO_Read(int pin);
 void HAL_GPIO_Write(int pin, pin_state_t state);
@@ -67,7 +64,7 @@ void HAL_GPIO_ISR1()
 //@ interrupt masking enable GPIO2;
 void HAL_GPIO_Enable_IRQ2();
 
-//@ interrupt service routine GPIO12;
+//@ interrupt service routine GPIO2;
 void HAL_GPIO_ISR2()
 {
     step_in_isr = true;

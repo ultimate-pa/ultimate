@@ -1,0 +1,59 @@
+#Thu Sep 03 19:37:14 CEST 2026
+\!/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor=
+/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor/Replace\ atomic\ blocks\ with\ locks=true
+/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor/Replace\ while\ statements\ and\ if-then-else\ statements=false
+/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor/Show\ all\ Annotations=false
+/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor/Show\ backtranslation\ warnings=false
+/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor/Simplify\ expressions=false
+/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor/Use\ memory\ slicer=false
+@de.uni_freiburg.informatik.ultimate.boogie.preprocessor=0.3.1
+file_export_version=3.0
+#Thu Sep 03 19:37:14 CEST 2026
+\!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Ignore\ calls\ to\ procedures\ called\ more\ than\ once=ONLY_FOR_SEQUENTIAL_PROGRAMS
+@de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.3.1
+file_export_version=3.0
+#Thu Sep 03 19:37:14 CEST 2026
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:4000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Dump\ SMT\ script\ to\ file=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Only\ consider\ context\ switches\ at\ boundaries\ of\ atomic\ blocks=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/SMT\ solver=External_DefaultMode
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+@de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=0.3.1
+file_export_version=3.0
+#Thu Sep 03 19:37:14 CEST 2026
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Apply\ one-shot\ large\ block\ encoding\ in\ concurrent\ analysis=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Automaton\ type\ used\ in\ concurrency\ analysis=PETRI_NET
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=FPandBP
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ procedure\ contracts=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolants\ consolidation=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Looper\ check\ in\ Petri\ net\ analysis=SEMANTIC
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Order\ on\ configurations\ for\ Petri\ net\ unfoldings=DBO
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=LoopHeads
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/SMT\ solver=External_ModelsAndUnsatCoreMode
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ separate\ solver\ for\ trace\ checks=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.3.1
+file_export_version=3.0
+#Thu Sep 03 19:37:14 CEST 2026
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Annotate\ interrupts=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Behaviour\ of\ calls\ to\ undefined\ functions=NON_DETERMINISTIC_RETURN
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ assertions\ from\ assert.h=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ division\ by\ zero=IGNORE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ if\ freed\ pointer\ was\ valid=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ unreachability\ of\ reach_error\ function=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/If\ two\ pointers\ are\ subtracted\ or\ compared\ they\ have\ the\ same\ base\ address=IGNORE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Interrupt-program\ translation\ mode=ONE_THREAD_PER_ISR
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Memory\ addressing=One_Dimensional
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Overapproximate\ operations\ on\ floating\ types=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ dereference\ validity=IGNORE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ POINTER=4
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ long=4
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ long\ double=12
+@de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.3.1
+file_export_version=3.0

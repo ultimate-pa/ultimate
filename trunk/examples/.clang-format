@@ -41,6 +41,7 @@ BraceWrapping:
 BreakBeforeTernaryOperators: 'false'
 BreakConstructorInitializers: AfterColon
 ColumnLimit: '120'
+CommentPragmas: '^#(Safe|Unsafe|Unknown|ValidAnnotation|InvalidAnnotation|SyntaxError)'
 ContinuationIndentWidth: '4'
 Cpp11BracedListStyle: 'false'
 FixNamespaceComments: 'true'

@@ -1,4 +1,4 @@
-// #SAFE
+//#Safe
 /*-----------------------------------------------------------------------------
  * Interrupt-Driven Program (IDP) for testing ACSL interrupt comment parsing
  * and transformation into a Thread-Based Program (TBP)

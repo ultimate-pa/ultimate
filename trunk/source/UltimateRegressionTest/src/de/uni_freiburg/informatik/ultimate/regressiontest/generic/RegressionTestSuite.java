@@ -52,7 +52,7 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 
 	public RegressionTestSuite() {
 		mTimeout = DEFAULT_TIMEOUT;
-		mRootFolder = TestUtil.getPathFromTrunk("examples/concurrent/interrupt_driven_programs/");
+		mRootFolder = TestUtil.getPathFromTrunk("examples/concurrent/interrupts/");
 
 		// exclude paths that match the following regex
 		mExcludeFilterRegexToolchain = ".*(" + EXCLUDED_DIRS.stream().collect(Collectors.joining("|")) + ").*";

@@ -1,4 +1,4 @@
-// #SAFE
+//#Safe
 /*-----------------------------------------------------------------------------
  * Interrupt-Driven Program (IDP) for testing IDP verification
  *-----------------------------------------------------------------------------
@@ -65,7 +65,7 @@ void HAL_GPIO_ISR1()
 //@ interrupt masking enable GPIO2;
 void HAL_GPIO_Enable_IRQ2();
 
-//@ interrupt service routine GPIO12;
+//@ interrupt service routine GPIO2;
 void HAL_GPIO_ISR2()
 {
     step_in_isr = true;
