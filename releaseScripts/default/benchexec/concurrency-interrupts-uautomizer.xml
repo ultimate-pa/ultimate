@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 2.3//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
+<benchmark tool="ultimateautomizer" displayName="UAutomizer" timelimit="15 min" hardtimelimit="16 min" memlimit="8 GB" cpuCores="2">
+
+  <resultfiles></resultfiles>
+
+  <option name="--full-output" />
+
+  <!-- ============================================================================================================ -->
+  <!-- Task definitions                                                                                             -->
+  <!-- ============================================================================================================ -->
+  <tasks name="Concurrency-Interrupts_unreach-call">
+    <includesfile>../../../trunk/examples/concurrency-interrupts.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <!-- ============================================================================================================ -->
+  <!-- Global options (apply to all run definitions)                                                                -->
+  <!-- ============================================================================================================ -->
+  <option name="--cacsl2boogietranslator.check.unreachability.of.reach_error.function">false</option>
+  <option name="--cacsl2boogietranslator.check.assertions.from.assert.h">true</option>
+  <option name="--cacsl2boogietranslator.check.acsl.annotations">true</option>
+  <option name="--cacsl2boogietranslator.behaviour.of.calls.to.undefined.functions">NON_DETERMINISTIC_RETURN</option>
+  <option name="--icfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks">false</option>
+
+  <option name="--cacsl2boogietranslator.annotate.interrupts">false</option>
+  <option name="--preprocessor.replace.atomic.blocks.with.locks">true</option>
+  <option name="--traceabstraction.automaton.type.used.in.concurrency.analysis">PETRI_NET</option>
+
+  <!-- ============================================================================================================ -->
+  <!-- Run definitions                                                                                              -->
+  <!-- ============================================================================================================ -->
+
+  <!-- Interrupt translation mode: ALL_ISR_IN_ONE_THREAD -->
+
+  <rundefinition name="Petri-Net_All-ISR-In-One-Thread">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+  </rundefinition>
+
+  <!-- Interrupt translation mode: ONE_THREAD_PER_ISR -->
+
+  <rundefinition name="Petri-Net_One-Thread-Per-ISR">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+  </rundefinition>
+
+  <!-- Interrupt translation mode: ONE_THREAD_PER_ISR_FORK_JOIN -->
+
+  <rundefinition name="Petri-Net_One-Thread-Per-ISR-Fork-Join">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+  </rundefinition>
+
+</benchmark>

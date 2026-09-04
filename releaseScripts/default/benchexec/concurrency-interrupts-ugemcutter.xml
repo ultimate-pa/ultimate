@@ -1,0 +1,491 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 2.3//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
+<benchmark tool="ultimategemcutter" displayName="UGemCutter" timelimit="15 min" hardtimelimit="16 min" memlimit="8 GB" cpuCores="2">
+
+  <resultfiles></resultfiles>
+
+  <option name="--full-output" />
+
+  <!-- ============================================================================================================ -->
+  <!-- Task definitions                                                                                             -->
+  <!-- ============================================================================================================ -->
+  <tasks name="Concurrency-Interrupts_unreach-call">
+    <includesfile>../../../trunk/examples/concurrency-interrupts.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <!-- ============================================================================================================ -->
+  <!-- Global options (apply to all run definitions)                                                                -->
+  <!-- ============================================================================================================ -->
+  <option name="--cacsl2boogietranslator.check.unreachability.of.reach_error.function">false</option>
+  <option name="--cacsl2boogietranslator.check.assertions.from.assert.h">true</option>
+  <option name="--cacsl2boogietranslator.check.acsl.annotations">true</option>
+  <option name="--cacsl2boogietranslator.behaviour.of.calls.to.undefined.functions">NON_DETERMINISTIC_RETURN</option>
+  <option name="--icfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks">false</option>
+
+  <option name="--cacsl2boogietranslator.annotate.interrupts">false</option>
+  <option name="--preprocessor.replace.atomic.blocks.with.locks">true</option>
+  <option name="--traceabstraction.automaton.type.used.in.concurrency.analysis">PARTIAL_ORDER_FA</option>
+  <option name="--traceabstraction.commutativity.condition.synthesis">NONE</option>
+
+  <!-- ============================================================================================================ -->
+  <!-- Run definitions                                                                                              -->
+  <!-- ============================================================================================================ -->
+
+  <!-- Interrupt translation mode: ALL_ISR_IN_ONE_THREAD -->
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_By-Serial-Number_None">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">NONE</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_By-Serial-Number_Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_By-Serial-Number_Persistent-Sets">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SETS</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_By-Serial-Number_Persistent-Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_By-Serial-Number_Persistent-Sleep-New-States-Fixedorder">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Pseudo-Lockstep_None">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">NONE</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Pseudo-Lockstep_Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Pseudo-Lockstep_Persistent-Sets">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SETS</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Pseudo-Lockstep_Persistent-Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Pseudo-Lockstep_Persistent-Sleep-New-States-Fixedorder">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Random_None">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">NONE</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Random_Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Random_Persistent-Sets">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SETS</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Random_Persistent-Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Random_Persistent-Sleep-New-States-Fixedorder">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Positional-Random_None">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">POSITIONAL_RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">NONE</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Positional-Random_Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">POSITIONAL_RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Positional-Random_Persistent-Sets">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">POSITIONAL_RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SETS</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Positional-Random_Persistent-Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">POSITIONAL_RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Positional-Random_Persistent-Sleep-New-States-Fixedorder">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">POSITIONAL_RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Loop-Lockstep_None">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">NONE</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Loop-Lockstep_Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Loop-Lockstep_Persistent-Sets">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SETS</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Loop-Lockstep_Persistent-Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_All-ISR-In-One-Thread_Loop-Lockstep_Persistent-Sleep-New-States-Fixedorder">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ALL_ISR_IN_ONE_THREAD</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER</option>
+  </rundefinition>
+
+  <!-- Interrupt translation mode: ONE_THREAD_PER_ISR -->
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_By-Serial-Number_None">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">NONE</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_By-Serial-Number_Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_By-Serial-Number_Persistent-Sets">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SETS</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_By-Serial-Number_Persistent-Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_By-Serial-Number_Persistent-Sleep-New-States-Fixedorder">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Pseudo-Lockstep_None">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">NONE</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Pseudo-Lockstep_Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Pseudo-Lockstep_Persistent-Sets">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SETS</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Pseudo-Lockstep_Persistent-Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Pseudo-Lockstep_Persistent-Sleep-New-States-Fixedorder">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Random_None">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">NONE</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Random_Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Random_Persistent-Sets">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SETS</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Random_Persistent-Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Random_Persistent-Sleep-New-States-Fixedorder">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Positional-Random_None">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">POSITIONAL_RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">NONE</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Positional-Random_Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">POSITIONAL_RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Positional-Random_Persistent-Sets">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">POSITIONAL_RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SETS</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Positional-Random_Persistent-Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">POSITIONAL_RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Positional-Random_Persistent-Sleep-New-States-Fixedorder">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">POSITIONAL_RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Loop-Lockstep_None">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">NONE</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Loop-Lockstep_Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Loop-Lockstep_Persistent-Sets">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SETS</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Loop-Lockstep_Persistent-Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR_Loop-Lockstep_Persistent-Sleep-New-States-Fixedorder">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER</option>
+  </rundefinition>
+
+  <!-- Interrupt translation mode: ONE_THREAD_PER_ISR_FORK_JOIN -->
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_By-Serial-Number_None">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">NONE</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_By-Serial-Number_Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_By-Serial-Number_Persistent-Sets">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SETS</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_By-Serial-Number_Persistent-Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_By-Serial-Number_Persistent-Sleep-New-States-Fixedorder">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Pseudo-Lockstep_None">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">NONE</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Pseudo-Lockstep_Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Pseudo-Lockstep_Persistent-Sets">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SETS</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Pseudo-Lockstep_Persistent-Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Pseudo-Lockstep_Persistent-Sleep-New-States-Fixedorder">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">PSEUDO_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Random_None">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">NONE</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Random_Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Random_Persistent-Sets">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SETS</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Random_Persistent-Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Random_Persistent-Sleep-New-States-Fixedorder">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Positional-Random_None">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">POSITIONAL_RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">NONE</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Positional-Random_Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">POSITIONAL_RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Positional-Random_Persistent-Sets">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">POSITIONAL_RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SETS</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Positional-Random_Persistent-Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">POSITIONAL_RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Positional-Random_Persistent-Sleep-New-States-Fixedorder">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">POSITIONAL_RANDOM</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Loop-Lockstep_None">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">NONE</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Loop-Lockstep_Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Loop-Lockstep_Persistent-Sets">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SETS</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Loop-Lockstep_Persistent-Sleep-New-States">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES</option>
+  </rundefinition>
+
+  <rundefinition name="Partial-Order-FA_One-Thread-Per-ISR-Fork-Join_Loop-Lockstep_Persistent-Sleep-New-States-Fixedorder">
+    <option name="--cacsl2boogietranslator.interrupt-program.translation.mode">ONE_THREAD_PER_ISR_FORK_JOIN</option>
+    <option name="--traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
+    <option name="--traceabstraction.partial.order.reduction.in.concurrent.analysis">PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER</option>
+  </rundefinition>
+
+</benchmark>
