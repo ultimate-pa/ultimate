@@ -3,7 +3,7 @@ format_version: '2.0'
 input_files: 'idp-test-isr-disable-unsafe.c'
 
 properties:
-  - property_file: ../properties/unreach-call.prp
+  - property_file: ../../../../svcomp/c/properties/unreach-call.prp
     expected_verdict: false
 
 options:
