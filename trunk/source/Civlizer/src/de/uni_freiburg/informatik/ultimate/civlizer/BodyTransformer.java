@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
@@ -221,34 +222,6 @@ final class BodyTransformer extends BoogieTransformer {
 		for (final Statement statement : statements) {
 			mAtomicStatementCounter += 1;
 
-			// special handling for Fork
-			if (statement instanceof final ForkStatement forkStmt) {
-
-				final var annotation = annotationMap.get(statement.getLoc());
-
-				// FIXME This doesn't always work correctly for ghost updates on AtomicStatements
-				final List<CallStatement> positiveGhostUpdates = createGhostUpdateAssignments(
-						ghostUpdateMap.get(new GhostUpdateLocation(statement.getLocation(), false)));
-
-				final var annotationFork = mTranslator.getProgramAndProof().getTemplateVisitor().getEntryAnnotationMap()
-						.get(forkStmt.getProcedureName());
-
-				// TODO change
-				// update(annotation, ghost update)
-
-				final var yieldInvariantFork = mTranslator.addYieldInvariant(mProcedureName, mAtomicStatementCounter,
-						new Expression[] { annotation, annotationFork }, mTidNeedsLinearity);
-				final var annotationCheckFork =
-						Translator.callYieldInvariant(yieldInvariantFork, mCurrentTids, annotation);
-
-				newStatements.addAll(positiveGhostUpdates);
-				newStatements.add(annotationCheckFork);
-				newStatements.add(processStatement(statement));
-
-				mTidNeedsLinearity.clear();
-				continue;
-			}
-
 			final var annotation = annotationMap.get(statement.getLoc());
 			final var yieldInvariant = mTranslator.addYieldInvariant(mProcedureName, mAtomicStatementCounter,
 					new Expression[] { annotation }, mTidNeedsLinearity);
@@ -289,11 +262,22 @@ final class BodyTransformer extends BoogieTransformer {
 				// case AssumeStatement _:
 				// case HavocStatement _:
 				// case AtomicStatement _:
-				//
-				// case ForkStatement _:
+
+				// special handling for Fork
 				newStatements.add(annotationCheck);
-				newStatements.add(processStatement(statement));
-				newStatements.addAll(positiveGhostUpdates);
+				if (statement instanceof final ForkStatement forkStmt) {
+					final var annotationFork = mTranslator.getProgramAndProof().getTemplateVisitor()
+							.getEntryAnnotationMap().get(forkStmt.getProcedureName());
+
+					newStatements.addAll(positiveGhostUpdates);
+					newStatements.add(new AssertStatement(null, new NamedAttribute[] {
+							new NamedAttribute(null, "layer", new Expression[] { new IntegerLiteral(null, "2") }) },
+							annotationFork));
+					newStatements.add(processStatement(statement));
+				} else {
+					newStatements.add(processStatement(statement));
+					newStatements.addAll(positiveGhostUpdates);
+				}
 				break;
 			}
 

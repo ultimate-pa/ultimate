@@ -41,6 +41,7 @@ import java.util.stream.Stream;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVariableCollector;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVariableCollector.IdentifierExpressionOccurrence;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.MustAssignAnalysis;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -403,9 +404,7 @@ public final class Translator {
 				params.add(new ParameterDeclaration(localVariable.identifier(), type, Linearity.NONE));
 			}
 
-			if (annotation != null) {
-				preserves.add(annotation);
-			}
+			preserves.add(annotation);
 		}
 
 		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
@@ -553,7 +552,19 @@ public final class Translator {
 			for (final var entry : ghostDeclarations.getGhostAndInitialValues().entrySet()) {
 				// ne marche pas necessite conversion entry.getKey()
 				ghostDeclarationsExpression.add(new BinaryExpression(null, BinaryExpression.Operator.COMPEQ,
-						new IdentifierExpression(null, entry.getKey()), (Expression) entry.getValue()));
+						new IdentifierExpression(null, BoogieType.TYPE_INT, entry.getKey(),
+								new DeclarationInformation(StorageClass.QUANTIFIED, null)),
+						(Expression) entry.getValue()));
+
+				mLogger.warn(collectLocalVariables((Expression) entry.getValue()));
+				// information
+				mLogger.warn(new IdentifierExpression(null, BoogieType.TYPE_INT, entry.getKey(),
+						new DeclarationInformation(StorageClass.QUANTIFIED, null)).getDeclarationInformation());
+				mLogger.warn(collectLocalVariables(new BinaryExpression(null, BinaryExpression.Operator.COMPEQ,
+						new IdentifierExpression(null, BoogieType.TYPE_INT, entry.getKey(),
+								new DeclarationInformation(StorageClass.QUANTIFIED, null)),
+						(Expression) entry.getValue())));
+
 			}
 		}
 		//
@@ -565,6 +576,8 @@ public final class Translator {
 						? ghostDeclarationsExpression.toArray(new Expression[0])
 						: new Expression[] { annotation },
 				tidNeedsLinearity);
+
+		// ghostDeclarationsExpression.toArray(new Expression[0])
 
 		final var requires = callYieldInvariant(yieldInv,
 				inParams.stream().map(Translator::getParameterExpression).toArray(IdentifierExpression[]::new),
