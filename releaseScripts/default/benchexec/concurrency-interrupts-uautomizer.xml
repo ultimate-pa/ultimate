@@ -22,6 +22,7 @@
   <option name="--cacsl2boogietranslator.check.acsl.annotations">true</option>
   <option name="--cacsl2boogietranslator.behaviour.of.calls.to.undefined.functions">NON_DETERMINISTIC_RETURN</option>
   <option name="--icfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks">false</option>
+  <option name="--icfgbuilder.size.of.a.code.block">SingleStatement</option>
 
   <option name="--cacsl2boogietranslator.annotate.interrupts">false</option>
   <option name="--preprocessor.replace.atomic.blocks.with.locks">true</option>

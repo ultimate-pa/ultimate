@@ -20,7 +20,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Dump\ SMT\ script\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Only\ consider\ context\ switches\ at\ boundaries\ of\ atomic\ blocks=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/SMT\ solver=External_DefaultMode
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Size\ of\ a\ code\ block=SingleStatement
 @de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=0.3.1
 file_export_version=3.0
 #Thu Sep 03 19:37:14 CEST 2026
