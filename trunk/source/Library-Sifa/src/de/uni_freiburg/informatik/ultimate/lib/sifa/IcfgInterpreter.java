@@ -109,7 +109,8 @@ public class IcfgInterpreter implements ISifaInterpreter, IEnterCallRegistrar {
 		mLoiPredStorage = new MapBasedStorage(mLogger);
 		mEnterCallWorklist = new PriorityWorklist<>(mCallGraph.relevantProceduresTopsorted(), mDomain::join);
 		final IPredicate effectiveInitial = initialState != null ? initialState : mTools.top();
-		mCallGraph.initialProceduresOfInterest().forEach(proc -> mEnterCallWorklist.add(proc, effectiveInitial));
+		mCallGraph.initialProceduresOfInterest().stream()
+				.forEach(proc -> mEnterCallWorklist.add(proc, effectiveInitial));
 		// Summaries from a previous run must not be reused with a different initial state.
 		mDagInterpreter = new DagInterpreter(mLogger, mStats, mTimer, mTools, mDomain, mFluid,
 				mLoopSumFactory.apply(this), mCallSumFactory.apply(this));

@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ILoopSummarizer;
  * @author schaetzc@tf.uni-freiburg.de
  */
 public class DagInterpreter {
+
 	private final ILogger mLogger;
 	private final SifaStats mStats;
 	private final SymbolicTools mTools;
@@ -88,7 +89,8 @@ public class DagInterpreter {
 	 * marker was not reached.
 	 *
 	 * @return Value of the sink location after interpreting the DAG
-	 * @throws Exception The interpreter reached more than one marker in the overlay
+	 * @throws Exception
+	 *             The interpreter reached more than one marker in the overlay
 	 */
 	public IPredicate interpretForSingleMarker(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay, final IPredicate initalInput) {

@@ -98,18 +98,18 @@ public class SifaBuilder {
 		final SymbolicTools tools = constructTools(stats, icfg);
 		final IDomain domain = constructStatsDomain(stats, tools, timer);
 		final IFluid fluid = constructStatsFluid(stats);
-		final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSum = constructLoopSummarizer(
-				stats, timer, tools, domain, fluid);
-		final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSum = constructCallSummarizer(
-				stats, tools, domain);
+		final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSum =
+				constructLoopSummarizer(stats, timer, tools, domain, fluid);
+		final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSum =
+				constructCallSummarizer(stats, tools, domain);
 
 		final ISifaInterpreter interpreter;
 		if (tools instanceof final ConcurrentSymbolicTools concurrentTools) {
 			interpreter = new ThreadModularSifaInterpreter(mLogger, timer, stats, concurrentTools, icfg,
 					locationsOfInterest, domain, fluid, loopSum, callSum, mServices);
 		} else {
-			interpreter = new IcfgInterpreter(mLogger, timer, stats, tools, icfg, locationsOfInterest, domain, fluid,
-					loopSum, callSum);
+			interpreter = new IcfgInterpreter(mLogger, timer, stats, tools, icfg,
+					locationsOfInterest, domain, fluid, loopSum, callSum);
 		}
 		return new SifaComponents(interpreter, domain, stats);
 	}
@@ -227,8 +227,8 @@ public class SifaBuilder {
 		}
 	}
 
-	private Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> constructCallSummarizer(
-			final SifaStats stats, final SymbolicTools tools, final IDomain domain) {
+	private Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>>
+			constructCallSummarizer(final SifaStats stats, final SymbolicTools tools, final IDomain domain) {
 		final String prefCallSum = mPrefs.getString(SifaPreferences.LABEL_CALL_SUMMARIZER);
 		if (TopInputCallSummarizer.class.getSimpleName().equals(prefCallSum)) {
 			return icfgIpr -> dagIpr -> new TopInputCallSummarizer(stats, tools, icfgIpr.procedureResourceCache(),
@@ -244,14 +244,14 @@ public class SifaBuilder {
 		}
 	}
 
-	private static Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> constructIprCallSummarizer(
-			final SifaStats stats) {
+	private static Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>>
+			constructIprCallSummarizer(final SifaStats stats) {
 		return icfgIpr -> dagIpr -> new InterpretCallSummarizer(stats, icfgIpr.procedureResourceCache(), dagIpr);
 	}
 
 	/**
-	 * Sifa is divided into components – this class stores the main component {@link #getInterpreter()} and gives access
-	 * to some internal components that are useful after interpretation.
+	 * Sifa is divided into components – this class stores the main component {@link #getInterpreter()} and gives
+	 * access to some intern components which are useful after interpretation.
 	 *
 	 * @author schaetzc@tf.uni-freiburg.de
 	 */
@@ -260,8 +260,8 @@ public class SifaBuilder {
 		private final IDomain mDomain;
 		private final SifaStats mStats;
 
-		public SifaComponents(final IcfgInterpreter interpreter, final IDomain domain, final SifaStats stats) {
-			this((ISifaInterpreter) interpreter, domain, stats);
+		public SifaComponents(final IcfgInterpreter icfgInterpreter, final IDomain domain, final SifaStats stats) {
+			this((ISifaInterpreter) icfgInterpreter, domain, stats);
 		}
 
 		private SifaComponents(final ISifaInterpreter interpreter, final IDomain domain, final SifaStats stats) {
