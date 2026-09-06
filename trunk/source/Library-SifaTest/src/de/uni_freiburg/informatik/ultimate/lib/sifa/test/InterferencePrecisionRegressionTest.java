@@ -1,3 +1,28 @@
+/*
+ * Copyright (C) 2026 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Library-Sifa plug-in.
+ *
+ * The ULTIMATE Library-Sifa plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Library-Sifa plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Library-Sifa plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Library-Sifa plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Library-Sifa plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.test;
 
 import static org.junit.Assert.assertEquals;
@@ -35,12 +60,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.strongestpostcondition.StrongestPostconditionInterference;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition;
-
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -201,7 +225,7 @@ public class InterferencePrecisionRegressionTest {
 		final CfgSmtToolkit toolkit = new CfgSmtToolkit(new ModifiableGlobalsTable(new HashRelation<>()),
 				mManagedScript, mPrimedSymbolTable, Collections.emptySet(), Collections.emptyMap(),
 				Collections.emptyMap(), null, null, null);
-		mTools = new SymbolicTools(mServices, mStats, new MinimalIcfg(toolkit), SimplificationTechnique.NONE,
+		mTools = new TestSymbolicTools(mServices, mStats, new MinimalIcfg(toolkit), SimplificationTechnique.NONE,
 				mPrimedSymbolTable);
 		final ILogger logger = mServices.getLoggingService().getLogger(getClass());
 		mIntervalDomain = new IntervalDomain(logger, mTools, 8, () -> ALWAYS_RUNNING_TIMER);
@@ -294,6 +318,14 @@ public class InterferencePrecisionRegressionTest {
 
 	private void assertUnsat(final Term formula) {
 		assertEquals(LBool.UNSAT, SmtUtils.checkSatTerm(mScript, formula));
+	}
+
+	private static final class TestSymbolicTools extends SymbolicTools {
+		private TestSymbolicTools(final IUltimateServiceProvider services, final SifaStats stats,
+				final IIcfg<IcfgLocation> icfg, final SimplificationTechnique simplification,
+				final PrimedDefaultIcfgSymbolTable symbolTable) {
+			super(services, stats, icfg, simplification, symbolTable);
+		}
 	}
 
 	private static final class MinimalIcfg implements IIcfg<IcfgLocation> {

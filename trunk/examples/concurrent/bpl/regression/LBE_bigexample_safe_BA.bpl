@@ -8,20 +8,20 @@
  * 
  */
 
-var x : int;
+var x : bool;
 
 procedure ULTIMATE.start();
 modifies x;
 
 implementation ULTIMATE.start()
 {
-  x := 1;
+  x := true;
   fork 1 bar();
   fork 2 bar();
   fork 3 bar();
   fork 4 bar();
-  assert x != 0;
-  assert x != 0;
+  assert x;
+  assert x;
   join 4;
   join 3;
   join 2;
@@ -32,13 +32,13 @@ procedure bar();
 
 implementation bar()
 {
-  assert x != 0;
-  assert x != 0;
-  assert x != 0;
-  assert x != 0;
-  assert x != 0;
-  assert x != 0;
-  assert x != 0;
-  assert x != 0;
-  assert x != 0;
+  assert x;
+  assert x;
+  assert x;
+  assert x;
+  assert x;
+  assert x;
+  assert x;
+  assert x;
+  assert x;
 }

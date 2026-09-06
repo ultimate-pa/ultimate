@@ -13,7 +13,7 @@ modifies x, y;
 
 procedure Thread1()
 modifies x, y;
-{  
+{
     while (1 == 1) {
         if (y < 1) {
             y := y + 1;

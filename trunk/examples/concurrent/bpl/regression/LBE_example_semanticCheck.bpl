@@ -8,7 +8,7 @@
  * 
  */
 
-var f : int;
+var f : bool;
 
 
 procedure ULTIMATE.start();
@@ -17,8 +17,8 @@ modifies f;
 implementation ULTIMATE.start()
 {
     fork 1 foo();
-    f := 1;
-    assert f != 0;
+    f := true;
+    assert f;
     join 1;
 }
 
@@ -27,5 +27,5 @@ modifies f;
 
 implementation foo()
 {
-    f := 1;
+    f := true;
 }

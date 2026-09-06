@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.LocationMarkerTransition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -72,7 +73,6 @@ public class SymbolicTools {
 	private final IPredicate mBottom;
 	private final SimplificationTechnique mSimplification;
 	private final IUltimateServiceProvider mServices;
-	private final IIcfgSymbolTable mSymbolTable;
 	private final ILogger mPQELogger;
 	private final SifaStats mStats;
 
@@ -81,12 +81,12 @@ public class SymbolicTools {
 		this(services, stats, icfg, simplification, icfg.getCfgSmtToolkit().getSymbolTable());
 	}
 
-	public SymbolicTools(final IUltimateServiceProvider services, final SifaStats stats, final IIcfg<IcfgLocation> icfg,
+	protected SymbolicTools(final IUltimateServiceProvider services, final SifaStats stats,
+			final IIcfg<IcfgLocation> icfg,
 			final SimplificationTechnique simplification, final IIcfgSymbolTable symbolTable) {
 		mServices = services;
 		mStats = stats;
 		mIcfg = icfg;
-		mSymbolTable = symbolTable;
 
 		// create PQE logger with custom log level and silence ModelCheckerUtils logger
 		mPQELogger = services.getLoggingService().getLogger(getClass().getName() + ".PQE");
@@ -115,12 +115,13 @@ public class SymbolicTools {
 		return mFactory;
 	}
 
-	public IIcfgSymbolTable getSymbolTable() {
-		return mSymbolTable;
-	}
-
-	protected SifaStats getStats() {
-		return mStats;
+	/** Computes the post-state for transitions supplied by extensions of the sequential interpreter. */
+	protected IPredicate postSpecialTransition(final IPredicate input,
+			final IIcfgTransition<IcfgLocation> transition) {
+		if (transition instanceof LocationMarkerTransition) {
+			return input;
+		}
+		throw new UnsupportedOperationException("Unexpected transition type: " + transition.getClass());
 	}
 
 	public IPredicate post(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {

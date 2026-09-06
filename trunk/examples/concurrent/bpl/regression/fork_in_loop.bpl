@@ -32,7 +32,7 @@ implementation ULTIMATE.start()
     
     join 1;
     join 2;
-    assert 0 == 1;
+    assert false;
 }
 
 

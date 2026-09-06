@@ -13,7 +13,7 @@
 procedure ULTIMATE.start()
 {
     var x : int;
-    var y : int;
+    var y : bool;
 
     // fork three threads, each has thread id 42
     fork 42 increment(7);

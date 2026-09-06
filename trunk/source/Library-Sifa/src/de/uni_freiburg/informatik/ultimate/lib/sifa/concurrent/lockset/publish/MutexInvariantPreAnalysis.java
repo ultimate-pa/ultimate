@@ -1,3 +1,28 @@
+/*
+ * Copyright (C) 2026 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Library-Sifa plug-in.
+ *
+ * The ULTIMATE Library-Sifa plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Library-Sifa plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Library-Sifa plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Library-Sifa plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Library-Sifa plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.publish;
 
 import java.util.Collections;
@@ -41,16 +66,16 @@ final class MutexInvariantPreAnalysis {
 		return Map.copyOf(invariants);
 	}
 
-	private static Map<IProgramVar, Set<IProgramVar>> computeProtectedGlobalsByLockVar(final IIcfg<IcfgLocation> icfg,
-			final MustLocksetAnalysis locksetInfo, final Set<IProgramVar> lockVars,
-			final Predicate<IcfgLocation> isSequential) {
+	private static Map<IProgramVar, Set<IProgramVar>> computeProtectedGlobalsByLockVar(
+			final IIcfg<IcfgLocation> icfg, final MustLocksetAnalysis locksetInfo,
+			final Set<IProgramVar> lockVars, final Predicate<IcfgLocation> isSequential) {
 		final Map<IProgramVar, Set<String>> alwaysHeldLockIdsByGlobal =
 				alwaysHeldLockIdsByGlobal(icfg, locksetInfo, lockVars, isSequential);
 		final Map<String, IProgramVar> lockById = lockById(lockVars);
 		final Map<IProgramVar, Set<IProgramVar>> protectedGlobalsByLock = new LinkedHashMap<>();
 		for (final Entry<IProgramVar, Set<String>> global : alwaysHeldLockIdsByGlobal.entrySet()) {
 			for (final String lockId : global.getValue()) {
-				protectedGlobalsByLock.computeIfAbsent(lockById.get(lockId), k -> new LinkedHashSet<>())
+				protectedGlobalsByLock.computeIfAbsent(lockById.get(lockId), ignored -> new LinkedHashSet<>())
 						.add(global.getKey());
 			}
 		}
@@ -73,8 +98,9 @@ final class MutexInvariantPreAnalysis {
 		return heldLockIdsByGlobal;
 	}
 
-	private static void intersectHeldLocksForWrittenGlobals(final IcfgEdge edge, final Set<IProgramVar> lockVars,
-			final Set<String> heldHere, final Map<IProgramVar, Set<String>> heldLockIdsByGlobal) {
+	private static void intersectHeldLocksForWrittenGlobals(final IcfgEdge edge,
+			final Set<IProgramVar> lockVars, final Set<String> heldHere,
+			final Map<IProgramVar, Set<String>> heldLockIdsByGlobal) {
 		final TransFormula tf = edge.getTransformula();
 		if (tf == null) {
 			return;
@@ -139,21 +165,22 @@ final class MutexInvariantPreAnalysis {
 		final Set<IProgramVar> written = InterferenceUtils.getChangedVars(edge.getTransformula());
 		for (final Entry<IProgramVar, Set<IProgramVar>> lock : protectedGlobalsByLock.entrySet()) {
 			if (!Collections.disjoint(written, lock.getValue())) {
-				initEdges.computeIfAbsent(lock.getKey(), k -> new LinkedHashSet<>()).add(edge);
+				initEdges.computeIfAbsent(lock.getKey(), ignored -> new LinkedHashSet<>()).add(edge);
 			}
 		}
 	}
 
 	private static Map<IProgramVar, Set<IcfgEdge>> releaseEdgesByLock(final IIcfg<IcfgLocation> icfg,
 			final Map<IProgramVar, Set<IProgramVar>> protectedGlobalsByLock,
-			final Predicate<IcfgLocation> isSequential, final Map<IProgramVar, Set<IcfgEdge>> initEdgesByLock) {
+			final Predicate<IcfgLocation> isSequential,
+			final Map<IProgramVar, Set<IcfgEdge>> initEdgesByLock) {
 		final Set<IProgramVar> protectingLocks = protectedGlobalsByLock.keySet();
 		final Map<IProgramVar, Set<IcfgEdge>> releaseEdges = new LinkedHashMap<>();
 		IcfgUtils.getAllLocations(icfg).forEach(source -> {
 			for (final IcfgEdge edge : source.getOutgoingEdges()) {
 				final IProgramVar released = releasedLockOf(edge, protectingLocks);
 				if (released != null && !isRedundantSequentialRelease(source, released, isSequential, initEdgesByLock)) {
-					releaseEdges.computeIfAbsent(released, k -> new LinkedHashSet<>()).add(edge);
+					releaseEdges.computeIfAbsent(released, ignored -> new LinkedHashSet<>()).add(edge);
 				}
 			}
 		});
@@ -168,7 +195,8 @@ final class MutexInvariantPreAnalysis {
 	}
 
 	private static boolean isRedundantSequentialRelease(final IcfgLocation source, final IProgramVar released,
-			final Predicate<IcfgLocation> isSequential, final Map<IProgramVar, Set<IcfgEdge>> initEdgesByLock) {
+			final Predicate<IcfgLocation> isSequential,
+			final Map<IProgramVar, Set<IcfgEdge>> initEdgesByLock) {
 		return isSequential.test(source) && !initEdgesByLock.getOrDefault(released, Set.of()).isEmpty();
 	}
 }

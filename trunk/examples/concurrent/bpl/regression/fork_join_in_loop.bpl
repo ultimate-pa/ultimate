@@ -28,7 +28,7 @@ implementation ULTIMATE.start()
     x := 1;
     join x;
     /* Can't reach this line since there is no thread left to join */
-    assert 0 == 1;
+    assert false;
 }
 
 

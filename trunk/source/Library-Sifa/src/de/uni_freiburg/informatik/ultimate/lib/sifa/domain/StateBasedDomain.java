@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -58,24 +57,16 @@ public class StateBasedDomain<STATE extends IAbstractState<STATE>> implements ID
 	private final ILogger mLogger;
 	private final Supplier<IProgressAwareTimer> mTimeout;
 	private final IStateProvider<STATE> mStateProvider;
-	private final SifaStats mStats;
 	// TODO: Is it good to use a WeakHashMap here?
 	private final WeakHashMap<IPredicate, List<STATE>> mPredicateCache = new WeakHashMap<>();
 
 	public StateBasedDomain(final SymbolicTools tools, final int maxDisjuncts, final ILogger logger,
 			final Supplier<IProgressAwareTimer> timeout, final IStateProvider<STATE> stateProvider) {
-		this(tools, maxDisjuncts, logger, timeout, stateProvider, null);
-	}
-
-	public StateBasedDomain(final SymbolicTools tools, final int maxDisjuncts, final ILogger logger,
-			final Supplier<IProgressAwareTimer> timeout, final IStateProvider<STATE> stateProvider,
-			final SifaStats stats) {
 		mTools = tools;
 		mMaxDisjuncts = maxDisjuncts;
 		mLogger = logger;
 		mTimeout = timeout;
 		mStateProvider = stateProvider;
-		mStats = stats;
 	}
 
 	@Override
@@ -86,9 +77,6 @@ public class StateBasedDomain<STATE extends IAbstractState<STATE>> implements ID
 		joined.addAll(toStates(rhs));
 		if (joined.size() > mMaxDisjuncts) {
 			joined = List.of(joinToSingleState(joined));
-			if (mStats != null) {
-				mStats.increment(SifaStats.Key.DOMAIN_MAX_DISJUNCTS_JOINS);
-			}
 		}
 		return toPredicate(joined);
 	}

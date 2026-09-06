@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstractionType;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ExplicitValueDomain;
@@ -120,20 +120,23 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	public static final Class<LocationAbstractionType> CLASS_LOCATION_ABSTRACTION = LocationAbstractionType.class;
 
 	public static final String LABEL_OUTER_WIDENING_THRESHOLD = "Outer Interference Widening Threshold";
-	private static final String TOOLTIP_OUTER_WIDENING_THRESHOLD = "Number of outer interference fixpoint iterations before widening";
+	private static final String TOOLTIP_OUTER_WIDENING_THRESHOLD =
+			"Number of outer interference fixpoint iterations before widening";
 	private static final int DEFAULT_OUTER_WIDENING_THRESHOLD = 10;
 
 	public static final String LABEL_INNER_WIDENING_THRESHOLD = "Inner Interference Widening Threshold";
-	private static final String TOOLTIP_INNER_WIDENING_THRESHOLD = "Number of inner interference application iterations before widening";
+	private static final String TOOLTIP_INNER_WIDENING_THRESHOLD =
+			"Number of inner interference application iterations before widening";
 	private static final int DEFAULT_INNER_WIDENING_THRESHOLD = 6;
 
 	public static final String LABEL_JOIN_PRECISION = "Join Precision";
-	private static final String TOOLTIP_JOIN_PRECISION = "Give exit locations of joined threads unique abstract location IDs for precise join semantics";
+	private static final String TOOLTIP_JOIN_PRECISION =
+			"Use distinct abstract location IDs for joined thread exits to preserve precise join semantics";
 	private static final boolean DEFAULT_JOIN_PRECISION = true;
 
-
 	public static final String LABEL_USE_BUCKETS = "Use Buckets";
-	private static final String TOOLTIP_USE_BUCKETS = "Partition the abstract state into per-interference buckets (disable to test applicators without bucket overhead)";
+	private static final String TOOLTIP_USE_BUCKETS =
+			"Partition abstract states into buckets according to the applicable interferences";
 	private static final boolean DEFAULT_USE_BUCKETS = true;
 
 	public static final String LABEL_MAX_BUCKETS = "Max. Buckets";
@@ -148,11 +151,13 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 			ThreadModularSifaSettings.DEFAULT_MAX_DISJUNCTS_PER_BUCKET;
 
 	public static final String LABEL_LOCKSET_AWARE_INTERFERENCE = "Lockset-Aware Interference";
-	private static final String TOOLTIP_LOCKSET_AWARE_INTERFERENCE = "Filter out interferences whose write point definitely holds a lock the observer also holds (requires frontend-tagged lock variables; STRONGEST_POSTCONDITION only)";
+	private static final String TOOLTIP_LOCKSET_AWARE_INTERFERENCE =
+			"Ignore interferences when writer and observer definitely hold the same recognized mutex";
 	private static final boolean DEFAULT_LOCKSET_AWARE_INTERFERENCE = true;
 
 	public static final String LABEL_PUBLISH_ON_ACQUIRE = "Publish On Acquire";
-	private static final String TOOLTIP_PUBLISH_ON_ACQUIRE = "Re-establish a lock-protected global's published value when the observer acquires the lock (numeric privatization; requires Lockset-Aware Interference; STRONGEST_POSTCONDITION only)";
+	private static final String TOOLTIP_PUBLISH_ON_ACQUIRE =
+			"Re-establish invariants for globals protected by a recognized mutex when it is acquired";
 	private static final boolean DEFAULT_PUBLISH_ON_ACQUIRE = false;
 
 	public static final String LABEL_PROOF_CHECK = "Proof Check";
@@ -173,7 +178,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	// settings specific to IntervalDomain
 	public static final String LABEL_INTERVALDOM_MAX_PARALLEL_STATES = "Max. Parallel Intervals";
-	private static final int DEFAULT_INTERVALDOM_MAX_PARALLEL_STATES = 1;
+	private static final int DEFAULT_INTERVALDOM_MAX_PARALLEL_STATES = 2;
 
 	// settings specific to OctagonDomain
 	public static final String LABEL_OCTAGONDOM_MAX_PARALLEL_STATES = "Max. Parallel Octagon";
@@ -181,7 +186,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	// settings specific to EqDomain
 	public static final String LABEL_EQDOM_MAX_PARALLEL_STATES = "Max. Parallel Equality";
-	private static final int DEFAULT_EQDOM_MAX_PARALLEL_STATES = 1;
+	private static final int DEFAULT_EQDOM_MAX_PARALLEL_STATES = 2;
 
 	// settings specific to CompoundDomain
 	public static final String LABEL_COMPOUNDDOM_SUBDOM = "CompoundDomain Intern Domains";

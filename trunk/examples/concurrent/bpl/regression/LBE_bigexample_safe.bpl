@@ -7,38 +7,38 @@
  * 
  */
 
-var f : int;
+var f : bool;
 
 procedure ULTIMATE.start();
 modifies f;
 
 implementation ULTIMATE.start()
 {
-    f := 1;
+    f := true;
     fork 1 foo();
     fork 2 foo();
     fork 3 foo();
     fork 4 foo();
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
-    assert f == 1;
+    assert f == true;
+    assert f == true;
+    assert f == true;
+    assert f == true;
+    assert f == true;
+    assert f == true;
+    assert f == true;
+    assert f == true;
+    assert f == true;
+    assert f == true;
+    assert f == true;
+    assert f == true;
+    assert f == true;
+    assert f == true;
+    assert f == true;
+    assert f == true;
+    assert f == true;
+    assert f == true;
+    assert f == true;
+    assert f == true;
     join 4;
     join 3;
     join 2;
@@ -49,6 +49,6 @@ procedure foo();
 
 implementation foo()
 {
-    assert f == 1;
-    assert f == 1;
+    assert f == true;
+    assert f == true;
 }

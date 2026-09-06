@@ -13,7 +13,7 @@
 procedure ULTIMATE.start()
 {
     fork 1 foo();
-    assert 0 == 1;
+    assert false;
     join 1;
 }
 

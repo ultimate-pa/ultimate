@@ -45,10 +45,10 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ThreadModularSifaInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstractionType;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.PrimedDefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ExplicitValueDomain;
@@ -104,9 +104,9 @@ public class SifaBuilder {
 				stats, tools, domain);
 
 		final ISifaInterpreter interpreter;
-		if (IcfgUtils.isConcurrent(icfg)) {
-			interpreter = new ThreadModularSifaInterpreter(mLogger, timer, stats, tools, icfg, locationsOfInterest,
-					domain, fluid, loopSum, callSum, mServices);
+		if (tools instanceof final ConcurrentSymbolicTools concurrentTools) {
+			interpreter = new ThreadModularSifaInterpreter(mLogger, timer, stats, concurrentTools, icfg,
+					locationsOfInterest, domain, fluid, loopSum, callSum, mServices);
 		} else {
 			interpreter = new IcfgInterpreter(mLogger, timer, stats, tools, icfg, locationsOfInterest, domain, fluid,
 					loopSum, callSum);
@@ -144,8 +144,8 @@ public class SifaBuilder {
 			final boolean resultPrint = mPrefs.getBoolean(SifaPreferences.LABEL_RESULT_PRINT);
 			final var settings = new ThreadModularSifaSettings(locationTrackingMode, locationAbstraction,
 					interferenceApplicator, outerWideningThreshold, innerWideningThreshold,
-					joinPrecision, useBuckets, locksetAwareInterference, publishOnAcquire, proofCheck,
-					resultPrint, maxBuckets, maxDisjunctsPerBucket);
+					joinPrecision, useBuckets, locksetAwareInterference, publishOnAcquire, proofCheck, resultPrint,
+					maxBuckets, maxDisjunctsPerBucket);
 			return new ConcurrentSymbolicTools(mServices, stats, icfg, simplification, primedTable, settings);
 		}
 		return new SymbolicTools(mServices, stats, icfg, simplification);
@@ -153,39 +153,38 @@ public class SifaBuilder {
 
 	private IDomain constructStatsDomain(final SifaStats stats, final SymbolicTools tools,
 			final IProgressAwareTimer timer) {
-		return new StatsWrapperDomain(stats, constructDomain(stats, tools, timer));
+		return new StatsWrapperDomain(stats, constructDomain(tools, timer));
 	}
 
-	private IDomain constructDomain(final SifaStats stats, final SymbolicTools tools,
-			final IProgressAwareTimer timer) {
+	private IDomain constructDomain(final SymbolicTools tools, final IProgressAwareTimer timer) {
 		final String prefDomain = mPrefs.getString(SifaPreferences.LABEL_ABSTRACT_DOMAIN);
 		if (CompoundDomain.class.getSimpleName().equals(prefDomain)) {
 			final List<IDomain> subdomains = SifaPreferences.SubdomainValidator
 					.subdomains(mPrefs.getString(SifaPreferences.LABEL_COMPOUNDDOM_SUBDOM))
-					.map(subDomName -> constructNonCompoundDomain(subDomName, stats, tools, timer))
+					.map(subDomName -> constructNonCompoundDomain(subDomName, tools, timer))
 					.collect(Collectors.toList());
 			return new CompoundDomain(tools, subdomains);
 
 		} else {
-			return constructNonCompoundDomain(prefDomain, stats, tools, timer);
+			return constructNonCompoundDomain(prefDomain, tools, timer);
 		}
 	}
 
-	private IDomain constructNonCompoundDomain(final String domainName, final SifaStats stats,
-			final SymbolicTools tools, final IProgressAwareTimer timer) {
+	private IDomain constructNonCompoundDomain(final String domainName, final SymbolicTools tools,
+			final IProgressAwareTimer timer) {
 		final IDomain domain;
 		if (ExplicitValueDomain.class.getSimpleName().equals(domainName)) {
 			domain = new ExplicitValueDomain(tools,
 					mPrefs.getInt(SifaPreferences.LABEL_EXPLVALDOM_MAX_PARALLEL_STATES));
 		} else if (IntervalDomain.class.getSimpleName().equals(domainName)) {
 			domain = new IntervalDomain(mLogger, tools,
-					mPrefs.getInt(SifaPreferences.LABEL_INTERVALDOM_MAX_PARALLEL_STATES), () -> timer, stats);
+					mPrefs.getInt(SifaPreferences.LABEL_INTERVALDOM_MAX_PARALLEL_STATES), () -> timer);
 		} else if (OctagonDomain.class.getSimpleName().equals(domainName)) {
 			domain = new OctagonDomain(mLogger, tools,
-					mPrefs.getInt(SifaPreferences.LABEL_OCTAGONDOM_MAX_PARALLEL_STATES), () -> timer, stats);
+					mPrefs.getInt(SifaPreferences.LABEL_OCTAGONDOM_MAX_PARALLEL_STATES), () -> timer);
 		} else if (EqDomain.class.getSimpleName().equals(domainName)) {
 			domain = new EqDomain(tools, mPrefs.getInt(SifaPreferences.LABEL_EQDOM_MAX_PARALLEL_STATES), mServices,
-					mLogger, () -> timer, stats);
+					mLogger, () -> timer);
 		} else {
 			throw new IllegalArgumentException("Unknown domain setting: " + domainName);
 		}
@@ -252,7 +251,7 @@ public class SifaBuilder {
 
 	/**
 	 * Sifa is divided into components – this class stores the main component {@link #getInterpreter()} and gives access
-	 * to some intern components which are useful after interpretation.
+	 * to some internal components that are useful after interpretation.
 	 *
 	 * @author schaetzc@tf.uni-freiburg.de
 	 */
@@ -261,7 +260,11 @@ public class SifaBuilder {
 		private final IDomain mDomain;
 		private final SifaStats mStats;
 
-		public SifaComponents(final ISifaInterpreter interpreter, final IDomain domain, final SifaStats stats) {
+		public SifaComponents(final IcfgInterpreter interpreter, final IDomain domain, final SifaStats stats) {
+			this((ISifaInterpreter) interpreter, domain, stats);
+		}
+
+		private SifaComponents(final ISifaInterpreter interpreter, final IDomain domain, final SifaStats stats) {
 			mInterpreter = interpreter;
 			mDomain = domain;
 			mStats = stats;
@@ -269,6 +272,13 @@ public class SifaBuilder {
 
 		public ISifaInterpreter getInterpreter() {
 			return mInterpreter;
+		}
+
+		public IcfgInterpreter getIcfgInterpreter() {
+			if (mInterpreter instanceof final IcfgInterpreter interpreter) {
+				return interpreter;
+			}
+			throw new IllegalStateException("The ICFG interpreter is only available for sequential programs");
 		}
 
 		public IDomain getDomain() {

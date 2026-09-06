@@ -3,10 +3,10 @@
  * Our BoogieProcedureInliner translates the call of the increment 
  * procedure into the following lines.
  *       increment_old_g := g;
- *       assume { :begin_inline_increment } 1;
+ *       assume { :begin_inline_increment } true;
  *       havoc g;
  *       assume g == increment_old_g + 1;
- *       assume { :end_inline_increment } 1;
+ *       assume { :end_inline_increment } true;
  * 
  * This is a problem our analysis of concurrent programs because the
  * analysis allows a context switch after the havoc.

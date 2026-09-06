@@ -1,3 +1,28 @@
+/*
+ * Copyright (C) 2026 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Library-Sifa plug-in.
+ *
+ * The ULTIMATE Library-Sifa plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Library-Sifa plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Library-Sifa plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Library-Sifa plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Library-Sifa plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
 import java.util.Collection;
@@ -26,10 +51,9 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.SingleThreadI
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.publish.PublishOnAcquire;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.proofchecking.ThreadModularProofChecker;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSetup;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
@@ -40,8 +64,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ILoopSummarizer;
 public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private static final int MAX_OUTER_INTERFERENCE_ITERATIONS = 100;
 	private static final int PUBLICATION_WIDENING_DELAY = 5;
-	/** Debug kill switch for A/B measurements; not a user-facing preference. */
-	private static final boolean DIRTY_TRACKING = Boolean.parseBoolean(System.getProperty("sifa.dirtyTracking", "true"));
 
 	private final ILogger mLogger;
 	private final IProgressAwareTimer mTimer;
@@ -65,14 +87,13 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private final RelationalPredicatePostcondition mPostcondition;
 	private final ConcurrentSymbolicTools mConcurrentTools;
 	private final int mOuterWideningThreshold;
-	private final PublishOnAcquire mStaticLockInvariants;
+	private final PublishOnAcquire mInitialPublication;
 	private final Set<IcfgLocation> mJoinedExitLocations;
 	private final Map<String, ThreadRunCache> mThreadRunCache = new LinkedHashMap<>();
-	/** Last round in which the publication grew; caches from that round or earlier must not be reused. */
 	private int mPublicationGrewRound;
 
 	public ThreadModularSifaInterpreter(final ILogger logger, final IProgressAwareTimer timer, final SifaStats stats,
-			final SymbolicTools tools, final IIcfg<IcfgLocation> icfg,
+			final ConcurrentSymbolicTools tools, final IIcfg<IcfgLocation> icfg,
 			final Collection<IcfgLocation> locationsOfInterest, final IDomain baseDomain, final IFluid fluid,
 			final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
 			final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSumFactory,
@@ -86,14 +107,14 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		mCallSumFactory = callSumFactory;
 		mRequestedLocationsOfInterest = locationsOfInterest == null ? Set.of() : Set.copyOf(locationsOfInterest);
 
-		mConcurrentTools = (ConcurrentSymbolicTools) tools;
+		mConcurrentTools = tools;
 		mOuterWideningThreshold = mConcurrentTools.getSettings().outerWideningThreshold();
-		final var setup = ThreadModularSetup.initialize(services, icfg, baseDomain, tools, mConcurrentTools);
+		final var setup = ThreadModularSetup.initialize(services, icfg, baseDomain, mConcurrentTools);
 		mThreadIds = setup.threadIds();
 		mJoinedThreads = setup.joinedThreads();
 		mDomain = setup.domain();
 		mInterferenceFactory = setup.interferenceFactory();
-		mStaticLockInvariants = setup.lockInvariants();
+		mInitialPublication = setup.publication();
 		mPostcondition = setup.postcondition();
 		mPostcondition.setStats(mStats);
 		mProofChecker = setup.proofChecker();
@@ -118,7 +139,16 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		if (mProofChecker != null) {
 			mProofChecker.checkAllOrThrow(fixpoint.locationPredicates, fixpoint.threadPredicates, mLogger);
 		}
-		return fixpoint.locationPredicates;
+		return requestedLocationPredicates(fixpoint.locationPredicates);
+	}
+
+	private Map<IcfgLocation, IPredicate> requestedLocationPredicates(
+			final Map<IcfgLocation, IPredicate> allPredicates) {
+		final Map<IcfgLocation, IPredicate> result = new LinkedHashMap<>();
+		for (final IcfgLocation location : mRequestedLocationsOfInterest) {
+			result.put(location, allPredicates.getOrDefault(location, mConcurrentTools.bottom()));
+		}
+		return result;
 	}
 
 	private static record FixpointResult(Map<IcfgLocation, IPredicate> locationPredicates,
@@ -128,15 +158,8 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private FixpointResult computeOuterInterferenceFixpoint() {
 		final Map<IcfgLocation, IPredicate> allPredicates = new LinkedHashMap<>();
 		IInterferenceSet currentInterferences = null;
-		PublishOnAcquire currentPublication = mStaticLockInvariants;
+		PublishOnAcquire currentPublication = mInitialPublication;
 		boolean rerunWithStableInterferences = false;
-
-		if (mConcurrentTools.getSettings().interferenceApplicatorType() == InterferenceApplicatorType.NONE) {
-			final Map<String, Map<IcfgLocation, IPredicate>> perThreadPredicates = new LinkedHashMap<>();
-			mConcurrentTools.setLockInvariants(currentPublication);
-			analyzeThreads(null, 1, allPredicates, perThreadPredicates);
-			return new FixpointResult(allPredicates, perThreadPredicates);
-		}
 
 		for (int iteration = 1;; iteration++) {
 			if (!mTimer.continueProcessing()) {
@@ -151,23 +174,22 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			final Map<IcfgLocation, IPredicate> joinedExitsBefore =
 					mJoinedExitLocations.isEmpty() ? Map.of() : snapshotLocations(allPredicates, mJoinedExitLocations);
 			final Map<String, Map<IcfgLocation, IPredicate>> perThreadPredicates = new LinkedHashMap<>();
-			mConcurrentTools.setLockInvariants(currentPublication);
+			mConcurrentTools.setPublication(currentPublication);
 			analyzeThreads(currentInterferences, iteration, allPredicates, perThreadPredicates);
 			final IInterferenceSet extractedInterferences =
 					mInterferenceFactory.buildFromAllStates(perThreadPredicates);
 			if (extractedInterferences != null) {
 				mStats.add(Key.INTERFERENCE_SUMMARIES_BUILT, extractedInterferences.summaryCount());
 			}
-			final PublishOnAcquire extractedPublication =
-					mStaticLockInvariants.recomputePublishedInvariants(allPredicates, mDomain,
-							mConcurrentTools::postWithoutInterference);
+			final PublishOnAcquire extractedPublication = mInitialPublication.recomputePublishedInvariants(
+					allPredicates, mDomain, mConcurrentTools::postWithoutInterference);
 			final boolean interferencesHaveConverged = hasConverged(extractedInterferences, currentInterferences);
-			final boolean publicationConverged = extractedPublication.isSubsumedBy(currentPublication, mDomain);
-			if (!publicationConverged) {
+			final boolean publicationHasConverged = extractedPublication.isSubsumedBy(currentPublication, mDomain);
+			if (!publicationHasConverged) {
 				mPublicationGrewRound = iteration;
 			}
 
-			if (interferencesHaveConverged && publicationConverged) {
+			if (interferencesHaveConverged && publicationHasConverged) {
 				if (rerunWithStableInterferences
 						|| mJoinedExitLocations.isEmpty()
 						|| joinedExitPredicatesUnchanged(allPredicates, joinedExitsBefore)) {
@@ -263,7 +285,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 
 			final Map<IcfgLocation, IPredicate> joinedExitInputs =
 					snapshotLocations(allPredicates, mJoinedExitLocations);
-			final ThreadRunCache cache = DIRTY_TRACKING ? mThreadRunCache.get(threadId) : null;
+			final ThreadRunCache cache = mThreadRunCache.get(threadId);
 			if (cache != null && canReuseCachedRun(cache, threadId, interference, initialState, joinedExitInputs)) {
 				mStats.increment(Key.THREAD_REANALYSES_SKIPPED);
 				publishThreadResult(threadId, cache.threadResult(), cache.observed(), cache.interferenceInput(),
@@ -299,10 +321,9 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 
 	/**
 	 * Reuse is sound iff every input the thread consumes is subsumed by the corresponding input of the cached
-	 * run: the cached result then still over-approximates all behaviors under the current inputs. Publication
-	 * is covered by the round marker: stable in every round since the cache round implies the current
-	 * publication is subsumed by the one the cached run consumed. Checks are ordered cheapest first; the
-	 * per-summary interference subsumption is the only expensive one.
+	 * run: the cached result then still over-approximates all behaviors under the current inputs. A cache predating
+	 * publication growth cannot be reused because it consumed a stronger lock invariant. Checks are ordered cheapest
+	 * first; the per-summary interference subsumption is the only expensive one.
 	 */
 	private boolean canReuseCachedRun(final ThreadRunCache cache, final String threadId,
 			final IInterferenceSet interference, final IPredicate initialState,
@@ -389,7 +410,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		final IDomain effDomain = mConcurrentTools.getEffectiveDomain();
 		final IDomain interpDomain = effDomain != null ? effDomain : mDomain;
 		return new IcfgInterpreter(mLogger, mTimer, mStats, mConcurrentTools, threadIcfg, lois, interpDomain, mFluid,
-				mLoopSumFactory, mCallSumFactory, null);
+				mLoopSumFactory, mCallSumFactory);
 	}
 
 	private Map<String, Set<IcfgLocation>> collectForkSourcesByThread() {

@@ -67,7 +67,6 @@ public class IcfgInterpreter implements ISifaInterpreter, IEnterCallRegistrar {
 	private final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> mCallSumFactory;
 	private final ProcedureResourceCache mProcResCache;
 	private DagInterpreter mDagInterpreter;
-	private final IPredicate mInitialState;
 
 	/**
 	 * Creates a new interpreter for manually specified locations of interest.
@@ -83,16 +82,6 @@ public class IcfgInterpreter implements ISifaInterpreter, IEnterCallRegistrar {
 			final Collection<IcfgLocation> locationsOfInterest, final IDomain domain, final IFluid fluid,
 			final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
 			final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSumFactory) {
-		this(logger, timer, stats, tools, icfg, locationsOfInterest, domain, fluid, loopSumFactory, callSumFactory,
-				null);
-	}
-
-	public IcfgInterpreter(final ILogger logger, final IProgressAwareTimer timer, final SifaStats stats,
-			final SymbolicTools tools, final IIcfg<IcfgLocation> icfg,
-			final Collection<IcfgLocation> locationsOfInterest, final IDomain domain, final IFluid fluid,
-			final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
-			final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSumFactory,
-			final IPredicate initialState) {
 		mStats = stats;
 		mStats.start(SifaStats.Key.OVERALL_TIME);
 		mLogger = logger;
@@ -103,12 +92,12 @@ public class IcfgInterpreter implements ISifaInterpreter, IEnterCallRegistrar {
 		mLoopSumFactory = loopSumFactory;
 		mCallSumFactory = callSumFactory;
 		mLocsOfInterest = locationsOfInterest;
-		mInitialState = initialState;
 		logStartingSifa(locationsOfInterest);
 		logBuildingCallGraph();
 		mCallGraph = new CallGraph(icfg, locationsOfInterest);
 		logCallGraphComputed();
 		mProcResCache = new ProcedureResourceCache(stats, mCallGraph, icfg);
+		initializeRunState(null);
 		mStats.stop(SifaStats.Key.OVERALL_TIME);
 	}
 
@@ -121,7 +110,7 @@ public class IcfgInterpreter implements ISifaInterpreter, IEnterCallRegistrar {
 		mEnterCallWorklist = new PriorityWorklist<>(mCallGraph.relevantProceduresTopsorted(), mDomain::join);
 		final IPredicate effectiveInitial = initialState != null ? initialState : mTools.top();
 		mCallGraph.initialProceduresOfInterest().forEach(proc -> mEnterCallWorklist.add(proc, effectiveInitial));
-		// re-created each call because summaries from the previous interference iteration are stale
+		// Summaries from a previous run must not be reused with a different initial state.
 		mDagInterpreter = new DagInterpreter(mLogger, mStats, mTimer, mTools, mDomain, mFluid,
 				mLoopSumFactory.apply(this), mCallSumFactory.apply(this));
 	}
@@ -134,12 +123,17 @@ public class IcfgInterpreter implements ISifaInterpreter, IEnterCallRegistrar {
 	 */
 	@Override
 	public Map<IcfgLocation, IPredicate> interpret() {
-		return interpret(mInitialState);
+		mStats.start(SifaStats.Key.OVERALL_TIME);
+		return interpretCurrentRun();
 	}
 
 	public Map<IcfgLocation, IPredicate> interpret(final IPredicate initialState) {
 		mStats.start(SifaStats.Key.OVERALL_TIME);
 		initializeRunState(initialState);
+		return interpretCurrentRun();
+	}
+
+	private Map<IcfgLocation, IPredicate> interpretCurrentRun() {
 		logStartingInterpretation();
 		while (mEnterCallWorklist.advance()) {
 			final String procedure = mEnterCallWorklist.getWork();

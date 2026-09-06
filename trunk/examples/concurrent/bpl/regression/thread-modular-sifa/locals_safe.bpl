@@ -4,8 +4,8 @@
     As in, they aren't transferred in interferences.
 */
 
-var x : int; 
- 
+var x : int;
+
 procedure ULTIMATE.start()
 modifies x;
 {

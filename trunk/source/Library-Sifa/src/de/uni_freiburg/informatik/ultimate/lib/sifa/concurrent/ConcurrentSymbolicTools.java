@@ -1,3 +1,28 @@
+/*
+ * Copyright (C) 2026 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Library-Sifa plug-in.
+ *
+ * The ULTIMATE Library-Sifa plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Library-Sifa plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Library-Sifa plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Library-Sifa plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Library-Sifa plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
 import java.util.HashMap;
@@ -8,7 +33,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
@@ -22,8 +46,9 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.LocationMar
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.ObservedThreadStateRecorder;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.publish.PublishOnAcquire;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocksetAnalysis;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.publish.PublishOnAcquire;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.InitialStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadActivityPreanalysis;
@@ -39,12 +64,14 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private final SifaStats mStats;
+	private final PrimedDefaultIcfgSymbolTable mSymbolTable;
 	private final ThreadModularSifaSettings mSettings;
 	private final InitialStateFactory mInitialStateFactory;
 	private final JoinHandler mJoinHandler;
 	private GhostVariableManager mGhostVariables;
 	private MustLocksetAnalysis mLocksetInfo = MustLocksetAnalysis.disabled();
-	private PublishOnAcquire mLockInvariants = PublishOnAcquire.disabled();
+	private PublishOnAcquire mPublication = PublishOnAcquire.disabled();
 	private ThreadActivityPreanalysis mThreadActivityPreanalysis;
 	private ThreadAnalysisContext mThreadContext;
 	private ObservedThreadStateRecorder mObservedStateRecorder;
@@ -52,10 +79,12 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 
 	public ConcurrentSymbolicTools(final IUltimateServiceProvider services, final SifaStats stats,
 			final IIcfg<IcfgLocation> icfg, final SimplificationTechnique simplification,
-			final IIcfgSymbolTable symbolTable, final ThreadModularSifaSettings settings) {
+			final PrimedDefaultIcfgSymbolTable symbolTable, final ThreadModularSifaSettings settings) {
 		super(services, stats, icfg, simplification, symbolTable);
 		mLogger = services.getLoggingService().getLogger(ConcurrentSymbolicTools.class);
 		mServices = services;
+		mStats = stats;
+		mSymbolTable = symbolTable;
 		mSettings = settings;
 		mInitialStateFactory = new InitialStateFactory(this, icfg);
 		mJoinHandler = new JoinHandler(this, services, icfg);
@@ -67,6 +96,10 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 
 	public IUltimateServiceProvider getServices() {
 		return mServices;
+	}
+
+	public PrimedDefaultIcfgSymbolTable getSymbolTable() {
+		return mSymbolTable;
 	}
 
 	public ThreadActivityPreanalysis getThreadActivityPreanalysis() {
@@ -81,8 +114,8 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		return mObservedStateRecorder.snapshotObservedStates();
 	}
 
-	public void setLockInvariants(final PublishOnAcquire lockInvariants) {
-		mLockInvariants = lockInvariants;
+	public void setPublication(final PublishOnAcquire publication) {
+		mPublication = publication;
 	}
 
 	public void initializeStaticAnalysis(final GhostVariableManager ghostVariables,
@@ -122,7 +155,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	@Override
 	public IPredicate postCall(final IPredicate input, final IIcfgCallTransition<IcfgLocation> transition) {
 		mLogger.error("Thread-modular SIFA encountered a procedure call at %s. Procedure calls are not supported; "
-				+ "enable procedure inlining in the RCFG builder settings.", transition.getSource());
+				+ "enable procedure inlining in the ICFG builder settings.", transition.getSource());
 		throw new UnsupportedOperationException("Thread-modular SIFA does not support procedure calls (found at "
 				+ transition.getSource() + "). Enable procedure inlining or restrict to fork/join concurrency.");
 	}
@@ -131,17 +164,23 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	public IPredicate postReturn(final IPredicate inputBeforeCall, final IPredicate inputBeforeReturn,
 			final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> returnTransition) {
 		mLogger.error("Thread-modular SIFA encountered a return transition at %s. Procedure calls are not supported; "
-				+ "enable procedure inlining in the RCFG builder settings.", returnTransition.getSource());
+				+ "enable procedure inlining in the ICFG builder settings.", returnTransition.getSource());
 		throw new UnsupportedOperationException("Thread-modular SIFA does not support procedure calls (found return at "
 				+ returnTransition.getSource() + "). Enable procedure inlining or restrict to fork/join concurrency.");
 	}
 
-	public IPredicate postNoOpTransition(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
+	@Override
+	protected IPredicate postSpecialTransition(final IPredicate input,
+			final IIcfgTransition<IcfgLocation> transition) {
 		if (transition instanceof LocationMarkerTransition) {
 			mObservedStateRecorder.recordTransitionInputState(transition, input);
 			return applyInterferences(input, transition.getTarget());
 		}
-		return post(input, transition);
+		if (transition instanceof IIcfgForkTransitionThreadCurrent<?>
+				|| transition instanceof IIcfgJoinTransitionThreadCurrent<?>) {
+			return post(input, transition);
+		}
+		return super.postSpecialTransition(input, transition);
 	}
 
 	public IPredicate applyInterferences(final IPredicate state, final IcfgLocation location) {
@@ -154,11 +193,12 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 			return state;
 		}
 		final Set<String> observerLockset = mLocksetInfo.mustLocksetAt(location);
+		final Set<String> interferenceObserverLockset =
+				mSettings.locksetAwareInterference() ? observerLockset : Set.of();
 		final IPredicate afterInterference = mThreadContext.interference().applyUntilFixpoint(state,
-				mThreadContext.threadId(), activeThreadIds, observerLockset, mThreadContext.domain(),
-				mSettings.innerWideningThreshold(), getStats());
-		// restores locked-protected vars interference application may have widened away
-		return mLockInvariants.restoreProtectedVars(state, afterInterference, observerLockset);
+				mThreadContext.threadId(), activeThreadIds, interferenceObserverLockset, mThreadContext.domain(),
+				mSettings.innerWideningThreshold(), mStats);
+		return mPublication.restoreProtectedVariables(state, afterInterference, observerLockset);
 	}
 
 	private boolean interferenceCannotChangeState(final IPredicate state) {
@@ -179,7 +219,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		if (isThreadLocalTransition(transition)) {
 			return updated;
 		}
-		updated = mLockInvariants.applyLockInvariantAtAcquireEdges(updated, transition);
+		updated = mPublication.applyAtAcquire(updated, transition);
 		return applyInterferences(updated, transition.getTarget());
 	}
 

@@ -1,3 +1,28 @@
+/*
+ * Copyright (C) 2026 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Library-Sifa plug-in.
+ *
+ * The ULTIMATE Library-Sifa plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Library-Sifa plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Library-Sifa plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Library-Sifa plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Library-Sifa plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.publish;
 
 import java.util.LinkedHashMap;
@@ -35,27 +60,27 @@ public final class PublishOnAcquire {
 	private final Set<IProgramVar> mLockVars;
 	private final Map<IProgramVar, MutexInvariant> mInvariants;
 	private final Set<IcfgLocation> mSequentialLocations;
-	private final Set<TermVariable> mGlobalTvs;
+	private final Set<TermVariable> mGlobalTermVariables;
 
 	private PublishOnAcquire(final IUltimateServiceProvider services, final ManagedScript managedScript,
 			final BasicPredicateFactory predicateFactory, final Set<IProgramVar> lockVars,
 			final Map<IProgramVar, MutexInvariant> invariants, final Set<IcfgLocation> sequentialLocations,
-			final Set<TermVariable> globalTvs) {
+			final Set<TermVariable> globalTermVariables) {
 		mServices = services;
 		mManagedScript = managedScript;
 		mPredicateFactory = predicateFactory;
-		mLockVars = lockVars;
-		mInvariants = invariants;
-		mSequentialLocations = sequentialLocations;
-		mGlobalTvs = globalTvs;
+		mLockVars = Set.copyOf(lockVars);
+		mInvariants = Map.copyOf(invariants);
+		mSequentialLocations = Set.copyOf(sequentialLocations);
+		mGlobalTermVariables = Set.copyOf(globalTermVariables);
 	}
 
 	public static PublishOnAcquire disabled() {
 		return new PublishOnAcquire(null, null, null, Set.of(), Map.of(), Set.of(), Set.of());
 	}
 
-	public static PublishOnAcquire discoverProtectedGlobalsAndPublishEdgesDuringPreanalysis(
-			final IIcfg<IcfgLocation> icfg, final MustLocksetAnalysis locksetInfo, final String entryProcedure,
+	public static PublishOnAcquire discover(final IIcfg<IcfgLocation> icfg,
+			final MustLocksetAnalysis locksetInfo, final String entryProcedure,
 			final ThreadActivityPreanalysis threadActivity, final IUltimateServiceProvider services,
 			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory) {
 		final Set<IProgramVar> lockVars = locksetInfo.getLockVars();
@@ -68,16 +93,17 @@ public final class PublishOnAcquire {
 		if (invariants.isEmpty()) {
 			return disabled();
 		}
-		final Set<TermVariable> globalTvs = new LinkedHashSet<>();
-		icfg.getCfgSmtToolkit().getSymbolTable().getGlobals().forEach(g -> globalTvs.add(g.getTermVariable()));
+		final Set<TermVariable> globalTermVariables = new LinkedHashSet<>();
+		icfg.getCfgSmtToolkit().getSymbolTable().getGlobals()
+				.forEach(global -> globalTermVariables.add(global.getTermVariable()));
 		return new PublishOnAcquire(services, managedScript, predicateFactory, lockVars, invariants,
-				sequentialLocationsOf(icfg, isSequential), globalTvs);
+				sequentialLocationsOf(icfg, isSequential), globalTermVariables);
 	}
 
 	private static Predicate<IcfgLocation> onlyOwnThreadCanBeActive(final String entryProcedure,
 			final ThreadActivityPreanalysis threadActivity) {
-		return loc -> loc.getProcedure().equals(entryProcedure)
-				&& threadActivity.getActiveThreadsAt(loc).size() <= 1;
+		return location -> location.getProcedure().equals(entryProcedure)
+				&& threadActivity.getActiveThreadsAt(location).size() <= 1;
 	}
 
 	private static Set<IcfgLocation> sequentialLocationsOf(final IIcfg<IcfgLocation> icfg,
@@ -91,59 +117,55 @@ public final class PublishOnAcquire {
 		return mInvariants.isEmpty();
 	}
 
-	public PublishOnAcquire recomputePublishedInvariants(final Map<IcfgLocation, IPredicate> locationStates, final IDomain domain,
-			final BiFunction<IPredicate, IcfgEdge, IPredicate> interferenceFreePost) {
+	public PublishOnAcquire recomputePublishedInvariants(final Map<IcfgLocation, IPredicate> locationStates,
+			final IDomain domain, final BiFunction<IPredicate, IcfgEdge, IPredicate> interferenceFreePost) {
 		if (isEmpty()) {
 			return this;
 		}
-		return withRecomputedPublished(
-				(lock, invariant) -> recomputeJoinedPublishEdgePostStates(invariant, locationStates, domain, interferenceFreePost));
+		return withRecomputedPublished((lock, invariant) -> recomputeJoinedPublishEdgePostStates(invariant,
+				locationStates, domain, interferenceFreePost));
 	}
 
 	public PublishOnAcquire widen(final PublishOnAcquire extracted, final IDomain domain) {
 		return withRecomputedPublished((lock, invariant) -> widenPublished(invariant, extracted, domain, lock));
 	}
 
-	public IPredicate applyLockInvariantAtAcquireEdges(final IPredicate state, final IIcfgTransition<IcfgLocation> transition) {
-		if (isEmpty() || isSequentialAcquire(transition)) {
+	public IPredicate applyAtAcquire(final IPredicate state,
+			final IIcfgTransition<IcfgLocation> transition) {
+		if (isEmpty() || isSequentialAcquire(transition) || SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;
 		}
-		if (SmtUtils.isFalseLiteral(state.getFormula())) {
-			return state;
-		}
-		final IPredicate publishedForAcquiredLock = publishedForAcquiredLock(transition);
-		if (publishedForAcquiredLock == null) {
-			return state;
-		}
-		return conjoin(state.getFormula(), publishedForAcquiredLock.getFormula());
+		final IPredicate published = publishedForAcquiredLock(transition);
+		return published == null ? state : conjoin(state.getFormula(), published.getFormula());
 	}
 
-	public IPredicate restoreProtectedVars(final IPredicate beforeInterference, final IPredicate afterInterference,
-			final Set<String> observerLockset) {
+	public IPredicate restoreProtectedVariables(final IPredicate beforeInterference,
+			final IPredicate afterInterference, final Set<String> observerLockset) {
 		if (isEmpty() || observerLockset.isEmpty()) {
 			return afterInterference;
 		}
 		final Term afterFormula = afterInterference.getFormula();
-		if (SmtUtils.isTrueLiteral(afterFormula) || SmtUtils.isFalseLiteral(afterFormula)) {
+		if (SmtUtils.isFalseLiteral(afterFormula)) {
 			return afterInterference;
 		}
-		final Set<IProgramVar> protectedVars = varsProtectedByHeldLocks(observerLockset);
-		if (protectedVars.isEmpty()) {
+		final Set<IProgramVar> protectedVariables = variablesProtectedByHeldLocks(observerLockset);
+		if (protectedVariables.isEmpty()) {
 			return afterInterference;
 		}
-		final Set<TermVariable> protectedTvs = termVariablesOf(protectedVars);
-		final Term withoutProtected = existentiallyRemove(afterFormula, protectedTvs);
-		final Set<TermVariable> protectedTvsAndUntouchableThreadLocalTvs =
-				withThreadLocalFreeVars(protectedTvs, beforeInterference);
-		final IPredicate preservedProtected = retainOnly(beforeInterference, protectedTvsAndUntouchableThreadLocalTvs);
-		return conjoin(withoutProtected, preservedProtected.getFormula());
+		final Set<TermVariable> protectedTermVariables = termVariablesOf(protectedVariables);
+		final Term withoutProtected = existentiallyRemove(afterFormula, protectedTermVariables);
+		final Set<TermVariable> variablesToPreserve =
+				withThreadLocalFreeVariables(protectedTermVariables, beforeInterference);
+		final IPredicate preserved = retainOnly(beforeInterference, variablesToPreserve);
+		return conjoin(withoutProtected, preserved.getFormula());
 	}
 
-	private Set<TermVariable> withThreadLocalFreeVars(final Set<TermVariable> tvs, final IPredicate predicate) {
-		final Set<TermVariable> result = new LinkedHashSet<>(tvs);
-		for (final TermVariable tv : predicate.getFormula().getFreeVars()) {
-			if (!mGlobalTvs.contains(tv)) {
-				result.add(tv);
+	private Set<TermVariable> withThreadLocalFreeVariables(final Set<TermVariable> variables,
+			final IPredicate predicate) {
+		final Set<TermVariable> result = new LinkedHashSet<>(variables);
+		for (final TermVariable freeVariable : predicate.getFormula().getFreeVars()) {
+			if (!mGlobalTermVariables.contains(freeVariable)) {
+				result.add(freeVariable);
 			}
 		}
 		return result;
@@ -152,16 +174,22 @@ public final class PublishOnAcquire {
 	public boolean isSubsumedBy(final PublishOnAcquire other, final IDomain domain) {
 		for (final Entry<IProgramVar, MutexInvariant> entry : mInvariants.entrySet()) {
 			final IPredicate published = entry.getValue().published();
-			if (published == null) {
-				continue;
-			}
 			final MutexInvariant otherInvariant = other.mInvariants.get(entry.getKey());
 			final IPredicate otherPublished = otherInvariant == null ? null : otherInvariant.published();
-			if (otherPublished == null || !domain.isSubsetEq(published, otherPublished).isTrueForAbstraction()) {
+			if (!isPublishedStateSubsumed(published, otherPublished, domain)) {
 				return false;
 			}
 		}
 		return true;
+	}
+
+	private static boolean isPublishedStateSubsumed(final IPredicate published,
+			final IPredicate otherPublished, final IDomain domain) {
+		if (published == null) {
+			return otherPublished == null;
+		}
+		return otherPublished == null
+				|| domain.isSubsetEq(published, otherPublished).isTrueForAbstraction();
 	}
 
 	private boolean isSequentialAcquire(final IIcfgTransition<IcfgLocation> transition) {
@@ -175,19 +203,19 @@ public final class PublishOnAcquire {
 		return invariant == null ? null : invariant.published();
 	}
 
-	private Set<IProgramVar> varsProtectedByHeldLocks(final Set<String> observerLockset) {
-		final Set<IProgramVar> protectedVars = new LinkedHashSet<>();
+	private Set<IProgramVar> variablesProtectedByHeldLocks(final Set<String> observerLockset) {
+		final Set<IProgramVar> protectedVariables = new LinkedHashSet<>();
 		for (final IProgramVar lock : mLockVars) {
 			if (!observerLockset.contains(lock.getGloballyUniqueId())) {
 				continue;
 			}
 			final MutexInvariant invariant = mInvariants.get(lock);
 			if (invariant != null) {
-				protectedVars.addAll(invariant.protectedGlobals());
+				protectedVariables.addAll(invariant.protectedGlobals());
 			}
-			protectedVars.add(lock);
+			protectedVariables.add(lock);
 		}
-		return protectedVars;
+		return protectedVariables;
 	}
 
 	private PublishOnAcquire withRecomputedPublished(
@@ -197,18 +225,18 @@ public final class PublishOnAcquire {
 			updated.put(entry.getKey(),
 					entry.getValue().withChangedPublished(newPublished.apply(entry.getKey(), entry.getValue())));
 		}
-		return new PublishOnAcquire(mServices, mManagedScript, mPredicateFactory, mLockVars, Map.copyOf(updated),
-				mSequentialLocations, mGlobalTvs);
+		return new PublishOnAcquire(mServices, mManagedScript, mPredicateFactory, mLockVars, updated,
+				mSequentialLocations, mGlobalTermVariables);
 	}
 
 	private IPredicate recomputeJoinedPublishEdgePostStates(final MutexInvariant invariant,
 			final Map<IcfgLocation, IPredicate> locationStates, final IDomain domain,
 			final BiFunction<IPredicate, IcfgEdge, IPredicate> interferenceFreePost) {
-		final Set<TermVariable> protectedTvs = termVariablesOf(invariant.protectedGlobals());
+		final Set<TermVariable> protectedTermVariables = termVariablesOf(invariant.protectedGlobals());
 		IPredicate joined = null;
 		for (final IcfgEdge edge : invariant.publishEdges()) {
-			final IPredicate projectedPostState =
-					recomputeProjectedPostStateOf(edge, protectedTvs, locationStates, interferenceFreePost);
+			final IPredicate projectedPostState = recomputeProjectedPostStateOf(edge, protectedTermVariables,
+					locationStates, interferenceFreePost);
 			if (projectedPostState != null) {
 				joined = joined == null ? projectedPostState : domain.join(joined, projectedPostState);
 			}
@@ -216,7 +244,8 @@ public final class PublishOnAcquire {
 		return nullIfTrivial(joined);
 	}
 
-	private IPredicate recomputeProjectedPostStateOf(final IcfgEdge edge, final Set<TermVariable> protectedTvs,
+	private IPredicate recomputeProjectedPostStateOf(final IcfgEdge edge,
+			final Set<TermVariable> protectedTermVariables,
 			final Map<IcfgLocation, IPredicate> locationStates,
 			final BiFunction<IPredicate, IcfgEdge, IPredicate> interferenceFreePost) {
 		final IPredicate sourceState = locationStates.get(edge.getSource());
@@ -227,7 +256,7 @@ public final class PublishOnAcquire {
 		if (SmtUtils.isFalseLiteral(afterEdge.getFormula())) {
 			return null;
 		}
-		return retainOnly(afterEdge, protectedTvs);
+		return retainOnly(afterEdge, protectedTermVariables);
 	}
 
 	private static IPredicate widenPublished(final MutexInvariant invariant, final PublishOnAcquire extracted,
@@ -264,10 +293,10 @@ public final class PublishOnAcquire {
 		return RelationalPredicateUtils.existentiallyProject(formula, removedVariables, mServices, mManagedScript);
 	}
 
-	private static Set<TermVariable> termVariablesOf(final Set<IProgramVar> vars) {
+	private static Set<TermVariable> termVariablesOf(final Set<IProgramVar> variables) {
 		final Set<TermVariable> termVariables = new LinkedHashSet<>();
-		for (final IProgramVar var : vars) {
-			termVariables.add(var.getTermVariable());
+		for (final IProgramVar variable : variables) {
+			termVariables.add(variable.getTermVariable());
 		}
 		return termVariables;
 	}

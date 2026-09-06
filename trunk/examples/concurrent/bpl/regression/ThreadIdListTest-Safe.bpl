@@ -19,7 +19,7 @@ implementation ULTIMATE.start()
     fork 1 increment(x);
 	fork 2, 23 decrement(x);
     join 2 assign y;
-	assert 0 == 1;
+	assert false;
 }
 
 procedure increment(n : int) returns(res : int);

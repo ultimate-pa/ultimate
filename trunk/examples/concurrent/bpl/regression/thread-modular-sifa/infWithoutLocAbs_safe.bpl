@@ -1,11 +1,11 @@
 //#Safe
 /*
     Without location abstraction, this would create x->inf,
-    for any other standard thread-mod absint. 
+    for any other standard thread-mod absint.
 */
 
-var x : int; 
- 
+var x : int;
+
 procedure ULTIMATE.start()
 modifies x;
 {

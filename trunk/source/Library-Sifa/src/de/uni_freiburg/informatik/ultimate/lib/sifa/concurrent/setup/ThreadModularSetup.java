@@ -1,3 +1,28 @@
+/*
+ * Copyright (C) 2026 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Library-Sifa plug-in.
+ *
+ * The ULTIMATE Library-Sifa plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Library-Sifa plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Library-Sifa plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Library-Sifa plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Library-Sifa plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup;
 
 import java.util.ArrayDeque;
@@ -15,24 +40,21 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.AbstractLocationPartitionedDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ConcurrentSymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.AbstractLocationPartitionedDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeCollector;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.publish.PublishOnAcquire;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocksetAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.guardedupdate.GuardedUpdateInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.poststate.PostStateInterferenceFactory;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.prepost.PrePostInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.strongestpostcondition.StrongestPostconditionInterferenceFactory;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.unaryglobals.UnaryGlobalInterferenceFactory;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocksetAnalysis;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.publish.PublishOnAcquire;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.proofchecking.ThreadModularProofChecker;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.TransFormulaToInterferencePredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.proofchecking.ThreadModularProofChecker;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -44,9 +66,9 @@ public final class ThreadModularSetup {
 	}
 
 	public static SetupResult initialize(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
-			final IDomain baseDomain, final SymbolicTools tools, final ConcurrentSymbolicTools concurrentTools) {
-		final ThreadModularSifaSettings settings = concurrentTools.getSettings();
-		final PrimedDefaultIcfgSymbolTable symbolTable = (PrimedDefaultIcfgSymbolTable) tools.getSymbolTable();
+			final IDomain baseDomain, final ConcurrentSymbolicTools tools) {
+		final ThreadModularSifaSettings settings = tools.getSettings();
+		final PrimedDefaultIcfgSymbolTable symbolTable = tools.getSymbolTable();
 		final var factory = tools.getFactory();
 		final ManagedScript script = tools.getManagedScript();
 		final ILogger logger = services.getLoggingService().getLogger(ThreadModularSetup.class);
@@ -57,22 +79,25 @@ public final class ThreadModularSetup {
 		}
 		final ThreadActivityPreanalysis activityPreanalysis = ThreadActivityPreanalysis.compute(icfg,
 				new LinkedHashSet<>(threadIds), settings.joinPrecision());
-		final MustLocksetAnalysis locksetInfo = settings.locksetAwareInterference()
+		final boolean needsLocksetAnalysis = settings.locksetAwareInterference() || settings.publishOnAcquire();
+		final MustLocksetAnalysis locksetInfo = needsLocksetAnalysis
 				? MustLocksetAnalysis.create(icfg, activityPreanalysis)
 				: MustLocksetAnalysis.disabled();
-		final Map<IcfgLocation, Integer> locationIds = computeLocationIds(settings, services, icfg, locksetInfo);
+		final MustLocksetAnalysis interferenceLocksetInfo =
+				settings.locksetAwareInterference() ? locksetInfo : MustLocksetAnalysis.disabled();
+		final Map<IcfgLocation, Integer> locationIds =
+				computeLocationIds(settings, services, icfg, interferenceLocksetInfo);
 		final Map<String, Set<IcfgLocation>> preForkSourcesByThread =
 				computePreForkSourcesByThread(icfg, activityPreanalysis.getMultiForkedThreads());
 
 		final GhostVariableManager ghostVars = createGhostVariablesIfEnabled(settings, script, symbolTable, threadIds,
 				icfg, locationIds, activityPreanalysis.getMultiForkedThreads());
-		concurrentTools.initializeStaticAnalysis(ghostVars, activityPreanalysis, locksetInfo);
-		final PublishOnAcquire lockInvariants = settings.publishOnAcquire()
-				? PublishOnAcquire.discoverProtectedGlobalsAndPublishEdgesDuringPreanalysis(icfg, locksetInfo,
-						MAIN_THREAD, activityPreanalysis, services, script, factory)
+		tools.initializeStaticAnalysis(ghostVars, activityPreanalysis, locksetInfo);
+		final PublishOnAcquire publication = settings.publishOnAcquire()
+				? PublishOnAcquire.discover(icfg, locksetInfo, MAIN_THREAD, activityPreanalysis, services, script, factory)
 				: PublishOnAcquire.disabled();
 		if (settings.publishOnAcquire()) {
-			logger.info("Publish-on-acquire enabled (protected globals discovered: %s)", !lockInvariants.isEmpty());
+			logger.info("Publish-on-acquire enabled (protected globals discovered: %s)", !publication.isEmpty());
 		}
 		final AbstractLocationPartitionedDomain partitionedDomain =
 				settings.useBuckets() && ghostVars != null
@@ -91,9 +116,9 @@ public final class ThreadModularSetup {
 		final InterferenceEdgeCollector edgeTraverser = new InterferenceEdgeCollector(icfg, translator);
 		final GroupedInterferenceFactory<?> interferenceFactory = createInterferenceFactory(
 				settings.interferenceApplicatorType(), edgeTraverser, translator, postcondition, domain, factory,
-				script, locksetInfo, preForkSourcesByThread);
+				script, interferenceLocksetInfo, preForkSourcesByThread);
 		logger.info("Interference method: %s (%s)", settings.interferenceApplicatorType(),
-				interferenceFactory == null ? "None" : interferenceFactory.getClass().getSimpleName());
+				interferenceFactory.getClass().getSimpleName());
 		logger.info("Interference grouping: abstract-location pairs via %s", settings.locationAbstractionType());
 
 		final ThreadModularProofChecker proofChecker = settings.proofCheck()
@@ -101,7 +126,7 @@ public final class ThreadModularSetup {
 				: null;
 
 		return new SetupResult(threadIds, domain, interferenceFactory, postcondition,
-				proofChecker, joinedThreads, locationIds, lockInvariants);
+				proofChecker, joinedThreads, locationIds, publication);
 	}
 
 	private static List<String> discoverThreadIds(final IIcfg<IcfgLocation> icfg) {
@@ -141,11 +166,11 @@ public final class ThreadModularSetup {
 	}
 
 	private static Map<IcfgLocation, Integer> computeLocationIds(final ThreadModularSifaSettings settings,
-			final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg, final MustLocksetAnalysis locksetInfo) {
+			final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
+			final MustLocksetAnalysis locksetInfo) {
 		return new LocationAbstraction().computeLocationAbstraction(settings.locationAbstractionType(),
 				services, icfg, locksetInfo);
 	}
-
 
 	private static Map<String, Set<IcfgLocation>> computePreForkSourcesByThread(final IIcfg<IcfgLocation> icfg,
 			final Set<String> multiForkedThreads) {
@@ -216,8 +241,8 @@ public final class ThreadModularSetup {
 				icfg.getProcedureEntryNodes(), symbolTable, impreciseLocationThreads);
 	}
 
-	private static GroupedInterferenceFactory<?> createInterferenceFactory(final InterferenceApplicatorType applicatorType,
-			final InterferenceEdgeCollector edgeTraverser,
+	private static GroupedInterferenceFactory<?> createInterferenceFactory(
+			final InterferenceApplicatorType applicatorType, final InterferenceEdgeCollector edgeTraverser,
 			final TransFormulaToInterferencePredicate translator, final RelationalPredicatePostcondition postcondition,
 			final IDomain domain, final BasicPredicateFactory factory, final ManagedScript script,
 			final MustLocksetAnalysis locksetInfo, final Map<String, Set<IcfgLocation>> preForkSourcesByThread) {
@@ -225,25 +250,18 @@ public final class ThreadModularSetup {
 		case STRONGEST_POSTCONDITION ->
 			new StrongestPostconditionInterferenceFactory(edgeTraverser, translator, postcondition, factory, script,
 					locksetInfo, preForkSourcesByThread);
-		case PREPOST ->
-			new PrePostInterferenceFactory(edgeTraverser, translator, postcondition, script, factory, locksetInfo,
-					preForkSourcesByThread);
 		case GUARDED_EXACT_UPDATE ->
 			new GuardedUpdateInterferenceFactory(edgeTraverser, translator, postcondition, script, factory,
 					locksetInfo, preForkSourcesByThread);
 		case POST_STATE ->
 			new PostStateInterferenceFactory(edgeTraverser, translator, postcondition, domain, factory, script,
 					locksetInfo, preForkSourcesByThread);
-		case UNARY_GLOBALS ->
-			new UnaryGlobalInterferenceFactory(edgeTraverser, translator.getServices(), translator, postcondition,
-					domain, factory, script, locksetInfo);
-		case NONE -> null;
 		};
 	}
 
 	public static record SetupResult(List<String> threadIds, IDomain domain,
 			GroupedInterferenceFactory<?> interferenceFactory, RelationalPredicatePostcondition postcondition,
 			ThreadModularProofChecker proofChecker, Set<String> joinedThreads,
-			Map<IcfgLocation, Integer> abstractLocationIds, PublishOnAcquire lockInvariants) {
+			Map<IcfgLocation, Integer> abstractLocationIds, PublishOnAcquire publication) {
 	}
 }

@@ -12,9 +12,9 @@
 
 procedure ULTIMATE.start() {
   fork 1 thread1();
-  // assert 0 == 1; // reachable without bugfix
+  // assert false; // reachable without bugfix
   join 1;
-  assert 0 == 1; // was unreachable before bugfix
+  assert false; // was unreachable before bugfix
 }
 
 procedure thread1() {

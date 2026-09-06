@@ -7,7 +7,7 @@ modifies x, y;
     y := 0;
     fork 1 writer_x();
     y := 1;
-    
+
     assert x == 0 || x == 1;
     assert y == 1;
 }

@@ -6,7 +6,7 @@
  * Date: 09.05.2018
  * 
  * Check that some thread can be joined, execution continues after join.
- * (assert 0 is reachable)
+ * (assert false is reachable)
  */
 
 var n: int;
@@ -23,7 +23,7 @@ implementation ULTIMATE.start()
     
     join x;
     x := 4;
-    assert 0 == 1;
+    assert false;
 }
 
 procedure foo();
