@@ -43,58 +43,43 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-public class ControlPartitioningHeuristics {
+final class ControlPartitioningHeuristics {
 	private final ManagedScript mManagedScript;
 	private final IIcfg<IcfgLocation> mIcfg;
-	private final Set<IProgramNonOldVar> mGlobals;
 	private final Map<TermVariable, IProgramVar> mTermToGlobalMap;
 	private final IUltimateServiceProvider mServices;
 
-	public ControlPartitioningHeuristics(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg) {
+	ControlPartitioningHeuristics(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg) {
 		mManagedScript = icfg.getCfgSmtToolkit().getManagedScript();
 		mIcfg = icfg;
-		mGlobals = mIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals();
-		mTermToGlobalMap = mGlobals.stream().collect(Collectors.toMap(IProgramVar::getTermVariable, v -> v));
+		mTermToGlobalMap = mIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals().stream()
+				.collect(Collectors.toMap(IProgramVar::getTermVariable, v -> v));
 		mServices = services;
 	}
 
-	public Map<IcfgLocation, Integer> guardSplitting() {
-		return threePhaseMutexSplitting();
+	Map<IcfgLocation, Integer> splitAtNonLockGuardsAndWrites(final Set<IProgramVar> lockVars) {
+		return splitAtGuardsAndWrites(computeFoundationalBaseMapping(lockVars), lockVars);
 	}
 
-	public Map<IcfgLocation, Integer> allVarOccurrencesSplit() {
-		return allVarOccurrencesSplit(Set.of());
-	}
-
-	public Map<IcfgLocation, Integer> allVarOccurrencesSplit(final Set<IProgramVar> excludedVars) {
-		return splitAtGuardsAndWrites(computeFoundationalBaseMapping(excludedVars), excludedVars);
-	}
-
-	private Map<IcfgLocation, Set<IProgramVar>> computeMutexVars(final boolean fullyPrecise) {
-		final Map<IcfgLocation, Set<IProgramVar>> mutexGuardToVarsMap = new HashMap<>();
+	private Map<IcfgLocation, Set<IProgramVar>> computeGuardVars() {
+		final Map<IcfgLocation, Set<IProgramVar>> guardVarsByLocation = new HashMap<>();
 		for (final IcfgLocation loc : collectReachableFromEntries()) {
 			final List<IcfgEdge> outgoing = loc.getOutgoingEdges();
-			if (!shouldDifferentiate(outgoing, fullyPrecise)) {
-				continue;
-			}
-			final Set<IProgramVar> guardVars = getGuardVars(outgoing, fullyPrecise);
+			final Set<IProgramVar> guardVars = getGuardVars(outgoing);
 			if (!guardVars.isEmpty()) {
-				mutexGuardToVarsMap.put(loc, guardVars);
+				guardVarsByLocation.put(loc, guardVars);
 			}
 		}
-		return mutexGuardToVarsMap;
+		return guardVarsByLocation;
 	}
 
-	private Map<IcfgLocation, Integer> computeFoundationalBaseMapping(final Set<IProgramVar> excludedVars) {
+	private Map<IcfgLocation, Integer> computeFoundationalBaseMapping(final Set<IProgramVar> lockVars) {
 		final Set<IcfgLocation> reachableFromEntries = collectReachableFromEntries();
 		final Map<IcfgLocation, IcfgLocation> parent = new HashMap<>();
 		for (final IcfgLocation loc : reachableFromEntries) {
@@ -108,7 +93,7 @@ public class ControlPartitioningHeuristics {
 				if (target == null || !procedure.equals(target.getProcedure()) || !parent.containsKey(target)) {
 					continue;
 				}
-				if (!isFoundationalSplitEdge(edge, excludedVars)) {
+				if (!isFoundationalSplitEdge(edge, lockVars)) {
 					union(parent, source, target);
 				}
 			}
@@ -155,17 +140,17 @@ public class ControlPartitioningHeuristics {
 	}
 
 	private Map<IcfgLocation, Integer> splitAtGuardsAndWrites(final Map<IcfgLocation, Integer> foundationalMap,
-			final Set<IProgramVar> excludedVars) {
+			final Set<IProgramVar> lockVars) {
 		final Map<IcfgLocation, Integer> abstractLocationMapping = new HashMap<>(foundationalMap);
-		final Map<IcfgLocation, Set<IProgramVar>> mutexGuardToVarsMap = computeMutexVars(false);
-		if (!excludedVars.isEmpty()) {
-			mutexGuardToVarsMap.values().forEach(vars -> vars.removeAll(excludedVars));
-			mutexGuardToVarsMap.values().removeIf(Set::isEmpty);
+		final Map<IcfgLocation, Set<IProgramVar>> guardVarsByLocation = computeGuardVars();
+		if (!lockVars.isEmpty()) {
+			guardVarsByLocation.values().forEach(vars -> vars.removeAll(lockVars));
+			guardVarsByLocation.values().removeIf(Set::isEmpty);
 		}
-		if (mutexGuardToVarsMap.isEmpty()) {
+		if (guardVarsByLocation.isEmpty()) {
 			return abstractLocationMapping;
 		}
-		final Set<IProgramVar> relevantGuardVars = mutexGuardToVarsMap.values().stream().flatMap(Set::stream)
+		final Set<IProgramVar> relevantGuardVars = guardVarsByLocation.values().stream().flatMap(Set::stream)
 				.collect(Collectors.toSet());
 		final Map<String, Set<IcfgLocation>> locationsByProcedure = groupByProcedure(foundationalMap.keySet());
 		for (final String procedure : sortedKeys(locationsByProcedure)) {
@@ -175,7 +160,7 @@ public class ControlPartitioningHeuristics {
 			}
 			int nextFreshId = nextFreshIdForProcedure(procedureLocations, abstractLocationMapping);
 			for (final IcfgLocation loc : orderedLocationsInProcedureFlow(procedure, procedureLocations)) {
-				if (!mutexGuardToVarsMap.containsKey(loc) && !writesAnyOf(loc, relevantGuardVars)) {
+				if (!guardVarsByLocation.containsKey(loc) && !writesAnyOf(loc, relevantGuardVars)) {
 					continue;
 				}
 				abstractLocationMapping.put(loc, nextFreshId);
@@ -183,83 +168,6 @@ public class ControlPartitioningHeuristics {
 			}
 		}
 		return abstractLocationMapping;
-	}
-
-	private Map<IcfgLocation, Integer> threePhaseMutexSplitting() {
-		final Map<IcfgLocation, Integer> result = singletonPerProcedureMapping();
-		final Map<IcfgLocation, Set<IProgramVar>> mutexGuardToVarsMap = computeMutexVars(true);
-		if (mutexGuardToVarsMap.isEmpty()) {
-			return result;
-		}
-
-		final Map<String, Set<IcfgLocation>> locationsByProcedure = groupByProcedure(result.keySet());
-		for (final String procedure : sortedKeys(locationsByProcedure)) {
-			final Set<IcfgLocation> procedureLocations = locationsByProcedure.get(procedure);
-			if (procedureLocations == null || procedureLocations.isEmpty()) {
-				continue;
-			}
-			final List<IcfgLocation> ordered = orderedLocationsInProcedureFlow(procedure, procedureLocations);
-			if (ordered.isEmpty()) {
-				continue;
-			}
-			final Set<IProgramVar> guardVars = procedureLocations.stream().filter(mutexGuardToVarsMap::containsKey)
-					.flatMap(loc -> mutexGuardToVarsMap.get(loc).stream()).collect(Collectors.toSet());
-			if (guardVars.isEmpty()) {
-				continue;
-			}
-
-			final int firstMutexInteraction = firstMutexInteractionIndex(ordered, mutexGuardToVarsMap, guardVars);
-			if (firstMutexInteraction < 0) {
-				continue;
-			}
-			final int insideStart = Math.min(firstMutexInteraction + 1, ordered.size() - 1);
-			final int lastGuardVarWrite = lastGuardVarWriteIndex(ordered, guardVars);
-			if (lastGuardVarWrite < insideStart) {
-				for (int i = insideStart; i < ordered.size(); i++) {
-					result.put(ordered.get(i), 2);
-				}
-				continue;
-			}
-
-			for (int i = insideStart; i <= lastGuardVarWrite; i++) {
-				result.put(ordered.get(i), 2);
-			}
-			if (lastGuardVarWrite + 1 < ordered.size()) {
-				for (int i = lastGuardVarWrite + 1; i < ordered.size(); i++) {
-					result.put(ordered.get(i), 3);
-				}
-			}
-		}
-		return result;
-	}
-
-	private int firstMutexInteractionIndex(final List<IcfgLocation> ordered,
-			final Map<IcfgLocation, Set<IProgramVar>> mutexGuardToVarsMap, final Set<IProgramVar> guardVars) {
-		int firstGuard = -1;
-		int firstWrite = -1;
-		for (int i = 0; i < ordered.size(); i++) {
-			final IcfgLocation loc = ordered.get(i);
-			if (firstGuard < 0 && mutexGuardToVarsMap.containsKey(loc)) {
-				firstGuard = i;
-			}
-			if (firstWrite < 0 && writesAnyOf(loc, guardVars)) {
-				firstWrite = i;
-			}
-			if (firstGuard >= 0 && firstWrite >= 0) {
-				break;
-			}
-		}
-		return firstGuard >= 0 ? firstGuard : firstWrite;
-	}
-
-	private int lastGuardVarWriteIndex(final List<IcfgLocation> ordered, final Set<IProgramVar> guardVars) {
-		int lastWrite = -1;
-		for (int i = 0; i < ordered.size(); i++) {
-			if (writesAnyOf(ordered.get(i), guardVars)) {
-				lastWrite = i;
-			}
-		}
-		return lastWrite;
 	}
 
 	private boolean writesAnyOf(final IcfgLocation loc, final Set<IProgramVar> vars) {
@@ -272,14 +180,6 @@ public class ControlPartitioningHeuristics {
 			}
 		}
 		return false;
-	}
-
-	private Map<IcfgLocation, Integer> singletonPerProcedureMapping() {
-		final Map<IcfgLocation, Integer> result = new HashMap<>();
-		for (final IcfgLocation loc : collectReachableFromEntries()) {
-			result.put(loc, 1);
-		}
-		return result;
 	}
 
 	private int nextFreshIdForProcedure(final Set<IcfgLocation> procedureLocations,
@@ -332,14 +232,14 @@ public class ControlPartitioningHeuristics {
 		return reachableFromEntries;
 	}
 
-	private boolean isFoundationalSplitEdge(final IcfgEdge edge, final Set<IProgramVar> excludedVars) {
+	private boolean isFoundationalSplitEdge(final IcfgEdge edge, final Set<IProgramVar> lockVars) {
 		if (edge instanceof IIcfgForkTransitionThreadCurrent<?>) {
 			return true;
 		}
-		if (excludedVars.isEmpty()) {
+		if (lockVars.isEmpty()) {
 			return InterferenceUtils.referencesGlobals(edge.getTransformula());
 		}
-		return !excludedVars.containsAll(InterferenceUtils.getReferencedGlobals(edge.getTransformula()));
+		return !lockVars.containsAll(InterferenceUtils.getReferencedGlobals(edge.getTransformula()));
 	}
 
 	private IcfgLocation find(final Map<IcfgLocation, IcfgLocation> parent, final IcfgLocation location) {
@@ -361,10 +261,7 @@ public class ControlPartitioningHeuristics {
 		}
 	}
 
-	private Set<IProgramVar> getGuardVars(final List<IcfgEdge> outgoing, final boolean fullyPrecise) {
-		if (fullyPrecise) {
-			return getGuardVarsStrict(outgoing);
-		}
+	private Set<IProgramVar> getGuardVars(final List<IcfgEdge> outgoing) {
 		final List<Term> guards = collectGuardTerms(outgoing);
 		final Set<IProgramVar> allVars = new HashSet<>();
 		for (final Term term : guards) {
@@ -373,41 +270,6 @@ public class ControlPartitioningHeuristics {
 			allVars.addAll(freeVars);
 		}
 		return allVars;
-	}
-
-	private Set<IProgramVar> getGuardVarsStrict(final List<IcfgEdge> outgoing) {
-		final List<Term> guards = collectGuardTerms(outgoing);
-		if (guards.isEmpty()) {
-			return Set.of();
-		}
-		final Set<IProgramVar> freeVars = new HashSet<>();
-		for (final Term guard : guards) {
-			final Term simplified = SmtUtils.simplify(mManagedScript, guard, mServices,
-					SimplificationTechnique.POLY_PAC);
-			if (SmtUtils.isTrueLiteral(simplified) || SmtUtils.isFalseLiteral(simplified)) {
-				continue;
-			}
-			Arrays.stream(simplified.getFreeVars()).filter(mTermToGlobalMap::containsKey).map(mTermToGlobalMap::get)
-					.forEach(freeVars::add);
-		}
-		return freeVars;
-	}
-
-	private boolean shouldDifferentiate(final List<IcfgEdge> outgoing, final boolean fullyPrecise) {
-		if (fullyPrecise) {
-			return shouldDifferentiateStrict(outgoing);
-		}
-		final List<Term> guards = collectGuardTerms(outgoing);
-		for (final Term term : guards) {
-			if (Arrays.stream(term.getFreeVars()).anyMatch(mTermToGlobalMap::containsKey)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private boolean shouldDifferentiateStrict(final List<IcfgEdge> outgoing) {
-		return !getGuardVarsStrict(outgoing).isEmpty();
 	}
 
 	private List<Term> collectGuardTerms(final List<IcfgEdge> outgoing) {

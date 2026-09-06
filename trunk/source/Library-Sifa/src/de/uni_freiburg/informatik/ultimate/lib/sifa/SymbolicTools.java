@@ -115,7 +115,6 @@ public class SymbolicTools {
 		return mFactory;
 	}
 
-	/** Computes the post-state for transitions supplied by extensions of the sequential interpreter. */
 	protected IPredicate postSpecialTransition(final IPredicate input,
 			final IIcfgTransition<IcfgLocation> transition) {
 		if (transition instanceof LocationMarkerTransition) {

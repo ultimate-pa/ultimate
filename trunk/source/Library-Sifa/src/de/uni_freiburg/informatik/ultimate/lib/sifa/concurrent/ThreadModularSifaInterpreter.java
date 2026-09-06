@@ -319,12 +319,6 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		perThreadPredicates.put(threadId, interferenceInput);
 	}
 
-	/**
-	 * Reuse is sound iff every input the thread consumes is subsumed by the corresponding input of the cached
-	 * run: the cached result then still over-approximates all behaviors under the current inputs. A cache predating
-	 * publication growth cannot be reused because it consumed a stronger lock invariant. Checks are ordered cheapest
-	 * first; the per-summary interference subsumption is the only expensive one.
-	 */
 	private boolean canReuseCachedRun(final ThreadRunCache cache, final String threadId,
 			final IInterferenceSet interference, final IPredicate initialState,
 			final Map<IcfgLocation, IPredicate> joinedExitInputs) {

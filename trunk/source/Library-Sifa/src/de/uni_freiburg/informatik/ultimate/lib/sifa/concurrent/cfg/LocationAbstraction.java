@@ -45,18 +45,12 @@ public class LocationAbstraction {
 
 	public Map<IcfgLocation, Integer> computeLocationAbstraction(final LocationAbstractionType type,
 			final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg, final MustLocksetAnalysis locksetInfo) {
-		final var heuristics = new ControlPartitioningHeuristics(services, icfg);
 		return switch (type) {
 		case SINGLETON -> evaluateAll(l -> 0, icfg);
-		case SPLIT_AT_GUARD -> heuristics.guardSplitting();
-		case SPLIT_AT_GUARDS_AND_WRITES -> heuristics.allVarOccurrencesSplit();
-		case SPLIT_AT_LOCKSETS -> evaluateAll(l -> locksetLocationId(l, locksetInfo), icfg);
-		case SPLIT_AT_GUARDS_WRITES_AND_LOCKSETS -> {
-			final Map<IcfgLocation, Integer> base = heuristics.allVarOccurrencesSplit();
-			yield evaluateAll(l -> refinedLocksetLocationId(l, base, locksetInfo), icfg);
-		}
 		case SPLIT_AT_NONLOCK_GUARDS_WRITES_AND_LOCKSETS -> {
-			final Map<IcfgLocation, Integer> base = heuristics.allVarOccurrencesSplit(locksetInfo.getLockVars());
+			final var heuristics = new ControlPartitioningHeuristics(services, icfg);
+			final Map<IcfgLocation, Integer> base =
+					heuristics.splitAtNonLockGuardsAndWrites(locksetInfo.getLockVars());
 			yield evaluateAll(l -> refinedLocksetLocationId(l, base, locksetInfo), icfg);
 		}
 		case SPLIT_AT_EVERY_LOCATION -> evaluateAll(
@@ -74,10 +68,6 @@ public class LocationAbstraction {
 			}
 		}
 		return result;
-	}
-
-	private int locksetLocationId(final IcfgLocation loc, final MustLocksetAnalysis locksetInfo) {
-		return idForKey(loc.getProcedure(), locksetKey(locksetInfo.mustLocksetAt(loc)));
 	}
 
 	private int refinedLocksetLocationId(final IcfgLocation loc, final Map<IcfgLocation, Integer> base,

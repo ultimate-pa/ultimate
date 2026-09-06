@@ -98,7 +98,7 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 	private static final boolean PROOF_CHECK = false;
 	private static final boolean RESULT_PRINT = false;
 
-	private static final String LOCATION_ABSTRACTION = "SPLIT_AT_GUARDS_AND_WRITES";
+	private static final String LOCATION_ABSTRACTION = "SPLIT_AT_NONLOCK_GUARDS_WRITES_AND_LOCKSETS";
 
 	@Override
 	protected long getTimeout() {

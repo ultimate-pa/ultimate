@@ -5,7 +5,7 @@
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Interference\ Applicator=STRONGEST_POSTCONDITION
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Join\ Precision=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Lockset-Aware\ Interference=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Location\ Abstraction=SPLIT_AT_GUARDS_AND_WRITES
+/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Location\ Abstraction=SPLIT_AT_NONLOCK_GUARDS_WRITES_AND_LOCKSETS
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Location\ Tracking\ Mode=GHOST_VARIABLES
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Equality=1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Explicit\ Values=2
