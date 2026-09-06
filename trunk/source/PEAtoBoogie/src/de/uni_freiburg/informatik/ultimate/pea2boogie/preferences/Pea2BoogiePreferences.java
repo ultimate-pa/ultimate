@@ -119,8 +119,16 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	public static final String LABEL_TESTCASE_WHOLE_GRAPH = "TestCases test the whole graph";
 	private static final boolean DEF_TESTCASE_WHOLE_GRAPH = true;
 	private static final String DESC_TESTCASE_WHOLE_GRAPH = """
-			If enabled, every TestCase is checked against all requirements' PEAs, regardless of its "for R1" target\
-			 - more thorough but expensive. If disabled, only the target requirement's PEA is used - much cheaper.""";
+			If enabled, each TestCase is checked against all requirements, not just its own target - more \
+			thorough, but more expensive.""";
+
+	public static final String LABEL_TESTCASE_WHOLE_GRAPH_BATCH_SIZE = "TestCases whole-graph: TestCases per procedure";
+	private static final int DEF_TESTCASE_WHOLE_GRAPH_BATCH_SIZE = 1;
+	private static final String DESC_TESTCASE_WHOLE_GRAPH_BATCH_SIZE = """
+			Only relevant if "TestCases test the whole graph" is enabled. How many TestCases share one procedure: \
+			1 = a separate procedure per TestCase (largest file, fastest to verify); a high value, e.g. 1000, = \
+			all TestCases in one procedure (smallest file, slowest to verify). Values in between trade file size \
+			for verification speed.""";
 
 	public enum PEATransformerMode {
 		REQ_CHECK, REQ_TEST, REQ_RED
@@ -164,7 +172,10 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_GUESS_INITIAL, DEF_GUESS_INITIAL, DESC_GUESS_INITIAL,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_TESTCASE_WHOLE_GRAPH, DEF_TESTCASE_WHOLE_GRAPH,
-						DESC_TESTCASE_WHOLE_GRAPH, PreferenceType.Boolean) };
+						DESC_TESTCASE_WHOLE_GRAPH, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_TESTCASE_WHOLE_GRAPH_BATCH_SIZE, DEF_TESTCASE_WHOLE_GRAPH_BATCH_SIZE,
+						DESC_TESTCASE_WHOLE_GRAPH_BATCH_SIZE, PreferenceType.Integer,
+						IUltimatePreferenceItemValidator.ONLY_POSITIVE) };
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {
