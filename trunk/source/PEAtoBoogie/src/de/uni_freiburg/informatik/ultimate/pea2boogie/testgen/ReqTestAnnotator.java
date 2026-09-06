@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.StrictInvariant;
@@ -70,6 +71,14 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 	@Override
 	public List<Statement> getPreChecks() {
 		return new ArrayList<>();
+	}
+
+	@Override
+	public List<Statement> getTestCaseCheck(final BoogieLocation bl, final PatternType<?> pattern,
+			final Expression notYetElapsedExpr) {
+		final NamedAttribute[] attr =
+				{ new NamedAttribute(bl, TEST_ASSERTION_PREFIX + "TESTCASE_" + pattern.getId(), new Expression[] {}) };
+		return Collections.singletonList(new AssertStatement(bl, attr, notYetElapsedExpr));
 	}
 
 	public static String getTrackingVar(final String ident) {
