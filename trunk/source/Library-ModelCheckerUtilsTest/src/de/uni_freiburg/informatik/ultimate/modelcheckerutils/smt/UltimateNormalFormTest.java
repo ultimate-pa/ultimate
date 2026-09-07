@@ -629,6 +629,39 @@ public class UltimateNormalFormTest {
 		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
 	}
 
+	// --- bvneg double-negation (BitvectorUtils) ---
+
+	@Test
+	public void bvnegDoubleNegationCancels() {
+		// Negation is an involution mod 2^n: (bvneg (bvneg x)) -> x, for any x, not just constants.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvneg (bvneg x))";
+		final String expected = "x";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvnegTripleNegationLeavesOneNegation() {
+		// Odd count: two of the three negations cancel pairwise while UnfTransformer builds bottom-up, leaving
+		// exactly one bvneg behind: (bvneg (bvneg (bvneg x))) -> (bvneg x).
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvneg (bvneg (bvneg x)))";
+		final String expected = "(bvneg x)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvnegSingleNegationNotSimplified() {
+		// Guard: a single negation of a plain variable has nothing to cancel against and must stay as-is.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvneg x)";
+		final String expected = "(bvneg x)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
 	static void runUnfTest(final FunDecl[] funDecls, final String eliminationInputAsString,
 			final String expectedResultAsString, final ManagedScript mgdScript) {
 		for (final FunDecl funDecl : funDecls) {
