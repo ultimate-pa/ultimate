@@ -30,7 +30,6 @@ void adc()
 //@ interrupt masking disable \all;
 void disable_all();
 
-//@ interrupt masking enable \all;
 int main()
 {
     //@ assert(ev == EV_NONE);

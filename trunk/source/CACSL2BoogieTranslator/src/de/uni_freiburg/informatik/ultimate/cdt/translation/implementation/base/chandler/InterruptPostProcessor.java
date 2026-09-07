@@ -193,9 +193,9 @@ public class InterruptPostProcessor implements IPostProcessor {
 		// Add atomic block and variable assignment false to request disabled functions
 		annotateMaskingProcedures(reqDisableFuncs, isrs, false);
 
-		// Add join statements to request disable procedure
+		// Add join statements to request disable procedure (only for IRQs that have a matching fork)
 		if (realization3) {
-			addJoinsToRequestDisable(reqDisableFuncs);
+			addJoinsToRequestDisable(reqDisableFuncs, reqEnableFuncs);
 		}
 
 		// Add interrupt enabled variable declarations (one per ISR)
@@ -246,12 +246,19 @@ public class InterruptPostProcessor implements IPostProcessor {
 		}
 	}
 
-	private void addJoinsToRequestDisable(final Map<Integer, List<Procedure>> intDisabledProcedures) {
+	private void addJoinsToRequestDisable(final Map<Integer, List<Procedure>> intDisabledProcedures,
+			final Map<Integer, List<Procedure>> intEnabledProcedures) {
 		for (final Entry<Integer, List<Procedure>> entry : intDisabledProcedures.entrySet()) {
 			final var irq = entry.getKey();
 			final var procedures = entry.getValue();
 
 			if (!mThreadProcedures.containsKey(irq)) {
+				continue;
+			}
+
+			// Only add a join if at least one fork (enable function) exists for this IRQ.
+			// Without a prior fork, joining the thread would lead to errors.
+			if (!intEnabledProcedures.containsKey(irq)) {
 				continue;
 			}
 

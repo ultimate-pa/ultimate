@@ -23,7 +23,6 @@ void gpio()
 //@ interrupt masking disable GPIO;
 void disable_gpio();
 
-//@ interrupt masking enable GPIO;
 int main()
 {
     //@ assert(ev == EV_NONE);
