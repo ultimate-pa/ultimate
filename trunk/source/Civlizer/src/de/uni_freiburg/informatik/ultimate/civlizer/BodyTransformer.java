@@ -267,6 +267,7 @@ final class BodyTransformer extends BoogieTransformer {
 				// case HavocStatement _:
 				// case AtomicStatement _:
 
+				newStatements.add(annotationCheck);
 				newStatements.add(processStatement(statement));
 				newStatements.addAll(positiveGhostUpdates);
 				break;
