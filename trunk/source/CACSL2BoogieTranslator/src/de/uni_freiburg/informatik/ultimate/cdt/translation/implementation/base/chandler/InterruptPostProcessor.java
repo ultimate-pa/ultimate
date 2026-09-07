@@ -234,11 +234,14 @@ public class InterruptPostProcessor implements IPostProcessor {
 
 			final var thrNum = -irq;
 			final var enabledExpr = constructEnabledExpression(irq);
+			final var enabledLhs = constructEnabledLhs(irq);
 			for (final var proc : procedures) {
+				// Register the enabled variable in the procedure's modifies clause
+				mProcedureManager.getProcedureInfo(proc.getIdentifier()).addModifiedGlobal(enabledLhs);
 				final List<Statement> fork = constructForkStatements(proc, List.of(threadProc), thrNum);
 				// Set enabled = true BEFORE fork so the thread enters its while loop
 				final var enabledAssignment = StatementFactory.constructSingleAssignmentStatement(mIgnoreLoc,
-						constructEnabledLhs(irq), ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true));
+						enabledLhs, ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true));
 				final var ifBody = new ArrayList<Statement>();
 				ifBody.add(enabledAssignment);
 				ifBody.addAll(fork);
@@ -268,10 +271,13 @@ public class InterruptPostProcessor implements IPostProcessor {
 			}
 
 			final var enabledExpr = constructEnabledExpression(irq);
+			final var enabledLhs = constructEnabledLhs(irq);
 			for (final var proc : procedures) {
+				// Register the enabled variable in the procedure's modifies clause
+				mProcedureManager.getProcedureInfo(proc.getIdentifier()).addModifiedGlobal(enabledLhs);
 				// Set enabled = false BEFORE join so the thread can exit its while loop
 				final var enabledAssignment = StatementFactory.constructSingleAssignmentStatement(mIgnoreLoc,
-						constructEnabledLhs(irq), ExpressionFactory.createBooleanLiteral(mIgnoreLoc, false));
+						enabledLhs, ExpressionFactory.createBooleanLiteral(mIgnoreLoc, false));
 				final List<Statement> join = constructJoinStatement(proc, -irq);
 				final var ifBody = new ArrayList<Statement>();
 				ifBody.add(enabledAssignment);
