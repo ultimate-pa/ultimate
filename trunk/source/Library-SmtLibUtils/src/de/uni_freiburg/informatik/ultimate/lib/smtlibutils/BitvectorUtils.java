@@ -648,6 +648,19 @@ public final class BitvectorUtils {
 			return constructTerm(script, BitvectorConstant.bvneg(bvs[0]));
 		}
 
+		@Override
+		protected Term simplify_NonConstantCase(final Script script, final BigInteger[] indices, final Term[] params,
+				final BitvectorConstant[] bvs) {
+			// Double negation: bvneg(bvneg(y)) -> y. Negation is an involution mod 2^n, holds for every y, no
+			// precondition needed. Safe to check unconditionally: UnfTransformer builds bottom-up, so a deeper
+			// chain like bvneg(bvneg(bvneg(bvneg(y)))) has already collapsed its inner pair before this call runs.
+			final ApplicationTerm inner = SmtUtils.getFunctionApplication(params[0], "bvneg");
+			if (inner != null) {
+				return inner.getParameters()[0];
+			}
+			return super.simplify_NonConstantCase(script, indices, params, bvs);
+		}
+
 	}
 
 	static Term simplifyBvand(final Script script, final Term[] params) {
