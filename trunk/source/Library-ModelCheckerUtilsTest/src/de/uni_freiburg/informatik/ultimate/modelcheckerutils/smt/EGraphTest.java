@@ -80,7 +80,7 @@ public class EGraphTest {
 
 	@Test
 	// most basic transitivity test
-	public void egraphTestExampleTransitivity() {
+	public void egraphTestExampleTransitivity01() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
 		final String formulaAsString = "(and (= x y) (= y 5))";
 		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
@@ -90,7 +90,7 @@ public class EGraphTest {
 
 	@Test
 	// basic select congruence test with the same arrays and indices that are found to be equivalent
-	public void egraphTestExampleSelectCongruence() {
+	public void egraphTestExampleSelectCongruence01() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j", "x", "y"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
 		final String formulaAsString = "(and (= i (select a x)) (= x y) (= j (select a y)))";
@@ -138,7 +138,7 @@ public class EGraphTest {
 
 	@Test
 	// most basic disequality test
-	public void egraphTestExampleDistinct() {
+	public void egraphTestExampleDistinct01() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z"), };
 		final String formulaAsString = "(and (distinct x y) (= y z))";
 		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
@@ -156,17 +156,40 @@ public class EGraphTest {
 		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
 	}
 
-//	@Test
-//	// select disequality test, where distinct values should imply distinct indices
-//	// this is currently not detectable
-//	public void egraphTestExampleDistinctSelect03() {
-//		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j", "x", "y"),
-//				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
-//		final String formulaAsString = "(and (= i (select a x)) (not (= i j)) (= j (select a y)))";
-//		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
-//		expectedRelations.add(new ExpectedRelation("x", "y", EGraph.EquivalenceState.DISTINCT));
-//		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
-//	}
+	@Test
+	// select disequality test, where distinct values should imply distinct indices
+	// this is currently not detectable
+	public void egraphTestExampleDistinctSelect01() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j", "x", "y"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
+		final String formulaAsString = "(and (= i (select a x)) (= j (select a y)) (not (= i j)))";
+		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
+		expectedRelations.add(new ExpectedRelation("x", "y", EGraph.EquivalenceState.DISTINCT));
+		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	// select disequality test, where distinct indices do not necessarily imply distinct values
+	public void egraphTestExampleDistinctSelect02() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j", "x", "y"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
+		final String formulaAsString = "(and (= i (select a x)) (= j (select a y)) (not (= x y)))";
+		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
+		expectedRelations.add(new ExpectedRelation("i", "j", EGraph.EquivalenceState.UNKNOWN));
+		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	// select test, where knowledge that two select expressions are equivalent does not necessarily imply that their
+	// indices are equivalent
+	public void egraphTestExampleSelect01() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j", "x", "y"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
+		final String formulaAsString = "(and (= i (select a x)) (= j (select a y)) (= i j))";
+		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
+		expectedRelations.add(new ExpectedRelation("x", "y", EGraph.EquivalenceState.UNKNOWN));
+		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
+	}
 
 	static void runEGraphTest(final FunDecl[] funDecls, final String conjunctAsString,
 			final ArrayList<ExpectedRelation> expectedRelations, final IUltimateServiceProvider services,
