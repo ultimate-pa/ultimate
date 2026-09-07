@@ -183,19 +183,17 @@ public class InterruptPostProcessor implements IPostProcessor {
 		final Map<Integer, List<Procedure>> reqDisableFuncs =
 				resolveMaskingFunctionProcedures(InterruptMaskingFunction.Operation.DISABLE);
 
-		// Add atomic block and variable assignment true to request enabled functions
-		annotateMaskingProcedures(reqEnableFuncs, isrs, true);
-
-		// Add fork statements in request enable procedure instead of the main procedure
 		if (realization3) {
+			// In fork-join mode, the enabled flag assignment is included inside the
+			// fork/join if-blocks to ensure correct ordering: set the flag BEFORE
+			// fork (so the thread enters its while loop) and BEFORE join (so the
+			// thread can exit its while loop).
 			addForksToRequestEnable(reqEnableFuncs);
-		}
-		// Add atomic block and variable assignment false to request disabled functions
-		annotateMaskingProcedures(reqDisableFuncs, isrs, false);
-
-		// Add join statements to request disable procedure (only for IRQs that have a matching fork)
-		if (realization3) {
 			addJoinsToRequestDisable(reqDisableFuncs, reqEnableFuncs);
+		} else {
+			// In non-fork-join modes, just add the enabled flag assignment
+			annotateMaskingProcedures(reqEnableFuncs, isrs, true);
+			annotateMaskingProcedures(reqDisableFuncs, isrs, false);
 		}
 
 		// Add interrupt enabled variable declarations (one per ISR)
@@ -235,10 +233,17 @@ public class InterruptPostProcessor implements IPostProcessor {
 			}
 
 			final var thrNum = -irq;
+			final var enabledExpr = constructEnabledExpression(irq);
 			for (final var proc : procedures) {
 				final List<Statement> fork = constructForkStatements(proc, List.of(threadProc), thrNum);
-				final var newBlock =
-						new ArrayList<>(List.of(constructForkIfStatement(constructEnabledExpression(irq), fork, true)));
+				// Set enabled = true BEFORE fork so the thread enters its while loop
+				final var enabledAssignment = StatementFactory.constructSingleAssignmentStatement(mIgnoreLoc,
+						constructEnabledLhs(irq), ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true));
+				final var ifBody = new ArrayList<Statement>();
+				ifBody.add(enabledAssignment);
+				ifBody.addAll(fork);
+				final var ifStmt = constructForkIfStatement(enabledExpr, ifBody, true);
+				final var newBlock = new ArrayList<>(List.of(ifStmt));
 				final var body = proc.getBody();
 				newBlock.addAll(Arrays.asList(body.getBlock()));
 				body.setBlock(newBlock.toArray(new Statement[0]));
@@ -262,10 +267,17 @@ public class InterruptPostProcessor implements IPostProcessor {
 				continue;
 			}
 
+			final var enabledExpr = constructEnabledExpression(irq);
 			for (final var proc : procedures) {
+				// Set enabled = false BEFORE join so the thread can exit its while loop
+				final var enabledAssignment = StatementFactory.constructSingleAssignmentStatement(mIgnoreLoc,
+						constructEnabledLhs(irq), ExpressionFactory.createBooleanLiteral(mIgnoreLoc, false));
 				final List<Statement> join = constructJoinStatement(proc, -irq);
-				final var newBlock =
-						new ArrayList<>(List.of(constructForkIfStatement(constructEnabledExpression(irq), join, false)));
+				final var ifBody = new ArrayList<Statement>();
+				ifBody.add(enabledAssignment);
+				ifBody.addAll(join);
+				final var ifStmt = constructForkIfStatement(enabledExpr, ifBody, false);
+				final var newBlock = new ArrayList<>(List.of(ifStmt));
 				final var body = proc.getBody();
 				newBlock.addAll(Arrays.asList(body.getBlock()));
 				body.setBlock(newBlock.toArray(new Statement[0]));
