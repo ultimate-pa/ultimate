@@ -369,7 +369,7 @@ public final class Translator {
 				params.toArray(Expression[]::new));
 	}
 
-	YieldInvariant addYieldInvariant(final String procName, final int counter, final Expression[] annotations,
+	YieldInvariant addYieldInvariant(final String procName, final int counter, final Expression annotation,
 			final Set<Tid> tidNeedsLinearity) {
 		final var params = new ArrayList<ParameterDeclaration>();
 		if (BoogieUtils.START_PROCEDURE.equals(procName)) {
@@ -397,15 +397,13 @@ public final class Translator {
 					new IdentifierExpression(null, "const_" + tid.toString())));
 		}
 
-		for (final var annotation : annotations) {
-			for (final var localVariable : collectLocalVariables(annotation)) {
-				assert !localVariable.inOldContext() : "Old() expressions not yet supported";
-				final ASTType type = localVariable.type().toASTType(null);
-				params.add(new ParameterDeclaration(localVariable.identifier(), type, Linearity.NONE));
-			}
-
-			preserves.add(annotation);
+		for (final var localVariable : collectLocalVariables(annotation)) {
+			assert !localVariable.inOldContext() : "Old() expressions not yet supported";
+			final ASTType type = localVariable.type().toASTType(null);
+			params.add(new ParameterDeclaration(localVariable.identifier(), type, Linearity.NONE));
 		}
+
+		preserves.add(annotation);
 
 		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
 				Collections.emptyList())) {

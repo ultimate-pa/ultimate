@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
@@ -164,8 +163,8 @@ final class BodyTransformer extends BoogieTransformer {
 
 		final Expression annotation =
 				mTranslator.getProgramAndProof().getTemplateVisitor().getExitAnnotationMap().get(mProcedureName);
-		final var yieldInvariant = mTranslator.addYieldInvariant(mProcedureName, mAtomicStatementCounter,
-				new Expression[] { annotation }, mTidNeedsLinearity);
+		final var yieldInvariant =
+				mTranslator.addYieldInvariant(mProcedureName, mAtomicStatementCounter, annotation, mTidNeedsLinearity);
 		newStatements.add(Translator.callYieldInvariant(yieldInvariant, mCurrentTids, annotation));
 
 		if (mProcedureName != BoogieUtils.START_PROCEDURE) {
@@ -224,7 +223,7 @@ final class BodyTransformer extends BoogieTransformer {
 
 			final var annotation = annotationMap.get(statement.getLoc());
 			final var yieldInvariant = mTranslator.addYieldInvariant(mProcedureName, mAtomicStatementCounter,
-					new Expression[] { annotation }, mTidNeedsLinearity);
+					annotation, mTidNeedsLinearity);
 			final var annotationCheck = Translator.callYieldInvariant(yieldInvariant, mCurrentTids, annotation);
 
 			// FIXME This doesn't always work correctly for ghost updates on AtomicStatements
@@ -249,6 +248,11 @@ final class BodyTransformer extends BoogieTransformer {
 			case final CallStatement callStmt:
 				throw new UnsupportedOperationException("Procedure calls in concurrent programs must be inlined");
 
+			case final ForkStatement forkStmt:
+				newStatements.add(annotationCheck);
+				newStatements.addAll(processForkStatement(forkStmt, positiveGhostUpdates));
+				break;
+
 			case final JoinStatement joinStmt:
 				// add tid when joined
 				mTidNeedsLinearity.add(new Tid(joinStmt.getThreadID()));
@@ -263,21 +267,8 @@ final class BodyTransformer extends BoogieTransformer {
 				// case HavocStatement _:
 				// case AtomicStatement _:
 
-				// special handling for Fork
-				newStatements.add(annotationCheck);
-				if (statement instanceof final ForkStatement forkStmt) {
-					final var annotationFork = mTranslator.getProgramAndProof().getTemplateVisitor()
-							.getEntryAnnotationMap().get(forkStmt.getProcedureName());
-
-					newStatements.addAll(positiveGhostUpdates);
-					newStatements.add(new AssertStatement(null, new NamedAttribute[] {
-							new NamedAttribute(null, "layer", new Expression[] { new IntegerLiteral(null, "2") }) },
-							annotationFork));
-					newStatements.add(processStatement(statement));
-				} else {
-					newStatements.add(processStatement(statement));
-					newStatements.addAll(positiveGhostUpdates);
-				}
+				newStatements.add(processStatement(statement));
+				newStatements.addAll(positiveGhostUpdates);
 				break;
 			}
 
@@ -400,8 +391,6 @@ final class BodyTransformer extends BoogieTransformer {
 		case final Label label:
 			return label;
 
-		case final ForkStatement forkStmt:
-			return processForkStatement(forkStmt);
 		case final JoinStatement joinStmt:
 			return processJoinStatement(joinStmt);
 
@@ -425,6 +414,8 @@ final class BodyTransformer extends BoogieTransformer {
 		case final CallStatement callStmt:
 			throw new UnsupportedOperationException("Procedure calls in concurrent programs must be inlined");
 
+		case final ForkStatement forkStmt:
+			throw new IllegalStateException("`fork` statements should be handled by processStatements()");
 		case final IfStatement ifStmt:
 			throw new IllegalStateException("`if` statements should be handled by processStatements()");
 		case final WhileStatement whileStmt:
@@ -432,9 +423,19 @@ final class BodyTransformer extends BoogieTransformer {
 		}
 	}
 
-	private static Statement processForkStatement(final ForkStatement forkStmt) {
+	// Perform the ghost update first, and then assert the forked thread's precondition.
+	// Then call a generated "fork" procedure.
+	private List<Statement> processForkStatement(final ForkStatement forkStmt, final List<CallStatement> ghostUpdates) {
 		// TODO support fork parameters
 		assert forkStmt.getArguments().length == 0 : "Arguments for forks are not yet supported";
+
+		final var result = new ArrayList<Statement>();
+		result.addAll(ghostUpdates);
+
+		final var annotationFork = mTranslator.getProgramAndProof().getTemplateVisitor().getEntryAnnotationMap()
+				.get(forkStmt.getProcedureName());
+		result.add(new AssertStatement(null,
+				new NamedAttribute[] { CivlUtils.createLayerAttribute(Translator.LAYER_TOP) }, annotationFork));
 
 		final Expression[] forkThreadId = forkStmt.getThreadID();
 		final String procName = forkStmt.getProcedureName();
@@ -445,7 +446,9 @@ final class BodyTransformer extends BoogieTransformer {
 		final var newFork = new CallStatement(forkStmt.getLoc(), new NamedAttribute[0], false, new VariableLHS[0],
 				"fork_" + procName, tids);
 		ModelUtils.copyAnnotations(forkStmt, newFork);
-		return newFork;
+		result.add(newFork);
+
+		return result;
 	}
 
 	private static Statement processJoinStatement(final JoinStatement joinStmt) {
