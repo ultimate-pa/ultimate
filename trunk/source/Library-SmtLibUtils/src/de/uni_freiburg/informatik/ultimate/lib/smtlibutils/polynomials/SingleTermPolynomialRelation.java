@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * {@link PolynomialRelation} implementation that reduces the relation to a single polynomial term &psi; compared
  * against zero (&psi; &#9657; 0, where &psi; = lhs - rhs). Sound for Int/Real inequalities and for equalities of any
- * sort, including bitvectors - unsound for bitvector inequalities (see {@link TwoSidedPolynomialRelation} for that
+ * sort, including bitvectors - unsound for bitvector inequalities (see {@link BitvectorInequalityRelation} for that
  * case), which is why the factory methods below still refuse to build a relation for those.
  * <p>
  * Allows to return this relation as an SMT term in the following two forms:

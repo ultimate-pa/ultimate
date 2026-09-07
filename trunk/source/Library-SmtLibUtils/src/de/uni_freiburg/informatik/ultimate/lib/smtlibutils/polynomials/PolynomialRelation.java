@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * <li>{@link SingleTermPolynomialRelation} - the original representation. Reduces the relation to a single
  * polynomial term compared against zero (&psi; &#9657; 0, where &psi; = lhs - rhs). Sound for Int/Real inequalities
  * and for equalities of any sort, including bitvectors.
- * <li>{@link TwoSidedPolynomialRelation} - keeps the left-hand side and right-hand side as two separate polynomial
+ * <li>{@link BitvectorInequalityRelation} - keeps the left-hand side and right-hand side as two separate polynomial
  * terms, never combined via subtraction. Needed for bitvector inequalities, where reducing to a single term compared
  * against zero is unsound under two's-complement wraparound.
  * </ul>
@@ -88,8 +88,8 @@ public interface PolynomialRelation extends IBinaryRelation, ITermProvider {
 	// --- static factories ---
 	// Unchanged behavior for now: always delegate to SingleTermPolynomialRelation, exactly like before this
 	// interface existed (including still returning null for bitvector inequalities).
-	// TODO: once TwoSidedPolynomialRelation is functional, these need to detect bitvector inequalities and route
-	// to TwoSidedPolynomialRelation.of(...) instead. Deliberately left alone for now, so nothing that currently
+	// TODO: once BitvectorInequalityRelation is functional, these need to detect bitvector inequalities and route
+	// to BitvectorInequalityRelation.of(...) instead. Deliberately left alone for now, so nothing that currently
 	// relies on the existing "returns null for bv inequalities" behavior (e.g. UnfTransformer's null-check) breaks.
 
 	static PolynomialRelation of(final AbstractGeneralizedAffineTerm<?> agat, final RelationSymbol relationSymbol) {
@@ -134,7 +134,7 @@ public interface PolynomialRelation extends IBinaryRelation, ITermProvider {
 	SolvedBinaryRelation solveForSubject(Script script, Term subject);
 
 	/**
-	 * TODO: needs real design work for {@link TwoSidedPolynomialRelation} - solving for a subject means moving
+	 * TODO: needs real design work for {@link BitvectorInequalityRelation} - solving for a subject means moving
 	 * terms across the relation, which is exactly the operation that's unsafe for bitvectors under wraparound.
 	 */
 	MultiCaseSolvedBinaryRelation solveForSubject(ManagedScript mgdScript, Term subject,
@@ -148,7 +148,7 @@ public interface PolynomialRelation extends IBinaryRelation, ITermProvider {
 	PolynomialRelation negate();
 
 	/**
-	 * TODO: needs real design work for {@link TwoSidedPolynomialRelation} - multiplying a bitvector relation by a
+	 * TODO: needs real design work for {@link BitvectorInequalityRelation} - multiplying a bitvector relation by a
 	 * constant involves bitvector multiplication, which wraps too, so this needs the same careful treatment as
 	 * {@link #solveForSubject}.
 	 */

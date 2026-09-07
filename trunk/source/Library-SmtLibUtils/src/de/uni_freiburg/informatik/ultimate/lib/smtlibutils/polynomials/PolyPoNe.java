@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Polynomia
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -70,6 +71,18 @@ public class PolyPoNe {
 	private final Set<Term> mPositive = new HashSet<>();
 	private final Set<Term> mNegative = new HashSet<>();
 	private final HashRelation<Map<?, Rational>, PolynomialRelation> mPolyRels = new HashRelation<>();
+	/**
+	 * Bitvector-inequality analogue of {@link #mPolyRels}, scoped to relations of the shape "bare variable vs. bare
+	 * constant" (e.g. {@code x <=u 5}) - keyed directly on the variable {@link Term} since there is no single
+	 * combined polynomial to key on the way {@link #mPolyRels} does. See {@link BitvectorInequalityRelation}.
+	 */
+	private final HashRelation<Term, BitvectorInequalityRelation> mTwoSidedRels = new HashRelation<>();
+	/**
+	 * {@link BitvectorInequalityRelation}s that are not "bare variable vs. bare constant" (both sides variables, or
+	 * either side compound like {@code x - y}) - no cheap key available, so these are just kept as-is and never
+	 * compared against anything.
+	 */
+	private final Set<BitvectorInequalityRelation> mCompoundTwoSidedRels = new HashSet<>();
 	private boolean mInconsistent = false;
 
 	PolyPoNe(final Script script, final Junction junction) {
@@ -206,6 +219,12 @@ public class PolyPoNe {
 		if (mInconsistent) {
 			throw new AssertionError("must not add if already inconsistent");
 		}
+		if (polyRel instanceof BitvectorInequalityRelation) {
+			// Never call getPolynomialTerm() on a BitvectorInequalityRelation - it has no single polynomial term
+			// (see BitvectorInequalityRelation.getPolynomialTerm()'s javadoc). Handled entirely separately below,
+			// scoped to the "bare variable vs. bare constant" shape - see mTwoSidedRels' javadoc.
+			return addTwoSidedPolyRel((BitvectorInequalityRelation) polyRel);
+		}
 
 		final Check check = checkPolyRel(script, polyRel, removeExpliedPolyRels);
 		if (check == Check.MAYBE_USEFUL) {
@@ -229,6 +248,110 @@ public class PolyPoNe {
 		} else {
 			throw new AssertionError("unknown value " + check);
 		}
+	}
+
+	/**
+	 * Bitvector-inequality analogue of {@link #addPolyRel}, scoped to the "bare variable vs. bare constant" shape
+	 * (see {@link BitvectorInequalityRelation#isBareVariableVsBareConstant()}). Relations outside that shape are
+	 * stored in {@link #mCompoundTwoSidedRels} unconditionally - no comparison is attempted for them, matching the
+	 * "skip rather than do an expensive scan" instruction from Heizmann's meeting notes (see
+	 * bitvector-inequality-relation-idea memory).
+	 */
+	private boolean addTwoSidedPolyRel(final BitvectorInequalityRelation polyRel) {
+		if (!polyRel.isBareVariableVsBareConstant()) {
+			mCompoundTwoSidedRels.add(polyRel); // no cheap key, keep as-is
+			return false;
+		}
+		final Term variable = polyRel.getBareVariableTerm(mScript);
+		final List<BitvectorInequalityRelation> explied = new ArrayList<>();
+		for (final BitvectorInequalityRelation existing : mTwoSidedRels.getImage(variable)) {
+			final ComparisonResult comp = compareTwoSidedRepresentation(existing, polyRel);
+			if (comp == null) {
+				continue; // no verdict, e.g. different orientation
+			}
+			switch (comp) {
+			case IMPLIES:
+			case EQUIVALENT:
+				return false; // polyRel redundant
+			case EXPLIES:
+				explied.add(existing); // existing redundant, drop later
+				break;
+			case INCONSISTENT:
+				return true;
+			default:
+				throw new AssertionError("unknown value " + comp);
+			}
+		}
+		for (final BitvectorInequalityRelation existing : explied) {
+			mTwoSidedRels.removePair(variable, existing);
+		}
+		final BitvectorInequalityRelation fusionPartner = findFusibleTwoSidedRelation(variable, polyRel);
+		if (fusionPartner != null) {
+			// fuse into an equality, reuse the existing single-term insertion path
+			mTwoSidedRels.removePair(variable, fusionPartner);
+			final PolynomialRelation fusion = SingleTermPolynomialRelation.of(mScript, RelationSymbol.EQ, variable,
+					polyRel.getBareConstantTerm(mScript));
+			return addPolyRel(mScript, fusion, true);
+		}
+		mTwoSidedRels.addPair(variable, polyRel);
+		return false;
+	}
+
+	/**
+	 * Compares two {@link BitvectorInequalityRelation}s that are both "bare variable vs. bare constant" and share the
+	 * same variable (same {@link HashRelation} bucket in {@link #mTwoSidedRels}). Returns {@code null} if the
+	 * relation symbols differ or the variable is on different sides (no verdict attempted in this pass - see the
+	 * "open question" note in the Phase B plan about the variable-vs-variable case).
+	 */
+	private static ComparisonResult compareTwoSidedRepresentation(final BitvectorInequalityRelation existing,
+			final BitvectorInequalityRelation newRel) {
+		if (existing.getRelationSymbol() != newRel.getRelationSymbol()) {
+			return null;
+		}
+		if (existing.isVariableOnLhs() != newRel.isVariableOnLhs()) {
+			return null;
+		}
+		final BitvectorConstant existingConstant = existing.getBareConstant();
+		final BitvectorConstant newConstant = newRel.getBareConstant();
+		if (existingConstant.equals(newConstant)) {
+			return ComparisonResult.EQUIVALENT;
+		}
+		final boolean unsigned =
+				existing.getRelationSymbol() == RelationSymbol.BVULE || existing.getRelationSymbol() == RelationSymbol.BVULT;
+		final boolean existingConstantIsSmaller = unsigned ? BitvectorConstant.bvult(existingConstant, newConstant)
+				: BitvectorConstant.bvslt(existingConstant, newConstant);
+		if (existing.isVariableOnLhs()) {
+			// relation shape "var <>= const" (upper bound) - the smaller constant is the tighter constraint.
+			return existingConstantIsSmaller ? ComparisonResult.IMPLIES : ComparisonResult.EXPLIES;
+		} else {
+			// relation shape "const <>= var" (lower bound) - the larger constant is the tighter constraint.
+			return existingConstantIsSmaller ? ComparisonResult.EXPLIES : ComparisonResult.IMPLIES;
+		}
+	}
+
+	/**
+	 * Mirrors {@link AbstractGeneralizedAffineTerm#areRepresentationsFusible} for the two-sided bitvector case:
+	 * fusion only applies to non-strict relations (BVULE/BVSLE - BVULT/BVSLT can't fuse into an equality the same
+	 * way, see {@code areRepresentationsFusibleHelper}'s AND case), with opposite orientation (one upper bound, one
+	 * lower bound on the same variable) and an equal constant, e.g. {@code x <=u 5 /\ x >=u 5 -> x = 5}.
+	 */
+	private BitvectorInequalityRelation findFusibleTwoSidedRelation(final Term variable,
+			final BitvectorInequalityRelation polyRel) {
+		if (polyRel.getRelationSymbol() != RelationSymbol.BVULE && polyRel.getRelationSymbol() != RelationSymbol.BVSLE) {
+			return null; // strict relations don't fuse
+		}
+		for (final BitvectorInequalityRelation existing : mTwoSidedRels.getImage(variable)) {
+			if (existing.getRelationSymbol() != polyRel.getRelationSymbol()) {
+				continue;
+			}
+			if (existing.isVariableOnLhs() == polyRel.isVariableOnLhs()) {
+				continue; // need opposite orientation (upper vs. lower bound)
+			}
+			if (existing.getBareConstant().equals(polyRel.getBareConstant())) {
+				return existing;
+			}
+		}
+		return null;
 	}
 
 	protected final boolean addNonPolynomial(final Term nonPolynomial) {
@@ -319,6 +442,12 @@ public class PolyPoNe {
 		for (final Entry<Map<?, Rational>, PolynomialRelation> pair : mPolyRels.getSetOfPairs()) {
 			params.add(pair.getValue().toTerm(mScript));
 		}
+		for (final Entry<Term, BitvectorInequalityRelation> pair : mTwoSidedRels.getSetOfPairs()) {
+			params.add(pair.getValue().toTerm(mScript));
+		}
+		for (final BitvectorInequalityRelation rel : mCompoundTwoSidedRels) {
+			params.add(rel.toTerm(mScript));
+		}
 		params.addAll(mPositive);
 		for (final Term term : mNegative) {
 			params.add(SmtUtils.not(mScript, term));
@@ -333,6 +462,12 @@ public class PolyPoNe {
 		final List<Term> params = new ArrayList<>();
 		for (final Entry<Map<?, Rational>, PolynomialRelation> pair : mPolyRels.getSetOfPairs()) {
 			params.add(pair.getValue().negate().toTerm(mScript));
+		}
+		for (final Entry<Term, BitvectorInequalityRelation> pair : mTwoSidedRels.getSetOfPairs()) {
+			params.add(pair.getValue().negate().toTerm(mScript));
+		}
+		for (final BitvectorInequalityRelation rel : mCompoundTwoSidedRels) {
+			params.add(rel.negate().toTerm(mScript));
 		}
 		for (final Term term : mPositive) {
 			params.add(SmtUtils.not(mScript, term));
