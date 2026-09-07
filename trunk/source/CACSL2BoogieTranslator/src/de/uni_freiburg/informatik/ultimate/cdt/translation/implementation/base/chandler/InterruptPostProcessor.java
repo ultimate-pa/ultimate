@@ -176,10 +176,11 @@ public class InterruptPostProcessor implements IPostProcessor {
 			addForksToProcedure(mainProcedure, threadProcedures);
 		}
 
-		// Resolve masking functions to (irqNum, procedure) pairs, expanding AllInterrupts references
-		final Map<Integer, Procedure> reqEnableFuncs =
+		// Resolve masking functions to (irqNum, procedures) pairs, expanding AllInterrupts references.
+		// Multiple masking functions can target the same IRQ, so we collect a list of procedures per IRQ.
+		final Map<Integer, List<Procedure>> reqEnableFuncs =
 				resolveMaskingFunctionProcedures(InterruptMaskingFunction.Operation.ENABLE);
-		final Map<Integer, Procedure> reqDisableFuncs =
+		final Map<Integer, List<Procedure>> reqDisableFuncs =
 				resolveMaskingFunctionProcedures(InterruptMaskingFunction.Operation.DISABLE);
 
 		// Add atomic block and variable assignment true to request enabled functions
@@ -223,10 +224,10 @@ public class InterruptPostProcessor implements IPostProcessor {
 		body.setBlock(newBlock.toArray(new Statement[0]));
 	}
 
-	private void addForksToRequestEnable(final Map<Integer, Procedure> intEnabledProcedures) {
-		for (final Entry<Integer, Procedure> entry : intEnabledProcedures.entrySet()) {
+	private void addForksToRequestEnable(final Map<Integer, List<Procedure>> intEnabledProcedures) {
+		for (final Entry<Integer, List<Procedure>> entry : intEnabledProcedures.entrySet()) {
 			final var irq = entry.getKey();
-			final var proc = entry.getValue();
+			final var procedures = entry.getValue();
 
 			final var threadProc = mThreadProcedures.get(irq);
 			if (threadProc == null) {
@@ -234,30 +235,34 @@ public class InterruptPostProcessor implements IPostProcessor {
 			}
 
 			final var thrNum = -irq;
-			final List<Statement> fork = constructForkStatements(proc, List.of(threadProc), thrNum);
-			final var newBlock =
-					new ArrayList<>(List.of(constructForkIfStatement(constructEnabledExpression(irq), fork, true)));
-			final var body = proc.getBody();
-			newBlock.addAll(Arrays.asList(body.getBlock()));
-			body.setBlock(newBlock.toArray(new Statement[0]));
+			for (final var proc : procedures) {
+				final List<Statement> fork = constructForkStatements(proc, List.of(threadProc), thrNum);
+				final var newBlock =
+						new ArrayList<>(List.of(constructForkIfStatement(constructEnabledExpression(irq), fork, true)));
+				final var body = proc.getBody();
+				newBlock.addAll(Arrays.asList(body.getBlock()));
+				body.setBlock(newBlock.toArray(new Statement[0]));
+			}
 		}
 	}
 
-	private void addJoinsToRequestDisable(final Map<Integer, Procedure> intDisabledProcedures) {
-		for (final Entry<Integer, Procedure> entry : intDisabledProcedures.entrySet()) {
+	private void addJoinsToRequestDisable(final Map<Integer, List<Procedure>> intDisabledProcedures) {
+		for (final Entry<Integer, List<Procedure>> entry : intDisabledProcedures.entrySet()) {
 			final var irq = entry.getKey();
-			final var proc = entry.getValue();
+			final var procedures = entry.getValue();
 
 			if (!mThreadProcedures.containsKey(irq)) {
 				continue;
 			}
 
-			final List<Statement> join = constructJoinStatement(proc, -irq);
-			final var newBlock =
-					new ArrayList<>(List.of(constructForkIfStatement(constructEnabledExpression(irq), join, false)));
-			final var body = proc.getBody();
-			newBlock.addAll(Arrays.asList(body.getBlock()));
-			body.setBlock(newBlock.toArray(new Statement[0]));
+			for (final var proc : procedures) {
+				final List<Statement> join = constructJoinStatement(proc, -irq);
+				final var newBlock =
+						new ArrayList<>(List.of(constructForkIfStatement(constructEnabledExpression(irq), join, false)));
+				final var body = proc.getBody();
+				newBlock.addAll(Arrays.asList(body.getBlock()));
+				body.setBlock(newBlock.toArray(new Statement[0]));
+			}
 		}
 	}
 
@@ -310,7 +315,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 				assignments);
 	}
 
-	private void annotateMaskingProcedures(final Map<Integer, Procedure> maskingProcedures,
+	private void annotateMaskingProcedures(final Map<Integer, List<Procedure>> maskingProcedures,
 			final List<InterruptServiceFunction> isrs, final boolean enabled) {
 		if (maskingProcedures == null) {
 			return;
@@ -325,14 +330,17 @@ public class InterruptPostProcessor implements IPostProcessor {
 			final var irqNum = getIrqNum(isr);
 			final var irqName = getIrqName(isr);
 
-			final var maskingProc = maskingProcedures.get(irqNum);
-			if (maskingProc == null) {
+			final var maskingProcs = maskingProcedures.get(irqNum);
+			if (maskingProcs == null || maskingProcs.isEmpty()) {
 				mLogger.warn(String.format("There exists no IRQ %s function for ISR '%s'", funcOp, irqName));
 				continue;
 			}
 
 			mLogger.info(String.format("Adding IRQ %s function for ISR '%s'", funcOp, irqName));
-			procToLhs.computeIfAbsent(maskingProc, k -> new ArrayList<>()).add(constructEnabledLhs(irqNum));
+			final var lhs = constructEnabledLhs(irqNum);
+			for (final var maskingProc : maskingProcs) {
+				procToLhs.computeIfAbsent(maskingProc, k -> new ArrayList<>()).add(lhs);
+			}
 		}
 
 		for (final Entry<Procedure, List<VariableLHS>> entry : procToLhs.entrySet()) {
@@ -340,8 +348,9 @@ public class InterruptPostProcessor implements IPostProcessor {
 		}
 	}
 
-	private Map<Integer, Procedure> resolveMaskingFunctionProcedures(final InterruptMaskingFunction.Operation op) {
-		final var result = new HashMap<Integer, Procedure>();
+	private Map<Integer, List<Procedure>> resolveMaskingFunctionProcedures(
+			final InterruptMaskingFunction.Operation op) {
+		final var result = new HashMap<Integer, List<Procedure>>();
 
 		for (final var func : mInterruptFuncHandler.getFunctions(InterruptMaskingFunction.class)) {
 			if (func.getOperation() != op) {
@@ -356,7 +365,7 @@ public class InterruptPostProcessor implements IPostProcessor {
 			final var procName = func.getProcedure().getIdentifier();
 			final var impl = ensureImplementation(procName);
 			for (final InterruptRequest irq : irqRefs) {
-				result.putIfAbsent(irq.getNum(), impl);
+				result.computeIfAbsent(irq.getNum(), k -> new ArrayList<>()).add(impl);
 			}
 		}
 
