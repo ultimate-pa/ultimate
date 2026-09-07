@@ -354,22 +354,25 @@ public final class Translator {
 		return new BoogieDeclaration(newDecl);
 	}
 
+	// TODO refactor to avoid these call* methods
 	static CallStatement callYieldInvariant(final YieldInvariant yieldInvariant, final IdentifierExpression[] input,
-			final Expression annotation) {
+			final Expression[] annotations) {
 		// use to fix issue with addAll because Arrays.asList(input) return fix size
 		final List<IdentifierExpression> params = new ArrayList<>(Arrays.asList(input));
 
-		for (final var localVariable : collectLocalVariables(annotation)) {
-			assert !localVariable.inOldContext() : "Old() expressions not yet supported";
-			params.add(new IdentifierExpression(null, localVariable.type(), localVariable.identifier(),
-					localVariable.declarationInformation()));
+		for (final var annotation : annotations) {
+			for (final var localVariable : collectLocalVariables(annotation)) {
+				assert !localVariable.inOldContext() : "Old() expressions not yet supported";
+				params.add(new IdentifierExpression(null, localVariable.type(), localVariable.identifier(),
+						localVariable.declarationInformation()));
+			}
 		}
 
 		return new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], yieldInvariant.getIdentifier(),
 				params.toArray(Expression[]::new));
 	}
 
-	YieldInvariant addYieldInvariant(final String procName, final int counter, final Expression annotation,
+	YieldInvariant addYieldInvariant(final String procName, final int counter, final Expression[] annotations,
 			final Set<Tid> tidNeedsLinearity) {
 		final var params = new ArrayList<ParameterDeclaration>();
 		if (BoogieUtils.START_PROCEDURE.equals(procName)) {
@@ -397,13 +400,15 @@ public final class Translator {
 					new IdentifierExpression(null, "const_" + tid.toString())));
 		}
 
-		for (final var localVariable : collectLocalVariables(annotation)) {
-			assert !localVariable.inOldContext() : "Old() expressions not yet supported";
-			final ASTType type = localVariable.type().toASTType(null);
-			params.add(new ParameterDeclaration(localVariable.identifier(), type, Linearity.NONE));
-		}
+		for (final var annotation : annotations) {
+			for (final var localVariable : collectLocalVariables(annotation)) {
+				assert !localVariable.inOldContext() : "Old() expressions not yet supported";
+				final ASTType type = localVariable.type().toASTType(null);
+				params.add(new ParameterDeclaration(localVariable.identifier(), type, Linearity.NONE));
+			}
 
-		preserves.add(annotation);
+			preserves.add(annotation);
+		}
 
 		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
 				Collections.emptyList())) {
@@ -429,6 +434,7 @@ public final class Translator {
 		return invDecl;
 	}
 
+	// TODO refactor to avoid these call* methods
 	static CallStatement callCondition(final YieldProcedure conditionProc, final Expression condition) {
 		final List<IdentifierExpression> params = new ArrayList<>();
 
@@ -464,6 +470,7 @@ public final class Translator {
 		return yieldProc;
 	}
 
+	// TODO refactor to avoid these call* methods
 	static CallStatement callAtomicStatement(final YieldProcedure statementProc, final Statement statement) {
 		final var variableCollector = new BoogieVariableCollector(statement);
 
@@ -544,42 +551,28 @@ public final class Translator {
 		}
 
 		// Maybe need to be optimize
-		final var ghostDeclarations = WitnessGhostDeclaration.getAnnotation(mProgramAndProof.getIcfg());
+		final var ghostDeclarations = WitnessGhostDeclaration.<Expression> getAnnotation(mProgramAndProof.getIcfg());
 		final var ghostDeclarationsExpression = new ArrayList<Expression>();
 		if (ghostDeclarations != null) {
 			for (final var entry : ghostDeclarations.getGhostAndInitialValues().entrySet()) {
-				// ne marche pas necessite conversion entry.getKey()
-				ghostDeclarationsExpression.add(new BinaryExpression(null, BinaryExpression.Operator.COMPEQ,
-						new IdentifierExpression(null, BoogieType.TYPE_INT, entry.getKey(),
-								new DeclarationInformation(StorageClass.QUANTIFIED, null)),
-						(Expression) entry.getValue()));
+				ghostDeclarationsExpression.add(new BinaryExpression(
+						null, BinaryExpression.Operator.COMPEQ, new IdentifierExpression(null, BoogieType.TYPE_INT,
+								entry.getKey(), new DeclarationInformation(StorageClass.QUANTIFIED, null)),
+						entry.getValue()));
 
-				mLogger.warn(collectLocalVariables((Expression) entry.getValue()));
-				// information
-				mLogger.warn(new IdentifierExpression(null, BoogieType.TYPE_INT, entry.getKey(),
-						new DeclarationInformation(StorageClass.QUANTIFIED, null)).getDeclarationInformation());
-				mLogger.warn(collectLocalVariables(new BinaryExpression(null, BinaryExpression.Operator.COMPEQ,
-						new IdentifierExpression(null, BoogieType.TYPE_INT, entry.getKey(),
-								new DeclarationInformation(StorageClass.QUANTIFIED, null)),
-						(Expression) entry.getValue())));
-
+				mLogger.warn(collectLocalVariables(entry.getValue()));
 			}
 		}
-		//
 
 		final Expression annotation =
 				mProgramAndProof.getTemplateVisitor().getEntryAnnotationMap().get(decl.getIdentifier());
-		final var yieldInv = addYieldInvariant(decl.getIdentifier(), 0,
-				BoogieUtils.START_PROCEDURE.equals(decl.getIdentifier())
-						? ghostDeclarationsExpression.toArray(new Expression[0])
-						: new Expression[] { annotation },
-				tidNeedsLinearity);
-
-		// ghostDeclarationsExpression.toArray(new Expression[0])
-
+		final var invariantClauses = BoogieUtils.START_PROCEDURE.equals(decl.getIdentifier())
+				? ghostDeclarationsExpression.toArray(Expression[]::new)
+				: new Expression[] { annotation };
+		final var yieldInv = addYieldInvariant(decl.getIdentifier(), 0, invariantClauses, tidNeedsLinearity);
 		final var requires = callYieldInvariant(yieldInv,
 				inParams.stream().map(Translator::getParameterExpression).toArray(IdentifierExpression[]::new),
-				annotation);
+				invariantClauses);
 
 		final var body = new BodyTransformer(mServices, this, decl.getIdentifier(), decl.getBody()).getResult();
 		return new YieldProcedure(LAYER_TOP, decl.getIdentifier(), inParams.toArray(ParameterDeclaration[]::new),

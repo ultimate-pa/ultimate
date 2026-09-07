@@ -103,6 +103,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * @author Gabriel Tréca (gabriel.treca@polytechnique.edu)
  * @author Dominik Klumpp (klumpp@lix.polytechnique.fr)
  */
+// TODO refactor to avoid various incorrect usages of placeholder types
 final class BodyTransformer extends BoogieTransformer {
 	private final ILogger mLogger;
 	private final Translator mTranslator;
@@ -163,9 +164,9 @@ final class BodyTransformer extends BoogieTransformer {
 
 		final Expression annotation =
 				mTranslator.getProgramAndProof().getTemplateVisitor().getExitAnnotationMap().get(mProcedureName);
-		final var yieldInvariant =
-				mTranslator.addYieldInvariant(mProcedureName, mAtomicStatementCounter, annotation, mTidNeedsLinearity);
-		newStatements.add(Translator.callYieldInvariant(yieldInvariant, mCurrentTids, annotation));
+		final var yieldInvariant = mTranslator.addYieldInvariant(mProcedureName, mAtomicStatementCounter,
+				new Expression[] { annotation }, mTidNeedsLinearity);
+		newStatements.add(Translator.callYieldInvariant(yieldInvariant, mCurrentTids, new Expression[] { annotation }));
 
 		if (mProcedureName != BoogieUtils.START_PROCEDURE) {
 			newStatements.add(new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "terminate",
@@ -223,8 +224,9 @@ final class BodyTransformer extends BoogieTransformer {
 
 			final var annotation = annotationMap.get(statement.getLoc());
 			final var yieldInvariant = mTranslator.addYieldInvariant(mProcedureName, mAtomicStatementCounter,
-					annotation, mTidNeedsLinearity);
-			final var annotationCheck = Translator.callYieldInvariant(yieldInvariant, mCurrentTids, annotation);
+					new Expression[] { annotation }, mTidNeedsLinearity);
+			final var annotationCheck =
+					Translator.callYieldInvariant(yieldInvariant, mCurrentTids, new Expression[] { annotation });
 
 			// FIXME This doesn't always work correctly for ghost updates on AtomicStatements
 			final List<CallStatement> positiveGhostUpdates = createGhostUpdateAssignments(
@@ -444,6 +446,7 @@ final class BodyTransformer extends BoogieTransformer {
 		final Expression[] tids = { new IdentifierExpression(forkStmt.getLoc(), BoogieType.createPlaceholderType(0),
 				(new Tid(forkThreadId)).toString(), DeclarationInformation.DECLARATIONINFO_GLOBAL) };
 
+		// TODO refactor to avoid dependence on "fork_..." procedure name
 		final var newFork = new CallStatement(forkStmt.getLoc(), new NamedAttribute[0], false, new VariableLHS[0],
 				"fork_" + procName, tids);
 		ModelUtils.copyAnnotations(forkStmt, newFork);
