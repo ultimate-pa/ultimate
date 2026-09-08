@@ -121,6 +121,91 @@ public class PolyPoNeTwoSidedTest {
 	}
 
 	@Test
+	public void crossStrictnessLooserBoundGetsDropped() {
+		// x <=u 7 implies x <u 9 (Heizmann's example) - the looser, strict one should be dropped
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv7 8))"), true);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv9 8))"), true);
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(bvule x (_ bv7 8))")));
+	}
+
+	@Test
+	public void crossStrictnessTighterBoundReplacesLooserRegardlessOfOrder() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv9 8))"), true);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv7 8))"), true);
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(bvule x (_ bv7 8))")));
+	}
+
+	@Test
+	public void crossStrictnessEquivalentBoundsCollapseToOne() {
+		// x <=u 7 and x <u 8 describe exactly the same set - the second one is redundant
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv7 8))"), true);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv8 8))"), true);
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(bvule x (_ bv7 8))")));
+	}
+
+	@Test
+	public void crossStrictnessAtUnderflowBoundaryDoesNotCrash() {
+		// x <u 0 can't be normalized to a non-strict boundary (0 - 1 would underflow) - must decline, not crash
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv0 8))"), true);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv5 8))"), true);
+		final Term result = polyPoNe.and();
+		final Term expected = parse("(and (bvult x (_ bv0 8)) (bvule x (_ bv5 8)))");
+		Assert.assertNotEquals(LBool.SAT, SmtUtils.checkEquivalence(result, expected, mScript));
+	}
+
+	@Test
+	public void knownEqualityMakesSatisfyingInequalityRedundant() {
+		// x = 5, then x <u 9 arrives - 5 <u 9 holds, so the inequality is redundant
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, PolynomialRelation.of(mScript, parse("(= x (_ bv5 8))")), true);
+		final boolean inconsistent = polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv9 8))"), true);
+		Assert.assertFalse(inconsistent);
+		// toTerm() rebuilds "=" from the internal representation, which canonically orders it constant-first -
+		// same pattern observed for upperAndLowerBoundWithSameConstantFuseIntoEquality below
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(= (_ bv5 8) x)")));
+	}
+
+	@Test
+	public void knownEqualityViolatingInequalityIsInconsistent() {
+		// x = 42, then x <s 7 arrives - 42 is not <s 7, so this is a contradiction
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, PolynomialRelation.of(mScript, parse("(= x (_ bv42 8))")), true);
+		final boolean inconsistent = polyPoNe.addPolyRel(mScript, twoSided("(bvslt x (_ bv7 8))"), true);
+		Assert.assertTrue(inconsistent);
+	}
+
+	@Test
+	public void inequalityAddedBeforeEqualityIsNotCheckedAgainstIt() {
+		// documents the scope boundary: only "new inequality vs. existing equality" is checked, not the reverse
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv9 8))"), true);
+		final boolean inconsistent =
+				polyPoNe.addPolyRel(mScript, PolynomialRelation.of(mScript, parse("(= x (_ bv5 8))")), true);
+		Assert.assertFalse(inconsistent);
+		final Term result = polyPoNe.and();
+		final Term expected = parse("(and (bvult x (_ bv9 8)) (= x (_ bv5 8)))");
+		Assert.assertNotEquals(LBool.SAT, SmtUtils.checkEquivalence(result, expected, mScript));
+	}
+
+	@Test
 	public void upperAndLowerBoundWithSameConstantFuseIntoEquality() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
 		declare(funDecls);
