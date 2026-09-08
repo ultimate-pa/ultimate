@@ -99,11 +99,19 @@ public class PolyPoNe {
 			// TODO 20201123 Matthias: For bitvectors distinct and equality are polynomial,
 			// the other inequalities not, hence distinct and equality should also be added
 			// as nonPoly. Add another data structure for binary relations
-			final PolynomialRelation polyPolyRel;
+			PolynomialRelation polyPolyRel;
 			if (negate) {
 				polyPolyRel = PolynomialRelation.of(mScript, param, TransformInequality.NONSTRICT2STRICT);
 			} else {
 				polyPolyRel = PolynomialRelation.of(mScript, param, TransformInequality.STRICT2NONSTRICT);
+			}
+			if (polyPolyRel == null) {
+				// INTERIM STEP: the shared factory above still never returns a BitvectorInequalityRelation (that
+				// would affect ~15 other, unaudited callers of PolynomialRelation.of across the codebase) - so
+				// PolyPoNe tries it here instead, only for itself, now that Phase B has made this class safe to
+				// use. The "real" fix would be moving this into PolynomialRelation.of once those other callers are
+				// checked too, and deleting this second attempt.
+				polyPolyRel = BitvectorInequalityRelation.ofIfApplicable(mScript, param);
 			}
 			if (polyPolyRel != null) {
 				final PolynomialRelation addedRel = negate ? polyPolyRel.negate() : polyPolyRel;

@@ -31,6 +31,7 @@ import java.util.List;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.core.IsEqual;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,9 +39,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Junction;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.FunDecl;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.QuantifierEliminationTest;
@@ -53,9 +56,11 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  * {@link PolyPoNe} deliberately - {@link PolyPoNe#addPolyRel} is protected and its constructor is package-visible,
  * neither reachable from a test in a different package.
  * <p>
- * Exercised directly via {@link PolyPoNe#addPolyRel}, not via {@link PolyPoNeUtils}: {@link PolynomialRelation#of}
- * still never returns a {@link BitvectorInequalityRelation} (Phase C hasn't happened), so the public entry points
- * can't reach this code path end-to-end yet either.
+ * Most tests below are exercised directly via {@link PolyPoNe#addPolyRel} rather than via {@link PolyPoNeUtils},
+ * since {@link PolynomialRelation#of} (the shared factory used by ~15 other callers across the codebase) still
+ * never returns a {@link BitvectorInequalityRelation} - see the "public entry point" tests near the end of this
+ * file for the one place PolyPoNe itself is actually wired live (its own {@code add(...)}, via
+ * {@link BitvectorInequalityRelation#ofIfApplicable}), which those tests exercise through {@link PolyPoNeUtils}.
  *
  * @author Roman Vintonyak
  */
@@ -142,5 +147,38 @@ public class PolyPoNeTwoSidedTest {
 		final List<Term> params = List.of(parse("(<= x 5)"), parse("(>= x 5)"));
 		final Term result = new PolyPoNe(mScript, Junction.AND).and(params);
 		MatcherAssert.assertThat(result, IsEqual.equalTo(parse("(= 5 x)")));
+	}
+
+	// --- public entry point (PolyPoNeUtils) - the one live, wired-up path, see BitvectorInequalityRelation#ofIfApplicable ---
+
+	@Test
+	public void publicEntryPointDropsRedundantBoundForBitvectors() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final List<Term> params = List.of(parse("(bvule x (_ bv5 8))"), parse("(bvule x (_ bv3 8))"));
+		final Term result = PolyPoNeUtils.and(mScript, params);
+		MatcherAssert.assertThat(result, IsEqual.equalTo(parse("(bvule x (_ bv3 8))")));
+	}
+
+	@Test
+	public void publicEntryPointFusesIntoEqualityForBitvectors() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final List<Term> params = List.of(parse("(bvule x (_ bv5 8))"), parse("(bvuge x (_ bv5 8))"));
+		final Term result = PolyPoNeUtils.and(mScript, params);
+		MatcherAssert.assertThat(result, IsEqual.equalTo(parse("(= (_ bv5 8) x)")));
+	}
+
+	@Test
+	public void publicEntryPointStillHandlesNonRelationalAtomsSafely() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x"),
+				new FunDecl(SmtSortUtils::getBoolSort, "p") };
+		declare(funDecls);
+		// "p" is not a binary relation at all - must not trip BitvectorInequalityRelation.ofIfApplicable
+		final List<Term> params = List.of(parse("(bvule x (_ bv5 8))"), parse("p"));
+		final Term result = PolyPoNeUtils.and(mScript, params);
+		// "and" is commutative and may reorder its arguments, so compare by equivalence rather than exact term
+		final Term expected = parse("(and (bvule x (_ bv5 8)) p)");
+		Assert.assertNotEquals(LBool.SAT, SmtUtils.checkEquivalence(result, expected, mScript));
 	}
 }
