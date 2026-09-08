@@ -160,7 +160,7 @@ public class BitvectorInequalityRelation implements PolynomialRelation {
 	/**
 	 * @return true iff exactly one side of this relation is a bare variable (coefficient 1, no offset) and the
 	 *         other side is a bare constant - the only shape {@link PolyPoNe} currently knows how to compare cheaply
-	 *         (see {@code PolyPoNe.mTwoSidedRels}). Anything else (both sides variables, either side compound like
+	 *         (see {@code PolyPoNe.mBvInequalityRels}). Anything else (both sides variables, either side compound like
 	 *         {@code x - y}) is deliberately not handled yet.
 	 */
 	boolean isBareVariableVsBareConstant() {
@@ -258,14 +258,9 @@ public class BitvectorInequalityRelation implements PolynomialRelation {
 		final boolean unsigned = mRelationSymbol == RelationSymbol.BVULT || mRelationSymbol == RelationSymbol.BVULE;
 		final boolean strict = mRelationSymbol == RelationSymbol.BVULT || mRelationSymbol == RelationSymbol.BVSLT;
 		final Sort sort = mLhs.getSort();
-		final int width = SmtSortUtils.getBitvectorLength(sort);
 		final BitvectorConstant constant = getBareConstant();
-		// unsigned min/max, or signed min/max depending on the operator family
-		final BitvectorConstant min = unsigned ? BitvectorUtils.constructBitvectorConstant(BigInteger.ZERO, sort)
-				: BitvectorUtils.constructBitvectorConstant(BigInteger.valueOf(2).pow(width - 1), sort);
-		final BitvectorConstant max = unsigned ? BitvectorConstant.maxValue(width)
-				: BitvectorUtils.constructBitvectorConstant(BigInteger.valueOf(2).pow(width - 1).subtract(BigInteger.ONE),
-						sort);
+		final BitvectorConstant min = sortMin(sort, unsigned);
+		final BitvectorConstant max = sortMax(sort, unsigned);
 		final boolean variableIsUpperBounded = isVariableOnLhs();
 		final boolean constantIsMin = constant.equals(min);
 		final boolean constantIsMax = constant.equals(max);
@@ -290,6 +285,21 @@ public class BitvectorInequalityRelation implements PolynomialRelation {
 
 	private Term buildBoundaryEquality(final Script script) {
 		return RelationSymbol.EQ.constructTerm(script, getBareVariableTerm(script), getBareConstantTerm(script));
+	}
+
+	/** The sort's unsigned minimum (0), or signed minimum, depending on {@code unsigned}. */
+	static BitvectorConstant sortMin(final Sort sort, final boolean unsigned) {
+		final int width = SmtSortUtils.getBitvectorLength(sort);
+		return unsigned ? BitvectorUtils.constructBitvectorConstant(BigInteger.ZERO, sort)
+				: BitvectorUtils.constructBitvectorConstant(BigInteger.valueOf(2).pow(width - 1), sort);
+	}
+
+	/** The sort's unsigned maximum, or signed maximum, depending on {@code unsigned}. */
+	static BitvectorConstant sortMax(final Sort sort, final boolean unsigned) {
+		final int width = SmtSortUtils.getBitvectorLength(sort);
+		return unsigned ? BitvectorConstant.maxValue(width)
+				: BitvectorUtils.constructBitvectorConstant(BigInteger.valueOf(2).pow(width - 1).subtract(BigInteger.ONE),
+						sort);
 	}
 
 	/**
