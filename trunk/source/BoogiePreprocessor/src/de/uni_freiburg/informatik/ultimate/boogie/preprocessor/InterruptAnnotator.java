@@ -80,7 +80,13 @@ public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObser
 
 	@Override
 	protected Statement processStatement(final Statement statement) {
-		addAnnotationIfInContext(statement);
+		// Labels are not annotated — they only mark ISR entry/exit boundaries.
+		// The context switch happens in visit(Label), which is called by
+		// super.processStatement after addAnnotationIfInContext. Annotating
+		// the exit label would incorrectly mark it as part of the ISR.
+		if (!(statement instanceof Label)) {
+			addAnnotationIfInContext(statement);
+		}
 		return super.processStatement(statement);
 	}
 
