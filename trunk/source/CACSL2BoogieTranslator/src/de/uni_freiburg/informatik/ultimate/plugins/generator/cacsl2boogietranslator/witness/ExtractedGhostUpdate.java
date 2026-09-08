@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
@@ -230,6 +231,14 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
 					.resetStatements(annotateLastOccurence(loc, expressionResult.getStatements(),
 							witness.getStatements(), ForkStatement.class::isInstance, false))
+					.build();
+		case "pthread_join":
+			// Make the ghost update itself atomic and insert it just before the join.
+			// TODO: Maybe we should do this atomically, but the CFG builder crashes for that case
+			// We are not sure, if this does have any different semantics.
+			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
+					.resetStatements(annotateLastOccurence(loc, expressionResult.getStatements(),
+							witness.getStatements(), JoinStatement.class::isInstance, false))
 					.build();
 		default:
 			throw new UnsupportedOperationException(
