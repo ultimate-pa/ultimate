@@ -248,8 +248,7 @@ public final class BitvectorUtils {
 					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvsle:
-			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvsle(x, y))
-					.simplifiedResult(script, funcname, indices, params);
+			result = new Bvsle().simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvsgt:
 			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvsgt(x, y))
@@ -551,6 +550,31 @@ public final class BitvectorUtils {
 		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices,
 				final BitvectorConstant[] bvs) {
 			return script.term(String.valueOf(mFunction.apply(bvs[0]).apply(bvs[1])));
+		}
+	}
+
+	private static class Bvsle extends RegularBitvectorOperation_BooleanResult {
+
+		public Bvsle() {
+			super(SMTLIBConstants.BVSLE, x -> y -> BitvectorConstant.bvsle(x, y));
+		}
+
+		@Override
+		protected Term simplify_NonConstantCase(final Script script, final BigInteger[] indices, final Term[] params,
+				final BitvectorConstant[] bvs) {
+			// (bvsle (zero_extend x) 0) -> (= x 0). zero_extend only pads leading zeros, so the sign bit of the
+			// extended value is always 0 - it can never be negative when read as signed. So "<= 0" collapses to
+			// "= 0", and since zero_extend preserves the numeric value, that is equivalent to x itself being 0.
+			// Requires an actual extension (index > 0): with a zero-width extension the sign bit is not pinned
+			// to 0 and this does not hold.
+			if (bvs[1] != null && bvs[1].getValue().equals(BigInteger.ZERO)) {
+				final ApplicationTerm zeroExtend = SmtUtils.getFunctionApplication(params[0], "zero_extend");
+				if (zeroExtend != null && new BigInteger(zeroExtend.getFunction().getIndices()[0]).signum() > 0) {
+					final Term x = zeroExtend.getParameters()[0];
+					return SmtUtils.binaryEquality(script, x, constructTerm(script, BigInteger.ZERO, x.getSort()));
+				}
+			}
+			return super.simplify_NonConstantCase(script, indices, params, bvs);
 		}
 	}
 
