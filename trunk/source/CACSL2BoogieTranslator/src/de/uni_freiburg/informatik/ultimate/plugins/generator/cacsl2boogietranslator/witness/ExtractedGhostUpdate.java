@@ -138,12 +138,8 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 				isAnnotated = true;
 				if (makeAtomic) {
 					// Create an atomic block with the matching statement and the ghost update
-					// Try to avoid nested atomic statements here
-					final Stream<Statement> currentStatements =
-							current instanceof final AtomicStatement atomic ? Arrays.stream(atomic.getBody())
-									: Stream.of(current);
 					result.set(i, StatementFactory.constructAtomicStatement(loc,
-							Stream.concat(currentStatements, ghostUpdate.stream())));
+							Stream.concat(Stream.of(current), ghostUpdate.stream())));
 				} else {
 					// Insert the ghost update just before the matching statement
 					result.add(i, StatementFactory.constructAtomicStatement(loc, ghostUpdate));
