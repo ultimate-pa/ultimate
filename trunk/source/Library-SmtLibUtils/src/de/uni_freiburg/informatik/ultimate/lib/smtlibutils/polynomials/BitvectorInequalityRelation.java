@@ -122,6 +122,20 @@ public class BitvectorInequalityRelation implements PolynomialRelation {
 		return new BitvectorInequalityRelation(relationSymbol, polyLhs, polyRhs);
 	}
 
+	/**
+	 * Same as {@link #of(Script, Term)}, but returns {@code null} instead of throwing when {@code term} is a binary
+	 * relation that just isn't a bitvector inequality (e.g. an equality, or an Int/Real relation) - for callers like
+	 * {@link PolyPoNe} that need to safely "try this, and if it doesn't apply, move on to something else" for an
+	 * arbitrary atom, rather than assert a precondition only some callers can guarantee.
+	 */
+	static BitvectorInequalityRelation ofIfApplicable(final Script script, final Term term) {
+		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);
+		if (bnr == null || !isBitvectorInequality(bnr.getRelationSymbol(), bnr.getLhs().getSort())) {
+			return null; // not a bv inequality, not our job
+		}
+		return of(script, term);
+	}
+
 	private static boolean isBitvectorInequality(final RelationSymbol relationSymbol, final Sort sort) {
 		return relationSymbol.isConvexInequality() && SmtSortUtils.isBitvecSort(sort);
 	}
