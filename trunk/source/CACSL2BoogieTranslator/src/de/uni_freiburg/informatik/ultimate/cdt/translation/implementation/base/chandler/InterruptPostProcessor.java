@@ -145,7 +145,6 @@ public class InterruptPostProcessor implements IPostProcessor {
 		}
 
 		final ArrayList<Declaration> decl = new ArrayList<>();
-		final var realization3 = mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN;
 
 		// Get main procedure implementation of program
 		final Procedure mainProcedure;
@@ -171,11 +170,6 @@ public class InterruptPostProcessor implements IPostProcessor {
 				.collect(Collectors.toList());
 		decl.addAll(threadProcedures);
 
-		// Add fork statements to the main procedure
-		if (!realization3) {
-			addForksToProcedure(mainProcedure, threadProcedures);
-		}
-
 		// Resolve masking functions to (irqNum, procedures) pairs, expanding AllInterrupts references.
 		// Multiple masking functions can target the same IRQ, so we collect a list of procedures per IRQ.
 		final Map<Integer, List<Procedure>> reqEnableFuncs =
@@ -183,17 +177,19 @@ public class InterruptPostProcessor implements IPostProcessor {
 		final Map<Integer, List<Procedure>> reqDisableFuncs =
 				resolveMaskingFunctionProcedures(InterruptMaskingFunction.Operation.DISABLE);
 
-		if (realization3) {
-			// In fork-join mode, the enabled flag assignment is included inside the
-			// fork/join if-blocks to ensure correct ordering: set the flag BEFORE
-			// fork (so the thread enters its while loop) and BEFORE join (so the
-			// thread can exit its while loop).
-			addForksToRequestEnable(reqEnableFuncs);
-			addJoinsToRequestDisable(reqDisableFuncs, reqEnableFuncs);
-		} else {
+		if (!(mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN)) {
+			// In non-fork-join modes, add fork statements to the main procedure
+			addForksToProcedure(mainProcedure, threadProcedures);
+
 			// In non-fork-join modes, just add the enabled flag assignment
 			annotateMaskingProcedures(reqEnableFuncs, isrs, true);
 			annotateMaskingProcedures(reqDisableFuncs, isrs, false);
+		} else {
+			// In fork-join mode, the enabled flag assignment is included inside the fork/join if-blocks to ensure
+			// correct ordering: set the flag BEFORE fork (so the thread enters its while loop) and BEFORE join (so
+			// the thread can exit its while loop).
+			addForksToRequestEnable(reqEnableFuncs);
+			addJoinsToRequestDisable(reqDisableFuncs, reqEnableFuncs);
 		}
 
 		// Add interrupt enabled variable declarations (one per ISR)
@@ -373,8 +369,8 @@ public class InterruptPostProcessor implements IPostProcessor {
 		}
 	}
 
-	private Map<Integer, List<Procedure>> resolveMaskingFunctionProcedures(
-			final InterruptMaskingFunction.Operation op) {
+	private Map<Integer, List<Procedure>>
+			resolveMaskingFunctionProcedures(final InterruptMaskingFunction.Operation op) {
 		final var result = new HashMap<Integer, List<Procedure>>();
 
 		for (final var func : mInterruptFuncHandler.getFunctions(InterruptMaskingFunction.class)) {
@@ -455,25 +451,31 @@ public class InterruptPostProcessor implements IPostProcessor {
 	}
 
 	private Map<Integer, Procedure> constructThreadProcedures(final List<InterruptServiceFunction> isrs) {
-		assert mTranslationMode != InterruptTranslationMode.NONE : "The chosen interrupt translation mode is NONE";
 		final var result = new HashMap<Integer, Procedure>();
 
-		if (mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR) {
-			mLogger.info("Translation of interrupt-driven program with realization 1: One thread per ISR");
+		mLogger.info(String.format("Translation of interrupt-driven program with realization %d: %s",
+				mTranslationMode.getNum(), mTranslationMode.getDesc()));
+
+		switch (mTranslationMode) {
+		case ONE_THREAD_PER_ISR:
 			for (final var isr : isrs) {
 				result.put(getIrqNum(isr), constructOneThreadPerIsr(isr));
 			}
-		} else if (mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN) {
-			mLogger.info("Translation of interrupt-driven program with realization 3: One thread per ISR with fork-join");
-			for (final var isr : isrs) {
-				result.put(getIrqNum(isr), constructOneThreadPerIsrForkJoin(isr));
-			}
-		} else {
-			mLogger.info("Translation of interrupt-driven program with realization 2: One thread for all ISRs");
+			break;
+		case ALL_ISR_IN_ONE_THREAD:
 			final var allThreadProc = constructOneThreadForAllIsrs(isrs);
 			for (final var isr : isrs) {
 				result.put(getIrqNum(isr), allThreadProc);
 			}
+			break;
+		case ONE_THREAD_PER_ISR_FORK_JOIN:
+			for (final var isr : isrs) {
+				result.put(getIrqNum(isr), constructOneThreadPerIsrForkJoin(isr));
+			}
+			break;
+		default:
+			throw new UnsupportedOperationException(String.format("Interrupt translation mode %d (%s) is not supported",
+					mTranslationMode.getNum(), mTranslationMode.getDesc()));
 		}
 
 		return result;
@@ -503,6 +505,29 @@ public class InterruptPostProcessor implements IPostProcessor {
 				null, body);
 	}
 
+	// Realization 2
+	private Procedure constructOneThreadForAllIsrs(final List<InterruptServiceFunction> isrs) {
+		final var procName = constructThreadName("all");
+
+		mLogger.info(String.format("Adding auxilliary ISR-thread function '%s' for all IRQs", procName));
+
+		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
+				new VarList[0], new Specification[0], null);
+
+		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final var nondetVarInfo = getHavocAuxVar(builder);
+		final var whileStmt = constructAllIsrWhileLoop(isrs, nondetVarInfo);
+		builder.addStatement(whileStmt);
+		final var body = mProcedureManager.constructBody(mIgnoreLoc,
+				builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
+				builder.getStatements().toArray(new Statement[builder.getStatements().size()]), procName);
+		mProcedureManager.endCustomProcedure(mCHandler, procName);
+
+		return new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0], new VarList[0],
+				null, body);
+	}
+
 	// Realization 3
 	private Procedure constructOneThreadPerIsrForkJoin(final InterruptServiceFunction isr) {
 		final int irqNum = getIrqNum(isr);
@@ -517,29 +542,6 @@ public class InterruptPostProcessor implements IPostProcessor {
 		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final var whileStmt = constructForkJoinIsrWhileLoop(isr);
-		builder.addStatement(whileStmt);
-		final var body = mProcedureManager.constructBody(mIgnoreLoc,
-				builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
-				builder.getStatements().toArray(new Statement[builder.getStatements().size()]), procName);
-		mProcedureManager.endCustomProcedure(mCHandler, procName);
-
-		return new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0], new VarList[0],
-				null, body);
-	}
-
-	// Realization 2
-	private Procedure constructOneThreadForAllIsrs(final List<InterruptServiceFunction> isrs) {
-		final var procName = constructThreadName("all");
-
-		mLogger.info(String.format("Adding auxilliary ISR-thread function '%s' for all IRQs", procName));
-
-		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
-				new VarList[0], new Specification[0], null);
-
-		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final var nondetVarInfo = getHavocAuxVar(builder);
-		final var whileStmt = constructAllIsrWhileLoop(isrs, nondetVarInfo);
 		builder.addStatement(whileStmt);
 		final var body = mProcedureManager.constructBody(mIgnoreLoc,
 				builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),

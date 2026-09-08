@@ -34,5 +34,23 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
  * otherwise.
  */
 public enum InterruptTranslationMode {
-	ONE_THREAD_PER_ISR, ALL_ISR_IN_ONE_THREAD, ONE_THREAD_PER_ISR_FORK_JOIN, NONE
+	NONE(0, "No interrupt translation"), ONE_THREAD_PER_ISR(1, "One thread per ISR"),
+	ALL_ISR_IN_ONE_THREAD(2, "One thread for all ISRs"),
+	ONE_THREAD_PER_ISR_FORK_JOIN(3, "One thread per ISR with fork-join");
+
+	final int mNum;
+	final String mDesc;
+
+	InterruptTranslationMode(final int num, final String desc) {
+		mNum = num;
+		mDesc = desc;
+	}
+
+	public int getNum() {
+		return mNum;
+	}
+
+	public String getDesc() {
+		return mDesc;
+	}
 }
