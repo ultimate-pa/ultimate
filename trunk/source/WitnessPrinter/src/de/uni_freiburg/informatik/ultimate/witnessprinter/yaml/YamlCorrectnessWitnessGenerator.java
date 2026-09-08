@@ -64,7 +64,8 @@ public class YamlCorrectnessWitnessGenerator {
 
 	private Witness getWitness() {
 		final var allProgramPoints = IcfgUtils.getAllLocations(mIcfg).toList();
-		final var allTransitions = new IcfgEdgeIterator(mIcfg).asStream().toList();
+		final var allTransitions = new IcfgEdgeIterator(mIcfg.getProcedureEntryNodes().values().stream()
+				.flatMap(loc -> loc.getOutgoingEdges().stream()).toList()).asStream().toList();
 
 		// TODO: Should we sort these entries somehow (for consistent result in validation and to improve readability)
 		// e.g. by line number and/or entry type?
