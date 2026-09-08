@@ -273,7 +273,7 @@ public class BitvectorInequalityRelationTest {
 		declare(funDecls);
 		final BitvectorInequalityRelation relation =
 				BitvectorInequalityRelation.of(mScript, parse("(bvule x (_ bv0 8))"));
-		assertToTermEquals(relation, "(= x (_ bv0 8))");
+		assertToTermEquals(relation, "(= (_ bv0 8) x)");
 	}
 
 	@Test
@@ -309,7 +309,7 @@ public class BitvectorInequalityRelationTest {
 		declare(funDecls);
 		final BitvectorInequalityRelation relation =
 				BitvectorInequalityRelation.of(mScript, parse("(bvule (_ bv255 8) x)"));
-		assertToTermEquals(relation, "(= x (_ bv255 8))");
+		assertToTermEquals(relation, "(= (_ bv255 8) x)");
 	}
 
 	@Test
