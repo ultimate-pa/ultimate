@@ -458,11 +458,15 @@ public class InterruptPostProcessor implements IPostProcessor {
 		assert mTranslationMode != InterruptTranslationMode.NONE : "The chosen interrupt translation mode is NONE";
 		final var result = new HashMap<Integer, Procedure>();
 
-		if (mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR
-				|| mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN) {
+		if (mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR) {
 			mLogger.info("Translation of interrupt-driven program with realization 1: One thread per ISR");
 			for (final var isr : isrs) {
 				result.put(getIrqNum(isr), constructOneThreadPerIsr(isr));
+			}
+		} else if (mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN) {
+			mLogger.info("Translation of interrupt-driven program with realization 3: One thread per ISR with fork-join");
+			for (final var isr : isrs) {
+				result.put(getIrqNum(isr), constructOneThreadPerIsrForkJoin(isr));
 			}
 		} else {
 			mLogger.info("Translation of interrupt-driven program with realization 2: One thread for all ISRs");
@@ -489,6 +493,30 @@ public class InterruptPostProcessor implements IPostProcessor {
 		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final var whileStmt = constructIsrWhileLoop(isr);
+		builder.addStatement(whileStmt);
+		final var body = mProcedureManager.constructBody(mIgnoreLoc,
+				builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
+				builder.getStatements().toArray(new Statement[builder.getStatements().size()]), procName);
+		mProcedureManager.endCustomProcedure(mCHandler, procName);
+
+		return new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0], new VarList[0],
+				null, body);
+	}
+
+	// Realization 3
+	private Procedure constructOneThreadPerIsrForkJoin(final InterruptServiceFunction isr) {
+		final int irqNum = getIrqNum(isr);
+		final String procName = constructThreadName(irqNum, isr.getProcedure().getIdentifier());
+
+		mLogger.info(String.format("Adding auxilliary ISR-thread function '%s' for IRQ '%s' (fork-join)", procName,
+				isr.getIrqReference().getIrq().getName()));
+
+		final var declaration = new Procedure(mIgnoreLoc, new Attribute[0], procName, new String[0], new VarList[0],
+				new VarList[0], new Specification[0], null);
+
+		mProcedureManager.beginCustomProcedure(mCHandler, mIgnoreLoc, procName, declaration);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final var whileStmt = constructForkJoinIsrWhileLoop(isr);
 		builder.addStatement(whileStmt);
 		final var body = mProcedureManager.constructBody(mIgnoreLoc,
 				builder.getDeclarations().toArray(new VariableDeclaration[builder.getDeclarations().size()]),
@@ -550,9 +578,16 @@ public class InterruptPostProcessor implements IPostProcessor {
 		final var enabledExpr = constructEnabledExpression(irqNum);
 		final var ifStmt = getIfStatement(isr, enabledExpr);
 		final var block = getIsrBlock(ifStmt, isr);
-		final var forkJoin = mTranslationMode == InterruptTranslationMode.ONE_THREAD_PER_ISR_FORK_JOIN;
-		final var loopCondition = forkJoin ? enabledExpr : ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
-		return new WhileStatement(mIgnoreLoc, loopCondition, new LoopInvariantSpecification[0], block);
+		final var alwaysTrue = ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
+		return new WhileStatement(mIgnoreLoc, alwaysTrue, new LoopInvariantSpecification[0], block);
+	}
+
+	private Statement constructForkJoinIsrWhileLoop(final InterruptServiceFunction isr) {
+		final int irqNum = getIrqNum(isr);
+		final var enabledExpr = constructEnabledExpression(irqNum);
+		final var ifStmt = getIfStatement(isr, enabledExpr);
+		final var block = getIsrBlock(ifStmt, isr);
+		return new WhileStatement(mIgnoreLoc, enabledExpr, new LoopInvariantSpecification[0], block);
 	}
 
 	private Statement constructAllIsrWhileLoop(final List<InterruptServiceFunction> isrs, final AuxVarInfo auxVarInfo) {
