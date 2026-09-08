@@ -566,6 +566,36 @@ public class UltimateNormalFormTest {
 		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
 	}
 
+	// --- bvsle zero_extend compared to zero (BitvectorUtils) ---
+
+	@Test
+	public void bvsleZeroExtendComparedToZeroSimplifiesToEquality() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvsle ((_ zero_extend 8) x) (_ bv0 16))";
+		final String expected = "(= x (_ bv0 8))";
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvsleZeroExtendComparedToNonzeroNotSimplified() {
+		// Negative guard: the rule only applies for a right-hand side of exactly 0, since only "= 0" is implied
+		// by the sign bit always being 0. Against any other constant no simplification is sound.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvsle ((_ zero_extend 8) x) (_ bv5 16))";
+		final String expected = "(bvsle ((_ zero_extend 8) x) (_ bv5 16))";
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+	@Test
+	public void bvsleWithoutZeroExtendNotSimplified() {
+		// Negative guard: without the zero_extend wrapper on the left-hand side, the sign bit of x is not pinned
+		// to 0, so "x <= 0" (signed) must not be rewritten to "x = 0".
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		final String formulaAsString = "(bvsle x (_ bv0 8))";
+		final String expected = "(bvsle x (_ bv0 8))";
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
 	@Test
 	public void bvConstantsCase() {
 		final String formulaAsString = "(bvand (_ bv1 8) (_ bv3 8) (_ bv7 8))";
