@@ -1455,8 +1455,8 @@ public final class SmtUtils {
 
 	/**
 	 * Ultimate's default method for constructing terms. In contrast to {@link Script#term} this method applies some
-	 * lightweight simplifications and ensures that the output is in Ultimate normal form (UNF) if the input was in UNF.
-	 * This method applies only simplifications that do will slow down the performance significantly. <br />
+	 * lightweight simplifications that are computationally inexpensive. The method ensures that the output is in
+	 * Ultimate normal form (UNF) if the input was in UNF. <br />
 	 * You should only apply {@link Script#term} instead of this method in the following two cases.
 	 * <li>You want to construct a term that has to have the syntactic form specified by your arguments. (Note that this
 	 * might violate the UNF and some of your algorithms will not be able to process your term.)

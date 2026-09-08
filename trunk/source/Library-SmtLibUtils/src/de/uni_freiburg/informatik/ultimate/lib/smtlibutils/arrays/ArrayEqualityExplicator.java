@@ -72,8 +72,7 @@ public class ArrayEqualityExplicator {
 			substitutionMapping.put(ber.toTerm(mgdScript.getScript()), elementwiseComparison);
 		}
 		mResultTerm = Substitution.apply(mgdScript, substitutionMapping, inputTerm);
-		assert CommuhashUtils.isInCommuhashNormalForm(inputTerm, CommuhashUtils.COMMUTATIVE_OPERATORS)
-				: "input not in commuhash normal form";
+		assert CommuhashUtils.isInCommuhashNormalForm(inputTerm) : "input not in commuhash normal form";
 		if (mResultTerm.equals(inputTerm)) {
 			throw new AssertionError("Substitution failed: " + substitutionMapping);
 		}

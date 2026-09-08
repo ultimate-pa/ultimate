@@ -36,7 +36,7 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.abduction.Abducer;
@@ -163,6 +163,6 @@ public class AbductionTest {
 	private Term parseWithVariables(final String syntax, final String... declarations) {
 		final String fullSyntax = "(forall (" + String.join(" ", declarations) + ") " + syntax + ")";
 		final QuantifiedFormula quant = (QuantifiedFormula) TermParseUtils.parseTerm(mScript, fullSyntax);
-		return new CommuhashNormalForm(mServices, mScript).transform(quant.getSubformula());
+		return CommuhashNormalFormTransformer.apply(mScript, quant.getSubformula());
 	}
 }

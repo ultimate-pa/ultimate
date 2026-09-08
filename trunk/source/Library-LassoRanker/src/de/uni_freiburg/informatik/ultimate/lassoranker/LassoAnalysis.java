@@ -39,7 +39,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.AddSymbols;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.CommuHashPreprocessor;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.DNF;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.MatchInOutVars;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RemoveNegation;
@@ -281,7 +280,6 @@ public class LassoAnalysis {
 		return new LassoPreprocessor[] { new StemAndLoopPreprocessor(mMgdScript, new MatchInOutVars()),
 				new StemAndLoopPreprocessor(mMgdScript,
 						new AddSymbols(lassoBuilder.getReplacementVarFactory(), mSmtSymbols)),
-				new StemAndLoopPreprocessor(mMgdScript, new CommuHashPreprocessor(mServices)),
 				mPreferences.isEnablePartitioneer() ? new LassoPartitioneerPreprocessor(mMgdScript, mServices) : null,
 				mapElimination, new StemAndLoopPreprocessor(mMgdScript, new MatchInOutVars()),
 				mPreferences.isEnablePartitioneer() ? new LassoPartitioneerPreprocessor(mMgdScript, mServices) : null,
@@ -292,7 +290,6 @@ public class LassoAnalysis {
 				new StemAndLoopPreprocessor(mMgdScript,
 						new RewriteUserDefinedTypes(lassoBuilder.getReplacementVarFactory(), mMgdScript)),
 				new StemAndLoopPreprocessor(mMgdScript, new RewriteEquality()),
-				new StemAndLoopPreprocessor(mMgdScript, new CommuHashPreprocessor(mServices)),
 				new StemAndLoopPreprocessor(mMgdScript, new SimplifyPreprocessor(mServices, mSimplificationTechnique)),
 				new StemAndLoopPreprocessor(mMgdScript, new DNF(mServices)),
 				new StemAndLoopPreprocessor(mMgdScript, new SimplifyPreprocessor(mServices, mSimplificationTechnique)),
@@ -619,8 +616,6 @@ public class LassoAnalysis {
 				return "ite";
 			case AddSymbols.DESCRIPTION:
 				return "ax";
-			case CommuHashPreprocessor.DESCRIPTION:
-				return "hnf";
 			default:
 				return "ukn";
 			}

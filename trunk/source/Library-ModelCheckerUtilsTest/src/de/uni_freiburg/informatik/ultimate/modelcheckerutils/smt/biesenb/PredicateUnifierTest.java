@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -99,14 +100,14 @@ public class PredicateUnifierTest {
 				SimplificationTechnique.NONE);
 		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
 
-		final Term term1 = mScript.term("=", mA.getTermVariable(), mZero);
-		final Term term2 = mScript.term("=", mA.getTermVariable(), mOne);
-		final Term term3 = mScript.term(">", mA.getTermVariable(), mTwo);
-		final Term term4 = mScript.term(">", mA.getTermVariable(), mThree);
-		final Term term5 = mScript.term("=", mB.getTermVariable(), mZero);
-		final Term term6 = mScript.term("=", mB.getTermVariable(), mOne);
-		final Term term7 = mScript.term(">", mB.getTermVariable(), mTwo);
-		final Term term8 = mScript.term(">", mB.getTermVariable(), mThree);
+		final Term term1 = SmtUtils.equality(mScript, mA.getTermVariable(), mZero);
+		final Term term2 = SmtUtils.equality(mScript, mA.getTermVariable(), mOne);
+		final Term term3 = SmtUtils.greater(mScript, mA.getTermVariable(), mTwo);
+		final Term term4 = SmtUtils.greater(mScript, mA.getTermVariable(), mThree);
+		final Term term5 = SmtUtils.equality(mScript, mB.getTermVariable(), mZero);
+		final Term term6 = SmtUtils.equality(mScript, mB.getTermVariable(), mOne);
+		final Term term7 = SmtUtils.greater(mScript, mB.getTermVariable(), mTwo);
+		final Term term8 = SmtUtils.greater(mScript, mB.getTermVariable(), mThree);
 
 		unifier.getOrConstructPredicate(term1);
 		oUnifier.getOrConstructPredicate(term1);
@@ -116,14 +117,14 @@ public class PredicateUnifierTest {
 		oUnifier.getOrConstructPredicate(term3);
 		unifier.getOrConstructPredicate(term4);
 		oUnifier.getOrConstructPredicate(term4);
-		unifier.getOrConstructPredicate(mScript.term("and", term4, term5));
-		oUnifier.getOrConstructPredicate(mScript.term("and", term4, term5));
-		unifier.getOrConstructPredicate(mScript.term("and", term4, term6));
-		oUnifier.getOrConstructPredicate(mScript.term("and", term4, term6));
-		unifier.getOrConstructPredicate(mScript.term("and", term4, term7));
-		oUnifier.getOrConstructPredicate(mScript.term("and", term4, term7));
-		unifier.getOrConstructPredicate(mScript.term("and", term4, term8));
-		oUnifier.getOrConstructPredicate(mScript.term("and", term4, term8));
+		unifier.getOrConstructPredicate(SmtUtils.and(mScript, term4, term5));
+		oUnifier.getOrConstructPredicate(SmtUtils.and(mScript, term4, term5));
+		unifier.getOrConstructPredicate(SmtUtils.and(mScript, term4, term6));
+		oUnifier.getOrConstructPredicate(SmtUtils.and(mScript, term4, term6));
+		unifier.getOrConstructPredicate(SmtUtils.and(mScript, term4, term7));
+		oUnifier.getOrConstructPredicate(SmtUtils.and(mScript, term4, term7));
+		unifier.getOrConstructPredicate(SmtUtils.and(mScript, term4, term8));
+		oUnifier.getOrConstructPredicate(SmtUtils.and(mScript, term4, term8));
 
 		mLogger.info(unifier.print(true, true));
 		mLogger.info(unifier.restructurePredicateTrie());
@@ -131,7 +132,7 @@ public class PredicateUnifierTest {
 		mLogger.info("B: " + unifier.collectPredicateUnifierStatistics());
 		mLogger.info("O: " + oUnifier.collectPredicateUnifierStatistics());
 
-		unifier.getOrConstructPredicate(mScript.term("or", term6, term5));
+		unifier.getOrConstructPredicate(SmtUtils.or(mScript, term6, term5));
 	}
 
 	@Test
@@ -141,10 +142,10 @@ public class PredicateUnifierTest {
 
 		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
 
-		final Term singleTerm1 = mScript.term("=", mA.getTermVariable(), mOne);
-		final Term singleTerm2 = mScript.term(">", mA.getTermVariable(), mZero);
-		final Term singleTerm3 = mScript.term("<", mA.getTermVariable(), mTwo);
-		final Term singleTerm4 = mScript.term("<", mB.getTermVariable(), mOne);
+		final Term singleTerm1 = SmtUtils.equality(mScript, mA.getTermVariable(), mOne);
+		final Term singleTerm2 = SmtUtils.greater(mScript, mA.getTermVariable(), mZero);
+		final Term singleTerm3 = SmtUtils.less(mScript, mA.getTermVariable(), mTwo);
+		final Term singleTerm4 = SmtUtils.less(mScript, mB.getTermVariable(), mOne);
 
 		final IPredicate pred1 = unifier.getOrConstructPredicate(singleTerm1);
 		final IPredicate pred2 = unifier.getOrConstructPredicate(singleTerm2);
@@ -167,8 +168,8 @@ public class PredicateUnifierTest {
 		Assert.assertThat("3", unifier.collectPredicateUnifierStatistics().substring(0, 99),
 				Is.is(oUnifier.collectPredicateUnifierStatistics().substring(0, 99)));
 
-		unifier.getOrConstructPredicate(mScript.term("and", singleTerm2, singleTerm3));
-		oUnifier.getOrConstructPredicate(mScript.term("and", singleTerm2, singleTerm3));
+		unifier.getOrConstructPredicate(SmtUtils.and(mScript, singleTerm2, singleTerm3));
+		oUnifier.getOrConstructPredicate(SmtUtils.and(mScript, singleTerm2, singleTerm3));
 		Assert.assertThat("4", unifier.collectPredicateUnifierStatistics().substring(0, 99),
 				Is.is(oUnifier.collectPredicateUnifierStatistics().substring(0, 99)));
 
@@ -182,7 +183,7 @@ public class PredicateUnifierTest {
 		Assert.assertThat("6", unifier.collectPredicateUnifierStatistics().substring(0, 99),
 				Is.is(oUnifier.collectPredicateUnifierStatistics().substring(0, 99)));
 
-		final Term singleTerm5 = mScript.term("=", mOne, mA.getTermVariable());
+		final Term singleTerm5 = SmtUtils.equality(mScript, mOne, mA.getTermVariable());
 
 		unifier.getOrConstructPredicate(singleTerm5);
 		oUnifier.getOrConstructPredicate(singleTerm5);
@@ -199,20 +200,20 @@ public class PredicateUnifierTest {
 
 		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
 
-		final Term singleTerm1 = mScript.term("=", mA.getTermVariable(), mOne);
-		final Term singleTerm2 = mScript.term(">", mA.getTermVariable(), mZero);
-		final Term singleTerm3 = mScript.term("<", mA.getTermVariable(), mTwo);
-		final Term singleTerm4 = mScript.term("<", mB.getTermVariable(), mOne);
+		final Term singleTerm1 = SmtUtils.equality(mScript, mA.getTermVariable(), mOne);
+		final Term singleTerm2 = SmtUtils.greater(mScript, mA.getTermVariable(), mZero);
+		final Term singleTerm3 = SmtUtils.less(mScript, mA.getTermVariable(), mTwo);
+		final Term singleTerm4 = SmtUtils.less(mScript, mB.getTermVariable(), mOne);
 
 		final IPredicate pred1 = unifier.getOrConstructPredicate(singleTerm1);
 		final IPredicate pred2 = unifier.getOrConstructPredicate(singleTerm2);
 		final IPredicate pred3 = unifier.getOrConstructPredicate(singleTerm3);
-		final IPredicate pred4 = unifier.getOrConstructPredicate(mScript.term("and", singleTerm1, singleTerm4));
+		final IPredicate pred4 = unifier.getOrConstructPredicate(SmtUtils.and(mScript, singleTerm1, singleTerm4));
 
 		final IPredicate oPred1 = oUnifier.getOrConstructPredicate(singleTerm1);
 		final IPredicate oPred2 = oUnifier.getOrConstructPredicate(singleTerm2);
 		final IPredicate oPred3 = oUnifier.getOrConstructPredicate(singleTerm3);
-		final IPredicate oPred4 = oUnifier.getOrConstructPredicate(mScript.term("and", singleTerm1, singleTerm4));
+		final IPredicate oPred4 = oUnifier.getOrConstructPredicate(SmtUtils.and(mScript, singleTerm1, singleTerm4));
 
 		final Collection<IPredicate> collection1 = new HashSet<>();
 		collection1.add(pred2);
@@ -237,10 +238,10 @@ public class PredicateUnifierTest {
 
 		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
 
-		final Term singleTerm1 = mScript.term("=", mA.getTermVariable(), mTwo);
-		final Term singleTerm2 = mScript.term(">", mA.getTermVariable(), mOne);
-		final Term singleTerm3 = mScript.term("=", mA.getTermVariable(), mOne);
-		final Term singleTerm4 = mScript.term(">", mA.getTermVariable(), mZero);
+		final Term singleTerm1 = SmtUtils.equality(mScript, mA.getTermVariable(), mTwo);
+		final Term singleTerm2 = SmtUtils.greater(mScript, mA.getTermVariable(), mOne);
+		final Term singleTerm3 = SmtUtils.equality(mScript, mA.getTermVariable(), mOne);
+		final Term singleTerm4 = SmtUtils.greater(mScript, mA.getTermVariable(), mZero);
 
 		final IPredicate pred1 = unifier.getOrConstructPredicate(singleTerm1);
 		final IPredicate pred2 = unifier.getOrConstructPredicate(singleTerm2);
@@ -276,12 +277,12 @@ public class PredicateUnifierTest {
 		final PredicateUnifier oUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, mBasicFactory, mTable,
 				SimplificationTechnique.NONE);
 
-		final Term singleTerm1 = mScript.term("=", mA.getTermVariable(), mOne);
-		final Term singleTerm2 = mScript.term(">", mA.getTermVariable(), mZero);
-		final Term singleTerm3 = mScript.term("<", mA.getTermVariable(), mTwo);
-		final Term term1 = mScript.term("and", singleTerm2, singleTerm3);
-		final Term term2 = mScript.term("and", singleTerm1, term1);
-		final Term term3 = mScript.term("or", singleTerm2, singleTerm3);
+		final Term singleTerm1 = SmtUtils.equality(mScript, mA.getTermVariable(), mOne);
+		final Term singleTerm2 = SmtUtils.greater(mScript, mA.getTermVariable(), mZero);
+		final Term singleTerm3 = SmtUtils.less(mScript, mA.getTermVariable(), mTwo);
+		final Term term1 = SmtUtils.and(mScript, singleTerm2, singleTerm3);
+		final Term term2 = SmtUtils.and(mScript, singleTerm1, term1);
+		final Term term3 = SmtUtils.or(mScript, singleTerm2, singleTerm3);
 
 		assertEqualSet("1", unifier.cannibalize(false, term2), oUnifier.cannibalize(false, term2));
 
@@ -305,22 +306,22 @@ public class PredicateUnifierTest {
 
 		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
 
-		final Term term1 = mScript.term("=", mA.getTermVariable(), mOne);
-		final Term term2 = mScript.term(">", mA.getTermVariable(), mZero);
-		final Term term3 = mScript.term("<", mA.getTermVariable(), mTwo);
-		final Term term4 = mScript.term("=", mA.getTermVariable(), mTwo);
+		final Term term1 = SmtUtils.equality(mScript, mA.getTermVariable(), mOne);
+		final Term term2 = SmtUtils.greater(mScript, mA.getTermVariable(), mZero);
+		final Term term3 = SmtUtils.less(mScript, mA.getTermVariable(), mTwo);
+		final Term term4 = SmtUtils.equality(mScript, mA.getTermVariable(), mTwo);
 
 		final IPredicate pred1 = unifier.getOrConstructPredicate(term1);
 		final IPredicate oPred1 = oUnifier.getOrConstructPredicate(term1);
 		final IPredicate pred2 = unifier.getOrConstructPredicate(term2);
 		final IPredicate oPred2 = oUnifier.getOrConstructPredicate(term2);
-		final IPredicate pred3 = unifier.getOrConstructPredicate(mScript.term("and", term2, term3));
-		final IPredicate oPred3 = oUnifier.getOrConstructPredicate(mScript.term("and", term2, term3));
+		final IPredicate pred3 = unifier.getOrConstructPredicate(SmtUtils.and(mScript, term2, term3));
+		final IPredicate oPred3 = oUnifier.getOrConstructPredicate(SmtUtils.and(mScript, term2, term3));
 
-		final IPredicate truePred = unifier.getOrConstructPredicate(mScript.term("or", term2, term3));
-		final IPredicate oTruePred = oUnifier.getOrConstructPredicate(mScript.term("or", term2, term3));
-		final IPredicate falsePred = unifier.getOrConstructPredicate(mScript.term("and", term1, term4));
-		final IPredicate oFalsePred = oUnifier.getOrConstructPredicate(mScript.term("and", term1, term4));
+		final IPredicate truePred = unifier.getOrConstructPredicate(SmtUtils.or(mScript, term2, term3));
+		final IPredicate oTruePred = oUnifier.getOrConstructPredicate(SmtUtils.or(mScript, term2, term3));
+		final IPredicate falsePred = unifier.getOrConstructPredicate(SmtUtils.and(mScript, term1, term4));
+		final IPredicate oFalsePred = oUnifier.getOrConstructPredicate(SmtUtils.and(mScript, term1, term4));
 		final IPredicate truePred2 = unifier.getOrConstructPredicate(mScript.term("true"));
 		final IPredicate oTruePred2 = oUnifier.getOrConstructPredicate(mScript.term("true"));
 
@@ -347,7 +348,7 @@ public class PredicateUnifierTest {
 
 		final BPredicateUnifier unifier = new BPredicateUnifier(mServices, mLogger, mMgdScript, mBasicFactory, mTable);
 
-		final Term term1 = mScript.term("=", mA.getTermVariable(), mOne);
+		final Term term1 = SmtUtils.equality(mScript, mA.getTermVariable(), mOne);
 
 		final Term termTrue = mScript.term("true");
 		final Term termFalse = mScript.term("false");

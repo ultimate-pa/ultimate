@@ -97,10 +97,10 @@ public class ParallelRankingFunction extends RankingFunction {
 		final Term[] summands = new Term[size];
 		for (int i = 0; i < size; ++i) {
 			final Term f_term = mranking[i].asTerm(script);
-			final Term cond = script.term(">", f_term, zero);
-			summands[i] = script.term("ite", cond, f_term, zero);
+			final Term cond = SmtUtils.greater(script, f_term, zero);
+			summands[i] = SmtUtils.ite(script, cond, f_term, zero);
 		}
-		return new Term[] { script.term("+", summands) };
+		return new Term[] { SmtUtils.sum(script, zero.getSort(), summands) };
 	}
 
 	@Override

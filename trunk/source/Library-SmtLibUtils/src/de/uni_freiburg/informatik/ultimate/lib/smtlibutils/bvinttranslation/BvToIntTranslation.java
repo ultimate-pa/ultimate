@@ -420,8 +420,15 @@ public class BvToIntTranslation extends TermTransformer {
 		if (fsym.isIntern()) {
 			switch (fsym.getName()) {
 			case "and":
+				setResult(SmtUtils.and(mScript, args));
+				return;
 			case "or":
+				setResult(SmtUtils.or(mScript, args));
+				return;
 			case "not":
+				assert args.length == 1;
+				setResult(SmtUtils.not(mScript, args[0]));
+				return;
 			case "=>":
 			case "store":
 				setResult(mScript.term(fsym.getName(), args));

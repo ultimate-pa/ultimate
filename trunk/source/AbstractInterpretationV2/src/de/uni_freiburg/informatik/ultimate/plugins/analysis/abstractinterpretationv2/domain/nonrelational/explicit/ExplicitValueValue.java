@@ -263,7 +263,7 @@ public class ExplicitValueValue extends BaseExplicitValueValue {
 
 	@Override
 	public Term getTerm(final Script script, final Sort sort, final Term variable) {
-		return script.term("=", variable, SmtUtils.rational2Term(script, mValue, sort));
+		return SmtUtils.equality(script, variable, SmtUtils.rational2Term(script, mValue, sort));
 	}
 
 	private <T> T commutativeOp(final BaseExplicitValueValue other, final Function<BaseExplicitValueValue, T> distFun,

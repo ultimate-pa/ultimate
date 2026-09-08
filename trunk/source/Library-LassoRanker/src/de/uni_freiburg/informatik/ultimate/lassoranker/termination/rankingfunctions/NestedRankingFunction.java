@@ -101,9 +101,9 @@ public class NestedRankingFunction extends RankingFunction {
 		for (int i = mRanking.length - 2; i >= 0; --i) {
 			n = n.add(BigInteger.ONE);
 			final Term f_term = mRanking[i].asTerm(script);
-			final Term cond = script.term(">", f_term, SmtUtils.constructIntValue(script, BigInteger.ZERO));
-			phase = script.term("ite", cond, SmtUtils.constructIntValue(script, n), phase);
-			value = script.term("ite", cond, f_term, value);
+			final Term cond = SmtUtils.greater(script, f_term, SmtUtils.constructIntValue(script, BigInteger.ZERO));
+			phase = SmtUtils.ite(script, cond, SmtUtils.constructIntValue(script, n), phase);
+			value = SmtUtils.ite(script, cond, f_term, value);
 		}
 		return new Term[] { phase, value };
 	}

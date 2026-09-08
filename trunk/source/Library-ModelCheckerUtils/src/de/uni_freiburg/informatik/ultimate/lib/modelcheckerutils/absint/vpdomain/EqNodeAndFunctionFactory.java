@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -145,7 +145,7 @@ public class EqNodeAndFunctionFactory extends AbstractNodeAndFunctionFactory<EqN
 		mMgdScript.unlock(this);
 
 		if (affineTerm.isErrorTerm()) {
-			result = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(term);
+			result = CommuhashNormalFormTransformer.apply(mMgdScript.getScript(), term);
 		} else {
 			result = affineTerm.toTerm(mMgdScript.getScript());
 		}

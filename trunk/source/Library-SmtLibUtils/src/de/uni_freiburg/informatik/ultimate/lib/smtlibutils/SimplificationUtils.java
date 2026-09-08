@@ -63,7 +63,7 @@ public final class SimplificationUtils {
 	 * @param term
 	 *            Term in which we apply the substitution.
 	 */
-	public static Term applyConstantFolding(final ManagedScript mgdScript, final Term context, final Term term) {
+	public static Term applyConstantPropagation(final ManagedScript mgdScript, final Term context, final Term term) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final Term conjunct : SmtUtils.getConjuncts(context)) {
 			if (!SmtUtils.isFunctionApplication(conjunct, "=")) {

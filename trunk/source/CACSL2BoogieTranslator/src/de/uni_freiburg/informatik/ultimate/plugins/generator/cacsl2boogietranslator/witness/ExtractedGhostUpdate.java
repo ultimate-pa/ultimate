@@ -30,8 +30,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
+import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -41,6 +44,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
@@ -51,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
@@ -61,6 +66,13 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
  *
  */
 public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
+	private static final List<Integer> ASSIGNMENT_OPERATORS = List.of(IASTBinaryExpression.op_assign,
+			IASTBinaryExpression.op_multiplyAssign, IASTBinaryExpression.op_divideAssign,
+			IASTBinaryExpression.op_moduloAssign, IASTBinaryExpression.op_plusAssign,
+			IASTBinaryExpression.op_minusAssign, IASTBinaryExpression.op_shiftLeftAssign,
+			IASTBinaryExpression.op_shiftRightAssign, IASTBinaryExpression.op_binaryAndAssign,
+			IASTBinaryExpression.op_binaryXorAssign, IASTBinaryExpression.op_binaryOrAssign);
+
 	private final IASTNode mMatchedAstNode;
 	private final String mStatement;
 
@@ -98,41 +110,42 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 		return (ExpressionResult) dispatcher.dispatch(acslNode, mMatchedAstNode);
 	}
 
-	private String getNameOfCalledFunction() {
-		final IASTExpression expr;
-		if (mMatchedAstNode instanceof IASTExpression) {
-			expr = (IASTExpression) mMatchedAstNode;
-		} else if (mMatchedAstNode instanceof IASTExpressionStatement) {
-			expr = ((IASTExpressionStatement) mMatchedAstNode).getExpression();
-		} else {
+	private IASTExpression getExpression() {
+		switch (mMatchedAstNode) {
+		case final IASTExpression expr:
+			return expr;
+		case final IASTExpressionStatement exprSt:
+			return exprSt.getExpression();
+		default:
 			return null;
 		}
-		if (expr instanceof IASTFunctionCallExpression) {
-			final IASTExpression function = ((IASTFunctionCallExpression) expr).getFunctionNameExpression();
-			if (function instanceof IASTIdExpression) {
-				return ((IASTIdExpression) function).getName().toString();
-			}
+	}
+
+	private String getNameOfCalledFunction() {
+		if (getExpression() instanceof final IASTFunctionCallExpression call
+				&& call.getFunctionNameExpression() instanceof final IASTIdExpression id) {
+			return id.getName().toString();
 		}
 		return null;
 	}
 
-	private static List<Statement> annotateAtomicCall(final ILocation loc, final List<Statement> programStatements,
-			final List<Statement> ghostUpdate, final String functionName) {
-		final List<Statement> result = new ArrayList<>();
+	private static List<Statement> annotateLastOccurence(final ILocation loc, final List<Statement> programStatements,
+			final List<Statement> ghostUpdate, final Predicate<Statement> predicate, final boolean makeAtomic) {
+		final List<Statement> result = new ArrayList<>(programStatements);
 		boolean isAnnotated = false;
-		for (final Statement st : programStatements) {
-			if (isAnnotated || !(st instanceof AtomicStatement)) {
-				result.add(st);
-				continue;
-			}
-			final Statement[] atomicBody = ((AtomicStatement) st).getBody();
-			if (Arrays.stream(atomicBody).anyMatch(
-					x -> x instanceof CallStatement && ((CallStatement) x).getMethodName().equals(functionName))) {
+		for (int i = programStatements.size() - 1; i >= 0; i--) {
+			final Statement current = programStatements.get(i);
+			if (predicate.test(current)) {
 				isAnnotated = true;
-				result.add(StatementFactory.constructAtomicStatement(loc,
-						Stream.concat(ghostUpdate.stream(), Arrays.stream(atomicBody))));
-			} else {
-				result.add(st);
+				if (makeAtomic) {
+					// Create an atomic block with the matching statement and the ghost update
+					result.set(i, StatementFactory.constructAtomicStatement(loc,
+							Stream.concat(Stream.of(current), ghostUpdate.stream())));
+				} else {
+					// Insert the ghost update just before the matching statement
+					result.add(i, StatementFactory.constructAtomicStatement(loc, ghostUpdate));
+				}
+				break;
 			}
 		}
 		if (!isAnnotated) {
@@ -141,21 +154,25 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 		return result;
 	}
 
-	private static List<Statement> annotateFork(final ILocation loc, final List<Statement> programStatements,
-			final List<Statement> ghostUpdate) {
-		final List<Statement> result = new ArrayList<>();
-		boolean isAnnotated = false;
-		for (final Statement st : programStatements) {
-			if (!isAnnotated && st instanceof ForkStatement) {
-				isAnnotated = true;
-				result.add(StatementFactory.constructAtomicStatement(loc, ghostUpdate));
-			}
-			result.add(st);
-		}
-		if (!isAnnotated) {
-			throw new UnsupportedOperationException("No statement found to annotate with the expected ghost update");
-		}
-		return result;
+	private static boolean isAtomicCall(final Statement st, final String functionName) {
+		return st instanceof final AtomicStatement atomic && Arrays.stream(atomic.getBody())
+				.anyMatch(x -> x instanceof CallStatement && ((CallStatement) x).getMethodName().equals(functionName));
+	}
+
+	private static List<Statement> annotateAtomicCall(final ILocation loc, final List<Statement> programStatements,
+			final List<Statement> ghostUpdate, final String functionName) {
+		return annotateLastOccurence(loc, programStatements, ghostUpdate, x -> isAtomicCall(x, functionName), true);
+	}
+
+	private boolean isAssignmentOrMemoryWrite(final Statement st) {
+		return st instanceof AssignmentStatement
+				|| (st instanceof final CallStatement call && call.getMethodName().startsWith(SFO.WRITE_PREFIX));
+	}
+
+	private boolean isAssignment() {
+		return (getExpression() instanceof final IASTBinaryExpression binEx
+				&& ASSIGNMENT_OPERATORS.contains(binEx.getOperator()))
+				|| mMatchedAstNode instanceof IASTDeclarationStatement;
 	}
 
 	private static List<Statement> annotateJoin(final ILocation loc, final List<Statement> programStatements,
@@ -178,13 +195,19 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 	@Override
 	public ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
 			final ExpressionResult expressionResult) {
+		final ExpressionResult witness = instrument(loc, dispatcher);
+		if (isAssignment()) {
+			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
+					.resetStatements(annotateLastOccurence(loc, expressionResult.getStatements(),
+							witness.getStatements(), this::isAssignmentOrMemoryWrite, true))
+					.build();
+		}
 		final String functionName = getNameOfCalledFunction();
 		if (functionName == null) {
 			// TODO: Support other statements, also not only function calls
 			throw new UnsupportedOperationException(
 					"The following statement is not yet supported for ghost updates: " + loc);
 		}
-		final ExpressionResult witness = instrument(loc, dispatcher);
 		switch (functionName) {
 		case "__VERIFIER_atomic_begin":
 			// Insert the ghost update after the begin of the atomic block to ensure that it is executed atomically.
@@ -223,7 +246,16 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 			// TODO: Maybe we should do this atomically, but the CFG builder crashes for that case
 			// We are not sure, if this does have any different semantics.
 			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
-					.resetStatements(annotateFork(loc, expressionResult.getStatements(), witness.getStatements()))
+					.resetStatements(annotateLastOccurence(loc, expressionResult.getStatements(),
+							witness.getStatements(), ForkStatement.class::isInstance, false))
+					.build();
+		case "pthread_join":
+			// Make the ghost update itself atomic and insert it just before the join.
+			// TODO: Maybe we should do this atomically, but the CFG builder crashes for that case
+			// We are not sure, if this does have any different semantics.
+			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
+					.resetStatements(annotateLastOccurence(loc, expressionResult.getStatements(),
+							witness.getStatements(), JoinStatement.class::isInstance, false))
 					.build();
 		case "pthread_join":
 			// Make the ghost update itself atomic and insert it just before the join.
