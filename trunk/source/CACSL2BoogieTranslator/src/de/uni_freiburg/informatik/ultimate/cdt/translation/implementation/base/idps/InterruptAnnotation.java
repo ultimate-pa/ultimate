@@ -72,17 +72,7 @@ public class InterruptAnnotation extends ModernAnnotations {
 
 	@Override
 	public String toString() {
-		final StringBuilder res = new StringBuilder();
-
-		res.append("location=");
-		res.append("[" + getLocation().getDescription() + "]");
-
-		res.append(", ");
-
-		res.append("irq=");
-		res.append("[" + getIrq().toString() + "]");
-
-		return res.toString();
+		return getLocation().getDescription() + ", " + getIrq().toString();
 	}
 
 	@Override

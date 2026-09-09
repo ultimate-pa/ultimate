@@ -71,7 +71,7 @@ public class InterruptRequest {
 
 	@Override
 	public String toString() {
-		return "num=" + Integer.toString(getNum()) + ", name=" + getName();
+		return getName() + " (" + Integer.toString(getNum()) + ")";
 	}
 
 }
