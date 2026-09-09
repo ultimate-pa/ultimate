@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
@@ -70,7 +71,7 @@ public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObser
 
 	@Override
 	protected void visit(final Procedure procedure) {
-		final var body = procedure.getBody();
+		final Body body = procedure.getBody();
 		if (body == null) {
 			return;
 		}
@@ -80,13 +81,13 @@ public class InterruptAnnotator extends BoogieVisitor implements IUnmanagedObser
 
 	@Override
 	protected Statement processStatement(final Statement statement) {
-		// Labels are not annotated — they only mark ISR entry/exit boundaries.
-		// The context switch happens in visit(Label), which is called by
-		// super.processStatement after addAnnotationIfInContext. Annotating
-		// the exit label would incorrectly mark it as part of the ISR.
+		// Labels are not annotated since they only mark ISR entry/exit boundaries. The processing of labels happens in
+		// visit(Label), which is called by super.processStatement after addAnnotationIfInContext. Annotating the exit
+		// label would incorrectly mark it as part of the ISR.
 		if (!(statement instanceof Label)) {
 			addAnnotationIfInContext(statement);
 		}
+
 		return super.processStatement(statement);
 	}
 

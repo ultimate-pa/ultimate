@@ -27,15 +27,39 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.idps;
 
 /**
- * Different modes for the source-to-source translation of IDPs. ONE_THREAD_PER_ISR: Introduce one thread for each ISR,
- * that calls the corresponding ISR infinitely often. ALL_ISR_IN_ONE_THREAD: Introduce only one thread that calls all
- * ISRs non-deterministically in an infinite loop. ONE_THREAD_PER_ISR_FORK_JOIN: Introduce one thread for each ISR, that
- * calls the corresponding ISR infinitely often. but only fork the ISR thread if the interrupt is enabled and join it
- * otherwise.
+ * Different modes for the source-to-source translation of IDPs.
+ *
+ * <ul>
+ * <li>{@link #NONE}: Disable interrupt translation.</li>
+ * <li>{@link #ONE_THREAD_PER_ISR}: Introduce one thread for each ISR, that calls the corresponding ISR infinitely
+ * often.</li>
+ * <li>{@link #ALL_ISR_IN_ONE_THREAD}: Introduce only one thread that calls all ISRs non-deterministically in an
+ * infinite loop.</li>
+ * <li>{@link #ONE_THREAD_PER_ISR_FORK_JOIN}: Introduce one thread for each ISR, that calls the corresponding ISR
+ * infinitely often, but only fork the ISR thread if the interrupt is enabled and join it otherwise.</li>
+ * </ul>
  */
 public enum InterruptTranslationMode {
-	NONE(0, "No interrupt translation"), ONE_THREAD_PER_ISR(1, "One thread per ISR"),
+
+	/**
+	 * Disable interrupt translation.
+	 */
+	NONE(0, "No interrupt translation"),
+
+	/**
+	 * Introduce one thread for each ISR, that calls the corresponding ISR infinitely often.
+	 */
+	ONE_THREAD_PER_ISR(1, "One thread per ISR"),
+
+	/**
+	 * Introduce only one thread that calls all ISRs non-deterministically in an infinite loop.
+	 */
 	ALL_ISR_IN_ONE_THREAD(2, "One thread for all ISRs"),
+
+	/**
+	 * Introduce one thread for each ISR, that calls the corresponding ISR infinitely often, but only fork the ISR
+	 * thread if the interrupt is enabled and join it otherwise.
+	 */
 	ONE_THREAD_PER_ISR_FORK_JOIN(3, "One thread per ISR with fork-join");
 
 	final int mNum;
@@ -53,4 +77,5 @@ public enum InterruptTranslationMode {
 	public String getDesc() {
 		return mDesc;
 	}
+
 }
