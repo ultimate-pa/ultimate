@@ -72,18 +72,16 @@ public class InterruptAnnotation extends ModernAnnotations {
 
 	@Override
 	public String toString() {
-		final StringBuilder res = new StringBuilder("interrupt level: ");
-		switch (getLocation()) {
-		case ENTRY:
-			res.append("entry");
-			break;
-		case ISR:
-			res.append("inner");
-			break;
-		default:
-			break;
-		}
-		res.append(", interrupt request num: ").append(getIrq().getNum());
+		final StringBuilder res = new StringBuilder();
+
+		res.append("location=");
+		res.append("[" + getLocation().getDescription() + "]");
+
+		res.append(", ");
+
+		res.append("irq=");
+		res.append("[" + getIrq().toString() + "]");
+
 		return res.toString();
 	}
 
@@ -116,7 +114,17 @@ public class InterruptAnnotation extends ModernAnnotations {
 	}
 
 	public enum ISRLocation {
-		ISR, ENTRY
+		ISR("ISR inner"), ENTRY("ISR entry");
+
+		private final String mDesc;
+
+		ISRLocation(final String desc) {
+			mDesc = desc;
+		}
+
+		public String getDescription() {
+			return mDesc;
+		}
 	}
 
 }

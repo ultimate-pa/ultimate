@@ -69,4 +69,9 @@ public class InterruptRequest {
 		return Objects.equals(getName(), other.getName()) && getNum() == other.getNum();
 	}
 
+	@Override
+	public String toString() {
+		return "num=" + Integer.toString(getNum()) + ", name=" + getName();
+	}
+
 }
