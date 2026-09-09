@@ -191,6 +191,42 @@ public class EGraphTest {
 		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
 	}
 
+	@Test
+	public void inequality01() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String formulaAsString = "(<= x y)";
+		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
+		expectedRelations.add(new ExpectedRelation("x", "y", EGraph.EquivalenceState.UNKNOWN));
+		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void boolean01() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getBoolSort, "x", "y") };
+		final String formulaAsString = "(and x y)";
+		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
+		expectedRelations.add(new ExpectedRelation("x", "y", EGraph.EquivalenceState.EQUAL));
+		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void boolean02() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getBoolSort, "x", "y") };
+		final String formulaAsString = "(and x (not y))";
+		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
+		expectedRelations.add(new ExpectedRelation("x", "y", EGraph.EquivalenceState.DISTINCT));
+		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
+	}
+
+	@Test
+	public void inequality02() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getBoolSort, "x", "y") };
+		final String formulaAsString = "(<= (+ x 1) y)";
+		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
+		expectedRelations.add(new ExpectedRelation("x", "y", EGraph.EquivalenceState.DISTINCT));
+		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
+	}
+
 	static void runEGraphTest(final FunDecl[] funDecls, final String conjunctAsString,
 			final ArrayList<ExpectedRelation> expectedRelations, final IUltimateServiceProvider services,
 			final ILogger logger, final ManagedScript mgdScript) {
