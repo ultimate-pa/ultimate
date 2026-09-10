@@ -57,7 +57,7 @@ public class PenguinRefinementStrategy<L extends IIcfgTransition<?>> extends Bas
 						factory.createIpTcStrategyModuleSmtInterpolCraig(
 								InterpolationTechnique.Craig_TreeInterpolation),
 						factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBP),
-						factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBP), },
+						factory.createIpTcStrategyModuleCVC5(InterpolationTechnique.FPandBP), },
 				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 
