@@ -1,0 +1,44 @@
+// Simple test for computation of Owicki-Gries annotation
+// ------------------------------------------------------
+
+//@ variables (y Int) (x Int) (z1 Int) (z2 Int)
+
+//@ semantics [0] {x} (= x 1)
+//@ semantics [1] {y} (= y 1)
+//@ semantics [2] {z1,z2} (and (= z1 x) (= z2 y))
+//@ semantics [3] {z1} (= z1 (+ |old(z1)| 1))
+//@ semantics [4] {z1} (= z1 (* |old(z1)| 2))
+//@ semantics [5] {  } false
+//@ semantics [6] {z2} (= z2 (+ |old(z2)| 1))
+//@ semantics [7] {z2} (= z2 (* |old(z2)| 2))
+//@ semantics [8] {  } false
+
+PetriNet program = (
+  alphabet    = { "[0]" "[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" "[8]" },
+  places      = { "main.l0" "main.l1" "main.l2" "t1.l1" "t1.l2" "t1.l3" "t1.e" "t2.l1" "t2.l2" "t2.l3" "t2.e" },
+  transitions = {
+    ({ "main.l0" } "[0]" { "main.l1" })
+    ({ "main.l1" } "[1]" { "main.l2" })
+    ({ "main.l2" } "[2]" { "t1.l1" "t2.l1" })
+    ({ "t1.l1" } "[3]" { "t1.l2" })
+    ({ "t1.l2" } "[4]" { "t1.l3" })
+    ({ "t1.l3" } "[5]" { "t1.e"  })
+    ({ "t2.l1" } "[6]" { "t2.l2" })
+    ({ "t2.l2" } "[7]" { "t2.l3" })
+    ({ "t2.l3" } "[8]" { "t2.e"  })
+  },
+  initialMarking = { "main.l0" },
+  acceptingPlaces = { "t1.e" "t2.e" }
+);
+
+FiniteAutomaton proof = (
+     alphabet      = { "[0]" "[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" "[8]" },
+     states        = { "true" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+       ("true" "[5]" "false")
+       ("true" "[8]" "false")
+     }
+);
+

@@ -240,6 +240,7 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 					.resetStatements(annotateLastOccurence(loc, expressionResult.getStatements(),
 							witness.getStatements(), JoinStatement.class::isInstance, false))
 					.build();
+
 		default:
 			throw new UnsupportedOperationException(
 					"The following statement is not yet supported for ghost updates: " + loc);

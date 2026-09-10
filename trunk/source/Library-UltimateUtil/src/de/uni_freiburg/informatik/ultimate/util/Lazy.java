@@ -49,6 +49,10 @@ public class Lazy<V> {
 		mValue = value;
 	}
 
+	public static <V> Lazy<V> empty() {
+		return new Lazy<>((V) null);
+	}
+
 	/**
 	 * Get or construct the cached value.
 	 */

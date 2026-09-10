@@ -1,0 +1,54 @@
+// Simple scalable test for computation of Owicki-Gries annotation for Petri Net with two threads having a race to write a variable
+// --------------------------------------------------------------------------------------------------------------------------------
+
+//@ variables (x Int) (g Int) (z1 Int) (z2 Int)
+
+//@ semantics [0] {g} (= g 0)
+//@ semantics [1] {z1} (= z1 0)
+//@ semantics [2] {z1} (= z1 (+ |old(z1)| 1))
+//@ semantics [3] {z2} (= z2 0)
+//@ semantics [4] {z2} (= z2 (+ |old(z2)| 1))
+//@ semantics [5] {g,x} (and (= |old(g)| 0) (= g 1) (= x 1))
+//@ semantics [6] { } (distinct x 1)
+//@ semantics [7] {g,x} (and (= |old(g)| 0) (= g 1) (= x 2))
+//@ semantics [8] { } (distinct x 2)
+
+PetriNet program = (
+  alphabet    = { "[0]" "[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" "[8]" },
+  places      = { "m" "t1.l0" "t1.l1" "t1.l2" "t1.l3" "t2.l0" "t2.l1" "t2.l2" "t2.l3" "e1" "e2" },
+  transitions = {
+    ({ "m" } "[0]" { "t1.l0" "t2.l0" })
+    ({ "t1.l0" } "[1]" { "t1.l1" })
+    ({ "t1.l1" } "[2]" { "t1.l2" })
+    ({ "t1.l2" } "[5]" { "t1.l3" })
+    ({ "t1.l3" } "[6]" { "e1" })
+    ({ "t2.l0" } "[3]" { "t2.l1" })
+    ({ "t2.l1" } "[4]" { "t2.l2" })
+    ({ "t2.l2" } "[7]" { "t2.l3" })
+    ({ "t2.l3" } "[8]" { "e2" })
+  },
+  initialMarking = { "m" },
+  acceptingPlaces = { "e1" "e2" }
+);
+
+FiniteAutomaton proof = (
+     alphabet      = { "[0]" "[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" "[8]" },
+     states        = { "true" "(and (= g 1) (= x 1))" "(and (= g 1) (= x 2))" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+       ("true" "[5]" "(and (= g 1) (= x 1))")
+       ("(and (= g 1) (= x 1))" "[3]" "(and (= g 1) (= x 1))")
+       ("(and (= g 1) (= x 1))" "[4]" "(and (= g 1) (= x 1))")
+       ("(and (= g 1) (= x 1))" "[6]" "false")
+       ("(and (= g 1) (= x 1))" "[7]" "false")
+       
+       ("true" "[7]" "(and (= g 1) (= x 2))")
+       ("(and (= g 1) (= x 2))" "[1]" "(and (= g 1) (= x 2))")
+       ("(and (= g 1) (= x 2))" "[2]" "(and (= g 1) (= x 2))")
+       ("(and (= g 1) (= x 2))" "[5]" "false")
+       ("(and (= g 1) (= x 2))" "[8]" "false")
+     }
+);
+
+

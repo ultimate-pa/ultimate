@@ -452,4 +452,8 @@ public class IcfgBacktranslator extends
 		return getStepInfoFromCondition(inputCond.getExpr(), outputCond.getExpr());
 	}
 
+	@Override
+	public Expression declareAndTranslateAuxiliaryVariable(final Term variable) {
+		return mTerm2Expression.declareAndTranslateAuxiliaryVariable((TermVariable) variable);
+	}
 }

@@ -121,7 +121,7 @@ public class YamlWitnessWriterV2 extends YamlWitnessWriter {
 		final List<Map<String, Object>> result = new ArrayList<>();
 		for (final var entry : locs2Updates.entrySet()) {
 			final Map<String, Object> map = new LinkedHashMap<>();
-			map.put("location", entry.getKey());
+			map.put("location", entry.getKey().toMap());
 			final List<Map<String, String>> updateMap = entry.getValue().stream()
 					.map(YamlWitnessWriterV2::extractGhostUpdateMap).collect(Collectors.toList());
 			map.put("updates", updateMap);
@@ -132,7 +132,7 @@ public class YamlWitnessWriterV2 extends YamlWitnessWriter {
 
 	private static Map<String, String> extractGhostUpdateMap(final GhostUpdate update) {
 		final Map<String, String> result = new LinkedHashMap<>();
-		result.put("variable", update.getName());
+		result.put("variable", update.getVariable());
 		result.put("value", update.getValue());
 		result.put("format", update.getValueFormat());
 		return result;

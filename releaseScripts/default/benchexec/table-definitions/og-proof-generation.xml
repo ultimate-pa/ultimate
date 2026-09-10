@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "+//IDN sosy-lab.org//DTD BenchExec table 1.10//EN" "https://www.sosy-lab.org/benchexec/table-1.10.dtd">
+<table>
+  <!-- default columns -->
+  <column title="status"/>
+  <column title="cputime" displayTitle="CPU Time"/>
+  <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+  <result filename="*.NaiveOG-NoAssert.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime"  displayTitle="CPU Time"/>
+    <column title="walltime" displayTitle="Wall Time"/>
+    <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
+    <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
+
+    <!-- test case setup vs actual test -->
+    <column title="setupTime" displayTitle="Setup Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">OwickiGriesTestSuite setup time: (\d+)ms</column>
+    <column title="proofTime" displayTitle="Proof Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Complete Proof Computation Time: (\d+)ms</column>
+
+    <!-- resulting O/G annotation -->
+    <column title="ghosts"         displayTitle="Ghost Variables">Computed Owicki-Gries annotation with (\d+) ghost variables</column>
+    <column title="ghostUpdates"   displayTitle="Ghost Updates">Computed Owicki-Gries annotation with.* (\d+) ghost updates</column>
+    <column title="ogSize"         displayTitle="O/G size">Computed Owicki-Gries annotation with.* overall size (\d+)$</column>
+    <column title="freeVarsMedian" displayTitle="free variables (median)">free variables mentioned in invariants: \(min: \d+, max: \d+, median: (\d+), avg: [\d\.]+\)</column>
+    <column title="ghostVarsAvg"   displayTitle="ghost variables (avg)">ghost variables mentioned in invariants: \(min: \d+, max: \d+, median: \d+, avg: ([\d\.]+)\)</column>
+  </result>
+
+  <result filename="*.NaiveOG-WithAssert.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime"  displayTitle="CPU Time"/>
+    <column title="walltime" displayTitle="Wall Time"/>
+    <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
+    <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
+
+    <column title="ogCheckTime" displayTitle="OG Validity Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Owicki-Gries validity check time \[ms\]: (\d+)(,|$)</column>
+
+    <column title="error" displayTitle="Exception">caught: .\[31m(.*).\[0m</column>
+  </result>
+
+  <result filename="*.NaiveOG-Validate.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime"  displayTitle="CPU Time"/>
+    <column title="walltime" displayTitle="Wall Time"/>
+    <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
+    <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
+
+    <column title="ogCheckTime" displayTitle="OG Validity Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Owicki-Gries Validation Time: (\d+)ms</column>
+
+    <column title="error" displayTitle="Exception">caught: .\[31m(.*).\[0m</column>
+  </result>
+
+  <result filename="*.EmpireAutomatonOG-NoAssert.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime"  displayTitle="CPU Time"/>
+    <column title="walltime" displayTitle="Wall Time"/>
+    <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
+    <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
+
+    <!-- test case setup vs actual test -->
+    <column title="setupTime" displayTitle="Setup Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">OwickiGriesTestSuite setup time: (\d+)ms</column>
+    <column title="proofTime" displayTitle="Proof Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Complete Proof Computation Time: (\d+)ms</column>
+
+    <!-- input program & automata -->
+    <column title="progPlaces" displayTitle="Program Places">Constructing Owicki-Gries proof for Petri program that has (\d+) places</column>
+    <column title="progTrans"  displayTitle="Program Transitions">Constructing Owicki-Gries proof for Petri program that has .* (\d+) transitions</column>
+    <column title="progFlow"   displayTitle="Program Flow">Constructing Owicki-Gries proof for Petri program that has .* (\d+) flow</column>
+    <column title="proofCount" displayTitle="Proof Automata">Number of proof automata: (\d+)$</column>
+
+    <!-- empire automaton -->
+    <column title="empireSize"         displayTitle="Empire Size">EmpireComputation statistics:.* empire annotation size: (\d+),</column>
+    <column title="empireStates"       displayTitle="Empire States">Explored empire automaton has (\d+) states</column>
+    <column title="empireTransitions"  displayTitle="Empire Transitions">Explored empire automaton has \d+ states and (\d+) transitions</column>
+    <column title="numRegions"         displayTitle="Region Count">EmpireComputation statistics:.* number of regions: (\d+),</column>
+    <column title="numTerritories"     displayTitle="Territory Count">EmpireComputation statistics:.* number of territories: (\d+),</column>
+    <column title="regPerTerritoryMin" displayTitle="Regions/Territory (min)">EmpireComputation statistics:.* Min number of regions per territory: (\d+),</column>
+    <column title="regPerTerritoryMax" displayTitle="Regions/Territory (max)">EmpireComputation statistics:.* Max number of regions per territory: (\d+),</column>
+    <column title="regPerTerritoryMed" displayTitle="Regions/Territory (med)">EmpireComputation statistics:.* Median number of regions per territory: (\d+),</column>
+    <column title="placesPerRegionMin" displayTitle="Places/Region (min)">EmpireComputation statistics:.* Min number of places per region: (\d+),</column>
+    <column title="placesPerRegionMax" displayTitle="Places/Region (max)">EmpireComputation statistics:.* Max number of places per region: (\d+),</column>
+    <column title="placesPerRegionMed" displayTitle="Places/Region (med)">EmpireComputation statistics:.* Median number of places per region: (\d+),</column>
+
+    <column title="empireTime"        displayTitle="Empire time"    sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">EmpireComputation time \[ms\]: (\d+),</column>
+    <column title="empireOgTime"      displayTitle="Empire2OG Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">EmpireToOwickiGries time \[ms\]: (\d+),</column>
+
+    <!-- resulting O/G annotation -->
+    <column title="ghosts"         displayTitle="Ghost Variables">Computed Owicki-Gries annotation with (\d+) ghost variables</column>
+    <column title="ghostUpdates"   displayTitle="Ghost Updates">Computed Owicki-Gries annotation with.* (\d+) ghost updates</column>
+    <column title="ogSize"         displayTitle="O/G size">Computed Owicki-Gries annotation with.* overall size (\d+)$</column>
+    <column title="freeVarsMedian" displayTitle="free variables (median)">free variables mentioned in invariants: \(min: \d+, max: \d+, median: (\d+), avg: [\d\.]+\)</column>
+    <column title="ghostVarsAvg"   displayTitle="ghost variables (avg)">ghost variables mentioned in invariants: \(min: \d+, max: \d+, median: \d+, avg: ([\d\.]+)\)</column>
+  </result>
+
+  <result filename="*.EmpireAutomatonOG-WithAssert.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime"  displayTitle="CPU Time"/>
+    <column title="walltime" displayTitle="Wall Time"/>
+    <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
+    <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
+
+    <column title="empireCheckTime" displayTitle="Empire Validity Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Empire validity check time \[ms\]: (\d+),</column>
+    <column title="ogCheckTime"     displayTitle="OG Validity Time"     sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Owicki-Gries validity check time \[ms\]: (\d+)(,|$)</column>
+
+    <column title="error" displayTitle="Exception">caught: .\[31m(.*).\[0m</column>
+  </result>
+
+  <result filename="*.EmpireAutomatonOG-Validate.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime"  displayTitle="CPU Time"/>
+    <column title="walltime" displayTitle="Wall Time"/>
+    <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
+    <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
+
+    <column title="ogCheckTime" displayTitle="OG Validity Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Owicki-Gries Validation Time: (\d+)ms</column>
+
+    <column title="error" displayTitle="Exception">caught: .\[31m(.*).\[0m</column>
+  </result>
+
+  <result filename="*.GlobalLegalFocusOG-NoAssert.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime"  displayTitle="CPU Time"/>
+    <column title="walltime" displayTitle="Wall Time"/>
+    <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
+    <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
+
+    <!-- test case setup vs actual test -->
+    <column title="setupTime" displayTitle="Setup Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">OwickiGriesTestSuite setup time: (\d+)ms</column>
+    <column title="proofTime" displayTitle="Proof Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Complete Proof Computation Time: (\d+)ms</column>
+
+    <!-- empire automaton -->
+    <column title="empireStates"      displayTitle="Empire States">Explored empire automaton has (\d+) states</column>
+    <column title="empireTransitions" displayTitle="Empire Transitions">Explored empire automaton has \d+ states and (\d+) transitions</column>
+    <column title="empireTime"        displayTitle="Empire time"    sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">EmpireComputation time \[ms\]: (\d+),</column>
+    <column title="empireOgTime"      displayTitle="Empire2OG Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">EmpireToOwickiGries time \[ms\]: (\d+),</column>
+    <column title="focusTime"         displayTitle="Focus Time"     sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Focus computation time \[ms\]: (\d+)$</column>
+
+    <!-- resulting O/G annotation -->
+    <column title="ghosts"         displayTitle="Ghost Variables">Computed Owicki-Gries annotation with (\d+) ghost variables</column>
+    <column title="ghostUpdates"   displayTitle="Ghost Updates">Computed Owicki-Gries annotation with.* (\d+) ghost updates</column>
+    <column title="ogSize"         displayTitle="O/G size">Computed Owicki-Gries annotation with.* overall size (\d+)$</column>
+    <column title="freeVarsMedian" displayTitle="free variables (median)">free variables mentioned in invariants: \(min: \d+, max: \d+, median: (\d+), avg: [\d\.]+\)</column>
+    <column title="ghostVarsAvg"   displayTitle="ghost variables (avg)">ghost variables mentioned in invariants: \(min: \d+, max: \d+, median: \d+, avg: ([\d\.]+)\)</column>
+  </result>
+
+  <result filename="*.GlobalLegalFocusOG-WithAssert.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime"  displayTitle="CPU Time"/>
+    <column title="walltime" displayTitle="Wall Time"/>
+    <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
+    <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
+
+    <column title="empireCheckTime" displayTitle="Empire Validity Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Empire validity check time \[ms\]: (\d+),</column>
+    <column title="ogCheckTime"     displayTitle="OG Validity Time"     sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Owicki-Gries validity check time \[ms\]: (\d+)(,|$)</column>
+
+    <column title="error" displayTitle="Exception">caught: .\[31m(.*).\[0m</column>
+  </result>
+
+  <result filename="*.GlobalLegalFocusOG-Validate.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime"  displayTitle="CPU Time"/>
+    <column title="walltime" displayTitle="Wall Time"/>
+    <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
+    <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
+
+    <column title="ogCheckTime" displayTitle="OG Validity Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Owicki-Gries Validation Time: (\d+)ms</column>
+
+    <column title="error" displayTitle="Exception">caught: .\[31m(.*).\[0m</column>
+  </result>
+
+  <result filename="*.ModularLegalFocusOG-NoAssert.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime"  displayTitle="CPU Time"/>
+    <column title="walltime" displayTitle="Wall Time"/>
+    <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
+    <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
+
+    <!-- test case setup vs actual test -->
+    <column title="setupTime" displayTitle="Setup Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">OwickiGriesTestSuite setup time: (\d+)ms</column>
+    <column title="proofTime" displayTitle="Proof Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Complete Proof Computation Time: (\d+)ms</column>
+
+    <!-- empire automaton -->
+    <column title="empireStates"      displayTitle="Empire States">Explored empire automaton has (\d+) states</column>
+    <column title="empireTransitions" displayTitle="Empire Transitions">Explored empire automaton has \d+ states and (\d+) transitions</column>
+    <column title="empireTime"        displayTitle="Empire time"    sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">EmpireComputation time \[ms\]: (\d+),</column>
+    <column title="empireOgTime"      displayTitle="Empire2OG Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">EmpireToOwickiGries time \[ms\]: (\d+),</column>
+    <column title="focusTime"         displayTitle="Focus Time"     sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Focus computation time \[ms\]: (\d+)$</column>
+
+    <!-- resulting O/G annotation -->
+    <column title="ghosts"         displayTitle="Ghost Variables">Computed Owicki-Gries annotation with (\d+) ghost variables</column>
+    <column title="ghostUpdates"   displayTitle="Ghost Updates">Computed Owicki-Gries annotation with.* (\d+) ghost updates</column>
+    <column title="ogSize"         displayTitle="O/G size">Computed Owicki-Gries annotation with.* overall size (\d+)$</column>
+    <column title="freeVarsMedian" displayTitle="free variables (median)">free variables mentioned in invariants: \(min: \d+, max: \d+, median: (\d+), avg: [\d\.]+\)</column>
+    <column title="ghostVarsAvg"   displayTitle="ghost variables (avg)">ghost variables mentioned in invariants: \(min: \d+, max: \d+, median: \d+, avg: ([\d\.]+)\)</column>
+  </result>
+
+  <result filename="*.ModularLegalFocusOG-WithAssert.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime"   displayTitle="CPU Time"/>
+    <column title="walltime" displayTitle="Wall Time"/>
+    <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
+    <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
+
+    <column title="empireCheckTime" displayTitle="Empire Validity Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Empire validity check time \[ms\]: (\d+),</column>
+    <column title="ogCheckTime"     displayTitle="OG Validity Time"     sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Owicki-Gries validity check time \[ms\]: (\d+)(,|$)</column>
+
+    <column title="error" displayTitle="Exception">caught: .\[31m(.*).\[0m</column>
+  </result>
+
+  <result filename="*.ModularLegalFocusOG-Validate.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime"   displayTitle="CPU Time"/>
+    <column title="walltime" displayTitle="Wall Time"/>
+    <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
+    <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
+
+    <column title="ogCheckTime" displayTitle="OG Validity Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Owicki-Gries Validation Time: (\d+)ms</column>
+
+    <column title="error" displayTitle="Exception">caught: .\[31m(.*).\[0m</column>
+  </result>
+
+
+<?ignore
+  <union>
+    <result filename="*.PetriOwickiGriesTestSuite-WithAssert.xml"/>
+
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- input program -->
+    <column title="progPlaces" displayTitle="Program Places">Constructing Owicki-Gries proof for Petri program that has (\d+) places</column>
+    <column title="progTrans"  displayTitle="Program Transitions">Constructing Owicki-Gries proof for Petri program that has .* (\d+) transitions</column>
+    <column title="progFlow"   displayTitle="Program Flow">Constructing Owicki-Gries proof for Petri program that has .* (\d+) flow</column>
+
+    <column title="proofCount" displayTitle="Proof Automata">Number of proof automata: (\d+)$</column>
+    <column title="minLoopers" displayTitle="Loopers (min)">Loopers in proof automata: min=(\d+),</column>
+    <column title="maxLoopers" displayTitle="Loopers (max)">Loopers in proof automata:.* max=(\d+),</column>
+    <column title="medLoopers" displayTitle="Loopers (med)">Loopers in proof automata:.* median=(\d+)$</column>
+
+    <column title="setupTime" displayTitle="Setup Time" sourceUnit="ms">OwickiGriesTestSuite setup time: (\d+)ms</column>
+
+    <!-- Empire -->
+    <column title="empireTime"    displayTitle="Empire Time" sourceUnit="ms">PetriOwickiGries Statistics:.* (\d+\.\d+)ms Crown empire time</column>
+    <column title="empSize"       displayTitle="Empire Size">PetriOwickiGries Empire Statistics:.* empire size: (\d+),</column>
+    <column title="lawSize"       displayTitle="Law Size">PetriOwickiGries Empire Statistics:.* empire law size: (\d+),</column>
+    <column title="annotSize"     displayTitle="Annotation Size">PetriOwickiGries Empire Statistics:.* empire annotation size: (\d+),</column>
+    <column title="regionCnt"     displayTitle="Region Count">PetriOwickiGries Empire Statistics:.* number of regions: (\d+),</column>
+    <column title="regionMin"     displayTitle="Regions/Territory (min)">PetriOwickiGries Empire Statistics:.* Min number of regions per territory: (\d+),</column>
+    <column title="regionMax"     displayTitle="Regions/Territory (max)">PetriOwickiGries Empire Statistics:.* Max number of regions per territory: (\d+),</column>
+    <column title="regionMed"     displayTitle="Regions/Territory (med)">PetriOwickiGries Empire Statistics:.* Median number of regions per territory: (\d+),</column>
+    <column title="regionSizeMin" displayTitle="Places/Region (min)">PetriOwickiGries Empire Statistics:.* Min number of places per region: (\d+),</column>
+    <column title="regionSizeMax" displayTitle="Places/Region (max)">PetriOwickiGries Empire Statistics:.* Max number of places per region: (\d+),</column>
+    <column title="regionSizeMed" displayTitle="Places/Region (med)">PetriOwickiGries Empire Statistics:.* Median number of places per region: (\d+)$</column>
+    <column title="empireValTime" displayTitle="Empire Validity Time" sourceUnit="ms">PetriOwickiGries Statistics:.* (\d+\.\d+)ms Empire validity check time</column>
+
+    <!-- Owicki-Gries -->
+    <column title="ogTime"       displayTitle="Empire 2 O/G time" sourceUnit="ms">PetriOwickiGries Statistics:.* (\d+\.\d+)ms EmpireToOwickiGries time</column>
+    <column title="ghosts"       displayTitle="Ghost Variables">Computed Owicki-Gries annotation with (\d+) ghost variables</column>
+    <column title="ghostUpdates" displayTitle="Ghost Updates">Computed Owicki-Gries annotation with.* (\d+) ghost updates</column>
+    <column title="ogSize"       displayTitle="O/G size">Computed Owicki-Gries annotation with.* overall size (\d+)$</column>
+    <column title="ogValTime"    displayTitle="O/G Validity Time" sourceUnit="ms">PetriOwickiGries Statistics:.* (\d+\.\d+)ms Owicki-Gries validity check time</column>
+  </union>
+
+  <union>
+    <result filename="*.PetriOwickiGriesTestSuite-NoAssert.xml"/>
+
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- input program -->
+    <column title="progPlaces" displayTitle="Program Places">Constructing Owicki-Gries proof for Petri program that has (\d+) places</column>
+    <column title="progTrans"  displayTitle="Program Transitions">Constructing Owicki-Gries proof for Petri program that has .* (\d+) transitions</column>
+    <column title="progFlow"   displayTitle="Program Flow">Constructing Owicki-Gries proof for Petri program that has .* (\d+) flow</column>
+
+    <column title="proofCount" displayTitle="Proof Automata">Number of proof automata: (\d+)$</column>
+    <column title="minLoopers" displayTitle="Loopers (min)">Loopers in proof automata: min=(\d+),</column>
+    <column title="maxLoopers" displayTitle="Loopers (max)">Loopers in proof automata:.* max=(\d+),</column>
+    <column title="medLoopers" displayTitle="Loopers (med)">Loopers in proof automata:.* median=(\d+)$</column>
+
+    <column title="setupTime" displayTitle="Setup Time" sourceUnit="ms">OwickiGriesTestSuite setup time: (\d+)ms</column>
+
+    <!-- Empire -->
+    <column title="empireTime"    displayTitle="Empire Time" sourceUnit="ms">PetriOwickiGries Statistics:.* (\d+\.\d+)ms Crown empire time</column>
+    <column title="empSize"       displayTitle="Empire Size">PetriOwickiGries Empire Statistics:.* empire size: (\d+),</column>
+    <column title="lawSize"       displayTitle="Law Size">PetriOwickiGries Empire Statistics:.* empire law size: (\d+),</column>
+    <column title="annotSize"     displayTitle="Annotation Size">PetriOwickiGries Empire Statistics:.* empire annotation size: (\d+),</column>
+    <column title="regionCnt"     displayTitle="Region Count">PetriOwickiGries Empire Statistics:.* number of regions: (\d+),</column>
+    <column title="regionMin"     displayTitle="Regions/Territory (min)">PetriOwickiGries Empire Statistics:.* Min number of regions per territory: (\d+),</column>
+    <column title="regionMax"     displayTitle="Regions/Territory (max)">PetriOwickiGries Empire Statistics:.* Max number of regions per territory: (\d+),</column>
+    <column title="regionMed"     displayTitle="Regions/Territory (med)">PetriOwickiGries Empire Statistics:.* Median number of regions per territory: (\d+),</column>
+    <column title="regionSizeMin" displayTitle="Places/Region (min)">PetriOwickiGries Empire Statistics:.* Min number of places per region: (\d+),</column>
+    <column title="regionSizeMax" displayTitle="Places/Region (max)">PetriOwickiGries Empire Statistics:.* Max number of places per region: (\d+),</column>
+    <column title="regionSizeMed" displayTitle="Places/Region (med)">PetriOwickiGries Empire Statistics:.* Median number of places per region: (\d+)$</column>
+
+    <!-- Owicki-Gries -->
+    <column title="ogTime"       displayTitle="Empire 2 O/G time" sourceUnit="ms">PetriOwickiGries Statistics:.* (\d+\.\d+)ms EmpireToOwickiGries time</column>
+    <column title="ghosts"       displayTitle="Ghost Variables">Computed Owicki-Gries annotation with (\d+) ghost variables</column>
+    <column title="ghostUpdates" displayTitle="Ghost Updates">Computed Owicki-Gries annotation with.* (\d+) ghost updates</column>
+    <column title="ogSize"       displayTitle="O/G size">Computed Owicki-Gries annotation with.* overall size (\d+)$</column>
+  </union>
+
+  <union>
+    <result filename="*.NaiveOwickiGriesTestSuite-WithAssert.xml"/>
+
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- input program -->
+    <column title="progPlaces" displayTitle="Program Places">Constructing Owicki-Gries proof for Petri program that has (\d+) places</column>
+    <column title="progTrans"  displayTitle="Program Transitions">Constructing Owicki-Gries proof for Petri program that has .* (\d+) transitions</column>
+    <column title="progFlow"   displayTitle="Program Flow">Constructing Owicki-Gries proof for Petri program that has .* (\d+) flow</column>
+
+    <column title="proofCount" displayTitle="Proof Automata">Number of proof automata: (\d+)$</column>
+    <column title="minLoopers" displayTitle="Loopers (min)">Loopers in proof automata: min=(\d+),</column>
+    <column title="maxLoopers" displayTitle="Loopers (max)">Loopers in proof automata:.* max=(\d+),</column>
+    <column title="medLoopers" displayTitle="Loopers (med)">Loopers in proof automata:.* median=(\d+)$</column>
+
+    <column title="setupTime" displayTitle="Setup Time" sourceUnit="ms">OwickiGriesTestSuite setup time: (\d+)ms</column>
+
+    <!-- Floyd/Hoare proof -->
+    <column title="fhMark" displayTitle="F/H markings">Computed Floyd-Hoare proof with (\d+) non-trivial markings</column>
+    <column title="fhSize" displayTitle="F/H size">Computed Floyd-Hoare proof with.* assertion size (\d+)$</column>
+
+    <!-- Owicki-Gries proof -->
+    <column title="ghosts"       displayTitle="Ghost Variables">Computed Owicki-Gries annotation with (\d+) ghost variables</column>
+    <column title="ghostUpdates" displayTitle="Ghost Updates">Computed Owicki-Gries annotation with.* (\d+) ghost updates</column>
+    <column title="ogSize"       displayTitle="O/G size">Computed Owicki-Gries annotation with.* overall size (\d+)$</column>
+  </union>
+
+  <union>
+    <result filename="*.NaiveOwickiGriesTestSuite-NoAssert.xml"/>
+
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime" displayTitle="CPU Time"/>
+    <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+    <!-- input program -->
+    <column title="progPlaces" displayTitle="Program Places">Constructing Owicki-Gries proof for Petri program that has (\d+) places</column>
+    <column title="progTrans"  displayTitle="Program Transitions">Constructing Owicki-Gries proof for Petri program that has .* (\d+) transitions</column>
+    <column title="progFlow"   displayTitle="Program Flow">Constructing Owicki-Gries proof for Petri program that has .* (\d+) flow</column>
+
+    <column title="proofCount" displayTitle="Proof Automata">Number of proof automata: (\d+)$</column>
+    <column title="minLoopers" displayTitle="Loopers (min)">Loopers in proof automata: min=(\d+),</column>
+    <column title="maxLoopers" displayTitle="Loopers (max)">Loopers in proof automata:.* max=(\d+),</column>
+    <column title="medLoopers" displayTitle="Loopers (med)">Loopers in proof automata:.* median=(\d+)$</column>
+
+    <column title="setupTime" displayTitle="Setup Time" sourceUnit="ms">OwickiGriesTestSuite setup time: (\d+)ms</column>
+
+    <!-- Floyd/Hoare proof -->
+    <column title="fhMark" displayTitle="F/H markings">Computed Floyd-Hoare proof with (\d+) non-trivial markings</column>
+    <column title="fhSize" displayTitle="F/H size">Computed Floyd-Hoare proof with.* assertion size (\d+)$</column>
+
+    <!-- Owicki-Gries proof -->
+    <column title="ghosts"       displayTitle="Ghost Variables">Computed Owicki-Gries annotation with (\d+) ghost variables</column>
+    <column title="ghostUpdates" displayTitle="Ghost Updates">Computed Owicki-Gries annotation with.* (\d+) ghost updates</column>
+    <column title="ogSize"       displayTitle="O/G size">Computed Owicki-Gries annotation with.* overall size (\d+)$</column>
+  </union>
+?>
+</table>

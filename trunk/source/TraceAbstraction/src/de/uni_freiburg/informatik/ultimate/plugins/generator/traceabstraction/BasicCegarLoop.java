@@ -682,6 +682,5 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 				final Lazy<IPredicateUnifier> predicateUnifier) {
 			super(LBool.UNKNOWN, null, null, false, Collections.emptyList(), htc, predicateUnifier);
 		}
-
 	}
 }

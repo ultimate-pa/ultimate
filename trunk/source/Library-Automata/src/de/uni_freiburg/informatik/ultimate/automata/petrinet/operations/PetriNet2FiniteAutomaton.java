@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Given a Petri net, this class constructs a finite automaton that recognizes the same language.
@@ -118,7 +117,7 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE>
 		final VpAlphabet<LETTER> vpAlphabet =
 				new VpAlphabet<>(alphabet, Collections.emptySet(), Collections.emptySet());
 		mResult = new NestedWordAutomaton<>(mServices, vpAlphabet, factory);
-		getState(new Marking<>(ImmutableSet.of(operand.getInitialPlaces())), true);
+		getState(Marking.initial(operand), true);
 		while (!mWorklist.isEmpty()) {
 			final Marking<PLACE> marking = mWorklist.remove(0);
 			constructOutgoingTransitions(marking);
@@ -206,6 +205,10 @@ public final class PetriNet2FiniteAutomaton<LETTER, PLACE>
 	@Override
 	public INestedWordAutomaton<LETTER, PLACE> getResult() {
 		return mResult;
+	}
+
+	public Map<Marking<PLACE>, PLACE> getStateMap() {
+		return mMarking2State;
 	}
 
 	@Override

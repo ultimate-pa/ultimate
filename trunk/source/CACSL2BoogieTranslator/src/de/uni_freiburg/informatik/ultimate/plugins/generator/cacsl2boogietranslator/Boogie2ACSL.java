@@ -30,16 +30,20 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
@@ -83,6 +87,8 @@ public final class Boogie2ACSL {
 	private final CACSL2BoogieBacktranslatorMapping mMapping;
 	private final FlatSymbolTable mSymbolTable;
 	private final Consumer<String> mReporter;
+
+	private final Map<String, BacktranslatedExpression> mAuxVariables = new HashMap<>();
 
 	public Boogie2ACSL(final TypeSizes typeSizes, final CACSL2BoogieBacktranslatorMapping mapping,
 			final FlatSymbolTable symbolTable, final Consumer<String> reporter) {
@@ -271,6 +277,8 @@ public final class Boogie2ACSL {
 			// of the parameter in C (because params can be re-assigned).
 			return new BacktranslatedExpression(new AtLabelExpression(new IdentifierExpression(pair.getFirst()), "Pre"),
 					pair.getSecond(), range);
+		} else if (mAuxVariables.containsKey(boogieId)) {
+			return mAuxVariables.get(boogieId);
 		}
 		mReporter.accept("Unknown variable: " + expr.getIdentifier());
 		return null;
@@ -870,6 +878,27 @@ public final class Boogie2ACSL {
 		}
 		final var range = getRangeForCType(resultType);
 		return new BacktranslatedExpression(result, resultType, range);
+	}
+
+	public BacktranslatedExpression declareAndTranslateAuxiliaryVariable(
+			final de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression variable) {
+		final String identifier = variable.getIdentifier();
+		if (mAuxVariables.containsKey(identifier)) {
+			throw new UnsupportedOperationException("Auxiliary variable already declared");
+		}
+
+		final String newIdentifier;
+		if (Pattern.matches(BoogieUtils.GHOST_VARIABLE_PREFIX + "([a-zA-Z0-9]*)", identifier)) {
+			// To avoid stacking "ghost" prefixes but still preserve meaningful variable names and guarantee uniqueness,
+			// we treat identifiers specially if they start with the prefix added during Boogie backtranslation.
+			newIdentifier = "__ULTIMATE_ghost_" + identifier.substring(BoogieUtils.GHOST_VARIABLE_PREFIX.length());
+		} else {
+			newIdentifier = "__ULTIMATE_C_ghost_" + mAuxVariables.size();
+		}
+
+		final var idExpr = new BacktranslatedExpression(new IdentifierExpression(newIdentifier));
+		mAuxVariables.put(identifier, idExpr);
+		return idExpr;
 	}
 
 	private enum Approximation {
