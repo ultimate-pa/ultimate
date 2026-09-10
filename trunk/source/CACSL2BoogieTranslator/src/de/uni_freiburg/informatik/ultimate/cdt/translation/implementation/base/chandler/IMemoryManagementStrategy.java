@@ -27,15 +27,17 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * This interface defines the functions for different memory management strategies. E.g. counting up, counting down, or
@@ -45,20 +47,29 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public interface IMemoryManagementStrategy {
 	/**
-	 * Constructs a list of expressions that are used in the specifications of malloc.
+	 * Constructs the specification of malloc.
 	 *
-	 * @return The expressions.
+	 * @return a record representing the specification
 	 */
-	List<Pair<Expression, Set<VariableLHS>>> constructMallocSpecificationExpressions(ILocation tuLoc,
-			MemoryArea memoryArea, RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	AllocationProcedureSpec constructMallocSpecification(ILocation tuLoc, MemoryArea memoryArea,
+			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
 	/**
-	 * Constructs a list of expressions that are used in the specifications of dealloc.
+	 * Constructs the specification of dealloc.
 	 *
-	 * @return The expressions.
+	 * @return a record representing the specification
 	 */
-	List<Triple<Expression, Set<VariableLHS>, Boolean>> constructDeallocSpecificationExpressions(ILocation tuLoc,
+	AllocationProcedureSpec constructDeallocSpecification(ILocation tuLoc,
+			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
+
+	/**
+	 * Constructs the specification for allocInit.
+	 *
+	 * @return a record representing the specification
+	 */
+	AllocationProcedureSpec constructAllocInitSpecification(ILocation tuLoc,
 			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
@@ -72,11 +83,49 @@ public interface IMemoryManagementStrategy {
 			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler, BigInteger fixedAddressCounter);
 
 	/**
-	 * Constructs the expressions used in the specifications for allocInit.
+	 * Encapsulates the specification for an allocation procedure.
 	 *
-	 * @return The expressions.
+	 * Currently, we do not allow allocation procedures to have "requires" clauses.
+	 *
+	 * @param ensures
+	 *            the "ensures" clauses for the procedure
+	 * @param freeEnsures
+	 *            the "free ensures" clauses for the procedure
+	 * @param modifies
+	 *            the set of modified global variables of the procedure
 	 */
-	List<Pair<Expression, Set<VariableLHS>>> constructAllocInitSpecificationExpressions(ILocation tuLoc,
-			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
+	record AllocationProcedureSpec(List<Expression> ensures, List<Expression> freeEnsures, Set<VariableLHS> modifies) {
+		/**
+		 * Convenience constructor for specs that do not have "free ensures" clauses.
+		 */
+		AllocationProcedureSpec(final List<Expression> ensures, final Set<VariableLHS> modifies) {
+			this(ensures, Collections.emptyList(), modifies);
+		}
+
+		public AllocationProcedureSpec {
+			Objects.requireNonNull(ensures);
+			Objects.requireNonNull(freeEnsures);
+			Objects.requireNonNull(modifies);
+		}
+
+		/**
+		 * Constructs "requires" resp. "free requires" clauses from the expressions stored in this specification.
+		 *
+		 * Note: Do not forget to handle the "modifies" clauses separately!
+		 *
+		 * @param loc
+		 *            the location for the specification clauses
+		 * @return the list of clauses
+		 */
+		List<EnsuresSpecification> constructSpecificationClauses(final ILocation loc) {
+			final var result = new ArrayList<EnsuresSpecification>();
+			for (final Expression ens : ensures) {
+				result.add(new EnsuresSpecification(loc, false, ens));
+			}
+			for (final Expression freeEns : freeEnsures) {
+				result.add(new EnsuresSpecification(loc, true, freeEns));
+			}
+			return result;
+		}
+	}
 }

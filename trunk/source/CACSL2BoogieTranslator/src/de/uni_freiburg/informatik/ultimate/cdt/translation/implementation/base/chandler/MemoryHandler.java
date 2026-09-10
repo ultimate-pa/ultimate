@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
@@ -74,10 +75,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -94,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryManagementStrategy.AllocationProcedureSpec;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryStructureBase.ReadWriteDefinition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.memoryhandler.ConstructMemcpyOrMemmove;
@@ -121,12 +123,14 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryStructure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * @author Markus Lindenmann
@@ -298,8 +302,8 @@ public class MemoryHandler {
 			declarations
 					.add(constructMemoryArrayDeclaration(tuLoc, heapDataArray.getName(), heapDataArray.getASTType()));
 			// create and add read and write procedure
-			declarations.addAll(constructWriteProcedures(main, tuLoc, heapDataArrays, heapDataArray));
-			declarations.addAll(constructReadProcedures(main, tuLoc, heapDataArray));
+			constructWriteProcedures(main, tuLoc, heapDataArrays, heapDataArray);
+			constructReadProcedures(main, tuLoc, heapDataArray);
 		}
 
 		// add store function (to be able to assign subarrays at pointer base addresses)
@@ -324,11 +328,11 @@ public class MemoryHandler {
 			declareDataOnHeapInitFunction(mMemoryModel.getPointerHeapArray());
 		}
 
-		declarations.addAll(declareDeallocation(main, tuLoc));
+		declareDeallocation(main, tuLoc);
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
 				.contains(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK)) {
-			declarations.addAll(declareMalloc(main, mTypeHandler, tuLoc, MemoryArea.STACK));
+			declareMalloc(main, mTypeHandler, tuLoc, MemoryArea.STACK);
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
@@ -338,7 +342,7 @@ public class MemoryHandler {
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
 				.contains(MemoryModelDeclarations.ULTIMATE_ALLOC_HEAP)) {
-			declarations.addAll(declareMalloc(main, mTypeHandler, tuLoc, MemoryArea.HEAP));
+			declareMalloc(main, mTypeHandler, tuLoc, MemoryArea.HEAP);
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
@@ -508,12 +512,12 @@ public class MemoryHandler {
 	}
 
 	/**
-	 * @param loc
-	 *            location of translation unit
-	 * @return new IdentifierExpression that represents the <em>#valid array</em>
+	 * Constructs a boolean expression that, when evaluated at the end of a procedure invocation, results in
+	 * {@code true} iff no memory is allocated that was not already allocated at the beginning of the invocation.
 	 */
-	public Expression getValidArray(final ILocation loc) {
-		return mMemoryModel.getValidArray(loc, mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+	public Expression constructMemoryNeutralityCheckExpr(final ILocation loc) {
+		return mMemoryModel.constructMemoryNeutralityCheckExpr(loc, mRequiredMemoryModelFeatures,
+				mMemoryModelDeclarationsHandler);
 	}
 
 	public Expression getMemoryRaceArray(final ILocation loc) {
@@ -528,9 +532,22 @@ public class MemoryHandler {
 				mMemoryModelDeclarationsHandler);
 	}
 
-	public Collection<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed) {
-		return mMemoryModel.getChecksForFreeCall(loc, pointerToBeFreed, mSettings.checkIfFreedPointerIsValid(),
+	public List<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed) {
+		if (!mSettings.checkIfFreedPointerIsValid()) {
+			return Collections.emptyList();
+		}
+
+		final List<Expression> checkExpressions = mMemoryModel.getChecksForFreeCall(loc, pointerToBeFreed,
 				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+		final List<Statement> statements =
+				checkExpressions.stream().<Statement> map(expr -> new AssertStatement(loc, expr)).toList();
+
+		final Check check = new Check(Spec.MEMORY_FREE);
+		for (final Statement stmt : statements) {
+			check.annotate(stmt);
+		}
+
+		return statements;
 	}
 
 	/**
@@ -663,9 +680,9 @@ public class MemoryHandler {
 	 *            the address to read from.
 	 * @param resultType
 	 *            the CType of the pointer
-	 * @return an ExpressionResult consisting only of a array access to the memory array.
+	 * @return an array access to the memory array.
 	 */
-	public ExpressionResult getReadUnchecked(final Expression address, final ICType resultType) {
+	public Expression getReadUnchecked(final Expression address, final ICType resultType) {
 		final int byteSize;
 		if (resultType instanceof CPointer) {
 			byteSize = mTypeSizes.getSizeOfPointer();
@@ -675,8 +692,7 @@ public class MemoryHandler {
 			throw new AssertionError("We only support reading primitive or pointer types");
 		}
 		final ILocation loc = address.getLocation();
-		return new ExpressionResult(new RValue(
-				readFromHeap(loc, determineMemoryArrayForType(resultType), address, resultType, byteSize), resultType));
+		return readFromHeap(loc, determineMemoryArrayForType(resultType), address, resultType, byteSize);
 	}
 
 	private String determineReadProcedure(final ICType resultType, final ILocation loc) throws AssertionError {
@@ -848,8 +864,11 @@ public class MemoryHandler {
 	}
 
 	public Expression constructAddressForStructField(final ILocation loc, final Expression baseAddress,
-			final Offset fieldOffset, final CPrimitive type) {
-		return mMemoryModel.constructAddressForStructField(loc, baseAddress, fieldOffset, type);
+			final Offset fieldOffset) {
+		if (fieldOffset.isBitfieldOffset()) {
+			throw new UnsupportedOperationException("Bitfield read");
+		}
+		return mMemoryModel.addExpressionToPointer(loc, baseAddress, fieldOffset.getAddressOffsetAsExpression(loc));
 	}
 
 	public void beginScope() {
@@ -908,9 +927,8 @@ public class MemoryHandler {
 	 * caution or improve this method.
 	 */
 	public boolean isNullPointerLiteral(final Expression expr) {
-
-		if (expr instanceof StructConstructor) {
-			return mMemoryPointer.isNullPointer(expr);
+		if (mMemoryPointer.isNullPointer(expr)) {
+			return true;
 		}
 
 		final BigInteger integerValue = mTypeSizes.extractIntegerValue(expr, new CPrimitive(CPrimitives.LONG));
@@ -1427,26 +1445,19 @@ public class MemoryHandler {
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { varList });
 	}
 
-	private List<Declaration> constructWriteProcedures(final CHandler main, final ILocation loc,
+	private void constructWriteProcedures(final CHandler main, final ILocation loc,
 			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray) {
-		final List<Declaration> result = new ArrayList<>();
 		for (final ReadWriteDefinition rda : mMemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray,
 				mRequiredMemoryModelFeatures)) {
-			final Collection<Procedure> writeDeclaration =
-					constructWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda);
-			result.addAll(writeDeclaration);
+			constructWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda);
 		}
-		return result;
 	}
 
-	private List<Declaration> constructReadProcedures(final CHandler main, final ILocation loc,
-			final HeapDataArray heapDataArray) {
-		final List<Declaration> result = new ArrayList<>();
+	private void constructReadProcedures(final CHandler main, final ILocation loc, final HeapDataArray heapDataArray) {
 		for (final ReadWriteDefinition rda : mMemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray,
 				mRequiredMemoryModelFeatures)) {
-			result.addAll(constructSingleReadProcedure(main, loc, heapDataArray, rda));
+			constructSingleReadProcedure(main, loc, heapDataArray, rda);
 		}
-		return result;
 	}
 
 	private VariableDeclaration declarePthreadsForkCount(final ILocation loc) {
@@ -1481,7 +1492,7 @@ public class MemoryHandler {
 	 * @param rda
 	 * @return
 	 */
-	private Collection<Procedure> constructWriteProcedure(final CHandler main, final ILocation loc,
+	private void constructWriteProcedure(final CHandler main, final ILocation loc,
 			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray,
 			final ReadWriteDefinition rda) {
 		if (rda.alsoUncheckedWrite()) {
@@ -1491,7 +1502,6 @@ public class MemoryHandler {
 			constructSingleWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda, HeapWriteMode.SELECT);
 		}
 		constructSingleWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda, HeapWriteMode.STORE_CHECKED);
-		return Collections.emptySet();
 	}
 
 	private void constructSingleWriteProcedure(final CHandler main, final ILocation loc,
@@ -1653,8 +1663,8 @@ public class MemoryHandler {
 	 *            whether we should construct an unchecked read procedure (i.e. one that omits validity checks)
 	 * @return
 	 */
-	private List<Procedure> constructSingleReadProcedure(final CHandler main, final ILocation loc,
-			final HeapDataArray hda, final ReadWriteDefinition rda) {
+	private void constructSingleReadProcedure(final CHandler main, final ILocation loc, final HeapDataArray hda,
+			final ReadWriteDefinition rda) {
 		// specification for memory reads
 		final String returnValue = "#value";
 		final ASTType valueAstType = rda.getASTType();
@@ -1700,8 +1710,6 @@ public class MemoryHandler {
 
 		mProcedureManager.addSpecificationsToCurrentProcedure(sread);
 		mProcedureManager.endCustomProcedure(main, readProcedureName);
-
-		return Collections.emptyList();
 	}
 
 	private Expression readFromHeap(final ILocation loc, final HeapDataArray hda, final Expression address,
@@ -1754,13 +1762,13 @@ public class MemoryHandler {
 	 * memory at the base address of the pointer. Furthermore, we check that the offset is greater than or equal to
 	 * zero.
 	 *
-	 * In case mPointerBaseValidity is CHECK, we construct the requires specification
+	 * In case {@code mSettings.checkPointerDerefValidity()} is CHECK, we construct the requires specification
 	 * <code>requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset)</code>.
 	 *
-	 * In case mPointerBaseValidity is CHECK, we construct the <b>free</b> requires specification
-	 * <code>free requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset)</code>.
+	 * In case {@code mSettings.checkPointerDerefValidity()} is ASSUME, we construct the <b>free</b> requires
+	 * specification <code>free requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset)</code>.
 	 *
-	 * In case mPointerBaseValidity is IGNORE, we construct nothing.
+	 * In case {@code mSettings.checkPointerDerefValidity()} is IGNORE, we construct nothing.
 	 *
 	 * @param loc
 	 *            location of translation unit
@@ -1772,17 +1780,36 @@ public class MemoryHandler {
 	 */
 	public List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
 			final String ptrName, final String procedureName) {
-		return mMemoryModel.constructPointerTargetFullyAllocatedCheck(loc, size, ptrName, procedureName,
-				mSettings.checkPointerDerefValidity(), mSettings.isBitvectorTranslation(), mRequiredMemoryModelFeatures,
+		final var mode = mSettings.checkPointerDerefValidity();
+		if (mode == CheckMode.IGNORE) {
+			return Collections.emptyList();
+		}
+
+		final Expression ptrExpr =
+				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrName,
+						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
+
+		final Expression offsetInAllocatedRange = mMemoryModel.constructPointerTargetFullyAllocatedCheckExpr(loc,
+				ptrExpr, size, mSettings.isBitvectorTranslation(), mRequiredMemoryModelFeatures,
 				mMemoryModelDeclarationsHandler);
+
+		final boolean isFreeRequires = mode == CheckMode.ASSUME;
+		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, offsetInAllocatedRange);
+		final Check check = new Check(Spec.MEMORY_DEREFERENCE);
+		check.annotate(spec);
+		return Collections.singletonList(spec);
 	}
 
 	/**
-	 * Construct specification that the pointer base address is valid. In case
-	 * {@link #getPointerBaseValidityCheckMode()} is ASSERTandASSUME, we add the requires specification
-	 * <code>requires #valid[#ptr!base]</code>. In case {@link #getPointerBaseValidityCheckMode()} is ASSERTandASSUME,
-	 * we add the <b>free</b> requires specification <code>free requires #valid[#ptr!base]</code>. In case
-	 * {@link #getPointerBaseValidityCheckMode()} is IGNORE, we add nothing.
+	 * Construct specification that the pointer base address is valid.
+	 *
+	 * In case {@code mSettings.checkPointerDerefValidity()} is CHECK, we add the requires specification
+	 * <code>requires #valid[#ptr!base]</code>.
+	 *
+	 * In case {@code mSettings.checkPointerDerefValidity()} is ASSUME, we add the <b>free</b> requires specification
+	 * <code>free requires #valid[#ptr!base]</code>.
+	 *
+	 * In case {@code mSettings.checkPointerDerefValidity()} is IGNORE, we add nothing.
 	 *
 	 * @param loc
 	 *            location of translation unit
@@ -1794,21 +1821,24 @@ public class MemoryHandler {
 	 */
 	public List<Specification> constructPointerBaseValidityCheck(final ILocation loc, final String ptrName,
 			final String procedureName) {
-		return mMemoryModel.constructPointerBaseValidityCheck(loc, ptrName, procedureName,
-				mSettings.checkPointerDerefValidity(), mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
-	}
+		final var mode = mSettings.checkPointerDerefValidity();
+		if (mode == CheckMode.IGNORE) {
+			return Collections.emptyList();
+		}
 
-	/**
-	 * Compare a pointer component (base or offset) to another expression.
-	 *
-	 * @param op
-	 *            One of the comparison operators defined in {@link IASTBinaryExpression}.
-	 */
-	private Expression constructPointerBinaryComparisonExpression(final ILocation loc, final int op,
-			final Expression left, final Expression right) {
-		return mExpressionTranslation.constructBinaryComparisonExpression(loc, op, left,
-				mExpressionTranslation.getCTypeOfPointerComponents(), right,
-				mExpressionTranslation.getCTypeOfPointerComponents());
+		final Expression ptrExpr =
+				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrName,
+						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
+
+		final Expression isValid = mMemoryModel.constructPointerBaseValidityCheckExpr(loc, ptrExpr,
+				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+
+		final boolean isFreeRequires = mode == CheckMode.ASSUME;
+
+		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, isValid);
+		final Check check = new Check(Spec.MEMORY_DEREFERENCE);
+		check.annotate(spec);
+		return Collections.singletonList(spec);
 	}
 
 	/**
@@ -1821,8 +1851,7 @@ public class MemoryHandler {
 	 *
 	 * @return declaration and implementation of procedure <code>Ultimate_dealloc</code>
 	 */
-	private List<Declaration> declareDeallocation(final CHandler main, final ILocation tuLoc) {
-
+	private void declareDeallocation(final CHandler main, final ILocation tuLoc) {
 		final Procedure deallocDeclaration = new Procedure(tuLoc, new Attribute[0],
 				MemoryModelDeclarations.ULTIMATE_DEALLOC.getName(), new String[0],
 				new VarList[] {
@@ -1831,20 +1860,12 @@ public class MemoryHandler {
 		mProcedureManager.beginCustomProcedure(main, tuLoc, MemoryModelDeclarations.ULTIMATE_DEALLOC.getName(),
 				deallocDeclaration);
 
-		final List<Triple<Expression, Set<VariableLHS>, Boolean>> deallocSpecificationExpressions =
-				mMemoryModel.constructDeallocSpecificationExpressions(tuLoc, mRequiredMemoryModelFeatures,
-						mMemoryModelDeclarationsHandler);
+		final AllocationProcedureSpec specification = mMemoryModel.constructDeallocSpecification(tuLoc,
+				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+		mProcedureManager.addModifiedGlobalsToCurrentProcedure(specification.modifies());
+		mProcedureManager.addSpecificationsToCurrentProcedure(specification.constructSpecificationClauses(tuLoc));
 
-		final List<Specification> deallocSpecifications = new ArrayList<>();
-
-		for (final Triple<Expression, Set<VariableLHS>, Boolean> triple : deallocSpecificationExpressions) {
-			deallocSpecifications.add(mProcedureManager.constructEnsuresSpecification(tuLoc, triple.getThird(),
-					triple.getFirst(), triple.getSecond()));
-		}
-
-		mProcedureManager.addSpecificationsToCurrentProcedure(deallocSpecifications);
 		mProcedureManager.endCustomProcedure(main, MemoryModelDeclarations.ULTIMATE_DEALLOC.getName());
-		return Collections.emptyList();
 	}
 
 	/**
@@ -1857,8 +1878,8 @@ public class MemoryHandler {
 	 *
 	 * @return declaration and implementation of procedure <code>~malloc</code>
 	 */
-	private ArrayList<Declaration> declareMalloc(final CHandler main, final ITypeHandler typeHandler,
-			final ILocation tuLoc, final MemoryArea memArea) {
+	private void declareMalloc(final CHandler main, final ITypeHandler typeHandler, final ILocation tuLoc,
+			final MemoryArea memArea) {
 		final MemoryModelDeclarations alloc = memArea.getMemoryStructureDeclaration();
 		final ASTType intType = typeHandler.cType2AstType(tuLoc, mExpressionTranslation.getCTypeOfPointerComponents());
 		final Procedure allocDeclaration = new Procedure(tuLoc, new Attribute[0], alloc.getName(), new String[0],
@@ -1868,22 +1889,12 @@ public class MemoryHandler {
 
 		mProcedureManager.beginCustomProcedure(main, tuLoc, alloc.getName(), allocDeclaration);
 
-		final List<Pair<Expression, Set<VariableLHS>>> mallocSpecificationExpressions =
-				mMemoryModel.constructMallocSpecificationExpressions(tuLoc, memArea, mRequiredMemoryModelFeatures,
-						mMemoryModelDeclarationsHandler);
+		final AllocationProcedureSpec specification = mMemoryModel.constructMallocSpecification(tuLoc, memArea,
+				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+		mProcedureManager.addModifiedGlobalsToCurrentProcedure(specification.modifies());
+		mProcedureManager.addSpecificationsToCurrentProcedure(specification.constructSpecificationClauses(tuLoc));
 
-		final List<Specification> mallocSpecifications = new ArrayList<>();
-
-		for (final Pair<Expression, Set<VariableLHS>> pair : mallocSpecificationExpressions) {
-			mallocSpecifications.add(
-					mProcedureManager.constructEnsuresSpecification(tuLoc, false, pair.getFirst(), pair.getSecond()));
-		}
-
-		mProcedureManager.addSpecificationsToCurrentProcedure(mallocSpecifications);
-
-		final ArrayList<Declaration> result = new ArrayList<>();
 		mProcedureManager.endCustomProcedure(main, alloc.getName());
-		return result;
 	}
 
 	/**
@@ -1893,26 +1904,19 @@ public class MemoryHandler {
 	 */
 	private void declareAllocInit(final CHandler main, final ITypeHandler typeHandler, final ILocation tuLoc) {
 		final String procedureIdentifier = MemoryModelDeclarations.ULTIMATE_ALLOC_INIT.getName();
-		final String pointerBaseIdentifier = "ptrBase";
 		final ASTType intType = typeHandler.cType2AstType(tuLoc, mExpressionTranslation.getCTypeOfPointerComponents());
 
 		final Procedure allocDeclaration = new Procedure(tuLoc, new Attribute[0], procedureIdentifier, new String[0],
-				new VarList[] { new VarList(tuLoc, new String[] { SFO.SIZE, pointerBaseIdentifier }, intType) },
+				new VarList[] { new VarList(tuLoc, new String[] { SFO.SIZE, SFO.ALLOCINIT_PTRBASE }, intType) },
 				new VarList[0], new Specification[0], null);
 
 		mProcedureManager.beginCustomProcedure(main, tuLoc, procedureIdentifier, allocDeclaration);
 
-		final var allocInitSpecificationExpressions = mMemoryModel.constructAllocInitSpecificationExpressions(tuLoc,
+		final AllocationProcedureSpec specification = mMemoryModel.constructAllocInitSpecification(tuLoc,
 				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+		mProcedureManager.addModifiedGlobalsToCurrentProcedure(specification.modifies());
+		mProcedureManager.addSpecificationsToCurrentProcedure(specification.constructSpecificationClauses(tuLoc));
 
-		final List<Specification> allocInitSpecifications = new ArrayList<>();
-
-		for (final Pair<Expression, Set<VariableLHS>> pair : allocInitSpecificationExpressions) {
-			allocInitSpecifications.add(
-					mProcedureManager.constructEnsuresSpecification(tuLoc, false, pair.getFirst(), pair.getSecond()));
-		}
-
-		mProcedureManager.addSpecificationsToCurrentProcedure(allocInitSpecifications);
 		mProcedureManager.endCustomProcedure(main, procedureIdentifier);
 	}
 
@@ -1991,8 +1995,7 @@ public class MemoryHandler {
 				throw new UnsupportedOperationException("Bitfield write");
 			}
 
-			final Expression newPointer = mMemoryModel.constructAddressForStructField(loc, startAddress, fieldOffset,
-					mExpressionTranslation.getCTypeOfPointerComponents());
+			final Expression newPointer = constructAddressForStructField(loc, startAddress, fieldOffset);
 
 			final HeapLValue fieldHlv = LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, fieldType, null);
 			final StructAccessExpression sae = ExpressionFactory.constructStructAccessExpression(loc, value, fieldId);
@@ -2618,14 +2621,41 @@ public class MemoryHandler {
 
 	/**
 	 * Construct assert statements that do memsafety checks for {@link pointerValue} if the corresponding settings are
-	 * active. settings concerned are: - "Pointer base address is valid at dereference" - "Pointer to allocated memory
-	 * at dereference"
+	 * active.
 	 */
 	public List<Statement> constructMemsafetyChecksForPointerExpression(final ILocation loc,
 			final Expression pointerValue) {
-		return mMemoryModel.constructMemSafeStatementsForPointerExpression(loc, pointerValue,
-				mSettings.checkPointerDerefValidity(), mSettings.checkPointerDerefValidity(),
+		final var mode = mSettings.checkPointerDerefValidity();
+		if (mode == CheckMode.IGNORE) {
+			return Collections.emptyList();
+		}
+
+		final List<Statement> result = new ArrayList<>();
+
+		final Expression validBase = mMemoryModel.constructPointerBaseValidityCheckExpr(loc, pointerValue,
 				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+		result.add(statementDependentOnCheck(loc, mode, validBase));
+
+		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+		final Expression pointerTargetFullyAllocated = mMemoryModel.constructPointerTargetFullyAllocatedCheckExpr(loc,
+				pointerValue, zero, mSettings.isBitvectorTranslation(), mRequiredMemoryModelFeatures,
+				mMemoryModelDeclarationsHandler);
+		result.add(statementDependentOnCheck(loc, mode, pointerTargetFullyAllocated));
+
+		return result;
+	}
+
+	private static Statement statementDependentOnCheck(final ILocation loc, final CheckMode check,
+			final Expression expr) {
+		if (check == CheckMode.CHECK) {
+			final AssertStatement assertion = new AssertStatement(loc, expr);
+			final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
+			chk.annotate(assertion);
+			return assertion;
+		}
+		assert check == CheckMode.ASSUME : "missed a case?";
+		return new AssumeStatement(loc, expr);
 	}
 
 	public List<Statement> ultimateInitStatements(final ILocation loc) {
@@ -2645,11 +2675,6 @@ public class MemoryHandler {
 
 	public final Expression createFunctionPointer(final ILocation loc, final BigInteger offset) {
 		return mMemoryModel.createFunctionPointer(loc, offset);
-	}
-
-	public final Expression lastCharOfString(final ILocation loc, final CPrimitive sizeT,
-			final IdentifierExpression len, final IdentifierExpression returnValue) {
-		return mMemoryModel.lastCharOfString(loc, sizeT, len, returnValue);
 	}
 
 	public final Expression initialPointerFromPointer(final ILocation loc, final Expression ptr) {

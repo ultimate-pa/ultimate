@@ -29,26 +29,21 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryManagementStrategy.AllocationProcedureSpec;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * The interface defining the functions for the different memory addressing schemes.
@@ -73,20 +68,29 @@ public interface IMemoryAdressing {
 	List<MemoryModelDeclarations> getMetaDataDeclarations();
 
 	/**
-	 * Constructs a list of expressions that are used in the specifications of malloc.
+	 * Constructs the specification of malloc.
 	 *
-	 * @return The expressions.
+	 * @return a record representing the specification
 	 */
-	List<Pair<Expression, Set<VariableLHS>>> constructMallocSpecificationExpressions(ILocation tuLoc,
-			MemoryArea memoryArea, RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	AllocationProcedureSpec constructMallocSpecification(ILocation tuLoc, MemoryArea memoryArea,
+			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
 	/**
-	 * Constructs a list of expressions that are used in the specifications of dealloc.
+	 * Constructs the specification of dealloc.
 	 *
-	 * @return The expressions.
+	 * @return a record representing the specification
 	 */
-	List<Triple<Expression, Set<VariableLHS>, Boolean>> constructDeallocSpecificationExpressions(ILocation tuLoc,
+	AllocationProcedureSpec constructDeallocSpecification(ILocation tuLoc,
+			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
+
+	/**
+	 * Constructs the specification of allocInit.
+	 *
+	 * @return a record representing the specification
+	 */
+	AllocationProcedureSpec constructAllocInitSpecification(ILocation tuLoc,
 			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
@@ -98,15 +102,6 @@ public interface IMemoryAdressing {
 	List<Statement> constructUltimateInitStatements(ILocation loc,
 			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler, BigInteger fixedAddressCounter);
-
-	/**
-	 * Constructs the expressions used in the specifications for allocInit.
-	 *
-	 * @return The expressions.
-	 */
-	List<Pair<Expression, Set<VariableLHS>>> constructAllocInitSpecificationExpressions(ILocation tuLoc,
-			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
 	/**
 	 * Add or subtracts a pointer and an integer.
@@ -124,30 +119,12 @@ public interface IMemoryAdressing {
 	BigInteger getFixedAddressCounterCountingStep(final Expression size);
 
 	/**
-	 * Returns the address for a field in a struct.
-	 *
-	 * @return The address.
-	 */
-	Expression constructAddressForStructField(final ILocation loc, final Expression baseAddress,
-			final Offset fieldOffset, final CPrimitive sizeT);
-
-	/**
 	 * Adds an integer to a pointer.
 	 *
 	 * @return The new pointer.
 	 */
 	Expression addIntegerConstantToPointer(final ILocation loc, final Expression ptrExpr,
 			final BigInteger integerConstant);
-
-	/**
-	 * Constructs the specifications that the pointer base address is valid.
-	 *
-	 * @return The specifications.
-	 */
-	List<Specification> constructPointerValidityCheck(final ILocation loc, final String ptrName,
-			final String procedureName, final CheckMode mode,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
 	/**
 	 * Constructs the pointer base validity check expression.
@@ -163,9 +140,8 @@ public interface IMemoryAdressing {
 	 *
 	 * @return The specifications.
 	 */
-	List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
-			final String ptrName, final String procedureName, final CheckMode mode,
-			final Boolean isBitVectorTranslation, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	Expression constructPointerTargetFullyAllocatedCheckExpr(final ILocation loc, Expression ptr, final Expression size,
+			final boolean isBitVectorTranslation, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
 	/**
@@ -173,8 +149,8 @@ public interface IMemoryAdressing {
 	 *
 	 * @return The statements.
 	 */
-	List<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed,
-			final boolean isPointerCheckRequired, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	List<Expression> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
 	/**
@@ -206,30 +182,12 @@ public interface IMemoryAdressing {
 	Expression addExpressionToPointer(final ILocation loc, final Expression ptrExpr, final Expression expr);
 
 	/**
-	 * Returns a pointer to the last character of a string.
-	 *
-	 * @return The pointer.
-	 */
-	Expression getLastCharOfString(final ILocation loc, final CPrimitive sizeT, final IdentifierExpression len,
-			final IdentifierExpression returnValue);
-
-	/**
 	 * Creates the assume statement used in the handling of strchr.
 	 *
 	 * @return The statement.
 	 */
 	AssumeStatement constructStrChrAssumeStatement(final ILocation loc, final Expression tmpExpr,
 			final Expression argSPtr, final Expression nullPtrExpr,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
-
-	/**
-	 * Constructs assert / assume statements for ptr memsafety checks.
-	 *
-	 * @return The statements.
-	 */
-	List<Statement> constructMemSafeStatementsForPointerExpression(final ILocation loc, final Expression ptr,
-			final CheckMode pointerBaseValid, final CheckMode pointerTargetFullyAllocated,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
@@ -276,6 +234,11 @@ public interface IMemoryAdressing {
 			final RequiredMemoryModelFeatures requiredFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 
-	Expression getValidArray(final ILocation loc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	/**
+	 * Constructs a boolean expression that, when evaluated at the end of a procedure invocation, results in
+	 * {@code true} iff no memory is allocated that was not already allocated at the beginning of the invocation.
+	 */
+	Expression constructMemoryNeutralityCheckExpr(final ILocation loc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 }
