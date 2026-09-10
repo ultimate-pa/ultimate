@@ -581,7 +581,11 @@ public class InterruptPostProcessor implements IPostProcessor {
 		final var ifStmt = getIfStatement(isr, enabledExpr);
 		final var block = getIsrBlock(ifStmt, isr);
 		final var alwaysTrue = ExpressionFactory.createBooleanLiteral(mIgnoreLoc, true);
-		return new WhileStatement(mIgnoreLoc, alwaysTrue, new LoopInvariantSpecification[0], block);
+		final var whileStmt = new WhileStatement(mIgnoreLoc, alwaysTrue, new LoopInvariantSpecification[0], block);
+		if (mAnnotateInterrupts) {
+			new InterruptAnnotation(ISRLocation.ENTRY, isr).annotate(whileStmt);
+		}
+		return whileStmt;
 	}
 
 	private Statement constructForkJoinIsrWhileLoop(final InterruptServiceFunction isr) {
@@ -589,7 +593,11 @@ public class InterruptPostProcessor implements IPostProcessor {
 		final var enabledExpr = constructEnabledExpression(irqNum);
 		final var ifStmt = getIfStatement(isr, enabledExpr);
 		final var block = getIsrBlock(ifStmt, isr);
-		return new WhileStatement(mIgnoreLoc, enabledExpr, new LoopInvariantSpecification[0], block);
+		final var whileStmt = new WhileStatement(mIgnoreLoc, enabledExpr, new LoopInvariantSpecification[0], block);
+		if (mAnnotateInterrupts) {
+			new InterruptAnnotation(ISRLocation.ENTRY, isr).annotate(whileStmt);
+		}
+		return whileStmt;
 	}
 
 	private Statement constructAllIsrWhileLoop(final List<InterruptServiceFunction> isrs, final AuxVarInfo auxVarInfo) {
