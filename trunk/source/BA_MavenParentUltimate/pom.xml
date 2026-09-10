@@ -20,9 +20,9 @@
 
 		<!-- maven plugin versions -->
 		<!-- https://mvnrepository.com/artifact/org.eclipse.tycho/tycho-core -->
-		<tycho-version>5.0.0</tycho-version>
+		<tycho-version>5.0.2</tycho-version>
 		<!-- https://mvnrepository.com/artifact/org.sonarsource.scanner.maven/sonar-maven-plugin -->
-		<sonar-version>5.2.0.4988</sonar-version>
+		<sonar-version>5.5.0.6356</sonar-version>
 		<!-- https://mvnrepository.com/artifact/org.jacoco/jacoco-maven-plugin -->
 		<jacoco-version>0.8.14</jacoco-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-clean-plugin -->
@@ -30,13 +30,13 @@
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-antrun-plugin -->
 		<maven-antrun-version>3.2.0</maven-antrun-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-war-plugin -->
-		<maven-war-version>3.5.0</maven-war-version>
+		<maven-war-version>3.5.1</maven-war-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-assembly-plugin -->
-		<maven-assembly-version>3.7.1</maven-assembly-version>
+		<maven-assembly-version>3.8.0</maven-assembly-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-resources-plugin -->
-		<maven-resources-version>3.3.1</maven-resources-version>
+		<maven-resources-version>3.5.0</maven-resources-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
-		<maven-compiler-version>3.14.1</maven-compiler-version>
+		<maven-compiler-version>3.15.0</maven-compiler-version>
 
 		<!-- reference to workspace root -->
 		<workspaceDir>${basedir}/..</workspaceDir>
@@ -233,7 +233,7 @@
 					<dependency>
 						<groupId>org.eclipse.jdt</groupId>
 						<artifactId>ecj</artifactId>
-						<version>3.43.0</version>
+						<version>3.45.0</version>
 					</dependency>
 				</dependencies>
 			</plugin>
