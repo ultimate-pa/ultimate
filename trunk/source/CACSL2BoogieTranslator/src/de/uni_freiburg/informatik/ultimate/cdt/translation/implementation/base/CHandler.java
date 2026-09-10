@@ -619,7 +619,8 @@ public class CHandler {
 		final FunctionModelHelper helper =
 				new FunctionModelHelper(mAuxVarInfoBuilder, mExpressionTranslation, mMemoryHandler, mTypeSizes,
 						mTypeHandler, mSettings.getFunctionsCheckedForMemoryNeutrality().contains("main"),
-						mSettings.isSvcompMemtrackCompatibilityMode(), mMemoryPointer);
+						mSettings.isSvcompMemtrackCompatibilityMode(), mMemoryPointer,
+						mSettings.assumeHeapAllocationAlwaysSucceeds());
 
 		return List.of(new AssertLibraryModel(helper, mExprResultTransformer, mSettings.checkAssertions()),
 				new AtomicLibraryModel(helper, mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder),
@@ -638,7 +639,8 @@ public class CHandler {
 						mTypeSizes, mMemoryHandler, mDataRaceChecker, mTypeHandler),
 				new StdlibLibraryModel(helper, mExprResultTransformer, mTypeSizes, mTypeSizeComputer,
 						mExpressionTranslation, mAuxVarInfoBuilder, mMemoryHandler, mProcedureManager, mNameHandler,
-						mSettings.checkSignedIntegerBounds()),
+						mSettings.checkSignedIntegerBounds(), mMemoryPointer,
+						mSettings.assumeHeapAllocationAlwaysSucceeds()),
 				new StringLibraryModel(helper, mExprResultTransformer, mAuxVarInfoBuilder, mMemoryHandler,
 						mProcedureManager, mExpressionTranslation, mTypeSizeComputer, mMemoryPointer),
 				new SvcompLibraryModel(helper, mAuxVarInfoBuilder, mExpressionTranslation, mNameHandler,

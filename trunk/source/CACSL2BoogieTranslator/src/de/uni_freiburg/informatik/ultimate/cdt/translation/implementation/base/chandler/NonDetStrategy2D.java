@@ -69,8 +69,8 @@ public class NonDetStrategy2D<T extends MemoryAddressing2D> extends MemoryManage
 
 	public NonDetStrategy2D(final TypeSizes typeSizes, final ExpressionTranslation expressionTranslation,
 			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final IBooleanArrayHelper booleanArrayHelper, final T addressing) {
-		super(typeSizes, expressionTranslation, typeHandler, typeSizeAndOffsetComputer);
+			final IBooleanArrayHelper booleanArrayHelper, final T addressing, final boolean assumeAllocAlwaysSucceeds) {
+		super(typeSizes, expressionTranslation, typeHandler, typeSizeAndOffsetComputer, assumeAllocAlwaysSucceeds);
 
 		mBooleanArrayHelper = booleanArrayHelper;
 		mMemoryAddressing = addressing;
@@ -80,6 +80,7 @@ public class NonDetStrategy2D<T extends MemoryAddressing2D> extends MemoryManage
 	public List<Pair<Expression, Set<VariableLHS>>> constructMallocSpecificationExpressions(final ILocation tuLoc,
 			final MemoryArea memoryArea, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		final boolean canAllocFail = memoryArea == MemoryArea.HEAP && !mAssumeAllocAlwaysSucceeds;
 
 		final var memoryAreaName = memoryArea.getMemoryStructureDeclaration().getName();
 		final var falseExpr = mBooleanArrayHelper.constructFalse();
@@ -115,20 +116,44 @@ public class NonDetStrategy2D<T extends MemoryAddressing2D> extends MemoryManage
 
 		expressions.add(new Pair<>(freshLocationCurrentlyNotValidExpr, Collections.emptySet()));
 
-		// #valid == old(#valid)[#res!base := true]
 		final var validUpdateExpr =
 				MemoryModelExpressionHelper.ensuresArrayUpdate(tuLoc, trueExpr, resBaseExpr, validArrayExpr);
-		expressions.add(new Pair<>(validUpdateExpr,
-				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(validArrayExpr))));
+		if (canAllocFail) {
+			// #res!base == 0 || #valid == old(#valid)[#res!base := true]
+			expressions.add(new Pair<>(
+					ExpressionFactory.or(tuLoc,
+							ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, resBaseExpr,
+									zeroNumericValueExpr),
+							validUpdateExpr),
+					Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(validArrayExpr))));
+
+			// #res!base != 0 || #valid == old(#valid)
+			expressions.add(new Pair<>(
+					ExpressionFactory.or(tuLoc,
+							ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPNEQ, resBaseExpr,
+									zeroNumericValueExpr),
+							ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
+									ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD,
+											validArrayExpr),
+									validArrayExpr)),
+					Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(validArrayExpr))));
+
+		} else {
+			// #valid == old(#valid)[#res!base := true]
+			expressions.add(new Pair<>(validUpdateExpr,
+					Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(validArrayExpr))));
+		}
 
 		// #res!offset == 0
 		final var offsetEqualZeroExpr = ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
 				mMemoryAddressing.mMemoryPointer.pointerOffset(resultExpr, tuLoc), zeroNumericValueExpr);
 		expressions.add(new Pair<>(offsetEqualZeroExpr, Collections.emptySet()));
 
-		// #res!base != 0
-		final var baseNotEqualZeroExpr = baseNotEqualZeroExpr(tuLoc, resultExpr, zeroNumericValueExpr);
-		expressions.add(new Pair<>(baseNotEqualZeroExpr, Collections.emptySet()));
+		if (!canAllocFail) {
+			// #res!base != 0
+			final var baseNotEqualZeroExpr = baseNotEqualZeroExpr(tuLoc, resultExpr, zeroNumericValueExpr);
+			expressions.add(new Pair<>(baseNotEqualZeroExpr, Collections.emptySet()));
+		}
 
 		if (memoryArea == MemoryArea.STACK) {
 			// #StackHeapBarrier < res!base
