@@ -288,7 +288,8 @@ public class OptionBuilder {
 			break;
 		case Path:
 			sb.append("<arg> is a string representing one or multiple paths to a file or directory on the system. ");
-			sb.append("If multiple paths are specified by the user, they are separated by a semicolon. ");
+			sb.append("If multiple paths are specified by the user, they are separated by the system-dependent path separator. ");
+			sb.append("On UNIX systems, this character is ':'; on Microsoft Windows systems it is ';'. ");
 			break;
 		case Integer:
 			sb.append("<arg> is a string representing an integer. ");

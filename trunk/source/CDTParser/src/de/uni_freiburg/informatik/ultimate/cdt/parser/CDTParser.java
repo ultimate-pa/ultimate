@@ -31,12 +31,18 @@
 package de.uni_freiburg.informatik.ultimate.cdt.parser;
 
 import java.io.File;
+import java.io.FileFilter;
+import java.io.FilenameFilter;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -128,14 +134,30 @@ public class CDTParser implements ISource {
 
 	private static final IProgressMonitor NULL_MONITOR = new NullProgressMonitor();
 	private final String[] mFileTypes;
+	private final String mIncludeFileType;
+	private final FilenameFilter mIncludeFilesFilter;
+	private final FileFilter mIncludeDirectoriesFilter;
 	private ILogger mLogger;
 	private List<String> mFileNames;
 	private IUltimateServiceProvider mServices;
 	private IProject mProject;
 
 	public CDTParser() {
-		mFileTypes = new String[] { ".c", ".i", ".h", ".inl" };
+		mIncludeFileType = new String(".h");
+		mFileTypes = new String[] { ".c", ".i", mIncludeFileType, ".inl" };
 		mCdtPProjectHierachyFlag = "FLAG" + UUID.randomUUID().toString().substring(0, 10).replace("-", "");
+		mIncludeFilesFilter = new FilenameFilter() {
+			@Override
+			public boolean accept(final File directory, final String name) {
+				return name.toLowerCase().endsWith(mIncludeFileType);
+			}
+		};
+		mIncludeDirectoriesFilter = new FileFilter() {
+			@Override
+			public boolean accept(final File pathname) {
+				return pathname.isDirectory();
+			}
+		};
 	}
 
 	@Override
@@ -278,19 +300,7 @@ public class CDTParser implements ISource {
 		final ICProject cProject = CoreModel.getDefault().create(mProject);
 		cProject.setRawPathEntries(new IPathEntry[] { sourceEntry }, NULL_MONITOR);
 
-		// TODO: this adds includes and makes them resolvable, but seems like the wrong way
-		final String includes =
-				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.INCLUDE_PATHS);
-		for (final String includePath : includes.split(";")) {
-			if (!new File(includePath).exists()) {
-				continue;
-			}
-			mLogger.info("Adding includes from " + includePath + " as file ");
-			final File[] includeFiles = new File(includePath).listFiles();
-			for (final File f : includeFiles) {
-				addLinkToFolder(sourceFolder, f);
-			}
-		}
+		addIncludeFiles(sourceFolder, computeIncludePaths(files));
 
 		// Refresh the workspace
 		ResourcesPlugin.getWorkspace().getRoot().refreshLocal(IResource.DEPTH_INFINITE, null);
@@ -306,6 +316,74 @@ public class CDTParser implements ISource {
 			printLanguageSettingsEntries(cProject);
 		}
 		return cProject;
+	}
+
+	private Collection<File> computeIncludePaths(final File[] files) {
+		// Include all parent dirs of the source files and all dirs from the settings afterwards
+		final List<File> rawPaths = Arrays.stream(files).map(File::getParentFile).collect(Collectors.toList());
+		final String includesFromSettings =
+				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.INCLUDE_PATHS);
+		for (final String include : includesFromSettings.split(";")) {
+			final File includeDir = new File(include);
+			if (includeDir.isAbsolute()) {
+				rawPaths.add(includeDir);
+				continue;
+			}
+			for (final File f : files) {
+				try {
+					rawPaths.add(new File(f.getParentFile(), include).getCanonicalFile());
+				} catch (final IOException e) {
+					// Invalid path, do nothing
+					continue;
+				}
+			}
+		}
+		// Exclude all duplicate and invalid paths, but keep their order.
+		final Collection<File> validPaths =
+				rawPaths.stream().filter(File::isDirectory).collect(Collectors.toCollection(LinkedHashSet::new));
+		final boolean recursive =
+				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceInitializer.RECURSIVE);
+		if (!recursive) {
+			return validPaths;
+		}
+		// Add the paths recursively
+		final ArrayDeque<File> queue = new ArrayDeque<>(validPaths);
+		final Set<File> result = new LinkedHashSet<>();
+		while (!queue.isEmpty()) {
+			final File f = queue.pop();
+			if (result.add(f)) {
+				queue.addAll(Arrays.asList(f.listFiles(mIncludeDirectoriesFilter)));
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Add files from specified include paths to the project source folder.
+	 *
+	 * @param sourceFolder
+	 *            project source folder
+	 * @param includePaths
+	 *            absolute path names where include files are located
+	 */
+	private void addIncludeFiles(final IFolder sourceFolder, final Collection<File> includePaths) throws CoreException {
+		for (final File includePath : includePaths) {
+			// check if current include path is valid
+			final boolean includePathValid = includePath.exists() && includePath.isDirectory();
+			if (!includePathValid) {
+				// skip adding invalid include path
+				continue;
+			}
+
+			mLogger.info("Adding include files from include path " + includePath);
+
+			// add all include files from the current include path
+			final File[] includeFiles = includePath.listFiles(mIncludeFilesFilter);
+			for (final File includeFile : includeFiles) {
+				mLogger.info("Adding include file " + includeFile);
+				addLinkToFolder(sourceFolder, includeFile);
+			}
+		}
 	}
 
 	/**
