@@ -189,6 +189,12 @@ public final class SFO {
 	public static final String MEMSET = "ULTIMATE.memset";
 
 	/**
+	 * Prefixes for the read and write functions in the memory model
+	 */
+	public static final String READ_PREFIX = "read~";
+	public static final String WRITE_PREFIX = "write~";
+
+	/**
 	 * used for detecting data races
 	 */
 	public static final String MEMORY_RACE = "#race";
