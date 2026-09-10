@@ -214,6 +214,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.EntryFunctionException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -585,7 +586,12 @@ public class CHandler {
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
-		mIsInLibraryMode = !prerunCHandler.mProcedureManager.hasProcedure(mSettings.getEntryFunction());
+		mIsInLibraryMode = mSettings.getEntryFunction().equals("");
+		if (!mIsInLibraryMode && !prerunCHandler.mProcedureManager.hasProcedure(mSettings.getEntryFunction())) {
+			final String errorMessage = String.format("Specified entry function %s does not exist in program",
+					mSettings.getEntryFunction());
+			throw new EntryFunctionException(null, errorMessage);
+		}
 		copyGlobalsFromPrerun(prerunCHandler.mSymbolTable);
 	}
 
