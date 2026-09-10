@@ -34,6 +34,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
+
 /**
  * Struct / Union type (see C11 6.2.5.20.2/3)
  *
@@ -47,6 +49,9 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	}
 
 	private final StructOrUnion mIsStructOrUnion;
+
+	private final boolean mIsAnonymous;
+
 	/**
 	 * Field names.
 	 */
@@ -83,20 +88,32 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		assert name != null;
 		assert fNames.length == bitFieldWidths.size();
 		mIsStructOrUnion = isStructOrUnion;
+		mIsAnonymous = name.isEmpty() ? true : false;
 		mFieldNames = fNames;
 		mFieldTypes = fTypes;
 		mBitFieldWidths = Collections.unmodifiableList(bitFieldWidths);
-		mStructName = Objects.requireNonNull(name);
+		mStructName = isAnonymous() ? Objects.requireNonNull(name) : new String();
 		mIsComplete = true;
 	}
 
 	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name) {
-		assert name != null && !name.isEmpty();
+		assert name != null;
 		mIsStructOrUnion = isStructOrUnion;
+		mIsAnonymous = name.isEmpty() ? true : false;
 		mFieldNames = new String[0];
 		mFieldTypes = new ICType[0];
 		mBitFieldWidths = Collections.emptyList();
-		mStructName = Objects.requireNonNull(name);
+		mStructName = isAnonymous() ? Objects.requireNonNull(name) : new String();
+		mIsComplete = false;
+	}
+
+	public CStructOrUnion(final StructOrUnion isStructOrUnion) {
+		mIsStructOrUnion = isStructOrUnion;
+		mIsAnonymous = true;
+		mFieldNames = new String[0];
+		mFieldTypes = new ICType[0];
+		mBitFieldWidths = Collections.emptyList();
+		mStructName = null;
 		mIsComplete = false;
 	}
 
@@ -157,17 +174,23 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		return mIsStructOrUnion;
 	}
 
+	public boolean isAnonymous() {
+		return mIsAnonymous;
+	}
+
 	@Override
 	public String toString() {
-		final String structOrUnionPrefix = getPrefix(mIsStructOrUnion);
+		final String structOrUnionPrefix = getPrefix(isStructOrUnion(), isAnonymous());
 
 		if (isIncomplete()) {
 			return structOrUnionPrefix + "~incomplete~" + getName();
 		}
 		final StringBuilder sb = new StringBuilder();
 		sb.append(structOrUnionPrefix);
-		sb.append('~');
-		sb.append(getName());
+		if (!isAnonymous()) {
+			sb.append('~');
+			sb.append(getName());
+		}
 		for (int i = 0; i < getFieldCount(); i++) {
 			sb.append("?");
 			sb.append(mFieldNames[i]);
@@ -207,6 +230,10 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		mIsComplete = true;
 	}
 
+	public List<String> getFieldNames() {
+		return Arrays.asList(mFieldNames);
+	}
+
 	public List<Integer> getBitFieldWidths() {
 		return mBitFieldWidths;
 	}
@@ -217,7 +244,7 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	 */
 	public int getBitfieldWidth(final String id) {
 		assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
-		final int idx = Arrays.asList(mFieldNames).indexOf(id);
+		final int idx = getFieldNames().indexOf(id);
 		if (idx < 0) {
 			throw new IllegalArgumentException("Field not in struct: " + id);
 		}
@@ -246,11 +273,26 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		return this == o;
 	}
 
-	public static String getPrefix(final StructOrUnion structOrUnion) {
+	public static String getPrefix(final StructOrUnion structOrUnion, final boolean anonymous) {
+		final String unnamed = anonymous ? "ANONYMOUS~" : new String();
 		return switch (structOrUnion) {
-		case STRUCT -> "STRUCT~";
-		case UNION -> "UNION~";
+		case STRUCT -> "STRUCT~" + unnamed;
+		case UNION -> "UNION~" + unnamed;
 		};
+	}
+
+	public static StructOrUnion getStructOrUnionFromAstNode(final IASTCompositeTypeSpecifier node) {
+		return switch (node.getKey()) {
+		case IASTCompositeTypeSpecifier.k_struct -> StructOrUnion.STRUCT;
+		case IASTCompositeTypeSpecifier.k_union -> StructOrUnion.UNION;
+		default -> throw new UnsupportedOperationException();
+		};
+	}
+
+	public static boolean isAnonymousFromAstNode(final IASTCompositeTypeSpecifier node) {
+		assert node.getKey() == IASTCompositeTypeSpecifier.k_struct
+				|| node.getKey() == IASTCompositeTypeSpecifier.k_union;
+		return node.getName().toString().isEmpty();
 	}
 
 	@Override

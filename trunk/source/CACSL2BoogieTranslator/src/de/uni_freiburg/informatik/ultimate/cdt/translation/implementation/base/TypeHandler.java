@@ -35,6 +35,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -422,6 +423,16 @@ public class TypeHandler implements ITypeHandler {
 					bitFieldWidths.add(declaration.getBitfieldSize());
 				}
 			} else if (r instanceof SkipResult) { // skip ;)
+			} else if (r instanceof final TypesResult tr && tr.getCType() instanceof final CStructOrUnion su) {
+				if (su.isAnonymous()) {
+					// Flat unnamed (anonymous) struct or union by adding the field(s) to to the parent struct or union.
+					fNames.addAll(su.getFieldNames());
+					fTypes.addAll(Arrays.asList(su.getFieldTypes()));
+					bitFieldWidths.addAll(su.getBitFieldWidths());
+				} else {
+					final String msg = "Non-anoymous struct or union declaration cannot be flatten!";
+					throw new UnsupportedSyntaxException(loc, msg);
+				}
 			} else {
 				final String msg = "Unexpected syntax in struct declaration!";
 				throw new UnsupportedSyntaxException(loc, msg);
@@ -430,16 +441,10 @@ public class TypeHandler implements ITypeHandler {
 
 		final String cId = node.getName().toString();
 		final String rslvName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
-		final StructOrUnion isStructOrUnion;
-		if (node.getKey() == IASTCompositeTypeSpecifier.k_struct) {
-			isStructOrUnion = StructOrUnion.STRUCT;
-		} else if (node.getKey() == IASTCompositeTypeSpecifier.k_union) {
-			isStructOrUnion = StructOrUnion.UNION;
-		} else {
-			throw new UnsupportedOperationException();
-		}
+		final StructOrUnion isStructOrUnion = CStructOrUnion.getStructOrUnionFromAstNode(node);
+		final boolean isAnonymous = CStructOrUnion.isAnonymousFromAstNode(node);
 
-		final String identifier = CStructOrUnion.getPrefix(isStructOrUnion) + rslvName;
+		final String identifier = CStructOrUnion.getPrefix(isStructOrUnion, isAnonymous) + rslvName;
 
 		if (mIncompleteCStructOrUnionObjects.containsKey(rslvName)) {
 			final CStructOrUnion structOrUnion = mIncompleteCStructOrUnionObjects.get(rslvName);
