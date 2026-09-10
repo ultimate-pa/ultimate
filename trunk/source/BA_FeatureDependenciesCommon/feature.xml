@@ -4,7 +4,7 @@
       label="BA_FeatureDependenciesCommon"
       version="0.3.1"
       provider-name="Ultimate Program Analysis Team"
-      arch="x86_64">
+      arch="aarch64,x86_64">
 
    <plugin
          id="com.google.gson"
@@ -72,6 +72,12 @@
          version="0.0.0"/>
 
    <plugin
+         id="org.eclipse.cdt.core.linux.aarch64"
+         os="linux"
+         arch="aarch64"
+         version="0.0.0"/>
+
+   <plugin
          id="org.eclipse.cdt.core.linux.x86_64"
          os="linux"
          arch="x86_64"
@@ -111,6 +117,12 @@
 
    <plugin
          id="org.eclipse.core.filesystem"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.core.filesystem.linux.aarch64"
+         os="linux"
+         arch="aarch64"
          version="0.0.0"/>
 
    <plugin
