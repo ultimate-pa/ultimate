@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
-import java.util.List;
+import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.civlizer.model.ParameterDeclaration;
 import de.uni_freiburg.informatik.ultimate.civlizer.model.ParameterDeclaration.Linearity;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
@@ -63,17 +64,31 @@ public class CivlUtils {
 		// static utility class should not be instantiated
 	}
 
+	public static ParameterDeclaration[] VarListToParameterDeclaration(final VarList[] varList) {
+		return Arrays.stream(varList).flatMap(x -> Arrays.stream(VarListToParameterDeclaration(x)))
+				.toArray(ParameterDeclaration[]::new);
+	}
+
+	public static ParameterDeclaration[] VarListToParameterDeclaration(final VarList varList) {
+		return Arrays.stream(varList.getIdentifiers())
+				.map(x -> new ParameterDeclaration(x, varList.getType(), Linearity.NONE))
+				.toArray(ParameterDeclaration[]::new);
+	}
+
+	// ***
 	static class ExpressionUpdater extends BoogieTransformer {
-		static Expression updates(final Expression expr, final CallStatement update) {
+		// VarList
+		static Expression updates(final Expression expr, final VarList[] paramToReplace,
+				final IdentifierExpression[] newParam) {
 			final ExpressionUpdater exprUpdater = new ExpressionUpdater(update);
 			return exprUpdater.processExpression(expr);
 		}
 
-		private final String mGhostVariable;
 		private Expression mCondition = null;
 
-		ExpressionUpdater(final CallStatement update) {
-			mGhostVariable = update.getMethodName();
+		ExpressionUpdater(final CallStatement update, final VarList[] paramToReplace,
+				final IdentifierExpression[] newParam) {
+
 			if (update.getArguments()[0] instanceof final IfThenElseExpression ite) {
 				mCondition = processExpression(ite.getCondition());
 				final Expression thenPart = processExpression(ite.getThenPart());
@@ -182,14 +197,13 @@ public class CivlUtils {
 
 	}
 
-	static Expression updateAnnotation(final Expression annotation, final List<CallStatement> ghostUpdates) {
+	static Expression updateAnnotation(final Expression annotation, final VarList[] paramToReplace,
+			final IdentifierExpression[] newParam) {
 		// TODO finish
-		for (final var ghostUpdate : ghostUpdates) {
-
-		}
 
 		return annotation;
 	}
+	// ***
 
 	static Attribute createLinearityAttribute(final Linearity linearity) {
 		final String name = switch (linearity) {

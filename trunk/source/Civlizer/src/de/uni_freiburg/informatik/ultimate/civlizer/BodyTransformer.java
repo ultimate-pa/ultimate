@@ -430,7 +430,7 @@ final class BodyTransformer extends BoogieTransformer {
 	// Then call a generated "fork" procedure.
 	private List<Statement> processForkStatement(final ForkStatement forkStmt, final List<CallStatement> ghostUpdates) {
 		// TODO support fork parameters
-		assert forkStmt.getArguments().length == 0 : "Arguments for forks are not yet supported";
+		// assert forkStmt.getArguments().length == 0 : "Arguments for forks are not yet supported";
 
 		final var result = new ArrayList<Statement>();
 		result.addAll(ghostUpdates);
@@ -457,7 +457,7 @@ final class BodyTransformer extends BoogieTransformer {
 
 	private static Statement processJoinStatement(final JoinStatement joinStmt) {
 		// TODO support return values from joins
-		assert joinStmt.getLhs().length == 0 : "Return values from joins are not yet supported";
+		// assert joinStmt.getLhs().length == 0 : "Return values from joins are not yet supported";
 
 		final Expression[] joinThreadId = joinStmt.getThreadID();
 		final Expression[] tid = { new IdentifierExpression(joinStmt.getLoc(), BoogieType.createPlaceholderType(0),

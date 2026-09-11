@@ -559,8 +559,6 @@ public final class Translator {
 						null, BinaryExpression.Operator.COMPEQ, new IdentifierExpression(null, BoogieType.TYPE_INT,
 								entry.getKey(), new DeclarationInformation(StorageClass.QUANTIFIED, null)),
 						entry.getValue()));
-
-				mLogger.warn(collectLocalVariables(entry.getValue()));
 			}
 		}
 
@@ -574,9 +572,24 @@ public final class Translator {
 				inParams.stream().map(Translator::getParameterExpression).toArray(IdentifierExpression[]::new),
 				invariantClauses);
 
+		// add parameters
+		inParams.addAll(Arrays.asList(CivlUtils.VarListToParameterDeclaration(decl.getInParams())));
+
 		final var body = new BodyTransformer(mServices, this, decl.getIdentifier(), decl.getBody()).getResult();
+
+		// return cases
+		if (decl.getOutParams().length > 0) {
+			return new YieldProcedure(LAYER_TOP, decl.getIdentifier(), inParams.toArray(ParameterDeclaration[]::new),
+					new ParameterDeclaration[0], new CallStatement[] { requires }, new CallStatement[0],
+					new Body(null,
+							Stream.concat(Stream.of(new VariableDeclaration(null, null, decl.getOutParams())),
+									Arrays.stream(body.getLocalVars())).toArray(VariableDeclaration[]::new),
+							body.getBlock()),
+					null);
+		}
 		return new YieldProcedure(LAYER_TOP, decl.getIdentifier(), inParams.toArray(ParameterDeclaration[]::new),
 				new ParameterDeclaration[0], new CallStatement[] { requires }, new CallStatement[0], body, null);
+
 	}
 
 	private static List<IdentifierExpressionOccurrence> collectLocalVariables(final Expression annotation) {
