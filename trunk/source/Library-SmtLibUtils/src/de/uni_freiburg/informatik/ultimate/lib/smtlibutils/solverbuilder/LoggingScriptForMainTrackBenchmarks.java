@@ -338,7 +338,8 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 			remainingCandidates.add(logic);
 		}
 		if (remainingCandidates.isEmpty()) {
-			throw new AssertionError("no applicable logic");
+			// Workaround for the case that no logic is found. This can happen e.g., because there is no QF_ALIRA.
+			return Logics.ALL;
 		} else if (remainingCandidates.size() == 1) {
 			return remainingCandidates.iterator().next();
 		} else {
