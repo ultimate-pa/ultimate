@@ -97,9 +97,9 @@ public class QuantifierUtils {
 
 	public static int getDualQuantifier(final int quantifier) {
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			return 1;
+			return QuantifiedFormula.FORALL;
 		} else if (quantifier == QuantifiedFormula.FORALL) {
-			return 0;
+			return QuantifiedFormula.EXISTS;
 		} else {
 			throw new UnsupportedOperationException(UNKNOWN_QUANTIFIER);
 		}
