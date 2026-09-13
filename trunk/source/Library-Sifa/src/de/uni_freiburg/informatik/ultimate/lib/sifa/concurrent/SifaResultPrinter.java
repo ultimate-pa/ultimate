@@ -75,7 +75,7 @@ public final class SifaResultPrinter {
 				continue;
 			}
 
-			final List<IcfgLocation> procLocations = getLocationsInProcedure(entry, proc, results);
+			final List<IcfgLocation> procLocations = getLocationsInProcedure(entry, proc);
 			if (procLocations.isEmpty()) {
 				continue;
 			}
@@ -100,8 +100,7 @@ public final class SifaResultPrinter {
 		}
 	}
 
-	private List<IcfgLocation> getLocationsInProcedure(final IcfgLocation entry, final String procedure,
-			final Map<IcfgLocation, IPredicate> results) {
+	private List<IcfgLocation> getLocationsInProcedure(final IcfgLocation entry, final String procedure) {
 		final List<IcfgLocation> ordered = new ArrayList<>();
 		final Set<IcfgLocation> visited = new HashSet<>();
 		final Deque<IcfgLocation> worklist = new ArrayDeque<>();

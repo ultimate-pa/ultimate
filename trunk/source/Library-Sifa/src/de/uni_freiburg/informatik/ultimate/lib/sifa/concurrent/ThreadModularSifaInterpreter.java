@@ -88,9 +88,6 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private final ConcurrentSymbolicTools mConcurrentTools;
 	private final int mOuterWideningThreshold;
 	private final PublishOnAcquire mInitialPublication;
-	private final Set<IcfgLocation> mJoinedExitLocations;
-	private final Map<String, ThreadRunCache> mThreadRunCache = new LinkedHashMap<>();
-	private int mPublicationGrewRound;
 
 	public ThreadModularSifaInterpreter(final ILogger logger, final IProgressAwareTimer timer, final SifaStats stats,
 			final ConcurrentSymbolicTools tools, final IIcfg<IcfgLocation> icfg,
@@ -123,7 +120,6 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		mThreadInterpreters = new HashMap<>();
 		mForkSourcesByThread = collectForkSourcesByThread();
 		prepareThreadIcfgsAndLois();
-		mJoinedExitLocations = computeJoinedExitLocations();
 		mResultPrinter = mConcurrentTools.getSettings().resultPrint()
 				? new SifaResultPrinter(logger, setup.abstractLocationIds(),
 						mConcurrentTools.getThreadActivityPreanalysis())
@@ -159,6 +155,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		final Map<IcfgLocation, IPredicate> allPredicates = new LinkedHashMap<>();
 		IInterferenceSet currentInterferences = null;
 		PublishOnAcquire currentPublication = mInitialPublication;
+		final Set<IcfgLocation> joinedExitLocations = computeJoinedExitLocations();
 		boolean rerunWithStableInterferences = false;
 
 		for (int iteration = 1;; iteration++) {
@@ -172,10 +169,10 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			}
 			mLogger.info("Iteration %d", iteration);
 			final Map<IcfgLocation, IPredicate> joinedExitsBefore =
-					mJoinedExitLocations.isEmpty() ? Map.of() : snapshotLocations(allPredicates, mJoinedExitLocations);
+					joinedExitLocations.isEmpty() ? Map.of() : snapshotLocations(allPredicates, joinedExitLocations);
 			final Map<String, Map<IcfgLocation, IPredicate>> perThreadPredicates = new LinkedHashMap<>();
 			mConcurrentTools.setPublication(currentPublication);
-			analyzeThreads(currentInterferences, iteration, allPredicates, perThreadPredicates);
+			analyzeThreads(currentInterferences, allPredicates, perThreadPredicates);
 			final IInterferenceSet extractedInterferences =
 					mInterferenceFactory.buildFromAllStates(perThreadPredicates);
 			if (extractedInterferences != null) {
@@ -185,13 +182,10 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 					allPredicates, mDomain, mConcurrentTools::postWithoutInterference);
 			final boolean interferencesHaveConverged = hasConverged(extractedInterferences, currentInterferences);
 			final boolean publicationHasConverged = extractedPublication.isSubsumedBy(currentPublication, mDomain);
-			if (!publicationHasConverged) {
-				mPublicationGrewRound = iteration;
-			}
 
 			if (interferencesHaveConverged && publicationHasConverged) {
 				if (rerunWithStableInterferences
-						|| mJoinedExitLocations.isEmpty()
+						|| joinedExitLocations.isEmpty()
 						|| joinedExitPredicatesUnchanged(allPredicates, joinedExitsBefore)) {
 					return new FixpointResult(allPredicates, perThreadPredicates);
 				}
@@ -268,13 +262,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		return true;
 	}
 
-	/** Result of one thread's outer-round analysis plus the inputs it was computed under. */
-	private static record ThreadRunCache(int round, IInterferenceSet interference, IPredicate initialState,
-			Map<IcfgLocation, IPredicate> joinedExitInputs, Map<IcfgLocation, IPredicate> threadResult,
-			Map<IcfgLocation, IPredicate> observed, Map<IcfgLocation, IPredicate> interferenceInput) {
-	}
-
-	private void analyzeThreads(final IInterferenceSet interference, final int round,
+	private void analyzeThreads(final IInterferenceSet interference,
 			final Map<IcfgLocation, IPredicate> allPredicates,
 			final Map<String, Map<IcfgLocation, IPredicate>> perThreadPredicates) {
 		for (final String threadId : mThreadIds) {
@@ -283,89 +271,20 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			mConcurrentTools.configureForThread(threadId, interference, allPredicates, mDomain);
 			final IPredicate initialState = mConcurrentTools.getInitialStatePredicate(threadId);
 
-			final Map<IcfgLocation, IPredicate> joinedExitInputs =
-					snapshotLocations(allPredicates, mJoinedExitLocations);
-			final ThreadRunCache cache = mThreadRunCache.get(threadId);
-			if (cache != null && canReuseCachedRun(cache, threadId, interference, initialState, joinedExitInputs)) {
-				mStats.increment(Key.THREAD_REANALYSES_SKIPPED);
-				publishThreadResult(threadId, cache.threadResult(), cache.observed(), cache.interferenceInput(),
-						allPredicates, perThreadPredicates);
-				continue;
-			}
-
 			final IcfgLocation entryLocation = threadIcfg.getProcedureEntryNodes().get(threadId);
 			mConcurrentTools.rememberThreadLocationState(entryLocation, initialState);
 			final Map<IcfgLocation, IPredicate> threadResult = analyzeSingleThread(threadId, initialState);
 			final Map<IcfgLocation, IPredicate> observed = mConcurrentTools.getObservedThreadLocationStates();
 			final Map<IcfgLocation, IPredicate> interferenceInput = new LinkedHashMap<>(observed);
 			interferenceInput.putAll(threadResult);
-			mThreadRunCache.put(threadId, new ThreadRunCache(round, interference, initialState, joinedExitInputs,
-					threadResult, observed, interferenceInput));
-			publishThreadResult(threadId, threadResult, observed, interferenceInput, allPredicates,
-					perThreadPredicates);
-		}
-	}
-
-	private void publishThreadResult(final String threadId, final Map<IcfgLocation, IPredicate> threadResult,
-			final Map<IcfgLocation, IPredicate> observed, final Map<IcfgLocation, IPredicate> interferenceInput,
-			final Map<IcfgLocation, IPredicate> allPredicates,
-			final Map<String, Map<IcfgLocation, IPredicate>> perThreadPredicates) {
-		allPredicates.putAll(threadResult);
-		for (final var entry : observed.entrySet()) {
-			if (!threadResult.containsKey(entry.getKey()) || isForkSourceLocation(entry.getKey())) {
-				allPredicates.put(entry.getKey(), entry.getValue());
+			allPredicates.putAll(threadResult);
+			for (final var entry : observed.entrySet()) {
+				if (!threadResult.containsKey(entry.getKey()) || isForkSourceLocation(entry.getKey())) {
+					allPredicates.put(entry.getKey(), entry.getValue());
+				}
 			}
+			perThreadPredicates.put(threadId, interferenceInput);
 		}
-		perThreadPredicates.put(threadId, interferenceInput);
-	}
-
-	private boolean canReuseCachedRun(final ThreadRunCache cache, final String threadId,
-			final IInterferenceSet interference, final IPredicate initialState,
-			final Map<IcfgLocation, IPredicate> joinedExitInputs) {
-		if (cache.round() <= mPublicationGrewRound) {
-			return false;
-		}
-		if (!predicateSubsumed(initialState, cache.initialState())) {
-			return false;
-		}
-		for (final var entry : joinedExitInputs.entrySet()) {
-			if (!predicateSubsumed(entry.getValue(), cache.joinedExitInputs().get(entry.getKey()))) {
-				return false;
-			}
-		}
-		return interferenceInputSubsumed(cache.interference(), interference, threadId);
-	}
-
-	private boolean interferenceInputSubsumed(final IInterferenceSet cached, final IInterferenceSet current,
-			final String threadId) {
-		if (current == null) {
-			return true;
-		}
-		if (cached == null) {
-			return false;
-		}
-		return current.isSubsumedByForThreads(cached, mDomain, relevantWriterThreads(threadId, current));
-	}
-
-	private Set<String> relevantWriterThreads(final String observerThreadId, final IInterferenceSet interference) {
-		final Set<String> relevant = new LinkedHashSet<>(interference.threadIds());
-		if (!mConcurrentTools.getThreadActivityPreanalysis().getMultiForkedThreads().contains(observerThreadId)) {
-			relevant.remove(observerThreadId);
-		}
-		return relevant;
-	}
-
-	private boolean predicateSubsumed(final IPredicate current, final IPredicate cached) {
-		if (current == cached || current == null) {
-			return true;
-		}
-		if (cached == null) {
-			return false;
-		}
-		if (current.getFormula() == cached.getFormula()) {
-			return true;
-		}
-		return mDomain.isSubsetEq(current, cached).isTrueForAbstraction();
 	}
 
 	private static boolean isForkSourceLocation(final IcfgLocation location) {

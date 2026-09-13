@@ -1,3 +1,5 @@
+//#Safe
+
 /*
     Simple case for handling nested forks, y is 2 or 3
 */

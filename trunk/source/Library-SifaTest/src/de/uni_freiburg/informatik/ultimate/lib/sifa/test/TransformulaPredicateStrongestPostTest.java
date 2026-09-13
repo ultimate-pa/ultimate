@@ -120,8 +120,6 @@ public class TransformulaPredicateStrongestPostTest {
 		final IPredicate spViaTransformulaPred = mPredicateFactory.newPredicate(spViaTransformula);
 		assertEquals(spViaTransformulaPred.getVars(), spViaRelation.getVars());
 		assertEquivalent(spViaTransformulaPred.getClosedFormula(), spViaRelation.getClosedFormula());
-		assertEquals(SmtUtils.checkEquivalence(spViaTransformulaPred.getClosedFormula(),
-				spViaRelation.getClosedFormula(), mScript), LBool.UNSAT);
 	}
 
 	@Test

@@ -1,3 +1,5 @@
+//#Safe
+
 var flag: int;
 
 procedure ULTIMATE.start()

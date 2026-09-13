@@ -26,14 +26,10 @@
 package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition.NamedServiceCallback;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
@@ -51,58 +47,24 @@ import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenera
 /** Fails on invalid expectations or when an expected-unsafe program is reported safe. */
 public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstractionTestSuite {
 
-	private static final String PROP_TIMEOUT_MS = "sifa.regression.timeout.ms";
-	private static final String PROP_MAX_FILES = "sifa.regression.maxFiles";
-	private static final String PROP_INCLUDE_REGEX = "sifa.regression.includeRegex";
-	private static final String PROP_EXCLUDE_REGEX = "sifa.regression.excludeRegex";
-	private static final String PROP_TOOLCHAIN = "sifa.regression.toolchain";
-	private static final String PROP_SETTINGS = "sifa.regression.settings";
-	private static final String PROP_INPUT_DIR = "sifa.regression.inputDir";
-	private static final String PROP_FILE_ENDING = "sifa.regression.fileEnding";
-	private static final String PROP_METHODS = "sifa.regression.methods";
-	private static final String PROP_LOCATION_TRACKING_MODE = "sifa.regression.locationTrackingMode";
-	private static final String PROP_USE_BUCKETS = "sifa.regression.useBuckets";
-	private static final String PROP_MAX_BUCKETS = "sifa.regression.maxBuckets";
-	private static final String PROP_MAX_DISJUNCTS_PER_BUCKET = "sifa.regression.maxDisjunctsPerBucket";
-	private static final String PROP_LOCKSET_AWARE = "sifa.regression.locksetAware";
-	private static final String PROP_PUBLISH_ON_ACQUIRE = "sifa.regression.publishOnAcquire";
-	private static final String PROP_JOIN_PRECISION = "sifa.regression.joinPrecision";
-	private static final String PROP_MAX_PARALLEL_EXPLICIT_VALUES = "sifa.regression.maxParallelExplicitValues";
-	private static final String PROP_ABSTRACT_DOMAIN = "sifa.regression.abstractDomain";
-	private static final String PROP_COMPOUND_DOMAINS = "sifa.regression.compoundDomains";
-	private static final String PROP_MAX_PARALLEL_INTERVALS = "sifa.regression.maxParallelIntervals";
-	private static final String PROP_MAX_PARALLEL_OCTAGON = "sifa.regression.maxParallelOctagon";
-	private static final String PROP_LOCATION_ABSTRACTION = "sifa.regression.locationAbstraction";
-	private static final String PROP_MAX_DISJUNCTIONS = "sifa.regression.maxDisjunctions";
-	private static final String PROP_INNER_WIDENING_THRESHOLD = "sifa.regression.innerWideningThreshold";
-	private static final String PROP_OUTER_WIDENING_THRESHOLD = "sifa.regression.outerWideningThreshold";
-
 	private static final String TOOLCHAIN = "SifaThreadModular.xml";
 	private static final String SETTINGS = "examples/concurrent/bpl/regression/thread-modular-sifa/testSettings.epf";
 	private static final String INPUT_DIR = "examples/concurrent/bpl/regression/thread-modular-sifa";
 	private static final String FILE_ENDING = ".bpl";
 	private static final String EXCLUDE_REGEX = ".*/scaling/.*";
 	private static final long TIMEOUT_MS = 30_000L;
+	private static final String INTERFERENCE_METHOD = "STRONGEST_POSTCONDITION";
 
-	private static final String[] METHODS = { "STRONGEST_POSTCONDITION" };
-
-	private static final String ABSTRACT_DOMAIN = "OctagonDomain";
-	private static final String FLUID = "SizeLimitFluid";
-	private static final int MAX_PARALLEL_EXPLICIT_VALUES = 2;
-	private static final int MAX_PARALLEL_OCTAGON = 1;
-	private static final int MAX_DISJUNCTIONS = 8;
-	private static final boolean JOIN_PRECISION = true;
-	private static final boolean USE_BUCKETS = true;
-	private static final boolean LOCKSET_AWARE = false;
-	private static final boolean PUBLISH_ON_ACQUIRE = false;
-	private static final boolean PROOF_CHECK = false;
-	private static final boolean RESULT_PRINT = false;
-
-	private static final String LOCATION_ABSTRACTION = "SPLIT_AT_NONLOCK_GUARDS_WRITES_AND_LOCKSETS";
+	private static final NamedServiceCallback RUN_CONFIGURATION =
+			new NamedServiceCallback(INTERFERENCE_METHOD, services -> {
+				services.getPreferenceProvider("de.uni_freiburg.informatik.ultimate.plugins.sifa")
+						.put("Interference Applicator", INTERFERENCE_METHOD);
+				return services;
+			});
 
 	@Override
 	protected long getTimeout() {
-		return Long.getLong(PROP_TIMEOUT_MS, TIMEOUT_MS);
+		return TIMEOUT_MS;
 	}
 
 	@Override
@@ -113,141 +75,25 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		final List<File> inputFiles = selectInputFiles();
-		final File toolchainFile = resolveToolchainFile();
-		final File settingsFile = resolveTrunkOrAbsoluteFile(getSettingsPath());
-
-		for (final String method : getMethods()) {
-			final UnaryOperator<IUltimateServiceProvider> callback = s -> {
-				final var prefs = s.getPreferenceProvider("de.uni_freiburg.informatik.ultimate.plugins.sifa");
-				prefs.put("Interference Applicator", method);
-
-				final String locationTrackingMode = System.getProperty(PROP_LOCATION_TRACKING_MODE);
-				if (locationTrackingMode != null && !locationTrackingMode.isBlank()) {
-					prefs.put("Location Tracking Mode", locationTrackingMode);
-				}
-				prefs.put("Abstract Domain", System.getProperty(PROP_ABSTRACT_DOMAIN, ABSTRACT_DOMAIN));
-				final String compoundDomains = System.getProperty(PROP_COMPOUND_DOMAINS);
-				if (compoundDomains != null && !compoundDomains.isBlank()) {
-					prefs.put("CompoundDomain Intern Domains", compoundDomains);
-				}
-				prefs.put("Fluid", FLUID);
-				prefs.put("Max. Parallel Explicit Values",
-						Integer.getInteger(PROP_MAX_PARALLEL_EXPLICIT_VALUES, MAX_PARALLEL_EXPLICIT_VALUES));
-				final Integer maxParallelIntervals = Integer.getInteger(PROP_MAX_PARALLEL_INTERVALS);
-				if (maxParallelIntervals != null) {
-					prefs.put("Max. Parallel Intervals", maxParallelIntervals);
-				}
-				prefs.put("Max. Parallel Octagon",
-						Integer.getInteger(PROP_MAX_PARALLEL_OCTAGON, MAX_PARALLEL_OCTAGON));
-				prefs.put("Join Precision", Boolean.parseBoolean(
-						System.getProperty(PROP_JOIN_PRECISION, Boolean.toString(JOIN_PRECISION))));
-				prefs.put("Use Buckets", Boolean.parseBoolean(
-						System.getProperty(PROP_USE_BUCKETS, Boolean.toString(USE_BUCKETS))));
-				putIntegerIfPresent(prefs, "Max. Buckets", PROP_MAX_BUCKETS);
-				putIntegerIfPresent(prefs, "Max. Disjuncts per Bucket", PROP_MAX_DISJUNCTS_PER_BUCKET);
-				prefs.put("Lockset-Aware Interference", Boolean.parseBoolean(
-						System.getProperty(PROP_LOCKSET_AWARE, Boolean.toString(LOCKSET_AWARE))));
-				prefs.put("Publish On Acquire", Boolean.parseBoolean(
-						System.getProperty(PROP_PUBLISH_ON_ACQUIRE, Boolean.toString(PUBLISH_ON_ACQUIRE))));
-				prefs.put("Proof Check", PROOF_CHECK);
-				prefs.put("Result Print", RESULT_PRINT);
-				prefs.put("Location Abstraction",
-						System.getProperty(PROP_LOCATION_ABSTRACTION, LOCATION_ABSTRACTION));
-				prefs.put("SizeLimitFluid Max. Disjunctions",
-						Integer.getInteger(PROP_MAX_DISJUNCTIONS, MAX_DISJUNCTIONS));
-				final Integer innerWideningThreshold = Integer.getInteger(PROP_INNER_WIDENING_THRESHOLD);
-				if (innerWideningThreshold != null) {
-					prefs.put("Inner Interference Widening Threshold", innerWideningThreshold);
-				}
-				final Integer outerWideningThreshold = Integer.getInteger(PROP_OUTER_WIDENING_THRESHOLD);
-				if (outerWideningThreshold != null) {
-					prefs.put("Outer Interference Widening Threshold", outerWideningThreshold);
-				}
-
-				return s;
-			};
-			addTestCases(toolchainFile, settingsFile, inputFiles, method, callback);
+		final File toolchainFile = UltimateRunDefinitionGenerator.getFileFromToolchainDir(TOOLCHAIN);
+		final File settingsFile = UltimateRunDefinitionGenerator.getFileFromTrunkDir(SETTINGS);
+		final long timeout = getTimeout();
+		for (final File inputFile : inputFiles) {
+			addTestCase(new UltimateRunDefinition(inputFile, settingsFile, toolchainFile, timeout, RUN_CONFIGURATION));
 		}
 		return super.createTestCases();
 	}
 
-	private static void putIntegerIfPresent(final IPreferenceProvider prefs, final String preferenceLabel,
-			final String propertyName) {
-		final Integer value = Integer.getInteger(propertyName);
-		if (value != null) {
-			prefs.put(preferenceLabel, value);
-		}
-	}
-
-	private void addTestCases(final File toolchainFile, final File settingsFile, final Collection<File> inputFiles,
-			final String name, final UnaryOperator<IUltimateServiceProvider> callback) {
-		final long timeout = getTimeout();
-		final NamedServiceCallback serviceCallback = new NamedServiceCallback(name, callback);
-		for (final File inputFile : inputFiles) {
-			addTestCase(new UltimateRunDefinition(inputFile, settingsFile, toolchainFile, timeout, serviceCallback));
-		}
-	}
-
 	private static List<File> selectInputFiles() {
-		final File inputDir = resolveTrunkOrAbsoluteFile(getInputDir());
-		final String includeRegex = System.getProperty(PROP_INCLUDE_REGEX);
-		final String excludeRegex = System.getProperty(PROP_EXCLUDE_REGEX, EXCLUDE_REGEX);
-		final int maxFiles = Integer.getInteger(PROP_MAX_FILES, -1);
-
-		List<File> inputFiles = TestUtil.getFiles(inputDir, getFileEnding()).stream()
-						.sorted((a, b) -> a.getAbsolutePath().compareTo(b.getAbsolutePath()))
-						.collect(Collectors.toList());
-
-		if (includeRegex != null && !includeRegex.isBlank()) {
-			inputFiles = inputFiles.stream().filter(f -> f.getAbsolutePath().matches(includeRegex))
-					.collect(Collectors.toList());
-		}
-		if (excludeRegex != null && !excludeRegex.isBlank()) {
-			inputFiles = inputFiles.stream().filter(f -> !f.getAbsolutePath().matches(excludeRegex))
-					.collect(Collectors.toList());
-		}
-		if (maxFiles >= 0 && inputFiles.size() > maxFiles) {
-			inputFiles = inputFiles.subList(0, maxFiles);
+		final File inputDir = UltimateRunDefinitionGenerator.getFileFromTrunkDir(INPUT_DIR);
+		final List<File> inputFiles = TestUtil.getFiles(inputDir, FILE_ENDING).stream()
+				.filter(file -> !file.getAbsolutePath().matches(EXCLUDE_REGEX))
+				.sorted((a, b) -> a.getAbsolutePath().compareTo(b.getAbsolutePath()))
+				.collect(Collectors.toList());
+		if (inputFiles.isEmpty()) {
+			throw new IllegalStateException("No " + FILE_ENDING + " test inputs found in " + inputDir);
 		}
 		return inputFiles;
-	}
-
-	private static File resolveToolchainFile() {
-		final String toolchain = System.getProperty(PROP_TOOLCHAIN, TOOLCHAIN);
-		final File direct = new File(toolchain);
-		if (direct.isAbsolute()) {
-			return direct;
-		}
-		return UltimateRunDefinitionGenerator.getFileFromToolchainDir(toolchain);
-	}
-
-	private static File resolveTrunkOrAbsoluteFile(final String path) {
-		final File direct = new File(path);
-		if (direct.isAbsolute()) {
-			return direct;
-		}
-		return UltimateRunDefinitionGenerator.getFileFromTrunkDir(path);
-	}
-
-	private static String getSettingsPath() {
-		return System.getProperty(PROP_SETTINGS, SETTINGS);
-	}
-
-	private static String getInputDir() {
-		return System.getProperty(PROP_INPUT_DIR, INPUT_DIR);
-	}
-
-	private static String getFileEnding() {
-		return System.getProperty(PROP_FILE_ENDING, FILE_ENDING);
-	}
-
-	private static String[] getMethods() {
-		final String configured = System.getProperty(PROP_METHODS);
-		if (configured == null || configured.isBlank()) {
-			return METHODS;
-		}
-		return Arrays.stream(configured.split(",")).map(String::trim).filter(s -> !s.isEmpty())
-				.toArray(String[]::new);
 	}
 
 	private static final class UnsoundnessOnlySafetyCheckTestResultDecider extends SafetyCheckTestResultDecider {

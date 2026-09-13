@@ -1,3 +1,5 @@
+//#Safe
+
 var x, y: int;
 
 procedure ULTIMATE.start()
