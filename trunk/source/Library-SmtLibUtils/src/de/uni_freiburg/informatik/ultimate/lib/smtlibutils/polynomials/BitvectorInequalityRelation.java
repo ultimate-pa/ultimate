@@ -99,41 +99,25 @@ public class BitvectorInequalityRelation implements PolynomialRelation {
 
 	/**
 	 * Constructs a canonicalized {@link BitvectorInequalityRelation} for a bitvector inequality {@code term}, or
-	 * {@code null} if {@code term} is not a binary relation / one of its sides could not be converted to a
-	 * polynomial term. Throws if {@code term}'s relation symbol is not one of the 8 bitvector inequality symbols -
-	 * this factory is not for equalities (those stay on {@link SingleTermPolynomialRelation}, which is already sound
-	 * for bitvector equality) or for Int/Real relations.
+	 * {@code null} if {@code term} is not a binary relation, isn't a bitvector inequality (e.g. an equality, or an
+	 * Int/Real relation - this factory is not for those; equalities stay on {@link SingleTermPolynomialRelation},
+	 * which is already sound for bitvector equality), or one of its sides could not be converted to a polynomial
+	 * term. Null-safe on purpose - callers like {@link PolyPoNe} need to safely "try this, and if it doesn't apply,
+	 * move on to something else" for an arbitrary atom, rather than assert a precondition only some callers could
+	 * guarantee.
 	 */
 	public static BitvectorInequalityRelation of(final Script script, final Term term) {
 		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);
-		if (bnr == null) {
-			return null;
+		if (bnr == null || !isBitvectorInequality(bnr.getRelationSymbol(), bnr.getLhs().getSort())) {
+			return null; // not a bv inequality, not our job
 		}
 		final RelationSymbol relationSymbol = bnr.getRelationSymbol();
-		if (!isBitvectorInequality(relationSymbol, bnr.getLhs().getSort())) {
-			throw new AssertionError(
-					"BitvectorInequalityRelation.of is only for bitvector inequalities, got " + relationSymbol);
-		}
 		final AbstractGeneralizedAffineTerm<?> polyLhs = transformToPolynomialTerm(script, bnr.getLhs());
 		final AbstractGeneralizedAffineTerm<?> polyRhs = transformToPolynomialTerm(script, bnr.getRhs());
 		if (polyLhs.isErrorTerm() || polyRhs.isErrorTerm()) {
 			return null;
 		}
 		return new BitvectorInequalityRelation(relationSymbol, polyLhs, polyRhs);
-	}
-
-	/**
-	 * Same as {@link #of(Script, Term)}, but returns {@code null} instead of throwing when {@code term} is a binary
-	 * relation that just isn't a bitvector inequality (e.g. an equality, or an Int/Real relation) - for callers like
-	 * {@link PolyPoNe} that need to safely "try this, and if it doesn't apply, move on to something else" for an
-	 * arbitrary atom, rather than assert a precondition only some callers can guarantee.
-	 */
-	static BitvectorInequalityRelation ofIfApplicable(final Script script, final Term term) {
-		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);
-		if (bnr == null || !isBitvectorInequality(bnr.getRelationSymbol(), bnr.getLhs().getSort())) {
-			return null; // not a bv inequality, not our job
-		}
-		return of(script, term);
 	}
 
 	private static boolean isBitvectorInequality(final RelationSymbol relationSymbol, final Sort sort) {
@@ -199,6 +183,38 @@ public class BitvectorInequalityRelation implements PolynomialRelation {
 	Term getBareConstantTerm(final Script script) {
 		final AbstractGeneralizedAffineTerm<?> constantSide = isVariableOnLhs() ? mRhs : mLhs;
 		return constantSide.toTerm(script);
+	}
+
+	/**
+	 * Combines the {@link #isBareVariableVsBareConstant()} check with extracting both sides in one call, instead of
+	 * making callers do the check and then separately call {@link #getBareVariableTerm(Script)} and
+	 * {@link #getBareConstantTerm(Script)} (each of which re-derives the orientation internally). Returns
+	 * {@code null} if the shape doesn't apply.
+	 */
+	BareVariableAndConstant asBareVariableVsBareConstant(final Script script) {
+		if (!isBareVariableVsBareConstant()) {
+			return null;
+		}
+		return new BareVariableAndConstant(getBareVariableTerm(script), getBareConstantTerm(script));
+	}
+
+	/** Holds both sides of a {@link #isBareVariableVsBareConstant()} relation together - see {@link #asBareVariableVsBareConstant(Script)}. */
+	static final class BareVariableAndConstant {
+		private final Term mVariable;
+		private final Term mConstantTerm;
+
+		private BareVariableAndConstant(final Term variable, final Term constantTerm) {
+			mVariable = variable;
+			mConstantTerm = constantTerm;
+		}
+
+		Term getVariable() {
+			return mVariable;
+		}
+
+		Term getConstantTerm() {
+			return mConstantTerm;
+		}
 	}
 
 	private static boolean isBareVariable(final AbstractGeneralizedAffineTerm<?> t) {
