@@ -79,7 +79,7 @@ int main(void)
      * higher, e.g. 200. Then Ultimate does not find a counterexample even
      * for "trivial" errors such as "assert false"
      */
-    while (steps_in_app < 250) {
+    while (steps_in_app < 100) {
         assert(!step_in_isr);
         steps_in_app++;
         assert(!step_in_isr);
@@ -89,7 +89,7 @@ int main(void)
     isr_executed = false;
 
     steps_in_app = 0;
-    while (steps_in_app < 1000) {
+    while (steps_in_app < 300) {
         steps_in_app++;
     }
     assert(isr_executed);

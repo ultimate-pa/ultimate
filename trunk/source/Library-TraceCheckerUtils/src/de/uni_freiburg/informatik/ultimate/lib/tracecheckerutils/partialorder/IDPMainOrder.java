@@ -51,7 +51,7 @@ public class IDPMainOrder<L extends IAction, S> implements IDfsOrder<L, S> {
 
 	@Override
 	public boolean isPositional() {
-		return true;
+		return false;
 	}
 
 	public static final class IDPMainComparator<L extends IAction> implements Comparator<L> {

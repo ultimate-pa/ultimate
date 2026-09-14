@@ -86,7 +86,6 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 
 	@Override
 	public boolean isSymmetric() {
-		// TODO: Should it be symmetric?
 		return mUnderlying.isSymmetric();
 	}
 
@@ -102,6 +101,10 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 			return Dependence.DEPENDENT;
 		}
 		if (isNonISRTransition(a) && isNonISRTransition(b)) {
+			if (!succOfSameThread(a) || succOfSameThread(b)) {
+				// Edges corresponding to a join are always dependent
+				return Dependence.DEPENDENT;
+			}
 			return mUnderlying.isIndependent(state, a, b);
 		}
 		return getInterruptDependence(a, b);
@@ -109,6 +112,10 @@ public class AtomicInterruptIndependenceRelation<S, L extends IIcfgTransition<?>
 
 	private boolean fromSameThread(final L a, final L b) {
 		return Objects.equals(a.getPrecedingProcedure(), b.getPrecedingProcedure());
+	}
+
+	private boolean succOfSameThread(final L a) {
+		return Objects.equals(a.getPrecedingProcedure(), a.getSucceedingProcedure());
 	}
 
 	private boolean isNonISRTransition(final L a) {
