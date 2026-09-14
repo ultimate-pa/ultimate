@@ -1,10 +1,12 @@
 #!/bin/bash -xe
 echo $PATH
 which z3
-which cvc4
+which cvc5
 which mathsat
+which bitwuzla
 z3 -version
-cvc4 --version | head -n 3
+cvc5 --version | head -n 3
 mathsat -version
+bitwuzla --version
 mvn --version
 echo "All solvers available!"

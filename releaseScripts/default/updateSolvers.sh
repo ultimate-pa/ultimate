@@ -72,30 +72,26 @@ update_cvc5(){
 ## bitwuzla
 update_bitwuzla(){
   TMP_DIR="bitwuzla"
-  # Requires: meson (pip), ninja (pip), m4 (apt), mingw-w64 (apt)
-  # Make sure to set the correct compilers:
-  # sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
-  # sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
-  git clone https://github.com/bitwuzla/bitwuzla $TMP_DIR
-  cd $TMP_DIR
-  # TODO: Do we want additional arguments here?
-  ./configure.py
-  cd build
-  meson compile
-  mv src/main/bitwuzla ../../adds/bitwuzla
-  chmod a+x ../../adds/bitwuzla
-  cd ..
-  # TODO: Do we want additional arguments here?
-  ./configure.py --wipe --win64
-  cd build
-  meson compile
-  mv src/main/bitwuzla.exe ../../adds/bitwuzla.exe
-  chmod a+x ../../adds/bitwuzla.exe
-  cd ../..
-  mv $TMP_DIR/COPYING adds/bitwuzla-LICENSE
-  rm -rf $TMP_DIR
-  # TODO: Update readme_files
+  TMP_ZIP="$TMP_DIR/bitwuzla.zip"
+  for platform in Linux Win64 ; do 
+    build=$(curl -sL https://api.github.com/repos/bitwuzla/bitwuzla/releases | jq -r 'map(select(.prerelease|not)) | first | .assets[] | select (.name| test(".*'$platform'.*x86.*static.zip")) | .browser_download_url' | sort | tail -n1)
+    echo "$platform $build"
+    
+    mkdir "$TMP_DIR"
+    curl -sL -o "$TMP_ZIP" "$build"
+    unzip -q -o -d "$TMP_DIR" "$TMP_ZIP"
+    if [[ "$platform" == "Linux" ]]; then
+      target="bitwuzla"
+    else
+      target="bitwuzla.exe"
+    fi
+    find "$TMP_DIR" -type f -name $target -exec cp "{}" adds/ \;
+    chmod a+x "adds/$target"
+    rm -r "$TMP_DIR"
+  done
+  curl -sL -o adds/bitwuzla-LICENSE https://raw.githubusercontent.com/bitwuzla/bitwuzla/main/COPYING
+  echo "$(adds/bitwuzla -V)"
 }
-update_mathsat
+update_bitwuzla
 
 # TODO: continue when the rate limit allows us again (its 50 per h for unauthenticated users)

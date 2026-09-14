@@ -402,19 +402,6 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 							mPredicateUnifier, mPredicateFactory, technique));
 		}
 
-		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleCVC4(final InterpolationTechnique technique,
-				final AssertCodeBlockOrder... order) {
-			return createIpTcStrategyModuleCVC4(-1, technique, order);
-		}
-
-		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleCVC4(final long timeoutInMillis,
-				final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
-			return createModuleWrapperIfNecessary(
-					new IpTcStrategyModuleCvc4<>(mTaskIdentifier, mServices, mPrefs, mCounterexample, mPrecondition,
-							mPostcondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
-							mPredicateUnifier, mPredicateFactory, timeoutInMillis, technique));
-		}
-
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleCVC5(final InterpolationTechnique technique,
 				final AssertCodeBlockOrder... order) {
 			return createIpTcStrategyModuleCVC5(-1, technique, order);
@@ -426,6 +413,14 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 					new IpTcStrategyModuleCvc5<>(mTaskIdentifier, mServices, mPrefs, mCounterexample, mPrecondition,
 							mPostcondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
 							mPredicateUnifier, mPredicateFactory, timeoutInMillis, technique));
+		}
+
+		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleBitwuzla(final InterpolationTechnique technique,
+				final AssertCodeBlockOrder... order) {
+			return createModuleWrapperIfNecessary(
+					new IpTcStrategyModuleBitwuzla<>(mTaskIdentifier, mServices, mPrefs, mCounterexample, mPrecondition,
+							mPostcondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
+							mPredicateUnifier, mPredicateFactory, technique));
 		}
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleAbstractInterpretation() {
