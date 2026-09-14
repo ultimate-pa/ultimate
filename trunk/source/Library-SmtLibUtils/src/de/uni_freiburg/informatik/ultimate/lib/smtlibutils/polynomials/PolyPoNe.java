@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Junction;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm.ComparisonResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -110,11 +111,11 @@ public class PolyPoNe {
 			}
 			if (polyPolyRel == null) {
 				// INTERIM STEP: the shared factory above still never returns a BitvectorInequalityRelation (that
-				// would affect ~15 other, unaudited callers of PolynomialRelation.of across the codebase) - so
+				// would affect ~195 other, unaudited references to PolynomialRelation across the codebase) - so
 				// PolyPoNe tries it here instead, only for itself, now that Phase B has made this class safe to
 				// use. The "real" fix would be moving this into PolynomialRelation.of once those other callers are
 				// checked too, and deleting this second attempt.
-				polyPolyRel = BitvectorInequalityRelation.ofIfApplicable(mScript, param);
+				polyPolyRel = BitvectorInequalityRelation.of(mScript, param);
 			}
 			if (polyPolyRel != null) {
 				final PolynomialRelation addedRel = negate ? polyPolyRel.negate() : polyPolyRel;
@@ -234,7 +235,7 @@ public class PolyPoNe {
 			// Never call getPolynomialTerm() on a BitvectorInequalityRelation - it has no single polynomial term
 			// (see BitvectorInequalityRelation.getPolynomialTerm()'s javadoc). Handled entirely separately below,
 			// scoped to the "bare variable vs. bare constant" shape - see mBvInequalityRels' javadoc.
-			return addTwoSidedPolyRel((BitvectorInequalityRelation) polyRel);
+			return addBvInequalityRel((BitvectorInequalityRelation) polyRel);
 		}
 
 		final Check check = checkPolyRel(script, polyRel, removeExpliedPolyRels);
@@ -247,11 +248,11 @@ public class PolyPoNe {
 					final PolynomialRelation fusion =
 							PolynomialRelation.of(polyRel.getPolynomialTerm(), RelationSymbol.EQ);
 					mPolyRels.addPair(fusion.getPolynomialTerm().getAbstractVariable2Coefficient(), fusion);
-					return false;
+					return dropBvInequalitiesContradictingNewEquality(fusion);
 				}
 			}
 			mPolyRels.addPair(polyRel.getPolynomialTerm().getAbstractVariable2Coefficient(), polyRel);
-			return false;
+			return dropBvInequalitiesContradictingNewEquality(polyRel);
 		} else if (check == Check.REDUNDANT) {
 			return false;
 		} else if (check == Check.INCONSISTENT) {
@@ -262,18 +263,47 @@ public class PolyPoNe {
 	}
 
 	/**
+	 * Cross-checks an equality just added to {@link #mPolyRels} against any bitvector-inequality bounds already
+	 * known for the same variable in {@link #mBvInequalityRels} - the mirror direction of
+	 * {@link #findKnownEqualityValue}, which only handles a new inequality checked against a known equality. A bound
+	 * the equality's value violates makes the whole conjunction inconsistent; a bound it satisfies is now redundant
+	 * (the equality is strictly more precise) and gets dropped. A no-op if {@code polyRel} isn't a simple
+	 * variable-equals-constant equality, or the variable has no bitvector-inequality bounds stored at all.
+	 */
+	private boolean dropBvInequalitiesContradictingNewEquality(final PolynomialRelation polyRel) {
+		final SolvedBinaryRelation solved = polyRel.isSimpleEquality(mScript);
+		if (solved == null) {
+			return false;
+		}
+		final Term variable = solved.getLeftHandSide();
+		final BitvectorConstant value = BitvectorUtils.constructBitvectorConstant(solved.getRightHandSide());
+		if (value == null) {
+			return false;
+		}
+		for (final BitvectorInequalityRelation existing : new ArrayList<>(mBvInequalityRels.getImage(variable))) {
+			if (!satisfiesBound(value, existing)) {
+				return true; // inconsistent
+			}
+			mBvInequalityRels.removePair(variable, existing); // redundant now that the exact value is known
+		}
+		return false;
+	}
+
+	/**
 	 * Bitvector-inequality analogue of {@link #addPolyRel}, scoped to the "bare variable vs. bare constant" shape
 	 * (see {@link BitvectorInequalityRelation#isBareVariableVsBareConstant()}). Relations outside that shape are
 	 * stored in {@link #mCompoundBvInequalityRels} unconditionally - no comparison is attempted for them, matching the
 	 * "skip rather than do an expensive scan" instruction from Heizmann's meeting notes (see
 	 * bitvector-inequality-relation-idea memory).
 	 */
-	private boolean addTwoSidedPolyRel(final BitvectorInequalityRelation polyRel) {
-		if (!polyRel.isBareVariableVsBareConstant()) {
+	private boolean addBvInequalityRel(final BitvectorInequalityRelation polyRel) {
+		final BitvectorInequalityRelation.BareVariableAndConstant bareShape =
+				polyRel.asBareVariableVsBareConstant(mScript);
+		if (bareShape == null) {
 			mCompoundBvInequalityRels.add(polyRel); // no cheap key, keep as-is
 			return false;
 		}
-		final Term variable = polyRel.getBareVariableTerm(mScript);
+		final Term variable = bareShape.getVariable();
 		// peek into the equality bin first - a known value can make this whole relation redundant or inconsistent
 		final BitvectorConstant knownValue = findKnownEqualityValue(polyRel);
 		if (knownValue != null) {
@@ -306,7 +336,7 @@ public class PolyPoNe {
 			// fuse into an equality, reuse the existing single-term insertion path
 			mBvInequalityRels.removePair(variable, fusionPartner);
 			final PolynomialRelation fusion = SingleTermPolynomialRelation.of(mScript, RelationSymbol.EQ, variable,
-					polyRel.getBareConstantTerm(mScript));
+					bareShape.getConstantTerm());
 			return addPolyRel(mScript, fusion, true);
 		}
 		mBvInequalityRels.addPair(variable, polyRel);

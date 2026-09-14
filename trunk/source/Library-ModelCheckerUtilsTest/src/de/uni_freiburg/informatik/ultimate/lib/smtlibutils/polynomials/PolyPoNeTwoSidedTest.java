@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttrans
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Junction;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -57,10 +58,10 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  * neither reachable from a test in a different package.
  * <p>
  * Most tests below are exercised directly via {@link PolyPoNe#addPolyRel} rather than via {@link PolyPoNeUtils},
- * since {@link PolynomialRelation#of} (the shared factory used by ~15 other callers across the codebase) still
- * never returns a {@link BitvectorInequalityRelation} - see the "public entry point" tests near the end of this
- * file for the one place PolyPoNe itself is actually wired live (its own {@code add(...)}, via
- * {@link BitvectorInequalityRelation#ofIfApplicable}), which those tests exercise through {@link PolyPoNeUtils}.
+ * since {@link PolynomialRelation#of} (the shared factory used by ~195 other, unaudited references across the
+ * codebase) still never returns a {@link BitvectorInequalityRelation} - see the "public entry point" tests near
+ * the end of this file for the one place PolyPoNe itself is actually wired live (its own {@code add(...)}, via
+ * {@link BitvectorInequalityRelation#of}), which those tests exercise through {@link PolyPoNeUtils}.
  *
  * @author Roman Vintonyak
  */
@@ -191,8 +192,10 @@ public class PolyPoNeTwoSidedTest {
 	}
 
 	@Test
-	public void inequalityAddedBeforeEqualityIsNotCheckedAgainstIt() {
-		// documents the scope boundary: only "new inequality vs. existing equality" is checked, not the reverse
+	public void equalityAddedAfterInequalityDropsTheNowRedundantInequality() {
+		// x <u 9 arrives first, then x = 5 arrives - 5 <u 9 holds, so the inequality is now redundant and gets
+		// dropped, leaving just the equality. Mirror direction of knownEqualityMakesSatisfyingInequalityRedundant
+		// (which has the equality arrive first) - both orders must behave the same.
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
 		declare(funDecls);
 		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
@@ -200,9 +203,21 @@ public class PolyPoNeTwoSidedTest {
 		final boolean inconsistent =
 				polyPoNe.addPolyRel(mScript, PolynomialRelation.of(mScript, parse("(= x (_ bv5 8))")), true);
 		Assert.assertFalse(inconsistent);
-		final Term result = polyPoNe.and();
-		final Term expected = parse("(and (bvult x (_ bv9 8)) (= x (_ bv5 8)))");
-		Assert.assertNotEquals(LBool.SAT, SmtUtils.checkEquivalence(result, expected, mScript));
+		// toTerm() rebuilds "=" from the internal representation, which canonically orders it constant-first
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(= (_ bv5 8) x)")));
+	}
+
+	@Test
+	public void equalityAddedAfterViolatingInequalityIsInconsistent() {
+		// x <s 7 arrives first, then x = 42 arrives - 42 is not <s 7, so this is a contradiction. Mirror direction
+		// of knownEqualityViolatingInequalityIsInconsistent (which has the equality arrive first).
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvslt x (_ bv7 8))"), true);
+		final boolean inconsistent =
+				polyPoNe.addPolyRel(mScript, PolynomialRelation.of(mScript, parse("(= x (_ bv42 8))")), true);
+		Assert.assertTrue(inconsistent);
 	}
 
 	@Test
@@ -234,7 +249,7 @@ public class PolyPoNeTwoSidedTest {
 		MatcherAssert.assertThat(result, IsEqual.equalTo(parse("(= 5 x)")));
 	}
 
-	// --- public entry point (PolyPoNeUtils) - the one live, wired-up path, see BitvectorInequalityRelation#ofIfApplicable ---
+	// --- public entry point (PolyPoNeUtils) - the one live, wired-up path, see BitvectorInequalityRelation#of ---
 
 	@Test
 	public void publicEntryPointDropsRedundantBoundForBitvectors() {
@@ -259,11 +274,30 @@ public class PolyPoNeTwoSidedTest {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x"),
 				new FunDecl(SmtSortUtils::getBoolSort, "p") };
 		declare(funDecls);
-		// "p" is not a binary relation at all - must not trip BitvectorInequalityRelation.ofIfApplicable
+		// "p" is not a binary relation at all - must not trip BitvectorInequalityRelation.of
 		final List<Term> params = List.of(parse("(bvule x (_ bv5 8))"), parse("p"));
 		final Term result = PolyPoNeUtils.and(mScript, params);
 		// "and" is commutative and may reorder its arguments, so compare by equivalence rather than exact term
 		final Term expected = parse("(and (bvule x (_ bv5 8)) p)");
+		Assert.assertNotEquals(LBool.SAT, SmtUtils.checkEquivalence(result, expected, mScript));
+	}
+
+	@Test
+	public void publicEntryPointRecognizesNotWrappedInequalityAsSameRelation() {
+		// (not (bvule x 5)) must be recognized as the very same relation as its canonical negation (bvult 5 x) -
+		// not stored as a separate opaque atom via the addNonPolynomial/unzipNot path (that path is only for
+		// atoms BitvectorInequalityRelation.of can't parse at all). Proof: "or"-ing the not-wrapped term together
+		// with its already-canonical equivalent must collapse to ONE relation, not a literal "(or A B)" - an
+		// opaque atom would never be recognized as equal to a differently-shaped term, so it would survive as a
+		// genuine two-way "or" instead.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final List<Term> params = List.of(parse("(not (bvule x (_ bv5 8)))"), parse("(bvult (_ bv5 8) x)"));
+		final Term result = PolyPoNeUtils.or(mScript, params);
+		final boolean stayedAsOr =
+				result instanceof ApplicationTerm && ((ApplicationTerm) result).getFunction().getName().equals("or");
+		Assert.assertFalse("not-wrapped inequality was not recognized - stayed as an opaque disjunct", stayedAsOr);
+		final Term expected = parse("(bvult (_ bv5 8) x)");
 		Assert.assertNotEquals(LBool.SAT, SmtUtils.checkEquivalence(result, expected, mScript));
 	}
 }

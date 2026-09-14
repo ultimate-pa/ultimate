@@ -708,4 +708,18 @@ public class BitvectorUtilsTest {
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void bvExtractOverSignExtendOfLiteralIsConstantFoldedDirectly() {
+		// When the sign_extend's argument is itself a literal, ((_ sign_extend 24) (_ bv5 8)) is already fully
+		// computed to a single 32-bit constant before extract ever runs - so extract just computes its own
+		// constant result directly (simplify_ConstantCase), never going through the extract-over-extend pattern
+		// match in simplify_NonConstantCase at all. No FunDecls needed - everything here is a literal.
+		final FunDecl[] funDecls = {};
+		final String formulaAsString = "((_ extract 7 0) ((_ sign_extend 24) (_ bv5 8)))";
+		final String expected = "(_ bv5 8)";
+
+		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expected, SimplificationTechnique.POLY_PAC,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 }
