@@ -1,0 +1,48 @@
+// Simple test for computation of Owicki-Gries annotation for the case of recursive post-processing
+// ------------------------------------------------------------------------------------------------
+
+//@ variables (x Int)
+
+//@ semantics [0] {x} (= x 0)
+//@ semantics [1] {x} (= x 1)
+//@ semantics [2] { } true
+//@ semantics [3] { } false
+
+PetriNet program = (
+  alphabet    = { "[0]" "[1]" "[2]" "[3]" },
+  places      = { "m.l0" "m.l1" "m.l2" "t.l0" "t.l1" "t.l2" "e" },
+  transitions = {
+    ({ "m.l0" } "[0]" { "m.l1" })
+    ({ "m.l1" "t.l1" } "[2]" { "m.l2" "t.l2" })
+    ({ "m.l2" "t.l2" } "[1]" { "m.l1" "t.l1" })
+    ({ "t.l0" } "[2]" { "t.l1" })
+    ({ "m.l2" } "[3]" { "e" })
+  },
+  initialMarking = { "m.l0" "t.l0" },
+  acceptingPlaces = { "e" }
+);
+
+FiniteAutomaton proof = (
+     alphabet      = { "[0]" "[1]" "[2]" "[3]" },
+     states        = { "true" "(= x 0)" "(= x 1)" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+       ("true" "[0]" "(= x 0)")
+       ("(= x 0)" "[0]" "(= x 0)")
+       ("(= x 0)" "[1]" "(= x 1)")
+       ("(= x 0)" "[2]" "(= x 0)")
+       ("(= x 0)" "[3]" "false")
+       ("(= x 1)" "[0]" "(= x 0)")
+       ("(= x 1)" "[1]" "(= x 1)")
+       ("(= x 1)" "[2]" "(= x 1)")
+       ("(= x 1)" "[3]" "false")
+       ("false" "[0]" "false")
+       ("false" "[1]" "false")
+       ("false" "[2]" "false")
+       ("false" "[3]" "false")
+     }
+);
+
+
+

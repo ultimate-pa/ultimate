@@ -231,21 +231,26 @@ public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetri
 
 	}
 
-	private static <LETTER, STATE> Set<LETTER>
-			determineUniversalLoopers(final INestedWordAutomaton<LETTER, STATE> nwa) {
+	public static <LETTER, STATE> Set<LETTER> determineUniversalLoopers(final INestedWordAutomaton<LETTER, STATE> nwa) {
+		return determineUniversalLoopers(nwa, nwa.getStates());
+	}
+
+	public static <LETTER, STATE> Set<LETTER> determineUniversalLoopers(
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa, final Set<STATE> states) {
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(nwa)) {
 			throw new UnsupportedOperationException("call and return not implemented yet");
 		}
-		return nwa.getAlphabet().stream().filter(letter -> isUniversalLooper(letter, nwa)).collect(Collectors.toSet());
+		return nwa.getAlphabet().stream().filter(letter -> isUniversalLooper(letter, nwa, states))
+				.collect(Collectors.toSet());
 	}
 
 	private static <LETTER, STATE> boolean isUniversalLooper(final LETTER letter,
-			final INestedWordAutomaton<LETTER, STATE> nwa) {
-		return nwa.getStates().stream().allMatch(state -> hasSelfloop(letter, state, nwa));
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa, final Set<STATE> states) {
+		return states.stream().filter(s -> !nwa.isFinal(s)).allMatch(state -> hasSelfloop(letter, state, nwa));
 	}
 
 	private static <LETTER, STATE> boolean hasSelfloop(final LETTER letter, final STATE state,
-			final INestedWordAutomaton<LETTER, STATE> nwa) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = nwa.internalSuccessors(state, letter).iterator();
 		if (!it.hasNext()) {
 			return false;

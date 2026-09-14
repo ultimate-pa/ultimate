@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -36,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
  * Implementation of an HashRelation where the add method and the remove method make sure that that relation contains a
  * pair (a,b) iff the relation contains the pair (b,a).
  * <p>
- * WARNING: If you use other ways to modify this relation (e.g., removal during iteration, the result might not be
+ * WARNING: If you use other ways to modify this relation (e.g., removal during iteration), the result might not be
  * symmetric any more.
  * </p>
  *
@@ -57,6 +58,24 @@ public class SymmetricHashRelation<E> extends HashRelation<E, E> {
 		final boolean wasModified = super.addPair(domainElem, rangeElem);
 		super.addPair(rangeElem, domainElem);
 		return wasModified;
+	}
+
+	@Override
+	public boolean addAllPairs(final E domainElem, final Collection<E> rangeElems) {
+		final boolean changed = super.addAllPairs(domainElem, rangeElems);
+
+		if (changed) {
+			for (final E rangeElem : rangeElems) {
+				var oldRangeElems = mMap.get(rangeElem);
+				if (oldRangeElems == null) {
+					oldRangeElems = newSet();
+					mMap.put(rangeElem, oldRangeElems);
+				}
+				oldRangeElems.add(domainElem);
+			}
+		}
+
+		return changed;
 	}
 
 	/*
