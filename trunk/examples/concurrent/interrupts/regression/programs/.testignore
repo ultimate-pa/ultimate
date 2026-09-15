@@ -12,6 +12,9 @@ TIMEOUT:
 - task: idp-test-ten-isrs.c
   settings: ReachSafety-32bit-GemCutter_Partial-Order-FA_One-Thread-Per-ISR.epf
   toolchain: ReachSafety.xml
+- task: idp-test-ten-isrs.c
+  settings: ReachSafety-32bit-GemCutter_Partial-Order-IDP-FA_One-Thread-Per-ISR-Fork-Join.epf
+  toolchain: ReachSafety.xml
 - task: idp-test-isr-disable-unsafe.c
   settings: ReachSafety-32bit-Automizer_Petri-Net_All-ISR-In-One-Thread.epf
   toolchain: ReachSafety.xml
@@ -26,6 +29,9 @@ TIMEOUT:
   toolchain: ReachSafety.xml
 - task: idp-test-isr-disable-unsafe.c
   settings: ReachSafety-32bit-GemCutter_Partial-Order-IDP-FA_One-Thread-Per-ISR.epf
+  toolchain: ReachSafety.xml
+- task: idp-test-isr-disable-unsafe.c
+  settings: ReachSafety-32bit-GemCutter_Partial-Order-IDP-FA_One-Thread-Per-ISR-Fork-Join.epf
   toolchain: ReachSafety.xml
 - task: idp-test-ten-isrs.c
   settings: ReachSafety-32bit-GemCutter_Partial-Order-IDP-FA_One-Thread-Per-ISR.epf
