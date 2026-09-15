@@ -18,7 +18,7 @@ end Wrap;
 
 ## Modeling Idea
 
-The procedire repeatedly splits a value into its low 16 bits and everything above, and add them back together, until the result fits in 16 bits.
+The procedure repeatedly splits a value into its low 16 bits and everything above, and add them back together, until the result fits in 16 bits.
 
 Since Boogie's native `int` has no bitwise operators, `S` is modeled as a genuine 32-bit bitvector (`bv32`), using Boogie/SMT-LIB bitvector builtins.
 
