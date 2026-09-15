@@ -1,6 +1,6 @@
 # Example 3: `Loopvar`
 
-Boogie Model: `loopvar.bpl`
+Boogie Model: [`loopvar.bpl`](loopvar.bpl) (1:1 translation) and [`loopvar_modified.bpl`](loopvar_modified.bpl) (with variant-tracking, see below)
 
 Source: `../testsuite/gnatprove/tests/QC08-010__loopvar/loopvar.adb`
 
@@ -19,15 +19,33 @@ end Loopvar;
 
 ## Modeling Idea
 
-Boogie has no direct equivalent of SPARK's `pragma Loop_Variant (Increases => X)`. Instead, `x_old` stores the value from the previous iteration, and a flag `is_first` skips the check on the very first pass. From the second iteration on, `assert x > x_old;` checks that `x` really increased. The original `pragma Assert (X > 0)` becomes `assert x > 0;` at the end of the loop body.
+`loopvar.bpl` is the 1:1 translation: the original `pragma Assert (X > 0)` becomes `assert x > 0;` at the end of the loop body, nothing else.
+
+`loopvar_modified.bpl` simulates `pragma Loop_Variant (Increases => X)` using three elements:
+
+*   **`x_old`:** Stores the variable's value from the previous iteration.
+*   **`is_first`:** A flag to skip the comparison during the very first loop pass.
+*   **`assert x > x_old;`:** Enforces that the value actually increased on all subsequent iterations.
 
 ## Results from Ultimate PA
+
+### `loopvar.bpl`
+
+| Type | Description |
+|---|---|
+| Assertion always holds | `assert x > 0;` |
+| Loop Invariant (derived) | `0 < x` |
+| Procedure Contract (derived) | `Modifies: []` |
+
+**Overall Result: All specifications hold — 1 specification checked, all of them hold.**
+
+### `loopvar_modified.bpl`
 
 | Type | Description |
 |---|---|
 | Assertion always holds | `assert x > x_old;` |
 | Assertion always holds | `assert x > 0;` |
-| Loop Invariant (derived) | `(is_first && 1 <= x) || (1 + x_old <= x && 2 <= x)` |
+| Loop Invariant (derived) | `(is_first && 1 <= x) \|\| (1 + x_old <= x && 2 <= x)` |
 | Procedure Contract (derived) | `Modifies: []` |
 
-**Overall Result: All specifications hold — 2 specifications checked. All of them hold.**
+**Overall Result: All specifications hold — 2 specifications checked, all of them hold.**
