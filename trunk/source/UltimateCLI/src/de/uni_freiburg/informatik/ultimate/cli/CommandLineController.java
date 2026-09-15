@@ -265,8 +265,8 @@ public class CommandLineController implements IController<RunDefinition> {
 	private IToolchainData<RunDefinition> prepareToolchain(final ICore<RunDefinition> core,
 			final ParsedParameter fullParams) throws ParseException, InvalidFileArgumentException {
 		core.resetPreferences(false);
-		if (fullParams.hasSettings()) {
-			core.loadPreferences(fullParams.getSettingsFile(), false);
+		for (final String settingsFile : fullParams.getSettingsFiles()) {
+			core.loadPreferences(settingsFile, false);
 		}
 		mToolchain = fullParams.createToolchainData();
 		fullParams.applyCliSettings(mToolchain.getServices());
@@ -397,7 +397,7 @@ public class CommandLineController implements IController<RunDefinition> {
 			csvProvider =
 					CsvUtils.addColumn(csvProvider, "Inputfiles", 0, repeatValue(rowCount, cliParams.getInputFiles()));
 			csvProvider = CsvUtils.addColumn(csvProvider, "Settingsfile", 0,
-					repeatValue(rowCount, cliParams.getSettingsFile()));
+					repeatValue(rowCount, cliParams.getSettingsFiles()));
 			csvProvider = CsvUtils.addColumn(csvProvider, "Toolchainfile", 0,
 					repeatValue(rowCount, cliParams.getToolchainFile()));
 		} catch (InvalidFileArgumentException | ParseException e) {
