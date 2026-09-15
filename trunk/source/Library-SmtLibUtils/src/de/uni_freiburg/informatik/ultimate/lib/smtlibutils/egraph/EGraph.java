@@ -215,35 +215,35 @@ public class EGraph {
 			final BinaryEqualityRelation binaryEqRelation = BinaryEqualityRelation.convert(term);
 			if (binaryEqRelation == null) {
 				if (ADD_ALL_TERMS) {
-					addTerm(term); // }
-				} else {
-					final Term lhs = binaryEqRelation.getLhs();
-					final Term rhs = binaryEqRelation.getRhs();
+					addTerm(term);
+				}
+			} else {
+				final Term lhs = binaryEqRelation.getLhs();
+				final Term rhs = binaryEqRelation.getRhs();
 
-					addTerm(lhs);
-					addTerm(rhs);
+				addTerm(lhs);
+				addTerm(rhs);
 
-					if (binaryEqRelation.getRelationSymbol() == RelationSymbol.DISTINCT) {
-						final ImmutableSet<Term> leftEset = mUnionFind.getContainingSet(lhs);
-						final ImmutableSet<Term> rightEset = mUnionFind.getContainingSet(rhs);
-						if (!(mDistinctSets.containsKey(leftEset))) {
-							mDistinctSets.put(leftEset, new HashSet<>(rightEset));
+				if (binaryEqRelation.getRelationSymbol() == RelationSymbol.DISTINCT) {
+					final ImmutableSet<Term> leftEset = mUnionFind.getContainingSet(lhs);
+					final ImmutableSet<Term> rightEset = mUnionFind.getContainingSet(rhs);
+					if (!(mDistinctSets.containsKey(leftEset))) {
+						mDistinctSets.put(leftEset, new HashSet<>(rightEset));
 
-						} else {
-							mDistinctSets.get(leftEset).addAll(rightEset);
-						}
-						if (!(mDistinctSets.containsKey(rightEset))) {
-							mDistinctSets.put(rightEset, new HashSet<>(leftEset));
-
-						} else {
-							mDistinctSets.get(rightEset).addAll(leftEset);
-						}
-
-					} else if (binaryEqRelation.getRelationSymbol() == RelationSymbol.EQ) {
-						unionWithImplied(binaryEqRelation.getLhs(), binaryEqRelation.getRhs());
 					} else {
-						throw new AssertionError("unexpected relation symbol " + binaryEqRelation.getRelationSymbol());
+						mDistinctSets.get(leftEset).addAll(rightEset);
 					}
+					if (!(mDistinctSets.containsKey(rightEset))) {
+						mDistinctSets.put(rightEset, new HashSet<>(leftEset));
+
+					} else {
+						mDistinctSets.get(rightEset).addAll(leftEset);
+					}
+
+				} else if (binaryEqRelation.getRelationSymbol() == RelationSymbol.EQ) {
+					unionWithImplied(binaryEqRelation.getLhs(), binaryEqRelation.getRhs());
+				} else {
+					throw new AssertionError("unexpected relation symbol " + binaryEqRelation.getRelationSymbol());
 				}
 			}
 		}
