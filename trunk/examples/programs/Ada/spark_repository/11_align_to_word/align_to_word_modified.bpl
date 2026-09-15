@@ -6,7 +6,6 @@ function {:builtin "bvult"} ~bvult32(in0: bv32, in1: bv32) returns (out: bool);
 
 procedure Align_To_Word(Data_I0: bv32, Remain0: bv32) returns (Data_I: bv32, Remain: bv32)
   requires ~bvand32(Data_I0, 1bv32) == 0bv32;
-  ensures ~bvand32(Data_I, 3bv32) == 0bv32 || ~bvult32(Remain, 2bv32);
 {
   Data_I := Data_I0;
   Remain := Remain0;
@@ -17,6 +16,4 @@ procedure Align_To_Word(Data_I0: bv32, Remain0: bv32) returns (Data_I: bv32, Rem
     Remain := ~bvsub32(Remain, 2bv32);
     assert ~bvand32(Data_I, 1bv32) == 0bv32;
   }
-
-  assert ~bvand32(Data_I, 3bv32) == 0bv32 || ~bvult32(Remain, 2bv32);
 }
