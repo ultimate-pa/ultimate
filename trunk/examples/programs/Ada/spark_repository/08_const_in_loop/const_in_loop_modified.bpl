@@ -20,7 +20,7 @@ procedure Const_In_Loop() returns (Z: int)
         }
         V2 := T_Last;
 
-        assert V1 == V2;
+        assert V1 == 1;
 
         Z := 2;
     }
