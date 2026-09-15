@@ -16,7 +16,7 @@ def get_ultimate_cli() -> list[str]:
     jar = (
         ult_bin.parent
         / "plugins"
-        / "org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar"
+        / "org.eclipse.equinox.launcher_1.8.0.v20260804-1928.jar"
     )
     datadir = ult_bin.parent / "data"
     return [

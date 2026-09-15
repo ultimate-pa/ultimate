@@ -4,6 +4,6 @@ java \
 -Dosgi.configuration.area=config/ \
 -Xmx10G \
 -Xss4m \
--jar plugins/org.eclipse.equinox.launcher_1.7.100.v20251111-0406.jar \
+-jar plugins/org.eclipse.equinox.launcher_1.8.0.v20260804-1928.jar \
 -data config/data \
 "$@"
