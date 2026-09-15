@@ -66,7 +66,7 @@ Ultimate proves this **incorrect** — `assert V1 == V2;` is violated, with a co
 
 - That suggested fix doesn't actually work: adding `V2 = T'Last` to the loop invariant still gives `medium: assertion might fail`, same counterexample, even at max effort.
 - The counterexample `V1 = 0, V2 = 2` isn't even a real reachable program state (`V1` is always `1` in any actual execution, never `0`).
-- GNATprove needs the invariant handed to it and has no counterexample-guided refinement loop. Ultimae PA, by contrast, either derives a sufficient invariant on its own or, as here, returns a concrete, checkable counterexample trace over an actual reachable execution.
+- GNATprove needs the invariant handed to it and has no counterexample-guided refinement loop. Ultimate PA, by contrast, either derives a sufficient invariant on its own or, as here, returns a concrete, checkable counterexample trace over an actual reachable execution.
 
 ### `const_in_loop_modified.bpl`
 
