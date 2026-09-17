@@ -128,7 +128,6 @@ public final class Translator {
 	private final ILogger mLogger;
 	private final ProgramAndProof mProgramAndProof;
 
-	private final ASTType mStartTidType;
 	private final ASTType mTidType;
 
 	private final List<CivlDeclaration> mDeclarations = new ArrayList<>();
@@ -141,8 +140,7 @@ public final class Translator {
 		mProgramAndProof = programAndProof;
 
 		// Declarations for thread management operations
-		mStartTidType = declareStartTidType();
-		mTidType = addTidsType();
+		mTidType = declareTidType();
 		addThreadControlFlow();
 
 		declareGhostVariables();
@@ -158,10 +156,6 @@ public final class Translator {
 	ProgramAndProof getProgramAndProof() {
 		// is used in body transformer
 		return mProgramAndProof;
-	}
-
-	ASTType getStartTidType() {
-		return mStartTidType;
 	}
 
 	ASTType getTidType() {
@@ -183,27 +177,16 @@ public final class Translator {
 		mDeclarations.add(new BoogieDeclaration(decl));
 	}
 
-	private ASTType declareStartTidType() {
-		final ILocation loc = null;
-
-		final var startTidType = new NamedType(loc, "StartTid", new ASTType[0]);
-		final var startTidTypeDecl =
-				new TypeDeclaration(loc, new Attribute[0], false, startTidType.getName(), new String[0]);
-		declare(startTidTypeDecl);
-
-		final var startTidConstDecl = new ConstDeclaration(loc, new Attribute[0], true,
-				new VarList(loc, new String[] { "const_start_tid" }, startTidType), null, false);
-		declare(startTidConstDecl);
-
-		return startTidType;
-	}
-
-	private ASTType addTidsType() {
+	private ASTType declareTidType() {
 		final ILocation loc = null;
 
 		final var tidType = new NamedType(loc, "Tid", new ASTType[0]);
 		final var tidTypeDecl = new TypeDeclaration(loc, new Attribute[0], false, tidType.getName(), new String[0]);
 		declare(tidTypeDecl);
+
+		final var startTidConstDecl = new ConstDeclaration(loc, new Attribute[0], true,
+				new VarList(loc, new String[] { "const_start_tid" }, tidType), null, false);
+		declare(startTidConstDecl);
 
 		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getTids()) {
 			addTidConst(tid, tidType);
@@ -376,7 +359,7 @@ public final class Translator {
 			final Set<Tid> tidNeedsLinearity) {
 		final var params = new ArrayList<ParameterDeclaration>();
 		if (BoogieUtils.START_PROCEDURE.equals(procName)) {
-			params.add(new ParameterDeclaration("start_tid", makeOne(mStartTidType), Linearity.INOUT));
+			params.add(new ParameterDeclaration("start_tid", makeOne(mTidType), Linearity.INOUT));
 		}
 
 		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(procName,
@@ -543,7 +526,7 @@ public final class Translator {
 
 		final var inParams = new ArrayList<ParameterDeclaration>();
 		if (BoogieUtils.START_PROCEDURE.equals(decl.getIdentifier())) {
-			inParams.add(new ParameterDeclaration("start_tid", makeOne(mStartTidType), Linearity.INOUT));
+			inParams.add(new ParameterDeclaration("start_tid", makeOne(mTidType), Linearity.INOUT));
 		}
 		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAllTidMap().getOrDefault(decl.getIdentifier(),
 				Collections.emptyList())) {

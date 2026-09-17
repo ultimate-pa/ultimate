@@ -12,6 +12,11 @@ CivlDeclaration ::=
 	   */
 	   BoogieDeclaration}
 		decl : de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration
+	/**
+	| {Datatype}
+		identifier   : String
+		constructors : DatatypeConstructor[]
+	*/
 
 	| {YieldProcedure}
         /* Note: Different from Boogie procedures, type parameters and general attributes are currently not supported */
@@ -30,6 +35,13 @@ CivlDeclaration ::=
         params            : ParameterDeclaration[]
         preserves         : de.uni_freiburg.informatik.ultimate.boogie.ast.Expression[]
         ;
+
+/**
+DatatypeConstructor ::=
+	identifier : String
+	inParams   : ParameterDeclaration[]
+	;
+*/
 
 ParameterDeclaration ::=
         identifier : String

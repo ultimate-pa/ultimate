@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
@@ -60,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
@@ -207,7 +209,7 @@ final class BodyTransformer extends BoogieTransformer {
 
 		final var inParams = new ArrayList<ParameterDeclaration>();
 		if (BoogieUtils.START_PROCEDURE.equals(mProcedureName)) {
-			inParams.add(new ParameterDeclaration("start_tid", Translator.makeOne(mTranslator.getStartTidType()),
+			inParams.add(new ParameterDeclaration("start_tid", Translator.makeOne(mTranslator.getTidType()),
 					Linearity.INOUT));
 		}
 		for (final Tid tid : mTranslator.getProgramAndProof().getTemplateVisitor().getAllTidMap()
@@ -252,6 +254,9 @@ final class BodyTransformer extends BoogieTransformer {
 
 			case final ForkStatement forkStmt:
 				newStatements.add(annotationCheck);
+				// final var annotationCheck =
+				// Translator.callYieldInvariant(yieldInvariant, mCurrentTids, new Expression[] { annotation });
+
 				newStatements.addAll(processForkStatement(forkStmt, positiveGhostUpdates));
 				break;
 
@@ -432,23 +437,37 @@ final class BodyTransformer extends BoogieTransformer {
 		// TODO support fork parameters
 		// assert forkStmt.getArguments().length == 0 : "Arguments for forks are not yet supported";
 
+		final var inParams = new ArrayList<Expression>();
+
 		final var result = new ArrayList<Statement>();
 		result.addAll(ghostUpdates);
 
+		// get the procedure that is forked
+		final Optional<Procedure> forkedProc =
+				Arrays.stream(mTranslator.getProgramAndProof().getBoogieAst().getDeclarations())
+						.filter(Procedure.class::isInstance).map(Procedure.class::cast)
+						.filter(x -> x.getIdentifier().equals(forkStmt.getProcedureName())).findFirst();
+
+		// replace paramater
 		final var annotationFork = mTranslator.getProgramAndProof().getTemplateVisitor().getEntryAnnotationMap()
 				.get(forkStmt.getProcedureName());
+		final var modifiedAnnotation = CivlUtils.replaceIdentifier(annotationFork,
+				CivlUtils.VarListToIdentifier(forkedProc.get().getInParams()), forkStmt.getArguments());
 		result.add(new AssertStatement(null,
-				new NamedAttribute[] { CivlUtils.createLayerAttribute(Translator.LAYER_TOP) }, annotationFork));
+				new NamedAttribute[] { CivlUtils.createLayerAttribute(Translator.LAYER_TOP) }, modifiedAnnotation));
 
 		final Expression[] forkThreadId = forkStmt.getThreadID();
 		final String procName = forkStmt.getProcedureName();
 
-		final Expression[] tids = { new IdentifierExpression(forkStmt.getLoc(), BoogieType.createPlaceholderType(0),
-				(new Tid(forkThreadId)).toString(), DeclarationInformation.DECLARATIONINFO_GLOBAL) };
+		// add tids
+		inParams.add(new IdentifierExpression(forkStmt.getLoc(), BoogieType.createPlaceholderType(0),
+				(new Tid(forkThreadId)).toString(), DeclarationInformation.DECLARATIONINFO_GLOBAL));
+
+		// add parameter TODO after async update
 
 		// TODO refactor to avoid dependence on "fork_..." procedure name
 		final var newFork = new CallStatement(forkStmt.getLoc(), new NamedAttribute[0], false, new VariableLHS[0],
-				"fork_" + procName, tids);
+				"fork_" + procName, inParams.stream().toArray(Expression[]::new));
 		ModelUtils.copyAnnotations(forkStmt, newFork);
 		result.add(newFork);
 
