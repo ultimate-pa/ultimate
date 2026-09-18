@@ -1,0 +1,142 @@
+// Testfile dumped by Ultimate at 2023/12/18 16:50:12
+//
+// 
+
+//@ variables (workerThread2of2ForFork0_thidvar0 Int) (i Int) (workerThread1of2ForFork0_thidvar0 Int) (c Int)
+//@ semantics [1] {workerThread2of2ForFork0_thidvar0} (= i workerThread2of2ForFork0_thidvar0)
+//@ semantics [2] {} (= (+ workerThread1of2ForFork0_thidvar0 1) i)
+//@ semantics [3] {} (= i (+ workerThread2of2ForFork0_thidvar0 1))
+//@ semantics [4] {} false
+//@ semantics [5] {i} (= i 0)
+//@ semantics [6] {c} (= c 0)
+//@ semantics [7] {i} (= i (+ |old(i)| 1))
+//@ semantics [8] {} (< 0 i)
+//@ semantics [9] {} (<= i 0)
+//@ semantics [10] {} true
+//@ semantics [11] {c} (= (+ i |old(c)|) c)
+//@ semantics [12] {} false
+//@ semantics [13] {c} (= |old(c)| (+ i c))
+//@ semantics [14] {} true
+//@ semantics [15] {c} (= (+ i |old(c)|) c)
+//@ semantics [16] {} false
+//@ semantics [17] {c} (= |old(c)| (+ i c))
+//@ semantics [18] {} true
+//@ semantics [19] {} true
+//@ semantics [20] {workerThread1of2ForFork0_thidvar0} (= i workerThread1of2ForFork0_thidvar0)
+
+
+PetriNet program = (
+	alphabet = {"[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" "[8]" "[9]" "[10]" "[11]" "[12]" "[13]" "[14]" "[15]" "[16]" "[17]" "[18]" "[19]" "[20]" },
+	places = {l0 l1 l2 l3 l4 l5 l6 l7 l8 l9 l10 l11 l12 l13 l14 l15 l16 l17 l18 l19 l20 l21 l22 },
+	transitions = {
+		({l4 } "[11]" {l2 })
+		({l10 } "[18]" {l0 })
+		({l19 } "[4]" {l3 })
+		({l15 l17 l19 } "[19]" {l8 })
+		({l14 l19 } "[20]" {l11 l15 l5 })
+		({l15 l16 l19 } "[1]" {l4 l15 l5 l17 })
+		({l15 l20 l0 } "[2]" {l14 l6 })
+		({l1 } "[5]" {l19 })
+		({l17 l20 l9 } "[3]" {l16 l6 })
+		({l18 } "[14]" {l9 })
+		({l21 } "[6]" {l1 })
+		({l6 } "[7]" {l19 })
+		({l13 } "[16]" {l12 })
+		({l13 } "[17]" {l10 })
+		({l5 } "[8]" {l20 })
+		({l5 } "[9]" {l6 })
+		({l11 } "[15]" {l13 })
+		({l2 } "[12]" {l22 })
+		({l2 } "[13]" {l18 })
+		({l3 } "[10]" {l7 })
+	},
+	initialMarking = {l14 l16 l21 },
+	acceptingPlaces = {l12 l8 l22 }
+);
+FiniteAutomaton proof1 = (
+	alphabet = {"[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" "[8]" "[9]" "[10]" "[11]" "[12]" "[13]" "[14]" "[15]" "[16]" "[17]" "[18]" "[19]" "[20]" },
+	states = {"false" "true" },
+	initialStates = {"true" },
+	finalStates = {"false" },
+	transitions = {
+		("false" "[5]" "false")
+		("false" "[6]" "false")
+		("false" "[7]" "false")
+		("false" "[8]" "false")
+		("false" "[9]" "false")
+		("false" "[10]" "false")
+		("false" "[11]" "false")
+		("false" "[13]" "false")
+		("false" "[14]" "false")
+		("false" "[15]" "false")
+		("false" "[17]" "false")
+		("false" "[18]" "false")
+		("false" "[19]" "false")
+		("true" "[1]" "true")
+		("true" "[2]" "true")
+		("true" "[3]" "true")
+		("true" "[4]" "false")
+		("true" "[5]" "true")
+		("true" "[6]" "true")
+		("true" "[7]" "true")
+		("true" "[8]" "true")
+		("true" "[9]" "true")
+		("true" "[10]" "true")
+		("true" "[11]" "true")
+		("true" "[12]" "false")
+		("true" "[13]" "true")
+		("true" "[14]" "true")
+		("true" "[15]" "true")
+		("true" "[16]" "false")
+		("true" "[17]" "true")
+		("true" "[18]" "true")
+		("true" "[19]" "true")
+		("true" "[20]" "true")
+	}
+);
+FiniteAutomaton proof2 = (
+	alphabet = {"[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" "[8]" "[9]" "[10]" "[11]" "[12]" "[13]" "[14]" "[15]" "[16]" "[17]" "[18]" "[19]" "[20]" },
+	states = {"false" "(<= 0 i)" "(<= 1 i)" "true" },
+	initialStates = {"true" },
+	finalStates = {"false" },
+	transitions = {
+		("false" "[6]" "false")
+		("false" "[10]" "false")
+		("false" "[14]" "false")
+		("false" "[18]" "false")
+		("false" "[19]" "false")
+		("(<= 0 i)" "[6]" "(<= 0 i)")
+		("(<= 0 i)" "[7]" "(<= 1 i)")
+		("(<= 0 i)" "[8]" "(<= 1 i)")
+		("(<= 0 i)" "[9]" "(<= 0 i)")
+		("(<= 0 i)" "[10]" "(<= 0 i)")
+		("(<= 0 i)" "[14]" "(<= 0 i)")
+		("(<= 0 i)" "[15]" "(<= 0 i)")
+		("(<= 0 i)" "[17]" "(<= 0 i)")
+		("(<= 0 i)" "[18]" "(<= 0 i)")
+		("(<= 0 i)" "[19]" "(<= 0 i)")
+		("(<= 0 i)" "[20]" "(<= 0 i)")
+		("(<= 1 i)" "[1]" "(<= 1 i)")
+		("(<= 1 i)" "[2]" "(<= 1 i)")
+		("(<= 1 i)" "[3]" "(<= 1 i)")
+		("(<= 1 i)" "[6]" "(<= 1 i)")
+		("(<= 1 i)" "[7]" "(<= 1 i)")
+		("(<= 1 i)" "[8]" "(<= 1 i)")
+		("(<= 1 i)" "[9]" "false")
+		("(<= 1 i)" "[10]" "(<= 1 i)")
+		("(<= 1 i)" "[11]" "(<= 1 i)")
+		("(<= 1 i)" "[13]" "(<= 1 i)")
+		("(<= 1 i)" "[14]" "(<= 1 i)")
+		("(<= 1 i)" "[15]" "(<= 1 i)")
+		("(<= 1 i)" "[17]" "(<= 1 i)")
+		("(<= 1 i)" "[18]" "(<= 1 i)")
+		("(<= 1 i)" "[19]" "(<= 1 i)")
+		("(<= 1 i)" "[20]" "(<= 1 i)")
+		("true" "[6]" "true")
+		("true" "[10]" "true")
+		("true" "[14]" "true")
+		("true" "[5]" "(<= 0 i)")
+		("true" "[18]" "true")
+		("true" "[19]" "true")
+	}
+);

@@ -47,7 +47,7 @@ public class Condition<LETTER, PLACE> implements Serializable {
 	private static final long serialVersionUID = -497620137647502376L;
 
 	// See https://github.com/ultimate-pa/ultimate/pull/595 for discussion
-	private static final boolean USE_HASH_JENKINS = false;
+	private static final boolean USE_HASH_JENKINS = true;
 
 	private final Event<LETTER, PLACE> mPredecessor;
 	private final Collection<Event<LETTER, PLACE>> mSuccessors;

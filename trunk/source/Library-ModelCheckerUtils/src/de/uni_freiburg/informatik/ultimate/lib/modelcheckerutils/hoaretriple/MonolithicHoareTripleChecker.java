@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 
-	private final CfgSmtToolkit mCsToolkit;
 	private final ManagedScript mManagedScript;
 	private final ModifiableGlobalsTable mModifiableGlobals;
 
@@ -71,9 +70,12 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	private long mSatCheckTime = 0;
 
 	public MonolithicHoareTripleChecker(final CfgSmtToolkit csToolkit) {
-		mCsToolkit = csToolkit;
-		mManagedScript = csToolkit.getManagedScript();
-		mModifiableGlobals = csToolkit.getModifiableGlobalsTable();
+		this(csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable());
+	}
+
+	public MonolithicHoareTripleChecker(final ManagedScript mgdScript, final ModifiableGlobalsTable modifiableGlobals) {
+		mManagedScript = mgdScript;
+		mModifiableGlobals = modifiableGlobals;
 		mHoareTripleCheckerStatistics = new HoareTripleCheckerStatisticsGenerator();
 	}
 

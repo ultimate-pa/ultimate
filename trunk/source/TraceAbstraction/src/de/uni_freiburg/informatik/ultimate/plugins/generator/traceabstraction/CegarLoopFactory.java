@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -39,7 +40,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -54,9 +57,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.IProof;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.IProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPetriNetProofProducer;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.BacktranslatingProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.NwaInitialAbstractionProvider;
@@ -75,8 +81,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
+import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * A utility class that allows creating CEGAR loops for different programs (based on some common settings).
@@ -178,27 +184,31 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			case PETRI_NET:
 				requireNoReuse("Petri net-based analysis");
 				requireNoWitnesses(witnessTransformer, "Petri net-based analysis");
-				final var pnCegar = new CegarLoopForPetriNet<>(name,
-						createPetriAbstraction(services, predicateFactory, true, root, errorLocs), root, csToolkit,
-						predicateFactory, mPrefs, errorLocs, services, mTransitionClazz, stateFactoryForRefinement);
-				return new Pair<>(pnCegar, null);
+
+				final var absAndProof = createPetriAbstractionProvider(services, predicateFactory, true /* TODO */);
+				final var abstraction =
+						constructInitialAbstraction(absAndProof.initialAbstractionProvider(), root, errorLocs);
+				final IPetriNetProofProducer<L, IPredicate> proofProducer = absAndProof.proofProducer().get();
+
+				final var pnCegar = new CegarLoopForPetriNet<>(name, abstraction, root, csToolkit, predicateFactory,
+						mPrefs, errorLocs, proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
+				return new Pair<>(pnCegar, absAndProof.proofProducerWithBacktranslation(root));
 			default:
 				// do nothing, and fall through to the code below
 			}
 		}
 
 		// handle finite automata-based CEGAR loops
-		final var triple = createAutomataAbstractionProvider(services, isConcurrent, predicateFactory,
+		final var abstractionAndProof = createAutomataAbstractionProvider(services, isConcurrent, predicateFactory,
 				stateFactoryForRefinement, witnessTransformer);
-		final var abstraction = constructInitialAbstraction(triple.getFirst(), root, errorLocs);
+		final var abstraction =
+				constructInitialAbstraction(abstractionAndProof.initialAbstractionProvider(), root, errorLocs);
 
-		final var producer = triple.getSecond().get();
-		final var backtranslator = triple.getThird();
+		final var producer = abstractionAndProof.proofProducer().get();
 		final var cegar = createFiniteAutomataCegarLoop(services, name, root, predicateFactory, errorLocs,
 				rawFloydHoareAutomataFromFile, stateFactoryForRefinement, witnessTransformer, abstraction, producer);
-		final var proofProducer = producer == null || backtranslator == null ? null
-				: new BacktranslatingProofProducer<>(root, producer, backtranslator);
-		return new Pair<>(cegar, proofProducer);
+
+		return new Pair<>(cegar, abstractionAndProof.proofProducerWithBacktranslation(root));
 	}
 
 	private NwaCegarLoop<L> createFiniteAutomataCegarLoop(final IUltimateServiceProvider services,
@@ -251,7 +261,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		}
 	}
 
-	private Triple<IInitialAbstractionProvider<L, ? extends INestedWordAutomaton<L, IPredicate>>, Supplier<NwaHoareProofProducer<L>>, Function<IFloydHoareAnnotation<IPredicate>, IFloydHoareAnnotation<IcfgLocation>>>
+	private AbstractionAndProof<L, INestedWordAutomaton<L, IPredicate>, IFloydHoareAnnotation<IPredicate>, IProof, NwaHoareProofProducer<L>>
 			createAutomataAbstractionProvider(final IUltimateServiceProvider services, final boolean isConcurrent,
 					final PredicateFactory predicateFactory, final PredicateFactoryRefinement stateFactory,
 					final IWitnessTransformer<L> witnessTransformer) {
@@ -259,54 +269,70 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 			final var provider = new NwaInitialAbstractionProvider<L>(services, stateFactory, mPrefs.interprocedural(),
 					predicateFactory, mPrefs.getHoareSettings());
 			if (witnessTransformer == null) {
-				return new Triple<>(provider, provider::getProofProducer, provider::backtranslateProof);
+				return new AbstractionAndProof<>(provider, provider::getProofProducer, provider::backtranslateProof);
 			}
-			return new Triple<>(
-					new WitnessAutomatonAbstractionProvider<>(predicateFactory, provider, witnessTransformer),
-					() -> null, null);
+
+			// If a witness is given, proof production is not supported.
+			return new AbstractionAndProof<>(
+					new WitnessAutomatonAbstractionProvider<>(predicateFactory, provider, witnessTransformer));
 		}
 
-		final var netProvider = createPetriAbstractionProvider(services, predicateFactory, false);
-		if (!mPrefs.applyOneShotPOR()) {
-			final var provider =
-					new Petri2FiniteAutomatonAbstractionProvider.Eager<>(services, netProvider, stateFactory);
-			if (witnessTransformer == null) {
-				return new Triple<>(provider,
-						() -> provider.getProofProducer(predicateFactory, mPrefs.getHoareSettings()), null);
-			}
-			return new Triple<>(
-					new WitnessAutomatonAbstractionProvider<>(predicateFactory, provider, witnessTransformer),
-					() -> null, null);
+		final var netProviderAndProof = createPetriAbstractionProvider(services, predicateFactory, false);
+		final var netProvider = netProviderAndProof.initialAbstractionProvider();
+		if (mPrefs.applyOneShotPOR()) {
+			// Witness automata in combination with POR require special handling, and are not yet supported.
+			requireNoWitnesses(witnessTransformer, "one-shot partial order reduction");
+
+			// Partial Order reductions aim to avoid the explicit construction of the full finite automaton.
+			// Hence we use the lazy abstraction provider.
+			final var autProvider =
+					new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(services, netProvider, stateFactory);
+
+			// Apply one-shot POR.
+			final var redProvider = new PartialOrderAbstractionProvider<>(autProvider, services, stateFactory,
+					predicateFactory, mPrefs.getPartialOrderMode(), mPrefs.getDfsOrderType(), mPrefs.getDfsOrderSeed());
+
+			// Return the abstraction only; proof production is not yet supported.
+			return new AbstractionAndProof<>(redProvider);
 		}
 
-		if (witnessTransformer != null) {
-			throw new UnsupportedOperationException(
-					"Witness validation with partial order reduction is not supported yet.");
+		// If no POR is applied, we construct the concurrent product automaton eagerly.
+		// TODO Do this lazily if a witness automaton is given, as the witness might prune large parts of the program.
+		final var autProvider =
+				new Petri2FiniteAutomatonAbstractionProvider.Eager<>(services, netProvider, stateFactory);
+
+		if (witnessTransformer == null) {
+			final var oldBacktranslator = netProviderAndProof.proofBacktranslator();
+			return new AbstractionAndProof<>(autProvider,
+					// Proof producer for NwaCegarLoop
+					() -> autProvider.getProofProducer(predicateFactory, mPrefs.getHoareSettings()),
+					// backtranslate proof
+					fh -> oldBacktranslator.apply(
+							autProvider.backtranslateProof(fh, predicateFactory, mPrefs.getOwickiGriesSettings())));
 		}
-		return new Triple<>(new PartialOrderAbstractionProvider<>(
-				// Partial Order reductions aim to avoid the explicit construction of the full finite automaton.
-				// Hence we use the lazy abstraction provider.
-				new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(services, netProvider, stateFactory), services,
-				stateFactory, predicateFactory, mPrefs.getPartialOrderMode(), mPrefs.getDfsOrderType(),
-				mPrefs.getDfsOrderSeed()), () -> null, null);
+
+		// If a witness is given, proof production is not supported.
+		return new AbstractionAndProof<>(
+				new WitnessAutomatonAbstractionProvider<>(predicateFactory, autProvider, witnessTransformer));
 	}
 
-	private BoundedPetriNet<L, IPredicate> createPetriAbstraction(final IUltimateServiceProvider services,
-			final PredicateFactory predicateFactory, final boolean removeDead, final IIcfg<IcfgLocation> icfg,
-			final Set<IcfgLocation> errorLocs) {
-		return constructInitialAbstraction(createPetriAbstractionProvider(services, predicateFactory, removeDead), icfg,
-				errorLocs);
-	}
-
-	private IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> createPetriAbstractionProvider(
-			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
-			final boolean removeDead) {
-		final var netProvider = new PetriInitialAbstractionProvider<L>(services, predicateFactory, removeDead);
+	private AbstractionAndProof<L, BoundedPetriNet<L, IPredicate>, OwickiGriesAnnotation<Transition<L, IPredicate>, IPredicate, Marking<IPredicate>>, OwickiGriesAnnotation<L, IcfgLocation, List<IcfgLocation>>, IPetriNetProofProducer<L, IPredicate>>
+			createPetriAbstractionProvider(final IUltimateServiceProvider services,
+					final PredicateFactory predicateFactory, final boolean computeProof) {
+		final var netProvider = new PetriInitialAbstractionProvider<L>(services, predicateFactory, !computeProof);
 		if (!mPrefs.applyOneShotLbe()) {
-			return netProvider;
+			return new AbstractionAndProof<>(netProvider,
+					// support proof production (if used with CegarLoopForPetriNets)
+					() -> netProvider.getProofProducer(mPrefs.getOwickiGriesSettings()),
+					// support proof backtranslation (also applicable when used with NwaCegarLoop)
+					netProvider::backtranslateProof);
 		}
-		return new PetriLbeInitialAbstractionProvider<>(services, netProvider, mTransitionClazz,
+
+		final var lbeProvider = new PetriLbeInitialAbstractionProvider<>(services, netProvider, mTransitionClazz,
 				mPrefs.lbeIndependenceSettings(), mCreateCompositionFactory.get());
+
+		// Proof production is not supported if one-shot LBE is used.
+		return new AbstractionAndProof<>(lbeProvider);
 	}
 
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> createPartialOrderAbstraction(
@@ -317,12 +343,14 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				createPartialOrderAbstractionProvider(services, predicateFactory, stateFactory), icfg, errorLocs);
 	}
 
+	// PartialOrderCegarLoop does not yet support proof production, so we ignore the proof producer here.
 	private IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>>
 			createPartialOrderAbstractionProvider(final IUltimateServiceProvider services,
 					final PredicateFactory predicateFactory,
 					final IPetriNet2FiniteAutomatonStateFactory<IPredicate> stateFactory) {
-		final var netProvider = createPetriAbstractionProvider(services, predicateFactory, false);
-		return new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(services, netProvider, stateFactory);
+		final var netProviderAndProof = createPetriAbstractionProvider(services, predicateFactory, false);
+		return new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(services,
+				netProviderAndProof.initialAbstractionProvider(), stateFactory);
 	}
 
 	private <A extends IAutomaton<L, ?>> A constructInitialAbstraction(final IInitialAbstractionProvider<L, A> provider,
@@ -357,6 +385,33 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	public void shutdown() {
 		if (mIndependenceProviderFactory != null) {
 			mIndependenceProviderFactory.shutdown();
+		}
+	}
+
+	private static final record AbstractionAndProof<L extends IIcfgTransition<?>, A extends IAutomaton<L, ?>, P1 extends IProof, P2 extends IProof, H extends IProofProducer<? super A, P1>>(
+			IInitialAbstractionProvider<L, ? extends A> initialAbstractionProvider, Lazy<H> proofProducer,
+			Function<P1, P2> proofBacktranslator) {
+		public AbstractionAndProof {
+			Objects.requireNonNull(initialAbstractionProvider);
+			Objects.requireNonNull(proofProducer);
+		}
+
+		public AbstractionAndProof(final IInitialAbstractionProvider<L, ? extends A> initialAbstractionProvider,
+				final Supplier<H> proofProducer, final Function<P1, P2> proofBacktranslator) {
+			this(initialAbstractionProvider, new Lazy<>(proofProducer), proofBacktranslator);
+		}
+
+		public AbstractionAndProof(final IInitialAbstractionProvider<L, ? extends A> initialAbstractionProvider) {
+			this(initialAbstractionProvider, Lazy.empty(), null);
+		}
+
+		public IProofProducer<IIcfg<IcfgLocation>, IProof>
+				proofProducerWithBacktranslation(final IIcfg<IcfgLocation> originalProgram) {
+			if (proofBacktranslator == null || proofProducer.get() == null) {
+				return null;
+			}
+
+			return new BacktranslatingProofProducer<>(originalProgram, proofProducer.get(), proofBacktranslator);
 		}
 	}
 }

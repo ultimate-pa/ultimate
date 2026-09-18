@@ -1,0 +1,33 @@
+// Simple scalable test for computation of Owicki-Gries annotation for Petri Net with nested fork
+// ----------------------------------------------------------------------------------------------
+
+//@ variables (x Int)
+
+//@ semantics [0] { } true
+//@ semantics [1] { } false
+
+PetriNet program = (
+  alphabet    = { "[0]" "[1]" },
+  places      = { "l0" "l1" "l2" "l3" "l4" "l5" "l6" "e" },
+  transitions = {
+    ({ "l0" } "[0]" { "l1" "l2" })
+    ({ "l1" } "[0]" { "l3" "l4" })
+    ({ "l2" } "[0]" { "l5" "l6" })
+    ({ "l3" "l4" "l5" "l6"} "[1]" { "e" })
+  },
+  initialMarking = { "l0" },
+  acceptingPlaces = { "e" }
+);
+
+FiniteAutomaton proof = (
+     alphabet      = { "[0]" "[1]"},
+     states        = { "true" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+       ("true" "[1]" "false")
+     }
+);
+
+
+

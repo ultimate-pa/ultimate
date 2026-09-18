@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBlackWhiteStat
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -128,7 +127,7 @@ public final class BuchiPetriNet2FiniteAutomaton<LETTER, PLACE>
 		final VpAlphabet<LETTER> vpAlphabet =
 				new VpAlphabet<>(alphabet, Collections.emptySet(), Collections.emptySet());
 		mResult = new NestedWordAutomaton<>(mServices, vpAlphabet, factory);
-		getState(new Marking<>(ImmutableSet.of(operand.getInitialPlaces())), true, false);
+		getState(Marking.initial(operand), true, false);
 		while (!mWorklist.isEmpty()) {
 			final Pair<Marking<PLACE>, Boolean> markingWithAcptBool = mWorklist.remove(0);
 			// final Marking<PLACE> marking = mWorklist.remove(0);
