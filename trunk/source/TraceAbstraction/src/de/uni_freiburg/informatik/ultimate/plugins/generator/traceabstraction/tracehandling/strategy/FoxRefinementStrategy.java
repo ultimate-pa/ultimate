@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 
 /**
  * {@link IRefinementStrategy} that tries either {@code MathSat}, {@code bitwuzla} and {@code Z3} for floating points or
- * {@code Z3}, {@code bitwuzla} and {@code MathSat} in bitvector mode.
+ * {@code bitwuzla}, {@code Z3} and {@code MathSat} in bitvector mode.
  * <p>
  * The class uses a {@link StraightLineInterpolantAutomatonBuilder} for constructing the interpolant automaton.
  *
@@ -63,8 +63,8 @@ public class FoxRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRe
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
 		final boolean hasFloats = RefinementStrategyUtils.hasFloats(tc);
 		if (!hasFloats) {
-			rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
 			rtr.add(factory.createIpTcStrategyModuleBitwuzla(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+			rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
 		}
 		if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
 			// no quantifiers and no FP_TO_IEEE_BV_EXTENSION
