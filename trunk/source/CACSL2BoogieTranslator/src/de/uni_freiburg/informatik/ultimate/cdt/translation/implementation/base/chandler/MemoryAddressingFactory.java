@@ -57,7 +57,7 @@ public class MemoryAddressingFactory {
 					typeSizeAndOffsetComputer, settings, functionDeclarations, p);
 		} else if (pointer instanceof final MemoryPointer2D p) {
 			return new MemoryAddressing2D(typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
-					typeSizeAndOffsetComputer, settings.getPointerIntegerCastMode(), functionDeclarations, p);
+					typeSizeAndOffsetComputer, settings, functionDeclarations, p);
 		}
 
 		throw new UnsupportedOperationException("Unknown pointer instance: " + pointer.getClass());

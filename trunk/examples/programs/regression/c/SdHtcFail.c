@@ -9,7 +9,9 @@
 */
 
 void *ldv_malloc(int size) {
-  return malloc(size);
+  void* res = malloc(size);
+  if (res == NULL) abort();
+  return res;
 }
 
 struct ldv_list_head {
