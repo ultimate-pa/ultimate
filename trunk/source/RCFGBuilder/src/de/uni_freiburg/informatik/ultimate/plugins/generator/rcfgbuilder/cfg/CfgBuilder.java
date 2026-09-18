@@ -115,7 +115,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.LoopEntryDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.OrdinaryDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureEntryDebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorDebugIdentifier.ProcedureErrorType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureErrorWithCheckDebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.ProcedureExitDebugIdentifier;
@@ -435,8 +434,12 @@ public class CfgBuilder {
 	 *
 	 * @return
 	 */
-	private BoogieIcfgLocation addErrorNode(final String procName, final BoogieASTNode boogieASTNode,
+	private BoogieIcfgLocation addErrorNode(final String procName, final BoogieASTNode boogieASTNode, final Check check,
 			final Map<DebugIdentifier, BoogieIcfgLocation> procLocNodes) {
+		if (check == null) {
+			throw new IllegalArgumentException(
+					"Constructing error location without specification for the following AST node: " + boogieASTNode);
+		}
 		Set<BoogieIcfgLocation> errorNodes = mIcfg.getProcedureErrorNodes().get(procName);
 		final int locNodeNumber;
 		if (errorNodes == null) {
@@ -452,7 +455,7 @@ public class CfgBuilder {
 			type = ProcedureErrorType.ASSERT_VIOLATION;
 		} else if (boogieASTNode instanceof EnsuresSpecification) {
 			type = ProcedureErrorType.ENSURES_VIOLATION;
-		} else if (boogieASTNode instanceof RequiresSpecification) {
+		} else if (boogieASTNode instanceof CallStatement) {
 			type = ProcedureErrorType.REQUIRES_VIOLATION;
 		} else if (boogieASTNode instanceof ForkStatement) {
 			type = ProcedureErrorType.INUSE_VIOLATION;
@@ -460,13 +463,7 @@ public class CfgBuilder {
 			throw new IllegalArgumentException();
 		}
 
-		final ProcedureErrorDebugIdentifier errorLocLabel;
-		final Check check = Check.getAnnotation(boogieASTNode);
-		if (check == null) {
-			throw new IllegalArgumentException(
-					"Constructing error location without specification for the following AST node: " + boogieASTNode);
-		}
-		errorLocLabel = new ProcedureErrorWithCheckDebugIdentifier(procName, locNodeNumber, type, check);
+		final var errorLocLabel = new ProcedureErrorWithCheckDebugIdentifier(procName, locNodeNumber, type, check);
 		final BoogieIcfgLocation errorLocNode = new BoogieIcfgLocation(errorLocLabel, procName, true, boogieASTNode);
 		check.annotate(errorLocNode);
 		procLocNodes.put(errorLocLabel, errorLocNode);
@@ -1043,7 +1040,8 @@ public class CfgBuilder {
 					final Statement st = assumeSt;
 					ModelUtils.copyAnnotations(spec, st);
 					mRcfgBacktranslator.putAux(assumeSt, new BoogieASTNode[] { spec });
-					final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, spec, mProcLocNodes);
+					final BoogieIcfgLocation errorLocNode =
+							addErrorNode(mCurrentProcedureName, spec, Check.getAnnotation(spec), mProcLocNodes);
 					final CodeBlock assumeEdge = mCbf.constructStatementSequence(finalNode, errorLocNode, assumeSt);
 					ModelUtils.copyAnnotations(spec, assumeEdge);
 					ModelUtils.copyAnnotations(spec, errorLocNode);
@@ -1270,7 +1268,8 @@ public class CfgBuilder {
 			final AssumeStatement assumeError = new AssumeStatement(st.getLocation(), getNegation(assertion));
 			ModelUtils.copyAnnotations(st, assumeError);
 			mRcfgBacktranslator.putAux(assumeError, new BoogieASTNode[] { st });
-			final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, st, mProcLocNodes);
+			final BoogieIcfgLocation errorLocNode =
+					addErrorNode(mCurrentProcedureName, st, Check.getAnnotation(st), mProcLocNodes);
 			final StatementSequence assumeErrorCB = mCbf.constructStatementSequence(locNode, errorLocNode, assumeError);
 			ModelUtils.copyAnnotations(st, errorLocNode);
 			ModelUtils.copyAnnotations(st, assumeErrorCB);
@@ -1416,10 +1415,11 @@ public class CfgBuilder {
 					final Statement st1 = assumeSt;
 					ModelUtils.copyAnnotations(st, st1);
 					mRcfgBacktranslator.putAux(assumeSt, new BoogieASTNode[] { st, spec });
-					final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, spec, mProcLocNodes);
+					final BoogieIcfgLocation errorLocNode =
+							addErrorNode(mCurrentProcedureName, st, Check.getAnnotation(spec), mProcLocNodes);
 					final StatementSequence errorCB = mCbf.constructStatementSequence(locNode, errorLocNode, assumeSt);
 					ModelUtils.copyAnnotations(spec, errorCB);
-					ModelUtils.copyAnnotations(spec, errorLocNode);
+					ModelUtils.copyAnnotationsExcept(spec, errorLocNode, ILocation.class);
 					mEdges.add(errorCB);
 				}
 			}
