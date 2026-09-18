@@ -139,16 +139,6 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.e4.ui.swt.gtk"
-         ws="gtk"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.e4.ui.swt.win32"
-         ws="win32"
-         version="0.0.0"/>
-
-   <plugin
          id="org.eclipse.e4.ui.widgets"
          version="0.0.0"/>
 
