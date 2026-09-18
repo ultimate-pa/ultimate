@@ -35,9 +35,9 @@ This archive also contains binaries for the following theorem provers.
 
 * CVC5 (<https://github.com/cvc5/cvc5>)
   * Linux (cvc5)
-    cvc5 version 1.3.1 [git ea1b484 on branch HEAD]
+    cvc5 1.4.0 [git b432cd7 on branch HEAD]
   * Windows (cvc5.exe)
-    cvc5 version 1.3.1 [git ea1b484 on branch HEAD]
+    cvc5 1.4.0 [git b432cd7 on branch HEAD]
 
 For each of these theorem provers, a corresponding license file (z3-LICENSE,
 bitwuzla-LICENSE, mathsat-LICENSE, cvc5-LICENSE) can be found in our archive.
