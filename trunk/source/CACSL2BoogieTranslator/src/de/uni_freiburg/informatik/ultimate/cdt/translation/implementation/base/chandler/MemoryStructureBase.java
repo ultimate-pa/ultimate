@@ -75,11 +75,6 @@ public abstract class MemoryStructureBase implements IMemoryStructure {
 	}
 
 	@Override
-	public final String getUncheckedReadProcedureName(final CPrimitives primitive) {
-		return READ_PROCEDURE_PREFIX + UNCHECKED_PREFIX + getProcedureSuffix(primitive);
-	}
-
-	@Override
 	public final String getWriteProcedureName(final CPrimitives primitive) {
 		return WRITE_PROCEDURE_PREFIX + getProcedureSuffix(primitive);
 	}
@@ -98,12 +93,6 @@ public abstract class MemoryStructureBase implements IMemoryStructure {
 	public final String getReadPointerProcedureName() {
 		final HeapDataArray hda = mPointerArray;
 		return READ_PROCEDURE_PREFIX + hda.getName();
-	}
-
-	@Override
-	public final String getUncheckedReadPointerProcedureName() {
-		final HeapDataArray hda = mPointerArray;
-		return READ_PROCEDURE_PREFIX + UNCHECKED_PREFIX + hda.getName();
 	}
 
 	@Override

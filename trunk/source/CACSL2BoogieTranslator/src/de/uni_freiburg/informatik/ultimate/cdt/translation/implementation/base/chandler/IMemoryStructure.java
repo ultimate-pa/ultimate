@@ -40,8 +40,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 public interface IMemoryStructure {
 	String getReadProcedureName(final CPrimitives primitive);
 
-	String getUncheckedReadProcedureName(final CPrimitives primitive);
-
 	String getWriteProcedureName(final CPrimitives primitive);
 
 	String getUncheckedWriteProcedureName(final CPrimitives primitive);
@@ -49,8 +47,6 @@ public interface IMemoryStructure {
 	String getInitWriteProcedureName(final CPrimitives primitive);
 
 	String getReadPointerProcedureName();
-
-	String getUncheckedReadPointerProcedureName();
 
 	String getWritePointerProcedureName();
 

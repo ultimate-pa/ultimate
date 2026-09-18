@@ -244,14 +244,7 @@ public final class ConstructMemcpyOrMemmove {
 			for (final CPrimitives cPrim : mMemoryHandler.getRequiredMemoryStructureFeatures()
 					.getDataOnHeapRequired()) {
 				final ICType cPrimType = new CPrimitive(cPrim);
-				final Expression srcAcc;
-				{
-					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadUnchecked(currentSrc, cPrimType);
-					srcAcc = srcAccExpRes.getLrValue().getValue();
-					loopBody.addStatements(srcAccExpRes.getStatements());
-					loopBody.addDeclarations(srcAccExpRes.getDeclarations());
-					assert srcAccExpRes.getOverapprs().isEmpty();
-				}
+				final Expression srcAcc = mMemoryHandler.getReadUnchecked(currentSrc, cPrimType);
 
 				{
 					final List<Statement> writeCall = mMemoryHandler.getWriteCall(ignoreLoc,
@@ -293,14 +286,7 @@ public final class ConstructMemcpyOrMemmove {
 
 			if (mMemoryHandler.getRequiredMemoryStructureFeatures().isPointerOnHeapRequired()) {
 				final ICType cPointer = CPointer.voidPointer();
-				final Expression srcAcc;
-				{
-					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadUnchecked(currentSrc, cPointer);
-					srcAcc = srcAccExpRes.getLrValue().getValue();
-					loopBody.addStatements(srcAccExpRes.getStatements());
-					loopBody.addDeclarations(srcAccExpRes.getDeclarations());
-					assert srcAccExpRes.getOverapprs().isEmpty();
-				}
+				final Expression srcAcc = mMemoryHandler.getReadUnchecked(currentSrc, cPointer);
 
 				{
 					final List<Statement> writeCall = mMemoryHandler.getWriteCall(ignoreLoc,

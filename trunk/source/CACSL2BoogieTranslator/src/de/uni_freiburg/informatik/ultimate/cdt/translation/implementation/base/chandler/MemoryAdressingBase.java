@@ -27,20 +27,17 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryManagementStrategy.AllocationProcedureSpec;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IPointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.NonBijectiveMapping1D;
@@ -54,10 +51,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Abstract base class for implementing specific memory addressing schemes based on a memory pointer representation.
@@ -114,9 +108,6 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 			} else {
 				throw new UnsupportedOperationException("Unknown pointer type " + mMemoryPointer.getClass());
 			}
-		default:
-			throw new UnsupportedOperationException(
-					"Pointer-Integer conversion not yet implemented " + pointerIntegerMode);
 		};
 	}
 
@@ -141,18 +132,26 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 	}
 
 	@Override
-	public List<Pair<Expression, Set<VariableLHS>>> constructMallocSpecificationExpressions(final ILocation tuLoc,
-			final MemoryArea memoryArea, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public AllocationProcedureSpec constructMallocSpecification(final ILocation tuLoc, final MemoryArea memoryArea,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryManagementStrategy.constructMallocSpecificationExpressions(tuLoc, memoryArea,
-				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		return mMemoryManagementStrategy.constructMallocSpecification(tuLoc, memoryArea, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
 	}
 
 	@Override
-	public List<Triple<Expression, Set<VariableLHS>, Boolean>> constructDeallocSpecificationExpressions(
-			final ILocation tuLoc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public AllocationProcedureSpec constructDeallocSpecification(final ILocation tuLoc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryManagementStrategy.constructDeallocSpecificationExpressions(tuLoc, requiredMemoryModelFeatures,
+		return mMemoryManagementStrategy.constructDeallocSpecification(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
+	}
+
+	@Override
+	public AllocationProcedureSpec constructAllocInitSpecification(final ILocation tuLoc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryManagementStrategy.constructAllocInitSpecification(tuLoc, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler);
 	}
 
@@ -162,14 +161,6 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler, final BigInteger fixedAddressCounter) {
 		return mMemoryManagementStrategy.constructUltimateInitStatements(loc, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler, fixedAddressCounter);
-	}
-
-	@Override
-	public List<Pair<Expression, Set<VariableLHS>>> constructAllocInitSpecificationExpressions(final ILocation tuLoc,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryManagementStrategy.constructAllocInitSpecificationExpressions(tuLoc, requiredMemoryModelFeatures,
-				memoryModelDeclarationsHandler);
 	}
 
 	@Override
@@ -210,58 +201,32 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 	}
 
 	@Override
-	public List<Specification> constructPointerValidityCheck(final ILocation loc, final String ptrName,
-			final String procedureName, final CheckMode mode,
+	public Expression constructPointerValidityCheckExpr(final ILocation loc, final Expression ptr,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		if (mode == CheckMode.IGNORE) {
-			return Collections.emptyList();
-		}
-
 		throw new UnsupportedOperationException("The pointer base validity check is not compatible with the selected: "
 				+ this.getClass() + " addressing mode!");
 	}
 
 	@Override
-	public List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
-			final String ptrName, final String procedureName, final CheckMode mode,
-			final Boolean isBitVectorTranslation, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	public Expression constructPointerTargetFullyAllocatedCheckExpr(final ILocation loc, final Expression ptr,
+			final Expression size, final boolean isBitVectorTranslation,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		if (mode == CheckMode.IGNORE) {
-			return Collections.emptyList();
-		}
-
 		throw new UnsupportedOperationException(
 				"The target pointer fully allocated check is not compatible with the selected: " + this.getClass()
-						+ "  " + "addressing mode!");
-	}
-
-	@Override
-	public List<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed,
-			final boolean isPointerCheckRequired, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		assert pointerToBeFreed.getCType().getUnderlyingType() instanceof CPointer;
-
-		if (!isPointerCheckRequired) {
-			return Collections.emptyList();
-		}
-
-		throw new UnsupportedOperationException(
-				"The check if the freed pointer is valid is not compatible with the selected: " + this.getClass()
 						+ "  addressing mode!");
 	}
 
 	@Override
-	public List<Statement> constructMemSafeStatementsForPointerExpression(final ILocation loc, final Expression ptr,
-			final CheckMode pointerBaseValid, final CheckMode pointerTargetFullyAllocated,
+	public List<Expression> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		if (pointerBaseValid == CheckMode.IGNORE && pointerTargetFullyAllocated == CheckMode.IGNORE) {
-			return Collections.emptyList();
-		}
+		assert pointerToBeFreed.getCType().getUnderlyingType() instanceof CPointer;
 
 		throw new UnsupportedOperationException(
-				"The MemSafety checks are not compatible with the selected: " + this.getClass() + "  addressing mode!");
+				"The check if the freed pointer is valid is not compatible with the selected: " + this.getClass()
+						+ "  addressing mode!");
 	}
 
 	@Override
@@ -270,6 +235,14 @@ public abstract class MemoryAdressingBase<T extends IMemoryPointer> implements I
 		throw new UnsupportedOperationException(
 				"The string copy overlapping check is not compatible with the selected: " + this.getClass()
 						+ "  addressing mode!");
+	}
+
+	@Override
+	public Expression constructMemoryNeutralityCheckExpr(final ILocation loc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		throw new UnsupportedOperationException("The check for memory neutrality is not compatible with the selected: "
+				+ this.getClass() + " addressing mode!");
 	}
 
 	/**
