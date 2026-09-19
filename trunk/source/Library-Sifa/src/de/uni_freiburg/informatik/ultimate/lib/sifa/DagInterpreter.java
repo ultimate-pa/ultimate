@@ -32,7 +32,9 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -52,8 +54,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag.RegexDagNode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ICallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ILoopSummarizer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinThreadCurrent;
 
 /**
  * Interprets the DAG of a single procedure or loop.
@@ -211,7 +211,8 @@ public class DagInterpreter {
 			output = ipretCallReturnSummary((CallReturnSummary) trans, input);
 		} else if (trans instanceof IIcfgInternalTransition) {
 			output = ipretInternal((IIcfgInternalTransition<IcfgLocation>) trans, input);
-		} else if (trans instanceof ForkThreadCurrent || trans instanceof JoinThreadCurrent) {
+		} else if (trans instanceof IIcfgForkTransitionThreadCurrent<?>
+				|| trans instanceof IIcfgJoinTransitionThreadCurrent<?>) {
 			output = postNoOpIfSupported(trans, input);
 		} else {
 			throw new UnsupportedOperationException("Unexpected transition type: " + trans.getClass());

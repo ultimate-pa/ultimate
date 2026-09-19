@@ -26,7 +26,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
 
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,12 +43,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.LocationMarkerTransition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.ObservedThreadStateRecorder;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostLocationStateUpdater;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocksetAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.publish.PublishOnAcquire;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.PrimedDefaultIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.InitialStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadActivityPreanalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
@@ -57,8 +56,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class ConcurrentSymbolicTools extends SymbolicTools {
 
@@ -73,9 +70,9 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	private MustLocksetAnalysis mLocksetInfo = MustLocksetAnalysis.disabled();
 	private PublishOnAcquire mPublication = PublishOnAcquire.disabled();
 	private ThreadActivityPreanalysis mThreadActivityPreanalysis;
+	private GhostLocationStateUpdater mLocationStateUpdater;
 	private ThreadAnalysisContext mThreadContext;
 	private ObservedThreadStateRecorder mObservedStateRecorder;
-	private final Map<String, IdentityHashMap<Term, Term>> mLocProjectionCache = new HashMap<>();
 
 	public ConcurrentSymbolicTools(final IUltimateServiceProvider services, final SifaStats stats,
 			final IIcfg<IcfgLocation> icfg, final SimplificationTechnique simplification,
@@ -123,8 +120,9 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		mGhostVariables = ghostVariables;
 		mThreadActivityPreanalysis = activityPreanalysis;
 		mLocksetInfo = locksetInfo;
-		mInitialStateFactory.configureStaticAnalysis(ghostVariables);
-		mJoinHandler.configureStaticAnalysis(ghostVariables);
+		mLocationStateUpdater = new GhostLocationStateUpdater(mServices, getManagedScript(), getFactory(), ghostVariables);
+		mInitialStateFactory.configureStaticAnalysis(ghostVariables, mLocationStateUpdater);
+		mJoinHandler.configureStaticAnalysis(ghostVariables, mLocationStateUpdater);
 	}
 
 	public void configureForThread(final String threadId, final IInterferenceSet interference,
@@ -204,8 +202,8 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	private IPredicate updateGhostvarsAndApplyInterferences(final IPredicate state,
 			final IIcfgTransition<IcfgLocation> transition) {
 		IPredicate updated = addLocationUpdate(state, transition);
-		if (hasGhostLocationTracking() && transition instanceof final IIcfgForkTransitionThreadCurrent<?> fork) {
-			updated = addLocationUpdateForThread(updated, fork.getNameOfForkedProcedure(),
+		if (mLocationStateUpdater.isEnabled() && transition instanceof final IIcfgForkTransitionThreadCurrent<?> fork) {
+			updated = mLocationStateUpdater.addLocationUpdate(updated, fork.getNameOfForkedProcedure(),
 					mGhostVariables.getEntryLocation(fork.getNameOfForkedProcedure()));
 		}
 		updated = mJoinHandler.extractJoinedThreadGlobalExitStateAndIntersect(updated, transition, mThreadContext,
@@ -231,36 +229,11 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	}
 
 	private IPredicate addLocationUpdate(final IPredicate postState, final IIcfgTransition<IcfgLocation> transition) {
-		return addLocationUpdateForThread(postState, mThreadContext.threadId(), transition.getTarget());
-	}
-
-	public IPredicate addLocationUpdateForThread(final IPredicate postState, final String threadId,
-			final IcfgLocation targetLocation) {
-		if (!hasGhostLocationTracking() || !mGhostVariables.tracksLocationPrecisely(threadId)
-				|| SmtUtils.isFalseLiteral(postState.getFormula())) {
-			return postState;
-		}
-
-		final Term locConstraint = mGhostVariables.createLocationConstraint(threadId, targetLocation);
-		if (SmtUtils.isTrueLiteral(postState.getFormula())) {
-			return predicate(locConstraint);
-		}
-
-		final TermVariable currentLocTv = mGhostVariables.getLocationTermVar(threadId);
-		final Term stateTerm = postState.getFormula();
-		final Term projected = mLocProjectionCache.computeIfAbsent(threadId, k -> new IdentityHashMap<>())
-				.computeIfAbsent(stateTerm, k -> RelationalPredicateUtils.existentiallyProject(k, Set.of(currentLocTv),
-						mServices, getManagedScript()));
-		final Term combined = SmtUtils.and(getScript(), projected, locConstraint);
-		return predicate(combined);
+		return mLocationStateUpdater.addLocationUpdate(postState, mThreadContext.threadId(), transition.getTarget());
 	}
 
 	public IDomain getEffectiveDomain() {
 		return mThreadContext != null ? mThreadContext.domain() : null;
-	}
-
-	private boolean hasGhostLocationTracking() {
-		return mGhostVariables != null;
 	}
 
 	public IPredicate getInitialStatePredicate(final String threadId) {

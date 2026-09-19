@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostLocationStateUpdater;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicateUtils;
@@ -54,6 +55,7 @@ class JoinHandler {
 	private final IUltimateServiceProvider mServices;
 	private final IIcfg<IcfgLocation> mIcfg;
 	private GhostVariableManager mGhostVariables;
+	private GhostLocationStateUpdater mLocationStateUpdater;
 	private final Map<String, Set<TermVariable>> mGhostVarsToProjectCache = new HashMap<>();
 	private final IdentityHashMap<IIcfgJoinTransitionThreadCurrent<?>, Set<TermVariable>> mAssignedVarsCache =
 			new IdentityHashMap<>();
@@ -67,8 +69,10 @@ class JoinHandler {
 		mIcfg = icfg;
 	}
 
-	void configureStaticAnalysis(final GhostVariableManager ghostVariables) {
+	void configureStaticAnalysis(final GhostVariableManager ghostVariables,
+			final GhostLocationStateUpdater locationStateUpdater) {
 		mGhostVariables = ghostVariables;
+		mLocationStateUpdater = locationStateUpdater;
 	}
 
 	IPredicate extractJoinedThreadGlobalExitStateAndIntersect(final IPredicate state,
@@ -128,7 +132,7 @@ class JoinHandler {
 
 	private IPredicate intersectStateAndExitLocationState(final IPredicate state, final String joinedThread,
 			final IcfgLocation exitLoc, final IPredicate sharedExit) {
-		final IPredicate atExit = mTools.addLocationUpdateForThread(state, joinedThread, exitLoc);
+		final IPredicate atExit = mLocationStateUpdater.addLocationUpdate(state, joinedThread, exitLoc);
 		final Term exitFormula = sharedExit.getFormula();
 		return mTools.predicate(SmtUtils.and(mTools.getScript(), atExit.getFormula(), exitFormula));
 	}

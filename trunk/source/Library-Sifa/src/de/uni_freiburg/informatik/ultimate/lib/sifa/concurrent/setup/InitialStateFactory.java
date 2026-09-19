@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ConcurrentSymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostLocationStateUpdater;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
@@ -48,6 +49,7 @@ public final class InitialStateFactory {
 	private final IIcfg<IcfgLocation> mIcfg;
 
 	private GhostVariableManager mGhostVariables;
+	private GhostLocationStateUpdater mLocationStateUpdater;
 	private Map<IcfgLocation, IPredicate> mLocationPredicates;
 	private IDomain mAnalysisDomain;
 
@@ -56,8 +58,10 @@ public final class InitialStateFactory {
 		mIcfg = Objects.requireNonNull(icfg);
 	}
 
-	public void configureStaticAnalysis(final GhostVariableManager ghostVariables) {
+	public void configureStaticAnalysis(final GhostVariableManager ghostVariables,
+			final GhostLocationStateUpdater locationStateUpdater) {
 		mGhostVariables = ghostVariables;
+		mLocationStateUpdater = locationStateUpdater;
 	}
 
 	public void configureForThread(final Map<IcfgLocation, IPredicate> locationPredicates,
@@ -126,8 +130,8 @@ public final class InitialStateFactory {
 		final String forkingTid = fork.getSource().getProcedure();
 		final IcfgLocation forkedEntry = mGhostVariables.getEntryLocation(forkedThreadId);
 
-		final IPredicate updated = mTools.addLocationUpdateForThread(sharedForkState, forkingTid, fork.getTarget());
-		return mTools.addLocationUpdateForThread(updated, forkedThreadId, forkedEntry);
+		final IPredicate updated = mLocationStateUpdater.addLocationUpdate(sharedForkState, forkingTid, fork.getTarget());
+		return mLocationStateUpdater.addLocationUpdate(updated, forkedThreadId, forkedEntry);
 	}
 
 	private IPredicate projectToSharedState(final IPredicate predicate) {
