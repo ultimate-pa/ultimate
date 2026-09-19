@@ -33,10 +33,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.threadactivity.MayActiveThreadAnalysis.ThreadActivity;
 
-/**
- * Computes the threads that may be active at each location and, when requested, the threads that have definitely
- * been joined.
- */
 public final class ThreadActivityPreanalysis {
 
 	private final Map<IcfgLocation, Set<String>> mActiveByLocation;
@@ -67,10 +63,6 @@ public final class ThreadActivityPreanalysis {
 				active.selfForkingThreads());
 	}
 
-	/**
-	 * Matches each join transition to the forked procedure whose fork-id arguments it joins on. Pass null threadIds
-	 * to match against every forked procedure.
-	 */
 	public static Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> matchJoinsToThreads(
 			final IIcfg<IcfgLocation> icfg, final Set<String> threadIds) {
 		return DefinitelyJoinedThreadAnalysis.matchJoinsToThreads(icfg, threadIds);

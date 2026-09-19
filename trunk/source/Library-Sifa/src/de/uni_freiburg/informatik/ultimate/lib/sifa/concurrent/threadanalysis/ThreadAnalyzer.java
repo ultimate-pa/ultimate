@@ -51,10 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ICallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ILoopSummarizer;
 
-/**
- * Owns the per-thread ICFG views, interpreters, and state collection for one outer analysis round.
- */
-public final class ThreadAnalysisRunner {
+public final class ThreadAnalyzer {
 	private final ILogger mLogger;
 	private final IProgressAwareTimer mTimer;
 	private final SifaStats mStats;
@@ -72,7 +69,7 @@ public final class ThreadAnalysisRunner {
 	private final Map<String, IcfgInterpreter> mThreadInterpreters = new HashMap<>();
 	private final Map<String, Set<IcfgLocation>> mForkSourcesByThread;
 
-	public ThreadAnalysisRunner(final ILogger logger, final IProgressAwareTimer timer, final SifaStats stats,
+	public ThreadAnalyzer(final ILogger logger, final IProgressAwareTimer timer, final SifaStats stats,
 			final ConcurrentSymbolicTools tools, final IIcfg<IcfgLocation> icfg,
 			final Collection<IcfgLocation> requestedLocationsOfInterest, final IDomain domain, final IFluid fluid,
 			final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,

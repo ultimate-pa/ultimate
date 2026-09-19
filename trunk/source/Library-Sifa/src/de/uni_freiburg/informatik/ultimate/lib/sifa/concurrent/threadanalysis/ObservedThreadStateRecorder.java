@@ -49,7 +49,7 @@ final class ObservedThreadStateRecorder {
 		mGhostVariables = ghostVariables;
 	}
 
-	Map<IcfgLocation, IPredicate> snapshotObservedStates() {
+	Map<IcfgLocation, IPredicate> getObservedStates() {
 		return Collections.unmodifiableMap(new LinkedHashMap<>(mObservedLocationStates));
 	}
 

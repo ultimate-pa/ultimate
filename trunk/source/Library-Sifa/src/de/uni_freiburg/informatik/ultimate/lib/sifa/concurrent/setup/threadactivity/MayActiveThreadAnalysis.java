@@ -35,9 +35,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
-/**
- * Computes which configured threads may be active at each location.
- */
 final class MayActiveThreadAnalysis {
 
 	private MayActiveThreadAnalysis() {
@@ -94,7 +91,6 @@ final class MayActiveThreadAnalysis {
 			final Set<String> activeThreads = restrictToConfiguredThreads(entry.getValue(), threadIds);
 			final Set<String> closedActiveThreads = new HashSet<>(activeThreads);
 			for (final String activeThread : activeThreads) {
-				// The current instance cannot interfere with itself unless another instance may have been forked.
 				if (activeThread.equals(ownerThread) && !selfForkingThreads.contains(ownerThread)) {
 					continue;
 				}

@@ -23,13 +23,33 @@
  * licensors of the ULTIMATE Library-Sifa plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.fixpoint;
 
-import java.util.Map;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+final class InterferenceFixpoint {
+	private final IDomain mDomain;
+	private final int mWideningThreshold;
+	private IInterferenceSet mCurrent;
 
-public record ThreadModularFixpointResult(Map<IcfgLocation, IPredicate> locationPredicates,
-		Map<String, Map<IcfgLocation, IPredicate>> threadPredicates) {
+	InterferenceFixpoint(final IDomain domain, final int wideningThreshold) {
+		mDomain = domain;
+		mWideningThreshold = wideningThreshold;
+	}
+
+	IInterferenceSet current() {
+		return mCurrent;
+	}
+
+	boolean isStable(final IInterferenceSet extracted) {
+		if (extracted == null) {
+			return true;
+		}
+		return mCurrent != null && extracted.isSubsumedBy(mCurrent, mDomain);
+	}
+
+	void advance(final IInterferenceSet extracted, final int iteration) {
+		mCurrent = iteration >= mWideningThreshold && mCurrent != null ? mCurrent.widen(extracted, mDomain) : extracted;
+	}
 }

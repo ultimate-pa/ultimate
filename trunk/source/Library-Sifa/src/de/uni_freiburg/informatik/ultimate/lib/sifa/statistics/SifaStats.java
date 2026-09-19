@@ -252,10 +252,7 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 		INTERFERENCE_QE_MAX_TIME(KeyType.MAX_TIMER),
 		INTERFERENCE_INNER_ITERATIONS(KeyType.COUNTER),
 		INTERFERENCE_INNER_WIDENINGS(KeyType.COUNTER),
-		INTERFERENCE_OUTER_WIDENINGS(KeyType.COUNTER),
 		INTERFERENCE_LOCKSET_FILTERED(KeyType.COUNTER),
-		/** Summaries in the interference set after each outer-round build (sums over rounds) */
-		INTERFERENCE_SUMMARIES_BUILT(KeyType.COUNTER),
 		/** Summaries that passed all applicability filters and were applied to a state */
 		INTERFERENCE_SUMMARIES_APPLIED(KeyType.COUNTER),;
 

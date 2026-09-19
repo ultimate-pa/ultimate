@@ -108,7 +108,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	}
 
 	public Map<IcfgLocation, IPredicate> getObservedThreadLocationStates() {
-		return mObservedStateRecorder.snapshotObservedStates();
+		return mObservedStateRecorder.getObservedStates();
 	}
 
 	public void setPublication(final PublishOnAcquire publication) {

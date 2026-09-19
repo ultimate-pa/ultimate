@@ -44,9 +44,9 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.proofchecking.Thr
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.reporting.SifaResultPrinter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSetup;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.OuterInterferenceFixpoint;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ThreadAnalysisRunner;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ThreadModularFixpointResult;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ThreadAnalyzer;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.fixpoint.OuterInterferenceFixpoint;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.fixpoint.ThreadModularFixpointResult;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
@@ -76,10 +76,10 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		final var setup = ThreadModularSetup.initialize(services, icfg, baseDomain, mConcurrentTools);
 		setup.postcondition().setStats(stats);
 		mProofChecker = setup.proofChecker();
-		final ThreadAnalysisRunner threadAnalysis = new ThreadAnalysisRunner(logger, timer, stats, mConcurrentTools,
+		final ThreadAnalyzer threadAnalysis = new ThreadAnalyzer(logger, timer, stats, mConcurrentTools,
 				icfg, mRequestedLocationsOfInterest, setup.domain(), fluid, loopSumFactory, callSumFactory,
 				setup.threadIds(), setup.joinedThreads());
-		mOuterFixpoint = new OuterInterferenceFixpoint(logger, timer, stats, mConcurrentTools, setup.domain(),
+		mOuterFixpoint = new OuterInterferenceFixpoint(logger, mConcurrentTools, setup.domain(),
 				setup.interferenceFactory(), setup.publication(), mConcurrentTools.getSettings().outerWideningThreshold(),
 				threadAnalysis);
 		mResultPrinter = mConcurrentTools.getSettings().resultPrint()

@@ -37,9 +37,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
-/**
- * The threads that each configured thread may create, directly or through nested forks.
- */
 final class ThreadForkGraph {
 
 	private final Map<String, Set<String>> mMayForkThreads;

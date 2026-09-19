@@ -42,9 +42,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-/**
- * Matches unambiguous joins to threads and propagates the resulting must-joined facts.
- */
 final class DefinitelyJoinedThreadAnalysis {
 
 	private DefinitelyJoinedThreadAnalysis() {
@@ -59,8 +56,8 @@ final class DefinitelyJoinedThreadAnalysis {
 				forkCount.merge(threadId, 1, Integer::sum);
 			}
 		}
-		final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> candidates =
-				new LinkedHashMap<>(matchJoinsToThreads(icfg, threadIds));
+		final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> candidates = new LinkedHashMap<>(
+				matchJoinsToThreads(icfg, threadIds));
 		final Map<String, Integer> joinCount = new HashMap<>();
 		candidates.values().forEach(threadId -> joinCount.merge(threadId, 1, Integer::sum));
 		candidates.entrySet().removeIf(entry -> forkCount.getOrDefault(entry.getValue(), 0) != 1
