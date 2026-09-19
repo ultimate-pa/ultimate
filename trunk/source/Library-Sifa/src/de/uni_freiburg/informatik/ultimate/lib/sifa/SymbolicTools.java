@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.LocationMarkerTransition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -113,14 +112,6 @@ public class SymbolicTools {
 
 	public BasicPredicateFactory getFactory() {
 		return mFactory;
-	}
-
-	protected IPredicate postSpecialTransition(final IPredicate input,
-			final IIcfgTransition<IcfgLocation> transition) {
-		if (transition instanceof LocationMarkerTransition) {
-			return input;
-		}
-		throw new UnsupportedOperationException("Unexpected transition type: " + transition.getClass());
 	}
 
 	public IPredicate post(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {

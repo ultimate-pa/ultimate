@@ -169,18 +169,12 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 				+ returnTransition.getSource() + "). Enable procedure inlining or restrict to fork/join concurrency.");
 	}
 
-	@Override
-	protected IPredicate postSpecialTransition(final IPredicate input,
-			final IIcfgTransition<IcfgLocation> transition) {
+	public IPredicate postNoOpTransition(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
 		if (transition instanceof LocationMarkerTransition) {
 			mObservedStateRecorder.recordTransitionInputState(transition, input);
 			return applyInterferences(input, transition.getTarget());
 		}
-		if (transition instanceof IIcfgForkTransitionThreadCurrent<?>
-				|| transition instanceof IIcfgJoinTransitionThreadCurrent<?>) {
-			return post(input, transition);
-		}
-		return super.postSpecialTransition(input, transition);
+		return post(input, transition);
 	}
 
 	public IPredicate applyInterferences(final IPredicate state, final IcfgLocation location) {
