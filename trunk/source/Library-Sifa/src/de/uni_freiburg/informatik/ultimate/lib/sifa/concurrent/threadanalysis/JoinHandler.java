@@ -23,7 +23,7 @@
  * licensors of the ULTIMATE Library-Sifa plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.Gh
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicateUtils;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadActivityPreanalysis;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.threadactivity.ThreadActivityPreanalysis;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;

@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.ISifaInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ConcurrentSymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ThreadModularSifaInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.PrimedDefaultIcfgSymbolTable;

@@ -31,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -52,8 +53,10 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.Grou
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.publish.PublishOnAcquire;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.proofchecking.ThreadModularProofChecker;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.reporting.SifaResultPrinter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSetup;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
@@ -245,7 +248,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 
 	private boolean joinedExitPredicatesUnchanged(final Map<IcfgLocation, IPredicate> allPredicates,
 			final Map<IcfgLocation, IPredicate> snapshot) {
-		for (final Map.Entry<IcfgLocation, IPredicate> entry : snapshot.entrySet()) {
+		for (final Entry<IcfgLocation, IPredicate> entry : snapshot.entrySet()) {
 			final IPredicate before = entry.getValue();
 			final IPredicate after = allPredicates.get(entry.getKey());
 			if (before == after) {

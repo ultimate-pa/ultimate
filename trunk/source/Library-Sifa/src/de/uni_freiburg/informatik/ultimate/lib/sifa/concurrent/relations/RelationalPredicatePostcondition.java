@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats.Key;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -142,15 +143,15 @@ public class RelationalPredicatePostcondition {
 			projected = conjunction;
 		} else {
 			if (mStats != null) {
-				mStats.increment(SifaStats.Key.INTERFERENCE_QE_APPLICATIONS);
-				mStats.start(SifaStats.Key.INTERFERENCE_QE_TIME);
-				mStats.startMax(SifaStats.Key.INTERFERENCE_QE_MAX_TIME);
+				mStats.increment(Key.INTERFERENCE_QE_APPLICATIONS);
+				mStats.start(Key.INTERFERENCE_QE_TIME);
+				mStats.startMax(Key.INTERFERENCE_QE_MAX_TIME);
 			}
 			projected = RelationalPredicateUtils.existentiallyProject(conjunction, preVarsToProject, mServices,
 					mManagedScript);
 			if (mStats != null) {
-				mStats.stop(SifaStats.Key.INTERFERENCE_QE_TIME);
-				mStats.stopMax(SifaStats.Key.INTERFERENCE_QE_MAX_TIME);
+				mStats.stop(Key.INTERFERENCE_QE_TIME);
+				mStats.stopMax(Key.INTERFERENCE_QE_MAX_TIME);
 			}
 		}
 

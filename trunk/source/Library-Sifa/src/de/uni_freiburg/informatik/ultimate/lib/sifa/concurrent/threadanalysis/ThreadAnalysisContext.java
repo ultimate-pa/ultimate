@@ -23,7 +23,7 @@
  * licensors of the ULTIMATE Library-Sifa plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -33,7 +33,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadActivityPreanalysis;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.threadactivity.ThreadActivityPreanalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
 record ThreadAnalysisContext(String threadId, IInterferenceSet interference, IDomain domain,

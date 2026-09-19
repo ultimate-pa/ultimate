@@ -23,7 +23,7 @@
  * licensors of the ULTIMATE Library-Sifa plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg;
+package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -38,22 +38,22 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.Gh
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
-public final class ObservedThreadStateRecorder {
+final class ObservedThreadStateRecorder {
 
 	private final IDomain mDomain;
 	private final GhostVariableManager mGhostVariables;
 	private final Map<IcfgLocation, IPredicate> mObservedLocationStates = new LinkedHashMap<>();
 
-	public ObservedThreadStateRecorder(final IDomain domain, final GhostVariableManager ghostVariables) {
+	ObservedThreadStateRecorder(final IDomain domain, final GhostVariableManager ghostVariables) {
 		mDomain = domain;
 		mGhostVariables = ghostVariables;
 	}
 
-	public Map<IcfgLocation, IPredicate> snapshotObservedStates() {
+	Map<IcfgLocation, IPredicate> snapshotObservedStates() {
 		return Collections.unmodifiableMap(new LinkedHashMap<>(mObservedLocationStates));
 	}
 
-	public void recordTransitionInputState(final IIcfgTransition<IcfgLocation> transition,
+	void recordTransitionInputState(final IIcfgTransition<IcfgLocation> transition,
 			final IPredicate inputState) {
 		if (!shouldCaptureTransitionInputForInterference(transition)) {
 			return;
@@ -64,7 +64,7 @@ public final class ObservedThreadStateRecorder {
 		}
 	}
 
-	public void recordObservedState(final IcfgLocation location, final IPredicate state) {
+	void recordObservedState(final IcfgLocation location, final IPredicate state) {
 		mObservedLocationStates.merge(location, state, mDomain::join);
 	}
 

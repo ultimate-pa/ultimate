@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats.Key;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -252,7 +253,7 @@ public final class GuardedUpdateInterference extends KeyedInterferenceSet<Guarde
 		final Term guardedState = guard == null ? state
 				: SmtUtils.andWithExtendedLocalSimplification(script, state, guard);
 		if (SmtUtils.isFalseLiteral(guardedState)
-				|| SmtUtils.checkSatTerm(script, guardedState) == Script.LBool.UNSAT) {
+				|| SmtUtils.checkSatTerm(script, guardedState) == LBool.UNSAT) {
 			return;
 		}
 		final Term projected = update.modifiedGlobals().isEmpty() ? guardedState

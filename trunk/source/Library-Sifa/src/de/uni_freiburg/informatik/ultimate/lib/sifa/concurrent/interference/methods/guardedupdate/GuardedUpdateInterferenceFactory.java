@@ -41,9 +41,10 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.Grou
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeCollector;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedInterferenceOfEdge;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.guardedupdate.GuardedUpdateInterference.GuardedUpdateGroup;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocksetAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.TransFormulaToInterferencePredicate;
@@ -191,7 +192,7 @@ public final class GuardedUpdateInterferenceFactory
 				reachable.stream().map(target -> locEquality(locVar, target)).toList()));
 		final GuardedUpdate update = new GuardedUpdate(guard, effect, Set.of(locVar));
 		final InterferenceGroupKey key = new InterferenceGroupKey(thread,
-				new InterferenceGrouping.AbstractLocationPair(sourceAbs, sourceAbs), Set.of(), null,
+				new AbstractLocationPair(sourceAbs, sourceAbs), Set.of(), null,
 				Set.copyOf(sources));
 		return new LocationMoveSummary(key, representative, update);
 	}
@@ -208,9 +209,9 @@ public final class GuardedUpdateInterferenceFactory
 		if (accumulator.isEmpty()) {
 			return null;
 		}
-		final Map<InterferenceGroupKey, GuardedUpdateInterference.GuardedUpdateGroup> merged = new LinkedHashMap<>();
+		final Map<InterferenceGroupKey, GuardedUpdateGroup> merged = new LinkedHashMap<>();
 		accumulator.forEach((key, updates) -> merged.put(key,
-				new GuardedUpdateInterference.GuardedUpdateGroup(updates)));
+				new GuardedUpdateGroup(updates)));
 		return new GuardedUpdateInterference(merged, mPreForkSourcesByThread, mManagedScript, mPredicateFactory);
 	}
 
