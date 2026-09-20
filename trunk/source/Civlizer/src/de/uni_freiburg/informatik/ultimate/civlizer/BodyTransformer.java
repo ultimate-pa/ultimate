@@ -258,12 +258,25 @@ final class BodyTransformer extends BoogieTransformer {
 				// Translator.callYieldInvariant(yieldInvariant, mCurrentTids, new Expression[] { annotation });
 
 				newStatements.addAll(processForkStatement(forkStmt, positiveGhostUpdates));
+				newStatements.addAll(positiveGhostUpdates);
 				break;
 
 			case final JoinStatement joinStmt:
 				// add tid when joined
 				mTidNeedsLinearity.add(new Tid(joinStmt.getThreadID()));
 				//$FALL-THROUGH$
+
+				newStatements.add(annotationCheck);
+				newStatements.add(processStatement(statement));
+				if (joinStmt.getLhs().length > 0) {
+					// TODO maybe refactor
+					newStatements.add(Translator.callYieldIgnore());
+					mTranslator.addReturnAssignement(mProcedureName, mAtomicStatementCounter, joinStmt);
+					newStatements
+							.add(Translator.callReturnAssignement(mProcedureName, mAtomicStatementCounter, joinStmt));
+				}
+				newStatements.addAll(positiveGhostUpdates);
+				break;
 
 			default:
 				// case Label _ :
@@ -487,6 +500,10 @@ final class BodyTransformer extends BoogieTransformer {
 		ModelUtils.copyAnnotations(joinStmt, newJoin);
 		return newJoin;
 	}
+
+	// private static Statement createReturn(final JoinStatement joinStmt) {
+
+//	}
 
 	private Statement processSimpleStatement(final Statement statement) {
 		assert statement instanceof AssertStatement || statement instanceof AssignmentStatement

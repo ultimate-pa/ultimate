@@ -45,6 +45,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.MustAssignAnalysis;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -58,6 +60,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
@@ -118,6 +122,7 @@ public final class Translator {
 	public static final int LAYER_TOP = LAYER_GHOST_VARS;
 
 	private static final String JOIN_POOL_NAME = "join_pool";
+	private static final String RETURN_ARRAY_NAME = "return_array";
 
 	// As of April 19 2026, Civl uses a UnitMap type for permissions instead of sets.
 	// https://github.com/boogie-org/boogie/pull/1119
@@ -290,6 +295,10 @@ public final class Translator {
 	private void addThreadControlFlow() {
 		final var joinPoolDecl = declareJoinPool();
 		mDeclarations.add(new BoogieDeclaration(joinPoolDecl));
+		final var returnArrayDecl = declareReturnArray();
+		mDeclarations.add(new BoogieDeclaration(returnArrayDecl));
+		final var yieldIgnore = declareYieldIgnore();
+		mDeclarations.add(yieldIgnore);
 
 		for (final String procName : mProgramAndProof.getTemplateVisitor().getAssociationTidMap().keySet()) {
 			final var forkDecl = addFork(procName);
@@ -310,6 +319,19 @@ public final class Translator {
 		final var joinPoolDecl = new VariableDeclaration(null, attributes,
 				new VarList[] { new VarList(null, new String[] { JOIN_POOL_NAME }, poolType) });
 		return joinPoolDecl;
+	}
+
+	private VariableDeclaration declareReturnArray() {
+		// ArrayType(null, new String[] {"T"}, new ASTType[] { makeOne(mTidType), new PrimitiveType(null, "int") }, new
+		// PrimitiveType(null, "T"))
+
+		final var attributes = new Attribute[] { CivlUtils.createLayerAttribute(LAYER_BASE, LAYER_TOP),
+				CivlUtils.createLinearityAttribute(Linearity.INOUT) };
+		final ASTType arrayType = new ArrayType(null, new String[] { "T" },
+				new ASTType[] { makeOne(mTidType), new PrimitiveType(null, "int") }, new PrimitiveType(null, "T"));
+		final var returnArrayDecl = new VariableDeclaration(null, attributes,
+				new VarList[] { new VarList(null, new String[] { RETURN_ARRAY_NAME }, arrayType) });
+		return returnArrayDecl;
 	}
 
 	private CivlDeclaration processDeclaration(final Declaration decl) {
@@ -335,6 +357,15 @@ public final class Translator {
 
 		final var newDecl = new VariableDeclaration(varDecl.getLoc(), newAttributes, varDecl.getVariables());
 		return new BoogieDeclaration(newDecl);
+	}
+
+	static CallStatement callYieldIgnore() {
+		return new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "yield_ignore",
+				new Expression[0]);
+	}
+
+	private YieldInvariant declareYieldIgnore() {
+		return new YieldInvariant(LAYER_TOP, "yield_ignore", new ParameterDeclaration[0], new Expression[0]);
 	}
 
 	// TODO refactor to avoid these call* methods
@@ -519,6 +550,126 @@ public final class Translator {
 				new CallStatement[0], new CallStatement[0], null, atomicAction);
 		mDeclarations.add(yieldProc);
 		return yieldProc;
+	}
+
+	static CallStatement callSetReturn(final String procName, final JoinStatement joinStmt) {
+		final Expression[] joinThreadId = joinStmt.getThreadID();
+
+		final Expression[] threadId = { new IdentifierExpression(joinStmt.getLoc(), BoogieType.createPlaceholderType(0),
+				new Tid(joinThreadId).toString(), DeclarationInformation.DECLARATIONINFO_GLOBAL) };
+
+		return new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "set_return_" + procName,
+				threadId);
+	}
+
+	YieldProcedure addSetReturn(final String procName, final JoinStatement joinStmt) {
+		final var lhs = joinStmt.getLhs();
+		final var tid = new Tid(joinStmt.getThreadID());
+		final var tidIdentifier = tid.toString();
+
+		final var tidParameter = new ParameterDeclaration(tidIdentifier, makeOne(mTidType), Linearity.INOUT);
+
+		final var assignments = new ArrayList<VariableLHS>();
+		final var returnVariables = new ArrayList<VariableLHS>();
+		final var returnExpressions = new ArrayList<Expression>();
+
+		for (int i = 0; i < lhs.length; i++) {
+			final var variable = lhs[i];
+			final var declarationInfo = variable.getDeclarationInformation();
+
+			if (declarationInfo.getStorageClass() == StorageClass.LOCAL) {
+				final var returnVariableName = "ret_" + i;
+
+				assignments.add(new VariableLHS(null, returnVariableName));
+
+				returnVariables.add(new VariableLHS(null, variable.getType(), returnVariableName, declarationInfo));
+
+				returnExpressions.add(new ArrayAccessExpression(null, new IdentifierExpression(null, RETURN_ARRAY_NAME),
+						new Expression[] { new IdentifierExpression(null, tidIdentifier),
+								new IntegerLiteral(null, String.valueOf(i)) }));
+			} else {
+				assignments.add(variable);
+			}
+		}
+
+		final var atomicAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP,
+				new Body(null, new VariableDeclaration[0], new Statement[] { new AssignmentStatement(null,
+						assignments.toArray(new VariableLHS[0]), returnExpressions.toArray(Expression[]::new)) }));
+
+		final var yieldProc = new YieldProcedure(LAYER_BASE, "return_" + procName + "_" + counter,
+				new ParameterDeclaration[] { tidParameter },
+				returnVariables.stream()
+						.map(variable -> new ParameterDeclaration(variable.getIdentifier(),
+								((BoogieType) variable.getType()).toASTType(null), Linearity.NONE))
+						.toArray(ParameterDeclaration[]::new),
+				new CallStatement[0], new CallStatement[0], null, atomicAction);
+
+		mDeclarations.add(yieldProc);
+
+		return yieldProc;
+
+	}
+
+	static CallStatement callReturnAssignement(final String procName, final int counter, final JoinStatement joinStmt) {
+		final Expression[] joinThreadId = joinStmt.getThreadID();
+
+		final Expression[] threadId = { new IdentifierExpression(joinStmt.getLoc(), BoogieType.createPlaceholderType(0),
+				new Tid(joinThreadId).toString(), DeclarationInformation.DECLARATIONINFO_GLOBAL) };
+
+		final VariableLHS[] localReturnVariables = Arrays.stream(joinStmt.getLhs())
+				.filter(lhs -> lhs.getDeclarationInformation().getStorageClass() == StorageClass.LOCAL)
+				.toArray(VariableLHS[]::new);
+
+		return new CallStatement(null, new NamedAttribute[0], false, localReturnVariables,
+				"return_" + procName + "_" + counter, threadId);
+	}
+
+	YieldProcedure addReturnAssignement(final String procName, final int counter, final JoinStatement joinStmt) {
+		final var lhs = joinStmt.getLhs();
+		final var tid = new Tid(joinStmt.getThreadID());
+		final var tidIdentifier = tid.toString();
+
+		final var tidParameter = new ParameterDeclaration(tidIdentifier, makeOne(mTidType), Linearity.INOUT);
+
+		final var assignments = new ArrayList<VariableLHS>();
+		final var returnVariables = new ArrayList<VariableLHS>();
+		final var returnExpressions = new ArrayList<Expression>();
+
+		for (int i = 0; i < lhs.length; i++) {
+			final var variable = lhs[i];
+			final var declarationInfo = variable.getDeclarationInformation();
+
+			if (declarationInfo.getStorageClass() == StorageClass.LOCAL) {
+				final var returnVariableName = "ret_" + i;
+
+				assignments.add(new VariableLHS(null, returnVariableName));
+
+				returnVariables.add(new VariableLHS(null, variable.getType(), returnVariableName, declarationInfo));
+
+				returnExpressions.add(new ArrayAccessExpression(null, new IdentifierExpression(null, RETURN_ARRAY_NAME),
+						new Expression[] { new IdentifierExpression(null, tidIdentifier),
+								new IntegerLiteral(null, String.valueOf(i)) }));
+			} else {
+				assignments.add(variable);
+			}
+		}
+
+		final var atomicAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP,
+				new Body(null, new VariableDeclaration[0], new Statement[] { new AssignmentStatement(null,
+						assignments.toArray(new VariableLHS[0]), returnExpressions.toArray(Expression[]::new)) }));
+
+		final var yieldProc = new YieldProcedure(LAYER_BASE, "return_" + procName + "_" + counter,
+				new ParameterDeclaration[] { tidParameter },
+				returnVariables.stream()
+						.map(variable -> new ParameterDeclaration(variable.getIdentifier(),
+								((BoogieType) variable.getType()).toASTType(null), Linearity.NONE))
+						.toArray(ParameterDeclaration[]::new),
+				new CallStatement[0], new CallStatement[0], null, atomicAction);
+
+		mDeclarations.add(yieldProc);
+
+		return yieldProc;
+
 	}
 
 	private YieldProcedure processProcedure(final Procedure decl) {
