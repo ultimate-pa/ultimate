@@ -101,25 +101,6 @@ public class CongruenceUtilTest {
 		Assert.assertEquals(matrix5.getRowCount(), 0);
 	}
 
-//	@Test
-//	public void testGetNumeratorAndGetDenominator() {
-//		final var num1 = Rational.valueOf(1, 2);
-//		Assert.assertEquals(1, CongruenceUtil.getNumerator(num1));
-//		Assert.assertEquals(2, CongruenceUtil.getDenominator(num1));
-//
-//		final var num2 = Rational.valueOf(2, 1);
-//		Assert.assertEquals(2, CongruenceUtil.getNumerator(num2));
-//		Assert.assertEquals(1, CongruenceUtil.getDenominator(num2));
-//
-//		final var num3 = Rational.valueOf(2, 4);
-//		Assert.assertEquals(1, CongruenceUtil.getNumerator(num3));
-//		Assert.assertEquals(2, CongruenceUtil.getDenominator(num3));
-//
-//		final var num4 = Rational.valueOf(1, -2);
-//		Assert.assertEquals(-1, CongruenceUtil.getNumerator(num4));
-//		Assert.assertEquals(2, CongruenceUtil.getDenominator(num4));
-//	}
-
 	@Test
 	public void testReorderByColumns() {
 		final var matrix = RationalMatrix.fromIntList(List.of(1, 2, 3, 4, 5, 6), 2, 3);
@@ -140,7 +121,7 @@ public class CongruenceUtilTest {
 		Assert.assertTrue(matrix2.equals(matrixReorder2));
 	}
 
-	private static boolean testMergedMapsHelper(final Map<String, Integer> map1, final Map<String, Integer> map2,
+	private static boolean isCorrectMergedMap(final Map<String, Integer> map1, final Map<String, Integer> map2,
 			final Map<String, Integer> mergedMap) {
 		for (final String s : map1.keySet()) {
 			if (!mergedMap.containsKey(s)) {
@@ -167,13 +148,13 @@ public class CongruenceUtilTest {
 		final Map<String, Integer> map1 = Map.of("a", 0, "b", 1, "c", 2);
 		final Map<String, Integer> map2 = Map.of("d", 0, "e", 1, "f", 2);
 		final Map<String, Integer> mergedMap12 = CongruenceUtil.mergeMaps(map1, map2);
-		// System.out.println(mergedMap12);
-		Assert.assertTrue(testMergedMapsHelper(map1, map2, mergedMap12));
+
+		Assert.assertTrue(isCorrectMergedMap(map1, map2, mergedMap12));
 
 		final Map<String, Integer> map3 = Map.of("a", 2, "b", 5, "d", 1);
 		final Map<String, Integer> mergedMap13 = CongruenceUtil.mergeMaps(map1, map3);
-		// System.out.println(mergedMap13);
-		Assert.assertTrue(testMergedMapsHelper(map1, map3, mergedMap13));
+
+		Assert.assertTrue(isCorrectMergedMap(map1, map3, mergedMap13));
 	}
 
 	@Test
@@ -198,10 +179,6 @@ public class CongruenceUtilTest {
 			for (long y = -range; y <= range; y++) {
 				final BigInteger[] rst = CongruenceUtil.gcdext(BigInteger.valueOf(x), BigInteger.valueOf(y));
 				final long gcd = rst[0].longValueExact();
-				// System.out.println(x);
-				// System.out.println(y);
-				// System.out.println(gcd);
-				// System.out.println(x.gcd(y));
 
 				if (x == 0 && y == 0) {
 					Assert.assertTrue(gcd == 0);
@@ -227,12 +204,7 @@ public class CongruenceUtilTest {
 						.longValueExact();
 				final long v1 = Math.abs(gcd * lcm);
 				final long v2 = Math.abs(x * y);
-				// System.out.println("x:" + x);
-				// System.out.println(y);
-				// System.out.println(lcm);
-				// System.out.println(gcd);
-				// System.out.println(v1);
-				// System.out.println(v2);
+
 				Assert.assertTrue(v1 == v2);
 			}
 		}
