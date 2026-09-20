@@ -25,17 +25,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.fixpoint;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.publish.PublishOnAcquire;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ThreadAnalyzer;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ThreadInvariants;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
 public final class OuterInterferenceFixpoint {
@@ -43,8 +39,7 @@ public final class OuterInterferenceFixpoint {
 	private final GroupedInterferenceFactory<?> mInterferenceFactory;
 	private final ThreadAnalyzer mThreadAnalysis;
 	private final InterferenceFixpoint mInterferences;
-	private final MutexInvariantFixpoint mMutexInvariants;
-	private final Invariants mInvariants;
+	private final InvariantFixpoint mInvariants;
 
 	public OuterInterferenceFixpoint(final ILogger logger, final ConcurrentSymbolicTools tools, final IDomain domain,
 			final GroupedInterferenceFactory<?> interferenceFactory, final PublishOnAcquire initialMutexInvariants,
@@ -53,36 +48,34 @@ public final class OuterInterferenceFixpoint {
 		mInterferenceFactory = interferenceFactory;
 		mThreadAnalysis = threadAnalysis;
 		mInterferences = new InterferenceFixpoint(domain, wideningThreshold);
-		mMutexInvariants = new MutexInvariantFixpoint(tools, domain, initialMutexInvariants, wideningThreshold);
-		mInvariants = new Invariants(domain, threadAnalysis.getJoinedExitLocations());
+		mInvariants = new InvariantFixpoint(tools, domain, initialMutexInvariants, wideningThreshold,
+				threadAnalysis.getJoinedExitLocations());
 	}
 
-	public ThreadModularFixpointResult compute() {
-		final Map<IcfgLocation, IPredicate> allPredicates = new LinkedHashMap<>();
-		boolean rerunWithStableInterferences = false;
+	public ThreadInvariants compute() {
+		final ThreadInvariants threadInvariants = new ThreadInvariants();
+		mInvariants.resetStabilityCheck();
 
 		for (int iteration = 1;; iteration++) {
 			mLogger.info("Iteration %d", iteration);
-			mInvariants.rememberCurrentStates(allPredicates);
-			mMutexInvariants.configureForAnalysis();
-			final Map<String, Map<IcfgLocation, IPredicate>> perThreadPredicates = mThreadAnalysis.analyze(
-					mInterferences.current(), allPredicates);
-			final IInterferenceSet extractedInterferences = mInterferenceFactory.buildFromAllStates(perThreadPredicates);
-			mMutexInvariants.extractFrom(allPredicates);
-			final boolean interferencesAreStable = mInterferences.isStable(extractedInterferences);
-			final boolean mutexInvariantsAreStable = mMutexInvariants.isStable();
+			mInvariants.configureForAnalysis(threadInvariants);
 
-			if (interferencesAreStable && mutexInvariantsAreStable) {
-				if (rerunWithStableInterferences || mInvariants.areUnchanged(allPredicates)) {
-					return new ThreadModularFixpointResult(allPredicates, perThreadPredicates);
+			mThreadAnalysis.analyzeAllThreads(mInterferences.current(), threadInvariants);
+			final IInterferenceSet extractedInterferences = mInterferenceFactory.buildFromAllStates(threadInvariants);
+
+			if (mInterferences.isStable(extractedInterferences)) {
+				switch (mInvariants.checkInvariantStability(threadInvariants, iteration)) {
+				case STABLE:
+					return threadInvariants;
+				case ONE_EXTRA_ROUND:
+					continue;
+				case UPDATE:
+					break;
 				}
-				rerunWithStableInterferences = true;
-				mMutexInvariants.acceptExtracted();
-				continue;
+			} else {
+				mInvariants.advance(threadInvariants, iteration);
 			}
 
-			rerunWithStableInterferences = false;
-			mMutexInvariants.advance(iteration);
 			mInterferences.advance(extractedInterferences, iteration);
 		}
 	}

@@ -74,8 +74,9 @@ public final class GhostLocationStateUpdater {
 
 		final TermVariable currentLocTv = mGhostVariables.getLocationTermVar(threadId);
 		final Term stateTerm = postState.getFormula();
-		final Term projected = mProjectionCache.computeIfAbsent(threadId, k -> new IdentityHashMap<>())
-				.computeIfAbsent(stateTerm, k -> RelationalPredicateUtils.existentiallyProject(k, Set.of(currentLocTv), mServices, mManagedScript));
+		final Term projected = mProjectionCache.computeIfAbsent(threadId, k -> new IdentityHashMap<>()).computeIfAbsent(
+				stateTerm,
+				k -> RelationalPredicateUtils.existentiallyProject(k, Set.of(currentLocTv), mServices, mManagedScript));
 		final Term combined = SmtUtils.and(mManagedScript.getScript(), projected, locConstraint);
 		return mPredicateFactory.newPredicate(combined);
 	}

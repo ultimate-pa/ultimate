@@ -25,41 +25,44 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis;
 
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.threadactivity.ThreadActivityPreanalysis;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
-record ThreadAnalysisContext(String threadId, IInterferenceSet interference, IDomain domain,
-		boolean includeSelfInterference, List<String> sortedInterferenceThreadIds,
-		Map<IcfgLocation, IPredicate> locationPredicates, Map<IcfgLocation, Set<String>> activeThreadIdsByLocation) {
+public final class ThreadInvariants {
+	private final Map<IcfgLocation, IPredicate> mLocationInvariants = new LinkedHashMap<>();
+	private Map<String, Map<IcfgLocation, IPredicate>> mThreadInvariants = new LinkedHashMap<>();
 
-	Set<String> activeInterferenceThreadsAt(final IcfgLocation location, final ThreadActivityPreanalysis preanalysis) {
-		return activeThreadIdsByLocation.computeIfAbsent(location,
-				loc -> computeActiveInterferenceThreads(loc, preanalysis));
+	public void beginRound() {
+		mThreadInvariants = new LinkedHashMap<>();
 	}
 
-	private Set<String> computeActiveInterferenceThreads(final IcfgLocation location,
-			final ThreadActivityPreanalysis preanalysis) {
-		final Set<String> result = new LinkedHashSet<>();
-		for (final String otherId : sortedInterferenceThreadIds) {
-			if (otherId.equals(threadId) && !includeSelfInterference) {
-				continue;
+	public void updateThread(final String threadId, final Map<IcfgLocation, IPredicate> threadResult,
+			final Map<IcfgLocation, IPredicate> observed) {
+		final Map<IcfgLocation, IPredicate> threadInvariants = new LinkedHashMap<>(observed);
+		threadInvariants.putAll(threadResult);
+		mLocationInvariants.putAll(threadResult);
+		for (final var entry : observed.entrySet()) {
+			if (!threadResult.containsKey(entry.getKey()) || isForkSourceLocation(entry.getKey())) {
+				mLocationInvariants.put(entry.getKey(), entry.getValue());
 			}
-			if (!preanalysis.mayBeActiveAt(location, otherId)) {
-				continue;
-			}
-			if (preanalysis.isDefinitelyJoinedAt(location, otherId)) {
-				continue;
-			}
-			result.add(otherId);
 		}
-		return Set.copyOf(result);
+		mThreadInvariants.put(threadId, threadInvariants);
+	}
+
+	public Map<IcfgLocation, IPredicate> locationInvariants() {
+		return mLocationInvariants;
+	}
+
+	public Map<String, Map<IcfgLocation, IPredicate>> threadInvariants() {
+		return mThreadInvariants;
+	}
+
+	private static boolean isForkSourceLocation(final IcfgLocation location) {
+		return location.getOutgoingEdges().stream()
+				.anyMatch(edge -> edge instanceof IIcfgForkTransitionThreadCurrent<?>);
 	}
 }

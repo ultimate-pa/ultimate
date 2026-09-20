@@ -61,8 +61,7 @@ final class DefinitelyJoinedThreadAnalysis {
 		final Map<String, Integer> joinCount = new HashMap<>();
 		candidates.values().forEach(threadId -> joinCount.merge(threadId, 1, Integer::sum));
 		candidates.entrySet().removeIf(entry -> forkCount.getOrDefault(entry.getValue(), 0) != 1
-				|| joinCount.getOrDefault(entry.getValue(), 0) != 1
-				|| selfForkingThreads.contains(entry.getValue()));
+				|| joinCount.getOrDefault(entry.getValue(), 0) != 1 || selfForkingThreads.contains(entry.getValue()));
 		return Map.copyOf(candidates);
 	}
 

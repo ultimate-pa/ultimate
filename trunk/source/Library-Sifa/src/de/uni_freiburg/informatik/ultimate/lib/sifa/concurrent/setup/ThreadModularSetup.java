@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.AbstractLocationPartitionedDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstraction;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
@@ -57,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.Relatio
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.TransFormulaToInterferencePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.threadactivity.ThreadActivityPreanalysis;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 
@@ -84,24 +84,24 @@ public final class ThreadModularSetup {
 		final MustLocksetAnalysis locksetInfo = needsLocksetAnalysis
 				? MustLocksetAnalysis.create(icfg, activityPreanalysis)
 				: MustLocksetAnalysis.disabled();
-		final MustLocksetAnalysis interferenceLocksetInfo =
-				settings.locksetAwareInterference() ? locksetInfo : MustLocksetAnalysis.disabled();
-		final Map<IcfgLocation, Integer> locationIds =
-				computeLocationIds(settings, services, icfg, interferenceLocksetInfo);
-		final Map<String, Set<IcfgLocation>> preForkSourcesByThread =
-				computePreForkSourcesByThread(icfg, activityPreanalysis.getMultiForkedThreads());
+		final MustLocksetAnalysis interferenceLocksetInfo = settings.locksetAwareInterference() ? locksetInfo
+				: MustLocksetAnalysis.disabled();
+		final Map<IcfgLocation, Integer> locationIds = computeLocationIds(settings, services, icfg,
+				interferenceLocksetInfo);
+		final Map<String, Set<IcfgLocation>> preForkSourcesByThread = computePreForkSourcesByThread(icfg,
+				activityPreanalysis.getMultiForkedThreads());
 
 		final GhostVariableManager ghostVars = createGhostVariablesIfEnabled(settings, script, symbolTable, threadIds,
 				icfg, locationIds, activityPreanalysis.getMultiForkedThreads());
 		tools.initializeStaticAnalysis(ghostVars, activityPreanalysis, locksetInfo);
 		final PublishOnAcquire publication = settings.publishOnAcquire()
-				? PublishOnAcquire.discover(icfg, locksetInfo, MAIN_THREAD, activityPreanalysis, services, script, factory)
+				? PublishOnAcquire.discover(icfg, locksetInfo, MAIN_THREAD, activityPreanalysis, services, script,
+						factory)
 				: PublishOnAcquire.disabled();
 		if (settings.publishOnAcquire()) {
 			logger.info("Publish-on-acquire enabled (protected globals discovered: %s)", !publication.isEmpty());
 		}
-		final AbstractLocationPartitionedDomain partitionedDomain =
-				settings.useBuckets() && ghostVars != null
+		final AbstractLocationPartitionedDomain partitionedDomain = settings.useBuckets() && ghostVars != null
 				? AbstractLocationPartitionedDomain.create(baseDomain, tools,
 						ghostVars.getLocationTermVariablesByThread(), settings.maxBuckets(),
 						settings.maxDisjunctsPerBucket())
@@ -126,8 +126,8 @@ public final class ThreadModularSetup {
 				? new ThreadModularProofChecker(icfg, postcondition, translator, domain, ghostVars, activityPreanalysis)
 				: null;
 
-		return new SetupResult(threadIds, domain, interferenceFactory, postcondition,
-				proofChecker, joinedThreads, locationIds, publication);
+		return new SetupResult(threadIds, domain, interferenceFactory, postcondition, proofChecker, joinedThreads,
+				locationIds, publication);
 	}
 
 	private static List<String> discoverThreadIds(final IIcfg<IcfgLocation> icfg) {
@@ -169,15 +169,15 @@ public final class ThreadModularSetup {
 	private static Map<IcfgLocation, Integer> computeLocationIds(final ThreadModularSifaSettings settings,
 			final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
 			final MustLocksetAnalysis locksetInfo) {
-		return new LocationAbstraction().computeLocationAbstraction(settings.locationAbstractionType(),
-				services, icfg, locksetInfo);
+		return new LocationAbstraction().computeLocationAbstraction(settings.locationAbstractionType(), services, icfg,
+				locksetInfo);
 	}
 
 	private static Map<String, Set<IcfgLocation>> computePreForkSourcesByThread(final IIcfg<IcfgLocation> icfg,
 			final Set<String> multiForkedThreads) {
 		final Map<String, List<IIcfgForkTransitionThreadCurrent<IcfgLocation>>> forksByThread = new LinkedHashMap<>();
-		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork
-				: icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet()) {
+		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : icfg.getCfgSmtToolkit()
+				.getConcurrencyInformation().getThreadInstanceMap().keySet()) {
 			forksByThread.computeIfAbsent(fork.getNameOfForkedProcedure(), ignored -> new ArrayList<>()).add(fork);
 		}
 
@@ -197,8 +197,8 @@ public final class ThreadModularSetup {
 			}
 			final Set<IcfgLocation> reachableAfterFork = reachableSameProcedure(forkTarget);
 			final Set<IcfgLocation> preForkSources = new LinkedHashSet<>();
-			for (final IcfgLocation candidate : icfg.getProgramPoints().getOrDefault(forkSource.getProcedure(), Map.of())
-					.values()) {
+			for (final IcfgLocation candidate : icfg.getProgramPoints()
+					.getOrDefault(forkSource.getProcedure(), Map.of()).values()) {
 				if (reachableAfterFork.contains(candidate)) {
 					continue;
 				}
@@ -248,15 +248,12 @@ public final class ThreadModularSetup {
 			final IDomain domain, final BasicPredicateFactory factory, final ManagedScript script,
 			final MustLocksetAnalysis locksetInfo, final Map<String, Set<IcfgLocation>> preForkSourcesByThread) {
 		return switch (applicatorType) {
-		case STRONGEST_POSTCONDITION ->
-			new StrongestPostconditionInterferenceFactory(edgeTraverser, translator, postcondition, factory, script,
-					locksetInfo, preForkSourcesByThread);
-		case GUARDED_EXACT_UPDATE ->
-			new GuardedUpdateInterferenceFactory(edgeTraverser, translator, postcondition, script, factory,
-					locksetInfo, preForkSourcesByThread);
-		case POST_STATE ->
-			new PostStateInterferenceFactory(edgeTraverser, translator, postcondition, domain, factory, script,
-					locksetInfo, preForkSourcesByThread);
+		case STRONGEST_POSTCONDITION -> new StrongestPostconditionInterferenceFactory(edgeTraverser, translator,
+				postcondition, factory, script, locksetInfo, preForkSourcesByThread);
+		case GUARDED_EXACT_UPDATE -> new GuardedUpdateInterferenceFactory(edgeTraverser, translator, postcondition,
+				script, factory, locksetInfo, preForkSourcesByThread);
+		case POST_STATE -> new PostStateInterferenceFactory(edgeTraverser, translator, postcondition, domain, factory,
+				script, locksetInfo, preForkSourcesByThread);
 		};
 	}
 

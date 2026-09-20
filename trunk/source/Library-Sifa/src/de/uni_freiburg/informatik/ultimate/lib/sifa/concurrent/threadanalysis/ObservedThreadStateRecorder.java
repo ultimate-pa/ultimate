@@ -53,8 +53,7 @@ final class ObservedThreadStateRecorder {
 		return Collections.unmodifiableMap(new LinkedHashMap<>(mObservedLocationStates));
 	}
 
-	void recordTransitionInputState(final IIcfgTransition<IcfgLocation> transition,
-			final IPredicate inputState) {
+	void recordTransitionInputState(final IIcfgTransition<IcfgLocation> transition, final IPredicate inputState) {
 		if (!shouldCaptureTransitionInputForInterference(transition)) {
 			return;
 		}

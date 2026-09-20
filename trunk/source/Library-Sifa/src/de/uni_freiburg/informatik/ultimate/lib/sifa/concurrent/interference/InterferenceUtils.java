@@ -51,10 +51,10 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public final class InterferenceUtils {
 
-	public static final Comparator<TranslatedInterferenceOfEdge> INTERFERENCE_EDGE_ORDER =
-			Comparator.comparing((TranslatedInterferenceOfEdge edge) -> edge.source().toString())
-					.thenComparing(edge -> edge.target().toString())
-					.thenComparing(edge -> edge.transitionPredicate().getFormula().toString());
+	public static final Comparator<TranslatedInterferenceOfEdge> INTERFERENCE_EDGE_ORDER = Comparator
+			.comparing((final TranslatedInterferenceOfEdge edge) -> edge.source().toString())
+			.thenComparing(edge -> edge.target().toString())
+			.thenComparing(edge -> edge.transitionPredicate().getFormula().toString());
 
 	private InterferenceUtils() {
 	}
@@ -134,8 +134,8 @@ public final class InterferenceUtils {
 		if (!(edge instanceof final IIcfgJoinTransitionThreadCurrent<?> joinCurrent)) {
 			return Set.of();
 		}
-		final List<IProgramVar> globals =
-				joinCurrent.getJoinSmtArguments().getAssignmentLhs().stream().filter(IProgramVar::isGlobal).toList();
+		final List<IProgramVar> globals = joinCurrent.getJoinSmtArguments().getAssignmentLhs().stream()
+				.filter(IProgramVar::isGlobal).toList();
 		return globals.isEmpty() ? Set.of() : Set.copyOf(globals);
 	}
 
@@ -143,7 +143,8 @@ public final class InterferenceUtils {
 		if (edge == null) {
 			return false;
 		}
-		return getForkedThreadOrNull(edge) != null || isJoinAssigningGlobal(edge) || modifiesGlobals(edge.getTransformula());
+		return getForkedThreadOrNull(edge) != null || isJoinAssigningGlobal(edge)
+				|| modifiesGlobals(edge.getTransformula());
 	}
 
 	public static boolean shouldSkipTrivialPredicate(final IPredicate predicate) {
@@ -156,14 +157,16 @@ public final class InterferenceUtils {
 	}
 
 	public static IPredicate projectToGlobalState(final IPredicate state, final Set<TermVariable> extraVarsToProject,
-			final IUltimateServiceProvider services, final ManagedScript script, final Function<Term, IPredicate> wrap) {
+			final IUltimateServiceProvider services, final ManagedScript script,
+			final Function<Term, IPredicate> wrap) {
 		final Set<TermVariable> toProject = state.getVars().stream().filter(v -> !v.isGlobal())
 				.map(IProgramVar::getTermVariable).collect(Collectors.toCollection(HashSet::new));
 		toProject.addAll(extraVarsToProject);
 		if (toProject.isEmpty()) {
 			return state;
 		}
-		return wrap.apply(RelationalPredicateUtils.existentiallyProject(state.getFormula(), toProject, services, script));
+		return wrap
+				.apply(RelationalPredicateUtils.existentiallyProject(state.getFormula(), toProject, services, script));
 	}
 
 	private static Set<IProgramVar> filterGlobals(final Set<IProgramVar> variables) {

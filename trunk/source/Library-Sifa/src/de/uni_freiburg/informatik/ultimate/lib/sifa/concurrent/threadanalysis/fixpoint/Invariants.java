@@ -43,20 +43,20 @@ final class Invariants {
 		mLocations = locations;
 	}
 
-	void rememberCurrentStates(final Map<IcfgLocation, IPredicate> allPredicates) {
+	void rememberCurrentStates(final Map<IcfgLocation, IPredicate> locationInvariants) {
 		if (mLocations.isEmpty()) {
 			return;
 		}
 		mRememberedStates = new LinkedHashMap<>(mLocations.size() * 2);
 		for (final IcfgLocation location : mLocations) {
-			mRememberedStates.put(location, allPredicates.get(location));
+			mRememberedStates.put(location, locationInvariants.get(location));
 		}
 	}
 
-	boolean areUnchanged(final Map<IcfgLocation, IPredicate> allPredicates) {
+	boolean areUnchanged(final Map<IcfgLocation, IPredicate> locationInvariants) {
 		for (final var entry : mRememberedStates.entrySet()) {
 			final IPredicate before = entry.getValue();
-			final IPredicate after = allPredicates.get(entry.getKey());
+			final IPredicate after = locationInvariants.get(entry.getKey());
 			if (before == after) {
 				continue;
 			}

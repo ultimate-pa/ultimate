@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.Relatio
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.TransFormulaToInterferencePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.threadactivity.ThreadActivityPreanalysis;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ThreadInvariants;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -71,19 +72,18 @@ public class ThreadModularProofChecker {
 		mHoareTripleChecker = new MonolithicHoareTripleChecker(icfg.getCfgSmtToolkit());
 		mPostcondition = postcondition;
 		mDomain = domain;
-		mGhostLocationVariables =
-				ghostVariables == null ? Set.of() : Set.copyOf(ghostVariables.getLocationTermVariables());
+		mGhostLocationVariables = ghostVariables == null ? Set.of()
+				: Set.copyOf(ghostVariables.getLocationTermVariables());
 		mProofInterferenceTranslator = new ProofEdgeInterferenceTranslator(translator, postcondition, ghostVariables);
 		mThreadActivityPreanalysis = Objects.requireNonNull(threadActivityPreanalysis);
 		mSelfInterferingThreads = threadActivityPreanalysis.getMultiForkedThreads();
 	}
 
-	public void checkAllOrThrow(final Map<IcfgLocation, IPredicate> locationPreds,
-			final Map<String, Map<IcfgLocation, IPredicate>> threadPreds, final ILogger logger) {
+	public void checkAllOrThrow(final ThreadInvariants invariants, final ILogger logger) {
 		logger.info("Thread-modular proof checking started");
-		final PhaseTally initial = checkInitialStates(locationPreds);
-		final PhaseTally hoare = checkHoareTriples(locationPreds);
-		final PhaseTally interference = checkInterferenceStability(threadPreds);
+		final PhaseTally initial = checkInitialStates(invariants.locationInvariants());
+		final PhaseTally hoare = checkHoareTriples(invariants.locationInvariants());
+		final PhaseTally interference = checkInterferenceStability(invariants.threadInvariants());
 		if (initial.valid() && hoare.valid() && interference.valid()) {
 			logger.info(
 					"Thread-modular proof checking passed (%d initial checks, %d hoare checks, %d interference checks)",
@@ -190,8 +190,8 @@ public class ThreadModularProofChecker {
 				final IcfgLocation otherLoc = otherLocEntry.getKey();
 				final IPredicate otherLocPred = otherLocEntry.getValue();
 				for (final IcfgEdge edge : otherLoc.getOutgoingEdges()) {
-					final IPredicate itfPred = mProofInterferenceTranslator
-							.tryTranslateInterferenceEdge(otherThreadId, otherLoc, otherLocPred, edge);
+					final IPredicate itfPred = mProofInterferenceTranslator.tryTranslateInterferenceEdge(otherThreadId,
+							otherLoc, otherLocPred, edge);
 					if (itfPred == null) {
 						continue;
 					}

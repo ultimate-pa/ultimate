@@ -57,10 +57,8 @@ class JoinHandler {
 	private GhostVariableManager mGhostVariables;
 	private GhostLocationStateUpdater mLocationStateUpdater;
 	private final Map<String, Set<TermVariable>> mGhostVarsToProjectCache = new HashMap<>();
-	private final IdentityHashMap<IIcfgJoinTransitionThreadCurrent<?>, Set<TermVariable>> mAssignedVarsCache =
-			new IdentityHashMap<>();
-	private final IdentityHashMap<IIcfgJoinTransitionThreadCurrent<?>, Set<TermVariable>> mAssignedGlobalVarsCache =
-			new IdentityHashMap<>();
+	private final IdentityHashMap<IIcfgJoinTransitionThreadCurrent<?>, Set<TermVariable>> mAssignedVarsCache = new IdentityHashMap<>();
+	private final IdentityHashMap<IIcfgJoinTransitionThreadCurrent<?>, Set<TermVariable>> mAssignedGlobalVarsCache = new IdentityHashMap<>();
 
 	JoinHandler(final ConcurrentSymbolicTools tools, final IUltimateServiceProvider services,
 			final IIcfg<IcfgLocation> icfg) {

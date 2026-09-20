@@ -102,30 +102,20 @@ public final class ThreadAnalyzer {
 		return Set.copyOf(exits);
 	}
 
-	public Map<String, Map<IcfgLocation, IPredicate>> analyze(final IInterferenceSet interference,
-			final Map<IcfgLocation, IPredicate> allPredicates) {
-		final Map<String, Map<IcfgLocation, IPredicate>> perThreadPredicates = new LinkedHashMap<>();
+	public void analyzeAllThreads(final IInterferenceSet interference, final ThreadInvariants threadInvariants) {
+		threadInvariants.beginRound();
 		for (final String threadId : mThreadIds) {
 			final IIcfg<IcfgLocation> threadIcfg = mThreadIcfgs.get(threadId);
 
-			mTools.configureForThread(threadId, interference, allPredicates, mDomain);
+			mTools.configureForThread(threadId, interference, threadInvariants.locationInvariants(), mDomain);
 			final IPredicate initialState = mTools.getInitialStatePredicate(threadId);
 
 			final IcfgLocation entryLocation = threadIcfg.getProcedureEntryNodes().get(threadId);
 			mTools.rememberThreadLocationState(entryLocation, initialState);
 			final Map<IcfgLocation, IPredicate> threadResult = analyzeSingleThread(threadId, initialState);
 			final Map<IcfgLocation, IPredicate> observed = mTools.getObservedThreadLocationStates();
-			final Map<IcfgLocation, IPredicate> interferenceInput = new LinkedHashMap<>(observed);
-			interferenceInput.putAll(threadResult);
-			allPredicates.putAll(threadResult);
-			for (final var entry : observed.entrySet()) {
-				if (!threadResult.containsKey(entry.getKey()) || isForkSourceLocation(entry.getKey())) {
-					allPredicates.put(entry.getKey(), entry.getValue());
-				}
-			}
-			perThreadPredicates.put(threadId, interferenceInput);
+			threadInvariants.updateThread(threadId, threadResult, observed);
 		}
-		return perThreadPredicates;
 	}
 
 	private Map<IcfgLocation, IPredicate> analyzeSingleThread(final String threadId, final IPredicate initialState) {
@@ -138,8 +128,8 @@ public final class ThreadAnalyzer {
 		for (final String threadId : mThreadIds) {
 			final IIcfg<IcfgLocation> threadIcfg = new SingleThreadIcfg(mIcfg, threadId);
 			mThreadIcfgs.put(threadId, threadIcfg);
-			final Collection<IcfgLocation> baseLois = LoiExpansion.getLocationsOfInterestForThread(threadId,
-					threadIcfg, mRequestedLocationsOfInterest);
+			final Collection<IcfgLocation> baseLois = LoiExpansion.getLocationsOfInterestForThread(threadId, threadIcfg,
+					mRequestedLocationsOfInterest);
 			final Set<IcfgLocation> expandedLois = new LinkedHashSet<>(baseLois);
 			expandedLois.addAll(mForkSourcesByThread.getOrDefault(threadId, Set.of()));
 			if (mJoinedThreads.contains(threadId)) {
@@ -173,10 +163,5 @@ public final class ThreadAnalyzer {
 			}
 		}
 		return Map.copyOf(result);
-	}
-
-	private static boolean isForkSourceLocation(final IcfgLocation location) {
-		return location.getOutgoingEdges().stream()
-				.anyMatch(edge -> edge instanceof IIcfgForkTransitionThreadCurrent<?>);
 	}
 }

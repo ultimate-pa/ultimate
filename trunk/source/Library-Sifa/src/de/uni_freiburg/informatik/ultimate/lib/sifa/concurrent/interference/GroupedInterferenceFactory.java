@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocksetAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.TransFormulaToInterferencePredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ThreadInvariants;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -67,7 +68,8 @@ public abstract class GroupedInterferenceFactory<A> {
 		mFalsePredicate = predicateFactory.newPredicate(managedScript.getScript().term("false"));
 	}
 
-	public final IInterferenceSet buildFromAllStates(final Map<String, Map<IcfgLocation, IPredicate>> perThreadStates) {
+	public final IInterferenceSet buildFromAllStates(final ThreadInvariants invariants) {
+		final Map<String, Map<IcfgLocation, IPredicate>> perThreadStates = invariants.threadInvariants();
 		final Map<IcfgLocation, IPredicate> allStates = mergeStates(perThreadStates);
 		final A accumulator = createAccumulator();
 		for (final TranslatedInterferenceOfEdge edge : mEdgeCollector.collect(allStates)) {
@@ -128,8 +130,8 @@ public abstract class GroupedInterferenceFactory<A> {
 	}
 
 	protected final IPredicate conjoin(final IPredicate left, final IPredicate right) {
-		final Term combined = SmtUtils.andWithExtendedLocalSimplification(mManagedScript.getScript(),
-				left.getFormula(), right.getFormula());
+		final Term combined = SmtUtils.andWithExtendedLocalSimplification(mManagedScript.getScript(), left.getFormula(),
+				right.getFormula());
 		return mPredicateFactory.newPredicate(combined);
 	}
 

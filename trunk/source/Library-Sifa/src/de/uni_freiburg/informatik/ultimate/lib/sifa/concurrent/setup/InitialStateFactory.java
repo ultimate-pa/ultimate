@@ -35,10 +35,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostLocationStateUpdater;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
 public final class InitialStateFactory {
@@ -130,7 +130,8 @@ public final class InitialStateFactory {
 		final String forkingTid = fork.getSource().getProcedure();
 		final IcfgLocation forkedEntry = mGhostVariables.getEntryLocation(forkedThreadId);
 
-		final IPredicate updated = mLocationStateUpdater.addLocationUpdate(sharedForkState, forkingTid, fork.getTarget());
+		final IPredicate updated = mLocationStateUpdater.addLocationUpdate(sharedForkState, forkingTid,
+				fork.getTarget());
 		return mLocationStateUpdater.addLocationUpdate(updated, forkedThreadId, forkedEntry);
 	}
 

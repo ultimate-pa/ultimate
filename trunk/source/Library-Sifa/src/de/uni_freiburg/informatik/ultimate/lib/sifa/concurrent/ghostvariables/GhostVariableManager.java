@@ -70,8 +70,8 @@ public class GhostVariableManager {
 			final Map<IcfgLocation, Integer> locationIds, final Set<String> threadIds,
 			final Map<String, IcfgLocation> entryLocations, final PrimedDefaultIcfgSymbolTable symbolTable,
 			final Set<String> impreciseLocationThreads) {
-		final GhostVariableManager manager =
-				new GhostVariableManager(managedScript, locationIds, entryLocations, impreciseLocationThreads);
+		final GhostVariableManager manager = new GhostVariableManager(managedScript, locationIds, entryLocations,
+				impreciseLocationThreads);
 		managedScript.lock(manager);
 		try {
 			manager.initializeLocationVariables(threadIds, symbolTable);
@@ -107,8 +107,8 @@ public class GhostVariableManager {
 	}
 
 	public Map<String, TermVariable> getLocationTermVariablesByThread() {
-		return mLocationVars.entrySet().stream().collect(Collectors.toUnmodifiableMap(Entry::getKey,
-				entry -> entry.getValue().getTermVariable()));
+		return mLocationVars.entrySet().stream()
+				.collect(Collectors.toUnmodifiableMap(Entry::getKey, entry -> entry.getValue().getTermVariable()));
 	}
 
 	public Term createLocationConstraint(final String threadId, final IcfgLocation location) {

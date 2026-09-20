@@ -44,9 +44,9 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.proofchecking.Thr
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.reporting.SifaResultPrinter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSetup;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ThreadInvariants;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ThreadAnalyzer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.fixpoint.OuterInterferenceFixpoint;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.fixpoint.ThreadModularFixpointResult;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
@@ -76,12 +76,12 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		final var setup = ThreadModularSetup.initialize(services, icfg, baseDomain, mConcurrentTools);
 		setup.postcondition().setStats(stats);
 		mProofChecker = setup.proofChecker();
-		final ThreadAnalyzer threadAnalysis = new ThreadAnalyzer(logger, timer, stats, mConcurrentTools,
-				icfg, mRequestedLocationsOfInterest, setup.domain(), fluid, loopSumFactory, callSumFactory,
-				setup.threadIds(), setup.joinedThreads());
+		final ThreadAnalyzer threadAnalysis = new ThreadAnalyzer(logger, timer, stats, mConcurrentTools, icfg,
+				mRequestedLocationsOfInterest, setup.domain(), fluid, loopSumFactory, callSumFactory, setup.threadIds(),
+				setup.joinedThreads());
 		mOuterFixpoint = new OuterInterferenceFixpoint(logger, mConcurrentTools, setup.domain(),
-				setup.interferenceFactory(), setup.publication(), mConcurrentTools.getSettings().outerWideningThreshold(),
-				threadAnalysis);
+				setup.interferenceFactory(), setup.publication(),
+				mConcurrentTools.getSettings().outerWideningThreshold(), threadAnalysis);
 		mResultPrinter = mConcurrentTools.getSettings().resultPrint()
 				? new SifaResultPrinter(logger, setup.abstractLocationIds(),
 						mConcurrentTools.getThreadActivityPreanalysis())
@@ -90,21 +90,21 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 
 	@Override
 	public Map<IcfgLocation, IPredicate> interpret() {
-		final ThreadModularFixpointResult fixpoint = mOuterFixpoint.compute();
+		final ThreadInvariants invariants = mOuterFixpoint.compute();
 		if (mResultPrinter != null) {
-			mResultPrinter.printResults(fixpoint.locationPredicates(), mIcfg);
+			mResultPrinter.printResults(invariants.locationInvariants(), mIcfg);
 		}
 		if (mProofChecker != null) {
-			mProofChecker.checkAllOrThrow(fixpoint.locationPredicates(), fixpoint.threadPredicates(), mLogger);
+			mProofChecker.checkAllOrThrow(invariants, mLogger);
 		}
-		return requestedLocationPredicates(fixpoint.locationPredicates());
+		return requestedLocationPredicates(invariants.locationInvariants());
 	}
 
 	private Map<IcfgLocation, IPredicate> requestedLocationPredicates(
-			final Map<IcfgLocation, IPredicate> allPredicates) {
+			final Map<IcfgLocation, IPredicate> locationInvariants) {
 		final Map<IcfgLocation, IPredicate> result = new LinkedHashMap<>();
 		for (final IcfgLocation location : mRequestedLocationsOfInterest) {
-			result.put(location, allPredicates.getOrDefault(location, mConcurrentTools.bottom()));
+			result.put(location, locationInvariants.getOrDefault(location, mConcurrentTools.bottom()));
 		}
 		return result;
 	}

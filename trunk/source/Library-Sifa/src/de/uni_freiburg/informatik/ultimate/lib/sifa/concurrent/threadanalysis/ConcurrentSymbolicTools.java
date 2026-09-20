@@ -50,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocks
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.publish.PublishOnAcquire;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.InitialStateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.threadactivity.ThreadActivityPreanalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.threadactivity.ThreadActivityPreanalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -120,7 +120,8 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		mGhostVariables = ghostVariables;
 		mThreadActivityPreanalysis = activityPreanalysis;
 		mLocksetInfo = locksetInfo;
-		mLocationStateUpdater = new GhostLocationStateUpdater(mServices, getManagedScript(), getFactory(), ghostVariables);
+		mLocationStateUpdater = new GhostLocationStateUpdater(mServices, getManagedScript(), getFactory(),
+				ghostVariables);
 		mInitialStateFactory.configureStaticAnalysis(ghostVariables, mLocationStateUpdater);
 		mJoinHandler.configureStaticAnalysis(ghostVariables, mLocationStateUpdater);
 	}
@@ -128,8 +129,8 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	public void configureForThread(final String threadId, final IInterferenceSet interference,
 			final Map<IcfgLocation, IPredicate> locationPredicates, final IDomain domain) {
 		IThreadLocalDomainContext.setIfApplicable(domain, threadId);
-		final List<String> sortedInterferenceThreadIds =
-				interference == null ? List.of() : interference.threadIds().stream().sorted().toList();
+		final List<String> sortedInterferenceThreadIds = interference == null ? List.of()
+				: interference.threadIds().stream().sorted().toList();
 		final boolean includeSelfInterference = mThreadActivityPreanalysis.getMultiForkedThreads().contains(threadId);
 		mThreadContext = new ThreadAnalysisContext(threadId, interference, domain, includeSelfInterference,
 				sortedInterferenceThreadIds, locationPredicates, new HashMap<>());
@@ -145,8 +146,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		return updateGhostvarsAndApplyInterferences(joinProjected, transition);
 	}
 
-	public IPredicate postWithoutInterference(final IPredicate input,
-			final IIcfgTransition<IcfgLocation> transition) {
+	public IPredicate postWithoutInterference(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
 		return super.post(input, transition);
 	}
 
@@ -179,14 +179,14 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		if (interferenceCannotChangeState(state)) {
 			return state;
 		}
-		final Set<String> activeThreadIds =
-				mThreadContext.activeInterferenceThreadsAt(location, mThreadActivityPreanalysis);
+		final Set<String> activeThreadIds = mThreadContext.activeInterferenceThreadsAt(location,
+				mThreadActivityPreanalysis);
 		if (activeThreadIds.isEmpty()) {
 			return state;
 		}
 		final Set<String> observerLockset = mLocksetInfo.mustLocksetAt(location);
-		final Set<String> interferenceObserverLockset =
-				mSettings.locksetAwareInterference() ? observerLockset : Set.of();
+		final Set<String> interferenceObserverLockset = mSettings.locksetAwareInterference() ? observerLockset
+				: Set.of();
 		final IPredicate afterInterference = mThreadContext.interference().applyUntilFixpoint(state,
 				mThreadContext.threadId(), activeThreadIds, interferenceObserverLockset, mThreadContext.domain(),
 				mSettings.innerWideningThreshold(), mStats);

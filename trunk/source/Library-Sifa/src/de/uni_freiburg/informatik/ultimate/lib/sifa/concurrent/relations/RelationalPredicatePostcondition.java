@@ -157,7 +157,8 @@ public class RelationalPredicatePostcondition {
 
 		final Map<Term, Term> primedToUnprimed = preparedRelation.primedToUnprimed();
 		final Term renamed;
-		if (primedToUnprimed.isEmpty() || !RelationalPredicateUtils.hasFreeVarIn(projected, primedToUnprimed.keySet())) {
+		if (primedToUnprimed.isEmpty()
+				|| !RelationalPredicateUtils.hasFreeVarIn(projected, primedToUnprimed.keySet())) {
 			renamed = projected;
 		} else {
 			renamed = Substitution.apply(mManagedScript, primedToUnprimed, projected);

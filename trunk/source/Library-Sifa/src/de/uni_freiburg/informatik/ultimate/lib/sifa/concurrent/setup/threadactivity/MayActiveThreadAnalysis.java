@@ -76,8 +76,8 @@ final class MayActiveThreadAnalysis {
 				propagate(activeThreadsByLocation, pendingLocations, target, activeAfterEdge);
 			}
 		}
-
-		return new ThreadActivity(closeUnderNestedForks(activeThreadsByLocation, threadIds, forkGraph, selfForkingThreads),
+		return new ThreadActivity(
+				closeUnderNestedForks(activeThreadsByLocation, threadIds, forkGraph, selfForkingThreads),
 				Set.copyOf(selfForkingThreads));
 	}
 
