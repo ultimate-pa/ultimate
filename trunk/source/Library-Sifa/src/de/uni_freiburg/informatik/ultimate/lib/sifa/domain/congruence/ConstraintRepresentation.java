@@ -100,14 +100,6 @@ public class ConstraintRepresentation {
 		return new ConstraintRepresentation(List.of(), List.of(), vectorLength, true, true);
 	}
 
-	public static ConstraintRepresentation getUnsat(final int vectorLength) {
-		return new ConstraintRepresentation(List.of(unsatVector(vectorLength)), List.of(), vectorLength, true, true);
-	}
-
-	private static RationalVector unsatVector(final int length) {
-		return RationalVector.getUnitVector(0, length).negate();
-	}
-
 	public int getDim() {
 		minimize();
 		return getVectorLength() - getEqualities().size();
