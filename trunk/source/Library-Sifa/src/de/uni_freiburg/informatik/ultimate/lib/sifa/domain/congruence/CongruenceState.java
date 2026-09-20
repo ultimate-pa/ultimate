@@ -10,6 +10,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -76,7 +77,7 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		for (final RationalVector equality : equalities) {
 			final BigInteger commonDenominator = CongruenceUtil.getCommonDenominator(equality);
 			final RationalVector wholeEquality = equality.multiply(commonDenominator);
-			final String[] vectorStrings = CongruenceUtil.getVectorStrings(wholeEquality, indexToVar);
+			final String[] vectorStrings = getVectorStrings(wholeEquality, indexToVar);
 			final String equalityString = vectorStrings[0] + " = " + vectorStrings[1];
 			constraintsString.append(equalityString).append(";\n");
 		}
@@ -84,13 +85,58 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		for (final RationalVector congruence : congruences) {
 			final BigInteger commonDenominator = CongruenceUtil.getCommonDenominator(congruence);
 			final RationalVector wholeCongruence = congruence.multiply(commonDenominator);
-			final String[] vectorStrings = CongruenceUtil.getVectorStrings(wholeCongruence, indexToVar);
+			final String[] vectorStrings = getVectorStrings(wholeCongruence, indexToVar);
 			final String congruenceString = vectorStrings[0] + " ≡" + commonDenominator + " " + vectorStrings[1];
 			constraintsString.append(congruenceString).append(";\n");
 		}
 
 		return "CongruenceState [mVarToIndex=" + mVarToIndex + ", mConstraints= \n"
 				+ constraintsString.append("]").toString();
+	}
+
+	/**
+	 * Takes a vector containing rational coefficients and a map from the indexes of
+	 * the vector to variables, together modeling a polynomial p. Returns an array
+	 * containing two strings, each representing one side of an equality equivalent
+	 * to p=0.
+	 */
+	private static String[] getVectorStrings(final RationalVector vector, final Map<Integer, Term> indexToVar) {
+		String resultString = "0";
+		final Set<String> summands = new HashSet<>();
+		for (int i = 0; i < vector.getLength(); i++) {
+			final Rational rationalFactor = vector.get(i);
+
+			if (rationalFactor.equals(Rational.ZERO)) {
+				continue;
+			}
+			final BigInteger factor = rationalFactor.numerator();
+
+			String term;
+			if (i == 0) {
+				resultString = factor.negate().toString();
+			} else {
+				final Term var = indexToVar.get(i);
+				if (factor.equals(BigInteger.ONE)) {
+					term = var.toString();
+				} else {
+					term = factor + " * " + var;
+				}
+				summands.add(term);
+			}
+		}
+
+		final String[] summandsArray = summands.toArray(String[]::new);
+
+		if (summandsArray.length == 0) {
+			return new String[] { "0", resultString };
+		}
+
+		StringBuilder sum = new StringBuilder();
+		for (final String element : summandsArray) {
+			sum.append(" + ").append(element);
+		}
+		sum = sum.delete(0, 2);
+		return new String[] { sum.toString(), resultString };
 	}
 
 	@Override
@@ -111,7 +157,7 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		for (final RationalVector equality : equalities) {
 			final BigInteger commonDenominator = CongruenceUtil.getCommonDenominator(equality);
 			final RationalVector wholeEquality = equality.multiply(commonDenominator);
-			final Term sum = CongruenceUtil.getSumTerm(wholeEquality, indexToVar, script);
+			final Term sum = getSumTerm(wholeEquality, indexToVar, script);
 			final Term equalityTerm = SmtUtils.binaryEquality(script, sum,
 					SmtUtils.constructIntValue(script, BigInteger.ZERO));
 			terms.add(equalityTerm);
@@ -120,7 +166,7 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		for (final RationalVector congruence : congruences) {
 			final BigInteger commonDenominator = CongruenceUtil.getCommonDenominator(congruence);
 			final RationalVector wholeCongruence = congruence.multiply(commonDenominator);
-			final Term sum = CongruenceUtil.getSumTerm(wholeCongruence, indexToVar, script);
+			final Term sum = getSumTerm(wholeCongruence, indexToVar, script);
 			final Term modTerm = SmtUtils.constructIntValue(script, commonDenominator);
 			final Term modSum = SmtUtils.mod(script, sum, modTerm);
 			final Term congruenceTerm = SmtUtils.binaryEquality(script, modSum,
@@ -131,6 +177,46 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		return SmtUtils.and(script, terms);
 	}
 
+	/**
+	 * Takes a vector containing rational coefficients and a map from the indexes of
+	 * the vector to variables, together modeling a polynomial. Returns a term
+	 * equivalent to this polynomial.
+	 */
+	private static Term getSumTerm(final RationalVector vector, final Map<Integer, Term> indexToVar,
+			final Script script) {
+
+		final Set<Term> summands = new HashSet<>();
+		for (int i = 0; i < vector.getLength(); i++) {
+			final Rational rationalFactor = vector.get(i);
+
+			if (rationalFactor.equals(Rational.ZERO)) {
+				continue;
+			}
+
+			final BigInteger factor = rationalFactor.numerator();
+
+			Term term;
+			if (i == 0) {
+				term = SmtUtils.constructIntValue(script, factor);
+			} else {
+				final Term var = indexToVar.get(i);
+				term = SmtUtils.mul(script, Rational.valueOf(factor, BigInteger.ONE), var);
+			}
+			summands.add(term);
+		}
+
+		final Term[] summandsArray = summands.toArray(Term[]::new);
+
+		if (summandsArray.length == 0) {
+			return SmtUtils.constructIntValue(script, BigInteger.ZERO);
+		} else if (summandsArray.length == 1) {
+			return summandsArray[0];
+		} else {
+			return SmtUtils.sum(script, "+", summandsArray);
+		}
+	}
+
+	// TODO: Documentation
 	public CongruenceState getReorderedForm(final Map<Term, Integer> newVarToIndex) {
 		// Compute the required lengths for the vectors
 		// +1 for the constant in the first place

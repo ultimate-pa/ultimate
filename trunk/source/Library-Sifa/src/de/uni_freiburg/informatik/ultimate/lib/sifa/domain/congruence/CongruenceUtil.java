@@ -3,15 +3,12 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -198,86 +195,6 @@ public class CongruenceUtil {
 	public static BigInteger getCommonDenominator(final RationalVector vector) {
 		final List<Rational> list = vector.asList();
 		return getCommonDenominator(list);
-	}
-
-	// TODO: Move to where it's used
-	// TODO: Add documentation
-	public static Term getSumTerm(final RationalVector vector, final Map<Integer, Term> indexToVar,
-			final Script script) {
-
-		final Set<Term> summands = new HashSet<>();
-		for (int i = 0; i < vector.getLength(); i++) {
-			final Rational rationalFactor = vector.get(i);
-
-			if (rationalFactor.equals(Rational.ZERO)) {
-				continue;
-			}
-
-			final BigInteger factor = rationalFactor.numerator();
-
-			Term term;
-			if (i == 0) {
-				term = SmtUtils.constructIntValue(script, factor);
-			} else {
-				final Term var = indexToVar.get(i);
-				term = SmtUtils.mul(script, Rational.valueOf(factor, BigInteger.ONE), var);
-			}
-			summands.add(term);
-		}
-		final Term[] summandsArray = summands.toArray(Term[]::new);
-		if (summandsArray.length == 0) {
-			return SmtUtils.constructIntValue(script, BigInteger.ZERO);
-		}
-
-		if (summandsArray.length == 1) {
-			return summandsArray[0];
-		}
-		final Term sum = SmtUtils.sum(script, "+", summandsArray);
-		return sum;
-	}
-
-	// TODO: Move to where it's used
-	/**
-	 * Takes a vector modeling a polynomial equality and a map from the indexes to
-	 * the variables. Returns an array containing two strings, each representing one
-	 * side of the equality.
-	 */
-	public static String[] getVectorStrings(final RationalVector vector, final Map<Integer, Term> indexToVar) {
-		String resultString = "0";
-		final Set<String> summands = new HashSet<>();
-		for (int i = 0; i < vector.getLength(); i++) {
-			final Rational rationalFactor = vector.get(i);
-
-			if (rationalFactor.equals(Rational.ZERO)) {
-				continue;
-			}
-			final BigInteger factor = rationalFactor.numerator();
-
-			String term;
-			if (i == 0) {
-				resultString = factor.negate().toString();
-			} else {
-				final Term var = indexToVar.get(i);
-				if (factor.equals(BigInteger.ONE)) {
-					term = var.toString();
-				} else {
-					term = factor + " * " + var;
-				}
-				summands.add(term);
-			}
-
-		}
-		final String[] summandsArray = summands.toArray(String[]::new);
-		if (summandsArray.length == 0) {
-			return new String[] { "0", resultString };
-		}
-
-		StringBuilder sum = new StringBuilder();
-		for (final String element : summandsArray) {
-			sum.append(" + ").append(element);
-		}
-		sum = sum.delete(0, 2);
-		return new String[] { sum.toString(), resultString };
 	}
 
 	/**
