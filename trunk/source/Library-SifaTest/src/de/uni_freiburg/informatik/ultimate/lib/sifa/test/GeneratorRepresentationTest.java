@@ -12,13 +12,13 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.RationalVe
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 public class GeneratorRepresentationTest {
-	public List<GeneratorRepresentation> getTestGenerators() {
+	private static List<GeneratorRepresentation> getTestGenerators() {
 		return List.of(getGenerators1(), getGenerators2(), getGenerators3(), getGenerators4(), getGenerators5(),
 				getGenerators8(), getGenerators9(), getGenerators10(), getGenerators11(), getGenerators12(),
 				getGenerators13(), getGenerators14());
 	}
 
-	public GeneratorRepresentation getGenerators1() {
+	private static GeneratorRepresentation getGenerators1() {
 		// @formatter:off
 		/*
 		 * L = {(1, 1, 0, 0, 0), (1, 1, 1, 0, 0)}
@@ -35,7 +35,7 @@ public class GeneratorRepresentationTest {
 		return new GeneratorRepresentation(lines, parameters, 5);
 	}
 
-	public GeneratorRepresentation getGenerators2() {
+	private static GeneratorRepresentation getGenerators2() {
 		// @formatter:off
 		/*
 		 * L = {}
@@ -51,7 +51,7 @@ public class GeneratorRepresentationTest {
 		return new GeneratorRepresentation(lines, parameters, 5);
 	}
 
-	public GeneratorRepresentation getGenerators3() {
+	private static GeneratorRepresentation getGenerators3() {
 		// @formatter:off
 		/*
 		 * L = {(1, 1, 0, 0, 0), (1, 1, 1, 0, 0)}
@@ -70,7 +70,7 @@ public class GeneratorRepresentationTest {
 		return new GeneratorRepresentation(lines, parameters, 5);
 	}
 
-	public GeneratorRepresentation getGenerators4() {
+	private static GeneratorRepresentation getGenerators4() {
 		// @formatter:off
 		/*
 		 * L = {(1, 0, 2, 0, 0), (1, 1, 0, 0, 0)}
@@ -89,7 +89,7 @@ public class GeneratorRepresentationTest {
 		return new GeneratorRepresentation(lines, parameters, 5);
 	}
 
-	public GeneratorRepresentation getGenerators5() {
+	private static GeneratorRepresentation getGenerators5() {
 		// @formatter:off
 		/*
 		 * L = {}
@@ -187,7 +187,7 @@ public class GeneratorRepresentationTest {
 		return new GeneratorRepresentation(equalities, congruences, 3);
 	}
 
-	public static GeneratorRepresentation getGenerators13() {
+	private static GeneratorRepresentation getGenerators13() {
 		// @formatter:off
 		/*
 		 * L = {}
@@ -222,9 +222,7 @@ public class GeneratorRepresentationTest {
 	@Test
 	public void testMinimize() {
 		for (final GeneratorRepresentation generators : getTestGenerators()) {
-			// System.out.println(generators);
 			generators.minimize();
-			// System.out.println(generators);
 			Assert.assertTrue(hasMinimalForm(generators));
 		}
 	}
@@ -239,14 +237,9 @@ public class GeneratorRepresentationTest {
 				getGenerators11(), getGenerators12(), getGenerators13());
 
 		for (int i = 0; i < constraints.size(); i++) {
-			System.out.println("------------------------");
-			System.out.println(i);
-
 			final ConstraintRepresentation expected = constraints.get(i);
 			expected.minimize();
 			final ConstraintRepresentation result = generators.get(i).computeConstraintRepresentation();
-			System.out.println(expected);
-			System.out.println(result);
 			Assert.assertEquals(expected, result);
 		}
 	}
