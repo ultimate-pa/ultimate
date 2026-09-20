@@ -6,13 +6,11 @@
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Join\ Precision=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Lockset-Aware\ Interference=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Location\ Abstraction=SPLIT_AT_NONLOCK_GUARDS_WRITES_AND_LOCKSETS
-/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Location\ Tracking\ Mode=GHOST_VARIABLES
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Equality=1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Explicit\ Values=2
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Intervals=1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Max.\ Parallel\ Octagon=1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Outer\ Interference\ Widening\ Threshold=10
-/instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Proof\ Check=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Publish\ On\ Acquire=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/Result\ Print=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.sifa/SizeLimitFluid\ Max.\ DAG\ Size=-1

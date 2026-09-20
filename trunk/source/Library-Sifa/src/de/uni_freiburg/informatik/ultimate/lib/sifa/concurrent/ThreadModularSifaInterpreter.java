@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.ISifaInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.proofchecking.ThreadModularProofChecker;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.reporting.SifaResultPrinter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSetup;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
@@ -54,13 +53,11 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ICallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ILoopSummarizer;
 
 public class ThreadModularSifaInterpreter implements ISifaInterpreter {
-	private final ILogger mLogger;
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final Collection<IcfgLocation> mRequestedLocationsOfInterest;
 	private final ConcurrentSymbolicTools mConcurrentTools;
 	private final OuterInterferenceFixpoint mOuterFixpoint;
 	private final SifaResultPrinter mResultPrinter;
-	private final ThreadModularProofChecker mProofChecker;
 
 	public ThreadModularSifaInterpreter(final ILogger logger, final IProgressAwareTimer timer, final SifaStats stats,
 			final ConcurrentSymbolicTools tools, final IIcfg<IcfgLocation> icfg,
@@ -68,14 +65,12 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 			final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
 			final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSumFactory,
 			final IUltimateServiceProvider services) {
-		mLogger = logger;
 		mIcfg = icfg;
 		mRequestedLocationsOfInterest = locationsOfInterest == null ? Set.of() : Set.copyOf(locationsOfInterest);
 		mConcurrentTools = tools;
 
 		final var setup = ThreadModularSetup.initialize(services, icfg, baseDomain, mConcurrentTools);
 		setup.postcondition().setStats(stats);
-		mProofChecker = setup.proofChecker();
 		final ThreadAnalyzer threadAnalysis = new ThreadAnalyzer(logger, timer, stats, mConcurrentTools, icfg,
 				mRequestedLocationsOfInterest, setup.domain(), fluid, loopSumFactory, callSumFactory, setup.threadIds(),
 				setup.joinedThreads());
@@ -93,9 +88,6 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		final ThreadInvariants invariants = mOuterFixpoint.compute();
 		if (mResultPrinter != null) {
 			mResultPrinter.printResults(invariants.locationInvariants(), mIcfg);
-		}
-		if (mProofChecker != null) {
-			mProofChecker.checkAllOrThrow(invariants, mLogger);
 		}
 		return requestedLocationPredicates(invariants.locationInvariants());
 	}

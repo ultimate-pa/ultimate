@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.LocationTrackingMode;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.CompoundDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.EqDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.ExplicitValueDomain;
@@ -100,11 +99,6 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	public static final Class<SimplificationTechnique> CLASS_SIMPLIFICATION = SimplificationTechnique.class;
 
 	// concurrent / thread-modular settings
-	public static final String LABEL_LOCATION_TRACKING_MODE = "Location Tracking Mode";
-	private static final LocationTrackingMode DEFAULT_LOCATION_TRACKING_MODE = LocationTrackingMode.GHOST_VARIABLES;
-	private static final LocationTrackingMode[] VALUES_LOCATION_TRACKING_MODE = LocationTrackingMode.values();
-	public static final Class<LocationTrackingMode> CLASS_LOCATION_TRACKING_MODE = LocationTrackingMode.class;
-
 	public static final String LABEL_INTERFERENCE_APPLICATOR = "Interference Applicator";
 	private static final InterferenceApplicatorType DEFAULT_INTERFERENCE_APPLICATOR =
 			InterferenceApplicatorType.GUARDED_EXACT_UPDATE;
@@ -159,11 +153,6 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	private static final String TOOLTIP_PUBLISH_ON_ACQUIRE =
 			"Re-establish invariants for globals protected by a recognized mutex when it is acquired";
 	private static final boolean DEFAULT_PUBLISH_ON_ACQUIRE = false;
-
-	public static final String LABEL_PROOF_CHECK = "Proof Check";
-	private static final String TOOLTIP_PROOF_CHECK =
-			"Run thread-modular proof checking after the analysis fixpoint";
-	private static final boolean DEFAULT_PROOF_CHECK = false;
 
 	public static final String LABEL_RESULT_PRINT = "Result Print";
 	private static final String TOOLTIP_RESULT_PRINT =
@@ -304,15 +293,8 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 				DEFAULT_LOCKSET_AWARE_INTERFERENCE, TOOLTIP_LOCKSET_AWARE_INTERFERENCE, PreferenceType.Boolean));
 		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_PUBLISH_ON_ACQUIRE,
 				DEFAULT_PUBLISH_ON_ACQUIRE, TOOLTIP_PUBLISH_ON_ACQUIRE, PreferenceType.Boolean));
-		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_PROOF_CHECK, DEFAULT_PROOF_CHECK,
-				TOOLTIP_PROOF_CHECK, PreferenceType.Boolean));
 		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_RESULT_PRINT, DEFAULT_RESULT_PRINT,
 				TOOLTIP_RESULT_PRINT, PreferenceType.Boolean));
-
-		final UltimatePreferenceItemContainer containerConcurrentTesting = new UltimatePreferenceItemContainer(
-				"Thread-Modular Testing");
-		containerConcurrentTesting.addItem(
-				combo(LABEL_LOCATION_TRACKING_MODE, DEFAULT_LOCATION_TRACKING_MODE, VALUES_LOCATION_TRACKING_MODE));
 
 		return new BaseUltimatePreferenceItem[] {
 				combo(LABEL_ABSTRACT_DOMAIN, DEFAULT_ABSTRACT_DOMAIN, VALUES_ABSTRACT_DOMAIN),
@@ -323,7 +305,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 				combo(LABEL_SIMPLIFICATION, DEFAULT_SIMPLIFICATION, VALUES_SIMPLIFICATION),
 				//
 				containerExplValDom, containerIntervalDom, containerOctagonDom, containerEqDom, containerCompoundDom,
-				containerLogFluid, containerSizeLimitFluid, containerConcurrent, containerConcurrentTesting };
+				containerLogFluid, containerSizeLimitFluid, containerConcurrent };
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {

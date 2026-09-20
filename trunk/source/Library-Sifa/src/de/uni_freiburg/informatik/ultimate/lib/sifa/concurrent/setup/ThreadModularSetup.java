@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.meth
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.strongestpostcondition.StrongestPostconditionInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocksetAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.publish.PublishOnAcquire;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.proofchecking.ThreadModularProofChecker;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.TransFormulaToInterferencePredicate;
@@ -91,8 +90,9 @@ public final class ThreadModularSetup {
 		final Map<String, Set<IcfgLocation>> preForkSourcesByThread = computePreForkSourcesByThread(icfg,
 				activityPreanalysis.getMultiForkedThreads());
 
-		final GhostVariableManager ghostVars = createGhostVariablesIfEnabled(settings, script, symbolTable, threadIds,
-				icfg, locationIds, activityPreanalysis.getMultiForkedThreads());
+		final GhostVariableManager ghostVars = GhostVariableManager.create(script, locationIds,
+				new LinkedHashSet<>(threadIds), icfg.getProcedureEntryNodes(), symbolTable,
+				activityPreanalysis.getMultiForkedThreads());
 		tools.initializeStaticAnalysis(ghostVars, activityPreanalysis, locksetInfo);
 		final PublishOnAcquire publication = settings.publishOnAcquire()
 				? PublishOnAcquire.discover(icfg, locksetInfo, MAIN_THREAD, activityPreanalysis, services, script,
@@ -101,7 +101,7 @@ public final class ThreadModularSetup {
 		if (settings.publishOnAcquire()) {
 			logger.info("Publish-on-acquire enabled (protected globals discovered: %s)", !publication.isEmpty());
 		}
-		final AbstractLocationPartitionedDomain partitionedDomain = settings.useBuckets() && ghostVars != null
+		final AbstractLocationPartitionedDomain partitionedDomain = settings.useBuckets()
 				? AbstractLocationPartitionedDomain.create(baseDomain, tools,
 						ghostVars.getLocationTermVariablesByThread(), settings.maxBuckets(),
 						settings.maxDisjunctsPerBucket())
@@ -122,12 +122,8 @@ public final class ThreadModularSetup {
 				interferenceFactory.getClass().getSimpleName());
 		logger.info("Interference grouping: abstract-location pairs via %s", settings.locationAbstractionType());
 
-		final ThreadModularProofChecker proofChecker = settings.proofCheck()
-				? new ThreadModularProofChecker(icfg, postcondition, translator, domain, ghostVars, activityPreanalysis)
-				: null;
-
-		return new SetupResult(threadIds, domain, interferenceFactory, postcondition, proofChecker, joinedThreads,
-				locationIds, publication);
+		return new SetupResult(threadIds, domain, interferenceFactory, postcondition, joinedThreads, locationIds,
+				publication);
 	}
 
 	private static List<String> discoverThreadIds(final IIcfg<IcfgLocation> icfg) {
@@ -231,17 +227,6 @@ public final class ThreadModularSetup {
 		return result;
 	}
 
-	private static GhostVariableManager createGhostVariablesIfEnabled(final ThreadModularSifaSettings settings,
-			final ManagedScript script, final PrimedDefaultIcfgSymbolTable symbolTable, final List<String> threadIds,
-			final IIcfg<IcfgLocation> icfg, final Map<IcfgLocation, Integer> locationIds,
-			final Set<String> impreciseLocationThreads) {
-		if (!settings.useGhostLocations()) {
-			return null;
-		}
-		return GhostVariableManager.create(script, locationIds, new LinkedHashSet<>(threadIds),
-				icfg.getProcedureEntryNodes(), symbolTable, impreciseLocationThreads);
-	}
-
 	private static GroupedInterferenceFactory<?> createInterferenceFactory(
 			final InterferenceApplicatorType applicatorType, final InterferenceEdgeCollector edgeTraverser,
 			final TransFormulaToInterferencePredicate translator, final RelationalPredicatePostcondition postcondition,
@@ -259,7 +244,6 @@ public final class ThreadModularSetup {
 
 	public static record SetupResult(List<String> threadIds, IDomain domain,
 			GroupedInterferenceFactory<?> interferenceFactory, RelationalPredicatePostcondition postcondition,
-			ThreadModularProofChecker proofChecker, Set<String> joinedThreads,
-			Map<IcfgLocation, Integer> abstractLocationIds, PublishOnAcquire publication) {
+			Set<String> joinedThreads, Map<IcfgLocation, Integer> abstractLocationIds, PublishOnAcquire publication) {
 	}
 }
