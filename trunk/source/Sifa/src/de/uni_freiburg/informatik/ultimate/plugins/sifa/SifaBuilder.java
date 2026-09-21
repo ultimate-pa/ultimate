@@ -81,8 +81,7 @@ public class SifaBuilder {
 	}
 
 	public SifaComponents construct(final IIcfg<IcfgLocation> icfg, final IProgressAwareTimer timer) {
-		return construct(icfg, timer,
-				icfg.getProgramPoints().values().stream().flatMap(x -> x.values().stream()).toList());
+		return construct(icfg, timer, IcfgInterpreter.allErrorLocations(icfg));
 	}
 
 	public SifaComponents construct(final IIcfg<IcfgLocation> icfg, final IProgressAwareTimer timer,
@@ -140,7 +139,7 @@ public class SifaBuilder {
 			domain = new EqDomain(tools, mPrefs.getInt(SifaPreferences.LABEL_EQDOM_MAX_PARALLEL_STATES), mServices,
 					mLogger, () -> timer);
 		} else if (CongruenceDomain.class.getSimpleName().equals(domainName)) {
-			domain = new CongruenceDomain(tools, mPrefs.getInt(SifaPreferences.LABEL_EQDOM_MAX_PARALLEL_STATES),
+			domain = new CongruenceDomain(tools, mPrefs.getInt(SifaPreferences.LABEL_CONGRUENCE_MAX_PARALLEL_STATES),
 					mLogger, () -> timer);
 		} else {
 			throw new IllegalArgumentException("Unknown domain setting: " + domainName);

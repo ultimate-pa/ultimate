@@ -14,6 +14,11 @@
     <option name="--sifa.abstract.domain">"IntervalDomain"</option>
   </rundefinition>
 
+  <rundefinition name="SIFA-OCT">
+    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/SifaC.xml</option>
+    <option name="--sifa.abstract.domain">"OctagonDomain"</option>
+  </rundefinition>
+
   <rundefinition name="SIFA-CON+INT">
     <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/SifaC.xml</option>
 	<option name="--sifa.abstract.domain">"CompoundDomain"</option>
@@ -28,6 +33,11 @@
   <rundefinition name="Taipan-INT">
     <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 	<option name="--sifa.abstract.domain">"IntervalDomain"</option>
+  </rundefinition>
+
+  <rundefinition name="Taipan-OCT">
+    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+	<option name="--sifa.abstract.domain">"OctagonDomain"</option>
   </rundefinition>
 
   <rundefinition name="Taipan-CON+INT">
