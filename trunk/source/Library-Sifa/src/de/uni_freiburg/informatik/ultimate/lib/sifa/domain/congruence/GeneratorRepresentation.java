@@ -11,11 +11,20 @@ import java.util.stream.IntStream;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+//TODO: Docu
+/**
+ * Constraint based representation of equalities and congruences. Stores equalities of form "∑ a_i * x_i = c" as vectors
+ * [-c, a_0, ..., a_n] and stores congruences of form "∑ a_i * x_i ≡b c" as vectors [-c/b, a_0/b, ..., a_n/b], where x_i
+ * correspond to numerical (ints and reals) variables and a_i, b and c to constants.
+ *
+ * @author Max Lehr
+ *
+ */
 public class GeneratorRepresentation {
 	private List<RationalVector> mLines;
 	private List<RationalVector> mParameters;
 
-	final private int mVectorLength;
+	private final int mVectorLength;
 
 	private boolean mIsMinimal;
 
@@ -25,9 +34,8 @@ public class GeneratorRepresentation {
 	}
 
 	/**
-	 * WARNING: Only give isMinimal as true if lineMatrix and parameterMatrix are
-	 * minimal. Alternatively use the constructor without isMinimal and call
-	 * minimize afterwards.
+	 * WARNING: Only give isMinimal as true if lineMatrix and parameterMatrix are minimal. Alternatively use the
+	 * constructor without isMinimal and call minimize afterwards.
 	 */
 	GeneratorRepresentation(final List<RationalVector> lines, final List<RationalVector> parameters,
 			final int vectorLength, final boolean isMinimal) {
@@ -87,6 +95,9 @@ public class GeneratorRepresentation {
 		return mIsMinimal;
 	}
 
+	/**
+	 * Returns if the represented state is unsatisfiable.
+	 */
 	public boolean isUnsat() {
 		minimize();
 		for (final RationalVector line : getLines()) {
@@ -108,6 +119,10 @@ public class GeneratorRepresentation {
 		return true;
 	}
 
+	/**
+	 * Converts the representation to be in minimal form. In minimal form the index of the first non zero entry of every
+	 * line and parameter vector is unique and the entry is positive.
+	 */
 	public void minimize() {
 		if (isMinimal()) {
 			return;
@@ -177,8 +192,8 @@ public class GeneratorRepresentation {
 				final int otherPivot = other.firstPivot();
 
 				if (pivot == otherPivot) {
-					final Pair<RationalVector, RationalVector> pair = CongruenceUtil.hermitEliminateField(other,
-							parameter, pivot);
+					final Pair<RationalVector, RationalVector> pair =
+							CongruenceUtil.hermitEliminateField(other, parameter, pivot);
 					parameters.set(j, pair.getFirst());
 					parameters.set(i, pair.getSecond());
 				}
@@ -223,6 +238,9 @@ public class GeneratorRepresentation {
 
 	}
 
+	/**
+	 * Returns an equivalent ConstraintRepresentation.
+	 */
 	public ConstraintRepresentation computeConstraintRepresentation() {
 		minimize();
 
@@ -257,8 +275,8 @@ public class GeneratorRepresentation {
 		final List<RationalVector> constraintList = constraintMatrix.getRowVectors();
 
 		final List<RationalVector> congruences = constraintList.subList(linesNum, linesNum + parametersNum);
-		final List<RationalVector> equalities = constraintList.subList(linesNum + parametersNum,
-				linesNum + parametersNum + fillerNum);
+		final List<RationalVector> equalities =
+				constraintList.subList(linesNum + parametersNum, linesNum + parametersNum + fillerNum);
 
 		return new ConstraintRepresentation(equalities, congruences, mVectorLength, true, false);
 	}

@@ -12,6 +12,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * Class containing various utility functions used in {@link CongruenceDomain}.
+ *
+ * @author Max Lehr
+ */
 public class CongruenceUtil {
 
 	/**

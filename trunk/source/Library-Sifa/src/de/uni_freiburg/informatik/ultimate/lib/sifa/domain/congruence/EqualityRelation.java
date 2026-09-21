@@ -17,8 +17,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class EqualityRelation {
 
-	final Map<Term, Rational> mVarToFactor;
-	final Rational mResult;
+	private final Map<Term, Rational> mVarToFactor;
+	private final Rational mResult;
 
 	public EqualityRelation(final AffineTerm term) {
 		mVarToFactor = term.getVariable2Coefficient();
@@ -77,6 +77,7 @@ public class EqualityRelation {
 		return out.toString();
 	}
 
+	// TODO: Move to Util
 	public List<Rational> getProtoVector(final Map<Term, Integer> varToIndex) {
 		final int n = varToIndex.size() + 1;
 		final List<Rational> list = new ArrayList<>(Collections.nCopies(n, Rational.ZERO));
@@ -91,6 +92,7 @@ public class EqualityRelation {
 		return list;
 	}
 
+	// TODO: Move to Util
 	public RationalVector getVector(final Map<Term, Integer> varToIndex) {
 		final List<Rational> protoVector = getProtoVector(varToIndex);
 		return new RationalVector(protoVector);

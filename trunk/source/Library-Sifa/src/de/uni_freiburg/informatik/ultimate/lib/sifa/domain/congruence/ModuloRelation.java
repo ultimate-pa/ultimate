@@ -20,8 +20,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class ModuloRelation {
 
-	final EqualityRelation mEqualityRelation;
-	final BigInteger mMod;
+	private final EqualityRelation mEqualityRelation;
+	private final BigInteger mMod;
 
 	public ModuloRelation(final AffineTerm term, final BigInteger finalMod) {
 		mEqualityRelation = new EqualityRelation(term);
@@ -53,8 +53,8 @@ public class ModuloRelation {
 		final var affineTermTransformer = new AffineTermTransformer(script);
 		final AffineTerm rhsAffine = (AffineTerm) affineTermTransformer.transform(rhs);
 		final AffineTerm lhsAffine = (AffineTerm) affineTermTransformer.transform(lhs);
-		final AffineTerm affineTerm = (AffineTerm) PolynomialTermOperations.sum(lhsAffine.mul(Rational.MONE),
-				rhsAffine);
+		final AffineTerm affineTerm =
+				(AffineTerm) PolynomialTermOperations.sum(lhsAffine.mul(Rational.MONE), rhsAffine);
 
 		if (affineTerm == null) {
 			// We can only handle affine polynomials
@@ -194,12 +194,13 @@ public class ModuloRelation {
 		return result;
 	}
 
+	// TODO: Move to Util
 	public RationalVector getVector(final Map<Term, Integer> varToIndex) {
 		final List<Rational> protoVector = mEqualityRelation.getProtoVector(varToIndex);
 
 		// Do mod on entries to make numbers smaller
-		final List<Rational> modProtoVector = protoVector.stream().map(rational -> modRational(rational, mMod))
-				.toList();
+		final List<Rational> modProtoVector =
+				protoVector.stream().map(rational -> modRational(rational, mMod)).toList();
 		final RationalVector modVector = new RationalVector(modProtoVector);
 
 		// Divide every entry through mMod

@@ -16,7 +16,20 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * TODO: Do like OctagonDomain
+ * Congruence abstract domain, based on Bagnara, Roberto & Dobson, Katy & Hill, Patricia & Mundell, Matthew &
+ * Zaffanella, Enea "Grids: A Domain for Analyzing the Distribution of Numerical Values"
+ * (https://www.researchgate.net/publication/221495908_Grids_A_Domain_for_Analyzing_the_Distribution_of_Numerical_Values)
+ * and Dobson, Katy "Grid Domains for Analysing Software"
+ * (https://www.researchgate.net/publication/265115063_Grid_Domains_for_Analysing_Software)
+ *
+ *
+ * The congruence domain stores constraints of the form "∑ a_i * x_i = c" and "∑ a_i * x_i ≡b c" for numerical (ints and
+ * reals) variables x_i and constants a_i, b and c. It uses a dual representation system where the constraint
+ * representation uses vectors to directly represent the constraints and the generator representation storing vectors
+ * that generate the space of the valid variable assignments.
+ *
+ * @author Max Lehr
+ *
  */
 public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 

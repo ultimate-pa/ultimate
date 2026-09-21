@@ -18,6 +18,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
  * utilizes BigInteger for its denominator and numerator so no precision is
  * lost. Further the sparse version SparseFieldMatrix<BigFraction> is used, so
  * only the non-zero entries are stored.
+ *
+ * @author Max Lehr
  */
 public class RationalMatrix {
 

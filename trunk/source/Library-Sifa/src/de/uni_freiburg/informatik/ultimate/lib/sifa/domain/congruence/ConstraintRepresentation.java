@@ -12,11 +12,19 @@ import java.util.stream.IntStream;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * Constraint based representation of equalities and congruences. Stores equalities of form "∑ a_i * x_i = c" as vectors
+ * [-c, a_0, ..., a_n] and stores congruences of form "∑ a_i * x_i ≡b c" as vectors [-c/b, a_0/b, ..., a_n/b], where x_i
+ * correspond to numerical (ints and reals) variables and a_i, b and c to constants.
+ *
+ * @author Max Lehr
+ *
+ */
 public class ConstraintRepresentation {
 	private List<RationalVector> mEqualities;
 	private List<RationalVector> mCongruences;
 
-	final private int mVectorLength;
+	private final int mVectorLength;
 
 	private boolean mIsMinimal;
 	private boolean mIsStrongMinimal;
@@ -27,10 +35,9 @@ public class ConstraintRepresentation {
 	}
 
 	/**
-	 * WARNING: Only give isMinimal/isStrongMinimal as true if lineMatrix and
-	 * parameterMatrix are minimal/strongly minimal. Alternatively use the
-	 * constructor without isMinimal/isStrongMinimal and call
-	 * minimize/stronglyMinimize afterwards.
+	 * WARNING: Only give isMinimal/isStrongMinimal as true if lineMatrix and parameterMatrix are minimal/strongly
+	 * minimal. Alternatively use the constructor without isMinimal/isStrongMinimal and call minimize/stronglyMinimize
+	 * afterwards.
 	 */
 	ConstraintRepresentation(final List<RationalVector> equalities, final List<RationalVector> congruences,
 			final int vectorLength, final boolean isMinimal, final boolean isStrongMinimal) {
@@ -96,27 +103,43 @@ public class ConstraintRepresentation {
 		return true;
 	}
 
+	/**
+	 * Returns an empty instance of a ConstraintRepresentation, so without any equalities or constraints.
+	 */
 	public static ConstraintRepresentation getEmpty(final int vectorLength) {
 		return new ConstraintRepresentation(List.of(), List.of(), vectorLength, true, true);
 	}
 
+	/**
+	 * Returns the amount of vectors needed to generate all vectors that satisfy the constraints. This can be seen as
+	 * the dimension of the space containing all valid variable assignments.
+	 */
 	public int getDim() {
 		minimize();
 		return getVectorLength() - getEqualities().size();
 	}
 
+	/**
+	 * Reorders the entries of the equality and congruence vectors according to the permutation given by reorderMap and
+	 * extends them to have size resultColumnCount. Returns a new ConstraintRepresentation containing the reordered
+	 * equalities and constraints.
+	 */
 	public ConstraintRepresentation getReorderedForm(final Map<Integer, Integer> reorderMap,
 			final int resultColumnCount) {
 
-		final RationalMatrix reorderedEqualityMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
-				getEqualityMatrix());
-		final RationalMatrix reorderedCongruenceMatrix = CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount,
-				getCongruenceMatrix());
+		final RationalMatrix reorderedEqualityMatrix =
+				CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount, getEqualityMatrix());
+		final RationalMatrix reorderedCongruenceMatrix =
+				CongruenceUtil.reorderByColumns(reorderMap, resultColumnCount, getCongruenceMatrix());
 
 		return new ConstraintRepresentation(reorderedEqualityMatrix.getRowVectors(),
 				reorderedCongruenceMatrix.getRowVectors(), resultColumnCount);
 	}
 
+	/**
+	 * Converts the representation to be in minimal form. In minimal form the index of the last non zero entry of every
+	 * equality and congruence vector is unique and the entry is positive.
+	 */
 	public void minimize() {
 		if (mIsMinimal) {
 			return;
@@ -136,10 +159,6 @@ public class ConstraintRepresentation {
 			if (pivot == -1) {
 				// vector is empty, can be deleted
 				equalitiesToDelete.add(i);
-//			} else if (pivot == 0) {
-//				// equality is unsatisfiable and so is the whole system
-//				markAsUnsat();
-//				return;
 
 			} else {
 				// Make pivotValue positive
@@ -194,8 +213,8 @@ public class ConstraintRepresentation {
 				final long otherPivot = other.lastPivot();
 
 				if (pivot == otherPivot) {
-					final Pair<RationalVector, RationalVector> pair = CongruenceUtil.hermitEliminateField(other,
-							congruence, pivot);
+					final Pair<RationalVector, RationalVector> pair =
+							CongruenceUtil.hermitEliminateField(other, congruence, pivot);
 					congruences.set(j, pair.getFirst());
 					congruences.set(i, pair.getSecond());
 				}
@@ -240,6 +259,11 @@ public class ConstraintRepresentation {
 		}
 	}
 
+	/**
+	 * Converts the representation to be in strong minimal form. In strong minimal form the representation is minimal
+	 * and for each pair of distinct congruence vectors v, u it holds that -v_k < 2*u_k ≤ v_k for k being the index of
+	 * the last non zero entry of v.
+	 */
 	public void stronglyMinimize() {
 		if (isStrongMinimal()) {
 			return;
@@ -283,8 +307,8 @@ public class ConstraintRepresentation {
 					final BigInteger wholeIndexElement2 = wholeIndexElement2Rational.numerator();
 
 					BigInteger factor;
-					final BigInteger e1ModE2Times2 = wholeIndexElement1.mod(wholeIndexElement2)
-							.multiply(BigInteger.TWO);
+					final BigInteger e1ModE2Times2 =
+							wholeIndexElement1.mod(wholeIndexElement2).multiply(BigInteger.TWO);
 
 					final BigInteger[] divideAndRemainder = wholeIndexElement1.divideAndRemainder(wholeIndexElement2);
 					final BigInteger divide = divideAndRemainder[0];
@@ -312,6 +336,9 @@ public class ConstraintRepresentation {
 		mIsStrongMinimal = true;
 	}
 
+	/**
+	 * Returns an equivalent GeneratorRepresentation.
+	 */
 	public GeneratorRepresentation computeGeneratorRepresentation() {
 		minimize();
 		final List<RationalVector> equalities = getEqualities();

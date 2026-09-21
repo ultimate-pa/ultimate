@@ -9,18 +9,36 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
+/**
+ * State used in {@link CongruenceDomain}
+ *
+ * @author Max Lehr
+ *
+ */
 public class CongruenceState implements IAbstractState<CongruenceState> {
 	public static final CongruenceState TOP = new CongruenceState(Map.of(), ConstraintRepresentation.getEmpty(0));
 
+	/**
+	 * Map of numerical variable (ints and reals) names to unique indexes used in the internal representations of
+	 * {@link ConstraintRepresentation} and {@link GeneratorRepresentation}.
+	 */
 	private final Map<Term, Integer> mVarToIndex;
 
+	/**
+	 * Representation of the state as constraints in the form of equalities and congruences.
+	 */
 	private final ConstraintRepresentation mConstraints;
+	/**
+	 * Representation of the state as vectors generating the valid variable assignments.
+	 */
 	private final GeneratorRepresentation mGenerators;
+
 	private Boolean mIsBottom = null;
 
 	public CongruenceState(final Map<Term, Integer> varToIndex, final ConstraintRepresentation constraints) {
@@ -53,6 +71,9 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		return mVarToIndex;
 	}
 
+	/**
+	 * Returns the inverse mapping of mVarToIndex.
+	 */
 	private Map<Integer, Term> getIndexToVar() {
 		final Map<Integer, Term> indexToVar = new HashMap<>();
 		final Map<Term, Integer> varToIndex = getVarToIndex();
@@ -95,10 +116,9 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 	}
 
 	/**
-	 * Takes a vector containing rational coefficients and a map from the indexes of
-	 * the vector to variables, together modeling a polynomial p. Returns an array
-	 * containing two strings, each representing one side of an equality equivalent
-	 * to p=0.
+	 * Takes a vector containing rational coefficients and a map from the indexes of the vector to variables, together
+	 * modeling a polynomial p. Returns an array containing two strings, each representing one side of an equality
+	 * equivalent to p=0.
 	 */
 	private static String[] getVectorStrings(final RationalVector vector, final Map<Integer, Term> indexToVar) {
 		String resultString = "0";
@@ -158,8 +178,8 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 			final BigInteger commonDenominator = CongruenceUtil.getCommonDenominator(equality);
 			final RationalVector wholeEquality = equality.multiply(commonDenominator);
 			final Term sum = getSumTerm(wholeEquality, indexToVar, script);
-			final Term equalityTerm = SmtUtils.binaryEquality(script, sum,
-					SmtUtils.constructIntValue(script, BigInteger.ZERO));
+			final Term equalityTerm =
+					SmtUtils.binaryEquality(script, sum, SmtUtils.constructIntValue(script, BigInteger.ZERO));
 			terms.add(equalityTerm);
 		}
 
@@ -169,8 +189,8 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 			final Term sum = getSumTerm(wholeCongruence, indexToVar, script);
 			final Term modTerm = SmtUtils.constructIntValue(script, commonDenominator);
 			final Term modSum = SmtUtils.mod(script, sum, modTerm);
-			final Term congruenceTerm = SmtUtils.binaryEquality(script, modSum,
-					SmtUtils.constructIntValue(script, BigInteger.ZERO));
+			final Term congruenceTerm =
+					SmtUtils.binaryEquality(script, modSum, SmtUtils.constructIntValue(script, BigInteger.ZERO));
 			terms.add(congruenceTerm);
 		}
 
@@ -178,9 +198,8 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 	}
 
 	/**
-	 * Takes a vector containing rational coefficients and a map from the indexes of
-	 * the vector to variables, together modeling a polynomial. Returns a term
-	 * equivalent to this polynomial.
+	 * Takes a vector containing rational coefficients and a map from the indexes of the vector to variables, together
+	 * modeling a polynomial. Returns a term equivalent to this polynomial.
 	 */
 	private static Term getSumTerm(final RationalVector vector, final Map<Integer, Term> indexToVar,
 			final Script script) {
@@ -207,17 +226,13 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 
 		final Term[] summandsArray = summands.toArray(Term[]::new);
 
-		if (summandsArray.length == 0) {
-			return SmtUtils.constructIntValue(script, BigInteger.ZERO);
-		} else if (summandsArray.length == 1) {
-			return summandsArray[0];
-		} else {
-			return SmtUtils.sum(script, "+", summandsArray);
-		}
+		return SmtUtils.sum(script, SmtSortUtils.getIntSort(script), summandsArray);
 	}
 
-	// TODO: Documentation
-	public CongruenceState getReorderedForm(final Map<Term, Integer> newVarToIndex) {
+	/**
+	 * Returns an equivalent CongruenceState that uses newVarToIndex as its mapping from variables to indexes.
+	 */
+	private CongruenceState getReorderedForm(final Map<Term, Integer> newVarToIndex) {
 		// Compute the required lengths for the vectors
 		// +1 for the constant in the first place
 		final int newColumnCount = newVarToIndex.size() + 1;
@@ -261,8 +276,8 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		final List<RationalVector> newParameters = selfReorderedGenerators.getParameters();
 		newParameters.addAll(otherReorderedGenerators.getParameters());
 
-		final GeneratorRepresentation newGenerators = new GeneratorRepresentation(newLines, newParameters,
-				selfReorderedGenerators.getVectorLength());
+		final GeneratorRepresentation newGenerators =
+				new GeneratorRepresentation(newLines, newParameters, selfReorderedGenerators.getVectorLength());
 
 		return new CongruenceState(newVarToIndex, newGenerators);
 	}
@@ -315,8 +330,8 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 			}
 		}
 
-		final ConstraintRepresentation newConstraints = new ConstraintRepresentation(newEqualities, newCongruences,
-				upperConstraints.getVectorLength());
+		final ConstraintRepresentation newConstraints =
+				new ConstraintRepresentation(newEqualities, newCongruences, upperConstraints.getVectorLength());
 
 		return new CongruenceState(newVarToIndex, newConstraints);
 	}
