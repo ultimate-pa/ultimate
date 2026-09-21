@@ -171,6 +171,9 @@ final class BodyTransformer extends BoogieTransformer {
 		newStatements.add(Translator.callYieldInvariant(yieldInvariant, mCurrentTids, new Expression[] { annotation }));
 
 		if (mProcedureName != BoogieUtils.START_PROCEDURE) {
+			mTranslator.addSetReturn(mProcedureName);
+			newStatements.add(mTranslator.callSetReturn(mProcedureName));
+			newStatements.add(Translator.callYieldIgnore());
 			newStatements.add(new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "terminate",
 					mCurrentTids));
 		}

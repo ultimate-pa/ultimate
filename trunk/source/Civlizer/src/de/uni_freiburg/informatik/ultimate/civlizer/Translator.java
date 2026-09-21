@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.Storage
 import de.uni_freiburg.informatik.ultimate.boogie.MustAssignAnalysis;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -552,57 +553,64 @@ public final class Translator {
 		return yieldProc;
 	}
 
-	static CallStatement callSetReturn(final String procName, final JoinStatement joinStmt) {
-		final Expression[] joinThreadId = joinStmt.getThreadID();
+	// Improve repreensation of Identifier and Tid TODO
+	CallStatement callSetReturn(final String procName) {
+		final var threadProc = (Procedure) Arrays.stream(mProgramAndProof.getBoogieAst().getDeclarations())
+				.filter(x -> x instanceof final Procedure proc && proc.getIdentifier().equals(procName)).findFirst()
+				.get();
 
-		final Expression[] threadId = { new IdentifierExpression(joinStmt.getLoc(), BoogieType.createPlaceholderType(0),
-				new Tid(joinThreadId).toString(), DeclarationInformation.DECLARATIONINFO_GLOBAL) };
+		final Expression[] inParams = Stream
+				.concat(mProgramAndProof.getTemplateVisitor().getAssociationTidMap()
+						.getOrDefault(procName, Collections.emptyList()).stream()
+						.map(tid -> new IdentifierExpression(null, tid.toString())),
+						Arrays.stream(threadProc.getInParams())
+								.flatMap(x -> Arrays.stream(x.getIdentifiers())
+										.map(identifier -> new IdentifierExpression(null, x.getType().getBoogieType(),
+												identifier, DeclarationInformation.DECLARATIONINFO_GLOBAL))))
+				.toArray(Expression[]::new);
 
 		return new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "set_return_" + procName,
-				threadId);
+				inParams);
 	}
 
-	YieldProcedure addSetReturn(final String procName, final JoinStatement joinStmt) {
-		final var lhs = joinStmt.getLhs();
-		final var tid = new Tid(joinStmt.getThreadID());
-		final var tidIdentifier = tid.toString();
+	YieldProcedure addSetReturn(final String procName) {
+		final var threadProc = (Procedure) Arrays.stream(mProgramAndProof.getBoogieAst().getDeclarations())
+				.filter(x -> x instanceof final Procedure proc && proc.getIdentifier().equals(procName)).findFirst()
+				.get();
 
-		final var tidParameter = new ParameterDeclaration(tidIdentifier, makeOne(mTidType), Linearity.INOUT);
+		final var procParams = new ArrayList<ParameterDeclaration>();
+		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAssociationTidMap().getOrDefault(procName,
+				Collections.emptyList())) {
+			procParams.add(new ParameterDeclaration(tid.toString(), makeOne(mTidType), Linearity.INOUT));
+		}
 
-		final var assignments = new ArrayList<VariableLHS>();
-		final var returnVariables = new ArrayList<VariableLHS>();
-		final var returnExpressions = new ArrayList<Expression>();
+		procParams.addAll(Arrays.stream(threadProc.getInParams())
+				.flatMap(x -> Arrays.stream(x.getIdentifiers())
+						.map(identifier -> new ParameterDeclaration(identifier, x.getType(), Linearity.INOUT)))
+				.toList());
 
-		for (int i = 0; i < lhs.length; i++) {
-			final var variable = lhs[i];
-			final var declarationInfo = variable.getDeclarationInformation();
+		final Expression[] inParams =
+				Arrays.stream(threadProc.getInParams())
+						.flatMap(x -> Arrays.stream(x.getIdentifiers())
+								.map(identifier -> new IdentifierExpression(null, x.getType().getBoogieType(),
+										identifier, DeclarationInformation.DECLARATIONINFO_GLOBAL)))
+						.toArray(Expression[]::new);
 
-			if (declarationInfo.getStorageClass() == StorageClass.LOCAL) {
-				final var returnVariableName = "ret_" + i;
+		final var returnExpressions = new ArrayList<LeftHandSide>();
+		final var tid = mProgramAndProof.getTemplateVisitor().getAssociationTidMap().get(procName).get(0);
 
-				assignments.add(new VariableLHS(null, returnVariableName));
-
-				returnVariables.add(new VariableLHS(null, variable.getType(), returnVariableName, declarationInfo));
-
-				returnExpressions.add(new ArrayAccessExpression(null, new IdentifierExpression(null, RETURN_ARRAY_NAME),
-						new Expression[] { new IdentifierExpression(null, tidIdentifier),
-								new IntegerLiteral(null, String.valueOf(i)) }));
-			} else {
-				assignments.add(variable);
-			}
+		for (int i = 0; i < inParams.length; i++) {
+			returnExpressions.add(new ArrayLHS(null, new VariableLHS(null, RETURN_ARRAY_NAME), new Expression[] {
+					new IdentifierExpression(null, tid.toString()), new IntegerLiteral(null, String.valueOf(i)) }));
 		}
 
 		final var atomicAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP,
-				new Body(null, new VariableDeclaration[0], new Statement[] { new AssignmentStatement(null,
-						assignments.toArray(new VariableLHS[0]), returnExpressions.toArray(Expression[]::new)) }));
+				new Body(null, new VariableDeclaration[0], new Statement[] {
+						new AssignmentStatement(null, returnExpressions.toArray(LeftHandSide[]::new), inParams) }));
 
-		final var yieldProc = new YieldProcedure(LAYER_BASE, "return_" + procName + "_" + counter,
-				new ParameterDeclaration[] { tidParameter },
-				returnVariables.stream()
-						.map(variable -> new ParameterDeclaration(variable.getIdentifier(),
-								((BoogieType) variable.getType()).toASTType(null), Linearity.NONE))
-						.toArray(ParameterDeclaration[]::new),
-				new CallStatement[0], new CallStatement[0], null, atomicAction);
+		final var yieldProc = new YieldProcedure(LAYER_BASE, "set_return_" + procName,
+				procParams.toArray(ParameterDeclaration[]::new), new ParameterDeclaration[0], new CallStatement[0],
+				new CallStatement[0], null, atomicAction);
 
 		mDeclarations.add(yieldProc);
 
