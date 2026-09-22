@@ -2,9 +2,11 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
@@ -20,8 +22,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class CongruenceUtil {
 
 	/**
-	 * Eliminates the field in minuendVector by subtracting a multiple of the
-	 * subtrahendVector and returns the updated minuendVector
+	 * Eliminates the field in minuendVector by subtracting a multiple of the subtrahendVector and returns the updated
+	 * minuendVector
 	 */
 	public static RationalVector gaussEliminateField(final RationalVector minuendVector,
 			final RationalVector subtrahendVector, final int pivot) {
@@ -34,9 +36,8 @@ public class CongruenceUtil {
 	}
 
 	/**
-	 * Eliminates the field in minuendVector by subtracting a multiple of the
-	 * subtrahendVector in a way that conserves modulo relations and returns the
-	 * updated minuendVector and subtrahendVector
+	 * Eliminates the field in minuendVector by subtracting a multiple of the subtrahendVector in a way that conserves
+	 * modulo relations and returns the updated minuendVector and subtrahendVector
 	 */
 	public static Pair<RationalVector, RationalVector> hermitEliminateField(final RationalVector minuendVector,
 			final RationalVector subtrahendVector, final int pivot) {
@@ -79,15 +80,14 @@ public class CongruenceUtil {
 	}
 
 	/**
-	 * Reorders the columns of matrix according to the permutation given by map and
-	 * returns the resulting matrix with dimensions matrix.rowCount x
-	 * resultColumnCount.
+	 * Reorders the columns of matrix according to the permutation given by map and returns the resulting matrix with
+	 * dimensions matrix.rowCount x resultColumnCount.
 	 */
 	public static RationalMatrix reorderByColumns(final Map<Integer, Integer> map, final int resultColumnCount,
 			final RationalMatrix matrix) {
 		final List<RationalVector> columns = matrix.getColumnVectors();
-		final List<RationalVector> resultColumns = RationalMatrix.getZeroMatrix(matrix.getRowCount(), resultColumnCount)
-				.getColumnVectors();
+		final List<RationalVector> resultColumns =
+				RationalMatrix.getZeroMatrix(matrix.getRowCount(), resultColumnCount).getColumnVectors();
 
 		for (int i = 0; i < columns.size(); i++) {
 			resultColumns.set(map.get(i), columns.get(i));
@@ -97,8 +97,7 @@ public class CongruenceUtil {
 	}
 
 	/**
-	 * Returns a new map that contains every key in map1 and map2 exactly once and
-	 * maps each key to a unique Integer.
+	 * Returns a new map that contains every key in map1 and map2 exactly once and maps each key to a unique Integer.
 	 */
 	public static <K> Map<K, Integer> mergeMaps(final Map<K, Integer> map1, final Map<K, Integer> map2) {
 		final Map<K, Integer> newMap = new HashMap<>();
@@ -203,8 +202,8 @@ public class CongruenceUtil {
 	}
 
 	/**
-	 * Returns true if the last non-zero entries of vector1 and vector2 are equal
-	 * and located at the same index in their respective vectors.
+	 * Returns true if the last non-zero entries of vector1 and vector2 are equal and located at the same index in their
+	 * respective vectors.
 	 */
 	public static boolean isEqualsInLastNonZero(final RationalVector vector1, final RationalVector vector2) {
 		final int k = vector1.lastPivot();
@@ -227,6 +226,62 @@ public class CongruenceUtil {
 	public static boolean containsMod(final Term term) {
 		final var checker = new SubtermPropertyChecker(x -> SmtUtils.isFunctionApplication(x, "mod"));
 		return checker.isSatisfiedBySomeSubterm(term);
+	}
+
+	/**
+	 * Performs the modulo operation on a Rational. Returns rational % mod.
+	 */
+	private static Rational modRational(final Rational rational, final BigInteger mod) {
+		// We bring the mod on the same denominator by multiplying it with
+		// rational.denominator
+		final BigInteger bigMod = rational.denominator().multiply(mod);
+		// Then we can simply calculate the mod of the numerators
+		final BigInteger numerator = rational.numerator().mod(bigMod);
+		final Rational result = Rational.valueOf(numerator, rational.denominator());
+		return result;
+	}
+
+	/**
+	 * Returns the vector representation of an EqulityRelation given a map of which variable should be mapped to which
+	 * index. Transforms equalities of the form "∑ a_i * x_i = c" into vectors of the form [-c, a_0, ..., a_n], where
+	 * x_i correspond to numerical (ints and reals) variables and a_i and c to constants.
+	 */
+	public static RationalVector getVector(final EqualityRelation equalityRelation,
+			final Map<Term, Integer> varToIndex) {
+		final int n = varToIndex.size() + 1;
+		final List<Rational> protoVector = new ArrayList<>(Collections.nCopies(n, Rational.ZERO));
+		final Rational result = equalityRelation.getResult();
+		protoVector.set(0, result);
+
+		final Map<Term, Rational> varToFactor = equalityRelation.getVarToFactor();
+		for (final Entry<Term, Rational> entry : varToFactor.entrySet()) {
+			final Term variable = entry.getKey();
+			final Rational factor = entry.getValue();
+			final int i = varToIndex.get(variable);
+			protoVector.set(i, factor);
+		}
+
+		return new RationalVector(protoVector);
+	}
+
+	/**
+	 * Returns the vector representation of a ModuloRelation given a map of which variable should be mapped to which
+	 * index. Transforms congruences of the form "∑ a_i * x_i ≡b c" into vectors of the form [-c/b, a_0/b, ..., a_n/b],
+	 * where x_i correspond to numerical (ints and reals) variables and a_i, b and c to constants.
+	 */
+	public static RationalVector getVector(final ModuloRelation moduloRelation, final Map<Term, Integer> varToIndex) {
+		final EqualityRelation equalityRelation = moduloRelation.getEqualityRelation();
+		final RationalVector equalityVector = getVector(equalityRelation, varToIndex);
+		final List<Rational> protoVector = equalityVector.asList();
+
+		final BigInteger mod = moduloRelation.getMod();
+
+		// Do mod on entries to make numbers smaller
+		final List<Rational> modProtoVector = protoVector.stream().map(rational -> modRational(rational, mod)).toList();
+		final RationalVector modVector = new RationalVector(modProtoVector);
+
+		// Divide every entry through mod
+		return modVector.divide(mod);
 	}
 
 }

@@ -80,10 +80,10 @@ public class CongruenceDomain extends StateBasedDomain<CongruenceState> {
 			final List<RationalVector> equalities = new ArrayList<>();
 			final List<RationalVector> congruences = new ArrayList<>();
 			for (final EqualityRelation equalityRelation : equalityRelations) {
-				equalities.add(equalityRelation.getVector(varToIndex));
+				equalities.add(CongruenceUtil.getVector(equalityRelation, varToIndex));
 			}
 			for (final ModuloRelation moduloRelation : moduloRelations) {
-				congruences.add(moduloRelation.getVector(varToIndex));
+				congruences.add(CongruenceUtil.getVector(moduloRelation, varToIndex));
 			}
 
 			final var vectorLength = varToIndex.size() + 1;

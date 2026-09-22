@@ -1,10 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
@@ -15,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
+// TODO: Docu
 public class EqualityRelation {
 
 	private final Map<Term, Rational> mVarToFactor;
@@ -25,7 +22,10 @@ public class EqualityRelation {
 		mResult = term.getConstant();
 	}
 
-	public static AffineTerm getAffineTerm(final PolynomialRelation polynomialRelation) {
+	/**
+	 * Extracts the affine term out of the polynomialRelation if possible, else returns null.
+	 */
+	private static AffineTerm getAffineTerm(final PolynomialRelation polynomialRelation) {
 		final AbstractGeneralizedAffineTerm<?> polynomialTerm = polynomialRelation.getPolynomialTerm();
 		if (!polynomialTerm.isAffine()) {
 			return null;
@@ -48,6 +48,17 @@ public class EqualityRelation {
 		return new EqualityRelation(affineTerm);
 	}
 
+	public Map<Term, Rational> getVarToFactor() {
+		return mVarToFactor;
+	}
+
+	public Rational getResult() {
+		return mResult;
+	}
+
+	/**
+	 * Returns the variables present in the equality relation.
+	 */
 	public Set<Term> getVars() {
 		return mVarToFactor.keySet();
 	}
@@ -75,27 +86,6 @@ public class EqualityRelation {
 		final StringBuilder out = new StringBuilder().append(sumString());
 		out.append(" = 0");
 		return out.toString();
-	}
-
-	// TODO: Move to Util
-	public List<Rational> getProtoVector(final Map<Term, Integer> varToIndex) {
-		final int n = varToIndex.size() + 1;
-		final List<Rational> list = new ArrayList<>(Collections.nCopies(n, Rational.ZERO));
-		list.set(0, mResult);
-
-		for (final Entry<Term, Rational> entry : mVarToFactor.entrySet()) {
-			final Term variable = entry.getKey();
-			final Rational factor = entry.getValue();
-			final int i = varToIndex.get(variable);
-			list.set(i, factor);
-		}
-		return list;
-	}
-
-	// TODO: Move to Util
-	public RationalVector getVector(final Map<Term, Integer> varToIndex) {
-		final List<Rational> protoVector = getProtoVector(varToIndex);
-		return new RationalVector(protoVector);
 	}
 
 }

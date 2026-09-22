@@ -1,8 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ModTerm;
@@ -18,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
+//TODO: Docu
 public class ModuloRelation {
 
 	private final EqualityRelation mEqualityRelation;
@@ -28,12 +27,18 @@ public class ModuloRelation {
 		mMod = finalMod;
 	}
 
+	/**
+	 * Returns the unsatisfiable modulo relation 1 ≡2 0.
+	 */
 	private static ModuloRelation getUnsatModuloRelation(final Script script) {
 		final AffineTerm term = AffineTerm.constructConstant(SmtSortUtils.getIntSort(script), BigInteger.ONE);
 		return new ModuloRelation(term, BigInteger.TWO);
 	}
 
-	public static BigInteger getConstantIntFromConstantTerm(final Term term) {
+	/**
+	 * Returns the constant of a constant term as a BigInteger if possible, else returns null.
+	 */
+	private static BigInteger getConstantIntFromConstantTerm(final Term term) {
 		if (!(term instanceof ConstantTerm)) {
 			return null;
 		}
@@ -44,11 +49,11 @@ public class ModuloRelation {
 		}
 
 		final Rational rational = SmtUtils.toRational(constantTerm);
-		// rationalMod will always have denuminator == 1, since we checked if its an int
+		// rational will always have denuminator == 1, since we checked if its an int
 		return rational.numerator();
 	}
 
-	public static ModuloRelation of(final Term lhs, final Term rhs, final RelationSymbol relationSymbol,
+	private static ModuloRelation of(final Term lhs, final Term rhs, final RelationSymbol relationSymbol,
 			final BigInteger modInt, final Script script) {
 		final var affineTermTransformer = new AffineTermTransformer(script);
 		final AffineTerm rhsAffine = (AffineTerm) affineTermTransformer.transform(rhs);
@@ -173,6 +178,17 @@ public class ModuloRelation {
 		return null;
 	}
 
+	public EqualityRelation getEqualityRelation() {
+		return mEqualityRelation;
+	}
+
+	public BigInteger getMod() {
+		return mMod;
+	}
+
+	/**
+	 * Returns the variables present in the modulo relation.
+	 */
 	public Set<Term> getVars() {
 		return mEqualityRelation.getVars();
 	}
@@ -184,26 +200,4 @@ public class ModuloRelation {
 		return out.toString();
 	}
 
-	private static Rational modRational(final Rational rational, final BigInteger mod) {
-		// We bring the mod on the same denominator by multiplying it with
-		// rational.denominator
-		final BigInteger bigMod = rational.denominator().multiply(mod);
-		// Then we can simply calculate the mod of the numerators
-		final BigInteger numerator = rational.numerator().mod(bigMod);
-		final Rational result = Rational.valueOf(numerator, rational.denominator());
-		return result;
-	}
-
-	// TODO: Move to Util
-	public RationalVector getVector(final Map<Term, Integer> varToIndex) {
-		final List<Rational> protoVector = mEqualityRelation.getProtoVector(varToIndex);
-
-		// Do mod on entries to make numbers smaller
-		final List<Rational> modProtoVector =
-				protoVector.stream().map(rational -> modRational(rational, mMod)).toList();
-		final RationalVector modVector = new RationalVector(modProtoVector);
-
-		// Divide every entry through mMod
-		return modVector.divide(mMod);
-	}
 }
