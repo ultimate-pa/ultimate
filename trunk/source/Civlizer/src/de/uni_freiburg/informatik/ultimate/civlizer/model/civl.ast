@@ -12,7 +12,7 @@ CivlDeclaration ::=
 	   */
 	   BoogieDeclaration}
 		decl : de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration
-	/**
+	/*
 	| {Datatype}
 		identifier   : String
 		constructors : DatatypeConstructor[]
@@ -36,7 +36,7 @@ CivlDeclaration ::=
         preserves         : de.uni_freiburg.informatik.ultimate.boogie.ast.Expression[]
         ;
 
-/**
+/*
 DatatypeConstructor ::=
 	identifier : String
 	inParams   : ParameterDeclaration[]
