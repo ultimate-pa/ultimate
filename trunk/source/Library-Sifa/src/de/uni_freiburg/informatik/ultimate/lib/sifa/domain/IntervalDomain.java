@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -129,7 +129,7 @@ public class IntervalDomain extends StateBasedDomain<NonrelationalState<Interval
 		private List<SolvedBinaryRelation> solveForAllSubjects(final Term[] conjuncts) {
 			final List<SolvedBinaryRelation> result = new ArrayList<>();
 			for (final Term term : conjuncts) {
-				final PolynomialRelation polyRel = PolynomialRelation.of(mScript, term);
+				final IPolynomialRelation polyRel = IPolynomialRelation.of(mScript, term);
 				if (polyRel == null) {
 					continue;
 				}

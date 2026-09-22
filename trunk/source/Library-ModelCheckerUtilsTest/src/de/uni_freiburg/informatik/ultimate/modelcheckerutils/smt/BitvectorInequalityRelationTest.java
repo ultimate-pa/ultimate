@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.BitvectorInequalityRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -237,7 +237,7 @@ public class BitvectorInequalityRelationTest {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
 		declare(funDecls);
 		final BitvectorInequalityRelation relation = BitvectorInequalityRelation.of(mScript, parse("(bvslt x y)"));
-		final PolynomialRelation result = relation.mul(mScript, Rational.MONE);
+		final IPolynomialRelation result = relation.mul(mScript, Rational.MONE);
 		final Term expected = parse("(bvslt (bvneg y) (bvneg x))");
 		Assert.assertNotEquals(LBool.SAT, SmtUtils.checkEquivalence(result.toTerm(mScript), expected, mScript));
 	}

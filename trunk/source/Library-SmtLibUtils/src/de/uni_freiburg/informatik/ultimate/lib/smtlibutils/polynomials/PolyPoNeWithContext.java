@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Junction;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -81,8 +81,8 @@ public class PolyPoNeWithContext extends PolyPoNe {
 
 	private boolean addContext(final Collection<Term> contextParams) {
 		for (final Term param : contextParams) {
-			final PolynomialRelation polyRel =
-					PolynomialRelation.of(mScript, param, TransformInequality.STRICT2NONSTRICT);
+			final IPolynomialRelation polyRel =
+					IPolynomialRelation.of(mScript, param, TransformInequality.STRICT2NONSTRICT);
 			if (polyRel != null) {
 				final boolean isInconsistent = mContext.addPolyRel(mScript, polyRel, true);
 				if (isInconsistent) {
@@ -99,7 +99,7 @@ public class PolyPoNeWithContext extends PolyPoNe {
 	}
 
 	@Override
-	protected final boolean addPolyRel(final Script script, final PolynomialRelation polyRel,
+	protected final boolean addPolyRel(final Script script, final IPolynomialRelation polyRel,
 			final boolean removeExpliedPolyRels) {
 		if (isInconsistent()) {
 			throw new AssertionError("must not add if already inconsistent");
@@ -107,7 +107,7 @@ public class PolyPoNeWithContext extends PolyPoNe {
 
 		final Check check = mContext.checkPolyRel(script, polyRel, false);
 		if (check == Check.MAYBE_USEFUL) {
-			final PolynomialRelation polyToAdd = tryToFuseWithContext(polyRel);
+			final IPolynomialRelation polyToAdd = tryToFuseWithContext(polyRel);
 			return super.addPolyRel(script, polyToAdd, removeExpliedPolyRels);
 		} else if (check == Check.REDUNDANT) {
 			return false;
@@ -119,15 +119,15 @@ public class PolyPoNeWithContext extends PolyPoNe {
 	}
 
 	/**
-	 * If we can fuse this {@link PolynomialRelation} with a {@link PolynomialRelation} from the context we return the
+	 * If we can fuse this {@link IPolynomialRelation} with a {@link IPolynomialRelation} from the context we return the
 	 * result of the fusion. Otherwise, we return the input.
 	 */
-	public PolynomialRelation tryToFuseWithContext(final PolynomialRelation polyRel) {
+	public IPolynomialRelation tryToFuseWithContext(final IPolynomialRelation polyRel) {
 		if (!polyRel.getRelationSymbol().isConvexInequality()) {
 			// we can only fuse inequalities
 			return polyRel;
 		}
-		final PolynomialRelation originalNonstrictInput;
+		final IPolynomialRelation originalNonstrictInput;
 		// For disjunctions, we work with negated polynomial relations,
 		// hence we have to negate again to get the original input.
 		if (mJunction == Junction.OR) {
@@ -141,22 +141,22 @@ public class PolyPoNeWithContext extends PolyPoNe {
 			originalNonstrictInput = polyRel;
 		}
 		// Since context is a conjunction we always have to use Junction.AND
-		final PolynomialRelation fusionPartner =
+		final IPolynomialRelation fusionPartner =
 				mContext.isFusibleWithExistingRelations(mScript, Junction.AND, originalNonstrictInput);
-		final PolynomialRelation result;
+		final IPolynomialRelation result;
 		if (fusionPartner == null) {
 			// no fusion possible
 			result = polyRel;
 		} else {
-			final PolynomialRelation fused;
+			final IPolynomialRelation fused;
 			if (mJunction == Junction.OR) {
 				// For disjunctions we work with negated relations, hence we store
 				// RelationSymbol.DISTINCT although the final result will contain
 				// RelationSymbol.EQ
-				fused = PolynomialRelation.of(originalNonstrictInput.getPolynomialTerm(), RelationSymbol.DISTINCT);
+				fused = IPolynomialRelation.of(originalNonstrictInput.getPolynomialTerm(), RelationSymbol.DISTINCT);
 			} else {
 				assert mJunction == Junction.AND;
-				fused = PolynomialRelation.of(originalNonstrictInput.getPolynomialTerm(), RelationSymbol.EQ);
+				fused = IPolynomialRelation.of(originalNonstrictInput.getPolynomialTerm(), RelationSymbol.EQ);
 			}
 			result = fused;
 		}

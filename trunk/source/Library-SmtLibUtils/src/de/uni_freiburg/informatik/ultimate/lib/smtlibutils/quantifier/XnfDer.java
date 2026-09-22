@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.UltimateNormalFormUti
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -144,7 +144,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 
 	private Term[] tryToEliminate_SbrBased(final int quantifier, final Term[] dualJuncts,
 			final Set<TermVariable> eliminatees) {
-		LinkedHashMap<Term, PolynomialRelation> term2relation = new LinkedHashMap<>();
+		LinkedHashMap<Term, IPolynomialRelation> term2relation = new LinkedHashMap<>();
 		for (final Term dualJunct : dualJuncts) {
 			term2relation.put(dualJunct, null);
 		}
@@ -167,7 +167,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 					it.remove();
 					continue;
 				}
-				final LinkedHashMap<Term, PolynomialRelation> withoutTv;
+				final LinkedHashMap<Term, IPolynomialRelation> withoutTv;
 
 				withoutTv = tryToEliminateOneVar(mScript, quantifier, term2relation, tv);
 				if (withoutTv != null) {
@@ -181,8 +181,8 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		return term2relation.keySet().toArray(new Term[term2relation.size()]);
 	}
 
-	private LinkedHashMap<Term, PolynomialRelation> tryToEliminateOneVar(final Script script, final int quantifier,
-			final LinkedHashMap<Term, PolynomialRelation> term2relation, final TermVariable tv) {
+	private LinkedHashMap<Term, IPolynomialRelation> tryToEliminateOneVar(final Script script, final int quantifier,
+			final LinkedHashMap<Term, IPolynomialRelation> term2relation, final TermVariable tv) {
 		// returns probably map in the future
 		final Pair<Term, SolvedBinaryRelation> solution =
 				tryToSolveWithoutAssumptionsAndUpdateEntries(script, quantifier, term2relation, tv);
@@ -194,8 +194,8 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	}
 
 	private Pair<Term, SolvedBinaryRelation> tryToSolveWithoutAssumptionsAndUpdateEntries(final Script script,
-			final int quantifier, final LinkedHashMap<Term, PolynomialRelation> term2relation, final TermVariable tv) {
-		for (final Entry<Term, PolynomialRelation> entry : term2relation.entrySet()) {
+			final int quantifier, final LinkedHashMap<Term, IPolynomialRelation> term2relation, final TermVariable tv) {
+		for (final Entry<Term, IPolynomialRelation> entry : term2relation.entrySet()) {
 			if (Arrays.asList(entry.getKey().getFreeVars()).contains(tv)) {
 				SolvedBinaryRelation sbr;
 				sbr = tryToSolveAndUpdateEntry(script, quantifier, tv, entry);
@@ -207,13 +207,13 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		return null;
 	}
 
-	private LinkedHashMap<Term, PolynomialRelation> replace(final Script script,
-			final LinkedHashMap<Term, PolynomialRelation> term2relation, final SolvedBinaryRelation sbr,
+	private LinkedHashMap<Term, IPolynomialRelation> replace(final Script script,
+			final LinkedHashMap<Term, IPolynomialRelation> term2relation, final SolvedBinaryRelation sbr,
 			final Term termOfSbr) {
 		final Map<Term, Term> substitutionMapping =
 				Collections.singletonMap(sbr.getLeftHandSide(), sbr.getRightHandSide());
-		final LinkedHashMap<Term, PolynomialRelation> result = new LinkedHashMap<>();
-		for (final Entry<Term, PolynomialRelation> entry : term2relation.entrySet()) {
+		final LinkedHashMap<Term, IPolynomialRelation> result = new LinkedHashMap<>();
+		for (final Entry<Term, IPolynomialRelation> entry : term2relation.entrySet()) {
 			if (entry.getKey() == termOfSbr) {
 				// skip this entry, it would become equivalent to the neutral
 				// element of the logical connective
@@ -231,7 +231,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	}
 
 	private SolvedBinaryRelation tryToSolveAndUpdateEntry(final Script script, final int quantifier,
-			final TermVariable tv, final Entry<Term, PolynomialRelation> entry) {
+			final TermVariable tv, final Entry<Term, IPolynomialRelation> entry) {
 		final SolvedBinaryRelation sbr;
 		if (entry.getValue() != null) {
 			// cached AffineRelation available
@@ -253,7 +253,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 				if (sber != null) {
 					sbr = sber;
 				} else {
-					final PolynomialRelation polyRel = PolynomialRelation.of(script, entry.getKey());
+					final IPolynomialRelation polyRel = IPolynomialRelation.of(script, entry.getKey());
 					if (polyRel == null) {
 						sbr = null;
 					} else {
@@ -330,7 +330,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	private Term substituteAndNormalize(final Map<Term, Term> substitutionMapping, final Term term) {
 		Term result = Substitution.apply(mMgdScript, substitutionMapping, term);
 		if (term != result) {
-			final PolynomialRelation polyRel = PolynomialRelation.of(mScript, result);
+			final IPolynomialRelation polyRel = IPolynomialRelation.of(mScript, result);
 			if (polyRel != null) {
 				result = polyRel.toTerm(mScript);
 			}
