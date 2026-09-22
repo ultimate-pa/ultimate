@@ -32,9 +32,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieSubstitution;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
@@ -52,10 +50,10 @@ public class WeakestPreconditionOfCall {
 		// static class cannot be instantiated
 	}
 
-	public static Expression substitutePrecondition(final Expression precondition, final CallStatement call,
-			final Procedure calledProcedure) {
+	public static Expression substitutePrecondition(final Expression precondition, final VarList[] inParams,
+			final Expression[] arguments, final Statement call) {
 		final Expression preconditionWithoutOld = new OldExpressionRemover().processExpression(precondition);
-		final var substitutionMap = computeSubstitutionMap(calledProcedure.getInParams(), call.getArguments(), call);
+		final var substitutionMap = computeSubstitutionMap(inParams, arguments, call);
 		final var substitution = new BoogieSubstitution(substitutionMap);
 		return substitution.processExpression(preconditionWithoutOld);
 	}
