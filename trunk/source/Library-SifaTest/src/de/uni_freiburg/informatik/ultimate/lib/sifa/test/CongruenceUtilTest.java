@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2026 Max Lehr
+ * Copyright (C) 2026 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Library-Sifa plug-in.
+ *
+ * The ULTIMATE Library-Sifa plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Library-Sifa plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Library-Sifa plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Library-Sifa plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Library-Sifa plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.test;
 
 import java.math.BigInteger;
@@ -63,8 +89,8 @@ public class CongruenceUtilTest {
 	public void testGetRowsFromMatrix() {
 		final var matrix1 = RationalMatrix.fromIntList(List.of(1, 2, 3, 4, 5, 6), 2, 3);
 		final var matrix1Rows = matrix1.getRowVectors();
-		final var rows1 = List.of(RationalVector.fromIntList(List.of(1, 2, 3)),
-				RationalVector.fromIntList(List.of(4, 5, 6)));
+		final var rows1 =
+				List.of(RationalVector.fromIntList(List.of(1, 2, 3)), RationalVector.fromIntList(List.of(4, 5, 6)));
 		Assert.assertTrue(matrix1Rows.get(0).equals(rows1.get(0)));
 		Assert.assertTrue(matrix1Rows.get(1).equals(rows1.get(1)));
 
@@ -84,8 +110,8 @@ public class CongruenceUtilTest {
 	@Test
 	public void testGetMatrixFromRows() {
 		final var matrix1 = RationalMatrix.fromIntList(List.of(1, 2, 3, 4, 5, 6), 2, 3);
-		final var rows2 = List.of(RationalVector.fromIntList(List.of(1, 2, 3)),
-				RationalVector.fromIntList(List.of(4, 5, 6)));
+		final var rows2 =
+				List.of(RationalVector.fromIntList(List.of(1, 2, 3)), RationalVector.fromIntList(List.of(4, 5, 6)));
 		final var matrix2 = RationalMatrix.fromRowVectors(rows2, 3);
 		Assert.assertTrue(matrix1.equals(matrix2));
 
@@ -200,8 +226,8 @@ public class CongruenceUtilTest {
 		for (long x = -range; x <= range; x++) {
 			for (long y = -range; y <= range; y++) {
 				final long lcm = CongruenceUtil.lcm(BigInteger.valueOf(x), BigInteger.valueOf(y)).longValueExact();
-				final long gcd = CongruenceUtil.gcdext(BigInteger.valueOf(x), BigInteger.valueOf(y))[0]
-						.longValueExact();
+				final long gcd =
+						CongruenceUtil.gcdext(BigInteger.valueOf(x), BigInteger.valueOf(y))[0].longValueExact();
 				final long v1 = Math.abs(gcd * lcm);
 				final long v2 = Math.abs(x * y);
 
@@ -218,8 +244,8 @@ public class CongruenceUtilTest {
 		final List<Rational> list2 = List.of(Rational.valueOf(2, 1), Rational.valueOf(1, 4), Rational.valueOf(0, 1));
 
 		// 0, -13/12, -1
-		final List<Rational> list3 = List.of(Rational.valueOf(0, 1), Rational.valueOf(-13, 12),
-				Rational.valueOf(-1, 1));
+		final List<Rational> list3 =
+				List.of(Rational.valueOf(0, 1), Rational.valueOf(-13, 12), Rational.valueOf(-1, 1));
 		// 13/8, 0, -3/16
 		final List<Rational> list4 = List.of(Rational.valueOf(13, 8), Rational.valueOf(0, 1), Rational.valueOf(-3, 16));
 
@@ -247,15 +273,15 @@ public class CongruenceUtilTest {
 		final List<Rational> list2 = List.of(Rational.valueOf(2, 1), Rational.valueOf(1, 4), Rational.valueOf(0, 1));
 
 		// 0, -13/12, -12/12
-		final List<Rational> list3 = List.of(Rational.valueOf(0, 1), Rational.valueOf(-13, 12),
-				Rational.valueOf(-12, 12));
+		final List<Rational> list3 =
+				List.of(Rational.valueOf(0, 1), Rational.valueOf(-13, 12), Rational.valueOf(-12, 12));
 
 		// 60/12, 1/12, -6/12
-		final List<Rational> list4 = List.of(Rational.valueOf(60, 12), Rational.valueOf(1, 12),
-				Rational.valueOf(-6, 12));
+		final List<Rational> list4 =
+				List.of(Rational.valueOf(60, 12), Rational.valueOf(1, 12), Rational.valueOf(-6, 12));
 		// 156/12, 0, -18/12
-		final List<Rational> list5 = List.of(Rational.valueOf(156, 12), Rational.valueOf(0, 1),
-				Rational.valueOf(-18, 12));
+		final List<Rational> list5 =
+				List.of(Rational.valueOf(156, 12), Rational.valueOf(0, 1), Rational.valueOf(-18, 12));
 
 		final RationalVector v1 = new RationalVector(list1);
 		final RationalVector v2 = new RationalVector(list2);
