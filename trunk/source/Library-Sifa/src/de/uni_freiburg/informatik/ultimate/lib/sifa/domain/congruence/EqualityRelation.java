@@ -11,7 +11,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-// TODO: Docu
+/**
+ * Represents a term of the form "∑ a_i * x_i = c" as a mapping from variables x_i to their respective factors a_i and
+ * the constant c as a {@link Rational}.
+ *
+ * @author Max Lehr
+ *
+ */
 public class EqualityRelation {
 
 	private final Map<Term, Rational> mVarToFactor;

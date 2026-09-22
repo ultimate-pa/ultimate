@@ -16,7 +16,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-//TODO: Docu
+/**
+ * Represents a term of the form "∑ a_i * x_i ≡b c" as the {@link EqualityRelation} for "∑ a_i * x_i = c" and the
+ * constant b as a {@link BigInteger}.
+ *
+ * @author Max Lehr
+ *
+ */
 public class ModuloRelation {
 
 	private final EqualityRelation mEqualityRelation;
@@ -36,7 +42,7 @@ public class ModuloRelation {
 	}
 
 	/**
-	 * Returns the constant of a constant term as a BigInteger if possible, else returns null.
+	 * Returns the constant of a constant term as a {@link BigInteger} if possible, else returns null.
 	 */
 	private static BigInteger getConstantIntFromConstantTerm(final Term term) {
 		if (!(term instanceof ConstantTerm)) {
