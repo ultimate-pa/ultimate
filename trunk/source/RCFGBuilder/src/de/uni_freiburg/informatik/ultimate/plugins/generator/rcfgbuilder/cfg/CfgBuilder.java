@@ -98,7 +98,7 @@ import de.uni_freiburg.informatik.ultimate.lib.icfg.Return;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.Summary;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.util.TransFormulaAdder;
-import de.uni_freiburg.informatik.ultimate.lib.icfg.util.WeakestPrecondition;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.util.WeakestPreconditionOfCall;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
@@ -1410,7 +1410,7 @@ public class CfgBuilder {
 						proc = mBoogieDeclarations.getProcSpecification().get(callee);
 					}
 					final Expression violatedRequires =
-							getNegation(new WeakestPrecondition(spec.getFormula(), st, proc).getResult());
+							getNegation(WeakestPreconditionOfCall.substitutePrecondition(spec.getFormula(), st, proc));
 					AssumeStatement assumeSt;
 					assumeSt = new AssumeStatement(st.getLocation(), violatedRequires);
 					final Statement st1 = assumeSt;
