@@ -18,12 +18,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Class containing various utility functions used in {@link CongruenceDomain}.
  *
  * @author Max Lehr
+ *
  */
 public class CongruenceUtil {
 
 	/**
 	 * Eliminates the field in minuendVector by subtracting a multiple of the subtrahendVector and returns the updated
-	 * minuendVector
+	 * minuendVector.
 	 */
 	public static RationalVector gaussEliminateField(final RationalVector minuendVector,
 			final RationalVector subtrahendVector, final int pivot) {
@@ -37,7 +38,7 @@ public class CongruenceUtil {
 
 	/**
 	 * Eliminates the field in minuendVector by subtracting a multiple of the subtrahendVector in a way that conserves
-	 * modulo relations and returns the updated minuendVector and subtrahendVector
+	 * modulo relations and returns the updated minuendVector and subtrahendVector.
 	 */
 	public static Pair<RationalVector, RationalVector> hermitEliminateField(final RationalVector minuendVector,
 			final RationalVector subtrahendVector, final int pivot) {
@@ -229,7 +230,7 @@ public class CongruenceUtil {
 	}
 
 	/**
-	 * Performs the modulo operation on a Rational. Returns rational % mod.
+	 * Performs the modulo operation on a {@link Rational}. Returns rational % mod.
 	 */
 	private static Rational modRational(final Rational rational, final BigInteger mod) {
 		// We bring the mod on the same denominator by multiplying it with
@@ -242,9 +243,9 @@ public class CongruenceUtil {
 	}
 
 	/**
-	 * Returns the vector representation of an EqulityRelation given a map of which variable should be mapped to which
-	 * index. Transforms equalities of the form "∑ a_i * x_i = c" into vectors of the form [-c, a_0, ..., a_n], where
-	 * x_i correspond to numerical (ints and reals) variables and a_i and c to constants.
+	 * Returns the vector representation of an {@link EqualityRelation} given a map of which variable should be mapped
+	 * to which index. Transforms equalities of the form "∑ a_i * x_i = c" into vectors of the form [-c, a_0, ..., a_n],
+	 * where x_i correspond to numerical (ints and reals) variables and a_i and c to constants.
 	 */
 	public static RationalVector getVector(final EqualityRelation equalityRelation,
 			final Map<Term, Integer> varToIndex) {
@@ -265,9 +266,9 @@ public class CongruenceUtil {
 	}
 
 	/**
-	 * Returns the vector representation of a ModuloRelation given a map of which variable should be mapped to which
-	 * index. Transforms congruences of the form "∑ a_i * x_i ≡b c" into vectors of the form [-c/b, a_0/b, ..., a_n/b],
-	 * where x_i correspond to numerical (ints and reals) variables and a_i, b and c to constants.
+	 * Returns the vector representation of a {@link ModuloRelation} given a map of which variable should be mapped to
+	 * which index. Transforms congruences of the form "∑ a_i * x_i ≡b c" into vectors of the form [-c/b, a_0/b, ...,
+	 * a_n/b], where x_i correspond to numerical (ints and reals) variables and a_i, b and c to constants.
 	 */
 	public static RationalVector getVector(final ModuloRelation moduloRelation, final Map<Term, Integer> varToIndex) {
 		final EqualityRelation equalityRelation = moduloRelation.getEqualityRelation();

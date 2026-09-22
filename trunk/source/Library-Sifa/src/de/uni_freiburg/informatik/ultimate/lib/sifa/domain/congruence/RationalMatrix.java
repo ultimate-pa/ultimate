@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -13,13 +14,13 @@ import org.apache.commons.math3.linear.SparseFieldMatrix;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
- * Class that represents a matrix with entries of type Rational. This is
- * archived by wrapping FieldMatrix<BigFraction>. BigFraction like Rational
- * utilizes BigInteger for its denominator and numerator so no precision is
- * lost. Further the sparse version SparseFieldMatrix<BigFraction> is used, so
- * only the non-zero entries are stored.
+ * Class that represents a matrix with entries of type {@link Rational}. This is archived by wrapping
+ * {@link FieldMatrix}<{@link BigFraction}>. {@link BigFraction} like {@link Rational} utilizes {@link BigInteger} for
+ * its denominator and numerator so no precision is lost. Further the sparse version
+ * {@link SparseFieldMatrix}<{@link BigFraction}> is used, so only the non-zero entries are stored.
  *
  * @author Max Lehr
+ *
  */
 public class RationalMatrix {
 
@@ -54,8 +55,8 @@ public class RationalMatrix {
 			return new RationalMatrix();
 		}
 
-		final SparseFieldMatrix<BigFraction> matrix = new SparseFieldMatrix<>(BigFractionField.getInstance(),
-				rowVectors.size(), columnCount);
+		final SparseFieldMatrix<BigFraction> matrix =
+				new SparseFieldMatrix<>(BigFractionField.getInstance(), rowVectors.size(), columnCount);
 
 		for (int i = 0; i < rowVectors.size(); i++) {
 			matrix.setRowVector(i, rowVectors.get(i).getVector());
@@ -72,8 +73,8 @@ public class RationalMatrix {
 			return new RationalMatrix();
 		}
 
-		final SparseFieldMatrix<BigFraction> matrix = new SparseFieldMatrix<>(BigFractionField.getInstance(), rowCount,
-				columnVectors.size());
+		final SparseFieldMatrix<BigFraction> matrix =
+				new SparseFieldMatrix<>(BigFractionField.getInstance(), rowCount, columnVectors.size());
 
 		for (int i = 0; i < columnVectors.size(); i++) {
 			matrix.setColumnVector(i, columnVectors.get(i).getVector());

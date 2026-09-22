@@ -13,25 +13,24 @@ import org.apache.commons.math3.linear.SparseFieldVector;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
- * Class that represents a vector with entries of type Rational. This is
- * archived by wrapping FieldVector<BigFraction>. BigFraction like Rational
- * utilizes BigInteger for its denominator and numerator so no precision is
- * lost. Further the sparse version SparseFieldVector<BigFraction> is used, so
- * only the non-zero entries are stored.
+ * Class that represents a vector with entries of type {@link Rational}. This is archived by wrapping
+ * {@link FieldVector}<{@link BigFraction}>. {@link BigFraction} like {@link Rational} utilizes {@link BigInteger} for
+ * its denominator and numerator so no precision is lost. Further the sparse version
+ * {@link SparseFieldVector}<{@link BigFraction}> is used, so only the non-zero entries are stored.
  *
  * @author Max Lehr
  *
  */
 public class RationalVector {
 	/**
-	 * Converts a Rational to a BigFraction.
+	 * Converts a {@link Rational} to a {@link BigFraction}.
 	 */
 	public static BigFraction getBigFractionFromRational(final Rational rational) {
 		return new BigFraction(rational.numerator(), rational.denominator());
 	}
 
 	/**
-	 * Converts a BigFraction to a Rational.
+	 * Converts a {@link BigFraction} to a {@link Rational}.
 	 */
 	public static Rational getRationalFromBigFraction(final BigFraction bigFraction) {
 		return Rational.valueOf(bigFraction.getNumerator(), bigFraction.getDenominator());
@@ -55,8 +54,8 @@ public class RationalVector {
 	}
 
 	public RationalVector(final List<Rational> rationalList) {
-		final FieldVector<BigFraction> vector = new SparseFieldVector<>(BigFractionField.getInstance(),
-				rationalList.size());
+		final FieldVector<BigFraction> vector =
+				new SparseFieldVector<>(BigFractionField.getInstance(), rationalList.size());
 		for (int i = 0; i < rationalList.size(); i++) {
 			vector.setEntry(i, getBigFractionFromRational(rationalList.get(i)));
 		}

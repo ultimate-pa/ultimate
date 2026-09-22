@@ -239,7 +239,7 @@ public class GeneratorRepresentation {
 	}
 
 	/**
-	 * Returns an equivalent ConstraintRepresentation.
+	 * Returns an equivalent {@link ConstraintRepresentation}.
 	 */
 	public ConstraintRepresentation computeConstraintRepresentation() {
 		minimize();

@@ -104,7 +104,7 @@ public class ConstraintRepresentation {
 	}
 
 	/**
-	 * Returns an empty instance of a ConstraintRepresentation, so without any equalities or constraints.
+	 * Returns an empty instance of a {@link ConstraintRepresentation}, so without any equalities or constraints.
 	 */
 	public static ConstraintRepresentation getEmpty(final int vectorLength) {
 		return new ConstraintRepresentation(List.of(), List.of(), vectorLength, true, true);
@@ -121,8 +121,8 @@ public class ConstraintRepresentation {
 
 	/**
 	 * Reorders the entries of the equality and congruence vectors according to the permutation given by reorderMap and
-	 * extends them to have size resultColumnCount. Returns a new ConstraintRepresentation containing the reordered
-	 * equalities and constraints.
+	 * extends them to have size resultColumnCount. Returns a new {@link ConstraintRepresentation} containing the
+	 * reordered equalities and constraints.
 	 */
 	public ConstraintRepresentation getReorderedForm(final Map<Integer, Integer> reorderMap,
 			final int resultColumnCount) {
@@ -337,7 +337,7 @@ public class ConstraintRepresentation {
 	}
 
 	/**
-	 * Returns an equivalent GeneratorRepresentation.
+	 * Returns an equivalent {@link GeneratorRepresentation}.
 	 */
 	public GeneratorRepresentation computeGeneratorRepresentation() {
 		minimize();
