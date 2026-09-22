@@ -11,11 +11,11 @@ import java.util.stream.IntStream;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-//TODO: Docu
 /**
- * Constraint based representation of equalities and congruences. Stores equalities of form "∑ a_i * x_i = c" as vectors
- * [-c, a_0, ..., a_n] and stores congruences of form "∑ a_i * x_i ≡b c" as vectors [-c/b, a_0/b, ..., a_n/b], where x_i
- * correspond to numerical (ints and reals) variables and a_i, b and c to constants.
+ * Representation that uses base vectors called lines and parameters to model all valid variable assignments. Every
+ * vector [x_0, ..., x_n] such that [1, x_0, ..., x_n] = ∑ λ_i * l_i + ∑ μ_j * p_j, for λ_i ∈ ℝ, μ_j ∈ ℤ, l_i being the
+ * line vectors and p_j being the parameter vectors, represents a valid solution for constraints of the form "∑ a_i *
+ * x_i = c" and "∑ a_i * x_i ≡b c". The leading 1 is needed as the first vector entry models the constant factors.
  *
  * @author Max Lehr
  *
