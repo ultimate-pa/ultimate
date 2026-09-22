@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  * neither reachable from a test in a different package.
  * <p>
  * Most tests below are exercised directly via {@link PolyPoNe#addPolyRel} rather than via {@link PolyPoNeUtils},
- * since {@link PolynomialRelation#of} (the shared factory used by ~195 other, unaudited references across the
+ * since {@link IPolynomialRelation#of} (the shared factory used by ~195 other, unaudited references across the
  * codebase) still never returns a {@link BitvectorInequalityRelation} - see the "public entry point" tests near
  * the end of this file for the one place PolyPoNe itself is actually wired live (its own {@code add(...)}, via
  * {@link BitvectorInequalityRelation#of}), which those tests exercise through {@link PolyPoNeUtils}.
@@ -172,7 +172,7 @@ public class PolyPoNeTwoSidedTest {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
 		declare(funDecls);
 		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
-		polyPoNe.addPolyRel(mScript, PolynomialRelation.of(mScript, parse("(= x (_ bv5 8))")), true);
+		polyPoNe.addPolyRel(mScript, IPolynomialRelation.of(mScript, parse("(= x (_ bv5 8))")), true);
 		final boolean inconsistent = polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv9 8))"), true);
 		Assert.assertFalse(inconsistent);
 		// toTerm() rebuilds "=" from the internal representation, which canonically orders it constant-first -
@@ -186,7 +186,7 @@ public class PolyPoNeTwoSidedTest {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
 		declare(funDecls);
 		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
-		polyPoNe.addPolyRel(mScript, PolynomialRelation.of(mScript, parse("(= x (_ bv42 8))")), true);
+		polyPoNe.addPolyRel(mScript, IPolynomialRelation.of(mScript, parse("(= x (_ bv42 8))")), true);
 		final boolean inconsistent = polyPoNe.addPolyRel(mScript, twoSided("(bvslt x (_ bv7 8))"), true);
 		Assert.assertTrue(inconsistent);
 	}
@@ -201,7 +201,7 @@ public class PolyPoNeTwoSidedTest {
 		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
 		polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv9 8))"), true);
 		final boolean inconsistent =
-				polyPoNe.addPolyRel(mScript, PolynomialRelation.of(mScript, parse("(= x (_ bv5 8))")), true);
+				polyPoNe.addPolyRel(mScript, IPolynomialRelation.of(mScript, parse("(= x (_ bv5 8))")), true);
 		Assert.assertFalse(inconsistent);
 		// toTerm() rebuilds "=" from the internal representation, which canonically orders it constant-first
 		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(= (_ bv5 8) x)")));
@@ -216,7 +216,7 @@ public class PolyPoNeTwoSidedTest {
 		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
 		polyPoNe.addPolyRel(mScript, twoSided("(bvslt x (_ bv7 8))"), true);
 		final boolean inconsistent =
-				polyPoNe.addPolyRel(mScript, PolynomialRelation.of(mScript, parse("(= x (_ bv42 8))")), true);
+				polyPoNe.addPolyRel(mScript, IPolynomialRelation.of(mScript, parse("(= x (_ bv42 8))")), true);
 		Assert.assertTrue(inconsistent);
 	}
 

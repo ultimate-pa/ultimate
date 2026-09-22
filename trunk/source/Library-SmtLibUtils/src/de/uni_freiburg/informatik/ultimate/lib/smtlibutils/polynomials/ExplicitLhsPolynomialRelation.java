@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Relati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.XnfTir;
 import de.uni_freiburg.informatik.ultimate.logic.INonSolverScript;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -110,7 +110,7 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 	}
 
 	public static ExplicitLhsPolynomialRelation moveMonomialToLhs(final Script script, final Term subject,
-			final PolynomialRelation polyRel) {
+			final IPolynomialRelation polyRel) {
 
 		final Monomial monomialOfSubject = polyRel.getPolynomialTerm().getExclusiveMonomialOfSubject(subject);
 		if (monomialOfSubject == null) {
@@ -685,7 +685,7 @@ public class ExplicitLhsPolynomialRelation implements IBinaryRelation, ITermProv
 	 * <li>the sort is Int and the lhs coefficient is positive and there is no equivalent
 	 * {@link ExplicitLhsPolynomialRelation} that has a smaller lhs coefficient but the same monomials (i.e., it is not
 	 * allowed to obtain the smaller lhs coefficient by a division that introduces a div term on the rhs). TODO 20230219
-	 * Matthias: Revise this documentation. Since the {@link PolynomialRelation} divides by the GCD the work that is
+	 * Matthias: Revise this documentation. Since the {@link IPolynomialRelation} divides by the GCD the work that is
 	 * done here can be explained more precisely.
 	 */
 	public ExplicitLhsPolynomialRelation makeTight() {

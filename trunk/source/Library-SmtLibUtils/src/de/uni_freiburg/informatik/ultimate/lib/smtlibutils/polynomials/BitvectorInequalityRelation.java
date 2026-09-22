@@ -42,14 +42,14 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 
 /**
- * {@link PolynomialRelation} implementation for bitvector inequalities. Keeps the left-hand side ({@link #mLhs}) and
+ * {@link IPolynomialRelation} implementation for bitvector inequalities. Keeps the left-hand side ({@link #mLhs}) and
  * right-hand side ({@link #mRhs}) as two separate polynomial terms, never combined via subtraction - reducing to a
- * single term compared against zero (the way {@link SingleTermPolynomialRelation} does it) is unsound for bitvector
+ * single term compared against zero (the way {@link PolynomialRelation} does it) is unsound for bitvector
  * inequalities under two's-complement wraparound.
  * <p>
  * TODO: this class - and {@link PolyPoNe}'s handling of it, scoped so far to the "bare variable vs. bare constant"
- * shape (see {@link #isBareVariableVsBareConstant()}) - is not yet reachable from {@link PolynomialRelation#of}
- * (those factory methods still always build a {@link SingleTermPolynomialRelation} and still return {@code null}
+ * shape (see {@link #isBareVariableVsBareConstant()}) - is not yet reachable from {@link IPolynomialRelation#of}
+ * (those factory methods still always build a {@link PolynomialRelation} and still return {@code null}
  * for bitvector inequalities, exactly like before this class existed), so nothing currently depends on any of the
  * bodies below - they are safe to fill in incrementally.
  * <p>
@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
  *
  * @author TODO add your name(s) here
  */
-public class BitvectorInequalityRelation implements PolynomialRelation {
+public class BitvectorInequalityRelation implements IPolynomialRelation {
 
 	private final RelationSymbol mRelationSymbol;
 	private final AbstractGeneralizedAffineTerm<?> mLhs;
@@ -100,7 +100,7 @@ public class BitvectorInequalityRelation implements PolynomialRelation {
 	/**
 	 * Constructs a canonicalized {@link BitvectorInequalityRelation} for a bitvector inequality {@code term}, or
 	 * {@code null} if {@code term} is not a binary relation, isn't a bitvector inequality (e.g. an equality, or an
-	 * Int/Real relation - this factory is not for those; equalities stay on {@link SingleTermPolynomialRelation},
+	 * Int/Real relation - this factory is not for those; equalities stay on {@link PolynomialRelation},
 	 * which is already sound for bitvector equality), or one of its sides could not be converted to a polynomial
 	 * term. Null-safe on purpose - callers like {@link PolyPoNe} need to safely "try this, and if it doesn't apply,
 	 * move on to something else" for an arbitrary atom, rather than assert a precondition only some callers could
@@ -382,7 +382,7 @@ public class BitvectorInequalityRelation implements PolynomialRelation {
 	 * </ul>
 	 */
 	@Override
-	public PolynomialRelation mul(final Script script, final Rational r) {
+	public IPolynomialRelation mul(final Script script, final Rational r) {
 		if (r.equals(Rational.ONE)) {
 			return this; // no-op
 		}
@@ -404,7 +404,7 @@ public class BitvectorInequalityRelation implements PolynomialRelation {
 
 	/**
 	 * This class is specifically for inequalities (bvult/bvule/bvslt/bvsle after canonicalization) - equality
-	 * already stays on {@link SingleTermPolynomialRelation}, since equality IS safe to reduce to "one term vs zero"
+	 * already stays on {@link PolynomialRelation}, since equality IS safe to reduce to "one term vs zero"
 	 * even for bitvectors. So there is never a simple equality to report here.
 	 */
 	@Override

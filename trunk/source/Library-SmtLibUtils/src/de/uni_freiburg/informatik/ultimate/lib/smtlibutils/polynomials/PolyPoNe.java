@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Junction;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm.ComparisonResult;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -52,15 +52,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * Internal data structure that we use to construct simplified conjunctions and disjunction. We distinguish three kinds
  * of parameters of the disjunction/conjunction.
- * <li>polynomial parameter: params that can be converted into a {@link PolynomialRelation}
- * <li>negative parameters: params that cannot be converted into a {@link PolynomialRelation} and are negated
+ * <li>polynomial parameter: params that can be converted into a {@link IPolynomialRelation}
+ * <li>negative parameters: params that cannot be converted into a {@link IPolynomialRelation} and are negated
  * <li>negative parameters: all other params.
  *
  * Based on a pairwise comparison of params, we decide whether a parameter is redundant and can be omitted or whether
  * the result for two parameters is already the absorbing element of the operation.
  *
- * For disjunctions we store negated versions of the {@link PolynomialRelation}s, apply the rules for conjunctions, and
- * negate all {@link PolynomialRelation} before computing the result.
+ * For disjunctions we store negated versions of the {@link IPolynomialRelation}s, apply the rules for conjunctions, and
+ * negate all {@link IPolynomialRelation} before computing the result.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -74,7 +74,7 @@ public class PolyPoNe {
 	protected final Junction mJunction;
 	private final Set<Term> mPositive = new HashSet<>();
 	private final Set<Term> mNegative = new HashSet<>();
-	private final HashRelation<Map<?, Rational>, PolynomialRelation> mPolyRels = new HashRelation<>();
+	private final HashRelation<Map<?, Rational>, IPolynomialRelation> mPolyRels = new HashRelation<>();
 	/**
 	 * Bitvector-inequality analogue of {@link #mPolyRels}, scoped to relations of the shape "bare variable vs. bare
 	 * constant" (e.g. {@code x <=u 5}) - keyed directly on the variable {@link Term} since there is no single
@@ -103,11 +103,11 @@ public class PolyPoNe {
 			// TODO 20201123 Matthias: For bitvectors distinct and equality are polynomial,
 			// the other inequalities not, hence distinct and equality should also be added
 			// as nonPoly. Add another data structure for binary relations
-			PolynomialRelation polyPolyRel;
+			IPolynomialRelation polyPolyRel;
 			if (negate) {
-				polyPolyRel = PolynomialRelation.of(mScript, param, TransformInequality.NONSTRICT2STRICT);
+				polyPolyRel = IPolynomialRelation.of(mScript, param, TransformInequality.NONSTRICT2STRICT);
 			} else {
-				polyPolyRel = PolynomialRelation.of(mScript, param, TransformInequality.STRICT2NONSTRICT);
+				polyPolyRel = IPolynomialRelation.of(mScript, param, TransformInequality.STRICT2NONSTRICT);
 			}
 			if (polyPolyRel == null) {
 				// INTERIM STEP: the shared factory above still never returns a BitvectorInequalityRelation (that
@@ -118,7 +118,7 @@ public class PolyPoNe {
 				polyPolyRel = BitvectorInequalityRelation.of(mScript, param);
 			}
 			if (polyPolyRel != null) {
-				final PolynomialRelation addedRel = negate ? polyPolyRel.negate() : polyPolyRel;
+				final IPolynomialRelation addedRel = negate ? polyPolyRel.negate() : polyPolyRel;
 				final boolean isInconsistent = addPolyRel(mScript, addedRel, true);
 				if (isInconsistent) {
 					mInconsistent = true;
@@ -145,14 +145,14 @@ public class PolyPoNe {
 		return or();
 	}
 
-	protected final Check checkPolyRel(final Script script, final PolynomialRelation newPolyRel,
+	protected final Check checkPolyRel(final Script script, final IPolynomialRelation newPolyRel,
 			final boolean removeExpliedPolyRels) {
 		final Check res1 = compareToExistingRepresentations(newPolyRel, removeExpliedPolyRels);
 		if (res1 == Check.INCONSISTENT || res1 == Check.REDUNDANT) {
 			return res1;
 		}
 		assert res1 == null;
-		final PolynomialRelation alternativeRepresentation = newPolyRel.mul(mScript, Rational.MONE);
+		final IPolynomialRelation alternativeRepresentation = newPolyRel.mul(mScript, Rational.MONE);
 		final Check res2 = compareToExistingRepresentations(alternativeRepresentation, removeExpliedPolyRels);
 		if (res2 == Check.INCONSISTENT || res2 == Check.REDUNDANT) {
 			return res2;
@@ -161,12 +161,12 @@ public class PolyPoNe {
 		return Check.MAYBE_USEFUL;
 	}
 
-	private Check compareToExistingRepresentations(final PolynomialRelation newPolyRel,
+	private Check compareToExistingRepresentations(final IPolynomialRelation newPolyRel,
 			final boolean removeExpliedPolyRels) {
-		final Set<PolynomialRelation> existingPolyRels =
+		final Set<IPolynomialRelation> existingPolyRels =
 				mPolyRels.getImage(newPolyRel.getPolynomialTerm().getAbstractVariable2Coefficient());
-		final List<PolynomialRelation> existingThatExplyNew = new ArrayList<>();
-		for (final PolynomialRelation existingPolyRel : existingPolyRels) {
+		final List<IPolynomialRelation> existingThatExplyNew = new ArrayList<>();
+		for (final IPolynomialRelation existingPolyRel : existingPolyRels) {
 			final ComparisonResult comp =
 					AbstractGeneralizedAffineTerm.compareRepresentation(existingPolyRel, newPolyRel);
 			if (comp != null) {
@@ -189,7 +189,7 @@ public class PolyPoNe {
 		if (removeExpliedPolyRels) {
 			// remove all existing relations that exply the new relation (i.e., all that are
 			// implied by the new relation)
-			for (final PolynomialRelation existing : existingThatExplyNew) {
+			for (final IPolynomialRelation existing : existingThatExplyNew) {
 				final boolean modified =
 						mPolyRels.removePair(existing.getPolynomialTerm().getAbstractVariable2Coefficient(), existing);
 				assert modified : "nothing removed";
@@ -198,25 +198,25 @@ public class PolyPoNe {
 		return null;
 	}
 
-	protected PolynomialRelation isFusibleWithExistingRelations(final Script script, final Junction junction,
-			final PolynomialRelation newPolyRel) {
-		final PolynomialRelation res1 = isFusibleWithExistingRepresentation(junction, newPolyRel);
+	protected IPolynomialRelation isFusibleWithExistingRelations(final Script script, final Junction junction,
+			final IPolynomialRelation newPolyRel) {
+		final IPolynomialRelation res1 = isFusibleWithExistingRepresentation(junction, newPolyRel);
 		if (res1 != null) {
 			return res1;
 		}
-		final PolynomialRelation alternativeRepresentation = newPolyRel.mul(mScript, Rational.MONE);
-		final PolynomialRelation res2 = isFusibleWithExistingRepresentation(junction, alternativeRepresentation);
+		final IPolynomialRelation alternativeRepresentation = newPolyRel.mul(mScript, Rational.MONE);
+		final IPolynomialRelation res2 = isFusibleWithExistingRepresentation(junction, alternativeRepresentation);
 		if (res2 != null) {
 			return res2;
 		}
 		return null;
 	}
 
-	private PolynomialRelation isFusibleWithExistingRepresentation(final Junction junction,
-			final PolynomialRelation newPolyRel) {
-		final Set<PolynomialRelation> existingPolyRels =
+	private IPolynomialRelation isFusibleWithExistingRepresentation(final Junction junction,
+			final IPolynomialRelation newPolyRel) {
+		final Set<IPolynomialRelation> existingPolyRels =
 				mPolyRels.getImage(newPolyRel.getPolynomialTerm().getAbstractVariable2Coefficient());
-		for (final PolynomialRelation existingPolyRel : existingPolyRels) {
+		for (final IPolynomialRelation existingPolyRel : existingPolyRels) {
 			final boolean res =
 					AbstractGeneralizedAffineTerm.areRepresentationsFusible(junction, existingPolyRel, newPolyRel);
 			if (res) {
@@ -226,7 +226,7 @@ public class PolyPoNe {
 		return null;
 	}
 
-	protected boolean addPolyRel(final Script script, final PolynomialRelation polyRel,
+	protected boolean addPolyRel(final Script script, final IPolynomialRelation polyRel,
 			final boolean removeExpliedPolyRels) {
 		if (mInconsistent) {
 			throw new AssertionError("must not add if already inconsistent");
@@ -241,12 +241,12 @@ public class PolyPoNe {
 		final Check check = checkPolyRel(script, polyRel, removeExpliedPolyRels);
 		if (check == Check.MAYBE_USEFUL) {
 			if (polyRel.getRelationSymbol().isConvexInequality()) {
-				final PolynomialRelation fusionPartner = isFusibleWithExistingRelations(mScript, Junction.AND, polyRel);
+				final IPolynomialRelation fusionPartner = isFusibleWithExistingRelations(mScript, Junction.AND, polyRel);
 				if (fusionPartner != null) {
 					mPolyRels.removePair(fusionPartner.getPolynomialTerm().getAbstractVariable2Coefficient(),
 							fusionPartner);
-					final PolynomialRelation fusion =
-							PolynomialRelation.of(polyRel.getPolynomialTerm(), RelationSymbol.EQ);
+					final IPolynomialRelation fusion =
+							IPolynomialRelation.of(polyRel.getPolynomialTerm(), RelationSymbol.EQ);
 					mPolyRels.addPair(fusion.getPolynomialTerm().getAbstractVariable2Coefficient(), fusion);
 					return dropBvInequalitiesContradictingNewEquality(fusion);
 				}
@@ -270,7 +270,7 @@ public class PolyPoNe {
 	 * (the equality is strictly more precise) and gets dropped. A no-op if {@code polyRel} isn't a simple
 	 * variable-equals-constant equality, or the variable has no bitvector-inequality bounds stored at all.
 	 */
-	private boolean dropBvInequalitiesContradictingNewEquality(final PolynomialRelation polyRel) {
+	private boolean dropBvInequalitiesContradictingNewEquality(final IPolynomialRelation polyRel) {
 		final SolvedBinaryRelation solved = polyRel.isSimpleEquality(mScript);
 		if (solved == null) {
 			return false;
@@ -335,7 +335,7 @@ public class PolyPoNe {
 		if (fusionPartner != null) {
 			// fuse into an equality, reuse the existing single-term insertion path
 			mBvInequalityRels.removePair(variable, fusionPartner);
-			final PolynomialRelation fusion = SingleTermPolynomialRelation.of(mScript, RelationSymbol.EQ, variable,
+			final IPolynomialRelation fusion = PolynomialRelation.of(mScript, RelationSymbol.EQ, variable,
 					bareShape.getConstantTerm());
 			return addPolyRel(mScript, fusion, true);
 		}
@@ -429,7 +429,7 @@ public class PolyPoNe {
 	private BitvectorConstant findKnownEqualityValue(final BitvectorInequalityRelation polyRel) {
 		final AbstractGeneralizedAffineTerm<?> variableSide =
 				polyRel.isVariableOnLhs() ? polyRel.getLhs() : polyRel.getRhs();
-		for (final PolynomialRelation existing : mPolyRels.getImage(variableSide.getAbstractVariable2Coefficient())) {
+		for (final IPolynomialRelation existing : mPolyRels.getImage(variableSide.getAbstractVariable2Coefficient())) {
 			if (existing.getRelationSymbol() == RelationSymbol.EQ) {
 				// existing's ψ is "variable - value", so its constant is -value
 				final Rational value = existing.getPolynomialTerm().getConstant().negate();
@@ -567,7 +567,7 @@ public class PolyPoNe {
 			return mScript.term("false");
 		}
 		final List<Term> params = new ArrayList<>();
-		for (final Entry<Map<?, Rational>, PolynomialRelation> pair : mPolyRels.getSetOfPairs()) {
+		for (final Entry<Map<?, Rational>, IPolynomialRelation> pair : mPolyRels.getSetOfPairs()) {
 			params.add(pair.getValue().toTerm(mScript));
 		}
 		for (final Entry<Term, BitvectorInequalityRelation> pair : mBvInequalityRels.getSetOfPairs()) {
@@ -588,7 +588,7 @@ public class PolyPoNe {
 			return mScript.term("true");
 		}
 		final List<Term> params = new ArrayList<>();
-		for (final Entry<Map<?, Rational>, PolynomialRelation> pair : mPolyRels.getSetOfPairs()) {
+		for (final Entry<Map<?, Rational>, IPolynomialRelation> pair : mPolyRels.getSetOfPairs()) {
 			params.add(pair.getValue().negate().toTerm(mScript));
 		}
 		for (final Entry<Term, BitvectorInequalityRelation> pair : mBvInequalityRels.getSetOfPairs()) {
