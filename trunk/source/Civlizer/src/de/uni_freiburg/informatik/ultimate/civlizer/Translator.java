@@ -553,7 +553,7 @@ public final class Translator {
 		return yieldProc;
 	}
 
-	// Improve repreensation of Identifier and Tid TODO
+	// Improve reprensation of Identifier and Tid TODO
 	CallStatement callSetReturn(final String procName) {
 		final var threadProc = (Procedure) Arrays.stream(mProgramAndProof.getBoogieAst().getDeclarations())
 				.filter(x -> x instanceof final Procedure proc && proc.getIdentifier().equals(procName)).findFirst()
@@ -584,13 +584,13 @@ public final class Translator {
 			procParams.add(new ParameterDeclaration(tid.toString(), makeOne(mTidType), Linearity.INOUT));
 		}
 
-		procParams.addAll(Arrays.stream(threadProc.getInParams())
+		procParams.addAll(Arrays.stream(threadProc.getOutParams())
 				.flatMap(x -> Arrays.stream(x.getIdentifiers())
 						.map(identifier -> new ParameterDeclaration(identifier, x.getType(), Linearity.INOUT)))
 				.toList());
 
 		final Expression[] inParams =
-				Arrays.stream(threadProc.getInParams())
+				Arrays.stream(threadProc.getOutParams())
 						.flatMap(x -> Arrays.stream(x.getIdentifiers())
 								.map(identifier -> new IdentifierExpression(null, x.getType().getBoogieType(),
 										identifier, DeclarationInformation.DECLARATIONINFO_GLOBAL)))

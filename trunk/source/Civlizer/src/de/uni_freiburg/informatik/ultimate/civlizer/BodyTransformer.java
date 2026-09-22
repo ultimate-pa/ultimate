@@ -171,9 +171,19 @@ final class BodyTransformer extends BoogieTransformer {
 		newStatements.add(Translator.callYieldInvariant(yieldInvariant, mCurrentTids, new Expression[] { annotation }));
 
 		if (mProcedureName != BoogieUtils.START_PROCEDURE) {
-			mTranslator.addSetReturn(mProcedureName);
-			newStatements.add(mTranslator.callSetReturn(mProcedureName));
-			newStatements.add(Translator.callYieldIgnore());
+			// use this
+			final var threadProc = (Procedure) Arrays
+					.stream(mTranslator.getProgramAndProof().getBoogieAst().getDeclarations())
+					.filter(x -> x instanceof final Procedure proc && proc.getIdentifier().equals(mProcedureName))
+					.findFirst().get();
+
+			final boolean needReturn = threadProc.getOutParams().length > 0;
+
+			if (needReturn) {
+				mTranslator.addSetReturn(mProcedureName);
+				newStatements.add(mTranslator.callSetReturn(mProcedureName));
+				newStatements.add(Translator.callYieldIgnore());
+			}
 			newStatements.add(new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "terminate",
 					mCurrentTids));
 		}
