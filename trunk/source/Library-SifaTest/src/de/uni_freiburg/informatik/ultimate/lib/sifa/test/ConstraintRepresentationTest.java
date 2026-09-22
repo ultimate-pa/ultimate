@@ -148,7 +148,7 @@ public class ConstraintRepresentationTest {
 		return new ConstraintRepresentation(equalities, congruences, 4);
 	}
 
-	public static ConstraintRepresentation getConstraints8() {
+	private static ConstraintRepresentation getConstraints8() {
 		// @formatter:off
 		/*
 		 * x1 = 1 [2]
@@ -162,7 +162,7 @@ public class ConstraintRepresentationTest {
 		return new ConstraintRepresentation(equalities, congruences, 2);
 	}
 
-	public static ConstraintRepresentation getConstraints9() {
+	private static ConstraintRepresentation getConstraints9() {
 		// @formatter:off
 		/*
 		 * 0 = -1
@@ -176,7 +176,7 @@ public class ConstraintRepresentationTest {
 		return new ConstraintRepresentation(equalities, congruences, 2);
 	}
 
-	public static ConstraintRepresentation getConstraints10() {
+	private static ConstraintRepresentation getConstraints10() {
 		// @formatter:off
 		/*
 		 * No constraints
@@ -189,7 +189,7 @@ public class ConstraintRepresentationTest {
 		return new ConstraintRepresentation(equalities, congruences, 2);
 	}
 
-	public static ConstraintRepresentation getConstraints11() {
+	private static ConstraintRepresentation getConstraints11() {
 		// @formatter:off
 		/*
 		 * 2*x1 + 3*x2 = 4 [10]
@@ -204,7 +204,7 @@ public class ConstraintRepresentationTest {
 		return new ConstraintRepresentation(equalities, congruences, 3);
 	}
 
-	public static ConstraintRepresentation getConstraints12() {
+	private static ConstraintRepresentation getConstraints12() {
 		// @formatter:off
 		/*
 		 * x1 = 1
@@ -221,7 +221,7 @@ public class ConstraintRepresentationTest {
 		return new ConstraintRepresentation(equalities, congruences, 3);
 	}
 
-	public static ConstraintRepresentation getConstraints13() {
+	private static ConstraintRepresentation getConstraints13() {
 		// @formatter:off
 		/*
 		 * 1 = 0
@@ -251,6 +251,86 @@ public class ConstraintRepresentationTest {
 		congruences.add(new RationalVector(List.of(Rational.valueOf(-1, 1), Rational.ZERO)));
 
 		return new ConstraintRepresentation(equalities, congruences, 2);
+	}
+
+	private static GeneratorRepresentation getGenerators8() {
+		// @formatter:off
+		/*
+		 * L = {(1, 1)}
+		 * Q = {(0, 2)}
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(new RationalVector(List.of(Rational.ONE, Rational.ONE)));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(List.of(Rational.ZERO, Rational.TWO)));
+
+		return new GeneratorRepresentation(equalities, congruences, 2);
+	}
+
+	private static GeneratorRepresentation getGenerators9() {
+		// @formatter:off
+		/*
+		 * L = {(0, 1)}
+		 * Q = {}
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(new RationalVector(List.of(Rational.ZERO, Rational.ONE)));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+
+		return new GeneratorRepresentation(equalities, congruences, 2);
+	}
+
+	private static GeneratorRepresentation getGenerators10() {
+		// @formatter:off
+		/*
+		 * L = {(1, 0), (0, 1)}
+		 * Q = {}
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(new RationalVector(List.of(Rational.ONE, Rational.ZERO)));
+		equalities.add(new RationalVector(List.of(Rational.ZERO, Rational.ONE)));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+
+		return new GeneratorRepresentation(equalities, congruences, 2);
+	}
+
+	private static GeneratorRepresentation getGenerators11() {
+		// @formatter:off
+		/*
+		 * L = {(1, 0, 4/3), (0, 1, -2/3)}
+		 * Q = {(0, 0, 10/3)}
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(new RationalVector(List.of(Rational.ONE, Rational.ZERO, Rational.valueOf(4, 3))));
+		equalities.add(new RationalVector(List.of(Rational.ZERO, Rational.ONE, Rational.valueOf(-2, 3))));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(List.of(Rational.ZERO, Rational.ZERO, Rational.valueOf(10, 3))));
+
+		return new GeneratorRepresentation(equalities, congruences, 3);
+	}
+
+	private static GeneratorRepresentation getGenerators12() {
+		// @formatter:off
+		/*
+		 * L = {(1, 1, 1)}
+		 * Q = {(0, 0, 3)}
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(new RationalVector(List.of(Rational.ONE, Rational.ONE, Rational.ONE)));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(List.of(Rational.ZERO, Rational.ZERO, Rational.valueOf(3, 1))));
+
+		return new GeneratorRepresentation(equalities, congruences, 3);
 	}
 
 	@Test
@@ -284,9 +364,8 @@ public class ConstraintRepresentationTest {
 	public void testComputeGeneratorRepresentation() {
 		final List<ConstraintRepresentation> constraints = List.of(getConstraints8(), getConstraints9(),
 				getConstraints10(), getConstraints11(), getConstraints12());
-		final List<GeneratorRepresentation> generators = List.of(GeneratorRepresentationTest.getGenerators8(),
-				GeneratorRepresentationTest.getGenerators9(), GeneratorRepresentationTest.getGenerators10(),
-				GeneratorRepresentationTest.getGenerators11(), GeneratorRepresentationTest.getGenerators12());
+		final List<GeneratorRepresentation> generators =
+				List.of(getGenerators8(), getGenerators9(), getGenerators10(), getGenerators11(), getGenerators12());
 
 		for (int i = 0; i < constraints.size(); i++) {
 			final GeneratorRepresentation expected = generators.get(i);
