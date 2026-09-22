@@ -1547,7 +1547,9 @@ public final class SmtUtils {
 			result = select(script, params[0], params[1]);
 			break;
 		case "zero_extend":
+		case "sign_extend":
 		case "extract":
+		case "concat":
 		case "bvadd":
 		case "bvsub":
 		case "bvmul":
