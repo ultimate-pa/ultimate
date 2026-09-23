@@ -50,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public abstract class MemoryStructureBase implements IMemoryStructure {
 
-	protected static final String READ_PROCEDURE_PREFIX = "read~";
-	protected static final String WRITE_PROCEDURE_PREFIX = "write~";
+	protected static final String READ_PROCEDURE_PREFIX = SFO.READ_PREFIX;
+	protected static final String WRITE_PROCEDURE_PREFIX = SFO.WRITE_PREFIX;
 	protected static final String UNCHECKED_PREFIX = "unchecked~";
 	protected static final String INIT_INFIX = "init~";
 

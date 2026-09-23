@@ -384,7 +384,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			}
 			preprocessedTerm = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript, context, term);
 		} else if (APPLY_CONSTANT_FOLDING) {
-			preprocessedTerm = SimplificationUtils.applyConstantFolding(mMgdScript, context, term);
+			preprocessedTerm = SimplificationUtils.applyConstantPropagation(mMgdScript, context, term);
 		} else {
 			preprocessedTerm = term;
 		}

@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -159,17 +159,19 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 			// return conjoinedPred;
 		}
 
-		final Term conjoinedFormula =
-				new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(conjoinedPred.getFormula());
+		// FIXME 2026-08-23 Matthias: Replaced transformation to CommuhashNormalForm with this
+		// sanity check, since term should already be in normal form here. Remove if it hasn't
+		// fired within two months.
+		assert CommuhashUtils.isInCommuhashNormalForm(conjoinedPred.getFormula()) : "Not in CommuhashNormalForm";
 
 		// final Set<IPredicate> ps = new HashSet<>();
 		// ps.add(state1);
 		// ps.add(state2);
 
-		final Set<ApplicationTerm> appTerms = TermVarsFuns.findNonTheoryApplicationTerms(conjoinedFormula);
+		final Set<ApplicationTerm> appTerms = TermVarsFuns.findNonTheoryApplicationTerms(conjoinedPred.getFormula());
 		final List<FunctionSymbol> funs =
 				appTerms.stream().map(ApplicationTerm::getFunction).collect(Collectors.toList());
-		return mPredicateFactory.newPredicate(state1PredSymbols, conjoinedFormula,
+		return mPredicateFactory.newPredicate(state1PredSymbols, conjoinedPred.getFormula(),
 				Arrays.asList(state1.getFormula().getFreeVars()), funs);
 	}
 

@@ -277,6 +277,16 @@ def get_java():
     sys.exit(ExitCode.FAIL_NO_JAVA)
 
 
+@lru_cache(maxsize=1)
+def get_launcher_jar():
+    candidates = glob.glob(os.path.join(ultimatedir, "plugins", "org.eclipse.equinox.launcher_*.jar"))
+    if not candidates:
+        raise RuntimeError("Could not find any launcher JAR.")
+    if len(candidates) > 1:
+        raise RuntimeError("Found multiple launcher JARs: " + ", ".join(candidates))
+    return candidates[0]
+
+
 def create_ultimate_base_call():
     ultimate_bin = [
         get_java(),
@@ -290,10 +300,7 @@ def create_ultimate_base_call():
 
     ultimate_bin = ultimate_bin + [
         "-jar",
-        os.path.join(
-            ultimatedir,
-            "plugins/org.eclipse.equinox.launcher_1.7.0.v20250519-0528.jar",
-        ),
+        get_launcher_jar(),
         "-data",
         "@noDefault",
         "-ultimatedata",
