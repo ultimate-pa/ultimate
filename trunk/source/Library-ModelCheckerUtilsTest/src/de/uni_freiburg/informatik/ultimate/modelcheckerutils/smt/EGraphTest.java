@@ -220,7 +220,7 @@ public class EGraphTest {
 
 	@Test
 	public void inequality02() {
-		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getBoolSort, "x", "y") };
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String formulaAsString = "(<= (+ x 1) y)";
 		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
 		expectedRelations.add(new ExpectedRelation("x", "y", EGraph.EquivalenceState.DISTINCT));
