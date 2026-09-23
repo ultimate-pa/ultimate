@@ -59,11 +59,11 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 	/**
 	 * Representation of the state as constraints in the form of equalities and congruences.
 	 */
-	private final ConstraintRepresentation mConstraints;
+	private ConstraintRepresentation mConstraints;
 	/**
 	 * Representation of the state as vectors generating the valid variable assignments.
 	 */
-	private final GeneratorRepresentation mGenerators;
+	private GeneratorRepresentation mGenerators;
 
 	private Boolean mIsBottom = null;
 
@@ -81,14 +81,14 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 
 	public ConstraintRepresentation getConstraintRepresentation() {
 		if (mConstraints == null) {
-			return mGenerators.computeConstraintRepresentation();
+			mConstraints = mGenerators.computeConstraintRepresentation();
 		}
 		return mConstraints;
 	}
 
 	public GeneratorRepresentation getGeneratorRepresentation() {
 		if (mGenerators == null) {
-			return mConstraints.computeGeneratorRepresentation();
+			mGenerators = mConstraints.computeGeneratorRepresentation();
 		}
 		return mGenerators;
 	}
