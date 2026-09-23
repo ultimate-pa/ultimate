@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.eclipse.cdt.core.dom.ast.IASTComment;
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
@@ -70,6 +71,19 @@ public class CommentParser {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+
+	// Common Doxygen commands (without the introducing "@" character).
+	private static final String DOXYGEN_COMMANDS = "brief|short|details|param|arg|return|returns|retval|author|date|"
+			+ "file|warning|note|attention|remark|remarks|see|sa|todo|bug|deprecated|version|mainpage|section|"
+			+ "subsection|subsubsection|page|code|endcode|verbatim|endverbatim|name|cond|endcond|var|def|struct|enum|"
+			+ "union|namespace|package|exception|throws|throw|overload|ref|copydoc|copydetails|anchor|internal|private|"
+			+ "public|protected|fn|defgroup|ingroup|addtogroup|since|li";
+
+	// TODO: temporary workaround: remove once the ACSL parser can handle (or skip) Doxygen comments itself.
+	// Recognizes common Doxygen commands introduced by "@", as well as the Doxygen group markers "@{" and "@}".
+	// Backslash-introduced Doxygen commands (e.g. "\brief") are deliberately not detected to avoid confusion with
+	// ACSL terms like "\result".
+	private static final Pattern DOXYGEN_COMMAND_PATTERN = Pattern.compile("@(?:" + DOXYGEN_COMMANDS + ")\\b|@[{}]");
 
 	/**
 	 * The Constructor.
@@ -133,16 +147,42 @@ public class CommentParser {
 						acslList.add(acslNode);
 					}
 				} catch (final ACSLSyntaxErrorException e) {
+					if (containsDoxygenElements(text)) {
+						// TODO: temporary workaround: Doxygen comments are forwarded to the ACSL parser but cannot be
+						// parsed by it. Ignore the parse error instead of aborting the translation.
+						mLogger.debug("Ignored ACSL parse error, comment contains Doxygen elements: %s",
+								e.getMessage());
+						continue;
+					}
 					final ACSLProblemNode problem = new ACSLProblemNode(e.getMessageText());
 					problem.setFileName(comment.getContainingFilename());
 					problem.setLocation(e.getLocation().getLocation());
 					acslList.add(problem);
 				} catch (final Exception e) {
+					if (containsDoxygenElements(text)) {
+						// TODO: temporary workaround: see above
+						mLogger.debug("Ignored exception during ACSL parsing, comment contains Doxygen elements: %s",
+								e.getMessage());
+						continue;
+					}
 					throw new RuntimeException(e);
 				}
 			}
 		}
 		return acslList;
+	}
+
+	/**
+	 * Checks whether the given comment text contains Doxygen elements. This is only a heuristic: we look for typical
+	 * Doxygen commands introduced by "@". Comments that contain such elements cannot be parsed by the ACSL parser, so
+	 * parse errors for them are ignored.
+	 *
+	 * @param commentText
+	 *            the raw comment text
+	 * @return true if the comment contains Doxygen elements
+	 */
+	private static boolean containsDoxygenElements(final String commentText) {
+		return DOXYGEN_COMMAND_PATTERN.matcher(commentText).find();
 	}
 
 	/**
