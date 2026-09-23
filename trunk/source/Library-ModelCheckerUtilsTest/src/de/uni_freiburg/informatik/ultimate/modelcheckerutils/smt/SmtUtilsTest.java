@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -40,10 +42,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils.Quantifier;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -157,5 +161,57 @@ public class SmtUtilsTest {
 		final String inputAsString = "((as const (Array Int Int)) 0)";
 		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
 		new TermTransferrer(hrs, hrs, Collections.emptyMap(), true).transform(inputAsTerm);
+	}
+
+	@Test
+	public void testQuantifierClassifierSimple() {
+		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+		mScript.declareFun("P", new Sort[] { intSort, intSort, intSort, intSort }, SmtSortUtils.getBoolSort(mScript));
+		final Term t = TermParseUtils.parseTerm(mScript, "(exists ((x Int) (y Int)) (P x y 0 0))");
+		final QuantifierClassifier qc = new QuantifierClassifier();
+		qc.checkTerm(t);
+		final Set<List<Quantifier>> expected = Set.of(List.of(Quantifier.EXISTS));
+		Assert.assertEquals(expected, qc.getLongestQuantSeqs());
+	}
+
+	@Test
+	public void testQuantifierClassifierOnlyLongestSequencesCount() {
+		// left conjunct: [EXISTS] right conjunct: [EXISTS, FORALL] one is a subsequence of the other, so only the
+		// longest sequence is returned
+		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+		mScript.declareFun("P", new Sort[] { intSort, intSort, intSort, intSort }, SmtSortUtils.getBoolSort(mScript));
+		final Term t = TermParseUtils.parseTerm(mScript,
+				"(and (exists ((x Int)) (P x 0 0 0)) (exists ((y Int)) (not (exists ((z Int)) (P z y 0 0)))))");
+		final QuantifierClassifier qc = new QuantifierClassifier();
+		qc.checkTerm(t);
+		final Set<List<Quantifier>> expected = Set.of(List.of(Quantifier.EXISTS, Quantifier.FORALL));
+		Assert.assertEquals("QuantifierClassifier should detect two sequences", expected, qc.getLongestQuantSeqs());
+	}
+
+	@Test
+	public void testQuantifierClassifierAlternation() {
+		// There is a negation: effective sequence: EXISTS, FORALL
+		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+		mScript.declareFun("P", new Sort[] { intSort, intSort, intSort, intSort }, SmtSortUtils.getBoolSort(mScript));
+		final Term t = TermParseUtils.parseTerm(mScript, "(exists ((x Int)) (not (exists ((y Int)) (P y x 0 0))))");
+		final QuantifierClassifier qc = new QuantifierClassifier();
+		qc.checkTerm(t);
+		final Set<List<Quantifier>> expected = Set.of(List.of(Quantifier.EXISTS, Quantifier.FORALL));
+		Assert.assertEquals(expected, qc.getLongestQuantSeqs());
+	}
+
+	@Test
+	public void testQuantifierClassifierTwoSequencesAndDoubleNegation() {
+		// left conjunct yields [EXISTS], right conjunct yields [FORALL] via negated exists, the doulbe negated forall
+		// cannot be counted as another alternation
+		final Sort intSort = SmtSortUtils.getIntSort(mScript);
+		mScript.declareFun("P", new Sort[] { intSort, intSort, intSort, intSort }, SmtSortUtils.getBoolSort(mScript));
+		final Term t = TermParseUtils.parseTerm(mScript,
+				"(and (exists ((x Int)) (P x 0 0 0)) (not (exists ((y Int)) (not (forall ((x Int)) (P y x 0 0))))))");
+		final QuantifierClassifier qc = new QuantifierClassifier();
+		qc.checkTerm(t);
+		final Set<List<Quantifier>> expected = Set.of(List.of(Quantifier.EXISTS), List.of(Quantifier.FORALL));
+		Assert.assertEquals("QuantifierClassifier should detect EXISTS and FORALL singleton sequences", expected,
+				qc.getLongestQuantSeqs());
 	}
 }

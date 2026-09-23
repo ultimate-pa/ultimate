@@ -9,8 +9,6 @@
 
    <requires>
       <import feature="BA_FeatureDependenciesDebugE4"/>
-      <import feature="BA_FeatureDependenciesCommon"/>
-      <import feature="BA_FeatureUltimateCommon"/>
    </requires>
 
    <plugin
@@ -31,9 +29,6 @@
 
    <plugin
          id="edu.uci.ics.jung"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
 </feature>

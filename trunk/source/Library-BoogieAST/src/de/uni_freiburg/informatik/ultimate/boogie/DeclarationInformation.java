@@ -40,6 +40,9 @@ public class DeclarationInformation {
 	public static final DeclarationInformation DECLARATIONINFO_GLOBAL =
 			new DeclarationInformation(StorageClass.GLOBAL, null);
 
+	public static final DeclarationInformation DECLARATIONINFO_QUANTIFIED =
+			new DeclarationInformation(StorageClass.QUANTIFIED, null);
+
 	/**
 	 * Defines where the declaration of a variable/constant is stored.
 	 */

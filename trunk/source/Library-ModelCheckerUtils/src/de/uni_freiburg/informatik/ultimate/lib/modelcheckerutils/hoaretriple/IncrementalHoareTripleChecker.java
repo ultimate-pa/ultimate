@@ -90,7 +90,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	protected final ModifiableGlobalsTable mModifiableGlobalVariableManager;
 	private final OldVarsAssignmentCache mOldVarsAssignmentCache;
 
-	private IPredicate mAssertedPrecond;
+	protected IPredicate mAssertedPrecond;
 	protected IPredicate mAssertedHier;
 	protected IAction mAssertedAction;
 	private IPredicate mAssertedPostcond;
