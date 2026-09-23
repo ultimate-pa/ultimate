@@ -30,7 +30,7 @@ public class EGraph {
 	 * This option allows us to toggle whether we detect congruence relations.
 	 */
 	private static final boolean PROCESS_CONGRUENCE = true;
-	private static final boolean ADD_ALL_TERMS = false;
+	private static final boolean ADD_ALL_TERMS = true;
 
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
@@ -72,6 +72,20 @@ public class EGraph {
 		mMgdScript = mgdScript;
 		mServices = services;
 
+		mMgdScript.lock(this);
+		final Term trueTerm = mMgdScript.term(this, "true");
+		final Term falseTerm = mMgdScript.term(this, "false");
+		mMgdScript.unlock(this);
+
+		mUnionFind.findAndConstructEquivalenceClassIfNeeded(trueTerm);
+		mUnionFind.findAndConstructEquivalenceClassIfNeeded(falseTerm);
+		final HashSet<Term> trueSet = new HashSet<>();
+		trueSet.add(trueTerm);
+		final HashSet<Term> falseSet = new HashSet<>();
+		falseSet.add(falseTerm);
+
+		mDistinctSets.put(mUnionFind.getContainingSet(trueTerm), falseSet);
+		mDistinctSets.put(mUnionFind.getContainingSet(falseTerm), trueSet);
 	}
 
 	/**
@@ -212,12 +226,22 @@ public class EGraph {
 		final Term[] conjuncts = SmtUtils.getConjuncts(formula);
 
 		for (final Term term : conjuncts) {
-			final BinaryEqualityRelation binaryEqRelation = BinaryEqualityRelation.convert(term);
-			if (binaryEqRelation == null) {
-				if (ADD_ALL_TERMS) {
-					addTerm(term);
+			mMgdScript.lock(this);
+			final Term trueTerm = mMgdScript.term(this, "true");
+			final Term falseTerm = mMgdScript.term(this, "false");
+			mMgdScript.unlock(this);
+			addTerm(term);
+			mUnionFind.union(term, trueTerm);
+			if (term instanceof ApplicationTerm) {
+				final ApplicationTerm appTerm = (ApplicationTerm) term;
+
+				if (appTerm.getFunction().getName().equals("not")) {
+					mUnionFind.union(appTerm.getParameters()[0], falseTerm);
 				}
-			} else {
+			}
+
+			final BinaryEqualityRelation binaryEqRelation = BinaryEqualityRelation.convert(term);
+			if (binaryEqRelation != null) {
 				final Term lhs = binaryEqRelation.getLhs();
 				final Term rhs = binaryEqRelation.getRhs();
 
