@@ -45,13 +45,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  */
 public class EqualityRelation {
-
-	private final Map<Term, Rational> mVarToFactor;
-	private final Rational mResult;
+	private final AffineTerm mAffineTerm;
 
 	public EqualityRelation(final AffineTerm term) {
-		mVarToFactor = term.getVariable2Coefficient();
-		mResult = term.getConstant();
+		mAffineTerm = term;
 	}
 
 	/**
@@ -81,43 +78,27 @@ public class EqualityRelation {
 	}
 
 	public Map<Term, Rational> getVarToFactor() {
-		return mVarToFactor;
+		return mAffineTerm.getVariable2Coefficient();
 	}
 
-	public Rational getResult() {
-		return mResult;
+	public Rational getConstant() {
+		return mAffineTerm.getConstant();
 	}
 
 	/**
 	 * Returns the variables present in the equality relation.
 	 */
 	public Set<Term> getVars() {
-		return mVarToFactor.keySet();
+		return getVarToFactor().keySet();
 	}
 
-	public String sumString() {
-		final StringBuilder out = new StringBuilder();
-
-		for (final Term var : mVarToFactor.keySet()) {
-			final Rational factor = mVarToFactor.get(var);
-
-			if (factor.equals(Rational.MONE)) {
-				out.append("-");
-			} else if (!factor.equals(Rational.ONE)) {
-				out.append(factor.toString()).append("*");
-			}
-			out.append(var.toString()).append(" + ");
-		}
-		out.append(mResult.toString());
-
-		return out.toString();
+	public AffineTerm getAffineTerm() {
+		return mAffineTerm;
 	}
 
 	@Override
 	public String toString() {
-		final StringBuilder out = new StringBuilder().append(sumString());
-		out.append(" = 0");
-		return out.toString();
+		return mAffineTerm + " = 0";
 	}
 
 }

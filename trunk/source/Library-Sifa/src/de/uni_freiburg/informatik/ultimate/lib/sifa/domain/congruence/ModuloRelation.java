@@ -227,7 +227,7 @@ public class ModuloRelation {
 
 	@Override
 	public String toString() {
-		final StringBuilder out = new StringBuilder().append(mEqualityRelation.sumString());
+		final StringBuilder out = new StringBuilder().append(mEqualityRelation.getAffineTerm());
 		out.append(" ≡").append(mMod.toString()).append(" 0");
 		return out.toString();
 	}

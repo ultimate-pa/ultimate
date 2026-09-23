@@ -277,7 +277,7 @@ public class CongruenceUtil {
 			final Map<Term, Integer> varToIndex) {
 		final int n = varToIndex.size() + 1;
 		final List<Rational> protoVector = new ArrayList<>(Collections.nCopies(n, Rational.ZERO));
-		final Rational result = equalityRelation.getResult();
+		final Rational result = equalityRelation.getConstant();
 		protoVector.set(0, result);
 
 		final Map<Term, Rational> varToFactor = equalityRelation.getVarToFactor();
