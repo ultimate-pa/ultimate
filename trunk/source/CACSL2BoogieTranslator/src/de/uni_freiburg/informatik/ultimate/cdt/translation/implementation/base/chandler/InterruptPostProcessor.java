@@ -159,10 +159,13 @@ public class InterruptPostProcessor implements IPostProcessor {
 			return List.of();
 		}
 
+		final var isrs = mInterruptFuncHandler.getIsrs();
+		if (isrs.isEmpty()) {
+			return List.of();
+		}
+
 		mLogger.info("Verify Interrupt-Driven Program with %d interrupt service routines",
 				mInterruptFuncHandler.getIsrs().size());
-
-		final var isrs = mInterruptFuncHandler.getIsrs();
 
 		// Construct thread procedures for each ISR (stored for later use in fork/join)
 		mThreadProcedures = constructThreadProcedures(isrs);
