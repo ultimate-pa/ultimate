@@ -54,9 +54,9 @@ public class ModuloRelation {
 	private final EqualityRelation mEqualityRelation;
 	private final BigInteger mMod;
 
-	public ModuloRelation(final AffineTerm term, final BigInteger finalMod) {
+	public ModuloRelation(final AffineTerm term, final BigInteger mod) {
 		mEqualityRelation = new EqualityRelation(term);
-		mMod = finalMod;
+		mMod = mod;
 	}
 
 	/**
@@ -85,8 +85,7 @@ public class ModuloRelation {
 		return rational.numerator();
 	}
 
-	private static ModuloRelation of(final Term lhs, final Term rhs, final RelationSymbol relationSymbol,
-			final BigInteger modInt, final Script script) {
+	private static ModuloRelation create(final Term lhs, final Term rhs, final BigInteger mod, final Script script) {
 		final var affineTermTransformer = new AffineTermTransformer(script);
 		final AffineTerm rhsAffine = (AffineTerm) affineTermTransformer.transform(rhs);
 		final AffineTerm lhsAffine = (AffineTerm) affineTermTransformer.transform(lhs);
@@ -98,116 +97,90 @@ public class ModuloRelation {
 			return null;
 		}
 
-		if (relationSymbol.equals(RelationSymbol.EQ)) {
-			// Modulo equality
-			final ModuloRelation moduloRelation = new ModuloRelation(affineTerm, modInt);
-			return moduloRelation;
-		}
-		// Can't handle the other cases
-		return null;
+		return new ModuloRelation(affineTerm, mod);
 	}
 
 	public static ModuloRelation of(final Term term, final Script script) {
 		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);
-		if (bnr == null) {
+		if (bnr == null || bnr.getRelationSymbol() != RelationSymbol.EQ) {
 			return null;
 		}
 
 		final Term lhs = bnr.getLhs();
 		final Term rhs = bnr.getRhs();
-		final RelationSymbol relationSymbol = bnr.getRelationSymbol();
 
-		final ModTerm modTermRhs = ModTerm.of(rhs);
 		final ModTerm modTermLhs = ModTerm.of(lhs);
+		final ModTerm modTermRhs = ModTerm.of(rhs);
 
-		// Checking that divisor and dividend don't contain a mod themselves
-		if (modTermRhs != null) {
-			if (CongruenceUtil.containsMod(modTermRhs.getDivident())) {
-				return null;
-			}
-			if (CongruenceUtil.containsMod(modTermRhs.getDivisor())) {
-				return null;
-			}
-		}
-
-		if (modTermLhs != null) {
-			if (CongruenceUtil.containsMod(modTermLhs.getDivident())) {
-				return null;
-			}
-			if (CongruenceUtil.containsMod(modTermLhs.getDivisor())) {
-				return null;
-			}
-		}
-
-		if (modTermRhs == null && modTermLhs == null) {
-			// Not a ModuloRelation
+		if (containsNestedMod(modTermLhs) || containsNestedMod(modTermRhs)) {
 			return null;
 		}
-		if ((modTermRhs == null && modTermLhs != null) || (modTermRhs != null && modTermLhs == null)) {
-			// We have a modulo on only one side
-			// We need to have a constant on the non mod side and the modulo has to be a
-			// constant
-			ModTerm modSide;
-			Term nonmodSide;
-
-			if (modTermLhs != null) {
-				modSide = modTermLhs;
-				nonmodSide = rhs;
-			} else {
-				modSide = modTermRhs;
-				nonmodSide = lhs;
-			}
-
-			final Term finalLhs = nonmodSide;
-			final Term finalRhs = modSide.getDivident();
-			final Term mod = modSide.getDivisor();
-
-			final BigInteger modInt = getConstantIntFromConstantTerm(mod);
-			if (modInt == null) {
-				// We can only handle constant mods
-				return null;
-			}
-
-			final BigInteger nonmodSideInt = getConstantIntFromConstantTerm(nonmodSide);
-			if (nonmodSideInt == null) {
-				// We can't handle this case
-				return null;
-			}
-
-			if (modInt.compareTo(nonmodSideInt) <= 0) {
-				// This is unsatisfiable, since modInt <= nonmodSideInt, so whatever modSide is
-				// it will never match nonmodSide
-				return getUnsatModuloRelation(script);
-			}
-
-			return ModuloRelation.of(finalLhs, finalRhs, relationSymbol, modInt, script);
-
-		} else if (modTermRhs != null && modTermLhs != null) {
-			// We have modulo on both sides
-			// We can handle the case that the modulo on both sides is equivalent and
-			// a constant
-
-			final Term finalLhs = modTermLhs.getDivident();
-			final Term finalRhs = modTermRhs.getDivident();
-
-			final Term modLhs = modTermLhs.getDivisor();
-			final Term modRhs = modTermRhs.getDivisor();
-
-			final BigInteger modLhsInt = getConstantIntFromConstantTerm(modLhs);
-			final BigInteger modRhsInt = getConstantIntFromConstantTerm(modRhs);
-
-			if (modLhsInt == null || modRhsInt == null) {
-				return null;
-			}
-			if (!modLhsInt.equals(modRhsInt)) {
-				return null;
-			}
-
-			final BigInteger modInt = modLhsInt;
-
-			return ModuloRelation.of(finalLhs, finalRhs, relationSymbol, modInt, script);
+		if (modTermLhs != null && modTermRhs != null) {
+			return handleModuloOnBothSides(modTermLhs, modTermRhs, script);
 		}
+		if (modTermLhs != null) {
+			return handleModuloOnSingleSide(modTermLhs, rhs, script);
+		}
+		if (modTermRhs != null) {
+			return handleModuloOnSingleSide(modTermRhs, lhs, script);
+		}
+		// Not a ModuloRelation
 		return null;
+	}
+
+	private static boolean containsNestedMod(final ModTerm modTerm) {
+		if (modTerm == null) {
+			return false;
+		}
+		// Checking that divisor and dividend don't contain a mod themselves
+		return CongruenceUtil.containsMod(modTerm.getDivident()) || CongruenceUtil.containsMod(modTerm.getDivisor());
+	}
+
+	/**
+	 * Handles the case where exactly one side of the relation is a modulo term. The other side must and the divisor
+	 * must be both constants.
+	 */
+	private static ModuloRelation handleModuloOnSingleSide(final ModTerm modSide, final Term nonmodSide,
+			final Script script) {
+		final Term finalLhs = nonmodSide;
+		final Term finalRhs = modSide.getDivident();
+		final Term mod = modSide.getDivisor();
+
+		final BigInteger modInt = getConstantIntFromConstantTerm(mod);
+		if (modInt == null) {
+			// We can only handle constant mods
+			return null;
+		}
+
+		final BigInteger nonmodSideInt = getConstantIntFromConstantTerm(nonmodSide);
+		if (nonmodSideInt == null) {
+			// We can't handle this case
+			return null;
+		}
+
+		if (modInt.compareTo(nonmodSideInt) <= 0) {
+			// This is unsatisfiable, since modInt <= nonmodSideInt, so whatever modSide is it will never match
+			// nonmodSide
+			return getUnsatModuloRelation(script);
+		}
+
+		return create(finalLhs, finalRhs, modInt, script);
+	}
+
+	/**
+	 * Handles the case where both sides are modulo terms with an equivalent, constant divisor.
+	 */
+	private static ModuloRelation handleModuloOnBothSides(final ModTerm modTermLhs, final ModTerm modTermRhs,
+			final Script script) {
+		final BigInteger modLhsInt = getConstantIntFromConstantTerm(modTermLhs.getDivisor());
+		final BigInteger modRhsInt = getConstantIntFromConstantTerm(modTermRhs.getDivisor());
+
+		if (modLhsInt == null || modRhsInt == null || !modLhsInt.equals(modRhsInt)) {
+			// We can only handle the case that the modulo on both sides is equivalent and a constant
+			return null;
+		}
+
+		return create(modTermLhs.getDivident(), modTermRhs.getDivident(), modLhsInt, script);
 	}
 
 	public EqualityRelation getEqualityRelation() {
