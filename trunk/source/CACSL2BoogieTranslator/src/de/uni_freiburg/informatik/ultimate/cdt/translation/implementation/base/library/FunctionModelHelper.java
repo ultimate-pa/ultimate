@@ -342,10 +342,17 @@ public class FunctionModelHelper {
 		body.add(mMemoryHandler.getUltimateMemAllocCall(len.getExp(), retvar.getLhs(), loc, MemoryArea.HEAP));
 
 		final var nullChar = mTypeSizes.constructLiteralForIntegerType(loc, charType, BigInteger.ZERO);
-		final var lastChar = mMemoryHandler.lastCharOfString(loc, sizeT, len.getExp(), retvar.getExp());
 
-		body.addAll(mMemoryHandler.getWriteCall(loc,
-				LRValueFactory.constructHeapLValue(mTypeHandler, lastChar, charType, null), nullChar, charType, false));
+		// *(retvar + (len - 1)) = '\0';
+		{
+			final var lenMinusOne = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
+					IASTBinaryExpression.op_minus, mExpressionTranslation.applyWraparound(loc, sizeT, len.getExp()),
+					sizeT, mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ONE), sizeT);
+			final Expression lastChar = mMemoryHandler.addExpressionToPointer(loc, retvar.getExp(), lenMinusOne);
+			body.addAll(mMemoryHandler.getWriteCall(loc,
+					LRValueFactory.constructHeapLValue(mTypeHandler, lastChar, charType, null), nullChar, charType,
+					false));
+		}
 
 		final var stmt = StatementFactory.constructIfStatement(loc, new WildcardExpression(loc),
 				new Statement[] { setPtrToNull }, body.toArray(Statement[]::new));

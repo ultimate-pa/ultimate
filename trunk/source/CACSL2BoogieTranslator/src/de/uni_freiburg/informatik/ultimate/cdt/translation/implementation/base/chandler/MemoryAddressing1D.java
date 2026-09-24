@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -101,17 +100,6 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 	}
 
 	@Override
-	public Expression constructAddressForStructField(final ILocation loc, final Expression baseAddress,
-			final Offset fieldOffset, final CPrimitive sizeT) {
-
-		final Expression pointerBase = mMemoryPointer.getPointerAddress(baseAddress, loc);
-		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-				pointerBase, sizeT, fieldOffset.getAddressOffsetAsExpression(loc), sizeT);
-
-		return mMemoryPointer.createPointerFromBase(sum, loc);
-	}
-
-	@Override
 	public Expression addIntegerConstantToPointer(final ILocation loc, final Expression ptrExpr,
 			final BigInteger integerConstant) {
 		final Expression integerExpr =
@@ -144,16 +132,6 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 						mTypeSizeAndOffsetComputer.getSizeT(), expr, mTypeSizeAndOffsetComputer.getSizeT());
 
 		return mMemoryPointer.createPointerFromBase(basePlus, loc);
-	}
-
-	@Override
-	public Expression getLastCharOfString(final ILocation loc, final CPrimitive sizeT, final IdentifierExpression len,
-			final IdentifierExpression returnValue) {
-		final var lenMinusOne = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
-				IASTBinaryExpression.op_minus, mExpressionTranslation.applyWraparound(loc, sizeT, len), sizeT,
-				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ONE), sizeT);
-
-		return mMemoryPointer.createPointerFromBase(lenMinusOne, loc);
 	}
 
 	@Override
@@ -206,21 +184,5 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 		stmts.add(call);
 
 		return stmts;
-	}
-
-	@Override
-	public Expression constructPointerValidityCheckExpr(final ILocation loc, final Expression ptr,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		throw new UnsupportedOperationException("The pointer validity check is not available with the 1D Addressing");
-
-	}
-
-	@Override
-	public Expression getValidArray(final ILocation loc, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		throw new UnsupportedOperationException(
-				"The valid array is not part of the metadata values from the 1D Addressing");
-
 	}
 }

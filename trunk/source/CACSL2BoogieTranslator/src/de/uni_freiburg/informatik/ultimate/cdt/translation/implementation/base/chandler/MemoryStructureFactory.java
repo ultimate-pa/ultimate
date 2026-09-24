@@ -52,19 +52,17 @@ public class MemoryStructureFactory {
 					+ " is only available in using the bitprecise translation");
 		}
 
-		switch (memoryStructurePreference) {
+		return switch (memoryStructurePreference) {
 		case HoenickeLindenmann_1ByteResolution:
 		case HoenickeLindenmann_2ByteResolution:
 		case HoenickeLindenmann_4ByteResolution:
 		case HoenickeLindenmann_8ByteResolution:
-			return new MemoryStructureSingleBitprecise(memoryStructurePreference.getByteSize(), typeSizes, typeHandler);
+			yield new MemoryStructureSingleBitprecise(memoryStructurePreference.getByteSize(), typeSizes, typeHandler);
 		case HoenickeLindenmann_Original:
 			if (settings.isBitvectorTranslation()) {
-				return new MemoryStructureMultiBitprecise(typeSizes, typeHandler);
+				yield new MemoryStructureMultiBitprecise(typeSizes, typeHandler);
 			}
-			return new MemoryStructureUnbounded(typeSizes, typeHandler);
-		default:
-			throw new UnsupportedOperationException(memoryStructurePreference + " is an invalid memory structure.");
-		}
+			yield new MemoryStructureUnbounded(typeSizes, typeHandler);
+		};
 	}
 }

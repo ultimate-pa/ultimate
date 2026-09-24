@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
@@ -84,10 +83,10 @@ public abstract class LRValue {
 
 	@Override
 	public final String toString() {
-		if (this instanceof HeapLValue) {
-			return "address: " + ((HeapLValue) this).getAddress();
-		} else if (this instanceof LocalLValue) {
-			return "lhs: " + ((LocalLValue) this).getLhs();
+		if (this instanceof final HeapLValue hlv) {
+			return "address: " + hlv.getAddress();
+		} else if (this instanceof final LocalLValue llv) {
+			return "lhs: " + llv.getLhs();
 		} else {
 			return "value: " + getValue();
 		}
@@ -107,8 +106,8 @@ public abstract class LRValue {
 		}
 
 		final Expression value;
-		if (this instanceof HeapLValue) {
-			value = ((HeapLValue) this).getAddress();
+		if (this instanceof final HeapLValue hlv) {
+			value = hlv.getAddress();
 			throw new AssertionError("unexpected: double check this case");
 		}
 		value = getValue();
@@ -118,9 +117,6 @@ public abstract class LRValue {
 			return true;
 		}
 
-		if (value instanceof StructConstructor) {
-			return memoryPointer.isNullPointer(value);
-		}
-		return false;
+		return memoryPointer.isNullPointer(value);
 	}
 }

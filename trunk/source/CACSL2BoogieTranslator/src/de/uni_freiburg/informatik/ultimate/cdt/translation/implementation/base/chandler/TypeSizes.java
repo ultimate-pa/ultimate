@@ -282,8 +282,8 @@ public class TypeSizes {
 	}
 
 	public BigInteger extractIntegerValue(final Expression expr, final ICType cType) {
-		if (expr instanceof IntegerLiteral) {
-			final BigInteger value = new BigInteger(((IntegerLiteral) expr).getValue());
+		if (expr instanceof final IntegerLiteral intLit) {
+			final BigInteger value = new BigInteger(intLit.getValue());
 			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
 			if (!isUnsigned(cPrimitive)) {
 				return value;
@@ -294,8 +294,8 @@ public class TypeSizes {
 			final BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
 			return value.mod(maxValuePlusOne);
 		}
-		if (expr instanceof BitvecLiteral) {
-			final BigInteger value = new BigInteger(((BitvecLiteral) expr).getValue());
+		if (expr instanceof final BitvecLiteral bvLit) {
+			final BigInteger value = new BigInteger(bvLit.getValue());
 			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
 			if (isUnsigned(cPrimitive)) {
 				if (getMinValueOfPrimitiveType(cPrimitive).compareTo(value) > 0) {

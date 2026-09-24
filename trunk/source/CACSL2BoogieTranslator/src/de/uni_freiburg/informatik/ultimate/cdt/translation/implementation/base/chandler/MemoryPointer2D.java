@@ -118,8 +118,8 @@ public final class MemoryPointer2D extends MemoryPointerBase {
 	 * @return The offset.
 	 */
 	public Expression pointerOffset(final Expression pointer, final ILocation loc) {
-		if (pointer instanceof StructConstructor) {
-			return ((StructConstructor) pointer).getFieldValues()[1];
+		if (pointer instanceof final StructConstructor sc) {
+			return sc.getFieldValues()[1];
 		}
 		return ExpressionFactory.constructStructAccessExpression(loc, pointer, SFO.POINTER_OFFSET);
 	}
@@ -144,18 +144,13 @@ public final class MemoryPointer2D extends MemoryPointerBase {
 		final Expression offsetRelation = constructPointerComponentRelation(loc, op, left.getLrValue().getValue(),
 				right.getLrValue().getValue(), SFO.POINTER_OFFSET, expressionTranslation);
 
-		switch (mPointerSubtractionAndComparisonValidityCheckMode) {
-		case CHECK:
-		case ASSUME:
-			return offsetRelation;
-		case IGNORE:
-			// use conjunction
-			return ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, baseEquality, offsetRelation);
-		// TODO: Do not use conjunction. Use nondeterministic value if baseEquality does not hold.
-		default:
-			throw new AssertionError("unknown value");
-		}
+		return switch (mPointerSubtractionAndComparisonValidityCheckMode) {
+		case CHECK, ASSUME -> offsetRelation;
 
+		// use conjunction
+		// TODO: Do not use conjunction. Use nondeterministic value if baseEquality does not hold.
+		case IGNORE -> ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, baseEquality, offsetRelation);
+		};
 	}
 
 	@Override
@@ -167,14 +162,10 @@ public final class MemoryPointer2D extends MemoryPointerBase {
 
 	@Override
 	public boolean isNullPointer(final Expression ptr) {
-		final StructConstructor sc = (StructConstructor) ptr;
-		if (sc.getFieldValues().length == 2 && sc.getFieldIdentifiers()[0].equals(SFO.POINTER_BASE)
+		return ptr instanceof final StructConstructor sc && sc.getFieldValues().length == 2
+				&& sc.getFieldIdentifiers()[0].equals(SFO.POINTER_BASE)
 				&& sc.getFieldIdentifiers()[1].equals(SFO.POINTER_OFFSET)
 				&& BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[0]))
-				&& BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[1]))) {
-			return true;
-		}
-
-		return false;
+				&& BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[1]));
 	}
 }
