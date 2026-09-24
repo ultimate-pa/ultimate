@@ -33,6 +33,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -67,16 +69,45 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 
 	private Boolean mIsBottom = null;
 
-	public CongruenceState(final Map<Term, Integer> varToIndex, final ConstraintRepresentation constraints) {
+	private CongruenceState(final Map<Term, Integer> varToIndex, final ConstraintRepresentation constraints) {
 		mVarToIndex = varToIndex;
 		mConstraints = constraints;
 		mGenerators = null;
 	}
 
-	public CongruenceState(final Map<Term, Integer> varToIndex, final GeneratorRepresentation generators) {
+	private CongruenceState(final Map<Term, Integer> varToIndex, final GeneratorRepresentation generators) {
 		mVarToIndex = varToIndex;
 		mConstraints = null;
 		mGenerators = generators;
+	}
+
+	public static CongruenceState fromRelations(final List<EqualityRelation> equalityRelations,
+			final List<ModuloRelation> moduloRelations) {
+		final Set<Term> vars = Stream.concat(equalityRelations.stream().flatMap(x -> x.getVars().stream()),
+				moduloRelations.stream().flatMap(x -> x.getVars().stream())).collect(Collectors.toSet());
+
+		final Map<Term, Integer> varToIndex = new HashMap<>();
+		int freeIndex = 1;
+		for (final Term var : vars) {
+			varToIndex.put(var, freeIndex);
+			freeIndex++;
+		}
+
+		final List<RationalVector> equalities = new ArrayList<>();
+		final List<RationalVector> congruences = new ArrayList<>();
+		for (final EqualityRelation equalityRelation : equalityRelations) {
+			equalities.add(CongruenceUtil.getVector(equalityRelation, varToIndex));
+		}
+		for (final ModuloRelation moduloRelation : moduloRelations) {
+			congruences.add(CongruenceUtil.getVector(moduloRelation, varToIndex));
+		}
+
+		final var vectorLength = varToIndex.size() + 1;
+
+		// Add that 1 % 1 = 0
+		congruences.add(RationalVector.getUnitVector(0, vectorLength).negate());
+
+		return new CongruenceState(varToIndex, new ConstraintRepresentation(equalities, congruences, vectorLength));
 	}
 
 	public ConstraintRepresentation getConstraintRepresentation() {
@@ -356,10 +387,8 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 			}
 		}
 
-		final ConstraintRepresentation newConstraints =
-				new ConstraintRepresentation(newEqualities, newCongruences, upperConstraints.getVectorLength());
-
-		return new CongruenceState(newVarToIndex, newConstraints);
+		return new CongruenceState(newVarToIndex,
+				new ConstraintRepresentation(newEqualities, newCongruences, upperConstraints.getVectorLength()));
 	}
 
 	@Override
