@@ -110,22 +110,18 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		return new CongruenceState(varToIndex, new ConstraintRepresentation(equalities, congruences, vectorLength));
 	}
 
-	public ConstraintRepresentation getConstraintRepresentation() {
+	private ConstraintRepresentation getConstraintRepresentation() {
 		if (mConstraints == null) {
 			mConstraints = mGenerators.computeConstraintRepresentation();
 		}
 		return mConstraints;
 	}
 
-	public GeneratorRepresentation getGeneratorRepresentation() {
+	private GeneratorRepresentation getGeneratorRepresentation() {
 		if (mGenerators == null) {
 			mGenerators = mConstraints.computeGeneratorRepresentation();
 		}
 		return mGenerators;
-	}
-
-	public Map<Term, Integer> getVarToIndex() {
-		return mVarToIndex;
 	}
 
 	/**
@@ -133,10 +129,9 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 	 */
 	private Map<Integer, Term> getIndexToVar() {
 		final Map<Integer, Term> indexToVar = new HashMap<>();
-		final Map<Term, Integer> varToIndex = getVarToIndex();
 
-		for (final Term term : varToIndex.keySet()) {
-			final Integer index = varToIndex.get(term);
+		for (final Term term : mVarToIndex.keySet()) {
+			final Integer index = mVarToIndex.get(term);
 			indexToVar.put(index, term);
 		}
 		return indexToVar;
@@ -316,9 +311,7 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		}
 
 		// Compute the new VarToIndex
-		final Map<Term, Integer> selfVarToIndex = getVarToIndex();
-		final Map<Term, Integer> otherVarToIndex = other.getVarToIndex();
-		final Map<Term, Integer> newVarToIndex = CongruenceUtil.mergeMaps(selfVarToIndex, otherVarToIndex);
+		final Map<Term, Integer> newVarToIndex = CongruenceUtil.mergeMaps(mVarToIndex, other.mVarToIndex);
 
 		final CongruenceState selfReorderedForm = getReorderedForm(newVarToIndex);
 		final CongruenceState otherReorderedForm = other.getReorderedForm(newVarToIndex);
@@ -350,7 +343,7 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		}
 
 		final CongruenceState upper = join(other);
-		final var newVarToIndex = upper.getVarToIndex();
+		final var newVarToIndex = upper.mVarToIndex;
 		final CongruenceState lower = other.getReorderedForm(newVarToIndex);
 
 		final ConstraintRepresentation lowerConstraints = lower.getConstraintRepresentation();
