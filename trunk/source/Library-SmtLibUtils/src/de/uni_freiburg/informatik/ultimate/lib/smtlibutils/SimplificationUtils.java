@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.egraph.EGraph;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -77,6 +78,25 @@ public final class SimplificationUtils {
 				}
 			}
 		}
+		if (substitutionMapping.isEmpty()) {
+			return term;
+		}
+		return Substitution.apply(mgdScript, substitutionMapping, term);
+	}
+
+	/**
+	 * TODO: egraph, equalities, representative, substitution
+	 *
+	 * @param context
+	 *            Term that we check for equalities. This term is not added to the result. E.g., in the
+	 *            {@link PolyPacSimplificationTermWalker} this is the critical constraint.
+	 * @param term
+	 *            Term in which we apply the substitution.
+	 */
+	public static Term applyEqualityPropagation(final ManagedScript mgdScript, final Term context, final Term term) {
+		final EGraph egraph = new EGraph(mgdScript, null);
+		egraph.addFormula(context);
+		final Map<Term, Term> substitutionMapping = egraph.getRepresentativeMap();
 		if (substitutionMapping.isEmpty()) {
 			return term;
 		}
