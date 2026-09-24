@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,14 +38,20 @@ import java.util.SortedMap;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerWithPreconditionRelevanceAnalysis;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerWithPreconditionRelevanceAnalysis.PrecondRelevanceResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -89,6 +97,7 @@ public class IterativePredicateTransformer<L extends IAction> {
 	private final IPredicate mTruePredicate;
 
 	private final IIcfgSymbolTable mSymbolTable;
+	private final CfgSmtToolkit mCsToolkit;
 
 	private static final boolean INTERPROCEDURAL_POST = true;
 	private static final boolean TRANSFORM_SUMMARY_TO_CNF = true;
@@ -104,6 +113,16 @@ public class IterativePredicateTransformer<L extends IAction> {
 			final NestedWord<L> trace, final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final IPredicate truePredicate,
 			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable) {
+		this(predicateFactory, mgdScript, modifiableGlobalsTable, services, trace, precondition, postcondition,
+				pendingContexts, truePredicate, simplificationTechnique, symbolTable, null);
+	}
+
+	public IterativePredicateTransformer(final BasicPredicateFactory predicateFactory, final ManagedScript mgdScript,
+			final ModifiableGlobalsTable modifiableGlobalsTable, final IUltimateServiceProvider services,
+			final NestedWord<L> trace, final IPredicate precondition, final IPredicate postcondition,
+			final SortedMap<Integer, IPredicate> pendingContexts, final IPredicate truePredicate,
+			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable,
+			final CfgSmtToolkit csToolkit) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(TraceCheckerUtils.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
@@ -118,6 +137,7 @@ public class IterativePredicateTransformer<L extends IAction> {
 		mPendingContexts = pendingContexts;
 		mTruePredicate = truePredicate;
 		mSymbolTable = symbolTable;
+		mCsToolkit = csToolkit;
 	}
 
 	@FunctionalInterface
@@ -196,10 +216,20 @@ public class IterativePredicateTransformer<L extends IAction> {
 				spSequence[i] = postprocessed;
 			}
 		}
+
 		if (computePostcondition) {
-			return new TracePredicates(mPrecondition, computedPostcondition, Arrays.asList(spSequence));
+			final TracePredicates result =
+					new TracePredicates(mPrecondition, computedPostcondition, Arrays.asList(spSequence));
+			return result;
 		}
 		return ipp;
+	}
+
+	public TracePredicates applyBackwardHoareCorePostprocessing(final TracePredicates input,
+			final List<IPredicatePostprocessor> postprocs,
+			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rtf) {
+		return new BackwardHoareCorePostprocessor(mCsToolkit, mPrecondition, mPostcondition, mLogger, mTrace,
+				mPendingContexts, mPredicateFactory, rtf).applyBackwardHoareCorePostprocessing(input, postprocs);
 	}
 
 	/**
@@ -448,6 +478,240 @@ public class IterativePredicateTransformer<L extends IAction> {
 			return mReason;
 		}
 
+	}
+
+	private final class BackwardHoareCorePostprocessor {
+		private final CfgSmtToolkit mCsToolkit;
+		private final IPredicate mPrecondition;
+		private final IPredicate mPostcondition;
+		private final ILogger mLogger;
+		private final NestedWord<L> mTrace;
+		private final SortedMap<Integer, IPredicate> mPendingContexts;
+		private final BasicPredicateFactory mPredicateFactory;
+		@SuppressWarnings("unused")
+		private final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> mRtf;
+
+		private int mOverallSizeReduction;
+		private int mOverallUnknowns;
+		private int mOverallConjuncts;
+		private int mOverallPositionsWithReduction;
+		private int mOverallTrivial;
+
+		private BackwardHoareCorePostprocessor(final CfgSmtToolkit csToolkit, final IPredicate precondition,
+				final IPredicate postcondition, final ILogger logger, final NestedWord<L> trace,
+				final SortedMap<Integer, IPredicate> pendingContexts, final BasicPredicateFactory predicateFactory,
+				final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rtf) {
+			mCsToolkit = csToolkit;
+			mPrecondition = precondition;
+			mPostcondition = postcondition;
+			mLogger = logger;
+			mTrace = trace;
+			mPendingContexts = pendingContexts;
+			mPredicateFactory = predicateFactory;
+			mRtf = rtf;
+		}
+
+		private TracePredicates applyBackwardHoareCorePostprocessing(final TracePredicates input,
+				final List<IPredicatePostprocessor> postprocs) {
+			mOverallSizeReduction = 0;
+			mOverallUnknowns = 0;
+			mOverallConjuncts = 0;
+			mOverallPositionsWithReduction = 0;
+			mOverallTrivial = 0;
+			final List<IPredicate> predicates = new ArrayList<>();
+			predicates.add(input.getPrecondition());
+			predicates.addAll(input.getPredicates());
+			predicates.add(input.getPostcondition());
+			final HoareTripleCheckerWithPreconditionRelevanceAnalysis checker =
+					new HoareTripleCheckerWithPreconditionRelevanceAnalysis(mCsToolkit, mLogger);
+			try {
+				// Iterate backwards up to 1, because we don't want to refine the precondition.
+				for (int i = mTrace.length() - 1; i >= 1; --i) {
+					final IPredicate predecessor = predicates.get(i);
+					final IPredicate successor = predicates.get(i + 1);
+					final List<IPredicate> predecessorConjuncts = splitConjunctively(predecessor);
+					mOverallConjuncts += predecessorConjuncts.size();
+					final int pos = i;
+					final IAction action = mTrace.getSymbol(pos);
+					switch (action) {
+					case final IInternalAction internalAction: {
+						if (!mTrace.isInternalPosition(pos)) {
+							throw new AssertionError("not an internal action at internal position");
+						}
+						if (SmtUtils.isTrueLiteral(predecessor.getFormula())
+								|| SmtUtils.isFalseLiteral(predecessor.getFormula())) {
+							predicates.set(i, applyPostprocessors(postprocs, i, predecessor));
+							mOverallTrivial++;
+							continue;
+						}
+						final PrecondRelevanceResult checkResult =
+								checker.checkInternal(predecessorConjuncts, internalAction, successor);
+						final PredicateReductionResult res =
+								constructReduction(postprocs, predecessorConjuncts, pos, checkResult);
+						setRefinedPredicate(predicates, postprocs, predecessor, pos, res);
+						break;
+					}
+					case final ICallAction callAction: {
+						if (!mTrace.isCallPosition(pos)) {
+							throw new AssertionError("not a call action at call position");
+						}
+						if (!mTrace.isPendingCall(pos)) {
+							// for pending calls, we must not weaken the precondition, the precondition was already
+							// weakened
+							// when we handled the return.
+//							predicates.set(i, applyPostprocessors(postprocs, i, predecessor));
+							continue;
+						}
+						if (SmtUtils.isTrueLiteral(predecessor.getFormula())
+								|| SmtUtils.isFalseLiteral(predecessor.getFormula())) {
+							predicates.set(i, applyPostprocessors(postprocs, i, predecessor));
+							mOverallTrivial++;
+							continue;
+						}
+
+						final PrecondRelevanceResult checkResult =
+								checker.checkCall(predecessorConjuncts, callAction, successor);
+						final PredicateReductionResult res =
+								constructReduction(postprocs, predecessorConjuncts, pos, checkResult);
+						setRefinedPredicate(predicates, postprocs, predecessor, pos, res);
+						break;
+					}
+					case final IReturnAction returnAction: {
+						if (!mTrace.isReturnPosition(pos)) {
+							throw new AssertionError("not a return action at return position");
+						}
+						IPredicate hierPre;
+						final int callPos = mTrace.getCallPosition(pos);
+						if (mTrace.isPendingReturn(pos)) {
+							hierPre = mPendingContexts.get(pos);
+						} else {
+							hierPre = predicates.get(callPos);
+							if (SmtUtils.isTrueLiteral(hierPre.getFormula())
+									|| SmtUtils.isFalseLiteral(hierPre.getFormula())) {
+								predicates.set(callPos, applyPostprocessors(postprocs, callPos, hierPre));
+								mOverallTrivial++;
+							} else {
+								final UnmodifiableTransFormula summaryTf =
+										TraceCheckUtils.computeProcedureSummary(mTrace, mRtf, callPos, pos, mMgdScript,
+												mServices, mLogger, mSimplificationTechnique, mSymbolTable,
+												mModifiedGlobals, TRANSFORM_SUMMARY_TO_CNF);
+								final IInternalAction summary = new IInternalAction() {
+									@Override
+									public String getPrecedingProcedure() {
+										return returnAction.getSucceedingProcedure();
+									}
+
+									@Override
+									public String getSucceedingProcedure() {
+										return returnAction.getSucceedingProcedure();
+									}
+
+									@Override
+									public String toString() {
+										return "Summary of " + mTrace.getSymbol(callPos) + " and " + returnAction;
+									}
+
+									@Override
+									public UnmodifiableTransFormula getTransformula() {
+										return summaryTf;
+									}
+								};
+								final List<IPredicate> hierPreConjuncts = splitConjunctively(hierPre);
+								final PrecondRelevanceResult checkResult =
+										checker.checkInternal(hierPreConjuncts, summary, successor);
+								final PredicateReductionResult res =
+										constructReduction(postprocs, hierPreConjuncts, callPos, checkResult);
+								setRefinedPredicate(predicates, postprocs, hierPre, callPos, res);
+								if (res.sizeReduction() > 0) {
+									hierPre = predicates.get(callPos);
+								}
+							}
+						}
+						if (SmtUtils.isTrueLiteral(predecessor.getFormula())
+								|| SmtUtils.isFalseLiteral(predecessor.getFormula())) {
+							predicates.set(i, applyPostprocessors(postprocs, i, predecessor));
+							mOverallTrivial++;
+							continue;
+						}
+						final PrecondRelevanceResult checkResult =
+								checker.checkReturn(predecessorConjuncts, hierPre, returnAction, successor);
+						final PredicateReductionResult res =
+								constructReduction(postprocs, predecessorConjuncts, pos, checkResult);
+						setRefinedPredicate(predicates, postprocs, predecessor, pos, res);
+						break;
+					}
+					default:
+						throw new AssertionError("Unexpected action type " + action.getClass());
+					}
+				}
+			} finally {
+				checker.releaseLock();
+			}
+
+			predicates.remove(0);
+			predicates.remove(predicates.size() - 1);
+			mLogger.warn(String.format(
+					"Backward Hoare core postprocessing reduced overall conjuncts from %s to %s. %s IPredicates, %s allowed reduction, %s trivial, %s solver unknowns",
+					mOverallConjuncts, mOverallConjuncts - mOverallSizeReduction, predicates.size(),
+					mOverallPositionsWithReduction, mOverallTrivial, mOverallUnknowns));
+			return new TracePredicates(input.getPrecondition(), input.getPostcondition(), predicates);
+		}
+
+		private void setRefinedPredicate(final List<IPredicate> predicates,
+				final List<IPredicatePostprocessor> postprocs, final IPredicate predecessor, final int pos,
+				final PredicateReductionResult res) {
+			if (res.sizeReduction() > 0) {
+				predicates.set(pos, res.result());
+				mOverallSizeReduction += res.sizeReduction();
+				mOverallPositionsWithReduction++;
+			} else {
+				predicates.set(pos, applyPostprocessors(postprocs, pos, predecessor));
+			}
+			mOverallUnknowns += res.solverReturnedUnknown();
+		}
+
+		private PredicateReductionResult constructReduction(final List<IPredicatePostprocessor> postprocs,
+				final List<IPredicate> predecessorConjuncts, final int pos, final PrecondRelevanceResult checkResult) {
+			switch (checkResult.validity()) {
+			case INVALID:
+				throw new AssertionError("Unexpected invalidity of Hoare triple for position " + pos);
+			case UNKNOWN:
+				// Cannot simplify because we did not get an unsat core.
+				mLogger.warn("Hoare triple for position " + pos + " is unknown");
+				return new PredicateReductionResult(null, (byte) 1, 0);
+			case VALID:
+				final List<IPredicate> relevantPreconditions = checkResult.relevantPreconditions();
+				final int sizeReduction = predecessorConjuncts.size() - relevantPreconditions.size();
+				if (sizeReduction == 0) {
+					return new PredicateReductionResult(null, (byte) 0, 0);
+				}
+				assert sizeReduction > 0 : "Size reduction must be positive";
+				mLogger.warn(String.format("Reduced conjuncts from %s to %s for position %s",
+						predecessorConjuncts.size(), relevantPreconditions.size(), pos));
+				final HashSet<IPredicate> irrelevantConjuncts = new HashSet<>(predecessorConjuncts);
+				irrelevantConjuncts.removeAll(relevantPreconditions);
+				mLogger.warn(String.format("Irrelevant conjuncts for position %s: %s", pos, irrelevantConjuncts));
+
+				// No need to simplify, the conjunction is a subset of an existing conjunction.
+				IPredicate refined = mPredicateFactory.and(SimplificationTechnique.NONE, relevantPreconditions);
+				refined = applyPostprocessors(postprocs, pos, refined);
+				return new PredicateReductionResult(refined, (byte) 0, sizeReduction);
+			default:
+				throw new AssertionError("Unexpected value" + checkResult.validity());
+			}
+		}
+
+		private List<IPredicate> splitConjunctively(final IPredicate predicate) {
+			final Term[] conjuncts = SmtUtils.getConjuncts(predicate.getFormula());
+			final List<IPredicate> result = new ArrayList<>(conjuncts.length);
+			for (final Term conjunct : conjuncts) {
+				result.add(mPredicateFactory.newPredicate(conjunct));
+			}
+			return result;
+		}
+
+		record PredicateReductionResult(IPredicate result, byte solverReturnedUnknown, int sizeReduction) {
+		}
 	}
 
 }

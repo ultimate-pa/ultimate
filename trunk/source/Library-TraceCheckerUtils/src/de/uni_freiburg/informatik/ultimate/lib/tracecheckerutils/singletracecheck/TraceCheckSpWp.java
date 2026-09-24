@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
@@ -71,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 /**
  * Use unsat core, predicate transformer and live variable analsysis to compute a sequence of interpolants.
@@ -284,11 +286,24 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				}
 				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices,
 						mCfgManagedScript, mPredicateFactory, mSimplificationTechnique));
-				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
+//				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
 				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
-						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mBoogie2SmtSymbolTable);
-				mInterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getPredicates();
+						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mBoogie2SmtSymbolTable,
+						mCsToolkit);
+				final TimeTracker tt = new TimeTracker();
+				tt.start();
+				final TracePredicates tp = spt.computeStrongestPostconditionSequence(rtf, postprocs);
+//				mInterpolantsFp = tp.getPredicates();
+				tt.stop();
+				mLogger.info("Time for computing forward predicates: " + tt.elapsedTime(TimeUnit.MILLISECONDS) + " ms");
+				tt.reset();
+				postprocs.clear();
+				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
+				tt.start();
+				mInterpolantsFp = spt.applyBackwardHoareCorePostprocessing(tp, postprocs, rtf).getPredicates();
+				tt.stop();
+				mLogger.info("Time for Hoare core postprocessing: " + tt.elapsedTime(TimeUnit.MILLISECONDS) + " ms");
 			} catch (final ToolchainCanceledException tce) {
 				final String taskDescription = "constructing forward predicates";
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
@@ -320,7 +335,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
 				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
-						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mBoogie2SmtSymbolTable);
+						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mBoogie2SmtSymbolTable,
+						mCsToolkit);
 				mInterpolantsBp =
 						spt.computeWeakestPreconditionSequence(rtf, postprocs, false, mAlternatingQuantifierBailout)
 								.getPredicates();
