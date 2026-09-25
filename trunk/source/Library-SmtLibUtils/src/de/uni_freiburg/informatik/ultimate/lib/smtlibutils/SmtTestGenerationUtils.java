@@ -72,29 +72,8 @@ public final class SmtTestGenerationUtils {
 		}
 
 		final Map<Sort, String> sortVarMapping = new HashMap<>();
-		final int counter = 0;
 		for (final Sort sort : sorts) {
-			final String constructionString;
-			if (SmtSortUtils.isBoolSort(sort)) {
-				constructionString = "SmtSortUtils::getBoolSort";
-			} else if (SmtSortUtils.isRealSort(sort)) {
-				constructionString = "SmtSortUtils::getRealSort";
-			} else if (SmtSortUtils.isIntSort(sort)) {
-				constructionString = "SmtSortUtils::getIntSort";
-			} else if (SmtSortUtils.isArraySort(sort)) {
-				if (isIntIntArray(sort)) {
-					constructionString = "QuantifierEliminationTest::getArrayIntIntSort";
-				} else if (isIntIntIntArray(sort)) {
-					constructionString = "QuantifierEliminationTest::getArrayIntIntIntSort";
-				} else {
-					constructionString = "arraySort" + counter;
-				}
-			} else if (SmtSortUtils.isBitvecSort(sort)) {
-				constructionString =
-						"QuantifierEliminationTest::getBitvectorSort" + SmtSortUtils.getBitvectorLength(sort);
-			} else {
-				constructionString = "otherSort" + counter;
-			}
+			final String constructionString = generateSortConstructionString(sort);
 			sortVarMapping.put(sort, constructionString);
 		}
 
@@ -143,6 +122,46 @@ public final class SmtTestGenerationUtils {
 		result.append(String.format("\t\tfinal String formulaAsString = \"%s\";", term.toStringDirect()));
 		result.append(System.lineSeparator());
 		return result.toString();
+	}
+
+	private static String generateSortConstructionString(final Sort sort) {
+		if (SmtSortUtils.isBoolSort(sort)) {
+			return "SmtSortUtils::getBoolSort";
+		} else if (SmtSortUtils.isRealSort(sort)) {
+			return "SmtSortUtils::getRealSort";
+		} else if (SmtSortUtils.isIntSort(sort)) {
+			return "SmtSortUtils::getIntSort";
+		} else if (SmtSortUtils.isArraySort(sort)) {
+			return generateSortConstructionStringForArraySort(sort);
+		} else if (SmtSortUtils.isBitvecSort(sort)) {
+			return "QuantifierEliminationTest::getBitvectorSort" + SmtSortUtils.getBitvectorLength(sort);
+		} else {
+			return "otherSort";
+		}
+	}
+
+	private static String generateSortConstructionStringForArraySort(final Sort sort) {
+		if (isIntIntArray(sort)) {
+			return "QuantifierEliminationTest::getArrayIntIntSort";
+		}
+		if (isIntIntIntArray(sort)) {
+			return "QuantifierEliminationTest::getArrayIntIntIntSort";
+		}
+
+		if (SmtSortUtils.isBitvecSort(sort.getArguments()[0])) {
+			if (SmtSortUtils.isBitvecSort(sort.getArguments()[1])) {
+				return "QuantifierEliminationTest::getArrayBv" + SmtSortUtils.getBitvectorLength(sort.getArguments()[0])
+						+ "Bv" + SmtSortUtils.getBitvectorLength(sort.getArguments()[1]) + "Sort";
+			}
+			if (SmtSortUtils.isArraySort(sort.getArguments()[1])
+					&& (SmtSortUtils.isBitvecSort(sort.getArguments()[1].getArguments()[0])
+							&& (SmtSortUtils.isBitvecSort(sort.getArguments()[1].getArguments()[1])))) {
+				return "QuantifierEliminationTest::getArrayBv" + SmtSortUtils.getBitvectorLength(sort.getArguments()[0])
+						+ "Bv" + SmtSortUtils.getBitvectorLength(sort.getArguments()[1].getArguments()[0]) + "Bv"
+						+ +SmtSortUtils.getBitvectorLength(sort.getArguments()[1].getArguments()[1]) + "Sort";
+			}
+		}
+		return "otherArraySort";
 	}
 
 	private static boolean isIntIntArray(final Sort sort) {
