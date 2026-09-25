@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.Inte
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedInterferenceOfEdge;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedEdgeInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocksetAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.TransFormulaToInterferencePredicate;
@@ -77,7 +77,7 @@ public final class PostStateInterferenceFactory
 
 	@Override
 	protected void accumulateEdgeInterference(final Map<GroupKey, Group> accumulator,
-			final TranslatedInterferenceOfEdge edge, final Map<IcfgLocation, IPredicate> threadStates) {
+			final TranslatedEdgeInterference edge, final Map<IcfgLocation, IPredicate> threadStates) {
 		final IPredicate targetState = threadStates.get(edge.target());
 		final IPredicate postState = targetState == null ? computeEdgeLocalPostState(edge, threadStates)
 				: mTranslator.projectPreStateToSharedState(targetState);
@@ -105,7 +105,7 @@ public final class PostStateInterferenceFactory
 		return new PostStateInterference(interferenceByGroup, mSourcesBeforeForkByThread);
 	}
 
-	private IPredicate computeEdgeLocalPostState(final TranslatedInterferenceOfEdge edge,
+	private IPredicate computeEdgeLocalPostState(final TranslatedEdgeInterference edge,
 			final Map<IcfgLocation, IPredicate> threadStates) {
 		final IPredicate relationalInterference = relationalInterferenceOf(edge, threadStates);
 		if (relationalInterference == null) {

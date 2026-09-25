@@ -43,42 +43,42 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.TransFo
 
 public final class InterferenceEdgeCollector {
 
-	private final Map<IcfgLocation, List<TranslatedInterferenceOfEdge>> mInterferenceBySourceLocation;
+	private final Map<IcfgLocation, List<TranslatedEdgeInterference>> mInterferenceBySourceLocation;
 
 	public InterferenceEdgeCollector(final IIcfg<IcfgLocation> icfg,
 			final TransFormulaToInterferencePredicate translator) {
-		mInterferenceBySourceLocation = prepareEdges(icfg, translator);
+		mInterferenceBySourceLocation = translateEdges(icfg, translator);
 	}
 
-	public List<TranslatedInterferenceOfEdge> allPreparedEdges() {
+	public List<TranslatedEdgeInterference> allTranslatedEdges() {
 		return mInterferenceBySourceLocation.values().stream().flatMap(List::stream).toList();
 	}
 
-	public List<TranslatedInterferenceOfEdge> collect(final Map<IcfgLocation, IPredicate> locationStates) {
+	public List<TranslatedEdgeInterference> collect(final Map<IcfgLocation, IPredicate> locationStates) {
 		return locationStates.keySet().stream().map(mInterferenceBySourceLocation::get).filter(Objects::nonNull)
 				.flatMap(List::stream).toList();
 	}
 
-	private static Map<IcfgLocation, List<TranslatedInterferenceOfEdge>> prepareEdges(final IIcfg<IcfgLocation> icfg,
+	private static Map<IcfgLocation, List<TranslatedEdgeInterference>> translateEdges(final IIcfg<IcfgLocation> icfg,
 			final TransFormulaToInterferencePredicate translator) {
-		final Map<IcfgLocation, List<TranslatedInterferenceOfEdge>> preparedEdgesBySource = new LinkedHashMap<>();
+		final Map<IcfgLocation, List<TranslatedEdgeInterference>> translatedEdgesBySource = new LinkedHashMap<>();
 		IcfgUtils.getAllLocations(icfg).forEach(source -> {
-			final List<TranslatedInterferenceOfEdge> preparedEdges = new ArrayList<>();
+			final List<TranslatedEdgeInterference> translatedEdges = new ArrayList<>();
 			for (final IcfgEdge edge : source.getOutgoingEdges()) {
-				final TranslatedInterferenceOfEdge prepared = prepareEdge(source, edge, translator);
-				if (prepared != null) {
-					preparedEdges.add(prepared);
+				final TranslatedEdgeInterference translated = translateEdge(source, edge, translator);
+				if (translated != null) {
+					translatedEdges.add(translated);
 				}
 			}
-			if (!preparedEdges.isEmpty()) {
-				preparedEdges.sort(InterferenceUtils.INTERFERENCE_EDGE_ORDER);
-				preparedEdgesBySource.put(source, List.copyOf(preparedEdges));
+			if (!translatedEdges.isEmpty()) {
+				translatedEdges.sort(InterferenceUtils.INTERFERENCE_EDGE_ORDER);
+				translatedEdgesBySource.put(source, List.copyOf(translatedEdges));
 			}
 		});
-		return Collections.unmodifiableMap(preparedEdgesBySource);
+		return Collections.unmodifiableMap(translatedEdgesBySource);
 	}
 
-	private static TranslatedInterferenceOfEdge prepareEdge(final IcfgLocation source, final IcfgEdge edge,
+	private static TranslatedEdgeInterference translateEdge(final IcfgLocation source, final IcfgEdge edge,
 			final TransFormulaToInterferencePredicate translator) {
 		final IcfgLocation target = edge.getTarget();
 		if (target == null || edge.getTransformula() == null) {
@@ -97,7 +97,7 @@ public final class InterferenceEdgeCollector {
 				: translator.translateForInterferenceWithFork(edge.getTransformula(), source.getProcedure(), source,
 						target, forkedThreadId, translator.getEntryLocation(forkedThreadId),
 						additionallyChangedGlobals);
-		return new TranslatedInterferenceOfEdge(source, target, InterferenceGrouping.keyFor(translator, source, target),
+		return new TranslatedEdgeInterference(source, target, InterferenceGrouping.keyFor(translator, source, target),
 				transitionPredicate,
 				InterferenceUtils.getChangedGlobals(edge.getTransformula(), additionallyChangedGlobals),
 				forkedThreadId);

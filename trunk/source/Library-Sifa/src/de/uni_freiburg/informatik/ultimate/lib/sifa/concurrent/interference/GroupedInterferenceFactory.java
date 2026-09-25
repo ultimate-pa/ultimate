@@ -72,7 +72,7 @@ public abstract class GroupedInterferenceFactory<A> {
 		final Map<String, Map<IcfgLocation, IPredicate>> perThreadStates = invariants.threadInvariants();
 		final Map<IcfgLocation, IPredicate> allStates = mergeStates(perThreadStates);
 		final A accumulator = createAccumulator();
-		for (final TranslatedInterferenceOfEdge edge : mEdgeCollector.collect(allStates)) {
+		for (final TranslatedEdgeInterference edge : mEdgeCollector.collect(allStates)) {
 			if (requiresChangedGlobals() && edge.changedGlobals().isEmpty()) {
 				continue;
 			}
@@ -91,17 +91,17 @@ public abstract class GroupedInterferenceFactory<A> {
 
 	protected abstract A createAccumulator();
 
-	protected abstract void accumulateEdgeInterference(A accumulator, TranslatedInterferenceOfEdge edge,
+	protected abstract void accumulateEdgeInterference(A accumulator, TranslatedEdgeInterference edge,
 			Map<IcfgLocation, IPredicate> threadStates);
 
 	protected abstract IInterferenceSet buildInterferenceSet(A accumulator);
 
-	protected final InterferenceGroupKey groupKeyFor(final TranslatedInterferenceOfEdge edge) {
+	protected final InterferenceGroupKey groupKeyFor(final TranslatedEdgeInterference edge) {
 		return new InterferenceGroupKey(edge.source().getProcedure(), edge.abstractLocationPair(),
 				mustHeldLocksAroundEdge(edge), edge.forkedThreadId(), Set.of(edge.source()));
 	}
 
-	protected final Set<String> mustHeldLocksAroundEdge(final TranslatedInterferenceOfEdge edge) {
+	protected final Set<String> mustHeldLocksAroundEdge(final TranslatedEdgeInterference edge) {
 		final Set<String> sourceLockset = mLocksetInfo.mustLocksetAt(edge.source());
 		final Set<String> targetLockset = mLocksetInfo.mustLocksetAt(edge.target());
 		if (sourceLockset.isEmpty()) {
@@ -115,7 +115,7 @@ public abstract class GroupedInterferenceFactory<A> {
 		return Set.copyOf(union);
 	}
 
-	protected final IPredicate relationalInterferenceOf(final TranslatedInterferenceOfEdge edge,
+	protected final IPredicate relationalInterferenceOf(final TranslatedEdgeInterference edge,
 			final Map<IcfgLocation, IPredicate> threadStates) {
 		final IPredicate sourceState = threadStates.get(edge.source());
 		if (sourceState == null) {

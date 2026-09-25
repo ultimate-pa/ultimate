@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.Inte
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedInterferenceOfEdge;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedEdgeInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.guardedupdate.GuardedUpdateInterference.GuardedUpdateGroup;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocksetAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition;
@@ -56,11 +56,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public final class GuardedUpdateInterferenceFactory
-		extends GroupedInterferenceFactory<Map<InterferenceGroupKey, Map<TranslatedInterferenceOfEdge, GuardedUpdate>>> {
+		extends GroupedInterferenceFactory<Map<InterferenceGroupKey, Map<TranslatedEdgeInterference, GuardedUpdate>>> {
 
 	private Map<String, Map<Integer, LocationMoveInterference>> mLocationMoveInterferenceByThread;
 
-	private final Map<TranslatedInterferenceOfEdge, CachedGuardedUpdate> mCachedUpdatesByEdge =
+	private final Map<TranslatedEdgeInterference, CachedGuardedUpdate> mCachedUpdatesByEdge =
 			new IdentityHashMap<>();
 	private final Map<IPredicate, IPredicate> mSharedStateProjections = new IdentityHashMap<>();
 
@@ -81,14 +81,14 @@ public final class GuardedUpdateInterferenceFactory
 	}
 
 	@Override
-	protected Map<InterferenceGroupKey, Map<TranslatedInterferenceOfEdge, GuardedUpdate>> createAccumulator() {
+	protected Map<InterferenceGroupKey, Map<TranslatedEdgeInterference, GuardedUpdate>> createAccumulator() {
 		return new LinkedHashMap<>();
 	}
 
 	@Override
 	protected void accumulateEdgeInterference(
-			final Map<InterferenceGroupKey, Map<TranslatedInterferenceOfEdge, GuardedUpdate>> accumulator,
-			final TranslatedInterferenceOfEdge edge, final Map<IcfgLocation, IPredicate> threadStates) {
+			final Map<InterferenceGroupKey, Map<TranslatedEdgeInterference, GuardedUpdate>> accumulator,
+			final TranslatedEdgeInterference edge, final Map<IcfgLocation, IPredicate> threadStates) {
 		final IPredicate sourceState = threadStates.get(edge.source());
 		if (sourceState == null) {
 			return;
@@ -116,28 +116,28 @@ public final class GuardedUpdateInterferenceFactory
 	}
 
 	private void accumulateLocationMoveClosure(
-			final Map<InterferenceGroupKey, Map<TranslatedInterferenceOfEdge, GuardedUpdate>> accumulator,
-			final TranslatedInterferenceOfEdge edge) {
+			final Map<InterferenceGroupKey, Map<TranslatedEdgeInterference, GuardedUpdate>> accumulator,
+			final TranslatedEdgeInterference edge) {
 		final LocationMoveInterference interference =
 				locationMoveInterferenceByThread().get(edge.source().getProcedure()).get(sourceAbstractLocation(edge));
 		accumulator.computeIfAbsent(interference.groupKey(), key -> new LinkedHashMap<>())
 				.put(interference.representative(), interference.update());
 	}
 
-	private boolean isLocationMove(final TranslatedInterferenceOfEdge edge) {
+	private boolean isLocationMove(final TranslatedEdgeInterference edge) {
 		return edge.changedGlobals().isEmpty() && edge.forkedThreadId() == null && sourceAbstractLocation(edge) != targetAbstractLocation(edge)
 				&& mTranslator.getLocationTermVarOrNull(edge.source().getProcedure()) != null;
 	}
 
-	private static int sourceAbstractLocation(final TranslatedInterferenceOfEdge edge) {
+	private static int sourceAbstractLocation(final TranslatedEdgeInterference edge) {
 		return edge.abstractLocationPair().sourceAbstractLocation();
 	}
 
-	private static int targetAbstractLocation(final TranslatedInterferenceOfEdge edge) {
+	private static int targetAbstractLocation(final TranslatedEdgeInterference edge) {
 		return edge.abstractLocationPair().targetAbstractLocation();
 	}
 
-	private record LocationMoveInterference(InterferenceGroupKey groupKey, TranslatedInterferenceOfEdge representative,
+	private record LocationMoveInterference(InterferenceGroupKey groupKey, TranslatedEdgeInterference representative,
 			GuardedUpdate update) {
 	}
 
@@ -146,9 +146,9 @@ public final class GuardedUpdateInterferenceFactory
 			return mLocationMoveInterferenceByThread;
 		}
 		final Map<String, Map<Integer, Set<Integer>>> moveGraph = new LinkedHashMap<>();
-		final Map<String, Map<Integer, TranslatedInterferenceOfEdge>> representatives = new LinkedHashMap<>();
+		final Map<String, Map<Integer, TranslatedEdgeInterference>> representatives = new LinkedHashMap<>();
 		final Map<String, Map<Integer, Set<IcfgLocation>>> concreteSources = new LinkedHashMap<>();
-		for (final TranslatedInterferenceOfEdge edge : mEdgeCollector.allPreparedEdges()) {
+		for (final TranslatedEdgeInterference edge : mEdgeCollector.allTranslatedEdges()) {
 			if (!isLocationMove(edge)) {
 				continue;
 			}
@@ -185,7 +185,7 @@ public final class GuardedUpdateInterferenceFactory
 	}
 
 	private LocationMoveInterference createLocationMoveInterference(final String thread, final TermVariable locVar,
-			final int sourceAbstractLocation, final Set<Integer> reachable, final TranslatedInterferenceOfEdge representative,
+			final int sourceAbstractLocation, final Set<Integer> reachable, final TranslatedEdgeInterference representative,
 			final Set<IcfgLocation> sources) {
 		final IPredicate guard = mPredicateFactory.newPredicate(locEquality(locVar, sourceAbstractLocation));
 		final IPredicate effect = mPredicateFactory.newPredicate(SmtUtils.or(mManagedScript.getScript(),
@@ -205,7 +205,7 @@ public final class GuardedUpdateInterferenceFactory
 
 	@Override
 	protected IInterferenceSet buildInterferenceSet(
-			final Map<InterferenceGroupKey, Map<TranslatedInterferenceOfEdge, GuardedUpdate>> accumulator) {
+			final Map<InterferenceGroupKey, Map<TranslatedEdgeInterference, GuardedUpdate>> accumulator) {
 		if (accumulator.isEmpty()) {
 			return null;
 		}
@@ -215,7 +215,7 @@ public final class GuardedUpdateInterferenceFactory
 		return new GuardedUpdateInterference(merged, mSourcesBeforeForkByThread, mManagedScript, mPredicateFactory);
 	}
 
-	private GuardedUpdate tryCreateUpdate(final TranslatedInterferenceOfEdge edge, final IPredicate sharedPreState) {
+	private GuardedUpdate tryCreateUpdate(final TranslatedEdgeInterference edge, final IPredicate sharedPreState) {
 		final Set<TermVariable> modified = modifiedTermVariablesOf(edge);
 		if (modified.isEmpty() && edge.changedGlobals().isEmpty()) {
 			return null;
@@ -233,7 +233,7 @@ public final class GuardedUpdateInterferenceFactory
 		return new GuardedUpdate(guard, effect, modified);
 	}
 
-	private Set<TermVariable> modifiedTermVariablesOf(final TranslatedInterferenceOfEdge edge) {
+	private Set<TermVariable> modifiedTermVariablesOf(final TranslatedEdgeInterference edge) {
 		final Set<TermVariable> modified = new HashSet<>();
 		for (final IProgramVar changed : edge.changedGlobals()) {
 			modified.add(changed.getTermVariable());

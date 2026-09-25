@@ -51,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public final class InterferenceUtils {
 
-	public static final Comparator<TranslatedInterferenceOfEdge> INTERFERENCE_EDGE_ORDER = Comparator
-			.comparing((final TranslatedInterferenceOfEdge edge) -> edge.source().toString())
+	public static final Comparator<TranslatedEdgeInterference> INTERFERENCE_EDGE_ORDER = Comparator
+			.comparing((final TranslatedEdgeInterference edge) -> edge.source().toString())
 			.thenComparing(edge -> edge.target().toString())
 			.thenComparing(edge -> edge.transitionPredicate().getFormula().toString());
 

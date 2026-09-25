@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInt
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeCollector;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedInterferenceOfEdge;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedEdgeInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.strongestpostcondition.StrongestPostconditionInterference.RelationalInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocksetAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition;
@@ -67,7 +67,7 @@ public final class StrongestPostconditionInterferenceFactory
 
 	@Override
 	protected void accumulateEdgeInterference(final Map<InterferenceGroupKey, RelationalInterference> accumulator,
-			final TranslatedInterferenceOfEdge edge, final Map<IcfgLocation, IPredicate> threadStates) {
+			final TranslatedEdgeInterference edge, final Map<IcfgLocation, IPredicate> threadStates) {
 		final IPredicate relationalInterference = relationalInterferenceOf(edge, threadStates);
 		if (relationalInterference == null
 				|| InterferenceUtils.isNullOrFalse(relationalInterference)) {

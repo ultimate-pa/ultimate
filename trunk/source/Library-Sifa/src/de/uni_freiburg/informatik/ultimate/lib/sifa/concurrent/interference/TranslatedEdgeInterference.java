@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 
-public record TranslatedInterferenceOfEdge(IcfgLocation source, IcfgLocation target,
+public record TranslatedEdgeInterference(IcfgLocation source, IcfgLocation target,
 		AbstractLocationPair abstractLocationPair, IPredicate transitionPredicate, Set<IProgramVar> changedGlobals,
 		String forkedThreadId) {
 }

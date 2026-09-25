@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterferenceSet;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedInterferenceOfEdge;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedEdgeInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain.ResultForAlteredInputs;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public final class GuardedUpdateInterference extends GroupedInterferenceSet<GuardedUpdateInterference.GuardedUpdateGroup> {
 
-	public record GuardedUpdateGroup(Map<TranslatedInterferenceOfEdge, GuardedUpdate> updatesByEdge) {
+	public record GuardedUpdateGroup(Map<TranslatedEdgeInterference, GuardedUpdate> updatesByEdge) {
 		public GuardedUpdateGroup {
 			updatesByEdge = Collections.unmodifiableMap(new LinkedHashMap<>(updatesByEdge));
 		}
@@ -160,7 +160,7 @@ public final class GuardedUpdateInterference extends GroupedInterferenceSet<Guar
 	@Override
 	protected GuardedUpdateGroup widenInterference(final GuardedUpdateGroup left, final GuardedUpdateGroup right,
 			final IDomain domain) {
-		final LinkedHashMap<TranslatedInterferenceOfEdge, GuardedUpdate> widened =
+		final LinkedHashMap<TranslatedEdgeInterference, GuardedUpdate> widened =
 				new LinkedHashMap<>(left.updatesByEdge());
 		right.updatesByEdge().forEach((edge, rightUpdate) -> widened.merge(edge, rightUpdate,
 				(leftUpdate, ignored) -> widen(leftUpdate, rightUpdate, domain)));
@@ -175,7 +175,7 @@ public final class GuardedUpdateInterference extends GroupedInterferenceSet<Guar
 	@Override
 	protected boolean isInterferenceSubsumedBy(final GuardedUpdateGroup left, final GuardedUpdateGroup right,
 			final IDomain domain) {
-		for (final Entry<TranslatedInterferenceOfEdge, GuardedUpdate> entry : left.updatesByEdge().entrySet()) {
+		for (final Entry<TranslatedEdgeInterference, GuardedUpdate> entry : left.updatesByEdge().entrySet()) {
 			final GuardedUpdate rightUpdate = right.updatesByEdge().get(entry.getKey());
 			if (rightUpdate == null || !isSubsumed(entry.getValue(), rightUpdate, domain)) {
 				return false;
