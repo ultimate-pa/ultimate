@@ -27,10 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -66,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
@@ -980,7 +975,8 @@ public class PredicateUnifier implements IPredicateUnifier {
 				}
 				if (implies == Validity.VALID && explies == Validity.VALID) {
 					if (DEBUG_DUMP_SIMPLIFICATION_OPPORTUNITIES) {
-						dumpSimplificationPossibility(mTerm, other.getFormula());
+						SmtTestGenerationUtils.dumpSimplificationOpportunity("SimplificationOpportunity", mTerm,
+								other.getFormula());
 					}
 					if (mDeprecatedPredicates.containsKey(other)) {
 						return mDeprecatedPredicates.get(other);
@@ -992,7 +988,8 @@ public class PredicateUnifier implements IPredicateUnifier {
 					}
 					mEquivalentGtQuantifiedPredicates.add(other);
 					if (DEBUG_DUMP_ELIMINATION_OPPORTUNITIES) {
-						dumpEliminationOpportunities(mTerm, other.getFormula());
+						SmtTestGenerationUtils.dumpEliminationOpportunities("EliminationOpportunity",
+								other.getFormula(), mTerm);
 					}
 				}
 			}
@@ -1020,60 +1017,6 @@ public class PredicateUnifier implements IPredicateUnifier {
 			return result;
 		}
 
-		private static void dumpSimplificationPossibility(final Term newTerm, final Term existingTerm) {
-			final long largerTermSize;
-			final long smallerTermSize;
-			final Term largerTerm;
-			final Term smallerTerm;
-			{
-				final long sizeNewTerm = new DAGSize().treesize(newTerm);
-				final long sizeExistingTerm = new DAGSize().treesize(existingTerm);
-				if (sizeNewTerm >= sizeExistingTerm) {
-					largerTermSize = sizeNewTerm;
-					largerTerm = newTerm;
-					smallerTermSize = sizeExistingTerm;
-					smallerTerm = existingTerm;
-				} else {
-					largerTermSize = sizeExistingTerm;
-					largerTerm = existingTerm;
-					smallerTermSize = sizeNewTerm;
-					smallerTerm = newTerm;
-				}
-			}
-
-			final String name = String.format("SimplifiableFormula_%s_%s_Treesizes_%s_%s",
-					Integer.toHexString(smallerTerm.hashCode()), Integer.toHexString(largerTerm.hashCode()),
-					smallerTermSize, largerTermSize);
-			final String testString = SmtTestGenerationUtils.generateSimplificationTest(name, largerTerm, smallerTerm);
-			try (FileWriter fw = new FileWriter(name + ".txt");
-					BufferedWriter bw = new BufferedWriter(fw);
-					PrintWriter out = new PrintWriter(bw)) {
-				out.println(testString);
-				out.close();
-				bw.close();
-				fw.close();
-			} catch (final IOException e) {
-				throw new AssertionError(e);
-			}
-		}
-
-		private static void dumpEliminationOpportunities(final Term newTerm, final Term existingTerm) {
-			final String name =
-					String.format("EliminationOpportunities_%s_%s_Size%s", Integer.toHexString(existingTerm.hashCode()),
-							Integer.toHexString(newTerm.hashCode()), new DAGSize().treesize(existingTerm));
-			final String testString =
-					SmtTestGenerationUtils.generateQuantifierEliminationTest(name, existingTerm, newTerm);
-			try (FileWriter fw = new FileWriter(name + ".txt");
-					BufferedWriter bw = new BufferedWriter(fw);
-					PrintWriter out = new PrintWriter(bw)) {
-				out.println(testString);
-				out.close();
-				bw.close();
-				fw.close();
-			} catch (final IOException e) {
-				throw new AssertionError(e);
-			}
-		}
 	}
 
 }

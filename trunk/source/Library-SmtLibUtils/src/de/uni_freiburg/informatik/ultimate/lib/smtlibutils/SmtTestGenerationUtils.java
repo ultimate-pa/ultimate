@@ -26,6 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 
@@ -205,6 +210,25 @@ public final class SmtTestGenerationUtils {
 		return sb.toString();
 	}
 
+	public static void dumpEliminationOpportunities(final String filenamePrefix, final Term moreQuantifiedTerm,
+			final Term lessQuantifiedTerm) {
+		final String name = String.format(filenamePrefix + "_%s_%s_Treesizes_%s_%s",
+				Integer.toHexString(moreQuantifiedTerm.hashCode()), Integer.toHexString(lessQuantifiedTerm.hashCode()),
+				new DAGSize().treesize(moreQuantifiedTerm), new DAGSize().treesize(lessQuantifiedTerm));
+		final String testString =
+				SmtTestGenerationUtils.generateQuantifierEliminationTest(name, moreQuantifiedTerm, lessQuantifiedTerm);
+		try (FileWriter fw = new FileWriter(name + ".txt");
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter out = new PrintWriter(bw)) {
+			out.println(testString);
+			out.close();
+			bw.close();
+			fw.close();
+		} catch (final IOException e) {
+			throw new AssertionError(e);
+		}
+	}
+
 	public static String generateSimplificationTest(final String methodName, final Term input,
 			final Term expectedResult) {
 		final StringBuilder sb = new StringBuilder();
@@ -225,4 +249,42 @@ public final class SmtTestGenerationUtils {
 		sb.append(System.lineSeparator());
 		return sb.toString();
 	}
+
+	public static void dumpSimplificationOpportunity(final String filenamePrefix, final Term term1, final Term term2) {
+		final long largerTermSize;
+		final long smallerTermSize;
+		final Term largerTerm;
+		final Term smallerTerm;
+		{
+			final long sizeNewTerm = new DAGSize().treesize(term1);
+			final long sizeExistingTerm = new DAGSize().treesize(term2);
+			if (sizeNewTerm >= sizeExistingTerm) {
+				largerTermSize = sizeNewTerm;
+				largerTerm = term1;
+				smallerTermSize = sizeExistingTerm;
+				smallerTerm = term2;
+			} else {
+				largerTermSize = sizeExistingTerm;
+				largerTerm = term2;
+				smallerTermSize = sizeNewTerm;
+				smallerTerm = term1;
+			}
+		}
+
+		final String name =
+				String.format(filenamePrefix + "_%s_%s_Treesizes_%s_%s", Integer.toHexString(smallerTerm.hashCode()),
+						Integer.toHexString(largerTerm.hashCode()), largerTermSize, smallerTermSize);
+		final String testString = SmtTestGenerationUtils.generateSimplificationTest(name, largerTerm, smallerTerm);
+		try (FileWriter fw = new FileWriter(name + ".txt");
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter out = new PrintWriter(bw)) {
+			out.println(testString);
+			out.close();
+			bw.close();
+			fw.close();
+		} catch (final IOException e) {
+			throw new AssertionError(e);
+		}
+	}
+
 }
