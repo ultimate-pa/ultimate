@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference.LoopSyncMethod;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
@@ -80,6 +82,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPetriNetProofProducer;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPossibleInterferences;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -94,6 +98,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -105,7 +110,12 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		REMOVE_DEAD, REMOVE_REDUNDANT_FLOW
 	}
 
-	private static final boolean USE_ON_DEMAND_RESULT = false;
+	private static final boolean DUMP_OWICKI_GRIES_TEST = false;
+	private final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mProofAutomata = new ArrayList<>();
+	private final IPetriNet<L, IPredicate> mInitialNet;
+	private HashRelation<IPredicate, Transition<L, IPredicate>> mPossibleInterferences;
+
+	private static final boolean USE_ON_DEMAND_RESULT = true;
 
 	private static final boolean DEBUG_WRITE_NET_HASH_CODES = false;
 
@@ -124,9 +134,10 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 	public int mCoRelationQueries = 0;
 	/**
 	 * Alternative measure to {@link CegarLoopStatisticsDefinitions#BiggestAbstraction} which currently counts the
-	 * number of places. TODO 20220821 Matthias: Find out whether counting transitions instead of places is helpful. An
-	 * alternative might be to count flow. In the long run the most suitable measure should be utilized in the
-	 * statistics.
+	 * number of places.
+	 *
+	 * TODO 20220821 Matthias: Find out whether counting transitions instead of places is helpful. An alternative might
+	 * be to count flow. In the long run the most suitable measure should be utilized in the statistics.
 	 */
 	public int mBiggestAbstractionTransitions;
 	/**
@@ -146,21 +157,25 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	private final CounterexampleCache<L> mCounterexampleCache = new CounterexampleCache<>();
 
-	// TODO change this once Owicki-Gries proof production is supported
-	private final boolean mProduceProof = false;
+	private final IPetriNetProofProducer<L, IPredicate> mProofProducer;
 
 	public CegarLoopForPetriNet(final DebugIdentifier name, final BoundedPetriNet<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs, final IUltimateServiceProvider services,
+			final TAPreferences taPrefs, final Set<IcfgLocation> errorLocs,
+			final IPetriNetProofProducer<L, IPredicate> proofProducer, final IUltimateServiceProvider services,
 			final Class<L> transitionClazz, final PredicateFactoryRefinement stateFactoryForRefinement) {
-		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, false, services,
-				transitionClazz, stateFactoryForRefinement);
+		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
+				proofProducer != null, services, transitionClazz, stateFactoryForRefinement);
 		mPetriClStatisticsGenerator = new PetriCegarLoopStatisticsGenerator(mCegarLoopBenchmark);
+		mProofProducer = proofProducer;
 
+		mInitialNet = initialAbstraction;
 		if (DEBUG_WRITE_NET_HASH_CODES) {
 			mLogger.debug(PetriNetUtils.printHashCodesOfInternalDataStructures(mAbstraction));
 		}
+
 		mProgramPointPlaces = mAbstraction.getPlaces();
+
 	}
 
 	@Override
@@ -171,11 +186,14 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();
 			final EventOrderEnum eventOrder = mPref.eventOrder();
 
+			final boolean collectPossibleInterferences =
+					getIteration() == 0 && (DUMP_OWICKI_GRIES_TEST || mProofProducer != null);
+
 			mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.EmptinessCheckTime.toString());
-			PetriNetUnfolder<L, IPredicate> unf;
+			final PetriNetUnfolder<L, IPredicate> unf;
 			try {
 				unf = new PetriNetUnfolder<>(new AutomataLibraryServices(getServices()), mAbstraction, eventOrder,
-						cutOffSameTrans, true);
+						cutOffSameTrans, !collectPossibleInterferences);
 			} catch (final PetriNetNot1SafeException e) {
 				throw new UnsupportedOperationException(e.getMessage());
 			} finally {
@@ -185,8 +203,20 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			mCoRelationQueries +=
 					finPrefix.getCoRelation().getQueryCounterYes() + finPrefix.getCoRelation().getQueryCounterNo();
 			mCounterexample = unf.getAcceptingRun();
+
+			if (collectPossibleInterferences) {
+				mPossibleInterferences = IPossibleInterferences.fromUnfolding(finPrefix);
+				if (mProofProducer != null) {
+					mProofProducer.initialize(IPossibleInterferences.fromRelation(mPossibleInterferences));
+				}
+			}
 		}
 		if (mCounterexample == null) {
+			if (DUMP_OWICKI_GRIES_TEST) {
+				assert mPossibleInterferences != null : "possible interferences should have been initialized";
+				new OwickiGriesTestDumper<>(mServices, mTaskIdentifier, mIcfg, mInitialNet, mPossibleInterferences,
+						mProofAutomata);
+			}
 			return true;
 		}
 		if (mPref.dumpDebugInfo()) {
@@ -253,6 +283,10 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			}
 			if (USE_ON_DEMAND_RESULT) {
 				mAbstraction = enhancementResult.getSecond().getResult();
+				final var finPrefix = enhancementResult.getSecond().getFinitePrefixOfDifference();
+				if (mProofProducer != null && finPrefix.getAcceptingRun() == null) {
+					mProofProducer.finalize(mAbstraction);
+				}
 			} else {
 				final Difference<L, IPredicate, ?> diff = new Difference<>(new AutomataLibraryServices(getServices()),
 						mPredicateFactoryInterpolantAutomata, mAbstraction, dia, LoopSyncMethod.HEURISTIC,
@@ -425,9 +459,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 					flowRemovedByMinimization);
 			mPetriClStatisticsGenerator.stop(PetriCegarLoopStatisticsDefinitions.RemoveRedundantFlowTime.toString());
 		}
-		final Triple<BoundedPetriNet<L, IPredicate>, AutomataMinimizationStatisticsGenerator, Long> minimizationResult =
-				new Triple<>(reducedNet, amsg, automataMinimizationTime);
-		return minimizationResult;
+		return new Triple<>(reducedNet, amsg, automataMinimizationTime);
 	}
 
 	protected Pair<INestedWordAutomaton<L, IPredicate>, DifferencePairwiseOnDemand<L, IPredicate, ?>>
@@ -504,12 +536,16 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			throw new UnsupportedOperationException();
 		}
 
-		if (mProduceProof) {
+		if (mProofProducer != null) {
 			assert checkInterpolantAutomatonInductivity(dia, mRefinementResult.getPredicateUnifier()) : "Not inductive";
+			mProofProducer.refine(mRefinementResult.getPredicateUnifier(), dia, dpod.getTransitionBacktranslation());
 		}
 		if (mPref.dumpAutomata()) {
 			final String filename = "InterpolantAutomatonDeterminized_Iteration" + getIteration();
 			writeAutomatonToFile(dia, filename);
+		}
+		if (DUMP_OWICKI_GRIES_TEST) {
+			mProofAutomata.add(dia);
 		}
 		// assert accepts(mServices, dia, mCounterexample.getWord(),
 		// true) : "Counterexample not accepted by determinized interpolant automaton: "

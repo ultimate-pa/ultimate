@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -49,11 +50,21 @@ public class IncrementalPlicationChecker {
 		VALID, INVALID, UNKNOWN, NOT_CHECKED;
 
 		public Validity and(final Validity other) {
+			return and(() -> other);
+		}
+
+		public Validity and(final Supplier<Validity> otherSupplier) {
 			return switch (this) {
 			case INVALID -> INVALID;
-			case NOT_CHECKED -> other == INVALID ? other : this;
-			case UNKNOWN -> (other == NOT_CHECKED || other == INVALID) ? other : this;
-			case VALID -> other;
+			case NOT_CHECKED -> {
+				final var other = otherSupplier.get();
+				yield other == INVALID ? other : this;
+			}
+			case UNKNOWN -> {
+				final var other = otherSupplier.get();
+				yield other == NOT_CHECKED || other == INVALID ? other : this;
+			}
+			case VALID -> otherSupplier.get();
 			};
 		}
 	}
@@ -111,9 +122,7 @@ public class IncrementalPlicationChecker {
 	 */
 	private Map<TermVariable, Term> constructVar2ConstSubstitution(final Term term) {
 		final Set<TermVariable> allTvs = new HashSet<>(Arrays.asList(term.getFreeVars()));
-		final Map<TermVariable, Term> substitutionMapping =
-				SmtUtils.termVariables2Constants(mMgdScript.getScript(), allTvs, true);
-		return substitutionMapping;
+		return SmtUtils.termVariables2Constants(mMgdScript.getScript(), allTvs, true);
 	}
 
 	public Validity checkPlication(final Term rhs) {

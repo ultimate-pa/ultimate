@@ -1,0 +1,43 @@
+// Simple test for computation of Owicki-Gries annotation with a main thread and a worker thread and a barrier represented by a join
+// ---------------------------------------------------------------------------------------------------------------------------------------
+
+//@ variables (z Int) (a Int) (y Int)
+
+//@ semantics [0] {z} (= z 0)
+//@ semantics [1] {a} (= a 1)
+//@ semantics [2] {z} (= z (+ |old(z)| 1))
+//@ semantics [3] {y}        (= y (+ a 1))
+//@ semantics [4] {        } (distinct y 2)
+
+PetriNet program = (
+  alphabet    = { "[0]" "[1]" "[2]" "[3]" "[4]" },
+  places      = { "main.l0" "main.l1" "main.l2" "worker.l0" "worker.l1" "worker.l2" "e" },
+  transitions = {
+    ({ "main.l0" } "[0]" { "main.l1" })
+    ({ "worker.l0" } "[1]" { "worker.l1" })
+    ({ "main.l1" } "[2]" { "main.l2" })
+    ({ "worker.l1" } "[3]" { "worker.l2" })
+    ({ "main.l2" "worker.l2" } "[4]" { "e" })
+  },
+  initialMarking = { "main.l0" "worker.l0" },
+  acceptingPlaces = { "e" }
+);
+
+FiniteAutomaton proof = (
+     alphabet      = { "[0]" "[1]" "[2]" "[3]" "[4]" },
+     states        = { "true" "(= a 1)" "(= y 2)" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+       ("true" "[1]" "(= a 1)")
+       ("(= a 1)" "[0]" "(= a 1)")
+       ("(= a 1)" "[2]" "(= a 1)")
+       ("(= a 1)" "[3]" "(= y 2)")
+       ("(= y 2)" "[0]" "(= y 2)")
+       ("(= y 2)" "[2]" "(= y 2)")
+       ("(= y 2)" "[4]" "false")
+     }
+);
+
+
+

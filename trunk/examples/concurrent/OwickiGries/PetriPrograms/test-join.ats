@@ -1,0 +1,48 @@
+// Simple test for computation of Owicki-Gries annotation with a fork-join pattern
+// -------------------------------------------------------------------------------
+
+//@ variables (x Int) (y Int) (z Int)
+
+//@ semantics [1] {x} (= x 0)
+//@ semantics [2] {y} (= y 0)
+//@ semantics [3] {z} (= z (+ x y))
+//@ semantics [4] { } (distinct z 0)
+
+PetriNet program = (
+  alphabet    = { "[1]" "[2]" "[3]" "[4]" },
+  places      = { "l0" "l1" "l2" "l3" "l4" "e" },
+  transitions = {
+    ({ "l0" } "[1]" { "l2" })
+    ({ "l1" } "[2]" { "l3" })
+    ({ "l2" "l3" } "[3]" { "l4" })
+    ({ "l4" } "[4]" { "e" })
+  },
+  initialMarking = { "l0" "l1"},
+  acceptingPlaces = { "e" }
+);
+
+FiniteAutomaton proof1 = (
+     alphabet      = { "[1]" "[2]" "[3]" "[4]" },
+     states        = { "true" "(= x 0)" "(and (= x 0) (= y 0))" "(= z 0)" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+         ("true"     "[1]" "(= x 0)")
+         ("(= x 0)" "[2]" "(and (= x 0) (= y 0))")
+         ("(and (= x 0) (= y 0))" "[3]" "(= z 0)")
+         ("(= z 0)"    "[4]" "false")
+     }
+);
+
+FiniteAutomaton proof2 = (
+     alphabet      = { "[1]" "[2]" "[3]" "[4]" },
+     states        = { "true" "(= y 0)" "(and (= x 0) (= y 0))" "(= z 0)" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+         ("true"     "[2]" "(= y 0)")
+         ("(= y 0)" "[1]" "(and (= x 0) (= y 0))")
+         ("(and (= x 0) (= y 0))" "[3]" "(= z 0)")
+         ("(= z 0)"    "[4]" "false")
+     }
+);

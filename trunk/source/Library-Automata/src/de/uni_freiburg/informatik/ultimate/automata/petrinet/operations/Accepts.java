@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  * Acceptance test for Petri nets.
@@ -82,7 +81,7 @@ public final class Accepts<LETTER, PLACE>
 			mLogger.info(startMessage());
 		}
 
-		mResult = getResultHelper(0, new Marking<>(ImmutableSet.of(operand.getInitialPlaces())));
+		mResult = getResultHelper(0, Marking.initial(operand));
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());

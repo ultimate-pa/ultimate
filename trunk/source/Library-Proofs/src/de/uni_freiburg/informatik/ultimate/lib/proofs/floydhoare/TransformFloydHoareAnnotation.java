@@ -66,8 +66,26 @@ public class TransformFloydHoareAnnotation<S1, S2> {
 	 */
 	public TransformFloydHoareAnnotation(final IFloydHoareAnnotation<S1> annotation, final Set<S1> states,
 			final Function<S1, S2> transformer) {
+		this(annotation, states, transformer, null);
+	}
+
+	/**
+	 * Creates a new instance and transforms a given annotation
+	 *
+	 * @param annotation
+	 *            The input annotation to be transformed
+	 * @param states
+	 *            The set of all states/locations to be transformed. Annotations for any state not included in this set
+	 *            will use the {@code defaultPredicate} (see below).
+	 * @param transformer
+	 *            The function to be applied to each state (which must be injective)
+	 * @param defaultPredicate
+	 *            A default predicate used in the returned annotation for any state not in {@code states}.
+	 */
+	public TransformFloydHoareAnnotation(final IFloydHoareAnnotation<S1> annotation, final Set<S1> states,
+			final Function<S1, S2> transformer, final IPredicate defaultPredicate) {
 		mTransformer = transformer;
-		mResult = extractAnnotation(annotation, states);
+		mResult = extractAnnotation(annotation, states, defaultPredicate);
 	}
 
 	private static <S extends IPredicate> TransformFloydHoareAnnotation<S, IcfgLocation>
@@ -93,7 +111,7 @@ public class TransformFloydHoareAnnotation<S1, S2> {
 	}
 
 	private IFloydHoareAnnotation<S2> extractAnnotation(final IFloydHoareAnnotation<S1> annotation,
-			final Set<S1> states) {
+			final Set<S1> states, final IPredicate defaultPredicate) {
 		final var result = new HashMap<S2, IPredicate>();
 
 		final var spec = annotation.getSpecification();
@@ -124,7 +142,10 @@ public class TransformFloydHoareAnnotation<S1, S2> {
 		final var newSpec =
 				new PrePostConditionSpecification<>(initialStates, finalStates::contains, spec.getPostcondition());
 
-		return new FloydHoareMapping<>(newSpec, result);
+		if (defaultPredicate == null) {
+			return new FloydHoareMapping<>(newSpec, result);
+		}
+		return new FloydHoareMapping<>(newSpec, result, defaultPredicate);
 	}
 
 	public IFloydHoareAnnotation<S2> getResult() {

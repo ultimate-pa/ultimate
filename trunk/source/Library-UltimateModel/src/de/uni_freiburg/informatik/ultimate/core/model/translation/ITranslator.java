@@ -104,4 +104,5 @@ public interface ITranslator<STE, TTE, SE, TE, SVL, TVL, CTX> {
 
 	Class<TE> getTargetExpressionClass();
 
+	TE declareAndTranslateAuxiliaryVariable(SE variable);
 }

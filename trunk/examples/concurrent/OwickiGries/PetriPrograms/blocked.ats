@@ -1,0 +1,25 @@
+// See block.empire.yml for more information on this example.;
+
+// The statement [0] is a "skip" statement that modifies no variables and has transition formula true.
+//@ semantics [0] { } true
+
+PetriNet program = (
+  alphabet    = { "[0]" },
+  places      = { "p1" "p2" "p3" },
+  transitions = {
+    ({ "p1" } "[0]" { "p2" })
+    ({ "p1" "p2" } "[0]" { "p3" })
+  },
+  initialMarking = { "p1" },
+  acceptingPlaces = { "p3" }
+);
+
+FiniteAutomaton proof = (
+     alphabet      = { "[0]" },
+     states        = { "true" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+       ("true" "[0]" "true")
+     }
+);

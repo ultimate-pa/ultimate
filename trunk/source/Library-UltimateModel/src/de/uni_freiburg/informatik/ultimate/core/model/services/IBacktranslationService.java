@@ -117,6 +117,8 @@ public interface IBacktranslationService {
 	 */
 	IBacktranslationService getTranslationServiceCopy();
 
+	<SE, TE> TE declareAndTranslateAuxiliaryVariable(SE variable);
+
 	record Lasso<X extends IProgramExecution<?, ?>>(X stem, X loop) {
 		// simple record
 	}
