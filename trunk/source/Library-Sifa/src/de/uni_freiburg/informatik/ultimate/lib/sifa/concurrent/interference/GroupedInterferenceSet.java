@@ -40,38 +40,38 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats.Key;
 
-public abstract class KeyedInterferenceSet<G> implements IInterferenceSet {
+public abstract class GroupedInterferenceSet<I> implements IInterferenceSet {
 
-	protected final Map<InterferenceGroupKey, G> mSummaryByKey;
-	protected final Map<String, Set<IcfgLocation>> mPreForkSourcesByThread;
+	protected final Map<InterferenceGroupKey, I> mInterferenceByGroup;
+	protected final Map<String, Set<IcfgLocation>> mSourcesBeforeForkByThread;
 
-	protected KeyedInterferenceSet(final Map<InterferenceGroupKey, G> summaryByKey,
-			final Map<String, Set<IcfgLocation>> preForkSourcesByThread) {
-		mSummaryByKey = Collections.unmodifiableMap(new LinkedHashMap<>(summaryByKey));
-		mPreForkSourcesByThread = Collections.unmodifiableMap(new LinkedHashMap<>(preForkSourcesByThread));
+	protected GroupedInterferenceSet(final Map<InterferenceGroupKey, I> interferenceByGroup,
+			final Map<String, Set<IcfgLocation>> sourcesBeforeForkByThread) {
+		mInterferenceByGroup = Collections.unmodifiableMap(new LinkedHashMap<>(interferenceByGroup));
+		mSourcesBeforeForkByThread = Collections.unmodifiableMap(new LinkedHashMap<>(sourcesBeforeForkByThread));
 	}
 
 	@Override
 	public final boolean isEmpty() {
-		return mSummaryByKey.isEmpty();
+		return mInterferenceByGroup.isEmpty();
 	}
 
 	@Override
-	public final int summaryCount() {
-		return mSummaryByKey.size();
+	public final int groupCount() {
+		return mInterferenceByGroup.size();
 	}
 
 	@Override
 	public final Set<String> threadIds() {
 		final Set<String> ids = new LinkedHashSet<>();
-		mSummaryByKey.keySet().forEach(key -> ids.add(key.threadId()));
+		mInterferenceByGroup.keySet().forEach(key -> ids.add(key.threadId()));
 		return Set.copyOf(ids);
 	}
 
-	protected final List<Entry<InterferenceGroupKey, G>> selectApplicableSummaries(final String observerThreadId,
+	protected final List<Entry<InterferenceGroupKey, I>> selectApplicableInterference(final String observerThreadId,
 			final Set<String> activeThreadIds, final Set<String> observerLockset, final SifaStats stats) {
-		final List<Entry<InterferenceGroupKey, G>> applicable = new ArrayList<>();
-		for (final Entry<InterferenceGroupKey, G> entry : mSummaryByKey.entrySet()) {
+		final List<Entry<InterferenceGroupKey, I>> applicable = new ArrayList<>();
+		for (final Entry<InterferenceGroupKey, I> entry : mInterferenceByGroup.entrySet()) {
 			final InterferenceGroupKey key = entry.getKey();
 			if (!activeThreadIds.contains(key.threadId())) {
 				continue;
@@ -79,10 +79,10 @@ public abstract class KeyedInterferenceSet<G> implements IInterferenceSet {
 			if (observerThreadId.equals(key.forkedThreadId())) {
 				continue;
 			}
-			if (happensBeforeObserverFork(observerThreadId, key.sourceLocations())) {
+			if (allSourcesPrecedeObserverFork(observerThreadId, key.sourceLocations())) {
 				continue;
 			}
-			if (excludedByMutualExclusion(key.lockset(), observerLockset)) {
+			if (haveCommonLock(key.lockset(), observerLockset)) {
 				stats.increment(Key.INTERFERENCE_LOCKSET_FILTERED);
 				continue;
 			}
@@ -92,12 +92,12 @@ public abstract class KeyedInterferenceSet<G> implements IInterferenceSet {
 		return applicable;
 	}
 
-	private boolean happensBeforeObserverFork(final String observerThreadId, final Set<IcfgLocation> sourceLocations) {
-		final Set<IcfgLocation> preForkSources = mPreForkSourcesByThread.getOrDefault(observerThreadId, Set.of());
-		return !sourceLocations.isEmpty() && preForkSources.containsAll(sourceLocations);
+	private boolean allSourcesPrecedeObserverFork(final String observerThreadId, final Set<IcfgLocation> sourceLocations) {
+		final Set<IcfgLocation> sourcesBeforeFork = mSourcesBeforeForkByThread.getOrDefault(observerThreadId, Set.of());
+		return !sourceLocations.isEmpty() && sourcesBeforeFork.containsAll(sourceLocations);
 	}
 
-	private static boolean excludedByMutualExclusion(final Set<String> writerLockset,
+	private static boolean haveCommonLock(final Set<String> writerLockset,
 			final Set<String> observerLockset) {
 		if (observerLockset.isEmpty()) {
 			return false;
@@ -111,29 +111,29 @@ public abstract class KeyedInterferenceSet<G> implements IInterferenceSet {
 			throw new IllegalArgumentException(
 					"Cannot widen " + getClass().getSimpleName() + " with " + other.getClass().getSimpleName());
 		}
-		final KeyedInterferenceSet<G> typedOther = (KeyedInterferenceSet<G>) other;
-		final Map<InterferenceGroupKey, G> widened = new LinkedHashMap<>();
-		for (final Entry<InterferenceGroupKey, G> entry : mSummaryByKey.entrySet()) {
+		final GroupedInterferenceSet<I> typedOther = (GroupedInterferenceSet<I>) other;
+		final Map<InterferenceGroupKey, I> widened = new LinkedHashMap<>();
+		for (final Entry<InterferenceGroupKey, I> entry : mInterferenceByGroup.entrySet()) {
 			IThreadLocalDomainContext.setIfApplicable(domain, entry.getKey().threadId());
-			final G otherSummary = typedOther.mSummaryByKey.get(entry.getKey());
-			final G widenedSummary;
-			if (otherSummary == null) {
-				widenedSummary = entry.getValue();
-			} else if (summaryIsSubsumedBy(otherSummary, entry.getValue(), domain)) {
-				widenedSummary = entry.getValue();
+			final I otherInterference = typedOther.mInterferenceByGroup.get(entry.getKey());
+			final I widenedInterference;
+			if (otherInterference == null) {
+				widenedInterference = entry.getValue();
+			} else if (isInterferenceSubsumedBy(otherInterference, entry.getValue(), domain)) {
+				widenedInterference = entry.getValue();
 			} else {
-				widenedSummary = widenSummaries(entry.getValue(), otherSummary, domain);
+				widenedInterference = widenInterference(entry.getValue(), otherInterference, domain);
 			}
-			if (!isTrivialSummary(widenedSummary)) {
-				widened.put(entry.getKey(), widenedSummary);
+			if (!isBottomInterference(widenedInterference)) {
+				widened.put(entry.getKey(), widenedInterference);
 			}
 		}
-		for (final Entry<InterferenceGroupKey, G> entry : typedOther.mSummaryByKey.entrySet()) {
-			if (!widened.containsKey(entry.getKey()) && !isTrivialSummary(entry.getValue())) {
+		for (final Entry<InterferenceGroupKey, I> entry : typedOther.mInterferenceByGroup.entrySet()) {
+			if (!widened.containsKey(entry.getKey()) && !isBottomInterference(entry.getValue())) {
 				widened.put(entry.getKey(), entry.getValue());
 			}
 		}
-		return widened.isEmpty() ? null : withSummaries(widened);
+		return widened.isEmpty() ? null : withInterference(widened);
 	}
 
 	@Override
@@ -141,22 +141,22 @@ public abstract class KeyedInterferenceSet<G> implements IInterferenceSet {
 		if (getClass() != other.getClass()) {
 			return false;
 		}
-		final KeyedInterferenceSet<G> typedOther = (KeyedInterferenceSet<G>) other;
-		for (final Entry<InterferenceGroupKey, G> entry : mSummaryByKey.entrySet()) {
+		final GroupedInterferenceSet<I> typedOther = (GroupedInterferenceSet<I>) other;
+		for (final Entry<InterferenceGroupKey, I> entry : mInterferenceByGroup.entrySet()) {
 			IThreadLocalDomainContext.setIfApplicable(domain, entry.getKey().threadId());
-			final G otherSummary = typedOther.mSummaryByKey.get(entry.getKey());
-			if (otherSummary == null || !summaryIsSubsumedBy(entry.getValue(), otherSummary, domain)) {
+			final I otherInterference = typedOther.mInterferenceByGroup.get(entry.getKey());
+			if (otherInterference == null || !isInterferenceSubsumedBy(entry.getValue(), otherInterference, domain)) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	protected abstract G widenSummaries(G left, G right, IDomain domain);
+	protected abstract I widenInterference(I left, I right, IDomain domain);
 
-	protected abstract boolean isTrivialSummary(G summary);
+	protected abstract boolean isBottomInterference(I interference);
 
-	protected abstract boolean summaryIsSubsumedBy(G left, G right, IDomain domain);
+	protected abstract boolean isInterferenceSubsumedBy(I left, I right, IDomain domain);
 
-	protected abstract KeyedInterferenceSet<G> withSummaries(Map<InterferenceGroupKey, G> summaries);
+	protected abstract GroupedInterferenceSet<I> withInterference(Map<InterferenceGroupKey, I> interferenceByGroup);
 }

@@ -50,9 +50,9 @@ public final class StrongestPostconditionInterferenceFactory
 	public StrongestPostconditionInterferenceFactory(final InterferenceEdgeCollector edgeCollector,
 			final TransFormulaToInterferencePredicate translator, final RelationalPredicatePostcondition postcondition,
 			final BasicPredicateFactory predicateFactory, final ManagedScript managedScript,
-			final MustLocksetAnalysis locksetInfo, final Map<String, Set<IcfgLocation>> preForkSourcesByThread) {
+			final MustLocksetAnalysis locksetInfo, final Map<String, Set<IcfgLocation>> sourcesBeforeForkByThread) {
 		super(edgeCollector, translator, postcondition, managedScript, predicateFactory, locksetInfo,
-				preForkSourcesByThread);
+				sourcesBeforeForkByThread);
 	}
 
 	@Override
@@ -83,7 +83,7 @@ public final class StrongestPostconditionInterferenceFactory
 	protected IInterferenceSet buildInterferenceSet(
 			final Map<InterferenceGroupKey, RelationalInterference> accumulator) {
 		return accumulator.isEmpty() ? null
-				: new StrongestPostconditionInterference(accumulator, mPreForkSourcesByThread, mPostcondition);
+				: new StrongestPostconditionInterference(accumulator, mSourcesBeforeForkByThread, mPostcondition);
 	}
 
 	private RelationalInterference mergeSummaries(final RelationalInterference left,

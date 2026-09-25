@@ -33,16 +33,16 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.KeyedInterferenceSet;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterferenceSet;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
-public final class PostStateInterference extends KeyedInterferenceSet<IPredicate> {
+public final class PostStateInterference extends GroupedInterferenceSet<IPredicate> {
 
-	public PostStateInterference(final Map<InterferenceGroupKey, IPredicate> summaryByKey,
-			final Map<String, Set<IcfgLocation>> preForkSourcesByThread) {
-		super(summaryByKey, preForkSourcesByThread);
+	public PostStateInterference(final Map<InterferenceGroupKey, IPredicate> interferenceByGroup,
+			final Map<String, Set<IcfgLocation>> sourcesBeforeForkByThread) {
+		super(interferenceByGroup, sourcesBeforeForkByThread);
 	}
 
 	@Override
@@ -50,7 +50,7 @@ public final class PostStateInterference extends KeyedInterferenceSet<IPredicate
 			final Set<String> activeThreadIds, final Set<String> observerLockset, final IDomain domain,
 			final int wideningThreshold, final SifaStats stats) {
 		final List<Entry<InterferenceGroupKey, IPredicate>> applicable =
-				selectApplicableSummaries(observerThreadId, activeThreadIds, observerLockset, stats);
+				selectApplicableInterference(observerThreadId, activeThreadIds, observerLockset, stats);
 		if (applicable.isEmpty()) {
 			return state;
 		}
@@ -62,22 +62,22 @@ public final class PostStateInterference extends KeyedInterferenceSet<IPredicate
 	}
 
 	@Override
-	protected IPredicate widenSummaries(final IPredicate left, final IPredicate right, final IDomain domain) {
+	protected IPredicate widenInterference(final IPredicate left, final IPredicate right, final IDomain domain) {
 		return domain.widen(left, right);
 	}
 
 	@Override
-	protected boolean isTrivialSummary(final IPredicate summary) {
-		return SmtUtils.isFalseLiteral(summary.getFormula());
+	protected boolean isBottomInterference(final IPredicate interference) {
+		return SmtUtils.isFalseLiteral(interference.getFormula());
 	}
 
 	@Override
-	protected boolean summaryIsSubsumedBy(final IPredicate left, final IPredicate right, final IDomain domain) {
+	protected boolean isInterferenceSubsumedBy(final IPredicate left, final IPredicate right, final IDomain domain) {
 		return domain.isSubsetEq(left, right).isTrueForAbstraction();
 	}
 
 	@Override
-	protected KeyedInterferenceSet<IPredicate> withSummaries(final Map<InterferenceGroupKey, IPredicate> summaries) {
-		return new PostStateInterference(summaries, mPreForkSourcesByThread);
+	protected GroupedInterferenceSet<IPredicate> withInterference(final Map<InterferenceGroupKey, IPredicate> interferenceByGroup) {
+		return new PostStateInterference(interferenceByGroup, mSourcesBeforeForkByThread);
 	}
 }

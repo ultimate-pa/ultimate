@@ -70,9 +70,9 @@ public final class GuardedUpdateInterferenceFactory
 	public GuardedUpdateInterferenceFactory(final InterferenceEdgeCollector edgeCollector,
 			final TransFormulaToInterferencePredicate translator, final RelationalPredicatePostcondition postcondition,
 			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory,
-			final MustLocksetAnalysis locksetInfo, final Map<String, Set<IcfgLocation>> preForkSourcesByThread) {
+			final MustLocksetAnalysis locksetInfo, final Map<String, Set<IcfgLocation>> sourcesBeforeForkByThread) {
 		super(edgeCollector, translator, postcondition, managedScript, predicateFactory, locksetInfo,
-				preForkSourcesByThread);
+				sourcesBeforeForkByThread);
 	}
 
 	@Override
@@ -212,7 +212,7 @@ public final class GuardedUpdateInterferenceFactory
 		final Map<InterferenceGroupKey, GuardedUpdateGroup> merged = new LinkedHashMap<>();
 		accumulator.forEach((key, updates) -> merged.put(key,
 				new GuardedUpdateGroup(updates)));
-		return new GuardedUpdateInterference(merged, mPreForkSourcesByThread, mManagedScript, mPredicateFactory);
+		return new GuardedUpdateInterference(merged, mSourcesBeforeForkByThread, mManagedScript, mPredicateFactory);
 	}
 
 	private GuardedUpdate tryCreateUpdate(final TranslatedInterferenceOfEdge edge, final IPredicate sharedPreState) {

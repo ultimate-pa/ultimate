@@ -49,21 +49,21 @@ public abstract class GroupedInterferenceFactory<A> {
 	protected final ManagedScript mManagedScript;
 	protected final BasicPredicateFactory mPredicateFactory;
 	protected final MustLocksetAnalysis mLocksetInfo;
-	protected final Map<String, Set<IcfgLocation>> mPreForkSourcesByThread;
+	protected final Map<String, Set<IcfgLocation>> mSourcesBeforeForkByThread;
 	protected final IPredicate mTruePredicate;
 	protected final IPredicate mFalsePredicate;
 
 	protected GroupedInterferenceFactory(final InterferenceEdgeCollector edgeCollector,
 			final TransFormulaToInterferencePredicate translator, final RelationalPredicatePostcondition postcondition,
 			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory,
-			final MustLocksetAnalysis locksetInfo, final Map<String, Set<IcfgLocation>> preForkSourcesByThread) {
+			final MustLocksetAnalysis locksetInfo, final Map<String, Set<IcfgLocation>> sourcesBeforeForkByThread) {
 		mEdgeCollector = edgeCollector;
 		mTranslator = translator;
 		mPostcondition = postcondition;
 		mManagedScript = managedScript;
 		mPredicateFactory = predicateFactory;
 		mLocksetInfo = locksetInfo;
-		mPreForkSourcesByThread = Map.copyOf(preForkSourcesByThread);
+		mSourcesBeforeForkByThread = Map.copyOf(sourcesBeforeForkByThread);
 		mTruePredicate = predicateFactory.newPredicate(managedScript.getScript().term("true"));
 		mFalsePredicate = predicateFactory.newPredicate(managedScript.getScript().term("false"));
 	}

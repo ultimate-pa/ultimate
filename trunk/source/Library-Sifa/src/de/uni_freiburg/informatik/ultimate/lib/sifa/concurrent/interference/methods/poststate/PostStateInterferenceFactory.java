@@ -64,9 +64,9 @@ public final class PostStateInterferenceFactory
 	public PostStateInterferenceFactory(final InterferenceEdgeCollector edgeCollector,
 			final TransFormulaToInterferencePredicate translator, final RelationalPredicatePostcondition postcondition,
 			final IDomain domain, final BasicPredicateFactory predicateFactory, final ManagedScript managedScript,
-			final MustLocksetAnalysis locksetInfo, final Map<String, Set<IcfgLocation>> preForkSourcesByThread) {
+			final MustLocksetAnalysis locksetInfo, final Map<String, Set<IcfgLocation>> sourcesBeforeForkByThread) {
 		super(edgeCollector, translator, postcondition, managedScript, predicateFactory, locksetInfo,
-				preForkSourcesByThread);
+				sourcesBeforeForkByThread);
 		mDomain = domain;
 	}
 
@@ -96,13 +96,13 @@ public final class PostStateInterferenceFactory
 		if (accumulator.isEmpty()) {
 			return null;
 		}
-		final Map<InterferenceGroupKey, IPredicate> summaryByKey = new LinkedHashMap<>();
+		final Map<InterferenceGroupKey, IPredicate> interferenceByGroup = new LinkedHashMap<>();
 		for (final var entry : accumulator.entrySet()) {
 			final GroupKey key = entry.getKey();
-			summaryByKey.put(new InterferenceGroupKey(key.threadId(), key.abstractLocations(), key.lockset(),
+			interferenceByGroup.put(new InterferenceGroupKey(key.threadId(), key.abstractLocations(), key.lockset(),
 					key.forkedThreadId(), entry.getValue().mSources), entry.getValue().mPostState);
 		}
-		return new PostStateInterference(summaryByKey, mPreForkSourcesByThread);
+		return new PostStateInterference(interferenceByGroup, mSourcesBeforeForkByThread);
 	}
 
 	private IPredicate computeEdgeLocalPostState(final TranslatedInterferenceOfEdge edge,

@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.KeyedInterferenceSet;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterferenceSet;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedInterferenceOfEdge;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain.ResultForAlteredInputs;
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-public final class GuardedUpdateInterference extends KeyedInterferenceSet<GuardedUpdateInterference.GuardedUpdateGroup> {
+public final class GuardedUpdateInterference extends GroupedInterferenceSet<GuardedUpdateInterference.GuardedUpdateGroup> {
 
 	public record GuardedUpdateGroup(Map<TranslatedInterferenceOfEdge, GuardedUpdate> updatesByEdge) {
 		public GuardedUpdateGroup {
@@ -69,10 +69,10 @@ public final class GuardedUpdateInterference extends KeyedInterferenceSet<Guarde
 	private final BasicPredicateFactory mPredicateFactory;
 	private final IPredicate mFalsePredicate;
 
-	public GuardedUpdateInterference(final Map<InterferenceGroupKey, GuardedUpdateGroup> summaryByKey,
-			final Map<String, Set<IcfgLocation>> preForkSourcesByThread, final ManagedScript managedScript,
+	public GuardedUpdateInterference(final Map<InterferenceGroupKey, GuardedUpdateGroup> interferenceByGroup,
+			final Map<String, Set<IcfgLocation>> sourcesBeforeForkByThread, final ManagedScript managedScript,
 			final BasicPredicateFactory predicateFactory) {
-		super(summaryByKey, preForkSourcesByThread);
+		super(interferenceByGroup, sourcesBeforeForkByThread);
 		mManagedScript = managedScript;
 		mPredicateFactory = predicateFactory;
 		mFalsePredicate = predicateFactory.newPredicate(managedScript.getScript().term("false"));
@@ -83,12 +83,12 @@ public final class GuardedUpdateInterference extends KeyedInterferenceSet<Guarde
 			final Set<String> activeThreadIds, final Set<String> observerLockset, final IDomain domain,
 			final int wideningThreshold,
 			final SifaStats stats) {
-		if (mSummaryByKey.isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
+		if (mInterferenceByGroup.isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
 				|| SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;
 		}
 		final List<Entry<InterferenceGroupKey, GuardedUpdateGroup>> applicable =
-				selectApplicableSummaries(observerThreadId, activeThreadIds, observerLockset, stats);
+				selectApplicableInterference(observerThreadId, activeThreadIds, observerLockset, stats);
 		if (applicable.isEmpty()) {
 			return state;
 		}
@@ -158,7 +158,7 @@ public final class GuardedUpdateInterference extends KeyedInterferenceSet<Guarde
 	}
 
 	@Override
-	protected GuardedUpdateGroup widenSummaries(final GuardedUpdateGroup left, final GuardedUpdateGroup right,
+	protected GuardedUpdateGroup widenInterference(final GuardedUpdateGroup left, final GuardedUpdateGroup right,
 			final IDomain domain) {
 		final LinkedHashMap<TranslatedInterferenceOfEdge, GuardedUpdate> widened =
 				new LinkedHashMap<>(left.updatesByEdge());
@@ -168,12 +168,12 @@ public final class GuardedUpdateInterference extends KeyedInterferenceSet<Guarde
 	}
 
 	@Override
-	protected boolean isTrivialSummary(final GuardedUpdateGroup group) {
+	protected boolean isBottomInterference(final GuardedUpdateGroup group) {
 		return group.updates().stream().allMatch(GuardedUpdate::hasFalseEffect);
 	}
 
 	@Override
-	protected boolean summaryIsSubsumedBy(final GuardedUpdateGroup left, final GuardedUpdateGroup right,
+	protected boolean isInterferenceSubsumedBy(final GuardedUpdateGroup left, final GuardedUpdateGroup right,
 			final IDomain domain) {
 		for (final Entry<TranslatedInterferenceOfEdge, GuardedUpdate> entry : left.updatesByEdge().entrySet()) {
 			final GuardedUpdate rightUpdate = right.updatesByEdge().get(entry.getKey());
@@ -185,9 +185,9 @@ public final class GuardedUpdateInterference extends KeyedInterferenceSet<Guarde
 	}
 
 	@Override
-	protected KeyedInterferenceSet<GuardedUpdateGroup> withSummaries(
-			final Map<InterferenceGroupKey, GuardedUpdateGroup> summaries) {
-		return new GuardedUpdateInterference(summaries, mPreForkSourcesByThread, mManagedScript, mPredicateFactory);
+	protected GroupedInterferenceSet<GuardedUpdateGroup> withInterference(
+			final Map<InterferenceGroupKey, GuardedUpdateGroup> interferenceByGroup) {
+		return new GuardedUpdateInterference(interferenceByGroup, mSourcesBeforeForkByThread, mManagedScript, mPredicateFactory);
 	}
 
 	private static boolean isSubsumed(final GuardedUpdate left, final GuardedUpdate right, final IDomain domain) {

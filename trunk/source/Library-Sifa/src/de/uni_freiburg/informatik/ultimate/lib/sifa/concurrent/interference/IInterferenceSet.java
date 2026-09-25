@@ -38,7 +38,7 @@ public interface IInterferenceSet {
 
 	boolean isEmpty();
 
-	int summaryCount();
+	int groupCount();
 
 	Set<String> threadIds();
 
