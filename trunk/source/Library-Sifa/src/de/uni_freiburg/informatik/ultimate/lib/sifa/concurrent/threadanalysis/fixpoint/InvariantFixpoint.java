@@ -65,7 +65,7 @@ final class InvariantFixpoint {
 
 	void configureForAnalysis(final ThreadInvariants invariants) {
 		mLocationInvariants.rememberCurrentStates(invariants.locationInvariants());
-		mTools.setPublication(mMutexInvariants);
+		mTools.setMutexInvariants(mMutexInvariants);
 	}
 
 	StabilityOutcome checkInvariantStability(final ThreadInvariants invariants, final int iteration) {

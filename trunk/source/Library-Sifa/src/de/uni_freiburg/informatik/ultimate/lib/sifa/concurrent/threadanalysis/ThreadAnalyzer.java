@@ -55,7 +55,7 @@ public final class ThreadAnalyzer {
 	private final ILogger mLogger;
 	private final IProgressAwareTimer mTimer;
 	private final SifaStats mStats;
-	private final ConcurrentSymbolicTools mTools;
+	private final ConcurrentSymbolicTools mConcurrentTools;
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final Collection<IcfgLocation> mRequestedLocationsOfInterest;
 	private final IDomain mDomain;
@@ -64,13 +64,13 @@ public final class ThreadAnalyzer {
 	private final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> mCallSumFactory;
 	private final List<String> mThreadIds;
 	private final Set<String> mJoinedThreads;
-	private final Map<String, IIcfg<IcfgLocation>> mThreadIcfgs = new HashMap<>();
+	private final Map<String, SingleThreadIcfg> mThreadIcfgs = new HashMap<>();
 	private final Map<String, Collection<IcfgLocation>> mThreadLois = new HashMap<>();
 	private final Map<String, IcfgInterpreter> mThreadInterpreters = new HashMap<>();
 	private final Map<String, Set<IcfgLocation>> mForkSourcesByThread;
 
 	public ThreadAnalyzer(final ILogger logger, final IProgressAwareTimer timer, final SifaStats stats,
-			final ConcurrentSymbolicTools tools, final IIcfg<IcfgLocation> icfg,
+			final ConcurrentSymbolicTools concurrentTools, final IIcfg<IcfgLocation> icfg,
 			final Collection<IcfgLocation> requestedLocationsOfInterest, final IDomain domain, final IFluid fluid,
 			final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
 			final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSumFactory,
@@ -78,7 +78,7 @@ public final class ThreadAnalyzer {
 		mLogger = logger;
 		mTimer = timer;
 		mStats = stats;
-		mTools = tools;
+		mConcurrentTools = concurrentTools;
 		mIcfg = icfg;
 		mRequestedLocationsOfInterest = Set.copyOf(requestedLocationsOfInterest);
 		mDomain = domain;
@@ -105,15 +105,15 @@ public final class ThreadAnalyzer {
 	public void analyzeAllThreads(final IInterferenceSet interference, final ThreadInvariants threadInvariants) {
 		threadInvariants.beginRound();
 		for (final String threadId : mThreadIds) {
-			final IIcfg<IcfgLocation> threadIcfg = mThreadIcfgs.get(threadId);
+			final SingleThreadIcfg threadIcfg = mThreadIcfgs.get(threadId);
 
-			mTools.configureForThread(threadId, interference, threadInvariants.locationInvariants(), mDomain);
-			final IPredicate initialState = mTools.getInitialStatePredicate(threadId);
+			mConcurrentTools.configureForThread(threadId, interference, threadInvariants.locationInvariants(), mDomain);
+			final IPredicate initialState = mConcurrentTools.getInitialStatePredicate(threadId);
 
 			final IcfgLocation entryLocation = threadIcfg.getProcedureEntryNodes().get(threadId);
-			mTools.rememberThreadLocationState(entryLocation, initialState);
+			mConcurrentTools.rememberThreadLocationState(entryLocation, initialState);
 			final Map<IcfgLocation, IPredicate> threadResult = analyzeSingleThread(threadId, initialState);
-			final Map<IcfgLocation, IPredicate> observed = mTools.getObservedThreadLocationStates();
+			final Map<IcfgLocation, IPredicate> observed = mConcurrentTools.getObservedThreadLocationStates();
 			threadInvariants.updateThread(threadId, threadResult, observed);
 		}
 	}
@@ -126,7 +126,7 @@ public final class ThreadAnalyzer {
 
 	private void prepareThreadIcfgsAndLois() {
 		for (final String threadId : mThreadIds) {
-			final IIcfg<IcfgLocation> threadIcfg = new SingleThreadIcfg(mIcfg, threadId);
+			final SingleThreadIcfg threadIcfg = new SingleThreadIcfg(mIcfg, threadId);
 			mThreadIcfgs.put(threadId, threadIcfg);
 			final Collection<IcfgLocation> baseLois = LoiExpansion.getLocationsOfInterestForThread(threadId, threadIcfg,
 					mRequestedLocationsOfInterest);
@@ -143,11 +143,9 @@ public final class ThreadAnalyzer {
 	}
 
 	private IcfgInterpreter createThreadInterpreter(final String threadId) {
-		final IIcfg<IcfgLocation> threadIcfg = mThreadIcfgs.get(threadId);
+		final SingleThreadIcfg threadIcfg = mThreadIcfgs.get(threadId);
 		final Collection<IcfgLocation> lois = mThreadLois.get(threadId);
-		final IDomain effectiveDomain = mTools.getEffectiveDomain();
-		final IDomain interpreterDomain = effectiveDomain != null ? effectiveDomain : mDomain;
-		return new IcfgInterpreter(mLogger, mTimer, mStats, mTools, threadIcfg, lois, interpreterDomain, mFluid,
+		return new IcfgInterpreter(mLogger, mTimer, mStats, mConcurrentTools, threadIcfg, lois, mDomain, mFluid,
 				mLoopSumFactory, mCallSumFactory);
 	}
 

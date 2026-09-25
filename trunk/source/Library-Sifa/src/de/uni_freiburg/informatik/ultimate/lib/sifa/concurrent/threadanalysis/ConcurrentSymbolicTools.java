@@ -68,7 +68,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	private final JoinHandler mJoinHandler;
 	private GhostVariableManager mGhostVariables;
 	private MustLocksetAnalysis mLocksetInfo = MustLocksetAnalysis.disabled();
-	private PublishOnAcquire mPublication = PublishOnAcquire.disabled();
+	private PublishOnAcquire mMutexInvariants = PublishOnAcquire.disabled();
 	private ThreadActivityPreanalysis mThreadActivityPreanalysis;
 	private GhostLocationStateUpdater mLocationStateUpdater;
 	private ThreadAnalysisContext mThreadContext;
@@ -111,8 +111,8 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		return mObservedStateRecorder.getObservedStates();
 	}
 
-	public void setPublication(final PublishOnAcquire publication) {
-		mPublication = publication;
+	public void setMutexInvariants(final PublishOnAcquire mutexInvariants) {
+		mMutexInvariants = mutexInvariants;
 	}
 
 	public void initializeStaticAnalysis(final GhostVariableManager ghostVariables,
@@ -190,7 +190,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		final IPredicate afterInterference = mThreadContext.interference().applyUntilFixpoint(state,
 				mThreadContext.threadId(), activeThreadIds, interferenceObserverLockset, mThreadContext.domain(),
 				mSettings.innerWideningThreshold(), mStats);
-		return mPublication.restoreProtectedVariables(state, afterInterference, observerLockset);
+		return mMutexInvariants.restoreProtectedVariables(state, afterInterference, observerLockset);
 	}
 
 	private boolean interferenceCannotChangeState(final IPredicate state) {
@@ -206,12 +206,12 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 			updated = mLocationStateUpdater.addLocationUpdate(updated, fork.getNameOfForkedProcedure(),
 					mGhostVariables.getEntryLocation(fork.getNameOfForkedProcedure()));
 		}
-		updated = mJoinHandler.extractJoinedThreadGlobalExitStateAndIntersect(updated, transition, mThreadContext,
+		updated = mJoinHandler.refineWithJoinedThreadExitState(updated, transition, mThreadContext,
 				mThreadActivityPreanalysis);
 		if (isThreadLocalTransition(transition)) {
 			return updated;
 		}
-		updated = mPublication.applyAtAcquire(updated, transition);
+		updated = mMutexInvariants.applyAtAcquire(updated, transition);
 		return applyInterferences(updated, transition.getTarget());
 	}
 
@@ -230,10 +230,6 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 
 	private IPredicate addLocationUpdate(final IPredicate postState, final IIcfgTransition<IcfgLocation> transition) {
 		return mLocationStateUpdater.addLocationUpdate(postState, mThreadContext.threadId(), transition.getTarget());
-	}
-
-	public IDomain getEffectiveDomain() {
-		return mThreadContext != null ? mThreadContext.domain() : null;
 	}
 
 	public IPredicate getInitialStatePredicate(final String threadId) {

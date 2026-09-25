@@ -94,12 +94,12 @@ public final class ThreadModularSetup {
 				new LinkedHashSet<>(threadIds), icfg.getProcedureEntryNodes(), symbolTable,
 				activityPreanalysis.getMultiForkedThreads());
 		tools.initializeStaticAnalysis(ghostVars, activityPreanalysis, locksetInfo);
-		final PublishOnAcquire publication = settings.publishOnAcquire()
+		final PublishOnAcquire mutexInvariants = settings.publishOnAcquire()
 				? PublishOnAcquire.discover(icfg, locksetInfo, MAIN_THREAD, activityPreanalysis, services, script,
 						factory)
 				: PublishOnAcquire.disabled();
 		if (settings.publishOnAcquire()) {
-			logger.info("Publish-on-acquire enabled (protected globals discovered: %s)", !publication.isEmpty());
+			logger.info("Publish-on-acquire enabled (protected globals discovered: %s)", !mutexInvariants.isEmpty());
 		}
 		final AbstractLocationPartitionedDomain partitionedDomain = settings.useBuckets()
 				? AbstractLocationPartitionedDomain.create(baseDomain, tools,
@@ -123,7 +123,7 @@ public final class ThreadModularSetup {
 		logger.info("Interference grouping: abstract-location pairs via %s", settings.locationAbstractionType());
 
 		return new SetupResult(threadIds, domain, interferenceFactory, postcondition, joinedThreads, locationIds,
-				publication);
+				mutexInvariants);
 	}
 
 	private static List<String> discoverThreadIds(final IIcfg<IcfgLocation> icfg) {
@@ -244,6 +244,6 @@ public final class ThreadModularSetup {
 
 	public static record SetupResult(List<String> threadIds, IDomain domain,
 			GroupedInterferenceFactory<?> interferenceFactory, RelationalPredicatePostcondition postcondition,
-			Set<String> joinedThreads, Map<IcfgLocation, Integer> abstractLocationIds, PublishOnAcquire publication) {
+			Set<String> joinedThreads, Map<IcfgLocation, Integer> abstractLocationIds, PublishOnAcquire mutexInvariants) {
 	}
 }

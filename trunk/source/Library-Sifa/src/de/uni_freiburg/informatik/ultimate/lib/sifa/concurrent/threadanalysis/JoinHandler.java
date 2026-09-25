@@ -73,7 +73,7 @@ class JoinHandler {
 		mLocationStateUpdater = locationStateUpdater;
 	}
 
-	IPredicate extractJoinedThreadGlobalExitStateAndIntersect(final IPredicate state,
+	IPredicate refineWithJoinedThreadExitState(final IPredicate state,
 			final IIcfgTransition<IcfgLocation> transition, final ThreadAnalysisContext threadContext,
 			final ThreadActivityPreanalysis activityPreanalysis) {
 		if (!(transition instanceof final IIcfgJoinTransitionThreadCurrent<?> join)) {

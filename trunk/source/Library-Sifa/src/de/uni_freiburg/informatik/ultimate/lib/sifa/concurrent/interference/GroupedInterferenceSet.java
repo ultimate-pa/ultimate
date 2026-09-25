@@ -88,7 +88,7 @@ public abstract class GroupedInterferenceSet<I> implements IInterferenceSet {
 			}
 			applicable.add(entry);
 		}
-		stats.add(Key.INTERFERENCE_SUMMARIES_APPLIED, applicable.size());
+		stats.add(Key.INTERFERENCE_GROUPS_APPLIED, applicable.size());
 		return applicable;
 	}
 

@@ -253,8 +253,8 @@ public class SifaStats extends StatisticsGeneratorWithStopwatches implements ISt
 		INTERFERENCE_INNER_ITERATIONS(KeyType.COUNTER),
 		INTERFERENCE_INNER_WIDENINGS(KeyType.COUNTER),
 		INTERFERENCE_LOCKSET_FILTERED(KeyType.COUNTER),
-		/** Summaries that passed all applicability filters and were applied to a state */
-		INTERFERENCE_SUMMARIES_APPLIED(KeyType.COUNTER),;
+		/** Groups that passed all applicability filters and were applied to a state */
+		INTERFERENCE_GROUPS_APPLIED(KeyType.COUNTER),;
 
 		private final KeyType mType;
 

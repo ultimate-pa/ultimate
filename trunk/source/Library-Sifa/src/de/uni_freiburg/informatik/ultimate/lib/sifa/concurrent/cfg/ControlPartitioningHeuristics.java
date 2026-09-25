@@ -64,7 +64,7 @@ final class ControlPartitioningHeuristics {
 	}
 
 	Map<IcfgLocation, Integer> splitAtNonLockGuardsAndWrites(final Set<IProgramVar> lockVars) {
-		return splitAtGuardsAndWrites(computeFoundationalBaseMapping(lockVars), lockVars);
+		return splitAtGuardsAndWrites(computeBasePartition(lockVars), lockVars);
 	}
 
 	private Map<IcfgLocation, Set<IProgramVar>> computeGuardVars() {
@@ -79,7 +79,7 @@ final class ControlPartitioningHeuristics {
 		return guardVarsByLocation;
 	}
 
-	private Map<IcfgLocation, Integer> computeFoundationalBaseMapping(final Set<IProgramVar> lockVars) {
+	private Map<IcfgLocation, Integer> computeBasePartition(final Set<IProgramVar> lockVars) {
 		final Set<IcfgLocation> reachableFromEntries = collectReachableFromEntries();
 		final Map<IcfgLocation, IcfgLocation> parent = new HashMap<>();
 		for (final IcfgLocation loc : reachableFromEntries) {
@@ -93,7 +93,7 @@ final class ControlPartitioningHeuristics {
 				if (target == null || !procedure.equals(target.getProcedure()) || !parent.containsKey(target)) {
 					continue;
 				}
-				if (!isFoundationalSplitEdge(edge, lockVars)) {
+				if (!shouldSplitAtEdge(edge, lockVars)) {
 					union(parent, source, target);
 				}
 			}
@@ -139,9 +139,9 @@ final class ControlPartitioningHeuristics {
 		}
 	}
 
-	private Map<IcfgLocation, Integer> splitAtGuardsAndWrites(final Map<IcfgLocation, Integer> foundationalMap,
+	private Map<IcfgLocation, Integer> splitAtGuardsAndWrites(final Map<IcfgLocation, Integer> basePartition,
 			final Set<IProgramVar> lockVars) {
-		final Map<IcfgLocation, Integer> abstractLocationMapping = new HashMap<>(foundationalMap);
+		final Map<IcfgLocation, Integer> abstractLocationMapping = new HashMap<>(basePartition);
 		final Map<IcfgLocation, Set<IProgramVar>> guardVarsByLocation = computeGuardVars();
 		if (!lockVars.isEmpty()) {
 			guardVarsByLocation.values().forEach(vars -> vars.removeAll(lockVars));
@@ -152,7 +152,7 @@ final class ControlPartitioningHeuristics {
 		}
 		final Set<IProgramVar> relevantGuardVars = guardVarsByLocation.values().stream().flatMap(Set::stream)
 				.collect(Collectors.toSet());
-		final Map<String, Set<IcfgLocation>> locationsByProcedure = groupByProcedure(foundationalMap.keySet());
+		final Map<String, Set<IcfgLocation>> locationsByProcedure = groupByProcedure(basePartition.keySet());
 		for (final String procedure : sortedKeys(locationsByProcedure)) {
 			final Set<IcfgLocation> procedureLocations = locationsByProcedure.get(procedure);
 			if (procedureLocations == null || procedureLocations.isEmpty()) {
@@ -232,7 +232,7 @@ final class ControlPartitioningHeuristics {
 		return reachableFromEntries;
 	}
 
-	private boolean isFoundationalSplitEdge(final IcfgEdge edge, final Set<IProgramVar> lockVars) {
+	private boolean shouldSplitAtEdge(final IcfgEdge edge, final Set<IProgramVar> lockVars) {
 		if (edge instanceof IIcfgForkTransitionThreadCurrent<?>) {
 			return true;
 		}
