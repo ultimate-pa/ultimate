@@ -26,10 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -275,16 +271,7 @@ public final class SmtUtils {
 			// (see if above) and if the context is equivalent to true.
 			final boolean writeSimplificationBenchmarksToFile = false;
 			if (writeSimplificationBenchmarksToFile && SmtUtils.isTrueLiteral(context)) {
-				try (FileWriter fw = new FileWriter("SimplificationBenchmark_" + overallTimeMs);
-						BufferedWriter bw = new BufferedWriter(fw);
-						PrintWriter out = new PrintWriter(bw)) {
-					out.println(SmtTestGenerationUtils.generateStringForTestfile(formula));
-					out.close();
-					bw.close();
-					fw.close();
-				} catch (final IOException e) {
-					throw new AssertionError(e);
-				}
+				SmtTestGenerationUtils.dumpSimplificationOpportunity("ExpensiveSimplification", formula, simplified);
 			}
 		}
 		return simplified;
