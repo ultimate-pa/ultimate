@@ -647,7 +647,6 @@ public class ExpressionFactory {
 	}
 
 	public static Expression createBitvecLiteral(final ILocation loc, BigInteger value, final int bitlength) {
-		final Expression resultLiteral;
 		if (value.signum() == -1) {
 			final BigInteger maxValue = BigInteger.valueOf(2).pow(bitlength);
 			value = value.add(maxValue);
