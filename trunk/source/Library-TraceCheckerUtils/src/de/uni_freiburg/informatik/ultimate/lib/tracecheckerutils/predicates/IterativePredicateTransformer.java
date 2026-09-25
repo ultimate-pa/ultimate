@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -219,6 +220,12 @@ public class IterativePredicateTransformer<L extends IAction> {
 		private final ManagedScript mMgdScript;
 		private final BasicPredicateFactory mPredicateFactory;
 		private final SimplificationTechnique mSimplificationTechnique;
+		/**
+		 * Idea: The quantifier elimination is, at least if used with repetition, idempotent. So if we have a term that
+		 * was already the result of the quantifier elimination, there is no need to apply the (costly) quantifier
+		 * elimination again.
+		 */
+		private final Set<Term> mEliminationResults = new HashSet<>();
 
 		public QuantifierEliminationPostprocessor(final IUltimateServiceProvider services,
 				final ManagedScript boogie2smt, final BasicPredicateFactory predicateFactory,
@@ -231,8 +238,12 @@ public class IterativePredicateTransformer<L extends IAction> {
 
 		@Override
 		public IPredicate postprocess(final IPredicate pred, final int i) {
+			if (mEliminationResults.contains(pred.getFormula())) {
+				return pred;
+			}
 			final Term resultTerm = PartialQuantifierElimination.eliminate(mServices, mMgdScript, pred.getFormula(),
 					mSimplificationTechnique);
+			mEliminationResults.add(resultTerm);
 			return mPredicateFactory.newPredicate(resultTerm);
 		}
 	}
