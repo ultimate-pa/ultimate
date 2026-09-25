@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -84,16 +85,17 @@ public class SmtExample {
 		final Term zero = mScript.numeral(BigInteger.ZERO);
 		final Term hundrednintysix = mScript.numeral("196");
 
-		final Term first = mScript.term("<=", mScript.term("-", y, x), mScript.term("+", k, two));
-		final Term second = mScript.term("<=", mScript.term("-", x, y), mScript.term("-", mScript.term("-", k), two));
-		final Term third = mScript.term("<=", mScript.term("*", two, x),
-				mScript.term("+", mScript.term("*", mScript.term("-", two), k), hundrednintysix));
-		final Term conj = mScript.term("and", first, second, third);
+		final Term first = SmtUtils.leq(mScript, mScript.term("-", y, x), SmtUtils.sum(mScript, intSort, k, two));
+		final Term second =
+				SmtUtils.leq(mScript, mScript.term("-", x, y), mScript.term("-", mScript.term("-", k), two));
+		final Term third = SmtUtils.leq(mScript, SmtUtils.mul(mScript, intSort, two, x), SmtUtils.sum(mScript, intSort,
+				SmtUtils.mul(mScript, intSort, mScript.term("-", two), k), hundrednintysix));
+		final Term conj = SmtUtils.and(mScript, first, second, third);
 
 		final Term quantified = mScript.quantifier(QuantifiedFormula.EXISTS, new TermVariable[] { k }, conj);
-		final Term isFalseOuter = mScript.term("=", quantified, mScript.term("false"));
+		final Term isFalseOuter = SmtUtils.equality(mScript, quantified, mScript.term("false"));
 		final Term isFalseInner = mScript.quantifier(QuantifiedFormula.EXISTS, new TermVariable[] { k },
-				mScript.term("=", conj, mScript.term("false")));
+				SmtUtils.equality(mScript, conj, mScript.term("false")));
 		final IUltimateServiceProvider services = mServices;
 		final ILogger logger = mLogger;
 		final ManagedScript mgdScript = mMgdScript;

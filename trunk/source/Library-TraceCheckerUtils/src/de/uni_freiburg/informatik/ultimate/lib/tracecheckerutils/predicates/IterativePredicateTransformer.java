@@ -323,7 +323,6 @@ public class IterativePredicateTransformer<L extends IAction> {
 
 				final UnmodifiableTransFormula oldVarAssignments;
 				final UnmodifiableTransFormula callLocalVarsAssignment;
-				final UnmodifiableTransFormula returnTf = nf.getFormulaFromNonCallPos(i);
 
 				if (mTrace.isPendingReturn(i)) {
 					if (useTrueAsCallPredecessor) {
@@ -340,19 +339,14 @@ public class IterativePredicateTransformer<L extends IAction> {
 				} else {
 					final int callPos = mTrace.getCallPosition(i);
 					assert callPos >= 0 && callPos <= i : "Bad call position!";
-					callLocalVarsAssignment = nf.getLocalVarAssignment(callPos);
-					oldVarAssignments = nf.getOldVarAssignment(callPos);
-					final UnmodifiableTransFormula globalVarsAssignments = nf.getGlobalVarAssignment(callPos);
-					final ProcedureSummary summary = computeProcedureSummary(mTrace, callLocalVarsAssignment, returnTf,
-							oldVarAssignments, globalVarsAssignments, nf, callPos, i);
+					final UnmodifiableTransFormula summary = computeProcedureSummary(mTrace, nf, callPos, i);
 
 					final Term preOrWpOfSummaryTerm;
 					if (bs == BackwardSequence.WP) {
-						preOrWpOfSummaryTerm =
-								mPredicateTransformer.weakestPrecondition(successorWp, summary.getWithCallAndReturn());
+						preOrWpOfSummaryTerm = mPredicateTransformer.weakestPrecondition(successorWp, summary);
 					} else {
 						preOrWpOfSummaryTerm = SmtUtils.not(mMgdScript.getScript(),
-								mPredicateTransformer.weakestPrecondition(successorWp, summary.getWithCallAndReturn()));
+								mPredicateTransformer.weakestPrecondition(successorWp, summary));
 					}
 
 					final IPredicate preOrWpOfSummaryPredicate = constructPredicate(preOrWpOfSummaryTerm);
@@ -371,7 +365,10 @@ public class IterativePredicateTransformer<L extends IAction> {
 					} else {
 						callerPred = preOrWpOfSummary;
 					}
+					callLocalVarsAssignment = nf.getLocalVarAssignment(callPos);
+					oldVarAssignments = nf.getOldVarAssignment(callPos);
 				}
+				final UnmodifiableTransFormula returnTf = nf.getFormulaFromNonCallPos(i);
 				final IIcfgReturnTransition<?, ?> returnCB = (IIcfgReturnTransition<?, ?>) mTrace.getSymbol(i);
 				final String calledMethod = returnCB.getCorrespondingCall().getSucceedingProcedure();
 				final Set<IProgramNonOldVar> modifiableGlobals = mModifiedGlobals.getModifiedBoogieVars(calledMethod);
@@ -418,52 +415,43 @@ public class IterativePredicateTransformer<L extends IAction> {
 		return postprocessed;
 	}
 
-	private static final class ProcedureSummary {
-		private final UnmodifiableTransFormula mWithCallAndReturn;
-		private final UnmodifiableTransFormula mWithoutCallAndReturn;
-
-		public ProcedureSummary(final UnmodifiableTransFormula withCallAndReturn,
-				final UnmodifiableTransFormula withoutCallAndReturn) {
-			mWithCallAndReturn = withCallAndReturn;
-			mWithoutCallAndReturn = withoutCallAndReturn;
-		}
-
-		public UnmodifiableTransFormula getWithCallAndReturn() {
-			return mWithCallAndReturn;
-		}
-
-		public UnmodifiableTransFormula getWithoutCallAndReturn() {
-			return mWithoutCallAndReturn;
-		}
-
-	}
-
 	/**
-	 * Computes a summary of the procedure. The procedure consists (or is represented) by the Call statement, the Return
-	 * statement and the inner statements.
+	 * Compute a summary for a subtrace between one non-pending call/return in the given trace. The formulas are not
+	 * taken directly from the trace, but from an additionally given NestedFormulas object. These formulas can be an
+	 * overapproximation of the actual formulas of the trace.
+	 * <p>
+	 * The resulting {@link Transformula} represents the sequential effect of
+	 * <ol>
+	 * <li>the call-side assignments at {@code callPos} (local, old, and global),</li>
+	 * <li>all statements between {@code callPos} and {@code returnPos}, recursively summarized for nested calls,</li>
+	 * <li>and the return transition at {@code returnPos}.</li>
+	 * </ol>
 	 *
 	 * @param trace
-	 *            - the inner statements of the procedure
-	 * @param callTf
-	 * @param returnTf
-	 * @param oldVarsAssignmentTf
-	 * @param rv
+	 *            Nested-word trace that contains the call/return region.
+	 * @param nf
+	 *            Potential overapproximation of the formulas of the trace.
 	 * @param callPos
-	 * @return
+	 *            Position of the call transition in {@code trace}.
+	 * @param returnPos
+	 *            Position of the corresponding return transition in {@code trace}.
+	 * @return A single transformula representing the composed effect of call, inner region, and return.
 	 */
-	private ProcedureSummary computeProcedureSummary(final NestedWord<L> trace, final UnmodifiableTransFormula callTf,
-			final UnmodifiableTransFormula returnTf, final UnmodifiableTransFormula oldVarsAssignmentTf,
-			final UnmodifiableTransFormula globalVarsAssignment,
-			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rv, final int callPos, final int returnPos) {
+	private UnmodifiableTransFormula computeProcedureSummary(final NestedWord<L> trace,
+			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf, final int callPos, final int returnPos) {
 		final UnmodifiableTransFormula summaryOfInnerStatements =
-				computeSummaryForInterproceduralTrace(trace, rv, callPos + 1, returnPos);
+				computeSummaryForInterproceduralTrace(trace, nf, callPos + 1, returnPos);
 		final String callee = trace.getSymbol(callPos).getSucceedingProcedure();
+		final UnmodifiableTransFormula callLocalVarAssignment = nf.getLocalVarAssignment(callPos);
+		final UnmodifiableTransFormula oldVarAssignment = nf.getOldVarAssignment(callPos);
+		final UnmodifiableTransFormula globalVarAssignment = nf.getGlobalVarAssignment(callPos);
+		final UnmodifiableTransFormula returnAssignment = nf.getFormulaFromNonCallPos(returnPos);
 		final UnmodifiableTransFormula summaryWithCallAndReturn =
 				TransFormulaUtils.sequentialCompositionWithCallAndReturn(mMgdScript, true, false,
-						TRANSFORM_SUMMARY_TO_CNF, callTf, oldVarsAssignmentTf, globalVarsAssignment,
-						summaryOfInnerStatements, returnTf, mLogger, mServices, mSimplificationTechnique, mSymbolTable,
-						mModifiedGlobals.getModifiedBoogieVars(callee));
-		return new ProcedureSummary(summaryWithCallAndReturn, summaryOfInnerStatements);
+						TRANSFORM_SUMMARY_TO_CNF, callLocalVarAssignment, oldVarAssignment, globalVarAssignment,
+						summaryOfInnerStatements, returnAssignment, mLogger, mServices, mSimplificationTechnique,
+						mSymbolTable, mModifiedGlobals.getModifiedBoogieVars(callee));
+		return summaryWithCallAndReturn;
 	}
 
 	/**

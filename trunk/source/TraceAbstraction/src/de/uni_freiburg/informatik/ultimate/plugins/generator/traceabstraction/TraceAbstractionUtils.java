@@ -26,29 +26,36 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaBasis;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -143,4 +150,36 @@ public final class TraceAbstractionUtils {
 		}
 		return htcc;
 	}
+
+	public static String constructDumpPath(final boolean besideInputFile, final String inputFilename,
+			final String directory, final String filename, final DebugIdentifier debugIdentifier, final String suffix) {
+		String filePath = null;
+
+		if (besideInputFile) {
+			assert Paths.get(inputFilename).isAbsolute();
+			filePath = inputFilename;
+		} else {
+			filePath = directory + File.separator + filename;
+		}
+
+		if (debugIdentifier != null) {
+			filePath += TaskIdentifier.SEPARATOR + debugIdentifier.toString();
+		}
+
+		return (suffix != null && !suffix.isEmpty()) ? filePath + TaskIdentifier.SEPARATOR + suffix : filePath;
+	}
+
+	public static <L> String determineAutomatonName(final IAutomaton<L, IPredicate> automaton) {
+		String result;
+		if (automaton instanceof INwaBasis) {
+			result = "nwa";
+		} else if (automaton instanceof IPetriNet) {
+			result = "net";
+		} else {
+			throw new UnsupportedOperationException(
+					"unknown kind of automaton " + automaton.getClass().getSimpleName());
+		}
+		return result;
+	}
+
 }

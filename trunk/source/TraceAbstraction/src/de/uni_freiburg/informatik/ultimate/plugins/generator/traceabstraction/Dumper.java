@@ -41,22 +41,20 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptio
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 public final class Dumper implements AutoCloseable {
 	private final PrintWriter mIterationPW;
 	private final ILogger mLogger;
 
-	Dumper(final ILogger logger, final TAPreferences prefs, final DebugIdentifier name, final int iteration) {
-		final File file = new File(prefs.dumpPath() + "/" + name + "_iteration" + iteration + ".txt");
+	Dumper(final ILogger logger, final String path) {
+		final File file = new File(path + ".txt");
 		try {
 			mIterationPW = new PrintWriter(new FileWriter(file));
 		} catch (final IOException e) {

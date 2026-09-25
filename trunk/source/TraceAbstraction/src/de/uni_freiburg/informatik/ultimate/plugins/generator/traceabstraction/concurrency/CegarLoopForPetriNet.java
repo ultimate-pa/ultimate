@@ -82,7 +82,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPetriNetProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPossibleInterferences;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
@@ -220,7 +219,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			}
 			return true;
 		}
-		if (mPref.dumpAutomata()) {
+		if (mPref.dumpDebugInfo()) {
 			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
 			mDumper.dumpNestedRun(mCounterexample);
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
@@ -262,9 +261,8 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			}
 
 			if (mPref.dumpAutomata()) {
-				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
-						+ "_AbstractionAfterDifferencePairwiseOnDemand";
-				super.writeAutomatonToFile(enhancementResult.getSecond().getResult(), filename);
+				writeAutomatonToFile(enhancementResult.getSecond().getResult(), getIteration(),
+						"AbstractionAfterDifferencePairwiseOnDemand");
 			}
 
 			if (getIteration() <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
@@ -305,9 +303,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 		}
 
 		if (mPref.dumpAutomata()) {
-			final String filename =
-					new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()) + "_AbstractionAfterDifference";
-			super.writeAutomatonToFile(mAbstraction, filename);
+			writeAutomatonToFile(mAbstraction, getIteration(), "AbstractionAfterDifference");
 		}
 
 		mLogger.info(mProgramPointPlaces.size() + " programPoint places, "
@@ -319,9 +315,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			mCegarLoopBenchmark.addAutomataMinimizationData(minimizationResult.getSecond());
 			if (mPref.dumpAutomata()
 					|| minimizationResult.getThird() > DEBUG_DUMP_REMOVEUNREACHABLEINPUT_THRESHOLD * 1_000_000_000L) {
-				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
-						+ "_AbstractionBeforeRemoveDead";
-				super.writeAutomatonToFile(mAbstraction, filename);
+				writeAutomatonToFile(mAbstraction, getIteration(), "AbstractionBeforeRemoveDead");
 			}
 			mAbstraction = minimizationResult.getFirst();
 		}
@@ -331,9 +325,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			mCegarLoopBenchmark.addAutomataMinimizationData(minimizationResult.getSecond());
 			if (mPref.dumpAutomata()
 					|| minimizationResult.getThird() > DEBUG_DUMP_REMOVEUNREACHABLEINPUT_THRESHOLD * 1_000_000_000L) {
-				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
-						+ "_AbstractionBeforeRemoveRedundantFlow";
-				super.writeAutomatonToFile(mAbstraction, filename);
+				writeAutomatonToFile(mAbstraction, getIteration(), "AbstractionBeforeRemoveRedundantFlow");
 			}
 			mAbstraction = minimizationResult.getFirst();
 		}
@@ -418,8 +410,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			mArtifactAutomaton = mAbstraction;
 		}
 		if (mPref.dumpAutomata()) {
-			final String filename = "Abstraction" + getIteration();
-			writeAutomatonToFile(mAbstraction, filename);
+			writeAutomatonToFile(mAbstraction, getIteration());
 		}
 		return true;
 	}
@@ -518,11 +509,9 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 				dia = new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), awis).getResult();
 				final long end = System.nanoTime();
 				if (end - start > DEBUG_DUMP_DRYRUNRESULT_THRESHOLD * 1_000_000_000L) {
-					final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
-							+ "_DifferencePairwiseOnDemandInput";
 					final String atsHeaderMessage = "inputs of difference operation in iteration " + getIteration();
 					final String atsCode = "PetriNet diff = differencePairwiseOnDemand(net, nwa);";
-					super.writeAutomataToFile(filename, atsHeaderMessage, atsCode,
+					writeAutomataToFile(getIteration(), "DifferencePairwiseOnDemandInput", atsHeaderMessage, atsCode,
 							new NamedAutomaton<>("net", mAbstraction), new NamedAutomaton<>("nwa", dia));
 				}
 			} else {
@@ -540,9 +529,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 					.getTransitionDensity(SymbolType.INTERNAL);
 			mLogger.info("DFA transition density " + dfaTransitionDensity);
 			if (mPref.dumpAutomata()) {
-				final String filename =
-						new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()) + "_EagerFloydHoareAutomaton";
-				super.writeAutomatonToFile(dia, filename);
+				writeAutomatonToFile(dia, getIteration(), "EagerFloydHoareAutomaton");
 			}
 			break;
 		default:

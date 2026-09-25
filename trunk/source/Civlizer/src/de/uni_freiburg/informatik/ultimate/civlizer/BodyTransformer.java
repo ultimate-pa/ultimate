@@ -77,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.util.WeakestPreconditionOfCall;
 
 /**
  * Transforms Boogie procedure bodies into their Civl thread template bodies.
@@ -464,8 +465,8 @@ final class BodyTransformer extends BoogieTransformer {
 		// replace paramater
 		final var annotationFork = mTranslator.getProgramAndProof().getTemplateVisitor().getEntryAnnotationMap()
 				.get(forkStmt.getProcedureName());
-		final var modifiedAnnotation = CivlUtils.replaceIdentifier(annotationFork,
-				CivlUtils.VarListToIdentifier(forkedProc.get().getInParams()), forkStmt.getArguments());
+		final var modifiedAnnotation = WeakestPreconditionOfCall.substitutePrecondition(annotationFork,
+				forkedProc.get().getInParams(), forkStmt.getArguments(), forkStmt);
 		result.add(new AssertStatement(null,
 				new NamedAttribute[] { CivlUtils.createLayerAttribute(Translator.LAYER_TOP) }, modifiedAnnotation));
 

@@ -11,14 +11,6 @@
          version="0.0.0"/>
 
    <plugin
-         id="com.ibm.icu"
-         version="0.0.0"/>
-
-   <plugin
-         id="com.sun.jna"
-         version="0.0.0"/>
-
-   <plugin
          id="com.sun.xml.bind.jaxb-impl"
          version="0.0.0"/>
 
@@ -35,27 +27,11 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.apache.commons.logging"
-         version="0.0.0"/>
-
-   <plugin
          id="org.apache.log4j"
          version="0.0.0"/>
 
    <plugin
          id="org.apache.logging.log4j.api"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.xerces"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.xml.resolver"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.xml.serializer"
          version="0.0.0"/>
 
    <plugin
@@ -102,14 +78,6 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.core.contenttype"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.core.expressions"
-         version="0.0.0"/>
-
-   <plugin
          id="org.eclipse.core.filesystem"
          version="0.0.0"/>
 
@@ -125,10 +93,6 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.core.jobs"
-         version="0.0.0"/>
-
-   <plugin
          id="org.eclipse.core.resources"
          version="0.0.0"/>
 
@@ -137,15 +101,7 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.core.variables"
-         version="0.0.0"/>
-
-   <plugin
          id="org.eclipse.equinox.app"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.equinox.bidi"
          version="0.0.0"/>
 
    <plugin
@@ -153,27 +109,7 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.equinox.preferences"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.equinox.registry"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.ltk.core.refactoring"
-         version="0.0.0"/>
-
-   <plugin
          id="org.eclipse.osgi"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.osgi.services"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.osgi.util"
          version="0.0.0"/>
 
    <plugin

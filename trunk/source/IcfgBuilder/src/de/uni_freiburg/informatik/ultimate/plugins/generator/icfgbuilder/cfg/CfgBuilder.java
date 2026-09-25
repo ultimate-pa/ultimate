@@ -106,6 +106,7 @@ import de.uni_freiburg.informatik.ultimate.lib.icfg.Return;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.Summary;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.util.TransFormulaAdder;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.util.WeakestPreconditionOfCall;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
@@ -140,7 +141,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.IcfgBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.WeakestPrecondition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.LargeBlockEncoding.InternalLbeMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer.CodeBlockSize;
@@ -1134,6 +1134,8 @@ public class CfgBuilder {
 				ModelUtils.copyAnnotations(st, newEdge);
 			}
 			mEdges.add(newEdge);
+			addErrorEdgesForPreconditions(newLocation, st.getProcedureName(), st, st.getArguments());
+
 			return newLocation;
 		}
 
@@ -1244,30 +1246,38 @@ public class CfgBuilder {
 				ModelUtils.copyAnnotations(st, summaryEdge);
 			}
 			mEdges.add(summaryEdge);
-			if (requiresNonFree != null && !requiresNonFree.isEmpty()) {
-				for (final RequiresSpecification spec : requiresNonFree) {
-					Procedure proc;
-					if (mBoogieDeclarations.getProcImplementation().containsKey(callee)) {
-						proc = mBoogieDeclarations.getProcImplementation().get(callee);
-					} else {
-						proc = mBoogieDeclarations.getProcSpecification().get(callee);
-					}
-					final Expression violatedRequires =
-							getNegation(new WeakestPrecondition(spec.getFormula(), st, proc).getResult());
-					AssumeStatement assumeSt;
-					assumeSt = new AssumeStatement(st.getLocation(), violatedRequires);
-					final Statement st1 = assumeSt;
-					ModelUtils.copyAnnotations(st, st1);
-					mIcfgBacktranslator.putAux(assumeSt, new BoogieASTNode[] { st, spec });
-					final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, spec, mProcLocNodes);
-					final StatementSequence errorCB =
-							mCbf.constructStatementSequence(newLocation, errorLocNode, assumeSt);
-					ModelUtils.copyAnnotations(spec, errorCB);
-					ModelUtils.copyAnnotations(spec, errorLocNode);
-					mEdges.add(errorCB);
-				}
-			}
+			addErrorEdgesForPreconditions(newLocation, callee, st, st.getArguments());
 			return newLocation;
+		}
+
+		private void addErrorEdgesForPreconditions(final BoogieIcfgLocation sourceLoc, final String callee,
+				final Statement st, final Expression[] arguments) {
+			final List<RequiresSpecification> requiresNonFree = mBoogieDeclarations.getRequiresNonFree().get(callee);
+			if (requiresNonFree == null || requiresNonFree.isEmpty()) {
+				return;
+			}
+
+			for (final RequiresSpecification spec : requiresNonFree) {
+				final Procedure proc;
+				if (mBoogieDeclarations.getProcImplementation().containsKey(callee)) {
+					proc = mBoogieDeclarations.getProcImplementation().get(callee);
+				} else {
+					proc = mBoogieDeclarations.getProcSpecification().get(callee);
+				}
+
+				final Expression violatedRequires = getNegation(WeakestPreconditionOfCall
+						.substitutePrecondition(spec.getFormula(), proc.getInParams(), arguments, st));
+
+				final AssumeStatement assumeSt = new AssumeStatement(st.getLocation(), violatedRequires);
+				ModelUtils.copyAnnotations(st, assumeSt);
+				mIcfgBacktranslator.putAux(assumeSt, new BoogieASTNode[] { st, spec });
+
+				final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, spec, mProcLocNodes);
+				final StatementSequence errorCB = mCbf.constructStatementSequence(sourceLoc, errorLocNode, assumeSt);
+				ModelUtils.copyAnnotations(spec, errorCB);
+				ModelUtils.copyAnnotations(spec, errorLocNode);
+				mEdges.add(errorCB);
+			}
 		}
 
 		private BoogieIcfgLocation endStatementSequence(final StatementSequence stseq, final BoogieIcfgLocation loc) {

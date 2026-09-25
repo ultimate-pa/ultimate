@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -52,9 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDept
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
@@ -730,7 +728,7 @@ public class SimplificationTest {
 		final FunDecl[] funDecls =
 				{ new FunDecl(SmtSortUtils::getIntSort, "x"), new FunDecl(SmtSortUtils::getBoolSort, "B") };
 		final String formulaAsString = "(or (>= x 24) (>= x 23) (>= x 22))";
-		final String simplified = "(< 21 x)";
+		final String simplified = "(<= 22 x)";
 		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
 				mLogger, mMgdScript, mCsvWriter);
 	}
@@ -1304,36 +1302,13 @@ public class SimplificationTest {
 		logger.info("CDC code output: " + CondisDepthCode.of(result));
 		csvWriter.reportEliminationSuccess(result, testId, (StatisticsScript) mgdScript.getScript());
 		if (expectedResultAsString != null) {
-			final CommuhashNormalForm cnft = new CommuhashNormalForm(services, mgdScript.getScript());
-			final Term cnfResult = cnft.transform(result);
 			final Term expectedResultAsTerm = new FormulaUnLet()
 					.transform(TermParseUtils.parseTerm(mgdScript.getScript(), expectedResultAsString));
-			final Term cnfExpectedResultAsTerm = cnft.transform(expectedResultAsTerm);
-			MatcherAssert.assertThat(cnfResult, IsEqual.equalTo(cnfExpectedResultAsTerm));
+			final Term cnfExpectedResultAsTerm =
+					CommuhashNormalFormTransformer.apply(mgdScript.getScript(), expectedResultAsTerm);
+			MatcherAssert.assertThat(result, IsEqual.equalTo(cnfExpectedResultAsTerm));
 		}
-		assert checkLogicalEquivalence(mgdScript.getScript(), result, formulaAsTerm);
-	}
-
-	private static boolean checkLogicalEquivalence(final Script script, final Term result, final Term input) {
-		script.echo(new QuotedObject("Start correctness check for simplification."));
-		final LBool lbool = SmtUtils.checkEquivalence(result, input, script);
-		script.echo(new QuotedObject("Finished correctness check for simplification. Result: " + lbool));
-		final String errorMessage;
-		switch (lbool) {
-		case SAT:
-			errorMessage = "Not logically equivalent to expected result: " + result;
-			break;
-		case UNKNOWN:
-			errorMessage = "Insufficient ressources for checking equivalence to expected result: " + result;
-			break;
-		case UNSAT:
-			errorMessage = null;
-			break;
-		default:
-			throw new AssertionError("unknown value " + lbool);
-		}
-		MatcherAssert.assertThat(errorMessage, lbool == LBool.UNSAT);
-		return lbool == LBool.UNSAT;
+		assert SmtTestUtils.checkLogicalEquivalence(mgdScript.getScript(), result, formulaAsTerm);
 	}
 
 }

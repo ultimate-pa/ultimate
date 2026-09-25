@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript.ILockHolderWithVoluntaryLockRelease;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.QuantifierClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
@@ -523,17 +524,23 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 			final long delta = mStats.mTime.lastDelta(TimeUnit.MILLISECONDS);
 			if (delta > LONG_CHECK_THRESHOLD_MS) {
 				final TermClassifier tc = new TermClassifier();
+				final QuantifierClassifier qc = new QuantifierClassifier();
 				tc.checkTerm(act.getTransformula().getFormula());
+				qc.checkTerm(act.getTransformula().getFormula());
 				tc.checkTerm(preLin.getFormula());
+				qc.checkTerm(preLin.getFormula());
 				tc.checkTerm(succ.getFormula());
+				// consider term as negated since it will be negated in the Hoare triple check
+				qc.checkTerm(true, succ.getFormula());
 				if (preHier != null) {
 					tc.checkTerm(preHier.getFormula());
+					qc.checkTerm(preHier.getFormula());
 				}
 				mLogger.warn(
 						"%s took %s for a HTC check with result %s. Formula has sorts %s, hasArrays=%s, hasNonlinArith=%s, quantifiers %s",
 						mHtc.getClass().getSimpleName(), CoreUtil.humanReadableTime(delta, TimeUnit.MILLISECONDS, 2),
 						result, tc.getOccuringSortNames(), tc.hasArrays(), tc.hasNonlinearArithmetic(),
-						tc.getOccuringQuantifiers());
+						qc.printLongestQuantSeqs());
 			}
 		}
 

@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnno
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
@@ -49,6 +50,7 @@ public class BasicPredicate extends ModernAnnotations implements IPredicate {
 
 	public BasicPredicate(final int serialNumber, final Term term, final Set<IProgramVar> vars,
 			final Set<IProgramFunction> functions, final Term closedFormula) {
+		assert CommuhashUtils.isInCommuhashNormalForm(term) : "Not in CommuhashNormalForm";
 		mFormula = term;
 		mClosedFormula = closedFormula;
 		mVars = vars;

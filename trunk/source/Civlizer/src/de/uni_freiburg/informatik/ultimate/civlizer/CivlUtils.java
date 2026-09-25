@@ -27,16 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.civlizer;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -52,18 +47,6 @@ public class CivlUtils {
 		// static utility class should not be instantiated
 	}
 
-	public static IdentifierExpression[] VarListToIdentifier(final VarList[] varList) {
-		return Arrays.stream(varList).flatMap(x -> Arrays.stream(VarListToIdentifier(x)))
-				.toArray(IdentifierExpression[]::new);
-	}
-
-	public static IdentifierExpression[] VarListToIdentifier(final VarList varList) {
-		return Arrays
-				.stream(varList.getIdentifiers()).map(x -> new IdentifierExpression(null,
-						varList.getType().getBoogieType(), x, DeclarationInformation.DECLARATIONINFO_GLOBAL))
-				.toArray(IdentifierExpression[]::new);
-	}
-
 	public static ParameterDeclaration[] VarListToParameterDeclaration(final VarList[] varList) {
 		return Arrays.stream(varList).flatMap(x -> Arrays.stream(VarListToParameterDeclaration(x)))
 				.toArray(ParameterDeclaration[]::new);
@@ -73,46 +56,6 @@ public class CivlUtils {
 		return Arrays.stream(varList.getIdentifiers())
 				.map(x -> new ParameterDeclaration(x, varList.getType(), Linearity.NONE))
 				.toArray(ParameterDeclaration[]::new);
-	}
-
-	static class ExpressionReplacer extends BoogieTransformer {
-
-		private final Expression mAnnotation;
-		private final Map<String, Expression> mReplaceMap;
-
-		ExpressionReplacer(final Expression annotation, final IdentifierExpression[] oldParam,
-				final Expression[] newExpr) {
-			mAnnotation = annotation;
-			mReplaceMap = new HashMap<>();
-
-			for (int i = 0; i < oldParam.length; i++) {
-				mReplaceMap.put(oldParam[i].getIdentifier(), newExpr[i]);
-			}
-		}
-
-		Expression getNewExpression() {
-			return processExpression(mAnnotation);
-		}
-
-		@Override
-		protected Expression processExpression(final Expression expr) {
-			if (expr instanceof final IdentifierExpression idExpr) {
-				final Expression newExpr = mReplaceMap.get(idExpr.getIdentifier());
-				if (newExpr != null) {
-					return newExpr;
-				}
-			}
-
-			return super.processExpression(expr);
-		}
-
-	}
-
-	static Expression replaceIdentifier(final Expression annotation, final IdentifierExpression[] oldParam,
-			final Expression[] newExpr) {
-		final ExpressionReplacer exprReplacer = new ExpressionReplacer(annotation, oldParam, newExpr);
-
-		return exprReplacer.getNewExpression();
 	}
 
 	static Attribute createLinearityAttribute(final Linearity linearity) {
