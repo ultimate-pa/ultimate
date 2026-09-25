@@ -26,6 +26,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class EGraph {
+	/**
+	 * This option allows us to toggle whether we detect congruence relations.
+	 */
+	private static final boolean PROCESS_CONGRUENCE = true;
+	private static final boolean ADD_ALL_TERMS = true;
+
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
 
@@ -66,6 +72,20 @@ public class EGraph {
 		mMgdScript = mgdScript;
 		mServices = services;
 
+		mMgdScript.lock(this);
+		final Term trueTerm = mMgdScript.term(this, "true");
+		final Term falseTerm = mMgdScript.term(this, "false");
+		mMgdScript.unlock(this);
+
+		mUnionFind.findAndConstructEquivalenceClassIfNeeded(trueTerm);
+		mUnionFind.findAndConstructEquivalenceClassIfNeeded(falseTerm);
+		final HashSet<Term> trueSet = new HashSet<>();
+		trueSet.add(trueTerm);
+		final HashSet<Term> falseSet = new HashSet<>();
+		falseSet.add(falseTerm);
+
+		mDistinctSets.put(mUnionFind.getContainingSet(trueTerm), falseSet);
+		mDistinctSets.put(mUnionFind.getContainingSet(falseTerm), trueSet);
 	}
 
 	/**
@@ -84,16 +104,14 @@ public class EGraph {
 		 * Helper method that ranks {@link Term}s of size one, using the order literal < constant symbol < variable.
 		 **/
 		private static int rankTermOfSizeOne(final Term term) {
-			if (SmtUtils.isFalseLiteral(term)) {
+			if (SmtUtils.isFalseLiteral(term) || SmtUtils.isTrueLiteral(term)) {
 				return 0;
-			} else if (SmtUtils.isTrueLiteral(term)) {
-				return 1;
 			} else if (term instanceof ConstantTerm) {
-				return 2;
+				return 1;
 			} else if (SmtUtils.isConstant(term)) {
-				return 3;
+				return 2;
 			} else if (term instanceof TermVariable) {
-				return 4;
+				return 3;
 			} else {
 				throw new AssertionError("Unexpected term of size one");
 			}
@@ -178,11 +196,10 @@ public class EGraph {
 	 * Adds terms to the datastructure.
 	 **/
 	private void addTerm(final Term term) {
-		if ((term instanceof ConstantTerm)) {
-			mUnionFind.findAndConstructEquivalenceClassIfNeeded(term); // we add terms that do not appear on either side
-																		// of an equality/disequality relation so that
-																		// we do not need to check for deep equality
-																		// later on
+		if ((term instanceof ConstantTerm || term instanceof TermVariable)) {
+			// we add terms that do not appear on either side of an equality/disequality relation so that we do not need
+			// to check for deep equality later on
+			mUnionFind.findAndConstructEquivalenceClassIfNeeded(term);
 		} else if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 
@@ -193,7 +210,7 @@ public class EGraph {
 					addTerm(arg);
 				}
 			}
-			if (appTerm.getFunction().getName().equals("select")) {
+			if (appTerm.getFunction().getName().equals("select") && PROCESS_CONGRUENCE) {
 				addSelectTerm(appTerm);
 			}
 		} else {
@@ -209,10 +226,22 @@ public class EGraph {
 		final Term[] conjuncts = SmtUtils.getConjuncts(formula);
 
 		for (final Term term : conjuncts) {
+			mMgdScript.lock(this);
+			final Term trueTerm = mMgdScript.term(this, "true");
+			final Term falseTerm = mMgdScript.term(this, "false");
+			mMgdScript.unlock(this);
+			addTerm(term);
+			mUnionFind.union(term, trueTerm);
+			if (term instanceof ApplicationTerm) {
+				final ApplicationTerm appTerm = (ApplicationTerm) term;
+
+				if (appTerm.getFunction().getName().equals("not")) {
+					mUnionFind.union(appTerm.getParameters()[0], falseTerm);
+				}
+			}
+
 			final BinaryEqualityRelation binaryEqRelation = BinaryEqualityRelation.convert(term);
-			if (binaryEqRelation == null) {
-				addTerm(term); //
-			} else {
+			if (binaryEqRelation != null) {
 				final Term lhs = binaryEqRelation.getLhs();
 				final Term rhs = binaryEqRelation.getRhs();
 
@@ -247,17 +276,7 @@ public class EGraph {
 	/**
 	 * Triple representing a union operation where E is the union of A and B.
 	 **/
-	// custom triple as there are no triples in java
-	private static class UnionOperation {
-		public ImmutableSet<Term> mA;
-		public ImmutableSet<Term> mB;
-		public ImmutableSet<Term> mE;
-
-		public UnionOperation(final ImmutableSet<Term> A, final ImmutableSet<Term> B, final ImmutableSet<Term> E) {
-			mA = A;
-			mB = B;
-			mE = E;
-		}
+	private static record UnionOperation(ImmutableSet<Term> A, ImmutableSet<Term> B, ImmutableSet<Term> E) {
 	}
 
 	/**
@@ -299,7 +318,7 @@ public class EGraph {
 		}
 
 		for (final UnionOperation unionOp : unions) {
-			findImpliedSelectUnions(unionOp.mA, unionOp.mB, unionOp.mE);
+			findImpliedSelectUnions(unionOp.A, unionOp.B, unionOp.E);
 		}
 	}
 
@@ -432,6 +451,18 @@ public class EGraph {
 		} else {
 			return EquivalenceState.UNKNOWN;
 		}
+	}
+
+	/**
+	 * Returns a map from each term to its representative.
+	 **/
+	public HashMap<Term, Term> getRepresentativeMap() {
+		final HashMap<Term, Term> representativeMap = new HashMap();
+		for (final Term term : mUnionFind.getAllElements()) {
+			assert mUnionFind.find(term) != null;
+			representativeMap.put(term, mUnionFind.find(term));
+		}
+		return representativeMap;
 	}
 
 }
