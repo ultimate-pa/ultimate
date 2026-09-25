@@ -627,8 +627,15 @@ public class ExpressionFactory {
 		return new FunctionApplication(loc, resultBoogieType, identifier, arguments);
 	}
 
-	public static StructAccessExpression constructStructAccessExpression(final ILocation loc, final Expression struct,
+	public static Expression constructStructAccessExpression(final ILocation loc, final Expression struct,
 			final String fieldName) {
+		if (struct instanceof final StructConstructor structConstructor) {
+			final int fieldIdx = Arrays.asList(structConstructor.getFieldIdentifiers()).indexOf(fieldName);
+			if (fieldIdx >= 0) {
+				// Simplify {x: e,...}!x to just e
+				return structConstructor.getFieldValues()[fieldIdx];
+			}
+		}
 		final BoogieType type = TypeCheckHelper.typeCheckStructAccessExpressionOrLhs((BoogieType) struct.getType(),
 				fieldName, new TypeErrorReporter(loc));
 		return new StructAccessExpression(loc, type, struct, fieldName);

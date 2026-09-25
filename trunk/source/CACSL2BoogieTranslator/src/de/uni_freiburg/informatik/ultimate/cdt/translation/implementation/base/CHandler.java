@@ -154,7 +154,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
@@ -3063,8 +3062,7 @@ public class CHandler {
 					// Assignment of structs ignores flexible arrays, https://en.cppreference.com/w/c/language/struct
 					continue;
 				}
-				final StructAccessExpression fieldValue =
-						ExpressionFactory.constructStructAccessExpression(loc, rhs, fieldId);
+				final Expression fieldValue = ExpressionFactory.constructStructAccessExpression(loc, rhs, fieldId);
 				lhsList.add(new StructLHS(loc, fieldValue.getType(), lhs.getLhs(), fieldId));
 				rhsList.add(fieldValue);
 			}

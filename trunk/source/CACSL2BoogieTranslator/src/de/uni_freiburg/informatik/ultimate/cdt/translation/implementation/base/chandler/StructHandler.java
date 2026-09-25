@@ -34,7 +34,6 @@ import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
@@ -142,8 +141,7 @@ public class StructHandler {
 			}
 		} else if (fieldOwner.getLrValue() instanceof RValue) {
 			final RValue rVal = (RValue) fieldOwner.getLrValue();
-			final StructAccessExpression sexpr =
-					ExpressionFactory.constructStructAccessExpression(loc, rVal.getValue(), field);
+			final Expression sexpr = ExpressionFactory.constructStructAccessExpression(loc, rVal.getValue(), field);
 			newValue = new RValue(sexpr, cFieldType);
 		} else {
 			final LocalLValue lVal = (LocalLValue) fieldOwner.getLrValue();
