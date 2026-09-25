@@ -269,21 +269,7 @@ public final class SmtUtils {
 		final long overallTimeMs = (endTime - startTime) / 1_000_000;
 		// write warning if simplification takes more than 5 seconds
 		if (overallTimeMs >= 5000) {
-			final StringBuilder sb = new StringBuilder();
-			sb.append("Spent ").append(CoreUtil.humanReadableTime(overallTimeMs, TimeUnit.MILLISECONDS, 2))
-					.append(" on a formula simplification");
-			if (formula.equals(simplified)) {
-				sb.append(" that was a NOOP. DAG size: ");
-				sb.append(new DagSizePrinter(formula));
-			} else {
-				sb.append(". DAG size of input: ");
-				sb.append(new DagSizePrinter(formula));
-				sb.append(" DAG size of output: ");
-				sb.append(new DagSizePrinter(simplified));
-			}
-			sb.append(" (called from ").append(ReflectionUtil.getCallerSignatureFiltered(Set.of(SmtUtils.class)))
-					.append(")");
-			logger.warn(sb);
+			logger.warn(generateSimplificationLogMessage(formula, simplified, overallTimeMs));
 			// Matthias 2023-08-01: The following is a hack for writing simplification
 			// benchmarks to a file. We write only if the simplification took at least 5s
 			// (see if above) and if the context is equivalent to true.
@@ -302,6 +288,28 @@ public final class SmtUtils {
 			}
 		}
 		return simplified;
+	}
+
+	/**
+	 * Log message for simplification that took a long time.
+	 */
+	private static String generateSimplificationLogMessage(final Term formula, final Term simplified,
+			final long overallTimeMs) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Spent ").append(CoreUtil.humanReadableTime(overallTimeMs, TimeUnit.MILLISECONDS, 2))
+				.append(" on a formula simplification");
+		if (formula.equals(simplified)) {
+			sb.append(" that was a NOOP. DAG size: ");
+			sb.append(new DagSizePrinter(formula));
+		} else {
+			sb.append(". DAG size of input: ");
+			sb.append(new DagSizePrinter(formula));
+			sb.append(" DAG size of output: ");
+			sb.append(new DagSizePrinter(simplified));
+		}
+		sb.append(" (called from ").append(ReflectionUtil.getCallerSignatureFiltered(Set.of(SmtUtils.class)))
+				.append(")");
+		return sb.toString();
 	}
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript mgdScript, final Term formula,
