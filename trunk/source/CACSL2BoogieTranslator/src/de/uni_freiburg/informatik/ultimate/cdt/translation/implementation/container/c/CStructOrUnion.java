@@ -234,6 +234,14 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		return false;
 	}
 
+	public boolean hasFlexibleArrayMember() {
+		if (mFieldTypes.length == 0) {
+			return false;
+		}
+		final ICType lastMember = mFieldTypes[mFieldTypes.length - 1];
+		return lastMember instanceof CArray && lastMember.isIncomplete();
+	}
+
 	@Override
 	public int hashCode() {
 		// reproducible hash codes, but object equality

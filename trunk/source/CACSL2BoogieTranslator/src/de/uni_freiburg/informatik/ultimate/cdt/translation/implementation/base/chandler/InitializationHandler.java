@@ -938,8 +938,8 @@ public class InitializationHandler {
 			}
 			return mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, initializationValue, cType, true);
 		}
-		final AssignmentStatement assignment = StatementFactory.constructAssignmentStatement(loc,
-				new LeftHandSide[] { ((LocalLValue) lhs).getLhs() }, new Expression[] { initializationValue });
+		final AssignmentStatement assignment =
+				mCHandler.constructAssignmentWithoutFlexibleArray(loc, (LocalLValue) lhs, initializationValue);
 		addOverApprToStatementAnnots(overAppr, assignment);
 		return Collections.singletonList(assignment);
 	}

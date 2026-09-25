@@ -154,6 +154,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -3012,8 +3014,8 @@ public class CHandler {
 		} else {
 			rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 		}
-		final AssignmentStatement assignStmt = StatementFactory.constructAssignmentStatement(loc,
-				new LeftHandSide[] { lValue.getLhs() }, new Expression[] { rhsWithBitfieldTreatment });
+		final AssignmentStatement assignStmt =
+				constructAssignmentWithoutFlexibleArray(loc, lValue, rhsWithBitfieldTreatment);
 
 		if (leftHandSide.getCType().isAtomic()) {
 			// For atomic types, make this assignment into an atomic block
@@ -3038,6 +3040,42 @@ public class CHandler {
 			mDataRaceChecker.checkOnWrite(builder, loc, leftHandSide);
 		}
 		return builder.build();
+	}
+
+	/**
+	 * Construct an assignment "lhs := rhs", but if the LHS type is a struct with a flexible array member, assign each
+	 * field separately, but skip flexible. Otherwise, construct just a simple assignment (same as
+	 * {@link StatementFactory#constructAssignmentStatement}).
+	 */
+	public AssignmentStatement constructAssignmentWithoutFlexibleArray(final ILocation loc, final LocalLValue lhs,
+			final Expression rhs) {
+		final LeftHandSide[] assignLhs;
+		final Expression[] assignRhs;
+		if (lhs.getCType().getUnderlyingType() instanceof final CStructOrUnion structType
+				&& structType.hasFlexibleArrayMember()) {
+			// If the LHS type is a struct with a flexible array member, assign each field separately, but skip flexible
+			// arrays (see C11 6.7.2.1).
+			final List<LeftHandSide> lhsList = new ArrayList<>();
+			final List<Expression> rhsList = new ArrayList<>();
+			for (final String fieldId : structType.getFieldIds()) {
+				final ICType fieldType = structType.getFieldType(fieldId);
+				if (fieldType.getUnderlyingType() instanceof CArray && fieldType.isIncomplete()) {
+					// Assignment of structs ignores flexible arrays, https://en.cppreference.com/w/c/language/struct
+					continue;
+				}
+				final StructAccessExpression fieldValue =
+						ExpressionFactory.constructStructAccessExpression(loc, rhs, fieldId);
+				lhsList.add(new StructLHS(loc, fieldValue.getType(), lhs.getLhs(), fieldId));
+				rhsList.add(fieldValue);
+			}
+			assignLhs = lhsList.toArray(LeftHandSide[]::new);
+			assignRhs = rhsList.toArray(Expression[]::new);
+		} else {
+			// Otherwise, construct just a simple assignment.
+			assignLhs = new LeftHandSide[] { lhs.getLhs() };
+			assignRhs = new Expression[] { rhs };
+		}
+		return StatementFactory.constructAssignmentStatement(loc, assignLhs, assignRhs);
 	}
 
 	/**
