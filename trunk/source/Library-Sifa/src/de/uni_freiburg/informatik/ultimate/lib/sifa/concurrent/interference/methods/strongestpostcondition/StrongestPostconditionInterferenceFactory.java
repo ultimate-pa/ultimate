@@ -66,17 +66,17 @@ public final class StrongestPostconditionInterferenceFactory
 	}
 
 	@Override
-	protected void accumulateEdgeSummary(final Map<InterferenceGroupKey, RelationalInterference> accumulator,
+	protected void accumulateEdgeInterference(final Map<InterferenceGroupKey, RelationalInterference> accumulator,
 			final TranslatedInterferenceOfEdge edge, final Map<IcfgLocation, IPredicate> threadStates) {
 		final IPredicate relationalInterference = relationalInterferenceOf(edge, threadStates);
 		if (relationalInterference == null
-				|| InterferenceUtils.shouldSkipTrivialPredicate(relationalInterference)) {
+				|| InterferenceUtils.isNullOrFalse(relationalInterference)) {
 			return;
 		}
-		final RelationalInterference summary = new RelationalInterference(relationalInterference,
+		final RelationalInterference interference = new RelationalInterference(relationalInterference,
 				mPostcondition.prepareRelation(relationalInterference),
 				unconditionalPostStateOf(relationalInterference));
-		accumulator.merge(groupKeyFor(edge), summary, this::mergeSummaries);
+		accumulator.merge(groupKeyFor(edge), interference, this::mergeInterference);
 	}
 
 	@Override
@@ -86,7 +86,7 @@ public final class StrongestPostconditionInterferenceFactory
 				: new StrongestPostconditionInterference(accumulator, mSourcesBeforeForkByThread, mPostcondition);
 	}
 
-	private RelationalInterference mergeSummaries(final RelationalInterference left,
+	private RelationalInterference mergeInterference(final RelationalInterference left,
 			final RelationalInterference right) {
 		final IPredicate mergedRelation = disjoin(left.relationalInterference(), right.relationalInterference());
 		final IPredicate mergedPostState = disjoin(left.unconditionalPostState(), right.unconditionalPostState());

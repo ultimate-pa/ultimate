@@ -76,12 +76,12 @@ public final class PostStateInterferenceFactory
 	}
 
 	@Override
-	protected void accumulateEdgeSummary(final Map<GroupKey, Group> accumulator,
+	protected void accumulateEdgeInterference(final Map<GroupKey, Group> accumulator,
 			final TranslatedInterferenceOfEdge edge, final Map<IcfgLocation, IPredicate> threadStates) {
 		final IPredicate targetState = threadStates.get(edge.target());
 		final IPredicate postState = targetState == null ? computeEdgeLocalPostState(edge, threadStates)
 				: mTranslator.projectPreStateToSharedState(targetState);
-		if (InterferenceUtils.shouldSkipTrivialPredicate(postState)) {
+		if (InterferenceUtils.isNullOrFalse(postState)) {
 			return;
 		}
 		final GroupKey key = new GroupKey(edge.source().getProcedure(), edge.abstractLocationPair(),

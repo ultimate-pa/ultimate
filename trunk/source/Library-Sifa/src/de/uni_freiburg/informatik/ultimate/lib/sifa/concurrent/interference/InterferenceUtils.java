@@ -147,7 +147,7 @@ public final class InterferenceUtils {
 				|| modifiesGlobals(edge.getTransformula());
 	}
 
-	public static boolean shouldSkipTrivialPredicate(final IPredicate predicate) {
+	public static boolean isNullOrFalse(final IPredicate predicate) {
 		return predicate == null || SmtUtils.isFalseLiteral(predicate.getFormula());
 	}
 

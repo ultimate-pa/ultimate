@@ -58,13 +58,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public final class GuardedUpdateInterferenceFactory
 		extends GroupedInterferenceFactory<Map<InterferenceGroupKey, Map<TranslatedInterferenceOfEdge, GuardedUpdate>>> {
 
-	private Map<String, Map<Integer, LocationMoveSummary>> mLocationMoveSummaries;
+	private Map<String, Map<Integer, LocationMoveInterference>> mLocationMoveInterferenceByThread;
 
-	private final Map<TranslatedInterferenceOfEdge, SummaryOfPreviousRound> mSummariesOfPreviousRound =
+	private final Map<TranslatedInterferenceOfEdge, CachedGuardedUpdate> mCachedUpdatesByEdge =
 			new IdentityHashMap<>();
 	private final Map<IPredicate, IPredicate> mSharedStateProjections = new IdentityHashMap<>();
 
-	private record SummaryOfPreviousRound(IPredicate sourceState, GuardedUpdate update) {
+	private record CachedGuardedUpdate(IPredicate sourceState, GuardedUpdate update) {
 	}
 
 	public GuardedUpdateInterferenceFactory(final InterferenceEdgeCollector edgeCollector,
@@ -86,7 +86,7 @@ public final class GuardedUpdateInterferenceFactory
 	}
 
 	@Override
-	protected void accumulateEdgeSummary(
+	protected void accumulateEdgeInterference(
 			final Map<InterferenceGroupKey, Map<TranslatedInterferenceOfEdge, GuardedUpdate>> accumulator,
 			final TranslatedInterferenceOfEdge edge, final Map<IcfgLocation, IPredicate> threadStates) {
 		final IPredicate sourceState = threadStates.get(edge.source());
@@ -97,17 +97,17 @@ public final class GuardedUpdateInterferenceFactory
 			accumulateLocationMoveClosure(accumulator, edge);
 			return;
 		}
-		final SummaryOfPreviousRound previous = mSummariesOfPreviousRound.get(edge);
+		final CachedGuardedUpdate cachedUpdate = mCachedUpdatesByEdge.get(edge);
 		final GuardedUpdate update;
-		if (previous != null && previous.sourceState() == sourceState) {
-			update = previous.update();
+		if (cachedUpdate != null && cachedUpdate.sourceState() == sourceState) {
+			update = cachedUpdate.update();
 		} else {
 			final IPredicate sharedPreState =
 					mSharedStateProjections.computeIfAbsent(sourceState, mTranslator::projectPreStateToSharedState);
 			final GuardedUpdate created = tryCreateUpdate(edge, sharedPreState);
-			update = created != null && InterferenceUtils.shouldSkipTrivialPredicate(created.effect()) ? null
+			update = created != null && InterferenceUtils.isNullOrFalse(created.effect()) ? null
 					: created;
-			mSummariesOfPreviousRound.put(edge, new SummaryOfPreviousRound(sourceState, update));
+			mCachedUpdatesByEdge.put(edge, new CachedGuardedUpdate(sourceState, update));
 		}
 		if (update == null) {
 			return;
@@ -118,32 +118,32 @@ public final class GuardedUpdateInterferenceFactory
 	private void accumulateLocationMoveClosure(
 			final Map<InterferenceGroupKey, Map<TranslatedInterferenceOfEdge, GuardedUpdate>> accumulator,
 			final TranslatedInterferenceOfEdge edge) {
-		final LocationMoveSummary summary =
-				locationMoveSummaries().get(edge.source().getProcedure()).get(sourceAbs(edge));
-		accumulator.computeIfAbsent(summary.groupKey(), key -> new LinkedHashMap<>())
-				.put(summary.representative(), summary.update());
+		final LocationMoveInterference interference =
+				locationMoveInterferenceByThread().get(edge.source().getProcedure()).get(sourceAbstractLocation(edge));
+		accumulator.computeIfAbsent(interference.groupKey(), key -> new LinkedHashMap<>())
+				.put(interference.representative(), interference.update());
 	}
 
 	private boolean isLocationMove(final TranslatedInterferenceOfEdge edge) {
-		return edge.changedGlobals().isEmpty() && edge.forkedThreadId() == null && sourceAbs(edge) != targetAbs(edge)
+		return edge.changedGlobals().isEmpty() && edge.forkedThreadId() == null && sourceAbstractLocation(edge) != targetAbstractLocation(edge)
 				&& mTranslator.getLocationTermVarOrNull(edge.source().getProcedure()) != null;
 	}
 
-	private static int sourceAbs(final TranslatedInterferenceOfEdge edge) {
+	private static int sourceAbstractLocation(final TranslatedInterferenceOfEdge edge) {
 		return edge.abstractLocationPair().sourceAbstractLocation();
 	}
 
-	private static int targetAbs(final TranslatedInterferenceOfEdge edge) {
+	private static int targetAbstractLocation(final TranslatedInterferenceOfEdge edge) {
 		return edge.abstractLocationPair().targetAbstractLocation();
 	}
 
-	private record LocationMoveSummary(InterferenceGroupKey groupKey, TranslatedInterferenceOfEdge representative,
+	private record LocationMoveInterference(InterferenceGroupKey groupKey, TranslatedInterferenceOfEdge representative,
 			GuardedUpdate update) {
 	}
 
-	private Map<String, Map<Integer, LocationMoveSummary>> locationMoveSummaries() {
-		if (mLocationMoveSummaries != null) {
-			return mLocationMoveSummaries;
+	private Map<String, Map<Integer, LocationMoveInterference>> locationMoveInterferenceByThread() {
+		if (mLocationMoveInterferenceByThread != null) {
+			return mLocationMoveInterferenceByThread;
 		}
 		final Map<String, Map<Integer, Set<Integer>>> moveGraph = new LinkedHashMap<>();
 		final Map<String, Map<Integer, TranslatedInterferenceOfEdge>> representatives = new LinkedHashMap<>();
@@ -154,22 +154,22 @@ public final class GuardedUpdateInterferenceFactory
 			}
 			final String thread = edge.source().getProcedure();
 			moveGraph.computeIfAbsent(thread, t -> new LinkedHashMap<>())
-					.computeIfAbsent(sourceAbs(edge), s -> new LinkedHashSet<>()).add(targetAbs(edge));
-			representatives.computeIfAbsent(thread, t -> new LinkedHashMap<>()).putIfAbsent(sourceAbs(edge), edge);
+					.computeIfAbsent(sourceAbstractLocation(edge), s -> new LinkedHashSet<>()).add(targetAbstractLocation(edge));
+			representatives.computeIfAbsent(thread, t -> new LinkedHashMap<>()).putIfAbsent(sourceAbstractLocation(edge), edge);
 			concreteSources.computeIfAbsent(thread, t -> new LinkedHashMap<>())
-					.computeIfAbsent(sourceAbs(edge), s -> new LinkedHashSet<>()).add(edge.source());
+					.computeIfAbsent(sourceAbstractLocation(edge), s -> new LinkedHashSet<>()).add(edge.source());
 		}
-		final Map<String, Map<Integer, LocationMoveSummary>> summaries = new LinkedHashMap<>();
+		final Map<String, Map<Integer, LocationMoveInterference>> interferenceByThread = new LinkedHashMap<>();
 		moveGraph.forEach((thread, successors) -> {
 			final TermVariable locVar = mTranslator.getLocationTermVarOrNull(thread);
-			final Map<Integer, LocationMoveSummary> perSource = new LinkedHashMap<>();
+			final Map<Integer, LocationMoveInterference> perSource = new LinkedHashMap<>();
 			successors.keySet().forEach(src -> perSource.put(src,
-					createLocationMoveSummary(thread, locVar, src, writeFreeClosure(src, successors),
+					createLocationMoveInterference(thread, locVar, src, writeFreeClosure(src, successors),
 							representatives.get(thread).get(src), concreteSources.get(thread).get(src))));
-			summaries.put(thread, perSource);
+			interferenceByThread.put(thread, perSource);
 		});
-		mLocationMoveSummaries = summaries;
-		return summaries;
+		mLocationMoveInterferenceByThread = interferenceByThread;
+		return interferenceByThread;
 	}
 
 	private static Set<Integer> writeFreeClosure(final int start, final Map<Integer, Set<Integer>> successors) {
@@ -184,17 +184,17 @@ public final class GuardedUpdateInterferenceFactory
 		return reached;
 	}
 
-	private LocationMoveSummary createLocationMoveSummary(final String thread, final TermVariable locVar,
-			final int sourceAbs, final Set<Integer> reachable, final TranslatedInterferenceOfEdge representative,
+	private LocationMoveInterference createLocationMoveInterference(final String thread, final TermVariable locVar,
+			final int sourceAbstractLocation, final Set<Integer> reachable, final TranslatedInterferenceOfEdge representative,
 			final Set<IcfgLocation> sources) {
-		final IPredicate guard = mPredicateFactory.newPredicate(locEquality(locVar, sourceAbs));
+		final IPredicate guard = mPredicateFactory.newPredicate(locEquality(locVar, sourceAbstractLocation));
 		final IPredicate effect = mPredicateFactory.newPredicate(SmtUtils.or(mManagedScript.getScript(),
 				reachable.stream().map(target -> locEquality(locVar, target)).toList()));
 		final GuardedUpdate update = new GuardedUpdate(guard, effect, Set.of(locVar));
 		final InterferenceGroupKey key = new InterferenceGroupKey(thread,
-				new AbstractLocationPair(sourceAbs, sourceAbs), Set.of(), null,
+				new AbstractLocationPair(sourceAbstractLocation, sourceAbstractLocation), Set.of(), null,
 				Set.copyOf(sources));
-		return new LocationMoveSummary(key, representative, update);
+		return new LocationMoveInterference(key, representative, update);
 	}
 
 	private Term locEquality(final TermVariable locVar, final int abstractLocation) {
@@ -221,7 +221,7 @@ public final class GuardedUpdateInterferenceFactory
 			return null;
 		}
 		final IPredicate relationalInterference = conjoin(sharedPreState, edge.transitionPredicate());
-		if (InterferenceUtils.shouldSkipTrivialPredicate(relationalInterference)) {
+		if (InterferenceUtils.isNullOrFalse(relationalInterference)) {
 			return null;
 		}
 		final IPredicate effect = mPostcondition.strongestPostcondition(mTruePredicate, relationalInterference);

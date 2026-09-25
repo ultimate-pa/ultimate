@@ -61,7 +61,7 @@ public final class OuterInterferenceFixpoint {
 			mInvariants.configureForAnalysis(threadInvariants);
 
 			mThreadAnalysis.analyzeAllThreads(mInterferences.current(), threadInvariants);
-			final IInterferenceSet extractedInterferences = mInterferenceFactory.buildFromAllStates(threadInvariants);
+			final IInterferenceSet extractedInterferences = mInterferenceFactory.buildFromThreadInvariants(threadInvariants);
 
 			if (mInterferences.isStable(extractedInterferences)) {
 				switch (mInvariants.checkInvariantStability(threadInvariants, iteration)) {

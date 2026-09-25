@@ -241,7 +241,7 @@ public final class PublishOnAcquire {
 				joined = joined == null ? projectedPostState : domain.join(joined, projectedPostState);
 			}
 		}
-		return nullIfTrivial(joined);
+		return nullIfTrue(joined);
 	}
 
 	private IPredicate recomputeProjectedPostStateOf(final IcfgEdge edge,
@@ -265,10 +265,10 @@ public final class PublishOnAcquire {
 		if (invariant.published() == null || extractedInvariant == null || extractedInvariant.published() == null) {
 			return null;
 		}
-		return nullIfTrivial(domain.widen(invariant.published(), extractedInvariant.published()));
+		return nullIfTrue(domain.widen(invariant.published(), extractedInvariant.published()));
 	}
 
-	private static IPredicate nullIfTrivial(final IPredicate predicate) {
+	private static IPredicate nullIfTrue(final IPredicate predicate) {
 		return predicate != null && !SmtUtils.isTrueLiteral(predicate.getFormula()) ? predicate : null;
 	}
 

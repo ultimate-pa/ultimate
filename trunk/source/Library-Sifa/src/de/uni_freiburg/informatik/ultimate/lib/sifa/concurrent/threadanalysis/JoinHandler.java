@@ -98,14 +98,14 @@ class JoinHandler {
 	private IPredicate globalExitState(final ThreadAnalysisContext threadContext, final IcfgLocation exitLoc,
 			final String joinedThread, final IIcfgJoinTransitionThreadCurrent<?> join) {
 		final IPredicate exitState = threadContext.locationPredicates().get(exitLoc);
-		if (exitState == null || isTrivial(exitState)) {
+		if (exitState == null || isBooleanLiteral(exitState)) {
 			return null;
 		}
 		final IPredicate projected = projectToGlobalVars(exitState, joinedThread, join);
 		return SmtUtils.isFalseLiteral(projected.getFormula()) ? null : projected;
 	}
 
-	private static boolean isTrivial(final IPredicate pred) {
+	private static boolean isBooleanLiteral(final IPredicate pred) {
 		return SmtUtils.isTrueLiteral(pred.getFormula()) || SmtUtils.isFalseLiteral(pred.getFormula());
 	}
 
@@ -136,7 +136,7 @@ class JoinHandler {
 	}
 
 	IPredicate projectJoinAssignedVars(final IPredicate state, final IIcfgTransition<IcfgLocation> transition) {
-		if (!(transition instanceof final IIcfgJoinTransitionThreadCurrent<?> join) || isTrivial(state)) {
+		if (!(transition instanceof final IIcfgJoinTransitionThreadCurrent<?> join) || isBooleanLiteral(state)) {
 			return state;
 		}
 		final Set<TermVariable> assigned = collectAssignedTermVars(join);

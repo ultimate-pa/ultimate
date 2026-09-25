@@ -68,7 +68,7 @@ public abstract class GroupedInterferenceFactory<A> {
 		mFalsePredicate = predicateFactory.newPredicate(managedScript.getScript().term("false"));
 	}
 
-	public final IInterferenceSet buildFromAllStates(final ThreadInvariants invariants) {
+	public final IInterferenceSet buildFromThreadInvariants(final ThreadInvariants invariants) {
 		final Map<String, Map<IcfgLocation, IPredicate>> perThreadStates = invariants.threadInvariants();
 		final Map<IcfgLocation, IPredicate> allStates = mergeStates(perThreadStates);
 		final A accumulator = createAccumulator();
@@ -80,7 +80,7 @@ public abstract class GroupedInterferenceFactory<A> {
 			if (threadStates == null) {
 				continue;
 			}
-			accumulateEdgeSummary(accumulator, edge, threadStates);
+			accumulateEdgeInterference(accumulator, edge, threadStates);
 		}
 		return buildInterferenceSet(accumulator);
 	}
@@ -91,7 +91,7 @@ public abstract class GroupedInterferenceFactory<A> {
 
 	protected abstract A createAccumulator();
 
-	protected abstract void accumulateEdgeSummary(A accumulator, TranslatedInterferenceOfEdge edge,
+	protected abstract void accumulateEdgeInterference(A accumulator, TranslatedInterferenceOfEdge edge,
 			Map<IcfgLocation, IPredicate> threadStates);
 
 	protected abstract IInterferenceSet buildInterferenceSet(A accumulator);
