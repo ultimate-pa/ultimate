@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -253,15 +252,15 @@ public final class Translator {
 	// call One_Put(join_pool, tid);
 	// }
 	//
-	private YieldProcedure addTerminate() {
-		final var tidParam = new ParameterDeclaration("tid", makeOne(mTidType), Linearity.IN);
-		final var putCall = new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "One_Put",
-				new Expression[] { getJoinPoolExpression(), getParameterExpression(tidParam) });
-		final var refinedAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP,
-				new Body(null, new VariableDeclaration[0], new Statement[] { putCall }));
-		return new YieldProcedure(LAYER_BASE, "terminate", new ParameterDeclaration[] { tidParam },
-				new ParameterDeclaration[0], new CallStatement[0], new CallStatement[0], null, refinedAction);
-	}
+
+	/*
+	 * private YieldProcedure addTerminate() { final var tidParam = new ParameterDeclaration("tid", makeOne(mTidType),
+	 * Linearity.IN); final var putCall = new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0],
+	 * "One_Put", new Expression[] { getJoinPoolExpression(), getParameterExpression(tidParam) }); final var
+	 * refinedAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP, new Body(null, new VariableDeclaration[0],
+	 * new Statement[] { putCall })); return new YieldProcedure(LAYER_BASE, "terminate", new ParameterDeclaration[] {
+	 * tidParam }, new ParameterDeclaration[0], new CallStatement[0], new CallStatement[0], null, refinedAction); }
+	 */
 
 	// Creates the following yield procedure:
 	//
@@ -270,20 +269,6 @@ public final class Translator {
 	// call One_Get(join_pool, tid);
 	// }
 	//
-	private YieldProcedure addJoin() {
-		final var tidParam = new ParameterDeclaration("tid", makeOne(mTidType), Linearity.OUT);
-
-		final var setContain = new FunctionApplication(null, JOIN_POOL_CONTAINS_FUNCTION,
-				new Expression[] { getJoinPoolExpression(), getParameterExpression(tidParam) });
-
-		final var assume = new AssumeStatement(null, setContain);
-		final var getCall = new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "One_Get",
-				new Expression[] { getJoinPoolExpression(), getParameterExpression(tidParam) });
-		final var refinedAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP,
-				new Body(null, new VariableDeclaration[0], new Statement[] { assume, getCall }));
-		return new YieldProcedure(LAYER_BASE, "join", new ParameterDeclaration[] { tidParam },
-				new ParameterDeclaration[0], new CallStatement[0], new CallStatement[0], null, refinedAction);
-	}
 
 	private static Expression getJoinPoolExpression() {
 		return new IdentifierExpression(null, JOIN_POOL_NAME);
@@ -298,19 +283,11 @@ public final class Translator {
 		mDeclarations.add(new BoogieDeclaration(joinPoolDecl));
 		final var returnArrayDecl = declareReturnArray();
 		mDeclarations.add(new BoogieDeclaration(returnArrayDecl));
-		final var yieldIgnore = declareYieldIgnore();
-		mDeclarations.add(yieldIgnore);
 
 		for (final String procName : mProgramAndProof.getTemplateVisitor().getAssociationTidMap().keySet()) {
 			final var forkDecl = addFork(procName);
 			mDeclarations.add(forkDecl);
 		}
-
-		final var terminateDecl = addTerminate();
-		mDeclarations.add(terminateDecl);
-
-		final var joinDecl = addJoin();
-		mDeclarations.add(joinDecl);
 	}
 
 	private VariableDeclaration declareJoinPool() {
@@ -358,15 +335,6 @@ public final class Translator {
 
 		final var newDecl = new VariableDeclaration(varDecl.getLoc(), newAttributes, varDecl.getVariables());
 		return new BoogieDeclaration(newDecl);
-	}
-
-	static CallStatement callYieldIgnore() {
-		return new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "yield_ignore",
-				new Expression[0]);
-	}
-
-	private YieldInvariant declareYieldIgnore() {
-		return new YieldInvariant(LAYER_TOP, "yield_ignore", new ParameterDeclaration[0], new Expression[0]);
 	}
 
 	// TODO refactor to avoid these call* methods
@@ -554,7 +522,7 @@ public final class Translator {
 	}
 
 	// Improve reprensation of Identifier and Tid TODO
-	CallStatement callSetReturn(final String procName) {
+	CallStatement callTerminate(final String procName) {
 		final var threadProc = (Procedure) Arrays.stream(mProgramAndProof.getBoogieAst().getDeclarations())
 				.filter(x -> x instanceof final Procedure proc && proc.getIdentifier().equals(procName)).findFirst()
 				.get();
@@ -569,24 +537,24 @@ public final class Translator {
 												identifier, DeclarationInformation.DECLARATIONINFO_GLOBAL))))
 				.toArray(Expression[]::new);
 
-		return new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "set_return_" + procName,
+		return new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "terminate_" + procName,
 				inParams);
 	}
 
-	YieldProcedure addSetReturn(final String procName) {
+	YieldProcedure addTerminate(final String procName) {
+
+		final var tidParam = new ParameterDeclaration("tid", makeOne(mTidType), Linearity.IN);
+
 		final var threadProc = (Procedure) Arrays.stream(mProgramAndProof.getBoogieAst().getDeclarations())
 				.filter(x -> x instanceof final Procedure proc && proc.getIdentifier().equals(procName)).findFirst()
 				.get();
 
 		final var procParams = new ArrayList<ParameterDeclaration>();
-		for (final Tid tid : mProgramAndProof.getTemplateVisitor().getAssociationTidMap().getOrDefault(procName,
-				Collections.emptyList())) {
-			procParams.add(new ParameterDeclaration(tid.toString(), makeOne(mTidType), Linearity.INOUT));
-		}
+		procParams.add(tidParam);
 
 		procParams.addAll(Arrays.stream(threadProc.getOutParams())
 				.flatMap(x -> Arrays.stream(x.getIdentifiers())
-						.map(identifier -> new ParameterDeclaration(identifier, x.getType(), Linearity.INOUT)))
+						.map(identifier -> new ParameterDeclaration(identifier, x.getType(), Linearity.NONE)))
 				.toList());
 
 		final Expression[] inParams =
@@ -601,16 +569,23 @@ public final class Translator {
 
 		for (int i = 0; i < inParams.length; i++) {
 			returnExpressions.add(new ArrayLHS(null, new VariableLHS(null, RETURN_ARRAY_NAME), new Expression[] {
-					new IdentifierExpression(null, tid.toString()), new IntegerLiteral(null, String.valueOf(i)) }));
+					getParameterExpression(tidParam), new IntegerLiteral(null, String.valueOf(i)) }));
 		}
 
-		final var atomicAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP,
-				new Body(null, new VariableDeclaration[0], new Statement[] {
-						new AssignmentStatement(null, returnExpressions.toArray(LeftHandSide[]::new), inParams) }));
+		final var putCall = new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "One_Put",
+				new Expression[] { getJoinPoolExpression(), getParameterExpression(tidParam) });
 
-		final var yieldProc = new YieldProcedure(LAYER_BASE, "set_return_" + procName,
-				procParams.toArray(ParameterDeclaration[]::new), new ParameterDeclaration[0], new CallStatement[0],
-				new CallStatement[0], null, atomicAction);
+		final var assignReturn =
+				new AssignmentStatement(null, returnExpressions.toArray(LeftHandSide[]::new), inParams);
+
+		final var atomicAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP,
+				new Body(null, new VariableDeclaration[0],
+						(returnExpressions.size() > 0) ? new Statement[] { assignReturn, putCall }
+								: new Statement[] { putCall }));
+
+		final var yieldProc =
+				new YieldProcedure(LAYER_BASE, "terminate_" + procName, procParams.toArray(ParameterDeclaration[]::new),
+						new ParameterDeclaration[0], new CallStatement[0], new CallStatement[0], null, atomicAction);
 
 		mDeclarations.add(yieldProc);
 
@@ -618,8 +593,11 @@ public final class Translator {
 
 	}
 
-	static CallStatement callReturnAssignement(final String procName, final int counter, final JoinStatement joinStmt) {
+	static CallStatement callJoin(final String procName, final int counter, final JoinStatement joinStmt) {
 		final Expression[] joinThreadId = joinStmt.getThreadID();
+
+		final String joinName = "join" + Arrays.stream(joinStmt.getLhs()).map(x -> "_" + x.getType().toString())
+				.collect(Collectors.joining(""));
 
 		final Expression[] threadId = { new IdentifierExpression(joinStmt.getLoc(), BoogieType.createPlaceholderType(0),
 				new Tid(joinThreadId).toString(), DeclarationInformation.DECLARATIONINFO_GLOBAL) };
@@ -628,16 +606,24 @@ public final class Translator {
 				.filter(lhs -> lhs.getDeclarationInformation().getStorageClass() == StorageClass.LOCAL)
 				.toArray(VariableLHS[]::new);
 
-		return new CallStatement(null, new NamedAttribute[0], false, localReturnVariables,
-				"return_" + procName + "_" + counter, threadId);
+		return new CallStatement(null, new NamedAttribute[0], false, localReturnVariables, joinName, threadId);
 	}
 
-	YieldProcedure addReturnAssignement(final String procName, final int counter, final JoinStatement joinStmt) {
+	YieldProcedure addJoin(final String procName, final int counter, final JoinStatement joinStmt) {
 		final var lhs = joinStmt.getLhs();
-		final var tid = new Tid(joinStmt.getThreadID());
-		final var tidIdentifier = tid.toString();
 
-		final var tidParameter = new ParameterDeclaration(tidIdentifier, makeOne(mTidType), Linearity.INOUT);
+		final String joinName =
+				"join" + Arrays.stream(lhs).map(x -> "_" + x.getType().toString()).collect(Collectors.joining(""));
+
+		final var optionalProc = mDeclarations.stream()
+				.filter(x -> x instanceof final YieldProcedure proc && proc.getIdentifier().equals(joinName))
+				.map(YieldProcedure.class::cast).findFirst();
+
+		if (optionalProc.isPresent()) {
+			return optionalProc.get();
+		}
+
+		final var tidParam = new ParameterDeclaration("tid", makeOne(mTidType), Linearity.OUT);
 
 		final var assignments = new ArrayList<VariableLHS>();
 		final var returnVariables = new ArrayList<VariableLHS>();
@@ -655,19 +641,24 @@ public final class Translator {
 				returnVariables.add(new VariableLHS(null, variable.getType(), returnVariableName, declarationInfo));
 
 				returnExpressions.add(new ArrayAccessExpression(null, new IdentifierExpression(null, RETURN_ARRAY_NAME),
-						new Expression[] { new IdentifierExpression(null, tidIdentifier),
+						new Expression[] { getParameterExpression(tidParam),
 								new IntegerLiteral(null, String.valueOf(i)) }));
 			} else {
 				assignments.add(variable);
 			}
 		}
 
-		final var atomicAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP,
-				new Body(null, new VariableDeclaration[0], new Statement[] { new AssignmentStatement(null,
-						assignments.toArray(new VariableLHS[0]), returnExpressions.toArray(Expression[]::new)) }));
+		final var assignReturn = new AssignmentStatement(null, assignments.toArray(new VariableLHS[0]),
+				returnExpressions.toArray(Expression[]::new));
 
-		final var yieldProc = new YieldProcedure(LAYER_BASE, "return_" + procName + "_" + counter,
-				new ParameterDeclaration[] { tidParameter },
+		final var getCall = new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "One_Get",
+				new Expression[] { getJoinPoolExpression(), getParameterExpression(tidParam) });
+
+		final var atomicAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP, new Body(null,
+				new VariableDeclaration[0],
+				(assignments.size() > 0) ? new Statement[] { assignReturn, getCall } : new Statement[] { getCall }));
+
+		final var yieldProc = new YieldProcedure(LAYER_BASE, joinName, new ParameterDeclaration[] { tidParam },
 				returnVariables.stream()
 						.map(variable -> new ParameterDeclaration(variable.getIdentifier(),
 								((BoogieType) variable.getType()).toASTType(null), Linearity.NONE))

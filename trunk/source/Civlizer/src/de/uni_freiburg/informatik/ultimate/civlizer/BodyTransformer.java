@@ -177,15 +177,8 @@ final class BodyTransformer extends BoogieTransformer {
 					.filter(x -> x instanceof final Procedure proc && proc.getIdentifier().equals(mProcedureName))
 					.findFirst().get();
 
-			final boolean needReturn = threadProc.getOutParams().length > 0;
-
-			if (needReturn) {
-				mTranslator.addSetReturn(mProcedureName);
-				newStatements.add(mTranslator.callSetReturn(mProcedureName));
-				newStatements.add(Translator.callYieldIgnore());
-			}
-			newStatements.add(new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "terminate",
-					mCurrentTids));
+			mTranslator.addTerminate(mProcedureName);
+			newStatements.add(mTranslator.callTerminate(mProcedureName));
 		}
 
 		// insert additional local variables, if needed
@@ -280,14 +273,8 @@ final class BodyTransformer extends BoogieTransformer {
 				//$FALL-THROUGH$
 
 				newStatements.add(annotationCheck);
-				newStatements.add(processStatement(statement));
-				if (joinStmt.getLhs().length > 0) {
-					// TODO maybe refactor
-					newStatements.add(Translator.callYieldIgnore());
-					mTranslator.addReturnAssignement(mProcedureName, mAtomicStatementCounter, joinStmt);
-					newStatements
-							.add(Translator.callReturnAssignement(mProcedureName, mAtomicStatementCounter, joinStmt));
-				}
+				mTranslator.addJoin(mProcedureName, mAtomicStatementCounter, joinStmt);
+				newStatements.add(Translator.callJoin(mProcedureName, mAtomicStatementCounter, joinStmt));
 				newStatements.addAll(positiveGhostUpdates);
 				break;
 
