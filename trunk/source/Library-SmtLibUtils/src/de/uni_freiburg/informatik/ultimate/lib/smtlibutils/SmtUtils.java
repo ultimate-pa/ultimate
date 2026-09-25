@@ -26,10 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -269,39 +265,38 @@ public final class SmtUtils {
 		final long overallTimeMs = (endTime - startTime) / 1_000_000;
 		// write warning if simplification takes more than 5 seconds
 		if (overallTimeMs >= 5000) {
-			final StringBuilder sb = new StringBuilder();
-			sb.append("Spent ").append(CoreUtil.humanReadableTime(overallTimeMs, TimeUnit.MILLISECONDS, 2))
-					.append(" on a formula simplification");
-			if (formula.equals(simplified)) {
-				sb.append(" that was a NOOP. DAG size: ");
-				sb.append(new DagSizePrinter(formula));
-			} else {
-				sb.append(". DAG size of input: ");
-				sb.append(new DagSizePrinter(formula));
-				sb.append(" DAG size of output: ");
-				sb.append(new DagSizePrinter(simplified));
-			}
-			sb.append(" (called from ").append(ReflectionUtil.getCallerSignatureFiltered(Set.of(SmtUtils.class)))
-					.append(")");
-			logger.warn(sb);
+			logger.warn(generateSimplificationLogMessage(formula, simplified, overallTimeMs));
 			// Matthias 2023-08-01: The following is a hack for writing simplification
 			// benchmarks to a file. We write only if the simplification took at least 5s
 			// (see if above) and if the context is equivalent to true.
 			final boolean writeSimplificationBenchmarksToFile = false;
 			if (writeSimplificationBenchmarksToFile && SmtUtils.isTrueLiteral(context)) {
-				try (FileWriter fw = new FileWriter("SimplificationBenchmark_" + overallTimeMs);
-						BufferedWriter bw = new BufferedWriter(fw);
-						PrintWriter out = new PrintWriter(bw)) {
-					out.println(SmtTestGenerationUtils.generateStringForTestfile(formula));
-					out.close();
-					bw.close();
-					fw.close();
-				} catch (final IOException e) {
-					throw new AssertionError(e);
-				}
+				SmtTestGenerationUtils.dumpSimplificationOpportunity("ExpensiveSimplification", formula, simplified);
 			}
 		}
 		return simplified;
+	}
+
+	/**
+	 * Log message for simplification that took a long time.
+	 */
+	private static String generateSimplificationLogMessage(final Term formula, final Term simplified,
+			final long overallTimeMs) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Spent ").append(CoreUtil.humanReadableTime(overallTimeMs, TimeUnit.MILLISECONDS, 2))
+				.append(" on a formula simplification");
+		if (formula.equals(simplified)) {
+			sb.append(" that was a NOOP. DAG size: ");
+			sb.append(new DagSizePrinter(formula));
+		} else {
+			sb.append(". DAG size of input: ");
+			sb.append(new DagSizePrinter(formula));
+			sb.append(" DAG size of output: ");
+			sb.append(new DagSizePrinter(simplified));
+		}
+		sb.append(" (called from ").append(ReflectionUtil.getCallerSignatureFiltered(Set.of(SmtUtils.class)))
+				.append(")");
+		return sb.toString();
 	}
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript mgdScript, final Term formula,
@@ -1455,8 +1450,8 @@ public final class SmtUtils {
 
 	/**
 	 * Ultimate's default method for constructing terms. In contrast to {@link Script#term} this method applies some
-	 * lightweight simplifications and ensures that the output is in Ultimate normal form (UNF) if the input was in UNF.
-	 * This method applies only simplifications that do will slow down the performance significantly. <br />
+	 * lightweight simplifications that are computationally inexpensive. The method ensures that the output is in
+	 * Ultimate normal form (UNF) if the input was in UNF. <br />
 	 * You should only apply {@link Script#term} instead of this method in the following two cases.
 	 * <li>You want to construct a term that has to have the syntactic form specified by your arguments. (Note that this
 	 * might violate the UNF and some of your algorithms will not be able to process your term.)

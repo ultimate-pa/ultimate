@@ -2,12 +2,12 @@
 <feature
       id="BA_FeatureDependenciesDebugE4"
       label="BA_FeatureDependenciesDebugE4"
-      version="0.3.1"
+      version="0.3.2"
       provider-name="Ultimate Program Analysis Team"
       arch="x86_64">
 
    <requires>
-      <import feature="BA_FeatureDependenciesCommon"/>
+      <import feature="BA_FeatureUltimateCommon"/>
    </requires>
 
    <plugin
@@ -60,14 +60,6 @@
 
    <plugin
          id="org.apache.commons.commons-jxpath"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.xalan"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.xmlgraphics"
          version="0.0.0"/>
 
    <plugin
@@ -144,16 +136,6 @@
 
    <plugin
          id="org.eclipse.e4.ui.services"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.e4.ui.swt.gtk"
-         ws="gtk"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.e4.ui.swt.win32"
-         ws="win32"
          version="0.0.0"/>
 
    <plugin

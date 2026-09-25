@@ -26,6 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 
@@ -72,29 +77,8 @@ public final class SmtTestGenerationUtils {
 		}
 
 		final Map<Sort, String> sortVarMapping = new HashMap<>();
-		final int counter = 0;
 		for (final Sort sort : sorts) {
-			final String constructionString;
-			if (SmtSortUtils.isBoolSort(sort)) {
-				constructionString = "SmtSortUtils::getBoolSort";
-			} else if (SmtSortUtils.isRealSort(sort)) {
-				constructionString = "SmtSortUtils::getRealSort";
-			} else if (SmtSortUtils.isIntSort(sort)) {
-				constructionString = "SmtSortUtils::getIntSort";
-			} else if (SmtSortUtils.isArraySort(sort)) {
-				if (isIntIntArray(sort)) {
-					constructionString = "QuantifierEliminationTest::getArrayIntIntSort";
-				} else if (isIntIntIntArray(sort)) {
-					constructionString = "QuantifierEliminationTest::getArrayIntIntIntSort";
-				} else {
-					constructionString = "arraySort" + counter;
-				}
-			} else if (SmtSortUtils.isBitvecSort(sort)) {
-				constructionString =
-						"QuantifierEliminationTest::getBitvectorSort" + SmtSortUtils.getBitvectorLength(sort);
-			} else {
-				constructionString = "otherSort" + counter;
-			}
+			final String constructionString = generateSortConstructionString(sort);
 			sortVarMapping.put(sort, constructionString);
 		}
 
@@ -145,6 +129,46 @@ public final class SmtTestGenerationUtils {
 		return result.toString();
 	}
 
+	private static String generateSortConstructionString(final Sort sort) {
+		if (SmtSortUtils.isBoolSort(sort)) {
+			return "SmtSortUtils::getBoolSort";
+		} else if (SmtSortUtils.isRealSort(sort)) {
+			return "SmtSortUtils::getRealSort";
+		} else if (SmtSortUtils.isIntSort(sort)) {
+			return "SmtSortUtils::getIntSort";
+		} else if (SmtSortUtils.isArraySort(sort)) {
+			return generateSortConstructionStringForArraySort(sort);
+		} else if (SmtSortUtils.isBitvecSort(sort)) {
+			return "QuantifierEliminationTest::getBitvectorSort" + SmtSortUtils.getBitvectorLength(sort);
+		} else {
+			return "otherSort";
+		}
+	}
+
+	private static String generateSortConstructionStringForArraySort(final Sort sort) {
+		if (isIntIntArray(sort)) {
+			return "QuantifierEliminationTest::getArrayIntIntSort";
+		}
+		if (isIntIntIntArray(sort)) {
+			return "QuantifierEliminationTest::getArrayIntIntIntSort";
+		}
+
+		if (SmtSortUtils.isBitvecSort(sort.getArguments()[0])) {
+			if (SmtSortUtils.isBitvecSort(sort.getArguments()[1])) {
+				return "QuantifierEliminationTest::getArrayBv" + SmtSortUtils.getBitvectorLength(sort.getArguments()[0])
+						+ "Bv" + SmtSortUtils.getBitvectorLength(sort.getArguments()[1]) + "Sort";
+			}
+			if (SmtSortUtils.isArraySort(sort.getArguments()[1])
+					&& (SmtSortUtils.isBitvecSort(sort.getArguments()[1].getArguments()[0])
+							&& (SmtSortUtils.isBitvecSort(sort.getArguments()[1].getArguments()[1])))) {
+				return "QuantifierEliminationTest::getArrayBv" + SmtSortUtils.getBitvectorLength(sort.getArguments()[0])
+						+ "Bv" + SmtSortUtils.getBitvectorLength(sort.getArguments()[1].getArguments()[0]) + "Bv"
+						+ +SmtSortUtils.getBitvectorLength(sort.getArguments()[1].getArguments()[1]) + "Sort";
+			}
+		}
+		return "otherArraySort";
+	}
+
 	private static boolean isIntIntArray(final Sort sort) {
 		if (((SmtSortUtils.isArraySort(sort) && (sort.getArguments().length == 2))
 				&& SmtSortUtils.isIntSort(sort.getArguments()[0])) && SmtSortUtils.isIntSort(sort.getArguments()[1])) {
@@ -185,4 +209,82 @@ public final class SmtTestGenerationUtils {
 		sb.append(System.lineSeparator());
 		return sb.toString();
 	}
+
+	public static void dumpEliminationOpportunities(final String filenamePrefix, final Term moreQuantifiedTerm,
+			final Term lessQuantifiedTerm) {
+		final String name = String.format(filenamePrefix + "_%s_%s_Treesizes_%s_%s",
+				Integer.toHexString(moreQuantifiedTerm.hashCode()), Integer.toHexString(lessQuantifiedTerm.hashCode()),
+				new DAGSize().treesize(moreQuantifiedTerm), new DAGSize().treesize(lessQuantifiedTerm));
+		final String testString =
+				SmtTestGenerationUtils.generateQuantifierEliminationTest(name, moreQuantifiedTerm, lessQuantifiedTerm);
+		try (FileWriter fw = new FileWriter(name + ".txt");
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter out = new PrintWriter(bw)) {
+			out.println(testString);
+			out.close();
+			bw.close();
+			fw.close();
+		} catch (final IOException e) {
+			throw new AssertionError(e);
+		}
+	}
+
+	public static String generateSimplificationTest(final String methodName, final Term input,
+			final Term expectedResult) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("\t").append("@Test").append(System.lineSeparator());
+		sb.append("\t").append("public void ").append(methodName).append("() {").append(System.lineSeparator());
+		sb.append(generateStringForTestfile(input));
+		sb.append("\t\t").append("final String expectedResultAsString = ");
+		if (expectedResult != null) {
+			sb.append('\"').append(expectedResult).append('\"');
+		} else {
+			sb.append(expectedResult);
+		}
+		sb.append(";").append(System.lineSeparator());
+		sb.append("\t\t").append(
+				"SimplificationTest.runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);")
+				.append(System.lineSeparator());
+		sb.append("\t").append("}").append(System.lineSeparator());
+		sb.append(System.lineSeparator());
+		return sb.toString();
+	}
+
+	public static void dumpSimplificationOpportunity(final String filenamePrefix, final Term term1, final Term term2) {
+		final long largerTermSize;
+		final long smallerTermSize;
+		final Term largerTerm;
+		final Term smallerTerm;
+		{
+			final long sizeNewTerm = new DAGSize().treesize(term1);
+			final long sizeExistingTerm = new DAGSize().treesize(term2);
+			if (sizeNewTerm >= sizeExistingTerm) {
+				largerTermSize = sizeNewTerm;
+				largerTerm = term1;
+				smallerTermSize = sizeExistingTerm;
+				smallerTerm = term2;
+			} else {
+				largerTermSize = sizeExistingTerm;
+				largerTerm = term2;
+				smallerTermSize = sizeNewTerm;
+				smallerTerm = term1;
+			}
+		}
+
+		final String name =
+				String.format(filenamePrefix + "_%s_%s_Treesizes_%s_%s", Integer.toHexString(smallerTerm.hashCode()),
+						Integer.toHexString(largerTerm.hashCode()), largerTermSize, smallerTermSize);
+		final String testString = SmtTestGenerationUtils.generateSimplificationTest(name, largerTerm, smallerTerm);
+		try (FileWriter fw = new FileWriter(name + ".txt");
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter out = new PrintWriter(bw)) {
+			out.println(testString);
+			out.close();
+			bw.close();
+			fw.close();
+		} catch (final IOException e) {
+			throw new AssertionError(e);
+		}
+	}
+
 }

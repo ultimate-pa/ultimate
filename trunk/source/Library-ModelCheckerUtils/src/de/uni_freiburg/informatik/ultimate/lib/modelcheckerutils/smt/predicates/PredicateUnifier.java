@@ -27,10 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbol
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator.PredicateUnifierStatisticsType;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtTestGenerationUtils;
@@ -67,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
@@ -87,11 +81,16 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 public class PredicateUnifier implements IPredicateUnifier {
 
 	/**
-	 * Option for writing a file if we find a quantified formula and a quantifier-free formula that are equivalent.
-	 * (Rationale: case where quantifier elimination is possible but our quantifier elimination is not successful.)
-	 *
+	 * If enabled, writes a file if we found a quantified formula and a quantifier-free formula that are logically
+	 * equivalent. (Rationale: identifies opportunities to improve quantifier elimination.)
 	 */
-	private static final boolean DUMP_UNEXPLOITED_ELIMININATION_POSSIBILITIES = false;
+	private static final boolean DEBUG_DUMP_ELIMINATION_OPPORTUNITIES = false;
+
+	/**
+	 * If enabled, writes a file if we found two syntactically different formulas that are logically equivalent.
+	 * (Rationale: identifies opportunities to improve formula simplification.)
+	 */
+	private static final boolean DEBUG_DUMP_SIMPLIFICATION_OPPORTUNITIES = false;
 
 	protected final ManagedScript mMgdScript;
 	private final BasicPredicateFactory mPredicateFactory;
@@ -338,7 +337,6 @@ public class PredicateUnifier implements IPredicateUnifier {
 	private IPredicate getOrConstructPredicate(final Term term, final HashMap<IPredicate, Validity> impliedPredicates,
 			final HashMap<IPredicate, Validity> expliedPredicates, final IPredicate originalPredicate,
 			final UnaryOperator<IPredicate> predicatePostProcessor) {
-
 		final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(term, mMgdScript, mSymbolTable);
 		mPredicateUnifierBenchmarkGenerator.continueTime();
 		mPredicateUnifierBenchmarkGenerator.incrementGetRequests();
@@ -356,9 +354,9 @@ public class PredicateUnifier implements IPredicateUnifier {
 				return p;
 			}
 		}
-		final Term commuNF = new CommuhashNormalForm(mServices, mScript).transform(withoutAnnotation);
+
 		{
-			IPredicate p = mTerm2Predicates.get(commuNF);
+			IPredicate p = mTerm2Predicates.get(withoutAnnotation);
 			if (p != null) {
 				if (mDeprecatedPredicates.containsKey(p)) {
 					p = mDeprecatedPredicates.get(p);
@@ -370,22 +368,21 @@ public class PredicateUnifier implements IPredicateUnifier {
 		}
 
 		final PredicateComparison pc =
-				new PredicateComparison(commuNF, tvp.getVars(), impliedPredicates, expliedPredicates);
+				new PredicateComparison(withoutAnnotation, tvp.getVars(), impliedPredicates, expliedPredicates);
 		if (pc.isEquivalentToExistingPredicateWithLeqQuantifiers()) {
 			mPredicateUnifierBenchmarkGenerator.incrementSemanticMatches();
 			mPredicateUnifierBenchmarkGenerator.stopTime();
 			return pc.getEquivalantLeqQuantifiedPredicate();
 		}
-		assert !SmtUtils.isTrueLiteral(commuNF) : "illegal predicate: true";
-		assert !SmtUtils.isFalseLiteral(commuNF) : "illegal predicate: false";
-		assert !mTerm2Predicates.containsKey(commuNF);
+		assert !SmtUtils.isTrueLiteral(withoutAnnotation) : "illegal predicate: true";
+		assert !SmtUtils.isFalseLiteral(withoutAnnotation) : "illegal predicate: false";
+		assert !mTerm2Predicates.containsKey(withoutAnnotation);
 		final Term simplifiedTerm;
 		if (pc.isIntricatePredicate()) {
-			simplifiedTerm = commuNF;
+			simplifiedTerm = withoutAnnotation;
 		} else {
 			try {
-				final Term tmp = SmtUtils.simplify(mMgdScript, commuNF, mServices, mSimplificationTechnique);
-				simplifiedTerm = new CommuhashNormalForm(mServices, mScript).transform(tmp);
+				simplifiedTerm = SmtUtils.simplify(mMgdScript, withoutAnnotation, mServices, mSimplificationTechnique);
 			} catch (final ToolchainCanceledException tce) {
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), "unifying predicates"));
 				throw tce;
@@ -977,6 +974,10 @@ public class PredicateUnifier implements IPredicateUnifier {
 					mExpliedPredicates.put(other, explies);
 				}
 				if (implies == Validity.VALID && explies == Validity.VALID) {
+					if (DEBUG_DUMP_SIMPLIFICATION_OPPORTUNITIES) {
+						SmtTestGenerationUtils.dumpSimplificationOpportunity("SimplificationOpportunity", mTerm,
+								other.getFormula());
+					}
 					if (mDeprecatedPredicates.containsKey(other)) {
 						return mDeprecatedPredicates.get(other);
 					}
@@ -986,22 +987,9 @@ public class PredicateUnifier implements IPredicateUnifier {
 						return other;
 					}
 					mEquivalentGtQuantifiedPredicates.add(other);
-					if (DUMP_UNEXPLOITED_ELIMININATION_POSSIBILITIES) {
-						final String name = String.format("UnexploitedEliminationPossibility_%s_%s_Size%s",
-								Integer.toHexString(other.getFormula().hashCode()),
-								Integer.toHexString(mTerm.hashCode()), new DAGSize().treesize(other.getFormula()));
-						final String testString = SmtTestGenerationUtils.generateQuantifierEliminationTest(name,
+					if (DEBUG_DUMP_ELIMINATION_OPPORTUNITIES) {
+						SmtTestGenerationUtils.dumpEliminationOpportunities("EliminationOpportunity",
 								other.getFormula(), mTerm);
-						try (FileWriter fw = new FileWriter(name + ".txt");
-								BufferedWriter bw = new BufferedWriter(fw);
-								PrintWriter out = new PrintWriter(bw)) {
-							out.println(testString);
-							out.close();
-							bw.close();
-							fw.close();
-						} catch (final IOException e) {
-							throw new AssertionError(e);
-						}
 					}
 				}
 			}
@@ -1028,6 +1016,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 			}
 			return result;
 		}
+
 	}
 
 }

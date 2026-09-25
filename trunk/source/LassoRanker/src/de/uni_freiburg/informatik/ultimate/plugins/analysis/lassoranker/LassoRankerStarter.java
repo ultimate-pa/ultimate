@@ -81,7 +81,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgram
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -90,6 +89,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -111,8 +111,8 @@ public class LassoRankerStarter {
 
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final IcfgLocation mHonda;
-	private final NestedWord<IIcfgTransition<IcfgLocation>> mStem;
-	private final NestedWord<IIcfgTransition<IcfgLocation>> mLoop;
+	private final NestedWord<IcfgEdge> mStem;
+	private final NestedWord<IcfgEdge> mLoop;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final IUltimateServiceProvider mServices;
@@ -133,7 +133,7 @@ public class LassoRankerStarter {
 		mPredicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(),
 				mRankVarConstructor.getCsToolkitWithRankVariables().getSymbolTable());
 
-		AbstractLassoExtractor<IIcfgTransition<IcfgLocation>> lassoExtractor;
+		AbstractLassoExtractor<IcfgEdge> lassoExtractor;
 		try {
 			lassoExtractor = new LassoExtractorBuchi<>(mServices, icfg, mCsToolkit, mPredicateFactory, mLogger);
 		} catch (final AutomataOperationCanceledException oce) {
@@ -267,12 +267,12 @@ public class LassoRankerStarter {
 		return overapproximations;
 	}
 
-	public UnmodifiableTransFormula constructTransformula(final NestedWord<IIcfgTransition<IcfgLocation>> nw) {
+	public UnmodifiableTransFormula constructTransformula(final NestedWord<IcfgEdge> nw) {
 		final boolean simplify = true;
 		final boolean extPqe = true;
 		final boolean tranformToCNF = false;
 		final boolean withBranchEncoders = false;
-		final List<IIcfgTransition<IcfgLocation>> codeBlocks = Collections.unmodifiableList(nw.asList());
+		final List<IcfgEdge> codeBlocks = Collections.unmodifiableList(nw.asList());
 		return SequentialComposition.getInterproceduralTransFormula(mCsToolkit, simplify, extPqe, tranformToCNF,
 				withBranchEncoders, mLogger, mServices, codeBlocks, mSimplificationTechnique);
 	}
@@ -441,14 +441,17 @@ public class LassoRankerStarter {
 	 *
 	 * @param arg
 	 */
-	private void reportNonTerminationResult(final GeometricNonTerminationArgument nta,
-			final NestedWord<IIcfgTransition<IcfgLocation>> stem,
-			final NestedWord<IIcfgTransition<IcfgLocation>> loop) {
-		final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> stemExecution =
-				IcfgProgramExecution.create(stem.asList(), Collections.emptyMap());
-		final IcfgProgramExecution<IIcfgTransition<IcfgLocation>> loopExecution =
-				IcfgProgramExecution.create(loop.asList(), Collections.emptyMap());
-		final IcfgEdge hondaEdge = (IcfgEdge) loop.getSymbol(0);
+	private void reportNonTerminationResult(final GeometricNonTerminationArgument nta, final NestedWord<IcfgEdge> stem,
+			final NestedWord<IcfgEdge> loop) {
+		final IcfgProgramExecution<IcfgEdge> stemExecution;
+		if (stem.length() == 0) {
+			stemExecution = IcfgProgramExecution.create(IcfgEdge.class);
+		} else {
+			stemExecution = TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(stem);
+		}
+		final IcfgProgramExecution<IcfgEdge> loopExecution =
+				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(loop);
+		final IcfgEdge hondaEdge = loop.getSymbol(0);
 		// TODO: translate also the rational coefficients to Expressions?
 		// mRootAnnot.getBoogie2Smt().translate(term)
 		// final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
@@ -459,7 +462,7 @@ public class LassoRankerStarter {
 		states.addAll(nta.getGEVs());
 		final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(states);
 
-		final NonTerminationArgumentResult<? extends IIcfgTransition<?>, Term> result =
+		final NonTerminationArgumentResult<IcfgEdge, Term> result =
 				new GeometricNonTerminationArgumentResult<>(hondaEdge, Activator.PLUGIN_NAME, initHondaRays.get(0),
 						initHondaRays.get(1), initHondaRays.subList(2, initHondaRays.size()), nta.getLambdas(),
 						nta.getNus(), getTranslatorSequence(), Term.class, stemExecution, loopExecution);

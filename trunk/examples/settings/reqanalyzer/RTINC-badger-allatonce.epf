@@ -53,14 +53,18 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ exception\ blacklist=UNKNOWN
 @de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.1.23
 
-#Thu Jan 18 16:49:04 CET 2024
+#Tue Aug 26 15:21:09 CEST 2025
 \!/instance/de.uni_freiburg.informatik.ultimate.pea2boogie=
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Always\ use\ all\ invariants\ during\ rt-inconsistency\ checks=false
 /instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ consistency=false
 /instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ if\ two\ PEAs\ are\ complements\ of\ each\ other=false
 /instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ rt-inconsistency=true
 /instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Check\ vacuity=false
-/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Use\ epsilon\ transformation\ during\ rt-inconsistency\ check=false
 /instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Generate\ history\ vars\ ('v)\ in\ Encoding=false
-@de.uni_freiburg.informatik.ultimate.pea2boogie=0.2.3
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Report\ trivial\ rt-consistency=true
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Rt-inconsistency\ range=2
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/Use\ epsilon\ transformation\ during\ rt-inconsistency\ check=false
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/number\ of\ chain-link\ requirements\ for\ rt-inconsistency=5
+/instance/de.uni_freiburg.informatik.ultimate.pea2boogie/rt-inconsistency\ pre-check=false
+@de.uni_freiburg.informatik.ultimate.pea2boogie=0.3.0
 file_export_version=3.0
-

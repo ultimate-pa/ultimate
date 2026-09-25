@@ -45,8 +45,8 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_TRANSFOMER_MODE = "PEA Transformation Mode";
 	public static final PEATransformerMode TRANSFOMER_MODE = PEATransformerMode.REQ_CHECK;
-	private static final String DESC_TRANSFOMER_MODE =
-			"Switches between checking requirements and generating tests for requirements.";
+	private static final String DESC_TRANSFOMER_MODE = """
+			Switches between checking requirements and generating tests for requirements.""";
 
 	public static final String LABEL_CHECK_VACUITY = "Check vacuity";
 	private static final boolean DEF_CHECK_VACUITY = true;
@@ -60,12 +60,30 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	private static final boolean DEF_CHECK_RT_INCONSISTENCY = true;
 	private static final String DESC_CHECK_RT_INCONSISTENCY = null;
 
+	public static final String LABEL_COMPLETE_RT_INCONSISTENCY_CHECK = "Complete rt-inconsistency check";
+	private static final boolean DEF_COMPLETE_RT_INCONSISTENCY_CHECK = true;
+	private static final String DESC_COMPLETE_RT_INCONSISTENCY_CHECK = """
+			This check allows for a fast and complete analysis for rt-inconsistency by reducing the number of \
+			requirement combinations that need to be checked. \
+			Published in: Hauff et al., A Practical and Complete Method for Detecting rt-Inconsistencies in Real-Time
+			Requirements, https://doi.org/10.1007/978-3-032-21423-2_19""";
+
+	public static final String LABEL_COMPLETE_RT_INCONSISTENCY_CHECK_MODE = "Complete rt-inconsistency check mode";
+	public static final CompleteRtInconsistencyCheckMode DEF_COMPLETE_RT_INCONSISTENCY_CHECK_MODE =
+			CompleteRtInconsistencyCheckMode.MARCO_BASIC;
+	private static final String DESC_COMPLETE_RT_INCONSISTENCY_CHECK_MODE = """
+			Switches between MUS enumeration algorithms for complete rt-inconsistency checking.""";
+
+	public static final String LABEL_COMPLETE_RT_INCONSISTENCY_CHECK_CANDIDATE_EXTRACTION = "Candidate extraction only";
+	private static final boolean DEF_COMPLETE_RT_INCONSISTENCY_CHECK_CANDIDATE_EXTRACTION = false;
+	private static final String DESC_COMPLETE_RT_INCONSISTENCY_CHECK_CANDIDATE_EXTRACTION = """
+			Only extract candidates for rt-inconsistency instead of performing the full check.""";
+
 	public static final String LABEL_GEN_FAILURE_PATH = "Generate failure path for rt-inconsistency";
 	private static final boolean DEF_GEN_FAILURE_PATH = false;
 	private static final String DESC_GEN_FAILURE_PATH = """
 			This setting controls whether a failure path is generated for each rt-inconsistency found. \
-			Note: Activating this increases the runtime.
-			""";
+			Note: Activating this increases the runtime.""";
 
 	public static final String LABEL_USE_EPSILON = "Use epsilon transformation during rt-inconsistency check";
 	private static final boolean DEF_USE_EPSILON = true;
@@ -74,39 +92,39 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	public static final String LABEL_RT_INCONSISTENCY_RANGE = "Rt-inconsistency range";
 	private static final int DEF_RT_INCONSISTENCY_RANGE = 2;
 	private static final String DESC_RT_INCONSISTENCY_RANGE = """
-			How many requirements should be checked for rt-inconsistency at the same time? \
-			Allows only positive integer values. \
-			Note: This value increases the runtime exponentially!\
+			How many requirements should be checked for rt-inconsistency at the same time? Allows only positive \
+			integer values. \
+			Note: This value increases the runtime exponentially! \
 			Note: A value of one can be used to check rt-inconsistency with invariants.""";
+
 	public static final String LABEL_REPORT_TRIVIAL_RT_CONSISTENCY = "Report trivial rt-consistency";
 	private static final boolean DEF_REPORT_TRIVIAL_RT_CONSISTENCY = false;
-	private static final String DESC_REPORT_TRIVIAL_RT_CONSISTENCY =
-			"Generate a result even if rt-consistency is shown during the generation of the assertion";
+	private static final String DESC_REPORT_TRIVIAL_RT_CONSISTENCY = """
+			Generate a result even if rt-consistency is shown during the generation of the assertion""";
 
 	public static final String LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS =
 			"Always use all invariants during rt-inconsistency checks";
 	private static final boolean DEF_RT_INCONSISTENCY_USE_ALL_INVARIANTS = true;
-	private static final String DESC_RT_INCONSISTENCY_USE_ALL_INVARIANTS =
-			"""
-					This setting controls whether invariant requirements are included in every rt-inconsistency check or if they\
-					 are treated as separate requirements. If enabled, each rt-inconsistency check is of the form \
-					Invariants ∧ (check over all remaining requirements). If disabled, invariants are not treated separately.""";
+	private static final String DESC_RT_INCONSISTENCY_USE_ALL_INVARIANTS = """
+			This setting controls whether invariant requirements are included in every rt-inconsistency check or if \
+			they are treated as separate requirements. If enabled, each rt-inconsistency check is of the form \
+			Invariants ∧ (check over all remaining requirements). If disabled, invariants are not treated \
+			separately.""";
 
 	public static final String LABEL_HISTORY_VARS = "Generate history vars ('v) in Encoding";
 	private static final boolean DEF_HISTORY_VARS = true;
-	private static final String DESC_HISTORY_VASRS =
-			"Include history variables for PEA locations and state variables and state variables" + "in the encoding,.";
+	private static final String DESC_HISTORY_VASRS = """
+			Include history variables for PEA locations and state variables and state variables" + "in the encoding.""";
 
 	public static final String LABEL_GUESS_IN_OUT =
 			"Use heuristic to find input/output definitions (if none are given)";
 	private static final boolean DEF_GUESS_IN_OUT = true;
 	private static final String DESC_GUESS_IN_OUT = """
-			If there is no explicit definition of inputs, outputs and internal\
-			variables in the Requirements file (i.e. only inputs), use the follwing heuristics:\
-			Every variable that is never influenced by a requirement is an input\
-			Every variable that is never used in the precondition of a requirement is an output\
-			The rest is internal. Note: this is the most conservative assignment suited for demos, but \
-			 usually not helpful in the wild""";
+			If there is no explicit definition of inputs, outputs and internal variables in the Requirements file \
+			(i.e. only inputs), use the follwing heuristics: Every variable that is never influenced by a requirement \
+			is an input Every variable that is never used in the precondition of a requirement is an output. The rest \
+			is internal. Note: this is the most conservative assignment suited for demos, but usually not helpful in \
+			the wild.""";
 
 	public static final String LABEL_GUESS_INITIAL = "Guess initial output assignment";
 	private static final boolean DEF_GUESS_INITIAL = false;
@@ -120,6 +138,10 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 		REQ_CHECK, REQ_TEST, REQ_RED
 	}
 
+	public enum CompleteRtInconsistencyCheckMode {
+		MARCO_BASIC
+	}
+
 	public Pea2BoogiePreferences() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
@@ -127,7 +149,6 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	@Override
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
 		return new BaseUltimatePreferenceItem[] {
-
 				new UltimatePreferenceItem<>(LABEL_TRANSFOMER_MODE, TRANSFOMER_MODE, DESC_TRANSFOMER_MODE,
 						PreferenceType.Combo, PEATransformerMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_VACUITY, DEF_CHECK_VACUITY, DESC_CHECK_VACUITY,
@@ -136,7 +157,16 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY, DEF_CHECK_RT_INCONSISTENCY,
 						DESC_CHECK_RT_INCONSISTENCY, PreferenceType.Boolean),
-
+				new UltimatePreferenceItemGroup("Complete Rt-Inconsistency Check",
+						new UltimatePreferenceItem<>(LABEL_COMPLETE_RT_INCONSISTENCY_CHECK,
+								DEF_COMPLETE_RT_INCONSISTENCY_CHECK, DESC_COMPLETE_RT_INCONSISTENCY_CHECK,
+								PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_COMPLETE_RT_INCONSISTENCY_CHECK_MODE,
+								DEF_COMPLETE_RT_INCONSISTENCY_CHECK_MODE, DESC_COMPLETE_RT_INCONSISTENCY_CHECK_MODE,
+								PreferenceType.Combo, CompleteRtInconsistencyCheckMode.values()),
+						new UltimatePreferenceItem<>(LABEL_COMPLETE_RT_INCONSISTENCY_CHECK_CANDIDATE_EXTRACTION,
+								DEF_COMPLETE_RT_INCONSISTENCY_CHECK_CANDIDATE_EXTRACTION,
+								DESC_COMPLETE_RT_INCONSISTENCY_CHECK_CANDIDATE_EXTRACTION, PreferenceType.Boolean)),
 				new UltimatePreferenceItemGroup("Rt-Inconsistency",
 						new UltimatePreferenceItem<>(LABEL_GEN_FAILURE_PATH, DEF_GEN_FAILURE_PATH,
 								DESC_GEN_FAILURE_PATH, PreferenceType.Boolean),

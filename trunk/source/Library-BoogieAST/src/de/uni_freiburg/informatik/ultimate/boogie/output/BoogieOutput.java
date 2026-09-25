@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
@@ -151,7 +152,6 @@ public class BoogieOutput implements AutoCloseable {
 	protected void printExpression(final Expression expr, int precedence) {
 		switch (expr) {
 		case final BinaryExpression binexpr -> {
-			final String op = getOperatorString(binexpr.getOperator());
 			final int opPrec = getOperatorPrecedence(binexpr.getOperator());
 			final int lPrec, rPrec;
 			switch (binexpr.getOperator()) {
@@ -169,14 +169,24 @@ public class BoogieOutput implements AutoCloseable {
 				break;
 
 			case LOGICOR:
-				lPrec = PRECEDENCE_LOGICAL_AND + 1;
+				if (binexpr.getLeft() instanceof final BinaryExpression leftBin
+						&& leftBin.getOperator() == Operator.LOGICOR) {
+					lPrec = opPrec;
+				} else {
+					lPrec = PRECEDENCE_LOGICAL_AND + 1;
+				}
 				rPrec = opPrec;
 				break;
 			case LOGICAND:
 				if (precedence == PRECEDENCE_LOGICAL_OR) {
 					precedence = opPrec + 1;
 				}
-				lPrec = opPrec + 1;
+				if (binexpr.getLeft() instanceof final BinaryExpression leftBin
+						&& leftBin.getOperator() == Operator.LOGICAND) {
+					lPrec = opPrec;
+				} else {
+					lPrec = opPrec + 1;
+				}
 				rPrec = opPrec;
 				break;
 			default:
@@ -186,7 +196,7 @@ public class BoogieOutput implements AutoCloseable {
 				mWriter.print("(");
 			}
 			printExpression(binexpr.getLeft(), lPrec);
-			mWriter.print(op);
+			mWriter.print(getOperatorString(binexpr.getOperator()));
 			printExpression(binexpr.getRight(), rPrec);
 			if (precedence > opPrec) {
 				mWriter.print(")");

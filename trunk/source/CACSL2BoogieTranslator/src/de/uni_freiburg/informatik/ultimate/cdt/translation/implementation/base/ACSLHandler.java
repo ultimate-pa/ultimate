@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -844,7 +843,7 @@ public class ACSLHandler implements IACSLHandler {
 		resultBuilder.addAllExceptLrValue(r);
 
 		// TODO: CType
-		final StructAccessExpression structAccessExpression =
+		final Expression structAccessExpression =
 				ExpressionFactory.constructStructAccessExpression(loc, r.getLrValue().getValue(), field);
 
 		final RValue rval = new RValue(structAccessExpression,

@@ -49,7 +49,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<BoogieASTNode, VisualizationNode> {
+public sealed class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<BoogieASTNode, VisualizationNode>
+		permits ASTType, Attribute, Body, Declaration, Expression, LeftHandSide, ParentEdge, Project, Specification,
+		Statement, Unit, VarList {
 
 	private static final long serialVersionUID = 5856434889026482850L;
 
@@ -95,18 +97,6 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 
 	public ILocation getLocation() {
 		return ILocation.getAnnotation(this);
-	}
-
-	protected BoogieASTNode createSpecialChild(final String name, final Object[] childs) {
-		final BoogieASTWrapper parent = new BoogieASTWrapper(null, name);
-		for (final Object obj : childs) {
-			parent.getOutgoingNodes().add(createSpecialChild(obj));
-		}
-		return parent;
-	}
-
-	protected BoogieASTNode createSpecialChild(final Object obj) {
-		return new BoogieASTWrapper(null, obj);
 	}
 
 	@Override
@@ -192,25 +182,5 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 			}
 			return Arrays.stream(array).anyMatch(a -> a == null);
 		}
-	}
-
-	private class BoogieASTWrapper extends BoogieASTNode {
-
-		private static final long serialVersionUID = 1L;
-		private final Object mBacking;
-
-		public BoogieASTWrapper(final ILocation location, final Object backing) {
-			super(location);
-			mBacking = backing;
-		}
-
-		@Override
-		public String toString() {
-			if (mBacking != null) {
-				return mBacking.toString();
-			}
-			return super.toString();
-		}
-
 	}
 }

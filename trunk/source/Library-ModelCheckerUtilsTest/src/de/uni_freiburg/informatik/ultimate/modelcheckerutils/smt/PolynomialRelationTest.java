@@ -535,7 +535,7 @@ public class PolynomialRelationTest {
 	public void relationIntPolyCVC4MATHSATEQ9() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 3 y x) (* 21 z y))";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, funDecls);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, funDecls);
 	}
 
 	@Test

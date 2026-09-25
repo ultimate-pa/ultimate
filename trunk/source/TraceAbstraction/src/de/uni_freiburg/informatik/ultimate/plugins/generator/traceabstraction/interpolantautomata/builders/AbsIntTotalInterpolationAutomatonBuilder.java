@@ -41,10 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieVariableCollector;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
@@ -88,7 +85,6 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 	private final CfgSmtToolkit mCsToolkit;
 	private final Word<LETTER> mCurrentCounterExample;
 	private final RcfgStatementExtractor mStatementExtractor;
-	private final VariableCollector mVariableCollector;
 	private final IIcfgSymbolTable mSymbolTable;
 
 	/**
@@ -113,7 +109,6 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 		mCsToolkit = csToolkit;
 		mSymbolTable = symbolTable;
 		mCurrentCounterExample = currentCounterExample;
-		mVariableCollector = new VariableCollector();
 		mStatementExtractor = new RcfgStatementExtractor();
 		mResult = constructAutomaton(oldAbstraction, aiResult, predicateUnifier, emptyStackFactory);
 	}
@@ -261,8 +256,8 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 
 			// Collect all occurring variables in the current letter.
 			// TODO: Die here if letter is not codeblock
-			final Set<IProgramVarOrConst> variableNames = mVariableCollector
-					.collectVariableNames((CodeBlock) currentLetter, mStatementExtractor, mSymbolTable);
+			final Set<IProgramVarOrConst> variableNames = collectVariables((CodeBlock) currentLetter,
+					mStatementExtractor, (Boogie2SmtSymbolTable) mSymbolTable);
 
 			// Iterate over all predicates to find matching candidates for a transition.
 			for (final IPredicate currentPredicate : allPredicates) {
@@ -398,37 +393,11 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 		return true;
 	}
 
-	/**
-	 * Collects all variable identifiers for a given statement.
-	 *
-	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
-	 */
-	private static final class VariableCollector extends BoogieVisitor {
-
-		private Set<IProgramVarOrConst> mVariables;
-		private Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
-
-		private Set<IProgramVarOrConst> collectVariableNames(final CodeBlock codeBlock,
-				final RcfgStatementExtractor statementExtractor, final IIcfgSymbolTable boogie2SmtSymbolTable) {
-			mVariables = new HashSet<>();
-			mBoogie2SmtSymbolTable = (Boogie2SmtSymbolTable) boogie2SmtSymbolTable;
-			for (final Statement statement : statementExtractor.process(codeBlock)) {
-				processStatement(statement);
-			}
-			return mVariables;
-		}
-
-		@Override
-		protected void visit(final IdentifierExpression expr) {
-			mVariables.add(
-					mBoogie2SmtSymbolTable.getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false));
-		}
-
-		@Override
-		protected void visit(final VariableLHS lhs) {
-			mVariables.add(
-					mBoogie2SmtSymbolTable.getBoogieVar(lhs.getIdentifier(), lhs.getDeclarationInformation(), false));
-		}
-
+	private static Set<IProgramVarOrConst> collectVariables(final CodeBlock codeBlock,
+			final RcfgStatementExtractor statementExtractor, final Boogie2SmtSymbolTable boogie2SmtSymbolTable) {
+		return new BoogieVariableCollector(statementExtractor.process(codeBlock), true, false).collectedOccurences()
+				.stream()
+				.map(occ -> boogie2SmtSymbolTable.getBoogieVar(occ.identifier(), occ.declarationInformation(), false))
+				.collect(Collectors.toSet());
 	}
 }

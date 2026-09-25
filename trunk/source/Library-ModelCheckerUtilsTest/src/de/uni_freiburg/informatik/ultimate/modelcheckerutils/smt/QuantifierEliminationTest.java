@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.DeclarableFunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -112,16 +113,32 @@ public class QuantifierEliminationTest {
 		return SmtSortUtils.getBitvectorSort(script, 32);
 	}
 
+	public static Sort getBitvectorSort64(final Script script) {
+		return SmtSortUtils.getBitvectorSort(script, 64);
+	}
+
 	public static Sort getArrayBv32Bv1Sort(final Script script) {
 		return SmtSortUtils.getArraySort(script, getBitvectorSort32(script), getBitvectorSort1(script));
+	}
+
+	public static Sort getArrayBv64Bv1Sort(final Script script) {
+		return SmtSortUtils.getArraySort(script, getBitvectorSort64(script), getBitvectorSort1(script));
 	}
 
 	public static Sort getArrayBv32Bv8Sort(final Script script) {
 		return SmtSortUtils.getArraySort(script, getBitvectorSort32(script), getBitvectorSort8(script));
 	}
 
+	public static Sort getArrayBv64Bv8Sort(final Script script) {
+		return SmtSortUtils.getArraySort(script, getBitvectorSort64(script), getBitvectorSort8(script));
+	}
+
 	public static Sort getArrayBv32Bv32Sort(final Script script) {
 		return SmtSortUtils.getArraySort(script, getBitvectorSort32(script), getBitvectorSort32(script));
+	}
+
+	public static Sort getArrayBv64Bv64Sort(final Script script) {
+		return SmtSortUtils.getArraySort(script, getBitvectorSort64(script), getBitvectorSort64(script));
 	}
 
 	public static Sort getArrayBv32Bv32Bv32Sort(final Script script) {
@@ -219,7 +236,8 @@ public class QuantifierEliminationTest {
 
 		final String formulaAsString =
 				"(exists ((v_a (Array Int (Array Int Int)))) " + "(= a (store v_a i ((as const (Array Int Int)) 0))))";
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
+		final Term formulaAsTerm =
+				CommuhashNormalFormTransformer.apply(mScript, TermParseUtils.parseTerm(mScript, formulaAsString));
 		// mLogger.info("Input: " + formulaAsTerm.toStringDirect());
 		final Term result = PartialQuantifierElimination.eliminate(mServices, mMgdScript, formulaAsTerm,
 				SimplificationTechnique.SIMPLIFY_DDA);

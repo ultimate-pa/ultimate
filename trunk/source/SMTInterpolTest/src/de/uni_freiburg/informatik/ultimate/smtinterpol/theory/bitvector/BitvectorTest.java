@@ -19,6 +19,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.bitvector;
 
+import java.math.BigInteger;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 
 /**
  *
@@ -1208,6 +1211,24 @@ public class BitvectorTest {
 		final LBool isUnSat = mSolver.checkSat();
 		Assert.assertSame(LBool.UNSAT, isUnSat);
 		mSolver.reset();
+	}
+
+	@Test
+	public void bitvectorConstant01() {
+		final BitvectorConstant bv = new BitvectorConstant(BigInteger.valueOf(255), BigInteger.valueOf(8));
+		Assert.assertTrue(bv.isAllOnes());
+	}
+
+	@Test
+	public void bitvectorConstant02() {
+		final BitvectorConstant bv = new BitvectorConstant(BigInteger.valueOf(255), BigInteger.valueOf(9));
+		Assert.assertFalse(bv.isAllOnes());
+	}
+
+	@Test
+	public void bitvectorConstant03() {
+		final BitvectorConstant bv = new BitvectorConstant(BigInteger.valueOf(256), BigInteger.valueOf(8));
+		Assert.assertFalse(bv.isAllOnes());
 	}
 
 }

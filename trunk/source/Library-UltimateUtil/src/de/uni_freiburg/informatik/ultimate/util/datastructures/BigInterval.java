@@ -434,4 +434,21 @@ public class BigInterval {
 		return new BigInterval(BigInteger.ZERO,
 				absDivisor.mMaxValue == null ? null : absDivisor.mMaxValue.subtract(BigInteger.ONE));
 	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		if (mMinValue == null) {
+			sb.append("(-∞");
+		} else {
+			sb.append('[').append(mMinValue);
+		}
+		sb.append(", ");
+		if (mMaxValue == null) {
+			sb.append("+∞)");
+		} else {
+			sb.append(mMaxValue).append(']');
+		}
+		return sb.toString();
+	}
 }
