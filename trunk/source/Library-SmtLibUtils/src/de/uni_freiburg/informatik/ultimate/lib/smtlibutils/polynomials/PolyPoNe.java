@@ -30,6 +30,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -81,6 +82,17 @@ public class PolyPoNe {
 	 * combined polynomial to key on the way {@link #mPolyRels} does. See {@link BitvectorInequalityRelation}.
 	 */
 	private final HashRelation<Term, BitvectorInequalityRelation> mBvInequalityRels = new HashRelation<>();
+	/**
+	 * Index of the alternative spellings ("twins", see
+	 * {@link BitvectorInequalityRelation#constructAlternativeRepresentation}) of the relations in
+	 * {@link #mBvInequalityRels}, keyed by the expression the twin is about. Only used to compare a new relation with
+	 * stored ones that are written the other way round, never part of the result.
+	 */
+	private final HashRelation<Term, BitvectorInequalityRelation> mBvTwins = new HashRelation<>();
+	private final Map<BitvectorInequalityRelation, BitvectorInequalityRelation> mTwinToOriginal =
+			new IdentityHashMap<>();
+	private final Map<BitvectorInequalityRelation, BitvectorInequalityRelation> mOriginalToTwin =
+			new IdentityHashMap<>();
 	/**
 	 * {@link BitvectorInequalityRelation}s that are not "bare variable vs. bare constant" (both sides variables, or
 	 * either side compound like {@code x - y}) - no cheap key available, so these are just kept as-is and never
@@ -186,7 +198,7 @@ public class PolyPoNe {
 				return Check.INCONSISTENT;
 			}
 		}
-		return Check.MAYBE_USEFUL;
+		return compareWithTwins(polyRel, shape.getKey(), null);
 	}
 
 	private Check compareToExistingRepresentations(final IPolynomialRelation newPolyRel,
@@ -313,7 +325,7 @@ public class PolyPoNe {
 			if (!satisfiesBound(value, existing)) {
 				return true; // inconsistent
 			}
-			mBvInequalityRels.removePair(variable, existing); // redundant now that the exact value is known
+			removeBvRel(variable, existing); // redundant now that the exact value is known
 		}
 		return false;
 	}
@@ -358,13 +370,25 @@ public class PolyPoNe {
 				throw new AssertionError("unknown value " + comp);
 			}
 		}
+		// the twins are other spellings of stored facts, compare with them too
+		final List<BitvectorInequalityRelation> twinExplied = new ArrayList<>();
+		final Check twinCheck = compareWithTwins(polyRel, variable, twinExplied);
+		if (twinCheck == Check.REDUNDANT) {
+			return false; // covered by a stored fact in another spelling
+		}
+		if (twinCheck == Check.INCONSISTENT) {
+			return true;
+		}
+		for (final BitvectorInequalityRelation original : twinExplied) {
+			removeBvRel(original.asPolynomialVsConstant(mScript).getKey(), original); // covered by the new fact
+		}
 		for (final BitvectorInequalityRelation existing : explied) {
-			mBvInequalityRels.removePair(variable, existing);
+			removeBvRel(variable, existing);
 		}
 		final BitvectorInequalityRelation fusionPartner = findFusibleTwoSidedRelation(variable, polyRel);
 		if (fusionPartner != null) {
 			// fuse into an equality, reuse the existing single-term insertion path
-			mBvInequalityRels.removePair(variable, fusionPartner);
+			removeBvRel(variable, fusionPartner);
 			final IPolynomialRelation fusion = PolynomialRelation.of(mScript, RelationSymbol.EQ, variable,
 					shape.getConstantTerm());
 			return addPolyRel(mScript, fusion, true);
@@ -379,7 +403,7 @@ public class PolyPoNe {
 			final BitvectorInequalityRelation strict = strictBoundAt(polyRel, boundary);
 			return strict == null || addBvInequalityRel(strict); // no value left -> inconsistent
 		}
-		mBvInequalityRels.addPair(variable, polyRel);
+		storeBvRel(variable, polyRel);
 		return false;
 	}
 
@@ -557,13 +581,57 @@ public class PolyPoNe {
 		}
 		for (final BitvectorInequalityRelation bound : new ArrayList<>(mBvInequalityRels.getImage(variable))) {
 			if (value.equals(effectiveInclusiveBoundary(bound))) {
-				mBvInequalityRels.removePair(variable, bound);
+				removeBvRel(variable, bound);
 				mPolyRels.removePair(distinct.getPolynomialTerm().getAbstractVariable2Coefficient(), distinct);
 				final BitvectorInequalityRelation strict = strictBoundAt(bound, value);
 				return strict == null || addBvInequalityRel(strict); // no value left -> inconsistent
 			}
 		}
 		return false;
+	}
+
+	private void storeBvRel(final Term key, final BitvectorInequalityRelation rel) {
+		mBvInequalityRels.addPair(key, rel);
+		final BitvectorInequalityRelation twin = rel.constructAlternativeRepresentation();
+		final BitvectorInequalityRelation.PolynomialAndConstant twinShape = twin.asPolynomialVsConstant(mScript);
+		if (twinShape == null) {
+			return; // no comparable twin
+		}
+		mBvTwins.addPair(twinShape.getKey(), twin);
+		mTwinToOriginal.put(twin, rel);
+		mOriginalToTwin.put(rel, twin);
+	}
+
+	private void removeBvRel(final Term key, final BitvectorInequalityRelation rel) {
+		mBvInequalityRels.removePair(key, rel);
+		final BitvectorInequalityRelation twin = mOriginalToTwin.remove(rel);
+		if (twin != null) {
+			mTwinToOriginal.remove(twin);
+			mBvTwins.removePair(twin.asPolynomialVsConstant(mScript).getKey(), twin);
+		}
+	}
+
+	/**
+	 * Compares {@code polyRel} with the twins stored under {@code key}. A twin means the same as the stored relation
+	 * it belongs to, so a verdict about the twin is a verdict about that stored relation. If the new relation is
+	 * stronger, the stored originals it makes redundant are added to {@code originalsToDrop} (may be {@code null}
+	 * for a read-only check).
+	 */
+	private Check compareWithTwins(final BitvectorInequalityRelation polyRel, final Term key,
+			final List<BitvectorInequalityRelation> originalsToDrop) {
+		for (final BitvectorInequalityRelation twin : mBvTwins.getImage(key)) {
+			final ComparisonResult comp = compareTwoSidedRepresentation(twin, polyRel);
+			if (comp == ComparisonResult.IMPLIES || comp == ComparisonResult.EQUIVALENT) {
+				return Check.REDUNDANT; // the stored original already covers it
+			}
+			if (comp == ComparisonResult.INCONSISTENT) {
+				return Check.INCONSISTENT;
+			}
+			if (comp == ComparisonResult.EXPLIES && originalsToDrop != null) {
+				originalsToDrop.add(mTwinToOriginal.get(twin)); // the new relation covers the stored original
+			}
+		}
+		return Check.MAYBE_USEFUL;
 	}
 
 	/** Does the concrete value {@code value} satisfy {@code rel}'s bound? */
