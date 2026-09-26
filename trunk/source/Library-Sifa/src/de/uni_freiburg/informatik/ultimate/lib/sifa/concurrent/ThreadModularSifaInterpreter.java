@@ -68,7 +68,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 
 		setup.postcondition().setStats(stats);
 		final ThreadAnalyzer threadAnalysis = new ThreadAnalyzer(logger, timer, stats, mConcurrentTools, icfg,
-				mRequestedLocationsOfInterest, setup.domain(), fluid, loopSumFactory, callSumFactory, setup.threadIds(),
+				mRequestedLocationsOfInterest, setup.domain(), fluid, loopSumFactory, callSumFactory, setup.forkGraph(),
 				setup.joinedThreads());
 		mOuterFixpoint = new OuterInterferenceFixpoint(logger, mConcurrentTools, setup.domain(),
 				setup.interferenceFactory(), setup.mutexInvariants(),

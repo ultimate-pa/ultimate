@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.PrimedD
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.InitialStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.threadactivity.ThreadActivityPreanalysis;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.threadactivity.ThreadForkGraph;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -73,7 +74,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 			final IIcfg<IcfgLocation> icfg, final SimplificationTechnique simplification,
 			final PrimedDefaultIcfgSymbolTable symbolTable, final ThreadModularSifaSettings settings,
 			final GhostVariableManager ghostVariables, final ThreadActivityPreanalysis activityPreanalysis,
-			final MustLocksetAnalysis locksetInfo) {
+			final MustLocksetAnalysis locksetInfo, final ThreadForkGraph forkGraph) {
 		super(services, stats, icfg, simplification, symbolTable);
 		mLogger = services.getLoggingService().getLogger(ConcurrentSymbolicTools.class);
 		mStats = stats;
@@ -82,7 +83,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		mThreadActivityPreanalysis = activityPreanalysis;
 		mLocksetInfo = locksetInfo;
 		mLocationStateUpdater = new GhostLocationStateUpdater(services, getManagedScript(), getFactory(), ghostVariables);
-		mInitialStateFactory = new InitialStateFactory(this, services, icfg, ghostVariables, mLocationStateUpdater);
+		mInitialStateFactory = new InitialStateFactory(this, services, forkGraph, ghostVariables, mLocationStateUpdater);
 		mJoinHandler = new JoinHandler(this, services, icfg, ghostVariables, mLocationStateUpdater, activityPreanalysis);
 	}
 

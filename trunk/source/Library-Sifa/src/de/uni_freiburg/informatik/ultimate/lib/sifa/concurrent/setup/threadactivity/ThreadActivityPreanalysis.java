@@ -50,22 +50,17 @@ public final class ThreadActivityPreanalysis {
 		mMultiForkedThreads = Set.copyOf(multiForkedThreads);
 	}
 
-	public static ThreadActivityPreanalysis compute(final IIcfg<IcfgLocation> icfg, final Set<String> threadIds,
+	public static ThreadActivityPreanalysis compute(final IIcfg<IcfgLocation> icfg, final ThreadForkGraph forkGraph,
 			final boolean enableJoinPrecision) {
-		final ThreadForkGraph forkGraph = ThreadForkGraph.compute(icfg, threadIds);
+		final Set<String> threadIds = Set.copyOf(forkGraph.getThreadIds());
 		final ThreadActivity active = MayActiveThreadAnalysis.compute(icfg, threadIds, forkGraph);
 		final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> joinedThreadByJoin = enableJoinPrecision
-				? DefinitelyJoinedThreadAnalysis.computeTrackedJoins(icfg, threadIds, active.selfForkingThreads())
+				? DefinitelyJoinedThreadAnalysis.computeTrackedJoins(forkGraph, active.selfForkingThreads())
 				: Map.of();
 		final Map<IcfgLocation, Set<String>> definitelyJoinedByLocation = joinedThreadByJoin.isEmpty() ? Map.of()
 				: DefinitelyJoinedThreadAnalysis.computeDefinitelyJoinedByLocation(icfg, joinedThreadByJoin);
 		return new ThreadActivityPreanalysis(active.activeByLocation(), definitelyJoinedByLocation, joinedThreadByJoin,
 				active.selfForkingThreads());
-	}
-
-	public static Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> matchJoinsToThreads(
-			final IIcfg<IcfgLocation> icfg, final Set<String> threadIds) {
-		return DefinitelyJoinedThreadAnalysis.matchJoinsToThreads(icfg, threadIds);
 	}
 
 	public Set<String> getActiveThreadsAt(final IcfgLocation location) {

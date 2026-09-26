@@ -31,8 +31,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ConcurrencyInformation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -40,31 +38,30 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostLocationStateUpdater;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.threadactivity.ThreadForkGraph;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
 public final class InitialStateFactory {
 
-	private static final String MAIN_THREAD = "ULTIMATE.start";
-
 	private final SymbolicTools mTools;
 	private final IUltimateServiceProvider mServices;
-	private final IIcfg<IcfgLocation> mIcfg;
+	private final ThreadForkGraph mForkGraph;
 	private final GhostVariableManager mGhostVariables;
 	private final GhostLocationStateUpdater mLocationStateUpdater;
 
 	public InitialStateFactory(final SymbolicTools tools, final IUltimateServiceProvider services,
-			final IIcfg<IcfgLocation> icfg, final GhostVariableManager ghostVariables,
+			final ThreadForkGraph forkGraph, final GhostVariableManager ghostVariables,
 			final GhostLocationStateUpdater locationStateUpdater) {
 		mTools = Objects.requireNonNull(tools);
 		mServices = Objects.requireNonNull(services);
-		mIcfg = Objects.requireNonNull(icfg);
+		mForkGraph = Objects.requireNonNull(forkGraph);
 		mGhostVariables = ghostVariables;
 		mLocationStateUpdater = locationStateUpdater;
 	}
 
 	public IPredicate getInitialStatePredicate(final String threadId,
 			final Map<IcfgLocation, IPredicate> locationPredicates, final IDomain domain) {
-		if (threadId.equals(MAIN_THREAD)) {
+		if (threadId.equals(ThreadForkGraph.MAIN_THREAD)) {
 			return getMainThreadInitialState();
 		}
 
@@ -83,7 +80,7 @@ public final class InitialStateFactory {
 		if (mGhostVariables == null) {
 			return mTools.top();
 		}
-		return mTools.predicate(mGhostVariables.createInitialLocationState(MAIN_THREAD));
+		return mTools.predicate(mGhostVariables.createInitialLocationState(ThreadForkGraph.MAIN_THREAD));
 	}
 
 	/*
@@ -92,11 +89,7 @@ public final class InitialStateFactory {
 	private Set<IPredicate> collectForkStates(final String threadId,
 			final Map<IcfgLocation, IPredicate> locationPredicates) {
 		final Set<IPredicate> states = new LinkedHashSet<>();
-		final ConcurrencyInformation concInfo = mIcfg.getCfgSmtToolkit().getConcurrencyInformation();
-		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : concInfo.getThreadInstanceMap().keySet()) {
-			if (!fork.getNameOfForkedProcedure().equals(threadId)) {
-				continue;
-			}
+		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : mForkGraph.getForksForThread(threadId)) {
 			final IPredicate forkState = locationPredicates.get(fork.getSource());
 			if (forkState == null) {
 				continue;

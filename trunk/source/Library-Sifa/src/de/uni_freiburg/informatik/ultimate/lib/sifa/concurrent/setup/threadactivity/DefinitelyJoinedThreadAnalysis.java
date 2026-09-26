@@ -29,7 +29,6 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 final class DefinitelyJoinedThreadAnalysis {
 
@@ -48,43 +46,14 @@ final class DefinitelyJoinedThreadAnalysis {
 	}
 
 	static Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> computeTrackedJoins(
-			final IIcfg<IcfgLocation> icfg, final Set<String> threadIds, final Set<String> selfForkingThreads) {
-		final Map<String, Integer> forkCount = new HashMap<>();
-		for (final var fork : icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet()) {
-			final String threadId = fork.getNameOfForkedProcedure();
-			if (threadIds.contains(threadId)) {
-				forkCount.merge(threadId, 1, Integer::sum);
-			}
-		}
+			final ThreadForkGraph forkGraph, final Set<String> selfForkingThreads) {
 		final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> candidates = new LinkedHashMap<>(
-				matchJoinsToThreads(icfg, threadIds));
+				forkGraph.getMatchedJoins());
 		final Map<String, Integer> joinCount = new HashMap<>();
 		candidates.values().forEach(threadId -> joinCount.merge(threadId, 1, Integer::sum));
-		candidates.entrySet().removeIf(entry -> forkCount.getOrDefault(entry.getValue(), 0) != 1
+		candidates.entrySet().removeIf(entry -> forkGraph.getForksForThread(entry.getValue()).size() != 1
 				|| joinCount.getOrDefault(entry.getValue(), 0) != 1 || selfForkingThreads.contains(entry.getValue()));
 		return Map.copyOf(candidates);
-	}
-
-	static Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> matchJoinsToThreads(
-			final IIcfg<IcfgLocation> icfg, final Set<String> threadIds) {
-		final var concurrency = icfg.getCfgSmtToolkit().getConcurrencyInformation();
-		final Map<List<Term>, String> threadByForkId = new LinkedHashMap<>();
-		for (final var fork : concurrency.getThreadInstanceMap().keySet()) {
-			final String threadId = fork.getNameOfForkedProcedure();
-			if (threadIds != null && !threadIds.contains(threadId)) {
-				continue;
-			}
-			threadByForkId.putIfAbsent(List.of(fork.getForkSmtArguments().getThreadIdArguments().terms()), threadId);
-		}
-		final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> matched = new LinkedHashMap<>();
-		for (final var join : concurrency.getJoinTransitions()) {
-			final String threadId = threadByForkId
-					.get(List.of(join.getJoinSmtArguments().getThreadIdArguments().terms()));
-			if (threadId != null) {
-				matched.put(join, threadId);
-			}
-		}
-		return matched;
 	}
 
 	static Map<IcfgLocation, Set<String>> computeDefinitelyJoinedByLocation(final IIcfg<IcfgLocation> icfg,

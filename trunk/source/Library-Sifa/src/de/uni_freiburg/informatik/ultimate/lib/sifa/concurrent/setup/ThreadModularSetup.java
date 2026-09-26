@@ -25,19 +25,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.bucketdomain.AbstractLocationPartitionedDomain;
@@ -55,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.Relatio
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.TransFormulaToInterferencePredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.threadactivity.ThreadActivityPreanalysis;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.threadactivity.ThreadForkGraph;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
@@ -62,13 +57,11 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 
 public final class ThreadModularSetup {
-	private static final String MAIN_THREAD = "ULTIMATE.start";
-
 	private final IUltimateServiceProvider mServices;
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final ThreadModularSifaSettings mSettings;
 	private final PrimedDefaultIcfgSymbolTable mSymbolTable;
-	private final List<String> mThreadIds;
+	private final ThreadForkGraph mForkGraph;
 	private final Set<String> mJoinedThreads;
 	private final ThreadActivityPreanalysis mActivityPreanalysis;
 	private final MustLocksetAnalysis mLocksetInfo;
@@ -85,27 +78,27 @@ public final class ThreadModularSetup {
 		mSymbolTable = new PrimedDefaultIcfgSymbolTable(toolkit.getSymbolTable(), toolkit.getProcedures(),
 				toolkit.getManagedScript());
 		final ILogger logger = services.getLoggingService().getLogger(ThreadModularSetup.class);
-		mThreadIds = List.copyOf(discoverThreadIds(icfg));
-		mJoinedThreads = settings.joinPrecision() ? identifyJoinedThreads(icfg) : Set.of();
+		mForkGraph = ThreadForkGraph.compute(icfg);
+		mJoinedThreads = settings.joinPrecision() ? Set.copyOf(mForkGraph.getMatchedJoins().values()) : Set.of();
 		if (settings.joinPrecision()) {
 			logger.info("Join precision enabled, joined threads: %s", mJoinedThreads);
 		}
-		mActivityPreanalysis = ThreadActivityPreanalysis.compute(icfg,
-				new LinkedHashSet<>(mThreadIds), settings.joinPrecision());
+		mActivityPreanalysis = ThreadActivityPreanalysis.compute(icfg, mForkGraph, settings.joinPrecision());
 		final boolean needsLocksetAnalysis = settings.locksetAwareInterference() || settings.publishOnAcquire();
 		mLocksetInfo = needsLocksetAnalysis
 				? MustLocksetAnalysis.create(icfg, mActivityPreanalysis)
 				: MustLocksetAnalysis.disabled();
 		mAbstractLocationIds = Map.copyOf(computeLocationIds(settings, services, icfg, interferenceLocksetInfo()));
-		mPreForkSourcesByThread = computePreForkSourcesByThread(icfg, mActivityPreanalysis.getMultiForkedThreads());
+		mPreForkSourcesByThread = mForkGraph.computePreForkSourcesByThread(icfg,
+				mActivityPreanalysis.getMultiForkedThreads());
 		mGhostVariables = GhostVariableManager.create(toolkit.getManagedScript(), mAbstractLocationIds,
-				new LinkedHashSet<>(mThreadIds), icfg.getProcedureEntryNodes(), mSymbolTable,
+				new LinkedHashSet<>(mForkGraph.getThreadIds()), icfg.getProcedureEntryNodes(), mSymbolTable,
 				mActivityPreanalysis.getMultiForkedThreads());
 	}
 
 	public ConcurrentSymbolicTools createTools(final SifaStats stats, final SimplificationTechnique simplification) {
 		return new ConcurrentSymbolicTools(mServices, stats, mIcfg, simplification, mSymbolTable, mSettings,
-				mGhostVariables, mActivityPreanalysis, mLocksetInfo);
+				mGhostVariables, mActivityPreanalysis, mLocksetInfo, mForkGraph);
 	}
 
 	public SetupResult initialize(final IDomain baseDomain, final ConcurrentSymbolicTools tools) {
@@ -113,8 +106,8 @@ public final class ThreadModularSetup {
 		final ManagedScript script = tools.getManagedScript();
 		final ILogger logger = mServices.getLoggingService().getLogger(ThreadModularSetup.class);
 		final PublishOnAcquire mutexInvariants = mSettings.publishOnAcquire()
-				? PublishOnAcquire.discover(mIcfg, mLocksetInfo, MAIN_THREAD, mActivityPreanalysis, mServices, script,
-						factory)
+				? PublishOnAcquire.discover(mIcfg, mLocksetInfo, ThreadForkGraph.MAIN_THREAD, mActivityPreanalysis,
+						mServices, script, factory)
 				: PublishOnAcquire.disabled();
 		if (mSettings.publishOnAcquire()) {
 			logger.info("Publish-on-acquire enabled (protected globals discovered: %s)", !mutexInvariants.isEmpty());
@@ -140,7 +133,7 @@ public final class ThreadModularSetup {
 				interferenceFactory.getClass().getSimpleName());
 		logger.info("Interference grouping: abstract-location pairs via %s", mSettings.locationAbstractionType());
 
-		return new SetupResult(mThreadIds, domain, interferenceFactory, postcondition, mJoinedThreads,
+		return new SetupResult(mForkGraph, domain, interferenceFactory, postcondition, mJoinedThreads,
 				mAbstractLocationIds, mutexInvariants);
 	}
 
@@ -148,105 +141,11 @@ public final class ThreadModularSetup {
 		return mSettings.locksetAwareInterference() ? mLocksetInfo : MustLocksetAnalysis.disabled();
 	}
 
-	private static List<String> discoverThreadIds(final IIcfg<IcfgLocation> icfg) {
-		final Map<String, Set<String>> forksByThread = collectDirectForkTargets(icfg);
-		final List<String> ordered = new ArrayList<>();
-		final Set<String> visited = new LinkedHashSet<>();
-		ordered.add(MAIN_THREAD);
-		visited.add(MAIN_THREAD);
-		appendReachableThreads(ordered, visited, forksByThread);
-		icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet().stream()
-				.map(fork -> fork.getNameOfForkedProcedure()).filter(visited::add).forEach(ordered::add);
-		return ordered;
-	}
-
-	private static Map<String, Set<String>> collectDirectForkTargets(final IIcfg<IcfgLocation> icfg) {
-		final Map<String, Set<String>> forkTargetsByThread = new LinkedHashMap<>();
-		for (final var fork : icfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet()) {
-			forkTargetsByThread.computeIfAbsent(fork.getSource().getProcedure(), __ -> new LinkedHashSet<>())
-					.add(fork.getNameOfForkedProcedure());
-		}
-		return forkTargetsByThread;
-	}
-
-	private static void appendReachableThreads(final List<String> ordered, final Set<String> visited,
-			final Map<String, Set<String>> forksByThread) {
-		for (int i = 0; i < ordered.size(); i++) {
-			for (final String child : forksByThread.getOrDefault(ordered.get(i), Set.of())) {
-				if (visited.add(child)) {
-					ordered.add(child);
-				}
-			}
-		}
-	}
-
-	private static Set<String> identifyJoinedThreads(final IIcfg<IcfgLocation> icfg) {
-		return Set.copyOf(ThreadActivityPreanalysis.matchJoinsToThreads(icfg, null).values());
-	}
-
 	private static Map<IcfgLocation, Integer> computeLocationIds(final ThreadModularSifaSettings settings,
 			final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
 			final MustLocksetAnalysis locksetInfo) {
 		return new LocationAbstraction().computeLocationAbstraction(settings.locationAbstractionType(), services, icfg,
 				locksetInfo);
-	}
-
-	private static Map<String, Set<IcfgLocation>> computePreForkSourcesByThread(final IIcfg<IcfgLocation> icfg,
-			final Set<String> multiForkedThreads) {
-		final Map<String, List<IIcfgForkTransitionThreadCurrent<IcfgLocation>>> forksByThread = new LinkedHashMap<>();
-		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : icfg.getCfgSmtToolkit()
-				.getConcurrencyInformation().getThreadInstanceMap().keySet()) {
-			forksByThread.computeIfAbsent(fork.getNameOfForkedProcedure(), ignored -> new ArrayList<>()).add(fork);
-		}
-
-		final Map<String, Set<IcfgLocation>> result = new LinkedHashMap<>();
-		for (final var entry : forksByThread.entrySet()) {
-			if (entry.getValue().size() != 1) {
-				continue;
-			}
-			final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork = entry.getValue().get(0);
-			final IcfgLocation forkSource = fork.getSource();
-			final IcfgLocation forkTarget = fork.getTarget();
-			if (forkSource == null || forkTarget == null) {
-				continue;
-			}
-			if (multiForkedThreads.contains(forkSource.getProcedure())) {
-				continue;
-			}
-			final Set<IcfgLocation> reachableAfterFork = reachableSameProcedure(forkTarget);
-			final Set<IcfgLocation> preForkSources = new LinkedHashSet<>();
-			for (final IcfgLocation candidate : icfg.getProgramPoints()
-					.getOrDefault(forkSource.getProcedure(), Map.of()).values()) {
-				if (reachableAfterFork.contains(candidate)) {
-					continue;
-				}
-				if (reachableSameProcedure(candidate).contains(forkSource)) {
-					preForkSources.add(candidate);
-				}
-			}
-			if (!preForkSources.isEmpty()) {
-				result.put(entry.getKey(), Set.copyOf(preForkSources));
-			}
-		}
-		return Map.copyOf(result);
-	}
-
-	private static Set<IcfgLocation> reachableSameProcedure(final IcfgLocation start) {
-		final Set<IcfgLocation> result = new LinkedHashSet<>();
-		final ArrayDeque<IcfgLocation> pending = new ArrayDeque<>();
-		result.add(start);
-		pending.add(start);
-		while (!pending.isEmpty()) {
-			final IcfgLocation source = pending.removeFirst();
-			for (final IcfgEdge edge : source.getOutgoingEdges()) {
-				final IcfgLocation target = edge.getTarget();
-				if (target == null || !start.getProcedure().equals(target.getProcedure()) || !result.add(target)) {
-					continue;
-				}
-				pending.add(target);
-			}
-		}
-		return result;
 	}
 
 	private static GroupedInterferenceFactory<?> createInterferenceFactory(
@@ -264,7 +163,7 @@ public final class ThreadModularSetup {
 		};
 	}
 
-	public static record SetupResult(List<String> threadIds, IDomain domain,
+	public static record SetupResult(ThreadForkGraph forkGraph, IDomain domain,
 			GroupedInterferenceFactory<?> interferenceFactory, RelationalPredicatePostcondition postcondition,
 			Set<String> joinedThreads, Map<IcfgLocation, Integer> abstractLocationIds, PublishOnAcquire mutexInvariants) {
 	}
