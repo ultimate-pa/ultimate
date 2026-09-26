@@ -25,8 +25,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -60,43 +58,36 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 public class ConcurrentSymbolicTools extends SymbolicTools {
 
 	private final ILogger mLogger;
-	private final IUltimateServiceProvider mServices;
 	private final SifaStats mStats;
-	private final PrimedDefaultIcfgSymbolTable mSymbolTable;
 	private final ThreadModularSifaSettings mSettings;
 	private final InitialStateFactory mInitialStateFactory;
 	private final JoinHandler mJoinHandler;
-	private GhostVariableManager mGhostVariables;
-	private MustLocksetAnalysis mLocksetInfo = MustLocksetAnalysis.disabled();
+	private final GhostVariableManager mGhostVariables;
+	private final MustLocksetAnalysis mLocksetInfo;
 	private PublishOnAcquire mMutexInvariants = PublishOnAcquire.disabled();
-	private ThreadActivityPreanalysis mThreadActivityPreanalysis;
-	private GhostLocationStateUpdater mLocationStateUpdater;
+	private final ThreadActivityPreanalysis mThreadActivityPreanalysis;
+	private final GhostLocationStateUpdater mLocationStateUpdater;
 	private ThreadAnalysisContext mThreadContext;
-	private ObservedThreadStateRecorder mObservedStateRecorder;
 
 	public ConcurrentSymbolicTools(final IUltimateServiceProvider services, final SifaStats stats,
 			final IIcfg<IcfgLocation> icfg, final SimplificationTechnique simplification,
-			final PrimedDefaultIcfgSymbolTable symbolTable, final ThreadModularSifaSettings settings) {
+			final PrimedDefaultIcfgSymbolTable symbolTable, final ThreadModularSifaSettings settings,
+			final GhostVariableManager ghostVariables, final ThreadActivityPreanalysis activityPreanalysis,
+			final MustLocksetAnalysis locksetInfo) {
 		super(services, stats, icfg, simplification, symbolTable);
 		mLogger = services.getLoggingService().getLogger(ConcurrentSymbolicTools.class);
-		mServices = services;
 		mStats = stats;
-		mSymbolTable = symbolTable;
 		mSettings = settings;
-		mInitialStateFactory = new InitialStateFactory(this, icfg);
-		mJoinHandler = new JoinHandler(this, services, icfg);
+		mGhostVariables = ghostVariables;
+		mThreadActivityPreanalysis = activityPreanalysis;
+		mLocksetInfo = locksetInfo;
+		mLocationStateUpdater = new GhostLocationStateUpdater(services, getManagedScript(), getFactory(), ghostVariables);
+		mInitialStateFactory = new InitialStateFactory(this, services, icfg, ghostVariables, mLocationStateUpdater);
+		mJoinHandler = new JoinHandler(this, services, icfg, ghostVariables, mLocationStateUpdater, activityPreanalysis);
 	}
 
 	public ThreadModularSifaSettings getSettings() {
 		return mSettings;
-	}
-
-	public IUltimateServiceProvider getServices() {
-		return mServices;
-	}
-
-	public PrimedDefaultIcfgSymbolTable getSymbolTable() {
-		return mSymbolTable;
 	}
 
 	public ThreadActivityPreanalysis getThreadActivityPreanalysis() {
@@ -104,43 +95,31 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	}
 
 	public void rememberThreadLocationState(final IcfgLocation location, final IPredicate state) {
-		mObservedStateRecorder.recordObservedState(location, state);
+		mThreadContext.observedStateRecorder().recordObservedState(location, state);
 	}
 
 	public Map<IcfgLocation, IPredicate> getObservedThreadLocationStates() {
-		return mObservedStateRecorder.getObservedStates();
+		return mThreadContext.observedStateRecorder().getObservedStates();
 	}
 
 	public void setMutexInvariants(final PublishOnAcquire mutexInvariants) {
 		mMutexInvariants = mutexInvariants;
 	}
 
-	public void initializeStaticAnalysis(final GhostVariableManager ghostVariables,
-			final ThreadActivityPreanalysis activityPreanalysis, final MustLocksetAnalysis locksetInfo) {
-		mGhostVariables = ghostVariables;
-		mThreadActivityPreanalysis = activityPreanalysis;
-		mLocksetInfo = locksetInfo;
-		mLocationStateUpdater = new GhostLocationStateUpdater(mServices, getManagedScript(), getFactory(),
-				ghostVariables);
-		mInitialStateFactory.configureStaticAnalysis(ghostVariables, mLocationStateUpdater);
-		mJoinHandler.configureStaticAnalysis(ghostVariables, mLocationStateUpdater);
-	}
-
 	public void configureForThread(final String threadId, final IInterferenceSet interference,
 			final Map<IcfgLocation, IPredicate> locationPredicates, final IDomain domain) {
 		IThreadLocalDomainContext.setIfApplicable(domain, threadId);
-		final List<String> sortedInterferenceThreadIds = interference == null ? List.of()
-				: interference.threadIds().stream().sorted().toList();
-		final boolean includeSelfInterference = mThreadActivityPreanalysis.getMultiForkedThreads().contains(threadId);
-		mThreadContext = new ThreadAnalysisContext(threadId, interference, domain, includeSelfInterference,
-				sortedInterferenceThreadIds, locationPredicates, new HashMap<>());
-		mObservedStateRecorder = new ObservedThreadStateRecorder(domain, mGhostVariables);
-		mInitialStateFactory.configureForThread(locationPredicates, domain);
+		mThreadContext = new ThreadAnalysisContext(threadId, interference, domain, locationPredicates,
+				mGhostVariables, mThreadActivityPreanalysis);
+	}
+
+	public void clearThreadContext() {
+		mThreadContext = null;
 	}
 
 	@Override
 	public IPredicate post(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
-		mObservedStateRecorder.recordTransitionInputState(transition, input);
+		mThreadContext.observedStateRecorder().recordTransitionInputState(transition, input);
 		final IPredicate spResult = super.post(input, transition);
 		final IPredicate joinProjected = mJoinHandler.projectJoinAssignedVars(spResult, transition);
 		return updateGhostvarsAndApplyInterferences(joinProjected, transition);
@@ -169,7 +148,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 
 	public IPredicate postNoOpTransition(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
 		if (transition instanceof LocationMarkerTransition) {
-			mObservedStateRecorder.recordTransitionInputState(transition, input);
+			mThreadContext.observedStateRecorder().recordTransitionInputState(transition, input);
 			return applyInterferences(input, transition.getTarget());
 		}
 		return post(input, transition);
@@ -206,8 +185,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 			updated = mLocationStateUpdater.addLocationUpdate(updated, fork.getNameOfForkedProcedure(),
 					mGhostVariables.getEntryLocation(fork.getNameOfForkedProcedure()));
 		}
-		updated = mJoinHandler.refineWithJoinedThreadExitState(updated, transition, mThreadContext,
-				mThreadActivityPreanalysis);
+		updated = mJoinHandler.refineWithJoinedThreadExitState(updated, transition, mThreadContext.locationPredicates());
 		if (isThreadLocalTransition(transition)) {
 			return updated;
 		}
@@ -232,8 +210,9 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		return mLocationStateUpdater.addLocationUpdate(postState, mThreadContext.threadId(), transition.getTarget());
 	}
 
-	public IPredicate getInitialStatePredicate(final String threadId) {
-		return mInitialStateFactory.getInitialStatePredicate(threadId);
+	public IPredicate getInitialStatePredicate() {
+		return mInitialStateFactory.getInitialStatePredicate(mThreadContext.threadId(),
+				mThreadContext.locationPredicates(), mThreadContext.domain());
 	}
 
 }

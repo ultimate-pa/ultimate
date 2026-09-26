@@ -108,13 +108,18 @@ public final class ThreadAnalyzer {
 			final SingleThreadIcfg threadIcfg = mThreadIcfgs.get(threadId);
 
 			mConcurrentTools.configureForThread(threadId, interference, threadInvariants.locationInvariants(), mDomain);
-			final IPredicate initialState = mConcurrentTools.getInitialStatePredicate(threadId);
+			try {
+				final IcfgLocation entryLocation = threadIcfg.getProcedureEntryNodes().get(threadId);
+				final IPredicate initialState = mConcurrentTools.applyInterferences(
+						mConcurrentTools.getInitialStatePredicate(), entryLocation);
 
-			final IcfgLocation entryLocation = threadIcfg.getProcedureEntryNodes().get(threadId);
-			mConcurrentTools.rememberThreadLocationState(entryLocation, initialState);
-			final Map<IcfgLocation, IPredicate> threadResult = analyzeSingleThread(threadId, initialState);
-			final Map<IcfgLocation, IPredicate> observed = mConcurrentTools.getObservedThreadLocationStates();
-			threadInvariants.updateThread(threadId, threadResult, observed);
+				mConcurrentTools.rememberThreadLocationState(entryLocation, initialState);
+				final Map<IcfgLocation, IPredicate> threadResult = analyzeSingleThread(threadId, initialState);
+				final Map<IcfgLocation, IPredicate> observed = mConcurrentTools.getObservedThreadLocationStates();
+				threadInvariants.updateThread(threadId, threadResult, observed);
+			} finally {
+				mConcurrentTools.clearThreadContext();
+			}
 		}
 	}
 

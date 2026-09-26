@@ -57,73 +57,95 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModul
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.threadactivity.ThreadActivityPreanalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 
 public final class ThreadModularSetup {
 	private static final String MAIN_THREAD = "ULTIMATE.start";
 
-	private ThreadModularSetup() {
+	private final IUltimateServiceProvider mServices;
+	private final IIcfg<IcfgLocation> mIcfg;
+	private final ThreadModularSifaSettings mSettings;
+	private final PrimedDefaultIcfgSymbolTable mSymbolTable;
+	private final List<String> mThreadIds;
+	private final Set<String> mJoinedThreads;
+	private final ThreadActivityPreanalysis mActivityPreanalysis;
+	private final MustLocksetAnalysis mLocksetInfo;
+	private final Map<IcfgLocation, Integer> mAbstractLocationIds;
+	private final Map<String, Set<IcfgLocation>> mPreForkSourcesByThread;
+	private final GhostVariableManager mGhostVariables;
+
+	public ThreadModularSetup(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
+			final ThreadModularSifaSettings settings) {
+		mServices = services;
+		mIcfg = icfg;
+		mSettings = settings;
+		final var toolkit = icfg.getCfgSmtToolkit();
+		mSymbolTable = new PrimedDefaultIcfgSymbolTable(toolkit.getSymbolTable(), toolkit.getProcedures(),
+				toolkit.getManagedScript());
+		final ILogger logger = services.getLoggingService().getLogger(ThreadModularSetup.class);
+		mThreadIds = List.copyOf(discoverThreadIds(icfg));
+		mJoinedThreads = settings.joinPrecision() ? identifyJoinedThreads(icfg) : Set.of();
+		if (settings.joinPrecision()) {
+			logger.info("Join precision enabled, joined threads: %s", mJoinedThreads);
+		}
+		mActivityPreanalysis = ThreadActivityPreanalysis.compute(icfg,
+				new LinkedHashSet<>(mThreadIds), settings.joinPrecision());
+		final boolean needsLocksetAnalysis = settings.locksetAwareInterference() || settings.publishOnAcquire();
+		mLocksetInfo = needsLocksetAnalysis
+				? MustLocksetAnalysis.create(icfg, mActivityPreanalysis)
+				: MustLocksetAnalysis.disabled();
+		mAbstractLocationIds = Map.copyOf(computeLocationIds(settings, services, icfg, interferenceLocksetInfo()));
+		mPreForkSourcesByThread = computePreForkSourcesByThread(icfg, mActivityPreanalysis.getMultiForkedThreads());
+		mGhostVariables = GhostVariableManager.create(toolkit.getManagedScript(), mAbstractLocationIds,
+				new LinkedHashSet<>(mThreadIds), icfg.getProcedureEntryNodes(), mSymbolTable,
+				mActivityPreanalysis.getMultiForkedThreads());
 	}
 
-	public static SetupResult initialize(final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
-			final IDomain baseDomain, final ConcurrentSymbolicTools tools) {
-		final ThreadModularSifaSettings settings = tools.getSettings();
-		final PrimedDefaultIcfgSymbolTable symbolTable = tools.getSymbolTable();
+	public ConcurrentSymbolicTools createTools(final SifaStats stats, final SimplificationTechnique simplification) {
+		return new ConcurrentSymbolicTools(mServices, stats, mIcfg, simplification, mSymbolTable, mSettings,
+				mGhostVariables, mActivityPreanalysis, mLocksetInfo);
+	}
+
+	public SetupResult initialize(final IDomain baseDomain, final ConcurrentSymbolicTools tools) {
 		final var factory = tools.getFactory();
 		final ManagedScript script = tools.getManagedScript();
-		final ILogger logger = services.getLoggingService().getLogger(ThreadModularSetup.class);
-		final List<String> threadIds = discoverThreadIds(icfg);
-		final Set<String> joinedThreads = settings.joinPrecision() ? identifyJoinedThreads(icfg) : Set.of();
-		if (settings.joinPrecision()) {
-			logger.info("Join precision enabled, joined threads: %s", joinedThreads);
-		}
-		final ThreadActivityPreanalysis activityPreanalysis = ThreadActivityPreanalysis.compute(icfg,
-				new LinkedHashSet<>(threadIds), settings.joinPrecision());
-		final boolean needsLocksetAnalysis = settings.locksetAwareInterference() || settings.publishOnAcquire();
-		final MustLocksetAnalysis locksetInfo = needsLocksetAnalysis
-				? MustLocksetAnalysis.create(icfg, activityPreanalysis)
-				: MustLocksetAnalysis.disabled();
-		final MustLocksetAnalysis interferenceLocksetInfo = settings.locksetAwareInterference() ? locksetInfo
-				: MustLocksetAnalysis.disabled();
-		final Map<IcfgLocation, Integer> locationIds = computeLocationIds(settings, services, icfg,
-				interferenceLocksetInfo);
-		final Map<String, Set<IcfgLocation>> preForkSourcesByThread = computePreForkSourcesByThread(icfg,
-				activityPreanalysis.getMultiForkedThreads());
-
-		final GhostVariableManager ghostVars = GhostVariableManager.create(script, locationIds,
-				new LinkedHashSet<>(threadIds), icfg.getProcedureEntryNodes(), symbolTable,
-				activityPreanalysis.getMultiForkedThreads());
-		tools.initializeStaticAnalysis(ghostVars, activityPreanalysis, locksetInfo);
-		final PublishOnAcquire mutexInvariants = settings.publishOnAcquire()
-				? PublishOnAcquire.discover(icfg, locksetInfo, MAIN_THREAD, activityPreanalysis, services, script,
+		final ILogger logger = mServices.getLoggingService().getLogger(ThreadModularSetup.class);
+		final PublishOnAcquire mutexInvariants = mSettings.publishOnAcquire()
+				? PublishOnAcquire.discover(mIcfg, mLocksetInfo, MAIN_THREAD, mActivityPreanalysis, mServices, script,
 						factory)
 				: PublishOnAcquire.disabled();
-		if (settings.publishOnAcquire()) {
+		if (mSettings.publishOnAcquire()) {
 			logger.info("Publish-on-acquire enabled (protected globals discovered: %s)", !mutexInvariants.isEmpty());
 		}
-		final AbstractLocationPartitionedDomain partitionedDomain = settings.useBuckets()
+		final AbstractLocationPartitionedDomain partitionedDomain = mSettings.useBuckets()
 				? AbstractLocationPartitionedDomain.create(baseDomain, tools,
-						ghostVars.getLocationTermVariablesByThread(), settings.maxBuckets(),
-						settings.maxDisjunctsPerBucket())
+						mGhostVariables.getLocationTermVariablesByThread(), mSettings.maxBuckets(),
+						mSettings.maxDisjunctsPerBucket())
 				: null;
 		if (partitionedDomain != null) {
 			logger.info("Abstract-location partitioned domain enabled");
 		}
 		final IDomain domain = partitionedDomain != null ? partitionedDomain : baseDomain;
-		final var translator = new TransFormulaToInterferencePredicate(services, script, factory, symbolTable,
-				ghostVars, locationIds, icfg.getProcedureEntryNodes());
-		final RelationalPredicatePostcondition postcondition = new RelationalPredicatePostcondition(services, script,
-				factory, symbolTable, true);
-		final InterferenceEdgeCollector edgeTraverser = new InterferenceEdgeCollector(icfg, translator);
+		final var translator = new TransFormulaToInterferencePredicate(mServices, script, factory, mSymbolTable,
+				mGhostVariables, mAbstractLocationIds, mIcfg.getProcedureEntryNodes());
+		final RelationalPredicatePostcondition postcondition = new RelationalPredicatePostcondition(mServices, script,
+				factory, mSymbolTable, true);
+		final InterferenceEdgeCollector edgeTraverser = new InterferenceEdgeCollector(mIcfg, translator);
 		final GroupedInterferenceFactory<?> interferenceFactory = createInterferenceFactory(
-				settings.interferenceApplicatorType(), edgeTraverser, translator, postcondition, domain, factory,
-				script, interferenceLocksetInfo, preForkSourcesByThread);
-		logger.info("Interference method: %s (%s)", settings.interferenceApplicatorType(),
+				mSettings.interferenceApplicatorType(), edgeTraverser, translator, postcondition, domain, factory,
+				script, interferenceLocksetInfo(), mPreForkSourcesByThread);
+		logger.info("Interference method: %s (%s)", mSettings.interferenceApplicatorType(),
 				interferenceFactory.getClass().getSimpleName());
-		logger.info("Interference grouping: abstract-location pairs via %s", settings.locationAbstractionType());
+		logger.info("Interference grouping: abstract-location pairs via %s", mSettings.locationAbstractionType());
 
-		return new SetupResult(threadIds, domain, interferenceFactory, postcondition, joinedThreads, locationIds,
-				mutexInvariants);
+		return new SetupResult(mThreadIds, domain, interferenceFactory, postcondition, mJoinedThreads,
+				mAbstractLocationIds, mutexInvariants);
+	}
+
+	private MustLocksetAnalysis interferenceLocksetInfo() {
+		return mSettings.locksetAwareInterference() ? mLocksetInfo : MustLocksetAnalysis.disabled();
 	}
 
 	private static List<String> discoverThreadIds(final IIcfg<IcfgLocation> icfg) {

@@ -30,63 +30,53 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ConcurrencyInformation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostLocationStateUpdater;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
 public final class InitialStateFactory {
 
 	private static final String MAIN_THREAD = "ULTIMATE.start";
 
-	private final ConcurrentSymbolicTools mTools;
+	private final SymbolicTools mTools;
+	private final IUltimateServiceProvider mServices;
 	private final IIcfg<IcfgLocation> mIcfg;
+	private final GhostVariableManager mGhostVariables;
+	private final GhostLocationStateUpdater mLocationStateUpdater;
 
-	private GhostVariableManager mGhostVariables;
-	private GhostLocationStateUpdater mLocationStateUpdater;
-	private Map<IcfgLocation, IPredicate> mLocationPredicates;
-	private IDomain mAnalysisDomain;
-
-	public InitialStateFactory(final ConcurrentSymbolicTools tools, final IIcfg<IcfgLocation> icfg) {
-		mTools = Objects.requireNonNull(tools);
-		mIcfg = Objects.requireNonNull(icfg);
-	}
-
-	public void configureStaticAnalysis(final GhostVariableManager ghostVariables,
+	public InitialStateFactory(final SymbolicTools tools, final IUltimateServiceProvider services,
+			final IIcfg<IcfgLocation> icfg, final GhostVariableManager ghostVariables,
 			final GhostLocationStateUpdater locationStateUpdater) {
+		mTools = Objects.requireNonNull(tools);
+		mServices = Objects.requireNonNull(services);
+		mIcfg = Objects.requireNonNull(icfg);
 		mGhostVariables = ghostVariables;
 		mLocationStateUpdater = locationStateUpdater;
 	}
 
-	public void configureForThread(final Map<IcfgLocation, IPredicate> locationPredicates,
-			final IDomain analysisDomain) {
-		mLocationPredicates = Objects.requireNonNull(locationPredicates);
-		mAnalysisDomain = Objects.requireNonNull(analysisDomain);
-	}
-
-	public IPredicate getInitialStatePredicate(final String threadId) {
-		final IcfgLocation entryLocation = mIcfg.getProcedureEntryNodes().get(threadId);
-
+	public IPredicate getInitialStatePredicate(final String threadId,
+			final Map<IcfgLocation, IPredicate> locationPredicates, final IDomain domain) {
 		if (threadId.equals(MAIN_THREAD)) {
-			final IPredicate mainState = getMainThreadInitialState();
-			return mTools.applyInterferences(mainState, entryLocation);
+			return getMainThreadInitialState();
 		}
 
-		final Set<IPredicate> forkStates = collectForkStates(threadId);
+		final Set<IPredicate> forkStates = collectForkStates(threadId, locationPredicates);
 		if (forkStates.isEmpty()) {
 			return mTools.bottom();
 		}
 		IPredicate result = null;
 		for (final IPredicate pred : forkStates) {
-			result = result == null ? pred : mAnalysisDomain.join(result, pred);
+			result = result == null ? pred : domain.join(result, pred);
 		}
-		return mTools.applyInterferences(result, entryLocation);
+		return result;
 	}
 
 	private IPredicate getMainThreadInitialState() {
@@ -99,14 +89,15 @@ public final class InitialStateFactory {
 	/*
 	 * For a non-main thread, start from every place where some other thread can fork it and join those states.
 	 */
-	private Set<IPredicate> collectForkStates(final String threadId) {
+	private Set<IPredicate> collectForkStates(final String threadId,
+			final Map<IcfgLocation, IPredicate> locationPredicates) {
 		final Set<IPredicate> states = new LinkedHashSet<>();
 		final ConcurrencyInformation concInfo = mIcfg.getCfgSmtToolkit().getConcurrencyInformation();
 		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : concInfo.getThreadInstanceMap().keySet()) {
 			if (!fork.getNameOfForkedProcedure().equals(threadId)) {
 				continue;
 			}
-			final IPredicate forkState = mLocationPredicates.get(fork.getSource());
+			final IPredicate forkState = locationPredicates.get(fork.getSource());
 			if (forkState == null) {
 				continue;
 			}
@@ -136,7 +127,7 @@ public final class InitialStateFactory {
 	}
 
 	private IPredicate projectToSharedState(final IPredicate predicate) {
-		return InterferenceUtils.projectToGlobalState(predicate, mTools.getServices(), mTools.getManagedScript(),
+		return InterferenceUtils.projectToGlobalState(predicate, mServices, mTools.getManagedScript(),
 				mTools::predicate);
 	}
 }

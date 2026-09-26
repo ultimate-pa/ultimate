@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ThreadModularSifaInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.cfg.LocationAbstractionType;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.PrimedDefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSetup;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSifaSettings.InterferenceApplicatorType;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
@@ -94,7 +94,9 @@ public class SifaBuilder {
 	public SifaComponents construct(final IIcfg<IcfgLocation> icfg, final IProgressAwareTimer timer,
 			final Collection<IcfgLocation> locationsOfInterest) {
 		final SifaStats stats = new SifaStats();
-		final SymbolicTools tools = constructTools(stats, icfg);
+		final ThreadModularSetup setup = IcfgUtils.isConcurrent(icfg)
+				? new ThreadModularSetup(mServices, icfg, constructThreadModularSettings()) : null;
+		final SymbolicTools tools = constructTools(stats, icfg, setup);
 		final IDomain domain = constructStatsDomain(stats, tools, timer);
 		final IFluid fluid = constructStatsFluid(stats);
 		final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSum = constructLoopSummarizer(
@@ -105,7 +107,7 @@ public class SifaBuilder {
 		final ISifaInterpreter interpreter;
 		if (tools instanceof final ConcurrentSymbolicTools concurrentTools) {
 			interpreter = new ThreadModularSifaInterpreter(mLogger, timer, stats, concurrentTools, icfg,
-					locationsOfInterest, domain, fluid, loopSum, callSum, mServices);
+					locationsOfInterest, setup.initialize(domain, concurrentTools), fluid, loopSum, callSum);
 		} else {
 			interpreter = new IcfgInterpreter(mLogger, timer, stats, tools, icfg, locationsOfInterest, domain, fluid,
 					loopSum, callSum);
@@ -113,36 +115,35 @@ public class SifaBuilder {
 		return new SifaComponents(interpreter, domain, stats);
 	}
 
-	private SymbolicTools constructTools(final SifaStats stats, final IIcfg<IcfgLocation> icfg) {
+	private SymbolicTools constructTools(final SifaStats stats, final IIcfg<IcfgLocation> icfg,
+			final ThreadModularSetup setup) {
 		final var simplification = mPrefs.getEnum(SifaPreferences.LABEL_SIMPLIFICATION,
 				SifaPreferences.CLASS_SIMPLIFICATION);
-		if (IcfgUtils.isConcurrent(icfg)) {
-			final var toolkit = icfg.getCfgSmtToolkit();
-			final var primedTable = new PrimedDefaultIcfgSymbolTable(toolkit.getSymbolTable(), toolkit.getProcedures(),
-					toolkit.getManagedScript());
-			final LocationAbstractionType locationAbstraction = mPrefs
-					.getEnum(SifaPreferences.LABEL_LOCATION_ABSTRACTION, SifaPreferences.CLASS_LOCATION_ABSTRACTION);
-			final InterferenceApplicatorType interferenceApplicator = mPrefs.getEnum(
-					SifaPreferences.LABEL_INTERFERENCE_APPLICATOR, SifaPreferences.CLASS_INTERFERENCE_APPLICATOR);
-			final int outerWideningThreshold = Math.max(1,
-					mPrefs.getInt(SifaPreferences.LABEL_OUTER_WIDENING_THRESHOLD));
-			final int innerWideningThreshold = Math.max(1,
-					mPrefs.getInt(SifaPreferences.LABEL_INNER_WIDENING_THRESHOLD));
-			final boolean joinPrecision = mPrefs.getBoolean(SifaPreferences.LABEL_JOIN_PRECISION);
-			final boolean useBuckets = mPrefs.getBoolean(SifaPreferences.LABEL_USE_BUCKETS);
-			final int maxBuckets = Math.max(1, mPrefs.getInt(SifaPreferences.LABEL_MAX_BUCKETS));
-			final int maxDisjunctsPerBucket = Math.max(1,
-					mPrefs.getInt(SifaPreferences.LABEL_MAX_DISJUNCTS_PER_BUCKET));
-			final boolean locksetAwareInterference = mPrefs
-					.getBoolean(SifaPreferences.LABEL_LOCKSET_AWARE_INTERFERENCE);
-			final boolean publishOnAcquire = mPrefs.getBoolean(SifaPreferences.LABEL_PUBLISH_ON_ACQUIRE);
-			final boolean resultPrint = mPrefs.getBoolean(SifaPreferences.LABEL_RESULT_PRINT);
-			final var settings = new ThreadModularSifaSettings(locationAbstraction, interferenceApplicator,
-					outerWideningThreshold, innerWideningThreshold, joinPrecision, useBuckets, locksetAwareInterference,
-					publishOnAcquire, resultPrint, maxBuckets, maxDisjunctsPerBucket);
-			return new ConcurrentSymbolicTools(mServices, stats, icfg, simplification, primedTable, settings);
-		}
-		return new SymbolicTools(mServices, stats, icfg, simplification);
+		return setup == null ? new SymbolicTools(mServices, stats, icfg, simplification)
+				: setup.createTools(stats, simplification);
+	}
+
+	private ThreadModularSifaSettings constructThreadModularSettings() {
+		final LocationAbstractionType locationAbstraction = mPrefs
+				.getEnum(SifaPreferences.LABEL_LOCATION_ABSTRACTION, SifaPreferences.CLASS_LOCATION_ABSTRACTION);
+		final InterferenceApplicatorType interferenceApplicator = mPrefs.getEnum(
+				SifaPreferences.LABEL_INTERFERENCE_APPLICATOR, SifaPreferences.CLASS_INTERFERENCE_APPLICATOR);
+		final int outerWideningThreshold = Math.max(1,
+				mPrefs.getInt(SifaPreferences.LABEL_OUTER_WIDENING_THRESHOLD));
+		final int innerWideningThreshold = Math.max(1,
+				mPrefs.getInt(SifaPreferences.LABEL_INNER_WIDENING_THRESHOLD));
+		final boolean joinPrecision = mPrefs.getBoolean(SifaPreferences.LABEL_JOIN_PRECISION);
+		final boolean useBuckets = mPrefs.getBoolean(SifaPreferences.LABEL_USE_BUCKETS);
+		final int maxBuckets = Math.max(1, mPrefs.getInt(SifaPreferences.LABEL_MAX_BUCKETS));
+		final int maxDisjunctsPerBucket = Math.max(1,
+				mPrefs.getInt(SifaPreferences.LABEL_MAX_DISJUNCTS_PER_BUCKET));
+		final boolean locksetAwareInterference = mPrefs
+				.getBoolean(SifaPreferences.LABEL_LOCKSET_AWARE_INTERFERENCE);
+		final boolean publishOnAcquire = mPrefs.getBoolean(SifaPreferences.LABEL_PUBLISH_ON_ACQUIRE);
+		final boolean resultPrint = mPrefs.getBoolean(SifaPreferences.LABEL_RESULT_PRINT);
+		return new ThreadModularSifaSettings(locationAbstraction, interferenceApplicator,
+				outerWideningThreshold, innerWideningThreshold, joinPrecision, useBuckets, locksetAwareInterference,
+				publishOnAcquire, resultPrint, maxBuckets, maxDisjunctsPerBucket);
 	}
 
 	private IDomain constructStatsDomain(final SifaStats stats, final SymbolicTools tools,

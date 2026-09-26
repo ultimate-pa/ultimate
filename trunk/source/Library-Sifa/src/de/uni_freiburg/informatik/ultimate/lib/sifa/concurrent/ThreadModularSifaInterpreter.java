@@ -33,7 +33,6 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -41,12 +40,11 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.ISifaInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.reporting.SifaResultPrinter;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSetup;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSetup.SetupResult;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ThreadInvariants;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ThreadAnalyzer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.fixpoint.OuterInterferenceFixpoint;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ICallSummarizer;
@@ -61,15 +59,13 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 
 	public ThreadModularSifaInterpreter(final ILogger logger, final IProgressAwareTimer timer, final SifaStats stats,
 			final ConcurrentSymbolicTools tools, final IIcfg<IcfgLocation> icfg,
-			final Collection<IcfgLocation> locationsOfInterest, final IDomain baseDomain, final IFluid fluid,
+			final Collection<IcfgLocation> locationsOfInterest, final SetupResult setup, final IFluid fluid,
 			final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
-			final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSumFactory,
-			final IUltimateServiceProvider services) {
+			final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSumFactory) {
 		mIcfg = icfg;
 		mRequestedLocationsOfInterest = locationsOfInterest == null ? Set.of() : Set.copyOf(locationsOfInterest);
 		mConcurrentTools = tools;
 
-		final var setup = ThreadModularSetup.initialize(services, icfg, baseDomain, mConcurrentTools);
 		setup.postcondition().setStats(stats);
 		final ThreadAnalyzer threadAnalysis = new ThreadAnalyzer(logger, timer, stats, mConcurrentTools, icfg,
 				mRequestedLocationsOfInterest, setup.domain(), fluid, loopSumFactory, callSumFactory, setup.threadIds(),

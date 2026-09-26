@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostLocationStateUpdater;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
@@ -51,35 +52,33 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 class JoinHandler {
 
-	private final ConcurrentSymbolicTools mTools;
+	private final SymbolicTools mTools;
 	private final IUltimateServiceProvider mServices;
 	private final IIcfg<IcfgLocation> mIcfg;
-	private GhostVariableManager mGhostVariables;
-	private GhostLocationStateUpdater mLocationStateUpdater;
+	private final GhostVariableManager mGhostVariables;
+	private final GhostLocationStateUpdater mLocationStateUpdater;
+	private final ThreadActivityPreanalysis mActivityPreanalysis;
 	private final Map<String, Set<TermVariable>> mGhostVarsToProjectCache = new HashMap<>();
 	private final IdentityHashMap<IIcfgJoinTransitionThreadCurrent<?>, Set<TermVariable>> mAssignedVarsCache = new IdentityHashMap<>();
 	private final IdentityHashMap<IIcfgJoinTransitionThreadCurrent<?>, Set<TermVariable>> mAssignedGlobalVarsCache = new IdentityHashMap<>();
 
-	JoinHandler(final ConcurrentSymbolicTools tools, final IUltimateServiceProvider services,
-			final IIcfg<IcfgLocation> icfg) {
+	JoinHandler(final SymbolicTools tools, final IUltimateServiceProvider services,
+			final IIcfg<IcfgLocation> icfg, final GhostVariableManager ghostVariables,
+			final GhostLocationStateUpdater locationStateUpdater, final ThreadActivityPreanalysis activityPreanalysis) {
 		mTools = tools;
 		mServices = services;
 		mIcfg = icfg;
-	}
-
-	void configureStaticAnalysis(final GhostVariableManager ghostVariables,
-			final GhostLocationStateUpdater locationStateUpdater) {
 		mGhostVariables = ghostVariables;
 		mLocationStateUpdater = locationStateUpdater;
+		mActivityPreanalysis = activityPreanalysis;
 	}
 
 	IPredicate refineWithJoinedThreadExitState(final IPredicate state,
-			final IIcfgTransition<IcfgLocation> transition, final ThreadAnalysisContext threadContext,
-			final ThreadActivityPreanalysis activityPreanalysis) {
+			final IIcfgTransition<IcfgLocation> transition, final Map<IcfgLocation, IPredicate> locationPredicates) {
 		if (!(transition instanceof final IIcfgJoinTransitionThreadCurrent<?> join)) {
 			return state;
 		}
-		final String joinedThread = activityPreanalysis
+		final String joinedThread = mActivityPreanalysis
 				.getJoinedThreadForJoin((IIcfgJoinTransitionThreadCurrent<IcfgLocation>) join);
 		if (joinedThread == null) {
 			return state;
@@ -88,16 +87,16 @@ class JoinHandler {
 		if (exitLoc == null) {
 			return state;
 		}
-		final IPredicate globalizedExit = globalExitState(threadContext, exitLoc, joinedThread, join);
+		final IPredicate globalizedExit = globalExitState(locationPredicates, exitLoc, joinedThread, join);
 		if (globalizedExit == null) {
 			return state;
 		}
 		return intersectStateAndExitLocationState(state, joinedThread, exitLoc, globalizedExit);
 	}
 
-	private IPredicate globalExitState(final ThreadAnalysisContext threadContext, final IcfgLocation exitLoc,
+	private IPredicate globalExitState(final Map<IcfgLocation, IPredicate> locationPredicates, final IcfgLocation exitLoc,
 			final String joinedThread, final IIcfgJoinTransitionThreadCurrent<?> join) {
-		final IPredicate exitState = threadContext.locationPredicates().get(exitLoc);
+		final IPredicate exitState = locationPredicates.get(exitLoc);
 		if (exitState == null || isBooleanLiteral(exitState)) {
 			return null;
 		}

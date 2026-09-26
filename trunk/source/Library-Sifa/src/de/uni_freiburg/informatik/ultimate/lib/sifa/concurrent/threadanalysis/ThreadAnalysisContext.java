@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -32,13 +33,23 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.threadactivity.ThreadActivityPreanalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
 record ThreadAnalysisContext(String threadId, IInterferenceSet interference, IDomain domain,
 		boolean includeSelfInterference, List<String> sortedInterferenceThreadIds,
-		Map<IcfgLocation, IPredicate> locationPredicates, Map<IcfgLocation, Set<String>> activeThreadIdsByLocation) {
+		Map<IcfgLocation, IPredicate> locationPredicates, Map<IcfgLocation, Set<String>> activeThreadIdsByLocation,
+		ObservedThreadStateRecorder observedStateRecorder) {
+
+	ThreadAnalysisContext(final String threadId, final IInterferenceSet interference, final IDomain domain,
+			final Map<IcfgLocation, IPredicate> locationPredicates, final GhostVariableManager ghostVariables,
+			final ThreadActivityPreanalysis preanalysis) {
+		this(threadId, interference, domain, preanalysis.getMultiForkedThreads().contains(threadId),
+				interference == null ? List.of() : interference.threadIds().stream().sorted().toList(),
+				locationPredicates, new HashMap<>(), new ObservedThreadStateRecorder(domain, ghostVariables));
+	}
 
 	Set<String> activeInterferenceThreadsAt(final IcfgLocation location, final ThreadActivityPreanalysis preanalysis) {
 		return activeThreadIdsByLocation.computeIfAbsent(location,
