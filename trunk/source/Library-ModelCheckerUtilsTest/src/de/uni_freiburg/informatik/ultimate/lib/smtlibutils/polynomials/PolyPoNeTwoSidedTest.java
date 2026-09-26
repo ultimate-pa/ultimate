@@ -340,4 +340,37 @@ public class PolyPoNeTwoSidedTest {
 		final Term result = PolyPoNeUtils.and(mScript, context, params);
 		MatcherAssert.assertThat(result, IsEqual.equalTo(parse("(bvule x (_ bv3 8))")));
 	}
+
+	// --- constant-first equalities: "(= 5 x)" is stored with coefficient -1 for x, unlike "(= x 5)" ---
+
+	@Test
+	public void constantFirstEqualityMakesSatisfyingInequalityRedundant() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, IPolynomialRelation.of(mScript, parse("(= (_ bv5 8) x)")), true);
+		final boolean inconsistent = polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv9 8))"), true);
+		Assert.assertFalse(inconsistent);
+		final Term result = polyPoNe.and();
+		Assert.assertFalse("redundant bound was kept: " + result, result.toString().contains("bvult"));
+	}
+
+	@Test
+	public void constantFirstEqualityViolatingInequalityIsInconsistent() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, IPolynomialRelation.of(mScript, parse("(= (_ bv42 8) x)")), true);
+		final boolean inconsistent = polyPoNe.addPolyRel(mScript, twoSided("(bvslt x (_ bv7 8))"), true);
+		Assert.assertTrue(inconsistent);
+	}
+
+	@Test
+	public void constantFirstContextEqualityContradictingBoundGivesFalse() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final Term context = parse("(= (_ bv5 8) x)");
+		final Term result = PolyPoNeUtils.and(mScript, context, List.of(parse("(bvult x (_ bv3 8))")));
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("false")));
+	}
 }
