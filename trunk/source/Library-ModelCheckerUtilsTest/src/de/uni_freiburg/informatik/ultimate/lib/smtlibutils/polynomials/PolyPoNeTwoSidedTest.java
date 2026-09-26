@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.core.IsEqual;
@@ -43,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Junction;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -677,6 +679,115 @@ public class PolyPoNeTwoSidedTest {
 				assertSameMeaning("and " + params, SmtUtils.and(mScript, params), PolyPoNeUtils.and(mScript, params));
 				assertSameMeaning("or " + params, SmtUtils.or(mScript, params), PolyPoNeUtils.or(mScript, params));
 			}
+		}
+	}
+
+	// --- bvneg and bvnot are understood as arithmetic: -x and -x-1 ---
+
+	@Test
+	public void bvnotAndBvnegAreConvertedToPolynomialsOverTheirArgument() {
+		declareXyz();
+		for (final String formula : new String[] { "(bvnot x)", "(bvneg x)" }) {
+			final Term term = parse(formula);
+			final AbstractGeneralizedAffineTerm<?> polynomial =
+					(AbstractGeneralizedAffineTerm<?>) PolynomialTermTransformer.convert(mScript, term);
+			// before the conversion the whole term "(bvnot x)" was one opaque unknown
+			final Map<Term, Rational> variables = polynomial.getAbstractVariableAsTerm2Coefficient(mScript);
+			Assert.assertTrue(formula, variables.size() == 1 && variables.containsKey(parse("x")));
+			assertSameMeaning(formula, term, polynomial.toTerm(mScript));
+		}
+	}
+
+	@Test
+	public void boundOnBvnotIsAnExpressionBoundNotABareVariable() {
+		declareXyz();
+		final BitvectorInequalityRelation relation = twoSided("(bvule (bvnot x) (_ bv100 8))");
+		Assert.assertTrue(relation.isPolynomialVsConstant());
+		Assert.assertFalse(relation.isBareVariableVsBareConstant());
+	}
+
+	@Test
+	public void bvnotAndBvnegAtomsKeepTheMeaningForAnyTwoAtoms() {
+		declareXyz();
+		final String[] atoms = { "(bvule (bvnot x) (_ bv100 8))", "(bvule x (_ bv5 8))",
+				"(bvuge (bvnot x) (_ bv200 8))", "(bvule (bvneg x) (_ bv5 8))", "(bvsle (bvnot x) (_ bv3 8))",
+				"(= (bvneg x) (_ bv251 8))", "(distinct (bvnot x) (_ bv7 8))", "(bvult (bvneg x) (_ bv100 8))",
+				"(bvuge x (_ bv155 8))", "(bvsge (bvneg x) (_ bv2 8))" };
+		for (int i = 0; i < atoms.length; i++) {
+			for (int j = i + 1; j < atoms.length; j++) {
+				final List<Term> params = List.of(parse(atoms[i]), parse(atoms[j]));
+				assertSameMeaning("and " + params, SmtUtils.and(mScript, params), PolyPoNeUtils.and(mScript, params));
+				assertSameMeaning("or " + params, SmtUtils.or(mScript, params), PolyPoNeUtils.or(mScript, params));
+			}
+		}
+	}
+
+	// --- twins: a stored fact and the same fact written the other way round meet each other ---
+
+	@Test
+	public void factAndItsOtherSpellingContradict() {
+		declareXyz();
+		// (bvnot x) <=u 100 means x >=u 155, which contradicts x <=u 5, in both orders
+		final PolyPoNe first = new PolyPoNe(mScript, Junction.AND);
+		first.addPolyRel(mScript, twoSided("(bvule x (_ bv5 8))"), true);
+		Assert.assertTrue(first.addPolyRel(mScript, twoSided("(bvule (bvnot x) (_ bv100 8))"), true));
+		final PolyPoNe second = new PolyPoNe(mScript, Junction.AND);
+		second.addPolyRel(mScript, twoSided("(bvule (bvnot x) (_ bv100 8))"), true);
+		Assert.assertTrue(second.addPolyRel(mScript, twoSided("(bvule x (_ bv5 8))"), true));
+	}
+
+	@Test
+	public void strongerFactInOtherSpellingDropsTheWeakerOne() {
+		declareXyz();
+		// (bvnot x) <=u 100 means x >=u 155, and x >=u 200 is stronger
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule (bvnot x) (_ bv100 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvuge x (_ bv200 8))"), true));
+		final Term result = polyPoNe.and();
+		assertSameMeaning("stronger fact", parse("(bvuge x (_ bv200 8))"), result);
+		Assert.assertFalse("weaker fact was kept: " + result, result.toString().contains("bv100"));
+	}
+
+	@Test
+	public void weakerFactInOtherSpellingIsRedundant() {
+		declareXyz();
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvuge x (_ bv200 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvule (bvnot x) (_ bv100 8))"), true));
+		final Term result = polyPoNe.and();
+		assertSameMeaning("stronger fact", parse("(bvuge x (_ bv200 8))"), result);
+		Assert.assertFalse("weaker fact was kept: " + result, result.toString().contains("bv100"));
+	}
+
+	@Test
+	public void signedFactAndItsOtherSpellingContradict() {
+		declareXyz();
+		// (bvnot x) >=s 0 means x <=s -1, which contradicts x >=s 5
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvsle (_ bv5 8) x)"), true);
+		Assert.assertTrue(polyPoNe.addPolyRel(mScript, twoSided("(bvsle (_ bv0 8) (bvnot x))"), true));
+	}
+
+	@Test
+	public void contextFactAndOtherSpellingContradict() {
+		declareXyz();
+		final Term context = parse("(bvule x (_ bv5 8))");
+		final Term result = PolyPoNeUtils.and(mScript, context, List.of(parse("(bvule (bvnot x) (_ bv100 8))")));
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("false")));
+	}
+
+	@Test
+	public void twinsKeepTheMeaningForSomeTriples() {
+		declareXyz();
+		final String[][] triples = {
+				{ "(bvuge x (_ bv200 8))", "(bvule (bvnot x) (_ bv100 8))", "(bvule x (_ bv250 8))" },
+				{ "(bvule (bvnot x) (_ bv100 8))", "(bvule x (_ bv5 8))", "(bvuge x (_ bv1 8))" },
+				{ "(bvsle (_ bv5 8) x)", "(bvsle (_ bv0 8) (bvnot x))", "(distinct x (_ bv3 8))" },
+				{ "(bvule (bvnot x) (_ bv100 8))", "(bvule (bvnot x) (_ bv200 8))", "(bvuge x (_ bv155 8))" } };
+		for (final String[] triple : triples) {
+			final List<Term> params = List.of(parse(triple[0]), parse(triple[1]), parse(triple[2]));
+			assertSameMeaning("and " + params, SmtUtils.and(mScript, params), PolyPoNeUtils.and(mScript, params));
+			assertSameMeaning("or " + params, SmtUtils.or(mScript, params), PolyPoNeUtils.or(mScript, params));
 		}
 	}
 }
