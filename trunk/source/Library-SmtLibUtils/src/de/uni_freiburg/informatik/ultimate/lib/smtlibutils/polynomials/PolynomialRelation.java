@@ -38,18 +38,14 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.IBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionTir;
 import de.uni_freiburg.informatik.ultimate.logic.INonSolverScript;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -60,11 +56,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Represents an term of the form ψ ▷ φ, where ψ and φ are {@link PolynomialTerm}s or {@link AffineTerm}s and ▷ is a
- * binary relation symbol from the following list.
- * <p>
- * ▷ ∈ { =, !=, \<=, \<, \>=, \> }
- * </p>
+ * {@link IPolynomialRelation} implementation that reduces the relation to a single polynomial term &psi; compared
+ * against zero (&psi; &#9657; 0, where &psi; = lhs - rhs). Sound for Int/Real inequalities and for equalities of any
+ * sort, including bitvectors - unsound for bitvector inequalities (see {@link BitvectorInequalityRelation} for that
+ * case), which is why the factory methods below still refuse to build a relation for those.
  * <p>
  * Allows to return this relation as an SMT term in the following two forms:
  * <ul>
@@ -78,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class PolynomialRelation implements IBinaryRelation, ITermProvider {
+public class PolynomialRelation implements IPolynomialRelation {
 
 	protected static final String NO_AFFINE_REPRESENTATION_WHERE_DESIRED_VARIABLE_IS_ON_LEFT_HAND_SIDE =
 			"No affine representation where desired variable is on left hand side";
@@ -90,37 +85,14 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 	 */
 	protected final AbstractGeneralizedAffineTerm<?> mPolynomialTerm;
 
-	public enum TransformInequality {
-		NO_TRANFORMATION, STRICT2NONSTRICT, NONSTRICT2STRICT;
-
-		/**
-		 * For the TIR quantifier elimination technique (see {@link DualJunctionTir}), we prefer non-strict inequalities
-		 * for the existential quantifier and we prefer strict inequalities for the universal quantifier.
-		 */
-		public static TransformInequality determineTransformationForTir(final int quantifier) {
-			TransformInequality result;
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				result = TransformInequality.STRICT2NONSTRICT;
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				result = TransformInequality.NONSTRICT2STRICT;
-			} else {
-				throw new AssertionError("Unknown quantifier");
-			}
-			return result;
-		}
-	}
-
-	public enum TrivialityStatus {
-		EQUIVALENT_TO_TRUE, EQUIVALENT_TO_FALSE, NONTRIVIAL
-	}
-
 	/**
 	 * Create {@link PolynomialRelation} from {@link IPolynomialTerm} and {@link RelationSymbol}.
 	 *
 	 * Resulting relation is then <code><term> <symbol> 0</code>.
 	 *
 	 */
-	private PolynomialRelation(final AbstractGeneralizedAffineTerm<?> agat, final RelationSymbol relationSymbol) {
+	private PolynomialRelation(final AbstractGeneralizedAffineTerm<?> agat,
+			final RelationSymbol relationSymbol) {
 		if (relationSymbol.isConvexInequality() && SmtSortUtils.isBitvecSort(agat.getSort())) {
 			throw new AssertionError("Unsupported inequality/sort combination");
 		}
@@ -252,8 +224,8 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 		return PolynomialRelation.of(transformInequality, relationSymbol, polyLhs, polyRhs);
 	}
 
-	public static PolynomialRelation of(final Script script, final RelationSymbol relationSymbol, final Term lhs,
-			final Term rhs) {
+	public static PolynomialRelation of(final Script script, final RelationSymbol relationSymbol,
+			final Term lhs, final Term rhs) {
 		final IPolynomialTerm lhsPoly = PolynomialTermTransformer.convert(script, lhs);
 		final IPolynomialTerm rhsPoly = PolynomialTermTransformer.convert(script, rhs);
 		if (lhsPoly == null || rhsPoly == null) {
@@ -410,10 +382,12 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 		}
 	}
 
+	@Override
 	public RelationSymbol getRelationSymbol() {
 		return mRelationSymbol;
 	}
 
+	@Override
 	public AbstractGeneralizedAffineTerm<?> getPolynomialTerm() {
 		return mPolynomialTerm;
 	}
@@ -530,6 +504,7 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 	 * Returns a {@link MultiCaseSolvedBinaryRelation} that is equivalent to this PolynomialRelation or null if we
 	 * cannot find such a {@link MultiCaseSolvedBinaryRelation}.
 	 */
+	@Override
 	public MultiCaseSolvedBinaryRelation solveForSubject(final ManagedScript mgdScript, final Term subject,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf, final Set<TermVariable> bannedForDivCapture,
 			final boolean allowDivModBasedSolution) {
@@ -540,21 +515,25 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 	/**
 	 * @return true iff the relation ψ ▷ φ has (after simplification) a form where ψ and φ are both affine terms.
 	 */
+	@Override
 	public boolean isAffine() {
 		return mPolynomialTerm.isAffine();
 	}
 
 	/**
-	 * @return true iff var is variable of this {@link PolynomialRelation}
+	 * @return true iff var is variable of this {@link IPolynomialRelation}
 	 */
+	@Override
 	public boolean isVariable(final Term var) {
 		return mPolynomialTerm.isVariable(var);
 	}
 
+	@Override
 	public PolynomialRelation negate() {
 		return new PolynomialRelation(mPolynomialTerm, mRelationSymbol.negate());
 	}
 
+	@Override
 	public PolynomialRelation mul(final Script script, final Rational r) {
 		final RelationSymbol resultRelationSymbol =
 				ExplicitLhsPolynomialRelation.swapOfRelationSymbolRequired(r, mPolynomialTerm.getSort())
@@ -615,10 +594,11 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 	}
 
 	/**
-	 * If this {@link PolynomialRelation} has the form `x=l`, where x is a variable of the underlying (affine)
+	 * If this {@link IPolynomialRelation} has the form `x=l`, where x is a variable of the underlying (affine)
 	 * polynomial relation and l is literal, the return this equality as a {@link SolvedBinaryRelation} where `x` is the
 	 * left-hand side and `y` is the right-hand side.
 	 */
+	@Override
 	public SolvedBinaryRelation isSimpleEquality(final Script script) {
 		if (mRelationSymbol != RelationSymbol.EQ) {
 			return null;
@@ -655,11 +635,12 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 	}
 
 	/**
-	 * Integer inequalities have two logically equivalent {@link PolynomialRelation}, one that utilizes a strict
+	 * Integer inequalities have two logically equivalent {@link IPolynomialRelation}, one that utilizes a strict
 	 * relation, one that utilizes a non-strict relation. E.g., `x>=1` and `x>0` are logically equivalent for integers.
 	 * This method returns the logically equivalent non-strict relation for strict integer relations. Otherwise, this
 	 * method returns the input.
 	 */
+	@Override
 	public PolynomialRelation tryToConvertToEquivalentNonStrictRelation() {
 		if (SmtSortUtils.isIntSort(mPolynomialTerm.getSort()) && mRelationSymbol.isStrictRelation()) {
 			final Rational offset = mRelationSymbol.getOffsetForStrictToNonstrictTransformation();

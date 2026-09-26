@@ -55,8 +55,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractG
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.ExplicitLhsPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Monomial;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionTir.TirPossibility.CostEstimation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionTir.TirPossibility.Difficulty;
@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * (∑_{j=0}^m x ≤ s_j), we replace this subformula by the formula ∑_{i=0}^n ∑_{j=0}^m t_i ≤ s_j. In case the subformula
  * has also conjuncts of the form x ≠ r, we rewrite them to x<r ∨ x>r, transform strict inequalities to non-strict
  * inequalities (for integers), apply distributivity to move the ∨-operator out and and apply the transformation above
- * to each disjunct. If relations do not have the form t ≤ x we use our {@link PolynomialRelation}s and
+ * to each disjunct. If relations do not have the form t ≤ x we use our {@link IPolynomialRelation}s and
  * {@link SolvedBinaryRelation}s and try to bring them into this form. For universal quantification we apply the dual
  * transformation. For each sort we deviate slightly from the general explanation above. Our transformation is very
  * similar to the "Omega Test" explained the following paper.
@@ -276,7 +276,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 			}
 		}
 		for (final Term t : withEliminatee) {
-			final PolynomialRelation polyRel = PolynomialRelation.of(script, t, tfi);
+			final IPolynomialRelation polyRel = IPolynomialRelation.of(script, t, tfi);
 			final ExplicitLhsPolynomialRelation elpr;
 			if (polyRel == null) {
 				final BinaryNumericRelation bnr = BinaryNumericRelation.convert(t);
@@ -919,7 +919,7 @@ public class DualJunctionTir extends DualJunctionQuantifierElimination {
 				} else {
 					resultRhs = rhs;
 				}
-				result = PolynomialRelation.of(TransformInequality.NO_TRANFORMATION, relSymbAndOffset.getFirst(),
+				result = IPolynomialRelation.of(TransformInequality.NO_TRANFORMATION, relSymbAndOffset.getFirst(),
 						(AbstractGeneralizedAffineTerm<?>) resultLhs, (AbstractGeneralizedAffineTerm<?>) resultRhs)
 						.toTerm(script);
 			}

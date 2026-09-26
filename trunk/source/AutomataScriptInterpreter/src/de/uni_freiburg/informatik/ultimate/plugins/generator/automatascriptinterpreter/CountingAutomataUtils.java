@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.DnfTransf
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTermTransformer;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -221,7 +221,7 @@ public class CountingAutomataUtils {
 
 	private static IAtomicCounterGuard atom2acg(final ManagedScript script, final ILocation loc, final Term atom)
 			throws InterpreterException {
-		final PolynomialRelation polyRel = PolynomialRelation.of(script.getScript(), atom);
+		final IPolynomialRelation polyRel = IPolynomialRelation.of(script.getScript(), atom);
 		if (!(polyRel.getPolynomialTerm() instanceof AffineTerm)) {
 			throw new InterpreterException(loc, "Term does not have supported form");
 		}
