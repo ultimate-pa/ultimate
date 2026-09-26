@@ -447,23 +447,27 @@ public class PolyPoNe {
 
 	/**
 	 * Looks up an existing equality (in {@link #mPolyRels}) about exactly the same bare variable as {@code polyRel},
-	 * and returns the value it pins that variable to, or {@code null} if there is none. Deliberately narrow: only
-	 * finds equalities whose variable side has the exact same shape as a bare variable (coefficient 1, no offset) -
-	 * an equality where that variable's coefficient ended up negated (e.g. depending on which side it was
-	 * originally written on) may be missed. Never wrong, just occasionally too conservative - same "skip rather
-	 * than guess" pattern as elsewhere in this class.
+	 * and returns the value it pins that variable to, or {@code null} if there is none. Looks in two buckets:
+	 * "x = c" is stored under the shape {x:1}, but the constant-first "c = x" under {x:-1}.
 	 */
 	private BitvectorConstant findKnownEqualityValue(final BitvectorInequalityRelation polyRel) {
 		final AbstractGeneralizedAffineTerm<?> variableSide =
 				polyRel.isVariableOnLhs() ? polyRel.getLhs() : polyRel.getRhs();
-		for (final IPolynomialRelation existing : mPolyRels.getImage(variableSide.getAbstractVariable2Coefficient())) {
-			if (existing.getRelationSymbol() == RelationSymbol.EQ) {
-				// existing's ψ is "variable - value", so its constant is -value
-				final Rational value = existing.getPolynomialTerm().getConstant().negate();
-				return BitvectorUtils.constructBitvectorConstant(value.numerator(), variableSide.getSort());
+		final Term variable = polyRel.getBareVariableTerm(mScript);
+		final AbstractGeneralizedAffineTerm<?> negatedSide =
+				(AbstractGeneralizedAffineTerm<?>) PolynomialTermOperations.mul(variableSide, Rational.MONE);
+		final BitvectorConstant value = knownValueUnderKey(variableSide.getAbstractVariable2Coefficient(), variable);
+		return value != null ? value : knownValueUnderKey(negatedSide.getAbstractVariable2Coefficient(), variable);
+	}
+
+	private BitvectorConstant knownValueUnderKey(final Map<?, Rational> key, final Term variable) {
+		for (final IPolynomialRelation existing : mPolyRels.getImage(key)) {
+			final SolvedBinaryRelation solved = existing.isSimpleEquality(mScript);
+			if (solved != null && solved.getLeftHandSide().equals(variable)) { // "x = value", either sign
+				return BitvectorUtils.constructBitvectorConstant(solved.getRightHandSide());
 			}
 		}
-		return null; // no known equality for this variable
+		return null; // no known equality under this key
 	}
 
 	/** Does the concrete value {@code value} satisfy {@code rel}'s bound? */
