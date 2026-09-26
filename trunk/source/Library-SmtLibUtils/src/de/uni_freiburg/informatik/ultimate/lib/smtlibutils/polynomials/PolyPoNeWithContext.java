@@ -79,10 +79,19 @@ public class PolyPoNeWithContext extends PolyPoNe {
 		return super.or(params);
 	}
 
+	/**
+	 * Same two attempts as in {@link PolyPoNe#add}: the shared factory first, then {@link BitvectorInequalityRelation}
+	 * (which the shared factory does not build). Returns {@code null} if {@code param} is no polynomial relation.
+	 */
+	private IPolynomialRelation relationOf(final Term param) {
+		final IPolynomialRelation numericRel =
+				IPolynomialRelation.of(mScript, param, TransformInequality.STRICT2NONSTRICT);
+		return numericRel != null ? numericRel : BitvectorInequalityRelation.of(mScript, param);
+	}
+
 	private boolean addContext(final Collection<Term> contextParams) {
 		for (final Term param : contextParams) {
-			final IPolynomialRelation polyRel =
-					IPolynomialRelation.of(mScript, param, TransformInequality.STRICT2NONSTRICT);
+			final IPolynomialRelation polyRel = relationOf(param);
 			if (polyRel != null) {
 				final boolean isInconsistent = mContext.addPolyRel(mScript, polyRel, true);
 				if (isInconsistent) {
@@ -105,9 +114,12 @@ public class PolyPoNeWithContext extends PolyPoNe {
 			throw new AssertionError("must not add if already inconsistent");
 		}
 
-		final Check check = mContext.checkPolyRel(script, polyRel, false);
+		final boolean isBv = polyRel instanceof BitvectorInequalityRelation;
+		final Check check = isBv ? mContext.checkBvInequalityRel((BitvectorInequalityRelation) polyRel)
+				: mContext.checkPolyRel(script, polyRel, false);
 		if (check == Check.MAYBE_USEFUL) {
-			final IPolynomialRelation polyToAdd = tryToFuseWithContext(polyRel);
+			// fusion with context needs getPolynomialTerm()
+			final IPolynomialRelation polyToAdd = isBv ? polyRel : tryToFuseWithContext(polyRel);
 			return super.addPolyRel(script, polyToAdd, removeExpliedPolyRels);
 		} else if (check == Check.REDUNDANT) {
 			return false;
