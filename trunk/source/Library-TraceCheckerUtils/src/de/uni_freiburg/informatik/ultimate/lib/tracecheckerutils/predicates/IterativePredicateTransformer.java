@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,12 +39,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
@@ -61,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNorm
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.TraceInterpolationException.Reason;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.NestedFormulas;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -339,7 +336,9 @@ public class IterativePredicateTransformer<L extends IAction> {
 				} else {
 					final int callPos = mTrace.getCallPosition(i);
 					assert callPos >= 0 && callPos <= i : "Bad call position!";
-					final UnmodifiableTransFormula summary = computeProcedureSummary(mTrace, nf, callPos, i);
+					final UnmodifiableTransFormula summary = TraceCheckUtils.computeProcedureSummary(mTrace, nf,
+							callPos, i, mMgdScript, mServices, mLogger, mSimplificationTechnique, mSymbolTable,
+							mModifiedGlobals, TRANSFORM_SUMMARY_TO_CNF);
 
 					final Term preOrWpOfSummaryTerm;
 					if (bs == BackwardSequence.WP) {
@@ -413,114 +412,6 @@ public class IterativePredicateTransformer<L extends IAction> {
 			postprocessed = postproc.postprocess(postprocessed, i);
 		}
 		return postprocessed;
-	}
-
-	/**
-	 * Compute a summary for a subtrace between one non-pending call/return in the given trace. The formulas are not
-	 * taken directly from the trace, but from an additionally given NestedFormulas object. These formulas can be an
-	 * overapproximation of the actual formulas of the trace.
-	 * <p>
-	 * The resulting {@link Transformula} represents the sequential effect of
-	 * <ol>
-	 * <li>the call-side assignments at {@code callPos} (local, old, and global),</li>
-	 * <li>all statements between {@code callPos} and {@code returnPos}, recursively summarized for nested calls,</li>
-	 * <li>and the return transition at {@code returnPos}.</li>
-	 * </ol>
-	 *
-	 * @param trace
-	 *            Nested-word trace that contains the call/return region.
-	 * @param nf
-	 *            Potential overapproximation of the formulas of the trace.
-	 * @param callPos
-	 *            Position of the call transition in {@code trace}.
-	 * @param returnPos
-	 *            Position of the corresponding return transition in {@code trace}.
-	 * @return A single transformula representing the composed effect of call, inner region, and return.
-	 */
-	private UnmodifiableTransFormula computeProcedureSummary(final NestedWord<L> trace,
-			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf, final int callPos, final int returnPos) {
-		final UnmodifiableTransFormula summaryOfInnerStatements =
-				computeSummaryForInterproceduralTrace(trace, nf, callPos + 1, returnPos);
-		final String callee = trace.getSymbol(callPos).getSucceedingProcedure();
-		final UnmodifiableTransFormula callLocalVarAssignment = nf.getLocalVarAssignment(callPos);
-		final UnmodifiableTransFormula oldVarAssignment = nf.getOldVarAssignment(callPos);
-		final UnmodifiableTransFormula globalVarAssignment = nf.getGlobalVarAssignment(callPos);
-		final UnmodifiableTransFormula returnAssignment = nf.getFormulaFromNonCallPos(returnPos);
-		final UnmodifiableTransFormula summaryWithCallAndReturn =
-				TransFormulaUtils.sequentialCompositionWithCallAndReturn(mMgdScript, true, false,
-						TRANSFORM_SUMMARY_TO_CNF, callLocalVarAssignment, oldVarAssignment, globalVarAssignment,
-						summaryOfInnerStatements, returnAssignment, mLogger, mServices, mSimplificationTechnique,
-						mSymbolTable, mModifiedGlobals.getModifiedBoogieVars(callee));
-		return summaryWithCallAndReturn;
-	}
-
-	/**
-	 * Computes a summary for the given trace, but only for the statements from position "start" to position "end".
-	 *
-	 * @return - a summary for the statements from the given trace from position "start" to position "end"
-	 */
-	private UnmodifiableTransFormula computeSummaryForInterproceduralTrace(final NestedWord<L> trace,
-			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rv, final int start, final int end) {
-		final LinkedList<UnmodifiableTransFormula> transformulasToComputeSummaryFor = new LinkedList<>();
-		for (int i = start; i < end; i++) {
-			if (trace.getSymbol(i) instanceof ICallAction) {
-				final UnmodifiableTransFormula callTf = rv.getLocalVarAssignment(i);
-				final UnmodifiableTransFormula oldVarsAssignment = rv.getOldVarAssignment(i);
-				final UnmodifiableTransFormula globalVarsAssignment = rv.getGlobalVarAssignment(i);
-				if (trace.isPendingCall(i)) {
-					final UnmodifiableTransFormula summaryAfterPendingCall =
-							computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
-					final String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
-					final Set<IProgramNonOldVar> modifiableGlobalsOfEndProcedure =
-							mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
-					return TransFormulaUtils.sequentialCompositionWithPendingCall(mMgdScript, true, false,
-							TRANSFORM_SUMMARY_TO_CNF, transformulasToComputeSummaryFor, callTf, oldVarsAssignment, null,
-							summaryAfterPendingCall, mLogger, mServices, modifiableGlobalsOfEndProcedure,
-							mSimplificationTechnique, mSymbolTable, trace.getSymbol(start).getPrecedingProcedure(),
-							trace.getSymbol(i).getPrecedingProcedure(), trace.getSymbol(i).getSucceedingProcedure(),
-							nameEndProcedure, mModifiedGlobals);
-				}
-				// Case: non-pending call
-				// Compute a summary for Call and corresponding Return, but
-				// only if the position of the corresponding
-				// Return is smaller than the position "end"
-				final int returnPosition = trace.getReturnPosition(i);
-				if (returnPosition >= end) {
-					// If the position of the corresponding Return is >=
-					// "end",
-					// then we handle this case as a pending-call
-					final UnmodifiableTransFormula summaryAfterPendingCall =
-							computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
-					final String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
-					final Set<IProgramNonOldVar> modifiableGlobalsOfEndProcedure =
-							mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
-					return TransFormulaUtils.sequentialCompositionWithPendingCall(mMgdScript, true, false,
-							TRANSFORM_SUMMARY_TO_CNF, transformulasToComputeSummaryFor, callTf, oldVarsAssignment,
-							globalVarsAssignment, summaryAfterPendingCall, mLogger, mServices,
-							modifiableGlobalsOfEndProcedure, mSimplificationTechnique, mSymbolTable,
-							trace.getSymbol(start).getPrecedingProcedure(), trace.getSymbol(i).getPrecedingProcedure(),
-							trace.getSymbol(i).getSucceedingProcedure(), nameEndProcedure, mModifiedGlobals);
-				}
-				// 1. Compute a summary for the statements between this
-				// non-pending Call
-				// and the corresponding Return recursively
-				final UnmodifiableTransFormula summaryBetweenCallAndReturn =
-						computeSummaryForInterproceduralTrace(trace, rv, i + 1, returnPosition);
-				final UnmodifiableTransFormula returnTf = rv.getFormulaFromNonCallPos(returnPosition);
-				final String callee = trace.getSymbol(i).getSucceedingProcedure();
-				transformulasToComputeSummaryFor.addLast(TransFormulaUtils.sequentialCompositionWithCallAndReturn(
-						mMgdScript, true, false, TRANSFORM_SUMMARY_TO_CNF, callTf, oldVarsAssignment,
-						globalVarsAssignment, summaryBetweenCallAndReturn, returnTf, mLogger, mServices,
-						mSimplificationTechnique, mSymbolTable, mModifiedGlobals.getModifiedBoogieVars(callee)));
-				i = returnPosition;
-			} else if (trace.getSymbol(i) instanceof IReturnAction) {
-				// Nothing to do
-			} else {
-				transformulasToComputeSummaryFor.addLast(rv.getFormulaFromNonCallPos(i));
-			}
-		}
-		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, true, false,
-				TRANSFORM_SUMMARY_TO_CNF, mSimplificationTechnique, transformulasToComputeSummaryFor);
 	}
 
 	// /**
