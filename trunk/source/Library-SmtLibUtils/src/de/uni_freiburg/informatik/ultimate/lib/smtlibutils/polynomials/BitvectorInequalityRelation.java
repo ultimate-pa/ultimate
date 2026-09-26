@@ -365,43 +365,31 @@ public class BitvectorInequalityRelation implements IPolynomialRelation {
 	}
 
 	/**
-	 * DISCUSSION DRAFT, not a proven-sound general implementation - only handles {@code r = 1} (no-op) and
-	 * {@code r = -1} for the signed symbols; everything else throws. Known limitations, deliberately left
-	 * unresolved rather than guessed at:
-	 * <ul>
-	 * <li>General bitvector multiplication (any other value, including other powers of two) is not attempted:
-	 * proving "no overflow" for one specific value doesn't establish it for the whole range of values this
-	 * relation restricts its variable to, and a sound {@code mul} needs to produce an equivalent relation for
-	 * every value satisfying the original one, not just one example.
-	 * <li>{@code r = -1} is only handled for the signed symbols (BVSLT/BVSLE). Two's-complement negation
-	 * reverses order for signed values in the common case (mirrors around zero) - but this is NOT proven sound
-	 * here for the edge case where a side is the sort's most-negative representable value (which negates to
-	 * itself instead of a properly mirrored partner, breaking the usual reversal).
-	 * <li>{@code r = -1} is rejected outright for the unsigned symbols (BVULT/BVULE): unsigned negation does
-	 * NOT reverse order the way signed negation does, at all - e.g. for an 8-bit sort {@code 0 <=u 5} is true,
-	 * but negating both sides unsigned gives {@code 0 >=u 251}, which is false. Unsound in general, not just at
-	 * an edge case.
-	 * </ul>
+	 * Not supported: multiplying both sides is not equivalent under bitvector wraparound. Example, signed 8 bit:
+	 * {@code 0 <s -128} is false, but {@code -(-128) <s -0}, i.e. {@code -128 <s 0}, is true. See
+	 * {@link #constructAlternativeRepresentation()} for the sound transformation.
 	 */
 	@Override
 	public IPolynomialRelation mul(final Script script, final Rational r) {
-		if (r.equals(Rational.ONE)) {
-			return this; // no-op
-		}
-		if (!r.equals(Rational.MONE)) {
-			throw new UnsupportedOperationException("mul is only implemented for r = 1 or r = -1 for now");
-		}
-		if (mRelationSymbol != RelationSymbol.BVSLT && mRelationSymbol != RelationSymbol.BVSLE) {
-			// unsigned negation does not reverse order, see class-level limitations above
-			throw new UnsupportedOperationException(
-					"mul(-1) is only implemented for signed relation symbols, not " + mRelationSymbol);
-		}
-		// negate both sides and swap them - same relation symbol, order reversed
-		final AbstractGeneralizedAffineTerm<?> negatedLhs =
-				(AbstractGeneralizedAffineTerm<?>) PolynomialTermOperations.mul(mRhs, Rational.MONE);
-		final AbstractGeneralizedAffineTerm<?> negatedRhs =
-				(AbstractGeneralizedAffineTerm<?>) PolynomialTermOperations.mul(mLhs, Rational.MONE);
-		return new BitvectorInequalityRelation(mRelationSymbol, negatedLhs, negatedRhs);
+		throw new UnsupportedOperationException(
+				"mul is unsound for bitvector inequalities, use constructAlternativeRepresentation");
+	}
+
+	/**
+	 * Returns the alternative representation of this relation: {@code lhs op rhs} becomes
+	 * {@code (-rhs-1) op (-lhs-1)}, same symbol, sides swapped. The map {@code v -> -v-1} (the bitwise complement)
+	 * reverses the order of all values, signed and unsigned, without an edge case, so the result is logically
+	 * equivalent. Plain negation {@code v -> -v} is not: it fails at 0 (unsigned) and at the most negative value
+	 * (signed).
+	 */
+	public BitvectorInequalityRelation constructAlternativeRepresentation() {
+		return new BitvectorInequalityRelation(mRelationSymbol, complement(mRhs), complement(mLhs));
+	}
+
+	private static AbstractGeneralizedAffineTerm<?> complement(final AbstractGeneralizedAffineTerm<?> term) {
+		final AbstractGeneralizedAffineTerm<?> negated =
+				(AbstractGeneralizedAffineTerm<?>) PolynomialTermOperations.mul(term, Rational.MONE);
+		return negated.add(Rational.MONE);
 	}
 
 	/**
