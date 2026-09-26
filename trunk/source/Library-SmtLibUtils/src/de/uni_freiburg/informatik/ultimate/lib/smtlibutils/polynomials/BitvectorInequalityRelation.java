@@ -331,7 +331,9 @@ public class BitvectorInequalityRelation implements IPolynomialRelation {
 		if (!isBareVariableVsBareConstant() || !subject.equals(getBareVariableTerm(script))) {
 			return null; // wrong shape or wrong variable
 		}
-		return new SolvedBinaryRelation(subject, getBareConstantTerm(script), mRelationSymbol);
+		// variable on the right: mirror the symbol
+		final RelationSymbol symbol = isVariableOnLhs() ? mRelationSymbol : mRelationSymbol.swapParameters();
+		return new SolvedBinaryRelation(subject, getBareConstantTerm(script), symbol);
 	}
 
 	@Override
