@@ -373,4 +373,70 @@ public class PolyPoNeTwoSidedTest {
 		final Term result = PolyPoNeUtils.and(mScript, context, List.of(parse("(bvult x (_ bv3 8))")));
 		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("false")));
 	}
+
+	// --- opposite bounds: a lower bound above an upper bound describes an empty range ---
+
+	@Test
+	public void lowerBoundAboveUpperBoundIsInconsistent() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvuge x (_ bv10 8))"), true);
+		Assert.assertTrue(polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv5 8))"), true));
+	}
+
+	@Test
+	public void upperBoundBelowLowerBoundIsInconsistent() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv5 8))"), true);
+		Assert.assertTrue(polyPoNe.addPolyRel(mScript, twoSided("(bvuge x (_ bv10 8))"), true));
+	}
+
+	@Test
+	public void emptyRangeIsDetectedWithSignedComparison() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		// 5 <=s x <=s -3 (bv253) is empty; read unsigned it would be the non-empty 5 <=u x <=u 253
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvsle (_ bv5 8) x)"), true);
+		Assert.assertTrue(polyPoNe.addPolyRel(mScript, twoSided("(bvsle x (_ bv253 8))"), true));
+	}
+
+	@Test
+	public void emptyRangeIsDetectedForStrictBounds() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		// 5 <u x means x >= 6, and x <u 6 means x <= 5
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvult (_ bv5 8) x)"), true);
+		Assert.assertTrue(polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv6 8))"), true));
+	}
+
+	@Test
+	public void nonEmptyRangeIsNotInconsistent() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvuge x (_ bv5 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv10 8))"), true));
+	}
+
+	@Test
+	public void disjunctionCoveringAllValuesIsTrue() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final List<Term> params = List.of(parse("(bvule x (_ bv10 8))"), parse("(bvuge x (_ bv5 8))"));
+		MatcherAssert.assertThat(PolyPoNeUtils.or(mScript, params), IsEqual.equalTo(mScript.term("true")));
+	}
+
+	@Test
+	public void contextLowerBoundAboveNewUpperBoundGivesFalse() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final Term context = parse("(bvule (_ bv10 8) x)");
+		final Term result = PolyPoNeUtils.and(mScript, context, List.of(parse("(bvule x (_ bv5 8))")));
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("false")));
+	}
 }

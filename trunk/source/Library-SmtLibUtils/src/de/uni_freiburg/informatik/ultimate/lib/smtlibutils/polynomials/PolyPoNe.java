@@ -374,9 +374,10 @@ public class PolyPoNe {
 	 * Compares two {@link BitvectorInequalityRelation}s that are both "bare variable vs. bare constant" and share the
 	 * same variable (same {@link HashRelation} bucket in {@link #mBvInequalityRels}). Handles mixed strictness (e.g.
 	 * {@code x <=u 7} vs. {@code x <u 9}) by normalizing both to an "effective inclusive boundary" first - see
-	 * {@link #effectiveInclusiveBoundary}. Returns {@code null} if the signedness differs, the variable is on
-	 * different sides, or normalizing either side would underflow/overflow (no verdict attempted in this pass - see
-	 * the "open question" note in the Phase B plan about the variable-vs-variable case).
+	 * {@link #effectiveInclusiveBoundary}. For an upper and a lower bound the result is
+	 * {@link ComparisonResult#INCONSISTENT} if the lower bound lies above the upper bound (empty range), otherwise
+	 * {@code null}. Also returns {@code null} if the signedness differs or normalizing either side would
+	 * underflow/overflow (no verdict attempted).
 	 */
 	private static ComparisonResult compareTwoSidedRepresentation(final BitvectorInequalityRelation existing,
 			final BitvectorInequalityRelation newRel) {
@@ -384,13 +385,18 @@ public class PolyPoNe {
 		if (existingUnsigned != isUnsigned(newRel.getRelationSymbol())) {
 			return null; // different signedness
 		}
-		if (existing.isVariableOnLhs() != newRel.isVariableOnLhs()) {
-			return null; // different orientation
-		}
 		final BitvectorConstant existingBoundary = effectiveInclusiveBoundary(existing);
 		final BitvectorConstant newBoundary = effectiveInclusiveBoundary(newRel);
 		if (existingBoundary == null || newBoundary == null) {
 			return null; // would underflow/overflow, decline rather than guess
+		}
+		if (existing.isVariableOnLhs() != newRel.isVariableOnLhs()) {
+			// one upper and one lower bound: empty range if the lower one lies above the upper one
+			final BitvectorConstant upper = existing.isVariableOnLhs() ? existingBoundary : newBoundary;
+			final BitvectorConstant lower = existing.isVariableOnLhs() ? newBoundary : existingBoundary;
+			final boolean empty = existingUnsigned ? BitvectorConstant.bvult(upper, lower)
+					: BitvectorConstant.bvslt(upper, lower);
+			return empty ? ComparisonResult.INCONSISTENT : null;
 		}
 		if (existingBoundary.equals(newBoundary)) {
 			return ComparisonResult.EQUIVALENT;
