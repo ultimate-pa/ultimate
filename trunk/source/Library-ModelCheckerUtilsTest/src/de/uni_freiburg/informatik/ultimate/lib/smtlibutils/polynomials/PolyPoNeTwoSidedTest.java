@@ -595,4 +595,88 @@ public class PolyPoNeTwoSidedTest {
 			}
 		}
 	}
+
+	// --- expression vs. number: the same expression (here x + y) is compared like a bare variable ---
+
+	private void declareXyz() {
+		declare(new FunDecl[] { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y", "z") });
+	}
+
+	@Test
+	public void polynomialVsConstantShapeIsRecognized() {
+		declareXyz();
+		Assert.assertTrue(twoSided("(bvule (bvadd x y) (_ bv5 8))").isPolynomialVsConstant());
+		Assert.assertTrue(twoSided("(bvuge (bvadd x y) (_ bv5 8))").isPolynomialVsConstant());
+		Assert.assertTrue(twoSided("(bvule x (_ bv5 8))").isPolynomialVsConstant());
+		Assert.assertFalse(twoSided("(bvule x y)").isPolynomialVsConstant());
+		Assert.assertFalse(twoSided("(bvule (_ bv3 8) (_ bv5 8))").isPolynomialVsConstant());
+	}
+
+	@Test
+	public void tighterBoundOnTheSameExpressionDropsTheLooserOne() {
+		declareXyz();
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule (bvadd x y) (_ bv5 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvule (bvadd x y) (_ bv3 8))"), true));
+		final Term result = polyPoNe.and();
+		assertSameMeaning("tighter bound", parse("(bvule (bvadd x y) (_ bv3 8))"), result);
+		Assert.assertFalse("looser bound was kept: " + result, result.toString().contains("bv5"));
+	}
+
+	@Test
+	public void oppositeBoundsOnTheSameExpressionAreInconsistent() {
+		declareXyz();
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvuge (bvadd x y) (_ bv10 8))"), true);
+		Assert.assertTrue(polyPoNe.addPolyRel(mScript, twoSided("(bvule (bvadd x y) (_ bv5 8))"), true));
+	}
+
+	@Test
+	public void lowerAndUpperBoundOnTheSameExpressionFuseIntoEquality() {
+		declareXyz();
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule (bvadd x y) (_ bv5 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvuge (bvadd x y) (_ bv5 8))"), true));
+		final Term result = polyPoNe.and();
+		assertSameMeaning("fusion", parse("(= (bvadd x y) (_ bv5 8))"), result);
+		Assert.assertFalse("not fused: " + result, result.toString().contains("bvule"));
+	}
+
+	@Test
+	public void differentExpressionsAndDifferentOffsetsAreNotCompared() {
+		declareXyz();
+		final String[][] pairs = { { "(bvule (bvadd x y) (_ bv5 8))", "(bvule (bvadd x z) (_ bv3 8))" },
+				{ "(bvule (bvadd x (_ bv1 8)) (_ bv5 8))", "(bvule x (_ bv3 8))" } };
+		for (final String[] pair : pairs) {
+			final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+			polyPoNe.addPolyRel(mScript, twoSided(pair[0]), true);
+			Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided(pair[1]), true));
+			final String result = polyPoNe.and().toString();
+			Assert.assertTrue("both must stay: " + result, result.contains("bv5") && result.contains("bv3"));
+		}
+	}
+
+	@Test
+	public void contextBoundOnTheSameExpressionMakesLooserBoundRedundant() {
+		declareXyz();
+		final Term context = parse("(bvule (bvadd x y) (_ bv3 8))");
+		final Term result = PolyPoNeUtils.and(mScript, context, List.of(parse("(bvule (bvadd x y) (_ bv5 8))")));
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("true")));
+	}
+
+	@Test
+	public void expressionAtomsKeepTheMeaningForAnyTwoAtoms() {
+		declareXyz();
+		final String[] atoms = { "(bvule (bvadd x y) (_ bv5 8))", "(bvule (bvadd x y) (_ bv3 8))",
+				"(bvuge (bvadd x y) (_ bv10 8))", "(bvult (bvadd x y) (_ bv6 8))", "(bvsle (bvadd x y) (_ bv253 8))",
+				"(bvsge (bvadd x y) (_ bv5 8))", "(bvule (bvadd x (_ bv1 8)) (_ bv5 8))", "(bvule x (_ bv3 8))",
+				"(bvuge (bvadd x y) (_ bv5 8))", "(= (bvadd x y) (_ bv5 8))", "(distinct (bvadd x y) (_ bv5 8))" };
+		for (int i = 0; i < atoms.length; i++) {
+			for (int j = i + 1; j < atoms.length; j++) {
+				final List<Term> params = List.of(parse(atoms[i]), parse(atoms[j]));
+				assertSameMeaning("and " + params, SmtUtils.and(mScript, params), PolyPoNeUtils.and(mScript, params));
+				assertSameMeaning("or " + params, SmtUtils.or(mScript, params), PolyPoNeUtils.or(mScript, params));
+			}
+		}
+	}
 }

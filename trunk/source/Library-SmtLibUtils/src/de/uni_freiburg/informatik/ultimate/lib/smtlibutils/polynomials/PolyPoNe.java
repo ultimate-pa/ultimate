@@ -167,16 +167,17 @@ public class PolyPoNe {
 	 * {@code getPolynomialTerm()}, which a {@link BitvectorInequalityRelation} does not have.
 	 */
 	protected final Check checkBvInequalityRel(final BitvectorInequalityRelation polyRel) {
-		final BitvectorInequalityRelation.BareVariableAndConstant bareShape =
-				polyRel.asBareVariableVsBareConstant(mScript);
-		if (bareShape == null) {
+		final BitvectorInequalityRelation.PolynomialAndConstant shape =
+				polyRel.asPolynomialVsConstant(mScript);
+		if (shape == null) {
 			return Check.MAYBE_USEFUL; // compound shape, not compared
 		}
-		final BitvectorConstant knownValue = findKnownEqualityValue(polyRel);
+		final BitvectorConstant knownValue =
+				polyRel.isBareVariableVsBareConstant() ? findKnownEqualityValue(polyRel) : null; // needs a bare variable
 		if (knownValue != null) {
 			return satisfiesBound(knownValue, polyRel) ? Check.REDUNDANT : Check.INCONSISTENT;
 		}
-		for (final BitvectorInequalityRelation existing : mBvInequalityRels.getImage(bareShape.getVariable())) {
+		for (final BitvectorInequalityRelation existing : mBvInequalityRels.getImage(shape.getKey())) {
 			final ComparisonResult comp = compareTwoSidedRepresentation(existing, polyRel);
 			if (comp == ComparisonResult.IMPLIES || comp == ComparisonResult.EQUIVALENT) {
 				return Check.REDUNDANT; // existing already covers it
@@ -325,15 +326,16 @@ public class PolyPoNe {
 	 * bitvector-inequality-relation-idea memory).
 	 */
 	private boolean addBvInequalityRel(final BitvectorInequalityRelation polyRel) {
-		final BitvectorInequalityRelation.BareVariableAndConstant bareShape =
-				polyRel.asBareVariableVsBareConstant(mScript);
-		if (bareShape == null) {
+		final BitvectorInequalityRelation.PolynomialAndConstant shape =
+				polyRel.asPolynomialVsConstant(mScript);
+		if (shape == null) {
 			mCompoundBvInequalityRels.add(polyRel); // no cheap key, keep as-is
 			return false;
 		}
-		final Term variable = bareShape.getVariable();
+		final Term variable = shape.getKey();
 		// peek into the equality bin first - a known value can make this whole relation redundant or inconsistent
-		final BitvectorConstant knownValue = findKnownEqualityValue(polyRel);
+		final BitvectorConstant knownValue =
+				polyRel.isBareVariableVsBareConstant() ? findKnownEqualityValue(polyRel) : null; // needs a bare variable
 		if (knownValue != null) {
 			return !satisfiesBound(knownValue, polyRel); // satisfies -> redundant (false); violates -> inconsistent (true)
 		}
@@ -364,13 +366,14 @@ public class PolyPoNe {
 			// fuse into an equality, reuse the existing single-term insertion path
 			mBvInequalityRels.removePair(variable, fusionPartner);
 			final IPolynomialRelation fusion = PolynomialRelation.of(mScript, RelationSymbol.EQ, variable,
-					bareShape.getConstantTerm());
+					shape.getConstantTerm());
 			return addPolyRel(mScript, fusion, true);
 		}
 		// a stored "x != c" next to a bound with effective boundary c tightens the bound to a strict one
 		final BitvectorConstant boundary = effectiveInclusiveBoundary(polyRel);
 		final IPolynomialRelation distinct =
-				boundary == null ? null : findDistinctWithValue(polyRel, variable, boundary);
+				boundary == null || !polyRel.isBareVariableVsBareConstant() ? null
+						: findDistinctWithValue(polyRel, variable, boundary); // needs a bare variable
 		if (distinct != null) {
 			mPolyRels.removePair(distinct.getPolynomialTerm().getAbstractVariable2Coefficient(), distinct);
 			final BitvectorInequalityRelation strict = strictBoundAt(polyRel, boundary);

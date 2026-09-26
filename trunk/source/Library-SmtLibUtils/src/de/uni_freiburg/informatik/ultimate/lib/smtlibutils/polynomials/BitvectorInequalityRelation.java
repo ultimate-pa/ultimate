@@ -152,12 +152,21 @@ public class BitvectorInequalityRelation implements IPolynomialRelation {
 	}
 
 	/**
-	 * Only meaningful if {@link #isBareVariableVsBareConstant()} is true. True iff the bare variable is on the left
+	 * @return true iff exactly one side of this relation is a constant. The other side may be any expression, for
+	 *         example {@code x + y}. {@link PolyPoNe} compares such relations by treating that expression as one
+	 *         unknown value and comparing only the constants.
+	 */
+	boolean isPolynomialVsConstant() {
+		return mLhs.isConstant() != mRhs.isConstant();
+	}
+
+	/**
+	 * Only meaningful if {@link #isPolynomialVsConstant()} is true. True iff the non-constant side is on the left
 	 * (relation shape "var &#9657; const", an upper bound), false iff it's on the right ("const &#9657; var", a
 	 * lower bound).
 	 */
 	boolean isVariableOnLhs() {
-		return isBareVariable(mLhs);
+		return !mLhs.isConstant();
 	}
 
 	/**
@@ -186,30 +195,33 @@ public class BitvectorInequalityRelation implements IPolynomialRelation {
 	}
 
 	/**
-	 * Combines the {@link #isBareVariableVsBareConstant()} check with extracting both sides in one call, instead of
-	 * making callers do the check and then separately call {@link #getBareVariableTerm(Script)} and
-	 * {@link #getBareConstantTerm(Script)} (each of which re-derives the orientation internally). Returns
-	 * {@code null} if the shape doesn't apply.
+	 * Combines the {@link #isPolynomialVsConstant()} check with extracting both sides in one call. The key is the
+	 * bare variable if there is one, otherwise the whole non-constant expression (offset included), so two relations
+	 * only share a key if their non-constant sides are the same expression. Returns {@code null} if the shape
+	 * doesn't apply.
 	 */
-	BareVariableAndConstant asBareVariableVsBareConstant(final Script script) {
-		if (!isBareVariableVsBareConstant()) {
+	PolynomialAndConstant asPolynomialVsConstant(final Script script) {
+		if (!isPolynomialVsConstant()) {
 			return null;
 		}
-		return new BareVariableAndConstant(getBareVariableTerm(script), getBareConstantTerm(script));
+		final AbstractGeneralizedAffineTerm<?> polynomialSide = isVariableOnLhs() ? mLhs : mRhs;
+		final Term key =
+				isBareVariableVsBareConstant() ? getBareVariableTerm(script) : polynomialSide.toTerm(script);
+		return new PolynomialAndConstant(key, getBareConstantTerm(script));
 	}
 
-	/** Holds both sides of a {@link #isBareVariableVsBareConstant()} relation together - see {@link #asBareVariableVsBareConstant(Script)}. */
-	static final class BareVariableAndConstant {
-		private final Term mVariable;
+	/** Holds the key and the constant side of a {@link #isPolynomialVsConstant()} relation together. */
+	static final class PolynomialAndConstant {
+		private final Term mKey;
 		private final Term mConstantTerm;
 
-		private BareVariableAndConstant(final Term variable, final Term constantTerm) {
-			mVariable = variable;
+		private PolynomialAndConstant(final Term key, final Term constantTerm) {
+			mKey = key;
 			mConstantTerm = constantTerm;
 		}
 
-		Term getVariable() {
-			return mVariable;
+		Term getKey() {
+			return mKey;
 		}
 
 		Term getConstantTerm() {
