@@ -47,17 +47,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
  * single term compared against zero (the way {@link PolynomialRelation} does it) is unsound for bitvector
  * inequalities under two's-complement wraparound.
  * <p>
- * TODO: this class - and {@link PolyPoNe}'s handling of it, scoped so far to the "bare variable vs. bare constant"
- * shape (see {@link #isBareVariableVsBareConstant()}) - is not yet reachable from {@link IPolynomialRelation#of}
- * (those factory methods still always build a {@link PolynomialRelation} and still return {@code null}
- * for bitvector inequalities, exactly like before this class existed), so nothing currently depends on any of the
- * bodies below - they are safe to fill in incrementally.
+ * The relation symbol is canonicalized on construction: the four "greater" symbols are mirrored to their "less"
+ * counterpart (swapping the sides), so only BVULT, BVULE, BVSLT and BVSLE occur.
  * <p>
- * TODO: {@code equals}/{@code hashCode}/{@code toString} are deliberately not overridden yet - what should count as
- * "equal" here (e.g. before vs. after canonicalization) needs to be decided together with the canonicalization
- * logic in the constructor, not assumed here.
+ * {@link PolyPoNe} compares relations that have a constant on one side (see {@link #isPolynomialVsConstant()}). The
+ * shared factory methods of {@link IPolynomialRelation} deliberately never build this class and return {@code null}
+ * for bitvector inequalities; {@link PolyPoNe} calls {@link #of(Script, Term)} itself.
+ * <p>
+ * {@code equals} and {@code hashCode} are deliberately not overridden: {@link PolyPoNe} relies on object identity.
  *
- * @author TODO add your name(s) here
+ * @author Roman Vintonyak
  */
 public class BitvectorInequalityRelation implements IPolynomialRelation {
 
@@ -143,9 +142,9 @@ public class BitvectorInequalityRelation implements IPolynomialRelation {
 
 	/**
 	 * @return true iff exactly one side of this relation is a bare variable (coefficient 1, no offset) and the
-	 *         other side is a bare constant - the only shape {@link PolyPoNe} currently knows how to compare cheaply
-	 *         (see {@code PolyPoNe.mBvInequalityRels}). Anything else (both sides variables, either side compound like
-	 *         {@code x - y}) is deliberately not handled yet.
+	 *         other side is a bare constant. Only for this shape does {@link PolyPoNe} look up known equalities and
+	 *         fuse with "x != c", and only this shape can collapse at the sort boundary or be solved for the
+	 *         variable.
 	 */
 	boolean isBareVariableVsBareConstant() {
 		return (isBareVariable(mLhs) && mRhs.isConstant()) || (isBareVariable(mRhs) && mLhs.isConstant());
@@ -236,11 +235,9 @@ public class BitvectorInequalityRelation implements IPolynomialRelation {
 
 	@Override
 	public AbstractGeneralizedAffineTerm<?> getPolynomialTerm() {
-		// There is no single polynomial term for a two-sided relation - see getLhs()/getRhs() instead. This method
-		// only exists on the interface because some existing callers (ExplicitLhsPolynomialRelation,
-		// PolyPoNeWithContext) call it on values statically typed as PolynomialRelation; those callers currently
-		// only ever receive a SingleTermPolynomialRelation in practice, since this class isn't reachable via
-		// PolynomialRelation.of yet.
+		// There is no single polynomial term for a two-sided relation - see getLhs()/getRhs() instead. Callers of
+		// IPolynomialRelation.of never receive this class, because the shared factories return null for bitvector
+		// inequalities. PolyPoNe checks for this class before it calls this method.
 		throw new UnsupportedOperationException(
 				"BitvectorInequalityRelation has no single polynomial term - see getLhs()/getRhs() instead");
 	}
@@ -331,12 +328,11 @@ public class BitvectorInequalityRelation implements IPolynomialRelation {
 	}
 
 	/**
-	 * Only handles the case where {@code subject} is already alone on one side (the same "bare variable vs. bare
-	 * constant" shape {@link PolyPoNe} knows how to compare, see {@link #isBareVariableVsBareConstant()}) - there is
-	 * nothing to move/compute in that case, the answer is just the already-stored fields read back out. Returns
-	 * {@code null} for anything else (a compound side, or solving for a variable that doesn't occur bare here) -
-	 * genuinely solving for a subject buried in a bitvector expression would mean moving terms across the relation,
-	 * which is exactly the operation that's unsafe for bitvectors under wraparound, and isn't attempted here.
+	 * Only handles the case where {@code subject} is already alone on one side (see
+	 * {@link #isBareVariableVsBareConstant()}) - there is nothing to move or compute in that case, the answer is just
+	 * the stored fields read back out. Returns {@code null} for anything else (a compound side, or another variable).
+	 * Solving for a subject inside a bitvector expression would mean moving terms across the relation, which is
+	 * unsound for bitvectors under wraparound, so it is not attempted.
 	 */
 	@Override
 	public SolvedBinaryRelation solveForSubject(final Script script, final Term subject) {
@@ -352,8 +348,8 @@ public class BitvectorInequalityRelation implements IPolynomialRelation {
 	public MultiCaseSolvedBinaryRelation solveForSubject(final ManagedScript mgdScript, final Term subject,
 			final MultiCaseSolvedBinaryRelation.Xnf xnf, final Set<TermVariable> bannedForDivCapture,
 			final boolean allowDivModBasedSolution) {
-		// TODO: same reasoning as the other solveForSubject overload above.
-		throw new UnsupportedOperationException("TODO: not yet implemented");
+		// same reason as for the other overload: moving terms across the relation is unsound under wraparound
+		throw new UnsupportedOperationException("solving for a subject is not supported for bitvector inequalities");
 	}
 
 	@Override
@@ -416,10 +412,9 @@ public class BitvectorInequalityRelation implements IPolynomialRelation {
 
 	@Override
 	public BitvectorInequalityRelation tryToConvertToEquivalentNonStrictRelation() {
-		// TODO: SingleTermPolynomialRelation's version is Int-sort-specific and uses an offset that
-		// RelationSymbol.getOffsetForStrictToNonstrictTransformation() explicitly refuses to compute for
-		// bitvectors. A bitvector version needs genuinely different, width-aware logic, not a shared implementation.
-		throw new UnsupportedOperationException("TODO: not yet implemented");
+		// The Int version (PolynomialRelation) adds an offset that RelationSymbol refuses to compute for bitvectors,
+		// and a strict bound at the sort minimum or maximum has no non-strict form.
+		throw new UnsupportedOperationException("not supported for bitvector inequalities");
 	}
 
 }

@@ -77,9 +77,10 @@ public class PolyPoNe {
 	private final Set<Term> mNegative = new HashSet<>();
 	private final HashRelation<Map<?, Rational>, IPolynomialRelation> mPolyRels = new HashRelation<>();
 	/**
-	 * Bitvector-inequality analogue of {@link #mPolyRels}, scoped to relations of the shape "bare variable vs. bare
-	 * constant" (e.g. {@code x <=u 5}) - keyed directly on the variable {@link Term} since there is no single
-	 * combined polynomial to key on the way {@link #mPolyRels} does. See {@link BitvectorInequalityRelation}.
+	 * Bitvector-inequality analogue of {@link #mPolyRels}, for relations with a constant on one side (for example
+	 * {@code x <=u 5} or {@code x + y <=u 5}). Keyed by the other side: the bare variable, or the whole expression
+	 * including its offset, since there is no single combined polynomial to key on the way {@link #mPolyRels} does.
+	 * Relations with the same key are compared by their constants. See {@link BitvectorInequalityRelation}.
 	 */
 	private final HashRelation<Term, BitvectorInequalityRelation> mBvInequalityRels = new HashRelation<>();
 	/**
@@ -94,9 +95,8 @@ public class PolyPoNe {
 	private final Map<BitvectorInequalityRelation, BitvectorInequalityRelation> mOriginalToTwin =
 			new IdentityHashMap<>();
 	/**
-	 * {@link BitvectorInequalityRelation}s that are not "bare variable vs. bare constant" (both sides variables, or
-	 * either side compound like {@code x - y}) - no cheap key available, so these are just kept as-is and never
-	 * compared against anything.
+	 * {@link BitvectorInequalityRelation}s without a constant on exactly one side (for example {@code x <=u y}) - no
+	 * cheap key available, so these are just kept as-is and never compared against anything.
 	 */
 	private final Set<BitvectorInequalityRelation> mCompoundBvInequalityRels = new HashSet<>();
 	private boolean mInconsistent = false;
@@ -122,11 +122,9 @@ public class PolyPoNe {
 				polyPolyRel = IPolynomialRelation.of(mScript, param, TransformInequality.STRICT2NONSTRICT);
 			}
 			if (polyPolyRel == null) {
-				// INTERIM STEP: the shared factory above still never returns a BitvectorInequalityRelation (that
-				// would affect ~195 other, unaudited references to PolynomialRelation across the codebase) - so
-				// PolyPoNe tries it here instead, only for itself, now that Phase B has made this class safe to
-				// use. The "real" fix would be moving this into PolynomialRelation.of once those other callers are
-				// checked too, and deleting this second attempt.
+				// The shared factory never builds a BitvectorInequalityRelation (subtracting both sides is unsound for
+				// bitvector inequalities), so PolyPoNe builds it itself. Moving this into the shared factory would
+				// change the behavior for every other caller of IPolynomialRelation.of.
 				polyPolyRel = BitvectorInequalityRelation.of(mScript, param);
 			}
 			if (polyPolyRel != null) {
@@ -190,7 +188,7 @@ public class PolyPoNe {
 			return satisfiesBound(knownValue, polyRel) ? Check.REDUNDANT : Check.INCONSISTENT;
 		}
 		for (final BitvectorInequalityRelation existing : mBvInequalityRels.getImage(shape.getKey())) {
-			final ComparisonResult comp = compareTwoSidedRepresentation(existing, polyRel);
+			final ComparisonResult comp = compareBvInequalities(existing, polyRel);
 			if (comp == ComparisonResult.IMPLIES || comp == ComparisonResult.EQUIVALENT) {
 				return Check.REDUNDANT; // existing already covers it
 			}
@@ -274,7 +272,7 @@ public class PolyPoNe {
 		if (polyRel instanceof BitvectorInequalityRelation) {
 			// Never call getPolynomialTerm() on a BitvectorInequalityRelation - it has no single polynomial term
 			// (see BitvectorInequalityRelation.getPolynomialTerm()'s javadoc). Handled entirely separately below,
-			// scoped to the "bare variable vs. bare constant" shape - see mBvInequalityRels' javadoc.
+			// see addBvInequalityRel.
 			return addBvInequalityRel((BitvectorInequalityRelation) polyRel);
 		}
 
@@ -331,11 +329,11 @@ public class PolyPoNe {
 	}
 
 	/**
-	 * Bitvector-inequality analogue of {@link #addPolyRel}, scoped to the "bare variable vs. bare constant" shape
-	 * (see {@link BitvectorInequalityRelation#isBareVariableVsBareConstant()}). Relations outside that shape are
-	 * stored in {@link #mCompoundBvInequalityRels} unconditionally - no comparison is attempted for them, matching the
-	 * "skip rather than do an expensive scan" instruction from Heizmann's meeting notes (see
-	 * bitvector-inequality-relation-idea memory).
+	 * Bitvector-inequality analogue of {@link #addPolyRel} for relations with a constant on one side (see
+	 * {@link BitvectorInequalityRelation#isPolynomialVsConstant()}). The new relation is compared with the stored
+	 * relations under the same key, with the twins stored under that key, and (bare variables only) with known
+	 * equalities and "x != c" facts, and is then stored. Relations without a constant on exactly one side are stored
+	 * in {@link #mCompoundBvInequalityRels} and never compared, to avoid an expensive scan.
 	 */
 	private boolean addBvInequalityRel(final BitvectorInequalityRelation polyRel) {
 		final BitvectorInequalityRelation.PolynomialAndConstant shape =
@@ -353,7 +351,7 @@ public class PolyPoNe {
 		}
 		final List<BitvectorInequalityRelation> explied = new ArrayList<>();
 		for (final BitvectorInequalityRelation existing : mBvInequalityRels.getImage(variable)) {
-			final ComparisonResult comp = compareTwoSidedRepresentation(existing, polyRel);
+			final ComparisonResult comp = compareBvInequalities(existing, polyRel);
 			if (comp == null) {
 				continue; // no verdict, e.g. different orientation
 			}
@@ -385,7 +383,7 @@ public class PolyPoNe {
 		for (final BitvectorInequalityRelation existing : explied) {
 			removeBvRel(variable, existing);
 		}
-		final BitvectorInequalityRelation fusionPartner = findFusibleTwoSidedRelation(variable, polyRel);
+		final BitvectorInequalityRelation fusionPartner = findFusibleBvInequality(variable, polyRel);
 		if (fusionPartner != null) {
 			// fuse into an equality, reuse the existing single-term insertion path
 			removeBvRel(variable, fusionPartner);
@@ -408,15 +406,15 @@ public class PolyPoNe {
 	}
 
 	/**
-	 * Compares two {@link BitvectorInequalityRelation}s that are both "bare variable vs. bare constant" and share the
-	 * same variable (same {@link HashRelation} bucket in {@link #mBvInequalityRels}). Handles mixed strictness (e.g.
+	 * Compares two {@link BitvectorInequalityRelation}s that have a constant on one side and share the same key (the
+	 * same {@link HashRelation} bucket in {@link #mBvInequalityRels}). Handles mixed strictness (e.g.
 	 * {@code x <=u 7} vs. {@code x <u 9}) by normalizing both to an "effective inclusive boundary" first - see
 	 * {@link #effectiveInclusiveBoundary}. For an upper and a lower bound the result is
 	 * {@link ComparisonResult#INCONSISTENT} if the lower bound lies above the upper bound (empty range), otherwise
 	 * {@code null}. Also returns {@code null} if the signedness differs or normalizing either side would
 	 * underflow/overflow (no verdict attempted).
 	 */
-	private static ComparisonResult compareTwoSidedRepresentation(final BitvectorInequalityRelation existing,
+	private static ComparisonResult compareBvInequalities(final BitvectorInequalityRelation existing,
 			final BitvectorInequalityRelation newRel) {
 		final boolean existingUnsigned = isUnsigned(existing.getRelationSymbol());
 		if (existingUnsigned != isUnsigned(newRel.getRelationSymbol())) {
@@ -620,7 +618,7 @@ public class PolyPoNe {
 	private Check compareWithTwins(final BitvectorInequalityRelation polyRel, final Term key,
 			final List<BitvectorInequalityRelation> originalsToDrop) {
 		for (final BitvectorInequalityRelation twin : mBvTwins.getImage(key)) {
-			final ComparisonResult comp = compareTwoSidedRepresentation(twin, polyRel);
+			final ComparisonResult comp = compareBvInequalities(twin, polyRel);
 			if (comp == ComparisonResult.IMPLIES || comp == ComparisonResult.EQUIVALENT) {
 				return Check.REDUNDANT; // the stored original already covers it
 			}
@@ -658,7 +656,7 @@ public class PolyPoNe {
 	 * way, see {@code areRepresentationsFusibleHelper}'s AND case), with opposite orientation (one upper bound, one
 	 * lower bound on the same variable) and an equal constant, e.g. {@code x <=u 5 /\ x >=u 5 -> x = 5}.
 	 */
-	private BitvectorInequalityRelation findFusibleTwoSidedRelation(final Term variable,
+	private BitvectorInequalityRelation findFusibleBvInequality(final Term variable,
 			final BitvectorInequalityRelation polyRel) {
 		if (polyRel.getRelationSymbol() != RelationSymbol.BVULE && polyRel.getRelationSymbol() != RelationSymbol.BVSLE) {
 			return null; // strict relations don't fuse
