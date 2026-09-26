@@ -322,6 +322,35 @@ public class BitvectorInequalityRelationTest {
 	}
 
 	@Test
+	public void negateIsTheLogicalOppositeForAllEightSymbols() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
+		declare(funDecls);
+		final String[] symbols = { "bvult", "bvule", "bvugt", "bvuge", "bvslt", "bvsle", "bvsgt", "bvsge" };
+		for (final String symbol : symbols) {
+			final Term original = parse("(" + symbol + " x y)");
+			final Term negated = BitvectorInequalityRelation.of(mScript, original).negate().toTerm(mScript);
+			final Term expected = mScript.term("not", original);
+			Assert.assertEquals(symbol, LBool.UNSAT, SmtUtils.checkEquivalence(negated, expected, mScript));
+		}
+	}
+
+	@Test
+	public void negateIsTheLogicalOppositeAtTheBoundaries() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		// bv128 is -128 and bv127 is 127 when read signed
+		final String[] formulas = { "(bvule x (_ bv0 8))", "(bvult x (_ bv0 8))", "(bvule x (_ bv255 8))",
+				"(bvult (_ bv255 8) x)", "(bvsle (_ bv128 8) x)", "(bvslt x (_ bv128 8))", "(bvsle x (_ bv127 8))",
+				"(bvslt (_ bv127 8) x)", "(bvult x (_ bv5 8))", "(bvsle (_ bv5 8) x)" };
+		for (final String formula : formulas) {
+			final Term original = parse(formula);
+			final Term negated = BitvectorInequalityRelation.of(mScript, original).negate().toTerm(mScript);
+			final Term expected = mScript.term("not", original);
+			Assert.assertEquals(formula, LBool.UNSAT, SmtUtils.checkEquivalence(negated, expected, mScript));
+		}
+	}
+
+	@Test
 	public void strictlyBelowUnsignedMinimumCollapsesToFalse() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
 		declare(funDecls);

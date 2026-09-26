@@ -529,4 +529,70 @@ public class PolyPoNeTwoSidedTest {
 			Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
 		}
 	}
+
+	// --- end to end: whatever PolyPoNe simplifies, the meaning of the input must stay the same ---
+
+	private static final String[] MEANING_TEST_ATOMS = { "(bvule x (_ bv3 8))", "(bvule x (_ bv5 8))",
+			"(bvult x (_ bv4 8))", "(bvuge x (_ bv4 8))", "(bvuge x (_ bv10 8))", "(bvugt x (_ bv3 8))",
+			"(= x (_ bv3 8))", "(distinct x (_ bv3 8))", "(bvsle x (_ bv253 8))", "(bvsge x (_ bv5 8))",
+			"(bvslt x (_ bv128 8))", "(bvule x (_ bv0 8))", "(= (_ bv5 8) x)", "(distinct (_ bv0 8) x)",
+			"(bvuge x (_ bv255 8))" };
+
+	private void assertSameMeaning(final String message, final Term expected, final Term actual) {
+		Assert.assertEquals(message, LBool.UNSAT, SmtUtils.checkEquivalence(actual, expected, mScript));
+	}
+
+	@Test
+	public void andAndOrKeepTheMeaningForAnyTwoAtoms() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		for (int i = 0; i < MEANING_TEST_ATOMS.length; i++) {
+			for (int j = i + 1; j < MEANING_TEST_ATOMS.length; j++) {
+				final List<Term> params = List.of(parse(MEANING_TEST_ATOMS[i]), parse(MEANING_TEST_ATOMS[j]));
+				assertSameMeaning("and " + params, SmtUtils.and(mScript, params), PolyPoNeUtils.and(mScript, params));
+				assertSameMeaning("or " + params, SmtUtils.or(mScript, params), PolyPoNeUtils.or(mScript, params));
+			}
+		}
+	}
+
+	@Test
+	public void andAndOrKeepTheMeaningForSomeTriples() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final String[][] triples = { { "(distinct x (_ bv3 8))", "(bvule x (_ bv3 8))", "(distinct x (_ bv2 8))" },
+				{ "(bvuge x (_ bv4 8))", "(= x (_ bv3 8))", "(bvsle x (_ bv100 8))" },
+				{ "(bvule x (_ bv5 8))", "(bvuge x (_ bv2 8))", "(distinct x (_ bv2 8))" },
+				{ "(distinct x (_ bv0 8))", "(distinct x (_ bv1 8))", "(bvule x (_ bv1 8))" } };
+		for (final String[] triple : triples) {
+			final List<Term> params = List.of(parse(triple[0]), parse(triple[1]), parse(triple[2]));
+			assertSameMeaning("and " + params, SmtUtils.and(mScript, params), PolyPoNeUtils.and(mScript, params));
+			assertSameMeaning("or " + params, SmtUtils.or(mScript, params), PolyPoNeUtils.or(mScript, params));
+		}
+	}
+
+	@Test
+	public void contextSimplificationKeepsTheMeaning() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final String[] contexts = { "(bvule x (_ bv3 8))", "(= x (_ bv5 8))", "(bvuge x (_ bv10 8))" };
+		final int atomCount = 8;
+		for (final String contextString : contexts) {
+			final Term context = parse(contextString);
+			for (int i = 0; i < atomCount; i++) {
+				for (int j = i; j < atomCount; j++) {
+					final List<Term> params = i == j ? List.of(parse(MEANING_TEST_ATOMS[i]))
+							: List.of(parse(MEANING_TEST_ATOMS[i]), parse(MEANING_TEST_ATOMS[j]));
+					// the simplified result only has to agree with the input under the assumption of the context
+					final Term andResult = PolyPoNeUtils.and(mScript, context, params);
+					assertSameMeaning("and " + params + " under " + contextString,
+							SmtUtils.and(mScript, context, SmtUtils.and(mScript, params)),
+							SmtUtils.and(mScript, context, andResult));
+					final Term orResult = PolyPoNeUtils.or(mScript, context, params);
+					assertSameMeaning("or " + params + " under " + contextString,
+							SmtUtils.and(mScript, context, SmtUtils.or(mScript, params)),
+							SmtUtils.and(mScript, context, orResult));
+				}
+			}
+		}
+	}
 }
