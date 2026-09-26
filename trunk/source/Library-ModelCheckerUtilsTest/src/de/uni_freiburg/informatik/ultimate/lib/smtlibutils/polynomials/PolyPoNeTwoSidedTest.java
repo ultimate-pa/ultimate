@@ -54,16 +54,14 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
 /**
- * Unit tests for {@link PolyPoNe}'s Phase B handling of {@link BitvectorInequalityRelation} (see
- * bitvector-inequality-relation-idea memory / the "pure-launching-barto" plan). Lives in the same package as
- * {@link PolyPoNe} deliberately - {@link PolyPoNe#addPolyRel} is protected and its constructor is package-visible,
- * neither reachable from a test in a different package.
+ * Unit tests for {@link PolyPoNe}'s handling of {@link BitvectorInequalityRelation}: dropping looser bounds, empty
+ * ranges, fusion, cross-checks with equalities and "x != c", comparison with the alternative representation, the
+ * context path, and end-to-end tests that check with the solver that the meaning of the input never changes. Lives
+ * in the same package as {@link PolyPoNe} deliberately - {@link PolyPoNe#addPolyRel} is protected and its
+ * constructor is package-visible, neither reachable from a test in a different package.
  * <p>
- * Most tests below are exercised directly via {@link PolyPoNe#addPolyRel} rather than via {@link PolyPoNeUtils},
- * since {@link IPolynomialRelation#of} (the shared factory used by ~195 other, unaudited references across the
- * codebase) still never returns a {@link BitvectorInequalityRelation} - see the "public entry point" tests near
- * the end of this file for the one place PolyPoNe itself is actually wired live (its own {@code add(...)}, via
- * {@link BitvectorInequalityRelation#of}), which those tests exercise through {@link PolyPoNeUtils}.
+ * Many tests call {@link PolyPoNe#addPolyRel} directly with a relation built by {@link BitvectorInequalityRelation};
+ * the tests that use {@link PolyPoNeUtils} go through the same path as the simplifier ({@link PolyPoNe#add}).
  *
  * @author Roman Vintonyak
  */

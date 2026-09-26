@@ -86,11 +86,9 @@ public interface IPolynomialRelation extends IBinaryRelation, ITermProvider {
 	}
 
 	// --- static factories ---
-	// Unchanged behavior for now: always delegate to SingleTermPolynomialRelation, exactly like before this
-	// interface existed (including still returning null for bitvector inequalities).
-	// TODO: once BitvectorInequalityRelation is functional, these need to detect bitvector inequalities and route
-	// to BitvectorInequalityRelation.of(...) instead. Deliberately left alone for now, so nothing that currently
-	// relies on the existing "returns null for bv inequalities" behavior (e.g. UnfTransformer's null-check) breaks.
+	// The factories build a PolynomialRelation. They return null for bitvector inequalities on purpose: subtracting
+	// both sides is unsound under wraparound. PolyPoNe builds a BitvectorInequalityRelation itself, see
+	// BitvectorInequalityRelation.of.
 
 	static IPolynomialRelation of(final AbstractGeneralizedAffineTerm<?> agat, final RelationSymbol relationSymbol) {
 		return PolynomialRelation.of(agat, relationSymbol);
@@ -121,9 +119,10 @@ public interface IPolynomialRelation extends IBinaryRelation, ITermProvider {
 
 	/**
 	 * @return the single polynomial term &psi; such that &psi; &#9657; 0 is equivalent to this relation.
-	 *         TODO: only meaningful for {@link PolynomialRelation} - a two-sided relation has no single
-	 *         such term. Kept on this interface only because {@link ExplicitLhsPolynomialRelation} and
-	 *         {@link PolyPoNeWithContext} already call it on values statically typed as {@link IPolynomialRelation}.
+	 *         Only {@link PolynomialRelation} has such a term, {@link BitvectorInequalityRelation} throws an
+	 *         {@link UnsupportedOperationException}. Kept on this interface because
+	 *         {@link ExplicitLhsPolynomialRelation} and {@link PolyPoNeWithContext} call it on values typed as
+	 *         {@link IPolynomialRelation}.
 	 */
 	AbstractGeneralizedAffineTerm<?> getPolynomialTerm();
 
@@ -134,8 +133,8 @@ public interface IPolynomialRelation extends IBinaryRelation, ITermProvider {
 	SolvedBinaryRelation solveForSubject(Script script, Term subject);
 
 	/**
-	 * TODO: needs real design work for {@link BitvectorInequalityRelation} - solving for a subject means moving
-	 * terms across the relation, which is exactly the operation that's unsafe for bitvectors under wraparound.
+	 * Not supported by {@link BitvectorInequalityRelation}: solving for a subject means moving terms across the
+	 * relation, which is unsound for bitvectors under wraparound.
 	 */
 	MultiCaseSolvedBinaryRelation solveForSubject(ManagedScript mgdScript, Term subject,
 			MultiCaseSolvedBinaryRelation.Xnf xnf, Set<TermVariable> bannedForDivCapture,
@@ -148,9 +147,8 @@ public interface IPolynomialRelation extends IBinaryRelation, ITermProvider {
 	IPolynomialRelation negate();
 
 	/**
-	 * TODO: needs real design work for {@link BitvectorInequalityRelation} - multiplying a bitvector relation by a
-	 * constant involves bitvector multiplication, which wraps too, so this needs the same careful treatment as
-	 * {@link #solveForSubject}.
+	 * Not supported by {@link BitvectorInequalityRelation}: multiplying both sides of a bitvector inequality is not
+	 * equivalent under wraparound, see {@link BitvectorInequalityRelation#constructAlternativeRepresentation()}.
 	 */
 	IPolynomialRelation mul(Script script, Rational r);
 
