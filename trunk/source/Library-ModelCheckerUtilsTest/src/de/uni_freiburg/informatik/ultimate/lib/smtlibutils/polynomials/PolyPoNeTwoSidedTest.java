@@ -300,4 +300,44 @@ public class PolyPoNeTwoSidedTest {
 		final Term expected = parse("(bvult (_ bv5 8) x)");
 		Assert.assertNotEquals(LBool.SAT, SmtUtils.checkEquivalence(result, expected, mScript));
 	}
+
+	// --- context path (PolyPoNeWithContext, used by the simplifier and quantifier elimination) ---
+
+	@Test
+	public void contextBoundMakesLooserBoundRedundant() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final Term context = parse("(bvule x (_ bv3 8))");
+		final Term result = PolyPoNeUtils.and(mScript, context, List.of(parse("(bvule x (_ bv5 8))")));
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("true")));
+	}
+
+	@Test
+	public void contextEqualityContradictingBoundGivesFalse() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final Term context = parse("(= x (_ bv5 8))");
+		final Term result = PolyPoNeUtils.and(mScript, context, List.of(parse("(bvult x (_ bv3 8))")));
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("false")));
+	}
+
+	@Test
+	public void contextEqualityMakesDisjunctionTrue() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final Term context = parse("(= x (_ bv5 8))");
+		final Term result = PolyPoNeUtils.or(mScript, context, List.of(parse("(bvule x (_ bv7 8))")));
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("true")));
+	}
+
+	@Test
+	public void contextPathStillComparesWithinParams() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x"),
+				new FunDecl(SmtSortUtils::getBoolSort, "p") };
+		declare(funDecls);
+		final Term context = parse("p");
+		final List<Term> params = List.of(parse("(bvule x (_ bv5 8))"), parse("(bvule x (_ bv3 8))"));
+		final Term result = PolyPoNeUtils.and(mScript, context, params);
+		MatcherAssert.assertThat(result, IsEqual.equalTo(parse("(bvule x (_ bv3 8))")));
+	}
 }

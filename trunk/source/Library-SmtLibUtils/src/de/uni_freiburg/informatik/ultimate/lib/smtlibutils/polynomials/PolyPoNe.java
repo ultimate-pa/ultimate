@@ -161,6 +161,33 @@ public class PolyPoNe {
 		return Check.MAYBE_USEFUL;
 	}
 
+	/**
+	 * Read-only counterpart of {@link #addBvInequalityRel} for {@link PolyPoNeWithContext}: compares {@code polyRel}
+	 * with what is stored here, but stores nothing. Needed because {@link #checkPolyRel} calls
+	 * {@code getPolynomialTerm()}, which a {@link BitvectorInequalityRelation} does not have.
+	 */
+	protected final Check checkBvInequalityRel(final BitvectorInequalityRelation polyRel) {
+		final BitvectorInequalityRelation.BareVariableAndConstant bareShape =
+				polyRel.asBareVariableVsBareConstant(mScript);
+		if (bareShape == null) {
+			return Check.MAYBE_USEFUL; // compound shape, not compared
+		}
+		final BitvectorConstant knownValue = findKnownEqualityValue(polyRel);
+		if (knownValue != null) {
+			return satisfiesBound(knownValue, polyRel) ? Check.REDUNDANT : Check.INCONSISTENT;
+		}
+		for (final BitvectorInequalityRelation existing : mBvInequalityRels.getImage(bareShape.getVariable())) {
+			final ComparisonResult comp = compareTwoSidedRepresentation(existing, polyRel);
+			if (comp == ComparisonResult.IMPLIES || comp == ComparisonResult.EQUIVALENT) {
+				return Check.REDUNDANT; // existing already covers it
+			}
+			if (comp == ComparisonResult.INCONSISTENT) {
+				return Check.INCONSISTENT;
+			}
+		}
+		return Check.MAYBE_USEFUL;
+	}
+
 	private Check compareToExistingRepresentations(final IPolynomialRelation newPolyRel,
 			final boolean removeExpliedPolyRels) {
 		final Set<IPolynomialRelation> existingPolyRels =
