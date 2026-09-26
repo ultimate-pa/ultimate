@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.BitvectorInequalityRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -239,38 +238,87 @@ public class BitvectorInequalityRelationTest {
 		Assert.assertNull(relation.solveForSubject(mScript, parse("x")));
 	}
 
-	@Test
-	public void mulByOneIsNoOp() {
-		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
-		declare(funDecls);
-		final BitvectorInequalityRelation relation = BitvectorInequalityRelation.of(mScript, parse("(bvult x y)"));
-		Assert.assertSame(relation, relation.mul(mScript, Rational.ONE));
-	}
-
-	@Test
-	public void mulByNegativeOneOnSignedRelationReversesOrder() {
+	@Test(expected = UnsupportedOperationException.class)
+	public void mulIsNotSupported() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
 		declare(funDecls);
 		final BitvectorInequalityRelation relation = BitvectorInequalityRelation.of(mScript, parse("(bvslt x y)"));
-		final IPolynomialRelation result = relation.mul(mScript, Rational.MONE);
-		final Term expected = parse("(bvslt (bvneg y) (bvneg x))");
-		Assert.assertNotEquals(LBool.SAT, SmtUtils.checkEquivalence(result.toTerm(mScript), expected, mScript));
-	}
-
-	@Test(expected = UnsupportedOperationException.class)
-	public void mulByNegativeOneRejectsUnsignedRelation() {
-		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
-		declare(funDecls);
-		final BitvectorInequalityRelation relation = BitvectorInequalityRelation.of(mScript, parse("(bvult x y)"));
 		relation.mul(mScript, Rational.MONE);
 	}
 
-	@Test(expected = UnsupportedOperationException.class)
-	public void mulByOtherValuesIsUnsupported() {
+	@Test
+	public void alternativeRepresentationIsEquivalentForAllFourSymbols() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
 		declare(funDecls);
-		final BitvectorInequalityRelation relation = BitvectorInequalityRelation.of(mScript, parse("(bvslt x y)"));
-		relation.mul(mScript, Rational.valueOf(2, 1));
+		// the solver checks all 8 bit values of x and y at once, the signed symbols included
+		for (final String symbol : new String[] { "bvult", "bvule", "bvslt", "bvsle" }) {
+			final BitvectorInequalityRelation relation =
+					BitvectorInequalityRelation.of(mScript, parse("(" + symbol + " x y)"));
+			final Term twin = relation.constructAlternativeRepresentation().toTerm(mScript);
+			Assert.assertEquals(symbol, LBool.UNSAT, SmtUtils.checkEquivalence(twin, relation.toTerm(mScript), mScript));
+		}
+	}
+
+	@Test
+	public void alternativeRepresentationOfUnsignedUpperBoundIsBitwiseComplement() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		// x <=u 5  is the same as  ~x >=u ~5 = 250, i.e. 250 <=u ~x
+		final BitvectorInequalityRelation relation =
+				BitvectorInequalityRelation.of(mScript, parse("(bvule x (_ bv5 8))"));
+		final Term twin = relation.constructAlternativeRepresentation().toTerm(mScript);
+		final Term expected = parse("(bvule (_ bv250 8) (bvnot x))");
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(twin, expected, mScript));
+	}
+
+	@Test
+	public void alternativeRepresentationKeepsTruthValueAtSignedMinimum() {
+		// 0 <s -128 is false, since -128 (bv128) is the smallest signed value. Plain negation would turn it into the
+		// true statement -128 <s 0, the alternative representation gives 127 <s -1, which is still false.
+		final BitvectorInequalityRelation relation =
+				BitvectorInequalityRelation.of(mScript, parse("(bvslt (_ bv0 8) (_ bv128 8))"));
+		final Term falseTerm = mScript.term("false");
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(relation.toTerm(mScript), falseTerm, mScript));
+		final Term twin = relation.constructAlternativeRepresentation().toTerm(mScript);
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(twin, falseTerm, mScript));
+	}
+
+	@Test
+	public void alternativeRepresentationOfAlternativeRepresentationIsOriginal() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
+		declare(funDecls);
+		final BitvectorInequalityRelation relation = BitvectorInequalityRelation.of(mScript, parse("(bvult x y)"));
+		final Term twinOfTwin =
+				relation.constructAlternativeRepresentation().constructAlternativeRepresentation().toTerm(mScript);
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(twinOfTwin, relation.toTerm(mScript), mScript));
+	}
+
+	@Test
+	public void alternativeRepresentationIsEquivalentAtTheBoundaries() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		// constants at the extremes of the 8 bit range (bv128 is -128 and bv127 is 127 when read signed)
+		final String[] boundaryRelations = {
+				// signed: always true, always false, and "everything except one value"
+				"(bvsle (_ bv128 8) x)", // -128 <= x
+				"(bvsle x (_ bv127 8))", // x <= 127
+				"(bvslt x (_ bv128 8))", // x < -128
+				"(bvslt (_ bv127 8) x)", // 127 < x
+				"(bvslt (_ bv128 8) x)", // -128 < x, i.e. x != -128
+				"(bvslt x (_ bv127 8))", // x < 127, i.e. x != 127
+				// unsigned: the same six cases
+				"(bvule (_ bv0 8) x)", // 0 <= x
+				"(bvule x (_ bv255 8))", // x <= 255
+				"(bvult x (_ bv0 8))", // x < 0
+				"(bvult (_ bv255 8) x)", // 255 < x
+				"(bvult (_ bv0 8) x)", // 0 < x, i.e. x != 0
+				"(bvult x (_ bv255 8))", // x < 255, i.e. x != 255
+		};
+		for (final String formula : boundaryRelations) {
+			final BitvectorInequalityRelation relation = BitvectorInequalityRelation.of(mScript, parse(formula));
+			final Term twin = relation.constructAlternativeRepresentation().toTerm(mScript);
+			Assert.assertEquals(formula, LBool.UNSAT, SmtUtils.checkEquivalence(twin, relation.toTerm(mScript), mScript));
+		}
 	}
 
 	@Test
