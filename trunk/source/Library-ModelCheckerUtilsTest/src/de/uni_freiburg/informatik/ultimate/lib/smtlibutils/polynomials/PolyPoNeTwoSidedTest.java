@@ -439,4 +439,94 @@ public class PolyPoNeTwoSidedTest {
 		final Term result = PolyPoNeUtils.and(mScript, context, List.of(parse("(bvule x (_ bv5 8))")));
 		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("false")));
 	}
+
+	// --- "x != c" next to a bound with boundary c: "x != 3 and x <= 3" is "x < 3" (in OR mode: x = 3 or x >= 4) ---
+
+	private IPolynomialRelation distinctRelation(final String formulaAsString) {
+		return IPolynomialRelation.of(mScript, parse(formulaAsString));
+	}
+
+	@Test
+	public void distinctThenAdjacentUpperBoundBecomesStrict() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, distinctRelation("(distinct x (_ bv3 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv3 8))"), true));
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(bvult x (_ bv3 8))")));
+	}
+
+	@Test
+	public void adjacentUpperBoundThenDistinctBecomesStrict() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv3 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, distinctRelation("(distinct x (_ bv3 8))"), true));
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(bvult x (_ bv3 8))")));
+	}
+
+	@Test
+	public void distinctThenAdjacentLowerBoundBecomesStrict() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, distinctRelation("(distinct x (_ bv3 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvuge x (_ bv3 8))"), true));
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(bvult (_ bv3 8) x)")));
+	}
+
+	@Test
+	public void distinctThenStrictBoundBecomesStrictAtTheDistinctValue() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		// x <u 4 means x <= 3
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, distinctRelation("(distinct x (_ bv3 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv4 8))"), true));
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(bvult x (_ bv3 8))")));
+	}
+
+	@Test
+	public void distinctAtTheOnlyAllowedValueIsInconsistent() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe unsignedMin = new PolyPoNe(mScript, Junction.AND);
+		unsignedMin.addPolyRel(mScript, distinctRelation("(distinct x (_ bv0 8))"), true);
+		Assert.assertTrue(unsignedMin.addPolyRel(mScript, twoSided("(bvule x (_ bv0 8))"), true));
+		final PolyPoNe unsignedMax = new PolyPoNe(mScript, Junction.AND);
+		unsignedMax.addPolyRel(mScript, distinctRelation("(distinct x (_ bv255 8))"), true);
+		Assert.assertTrue(unsignedMax.addPolyRel(mScript, twoSided("(bvuge x (_ bv255 8))"), true));
+		// bv128 is -128, the signed minimum
+		final PolyPoNe signedMin = new PolyPoNe(mScript, Junction.AND);
+		signedMin.addPolyRel(mScript, distinctRelation("(distinct x (_ bv128 8))"), true);
+		Assert.assertTrue(signedMin.addPolyRel(mScript, twoSided("(bvsle x (_ bv128 8))"), true));
+	}
+
+	@Test
+	public void distinctAwayFromTheBoundStaysUnfused() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, distinctRelation("(distinct x (_ bv3 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv5 8))"), true));
+		final String result = polyPoNe.and().toString();
+		Assert.assertTrue(result, result.contains("bvule") && !result.contains("bvult"));
+	}
+
+	@Test
+	public void equalityOrAdjacentLowerBoundBecomesNonStrictLowerBound() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		// x = 3 or x >= 4  is  x >= 3, in both orders
+		final Term expected = parse("(bvuge x (_ bv3 8))");
+		for (final List<Term> params : List.of(List.of(parse("(= x (_ bv3 8))"), parse("(bvuge x (_ bv4 8))")),
+				List.of(parse("(bvuge x (_ bv4 8))"), parse("(= x (_ bv3 8))")))) {
+			final Term result = PolyPoNeUtils.or(mScript, params);
+			final boolean stayedAsOr =
+					result instanceof ApplicationTerm && ((ApplicationTerm) result).getFunction().getName().equals("or");
+			Assert.assertFalse("not fused: " + result, stayedAsOr);
+			Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
+		}
+	}
 }

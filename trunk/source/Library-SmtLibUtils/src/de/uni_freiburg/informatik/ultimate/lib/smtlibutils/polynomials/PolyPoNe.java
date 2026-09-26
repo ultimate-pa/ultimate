@@ -279,7 +279,8 @@ public class PolyPoNe {
 				}
 			}
 			mPolyRels.addPair(polyRel.getPolynomialTerm().getAbstractVariable2Coefficient(), polyRel);
-			return dropBvInequalitiesContradictingNewEquality(polyRel);
+			return polyRel.getRelationSymbol() == RelationSymbol.DISTINCT ? fuseNewDistinctWithBvBound(polyRel)
+					: dropBvInequalitiesContradictingNewEquality(polyRel);
 		} else if (check == Check.REDUNDANT) {
 			return false;
 		} else if (check == Check.INCONSISTENT) {
@@ -365,6 +366,15 @@ public class PolyPoNe {
 			final IPolynomialRelation fusion = PolynomialRelation.of(mScript, RelationSymbol.EQ, variable,
 					bareShape.getConstantTerm());
 			return addPolyRel(mScript, fusion, true);
+		}
+		// a stored "x != c" next to a bound with effective boundary c tightens the bound to a strict one
+		final BitvectorConstant boundary = effectiveInclusiveBoundary(polyRel);
+		final IPolynomialRelation distinct =
+				boundary == null ? null : findDistinctWithValue(polyRel, variable, boundary);
+		if (distinct != null) {
+			mPolyRels.removePair(distinct.getPolynomialTerm().getAbstractVariable2Coefficient(), distinct);
+			final BitvectorInequalityRelation strict = strictBoundAt(polyRel, boundary);
+			return strict == null || addBvInequalityRel(strict); // no value left -> inconsistent
 		}
 		mBvInequalityRels.addPair(variable, polyRel);
 		return false;
@@ -474,6 +484,83 @@ public class PolyPoNe {
 			}
 		}
 		return null; // no known equality under this key
+	}
+
+	/**
+	 * Finds a stored "x != value" (in {@link #mPolyRels}, under either key shape like
+	 * {@link #findKnownEqualityValue}) for the bare variable of {@code polyRel}, or {@code null} if there is none.
+	 */
+	private IPolynomialRelation findDistinctWithValue(final BitvectorInequalityRelation polyRel, final Term variable,
+			final BitvectorConstant value) {
+		final AbstractGeneralizedAffineTerm<?> variableSide =
+				polyRel.isVariableOnLhs() ? polyRel.getLhs() : polyRel.getRhs();
+		final AbstractGeneralizedAffineTerm<?> negatedSide =
+				(AbstractGeneralizedAffineTerm<?>) PolynomialTermOperations.mul(variableSide, Rational.MONE);
+		final IPolynomialRelation distinct =
+				distinctUnderKey(variableSide.getAbstractVariable2Coefficient(), variable, value);
+		return distinct != null ? distinct
+				: distinctUnderKey(negatedSide.getAbstractVariable2Coefficient(), variable, value);
+	}
+
+	private IPolynomialRelation distinctUnderKey(final Map<?, Rational> key, final Term variable,
+			final BitvectorConstant value) {
+		for (final IPolynomialRelation existing : mPolyRels.getImage(key)) {
+			if (existing.getRelationSymbol() != RelationSymbol.DISTINCT) {
+				continue; // only "x != value"
+			}
+			final SolvedBinaryRelation solved = existing.negate().isSimpleEquality(mScript); // "x = value"
+			if (solved != null && solved.getLeftHandSide().equals(variable)
+					&& value.equals(BitvectorUtils.constructBitvectorConstant(solved.getRightHandSide()))) {
+				return existing;
+			}
+		}
+		return null; // no such "x != value" under this key
+	}
+
+	/**
+	 * "x != c" together with a bound whose effective boundary is exactly c gives the strict bound at c ("x != 3 and
+	 * x <= 3" is "x < 3"). Returns {@code null} if no value is left, e.g. for "x != 0 and x <=u 0".
+	 */
+	private BitvectorInequalityRelation strictBoundAt(final BitvectorInequalityRelation bound,
+			final BitvectorConstant value) {
+		final boolean unsigned = isUnsigned(bound.getRelationSymbol());
+		final boolean upper = bound.isVariableOnLhs();
+		final Sort sort = bound.getLhs().getSort();
+		final BitvectorConstant extreme = upper ? BitvectorInequalityRelation.sortMin(sort, unsigned)
+				: BitvectorInequalityRelation.sortMax(sort, unsigned);
+		if (value.equals(extreme)) {
+			return null; // the only value the bound allowed was the excluded one
+		}
+		final RelationSymbol strict = unsigned ? RelationSymbol.BVULT : RelationSymbol.BVSLT;
+		final Term variable = bound.getBareVariableTerm(mScript);
+		final Term constant = BitvectorUtils.constructTerm(mScript, value);
+		return BitvectorInequalityRelation.of(mScript, upper ? strict.constructTerm(mScript, variable, constant)
+				: strict.constructTerm(mScript, constant, variable));
+	}
+
+	/**
+	 * Counterpart of the fusion in {@link #addBvInequalityRel} for a newly stored "x != c": a bound already stored
+	 * for x whose effective boundary is exactly c becomes the strict bound at c, and the "x != c" is dropped.
+	 */
+	private boolean fuseNewDistinctWithBvBound(final IPolynomialRelation distinct) {
+		final SolvedBinaryRelation solved = distinct.negate().isSimpleEquality(mScript);
+		if (solved == null) {
+			return false; // not "x != c"
+		}
+		final Term variable = solved.getLeftHandSide();
+		final BitvectorConstant value = BitvectorUtils.constructBitvectorConstant(solved.getRightHandSide());
+		if (value == null) {
+			return false; // not a bitvector
+		}
+		for (final BitvectorInequalityRelation bound : new ArrayList<>(mBvInequalityRels.getImage(variable))) {
+			if (value.equals(effectiveInclusiveBoundary(bound))) {
+				mBvInequalityRels.removePair(variable, bound);
+				mPolyRels.removePair(distinct.getPolynomialTerm().getAbstractVariable2Coefficient(), distinct);
+				final BitvectorInequalityRelation strict = strictBoundAt(bound, value);
+				return strict == null || addBvInequalityRel(strict); // no value left -> inconsistent
+			}
+		}
+		return false;
 	}
 
 	/** Does the concrete value {@code value} satisfy {@code rel}'s bound? */
