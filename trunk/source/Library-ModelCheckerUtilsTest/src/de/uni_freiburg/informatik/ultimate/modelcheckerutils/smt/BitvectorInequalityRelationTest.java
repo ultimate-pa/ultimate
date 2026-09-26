@@ -203,7 +203,22 @@ public class BitvectorInequalityRelationTest {
 		Assert.assertNotNull(solved);
 		MatcherAssert.assertThat(solved.getLeftHandSide(), IsEqual.equalTo(parse("x")));
 		MatcherAssert.assertThat(solved.getRightHandSide(), IsEqual.equalTo(parse("(_ bv5 8)")));
-		Assert.assertEquals(RelationSymbol.BVULE, solved.getRelationSymbol());
+		// "5 <=u x" solved for x reads "x >=u 5"
+		Assert.assertEquals(RelationSymbol.BVUGE, solved.getRelationSymbol());
+	}
+
+	@Test
+	public void solveForSubjectMirrorsSignedStrictLowerBound() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		// canonicalizes to "5 <s x", i.e. the variable ends up on the right-hand side
+		final Term input = parse("(bvsgt x (_ bv5 8))");
+		final BitvectorInequalityRelation relation = BitvectorInequalityRelation.of(mScript, input);
+		final SolvedBinaryRelation solved = relation.solveForSubject(mScript, parse("x"));
+		Assert.assertNotNull(solved);
+		MatcherAssert.assertThat(solved.getLeftHandSide(), IsEqual.equalTo(parse("x")));
+		MatcherAssert.assertThat(solved.getRightHandSide(), IsEqual.equalTo(parse("(_ bv5 8)")));
+		Assert.assertEquals(RelationSymbol.BVSGT, solved.getRelationSymbol());
 	}
 
 	@Test
