@@ -31,6 +31,7 @@ public class EGraph {
 	 */
 	private static final boolean PROCESS_CONGRUENCE = true;
 	private static final boolean ADD_ALL_TERMS = true;
+	private static final boolean PROPOGATE_DISTINCTS_BY_UNION = true;
 
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
@@ -136,12 +137,16 @@ public class EGraph {
 			if (term1.equals(term2)) {
 				return 0;
 			}
-			if (mDagSize.treesize(term1) < mDagSize.treesize(term2)) {
+			final long term1Size = mDagSize.treesize(term1);
+			mDagSize.reset();
+			final long term2Size = mDagSize.treesize(term2);
+			mDagSize.reset();
+			if (term1Size < term2Size) {
 				return -1;
-			} else if (mDagSize.treesize(term1) > mDagSize.treesize(term2)) {
+			} else if (term1Size > term2Size) {
 				return 1;
 			} else { // tiebreaking
-				if (mDagSize.treesize(term1) == 1) {
+				if (term1Size == 1) {
 					return compareTermsOfSizeOne(term1, term2);
 				} else {
 					return CommuhashUtils.HASH_BASED_COMPERATOR.compare(term1, term2);
@@ -224,19 +229,18 @@ public class EGraph {
 	 **/
 	public void addFormula(final Term formula) {
 		final Term[] conjuncts = SmtUtils.getConjuncts(formula);
-
+		mMgdScript.lock(this);
+		final Term trueTerm = mMgdScript.term(this, "true");
+		final Term falseTerm = mMgdScript.term(this, "false");
+		mMgdScript.unlock(this);
 		for (final Term term : conjuncts) {
-			mMgdScript.lock(this);
-			final Term trueTerm = mMgdScript.term(this, "true");
-			final Term falseTerm = mMgdScript.term(this, "false");
-			mMgdScript.unlock(this);
 			addTerm(term);
-			mUnionFind.union(term, trueTerm);
+			union(term, trueTerm);
 			if (term instanceof ApplicationTerm) {
 				final ApplicationTerm appTerm = (ApplicationTerm) term;
 
 				if (appTerm.getFunction().getName().equals("not")) {
-					mUnionFind.union(appTerm.getParameters()[0], falseTerm);
+					union(appTerm.getParameters()[0], falseTerm);
 				}
 			}
 
@@ -345,8 +349,15 @@ public class EGraph {
 	 **/
 	private void unionDistinctTerms(final ImmutableSet<Term> A, final ImmutableSet<Term> B,
 			final ImmutableSet<Term> E) {
-		final HashSet<Term> newDistinct = mDistinctSets.getOrDefault(A, new HashSet<>());
+		HashSet<Term> newDistinct = mDistinctSets.getOrDefault(A, new HashSet<>());
 		newDistinct.addAll(mDistinctSets.getOrDefault(B, new HashSet<>()));
+		if (PROPOGATE_DISTINCTS_BY_UNION) {
+			Set<Term> newDistinctUnioned = new HashSet<>();
+			for (final Term term : newDistinct) {
+				newDistinctUnioned = DataStructureUtils.union(newDistinctUnioned, mUnionFind.getContainingSet(term));
+			}
+			newDistinct = new HashSet<>(newDistinctUnioned);
+		}
 		mDistinctSets.remove(A);
 		mDistinctSets.remove(B);
 		mDistinctSets.put(E, newDistinct);
