@@ -227,6 +227,15 @@ public class EGraphTest {
 		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
 	}
 
+	@Test
+	public void inequality03() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y") };
+		final String formulaAsString = "(< x y)";
+		final ArrayList<ExpectedRelation> expectedRelations = new ArrayList<>();
+		expectedRelations.add(new ExpectedRelation("x", "y", EGraph.EquivalenceState.DISTINCT));
+		runEGraphTest(funDecls, formulaAsString, expectedRelations, mServices, mLogger, mMgdScript);
+	}
+
 	static void runEGraphTest(final FunDecl[] funDecls, final String conjunctAsString,
 			final ArrayList<ExpectedRelation> expectedRelations, final IUltimateServiceProvider services,
 			final ILogger logger, final ManagedScript mgdScript) {

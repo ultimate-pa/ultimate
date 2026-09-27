@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -224,6 +225,78 @@ public class EGraph {
 
 	}
 
+	private void processBinaryEqualityRelation(final Term term) {
+		final BinaryEqualityRelation binaryEqRelation = BinaryEqualityRelation.convert(term);
+		if (binaryEqRelation != null) {
+			final Term lhs = binaryEqRelation.getLhs();
+			final Term rhs = binaryEqRelation.getRhs();
+
+			addTerm(lhs);
+			addTerm(rhs);
+
+			if (binaryEqRelation.getRelationSymbol() == RelationSymbol.DISTINCT) {
+				final ImmutableSet<Term> leftEset = mUnionFind.getContainingSet(lhs);
+				final ImmutableSet<Term> rightEset = mUnionFind.getContainingSet(rhs);
+				if (!(mDistinctSets.containsKey(leftEset))) {
+					mDistinctSets.put(leftEset, new HashSet<>(rightEset));
+
+				} else {
+					mDistinctSets.get(leftEset).addAll(rightEset);
+				}
+				if (!(mDistinctSets.containsKey(rightEset))) {
+					mDistinctSets.put(rightEset, new HashSet<>(leftEset));
+
+				} else {
+					mDistinctSets.get(rightEset).addAll(leftEset);
+				}
+
+			} else if (binaryEqRelation.getRelationSymbol() == RelationSymbol.EQ) {
+				unionWithImplied(binaryEqRelation.getLhs(), binaryEqRelation.getRhs());
+			} else {
+				throw new AssertionError("unexpected relation symbol " + binaryEqRelation.getRelationSymbol());
+			}
+		}
+	}
+
+	private void processBinaryNumericRelation(final Term term) {
+		final BinaryNumericRelation binaryNumRelation = BinaryNumericRelation.convert(term);
+		if (binaryNumRelation != null) {
+			final RelationSymbol relationSymbol = binaryNumRelation.getRelationSymbol();
+			switch (relationSymbol) {
+			case RelationSymbol.LESS:
+			case RelationSymbol.GREATER:
+			case RelationSymbol.BVULT:
+			case RelationSymbol.BVUGT:
+			case RelationSymbol.BVSLT:
+			case RelationSymbol.BVSGT:
+				final Term lhs = binaryNumRelation.getLhs();
+				final Term rhs = binaryNumRelation.getRhs();
+
+				addTerm(lhs);
+				addTerm(rhs);
+
+				final ImmutableSet<Term> leftEset = mUnionFind.getContainingSet(lhs);
+				final ImmutableSet<Term> rightEset = mUnionFind.getContainingSet(rhs);
+				if (!(mDistinctSets.containsKey(leftEset))) {
+					mDistinctSets.put(leftEset, new HashSet<>(rightEset));
+
+				} else {
+					mDistinctSets.get(leftEset).addAll(rightEset);
+				}
+				if (!(mDistinctSets.containsKey(rightEset))) {
+					mDistinctSets.put(rightEset, new HashSet<>(leftEset));
+
+				} else {
+					mDistinctSets.get(rightEset).addAll(leftEset);
+				}
+				break;
+			default:
+				break;
+			}
+
+		}
+	}
+
 	/**
 	 * Creates an egraph-like datastructure from a formula which is assumed to be of the form of a list of conjuncts.
 	 **/
@@ -243,37 +316,8 @@ public class EGraph {
 					union(appTerm.getParameters()[0], falseTerm);
 				}
 			}
-
-			final BinaryEqualityRelation binaryEqRelation = BinaryEqualityRelation.convert(term);
-			if (binaryEqRelation != null) {
-				final Term lhs = binaryEqRelation.getLhs();
-				final Term rhs = binaryEqRelation.getRhs();
-
-				addTerm(lhs);
-				addTerm(rhs);
-
-				if (binaryEqRelation.getRelationSymbol() == RelationSymbol.DISTINCT) {
-					final ImmutableSet<Term> leftEset = mUnionFind.getContainingSet(lhs);
-					final ImmutableSet<Term> rightEset = mUnionFind.getContainingSet(rhs);
-					if (!(mDistinctSets.containsKey(leftEset))) {
-						mDistinctSets.put(leftEset, new HashSet<>(rightEset));
-
-					} else {
-						mDistinctSets.get(leftEset).addAll(rightEset);
-					}
-					if (!(mDistinctSets.containsKey(rightEset))) {
-						mDistinctSets.put(rightEset, new HashSet<>(leftEset));
-
-					} else {
-						mDistinctSets.get(rightEset).addAll(leftEset);
-					}
-
-				} else if (binaryEqRelation.getRelationSymbol() == RelationSymbol.EQ) {
-					unionWithImplied(binaryEqRelation.getLhs(), binaryEqRelation.getRhs());
-				} else {
-					throw new AssertionError("unexpected relation symbol " + binaryEqRelation.getRelationSymbol());
-				}
-			}
+			processBinaryEqualityRelation(term);
+			processBinaryNumericRelation(term);
 		}
 	}
 
