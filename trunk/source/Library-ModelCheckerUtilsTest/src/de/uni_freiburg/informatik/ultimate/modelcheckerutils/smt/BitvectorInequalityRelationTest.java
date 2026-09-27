@@ -51,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
 /**
  * Unit tests for {@link BitvectorInequalityRelation}, exercised directly via its own {@code of(Script, Term)} entry
- * point since it is not yet wired into {@code PolynomialRelation.of(...)} - see the TODOs on that interface's static
- * factories. Follows the same solver/script setup as {@link BitvectorUtilsTest}.
+ * point since the shared {@code IPolynomialRelation} static factories deliberately never build this class (see the
+ * comment above their declaration). Follows the same solver/script setup as {@link SimplificationTest}.
  *
  * @author Roman Vintonyak
  */
