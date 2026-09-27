@@ -31,7 +31,7 @@ public class EGraph {
 	 * This option allows us to toggle whether we detect congruence relations.
 	 */
 	private static final boolean PROCESS_CONGRUENCE = true;
-	private static final boolean ADD_ALL_TERMS = true;
+	private static final boolean ADD_ALL_TERMS = false;
 	private static final boolean PROPOGATE_DISTINCTS_BY_UNION = true;
 
 	private final IUltimateServiceProvider mServices;
@@ -167,6 +167,9 @@ public class EGraph {
 		final Term array = selectTerm.getParameters()[0];
 		final Term index = selectTerm.getParameters()[1];
 
+		addTerm(array);
+		addTerm(index);
+
 		ImmutableSet<Term> arrayESet = mUnionFind.getContainingSet(array);
 		ImmutableSet<Term> indexESet = mUnionFind.getContainingSet(index);
 
@@ -212,12 +215,11 @@ public class EGraph {
 			final Term representative = mUnionFind.find(appTerm);
 			if (representative == null) {
 				mUnionFind.makeEquivalenceClass(appTerm);
-				for (final Term arg : appTerm.getParameters()) {
-					addTerm(arg);
+				if (ADD_ALL_TERMS) {
+					for (final Term arg : appTerm.getParameters()) {
+						addTerm(arg);
+					}
 				}
-			}
-			if (appTerm.getFunction().getName().equals("select") && PROCESS_CONGRUENCE) {
-				addSelectTerm(appTerm);
 			}
 		} else {
 			throw new UnsupportedOperationException("Unsupported term type");
@@ -313,11 +315,18 @@ public class EGraph {
 				final ApplicationTerm appTerm = (ApplicationTerm) term;
 
 				if (appTerm.getFunction().getName().equals("not")) {
+					addTerm(appTerm.getParameters()[0]);
 					union(appTerm.getParameters()[0], falseTerm);
 				}
 			}
 			processBinaryEqualityRelation(term);
 			processBinaryNumericRelation(term);
+		}
+		if (PROCESS_CONGRUENCE) {
+			final Set<ApplicationTerm> selectTerms = SmtUtils.extractApplicationTerms("select", formula, false);
+			for (final ApplicationTerm selectTerm : selectTerms) {
+				addSelectTerm(selectTerm);
+			}
 		}
 	}
 
