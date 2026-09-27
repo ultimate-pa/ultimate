@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.met
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,7 +40,7 @@ import java.util.stream.Stream;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterferenceSet;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedEdgeInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
@@ -69,10 +70,10 @@ public final class GuardedUpdateInterference extends GroupedInterferenceSet<Guar
 	private final BasicPredicateFactory mPredicateFactory;
 	private final IPredicate mFalsePredicate;
 
-	public GuardedUpdateInterference(final Map<InterferenceGroupKey, GuardedUpdateGroup> interferenceByGroup,
+	public GuardedUpdateInterference(final Collection<GroupedInterference<GuardedUpdateGroup>> groupedInterferences,
 			final Map<String, Set<IcfgLocation>> sourcesBeforeForkByThread, final ManagedScript managedScript,
 			final BasicPredicateFactory predicateFactory) {
-		super(interferenceByGroup, sourcesBeforeForkByThread);
+		super(groupedInterferences, sourcesBeforeForkByThread);
 		mManagedScript = managedScript;
 		mPredicateFactory = predicateFactory;
 		mFalsePredicate = predicateFactory.newPredicate(managedScript.getScript().term("false"));
@@ -83,11 +84,11 @@ public final class GuardedUpdateInterference extends GroupedInterferenceSet<Guar
 			final Set<String> activeThreadIds, final Set<String> observerLockset, final IDomain domain,
 			final int wideningThreshold,
 			final SifaStats stats) {
-		if (mInterferenceByGroup.isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
+		if (isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
 				|| SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;
 		}
-		final List<Entry<InterferenceGroupKey, GuardedUpdateGroup>> applicable =
+		final List<GroupedInterference<GuardedUpdateGroup>> applicable =
 				selectApplicableInterference(observerThreadId, activeThreadIds, observerLockset, stats);
 		if (applicable.isEmpty()) {
 			return state;
@@ -98,8 +99,8 @@ public final class GuardedUpdateInterference extends GroupedInterferenceSet<Guar
 			stats.increment(Key.INTERFERENCE_INNER_ITERATIONS);
 			boolean hasGenerated = false;
 			IPredicate generated = state;
-			for (final Entry<InterferenceGroupKey, GuardedUpdateGroup> entry : applicable) {
-				final IPredicate post = applyGroupToFrontier(frontier, entry.getValue(), domain);
+			for (final GroupedInterference<GuardedUpdateGroup> group : applicable) {
+				final IPredicate post = applyGroupToFrontier(frontier, group.mergedInterference(), domain);
 				if (SmtUtils.isFalseLiteral(post.getFormula())) {
 					continue;
 				}
@@ -185,9 +186,10 @@ public final class GuardedUpdateInterference extends GroupedInterferenceSet<Guar
 	}
 
 	@Override
-	protected GroupedInterferenceSet<GuardedUpdateGroup> withInterference(
-			final Map<InterferenceGroupKey, GuardedUpdateGroup> interferenceByGroup) {
-		return new GuardedUpdateInterference(interferenceByGroup, mSourcesBeforeForkByThread, mManagedScript, mPredicateFactory);
+	protected GroupedInterferenceSet<GuardedUpdateGroup>
+			withGroupedInterferences(final Collection<GroupedInterference<GuardedUpdateGroup>> groupedInterferences) {
+		return new GuardedUpdateInterference(groupedInterferences, mSourcesBeforeForkByThread, mManagedScript,
+				mPredicateFactory);
 	}
 
 	private static boolean isSubsumed(final GuardedUpdate left, final GuardedUpdate right, final IDomain domain) {

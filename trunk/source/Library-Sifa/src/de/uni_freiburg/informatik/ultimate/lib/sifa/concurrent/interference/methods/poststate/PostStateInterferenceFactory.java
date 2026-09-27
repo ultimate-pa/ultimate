@@ -33,11 +33,11 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceContext;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeCollector;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedEdgeInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocksetAnalysis;
@@ -48,16 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
 public final class PostStateInterferenceFactory
-		extends GroupedInterferenceFactory<Map<PostStateInterferenceFactory.GroupKey, PostStateInterferenceFactory.Group>> {
-
-	record GroupKey(String threadId, AbstractLocationPair abstractLocations, Set<String> lockset,
-			String forkedThreadId) {
-	}
-
-	static final class Group {
-		private IPredicate mPostState;
-		private final Set<IcfgLocation> mSources = new LinkedHashSet<>();
-	}
+		extends GroupedInterferenceFactory<Map<InterferenceContext, GroupedInterference<IPredicate>>> {
 
 	private final IDomain mDomain;
 
@@ -71,12 +62,13 @@ public final class PostStateInterferenceFactory
 	}
 
 	@Override
-	protected Map<GroupKey, Group> createAccumulator() {
+	public Map<InterferenceContext, GroupedInterference<IPredicate>> createInterferenceGroups() {
 		return new LinkedHashMap<>();
 	}
 
 	@Override
-	protected void accumulateEdgeInterference(final Map<GroupKey, Group> accumulator,
+	protected void addEdgeInterference(
+			final Map<InterferenceContext, GroupedInterference<IPredicate>> groupedInterferences,
 			final TranslatedEdgeInterference edge, final Map<IcfgLocation, IPredicate> threadStates) {
 		final IPredicate targetState = threadStates.get(edge.target());
 		final IPredicate postState = targetState == null ? computeEdgeLocalPostState(edge, threadStates)
@@ -84,25 +76,23 @@ public final class PostStateInterferenceFactory
 		if (InterferenceUtils.isNullOrFalse(postState)) {
 			return;
 		}
-		final GroupKey key = new GroupKey(edge.source().getProcedure(), edge.abstractLocationPair(),
-				mustHeldLocksAroundEdge(edge), edge.forkedThreadId());
-		final Group group = accumulator.computeIfAbsent(key, ignored -> new Group());
-		group.mPostState = group.mPostState == null ? postState : mDomain.join(group.mPostState, postState);
-		group.mSources.add(edge.source());
+		final InterferenceContext context = contextFor(edge);
+		final GroupedInterference<IPredicate> previous = groupedInterferences.get(context);
+		final IPredicate mergedPostState =
+				previous == null ? postState : mDomain.join(previous.mergedInterference(), postState);
+		final Set<IcfgLocation> sourceLocations = new LinkedHashSet<>();
+		if (previous != null) {
+			sourceLocations.addAll(previous.sourceLocations());
+		}
+		sourceLocations.add(edge.source());
+		groupedInterferences.put(context, new GroupedInterference<>(context, sourceLocations, mergedPostState));
 	}
 
 	@Override
-	protected IInterferenceSet buildInterferenceSet(final Map<GroupKey, Group> accumulator) {
-		if (accumulator.isEmpty()) {
-			return null;
-		}
-		final Map<InterferenceGroupKey, IPredicate> interferenceByGroup = new LinkedHashMap<>();
-		for (final var entry : accumulator.entrySet()) {
-			final GroupKey key = entry.getKey();
-			interferenceByGroup.put(new InterferenceGroupKey(key.threadId(), key.abstractLocations(), key.lockset(),
-					key.forkedThreadId(), entry.getValue().mSources), entry.getValue().mPostState);
-		}
-		return new PostStateInterference(interferenceByGroup, mSourcesBeforeForkByThread);
+	public IInterferenceSet
+			buildInterferenceSet(final Map<InterferenceContext, GroupedInterference<IPredicate>> groupedInterferences) {
+		return groupedInterferences.isEmpty() ? null
+				: new PostStateInterference(groupedInterferences.values(), mSourcesBeforeForkByThread);
 	}
 
 	private IPredicate computeEdgeLocalPostState(final TranslatedEdgeInterference edge,

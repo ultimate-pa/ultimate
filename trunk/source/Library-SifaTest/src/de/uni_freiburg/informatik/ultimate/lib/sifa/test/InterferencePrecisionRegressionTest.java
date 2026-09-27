@@ -59,8 +59,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceContext;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.strongestpostcondition.StrongestPostconditionInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.PrimedDefaultIcfgSymbolTable;
@@ -235,11 +236,12 @@ public class InterferencePrecisionRegressionTest {
 		final Term all = SmtUtils.orWithExtendedLocalSimplification(mScript, List.of(writerWriteRaceZero().getFormula(),
 				writerUnlock().getFormula(), unreachableOtherThreadWriteOne().getFormula()));
 		final IPredicate asPredicate = predicate(all);
-		final var key = new InterferenceGroupKey(INTERFERING_THREAD_ID, new AbstractLocationPair(0, 0),
-				Set.of(), null, Set.of());
+		final var context =
+				new InterferenceContext(INTERFERING_THREAD_ID, new AbstractLocationPair(0, 0), Set.of(), null);
 		final var contribution = new StrongestPostconditionInterference.RelationalInterference(asPredicate,
 				mRelationalPost.prepareRelation(asPredicate), asPredicate);
-		return new StrongestPostconditionInterference(Map.of(key, contribution), Map.of(), mRelationalPost);
+		return new StrongestPostconditionInterference(
+				List.of(new GroupedInterference<>(context, Set.of(), contribution)), Map.of(), mRelationalPost);
 	}
 
 	private IPredicate writerWriteRaceZero() {

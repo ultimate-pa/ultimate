@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.reporting.SifaResultPrinter;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.setup.ThreadModularSetup.SetupResult;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ThreadInvariants;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ThreadAnalyzer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.fixpoint.OuterInterferenceFixpoint;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.IFluid;
@@ -54,7 +53,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 	private final IIcfg<IcfgLocation> mIcfg;
 	private final Collection<IcfgLocation> mRequestedLocationsOfInterest;
 	private final ConcurrentSymbolicTools mConcurrentTools;
-	private final OuterInterferenceFixpoint mOuterFixpoint;
+	private final OuterInterferenceFixpoint<?> mOuterFixpoint;
 	private final SifaResultPrinter mResultPrinter;
 
 	public ThreadModularSifaInterpreter(final ILogger logger, final IProgressAwareTimer timer, final SifaStats stats,
@@ -70,7 +69,7 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		final ThreadAnalyzer threadAnalysis = new ThreadAnalyzer(logger, timer, stats, mConcurrentTools, icfg,
 				mRequestedLocationsOfInterest, setup.domain(), fluid, loopSumFactory, callSumFactory, setup.forkGraph(),
 				setup.joinedThreads());
-		mOuterFixpoint = new OuterInterferenceFixpoint(logger, mConcurrentTools, setup.domain(),
+		mOuterFixpoint = new OuterInterferenceFixpoint<>(logger, mConcurrentTools, setup.domain(),
 				setup.interferenceFactory(), setup.mutexInvariants(),
 				mConcurrentTools.getSettings().outerWideningThreshold(), threadAnalysis);
 		mResultPrinter = mConcurrentTools.getSettings().resultPrint()
@@ -81,11 +80,11 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 
 	@Override
 	public Map<IcfgLocation, IPredicate> interpret() {
-		final ThreadInvariants invariants = mOuterFixpoint.compute();
+		final Map<IcfgLocation, IPredicate> invariants = mOuterFixpoint.compute();
 		if (mResultPrinter != null) {
-			mResultPrinter.printResults(invariants.locationInvariants(), mIcfg);
+			mResultPrinter.printResults(invariants, mIcfg);
 		}
-		return requestedLocationPredicates(invariants.locationInvariants());
+		return requestedLocationPredicates(invariants);
 	}
 
 	private Map<IcfgLocation, IPredicate> requestedLocationPredicates(

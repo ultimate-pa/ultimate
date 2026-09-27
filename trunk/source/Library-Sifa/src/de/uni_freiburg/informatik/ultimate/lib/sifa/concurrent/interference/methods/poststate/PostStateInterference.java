@@ -25,14 +25,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.poststate;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterferenceSet;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
@@ -40,23 +40,23 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
 public final class PostStateInterference extends GroupedInterferenceSet<IPredicate> {
 
-	public PostStateInterference(final Map<InterferenceGroupKey, IPredicate> interferenceByGroup,
+	public PostStateInterference(final Collection<GroupedInterference<IPredicate>> groupedInterferences,
 			final Map<String, Set<IcfgLocation>> sourcesBeforeForkByThread) {
-		super(interferenceByGroup, sourcesBeforeForkByThread);
+		super(groupedInterferences, sourcesBeforeForkByThread);
 	}
 
 	@Override
 	public IPredicate applyUntilFixpoint(final IPredicate state, final String observerThreadId,
 			final Set<String> activeThreadIds, final Set<String> observerLockset, final IDomain domain,
 			final int wideningThreshold, final SifaStats stats) {
-		final List<Entry<InterferenceGroupKey, IPredicate>> applicable =
+		final List<GroupedInterference<IPredicate>> applicable =
 				selectApplicableInterference(observerThreadId, activeThreadIds, observerLockset, stats);
 		if (applicable.isEmpty()) {
 			return state;
 		}
 		IPredicate result = state;
-		for (final Entry<InterferenceGroupKey, IPredicate> entry : applicable) {
-			result = domain.join(result, entry.getValue());
+		for (final GroupedInterference<IPredicate> group : applicable) {
+			result = domain.join(result, group.mergedInterference());
 		}
 		return result;
 	}
@@ -77,7 +77,8 @@ public final class PostStateInterference extends GroupedInterferenceSet<IPredica
 	}
 
 	@Override
-	protected GroupedInterferenceSet<IPredicate> withInterference(final Map<InterferenceGroupKey, IPredicate> interferenceByGroup) {
-		return new PostStateInterference(interferenceByGroup, mSourcesBeforeForkByThread);
+	protected GroupedInterferenceSet<IPredicate>
+			withGroupedInterferences(final Collection<GroupedInterference<IPredicate>> groupedInterferences) {
+		return new PostStateInterference(groupedInterferences, mSourcesBeforeForkByThread);
 	}
 }

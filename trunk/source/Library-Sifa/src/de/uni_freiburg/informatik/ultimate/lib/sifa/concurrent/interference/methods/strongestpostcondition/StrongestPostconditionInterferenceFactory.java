@@ -32,10 +32,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeCollector;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedEdgeInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.strongestpostcondition.StrongestPostconditionInterference.RelationalInterference;
@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.TransFo
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 
 public final class StrongestPostconditionInterferenceFactory
-		extends GroupedInterferenceFactory<Map<InterferenceGroupKey, RelationalInterference>> {
+		extends GroupedInterferenceFactory<Map<GroupedInterference.Key, GroupedInterference<RelationalInterference>>> {
 
 	public StrongestPostconditionInterferenceFactory(final InterferenceEdgeCollector edgeCollector,
 			final TransFormulaToInterferencePredicate translator, final RelationalPredicatePostcondition postcondition,
@@ -61,12 +61,13 @@ public final class StrongestPostconditionInterferenceFactory
 	}
 
 	@Override
-	protected Map<InterferenceGroupKey, RelationalInterference> createAccumulator() {
+	public Map<GroupedInterference.Key, GroupedInterference<RelationalInterference>> createInterferenceGroups() {
 		return new LinkedHashMap<>();
 	}
 
 	@Override
-	protected void accumulateEdgeInterference(final Map<InterferenceGroupKey, RelationalInterference> accumulator,
+	protected void addEdgeInterference(
+			final Map<GroupedInterference.Key, GroupedInterference<RelationalInterference>> groupedInterferences,
 			final TranslatedEdgeInterference edge, final Map<IcfgLocation, IPredicate> threadStates) {
 		final IPredicate relationalInterference = relationalInterferenceOf(edge, threadStates);
 		if (relationalInterference == null
@@ -76,22 +77,29 @@ public final class StrongestPostconditionInterferenceFactory
 		final RelationalInterference interference = new RelationalInterference(relationalInterference,
 				mPostcondition.prepareRelation(relationalInterference),
 				unconditionalPostStateOf(relationalInterference));
-		accumulator.merge(groupKeyFor(edge), interference, this::mergeInterference);
+		final GroupedInterference<RelationalInterference> group =
+				new GroupedInterference<>(contextFor(edge), Set.of(edge.source()), interference);
+		groupedInterferences.merge(group.key(), group, this::mergeInterference);
 	}
 
 	@Override
-	protected IInterferenceSet buildInterferenceSet(
-			final Map<InterferenceGroupKey, RelationalInterference> accumulator) {
-		return accumulator.isEmpty() ? null
-				: new StrongestPostconditionInterference(accumulator, mSourcesBeforeForkByThread, mPostcondition);
+	public IInterferenceSet buildInterferenceSet(
+			final Map<GroupedInterference.Key, GroupedInterference<RelationalInterference>> groupedInterferences) {
+		return groupedInterferences.isEmpty() ? null
+				: new StrongestPostconditionInterference(groupedInterferences.values(), mSourcesBeforeForkByThread,
+						mPostcondition);
 	}
 
-	private RelationalInterference mergeInterference(final RelationalInterference left,
-			final RelationalInterference right) {
-		final IPredicate mergedRelation = disjoin(left.relationalInterference(), right.relationalInterference());
-		final IPredicate mergedPostState = disjoin(left.unconditionalPostState(), right.unconditionalPostState());
-		return new RelationalInterference(mergedRelation, mPostcondition.prepareRelation(mergedRelation),
-				mergedPostState);
+	private GroupedInterference<RelationalInterference> mergeInterference(
+			final GroupedInterference<RelationalInterference> left,
+			final GroupedInterference<RelationalInterference> right) {
+		final RelationalInterference leftInterference = left.mergedInterference();
+		final RelationalInterference rightInterference = right.mergedInterference();
+		final IPredicate mergedRelation =
+				disjoin(leftInterference.relationalInterference(), rightInterference.relationalInterference());
+		final IPredicate mergedPostState =
+				disjoin(leftInterference.unconditionalPostState(), rightInterference.unconditionalPostState());
+		return left.withMergedInterference(new RelationalInterference(mergedRelation,
+				mPostcondition.prepareRelation(mergedRelation), mergedPostState));
 	}
-
 }

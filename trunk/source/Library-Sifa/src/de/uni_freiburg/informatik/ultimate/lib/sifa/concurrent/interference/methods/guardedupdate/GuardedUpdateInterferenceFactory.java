@@ -26,10 +26,12 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.guardedupdate;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,10 +39,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceContext;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceEdgeCollector;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.TranslatedEdgeInterference;
@@ -55,8 +58,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-public final class GuardedUpdateInterferenceFactory
-		extends GroupedInterferenceFactory<Map<InterferenceGroupKey, Map<TranslatedEdgeInterference, GuardedUpdate>>> {
+public final class GuardedUpdateInterferenceFactory extends
+		GroupedInterferenceFactory<Map<GroupedInterference.Key, Map<TranslatedEdgeInterference, GuardedUpdate>>> {
 
 	private Map<String, Map<Integer, LocationMoveInterference>> mLocationMoveInterferenceByThread;
 
@@ -81,20 +84,20 @@ public final class GuardedUpdateInterferenceFactory
 	}
 
 	@Override
-	protected Map<InterferenceGroupKey, Map<TranslatedEdgeInterference, GuardedUpdate>> createAccumulator() {
+	public Map<GroupedInterference.Key, Map<TranslatedEdgeInterference, GuardedUpdate>> createInterferenceGroups() {
 		return new LinkedHashMap<>();
 	}
 
 	@Override
-	protected void accumulateEdgeInterference(
-			final Map<InterferenceGroupKey, Map<TranslatedEdgeInterference, GuardedUpdate>> accumulator,
+	protected void addEdgeInterference(
+			final Map<GroupedInterference.Key, Map<TranslatedEdgeInterference, GuardedUpdate>> updatesByGroup,
 			final TranslatedEdgeInterference edge, final Map<IcfgLocation, IPredicate> threadStates) {
 		final IPredicate sourceState = threadStates.get(edge.source());
 		if (sourceState == null) {
 			return;
 		}
 		if (isLocationMove(edge)) {
-			accumulateLocationMoveClosure(accumulator, edge);
+			addLocationMoveClosure(updatesByGroup, edge);
 			return;
 		}
 		final CachedGuardedUpdate cachedUpdate = mCachedUpdatesByEdge.get(edge);
@@ -112,15 +115,16 @@ public final class GuardedUpdateInterferenceFactory
 		if (update == null) {
 			return;
 		}
-		accumulator.computeIfAbsent(groupKeyFor(edge), key -> new LinkedHashMap<>()).put(edge, update);
+		final GroupedInterference.Key key = new GroupedInterference.Key(contextFor(edge), Set.of(edge.source()));
+		updatesByGroup.computeIfAbsent(key, ignored -> new LinkedHashMap<>()).put(edge, update);
 	}
 
-	private void accumulateLocationMoveClosure(
-			final Map<InterferenceGroupKey, Map<TranslatedEdgeInterference, GuardedUpdate>> accumulator,
+	private void addLocationMoveClosure(
+			final Map<GroupedInterference.Key, Map<TranslatedEdgeInterference, GuardedUpdate>> updatesByGroup,
 			final TranslatedEdgeInterference edge) {
 		final LocationMoveInterference interference =
 				locationMoveInterferenceByThread().get(edge.source().getProcedure()).get(sourceAbstractLocation(edge));
-		accumulator.computeIfAbsent(interference.groupKey(), key -> new LinkedHashMap<>())
+		updatesByGroup.computeIfAbsent(interference.groupKey(), key -> new LinkedHashMap<>())
 				.put(interference.representative(), interference.update());
 	}
 
@@ -137,7 +141,7 @@ public final class GuardedUpdateInterferenceFactory
 		return edge.abstractLocationPair().targetAbstractLocation();
 	}
 
-	private record LocationMoveInterference(InterferenceGroupKey groupKey, TranslatedEdgeInterference representative,
+	private record LocationMoveInterference(GroupedInterference.Key groupKey, TranslatedEdgeInterference representative,
 			GuardedUpdate update) {
 	}
 
@@ -191,9 +195,9 @@ public final class GuardedUpdateInterferenceFactory
 		final IPredicate effect = mPredicateFactory.newPredicate(SmtUtils.or(mManagedScript.getScript(),
 				reachable.stream().map(target -> locEquality(locVar, target)).toList()));
 		final GuardedUpdate update = new GuardedUpdate(guard, effect, Set.of(locVar));
-		final InterferenceGroupKey key = new InterferenceGroupKey(thread,
-				new AbstractLocationPair(sourceAbstractLocation, sourceAbstractLocation), Set.of(), null,
-				Set.copyOf(sources));
+		final InterferenceContext context = new InterferenceContext(thread,
+				new AbstractLocationPair(sourceAbstractLocation, sourceAbstractLocation), Set.of(), null);
+		final GroupedInterference.Key key = new GroupedInterference.Key(context, sources);
 		return new LocationMoveInterference(key, representative, update);
 	}
 
@@ -204,15 +208,16 @@ public final class GuardedUpdateInterferenceFactory
 	}
 
 	@Override
-	protected IInterferenceSet buildInterferenceSet(
-			final Map<InterferenceGroupKey, Map<TranslatedEdgeInterference, GuardedUpdate>> accumulator) {
-		if (accumulator.isEmpty()) {
+	public IInterferenceSet buildInterferenceSet(
+			final Map<GroupedInterference.Key, Map<TranslatedEdgeInterference, GuardedUpdate>> updatesByGroup) {
+		if (updatesByGroup.isEmpty()) {
 			return null;
 		}
-		final Map<InterferenceGroupKey, GuardedUpdateGroup> merged = new LinkedHashMap<>();
-		accumulator.forEach((key, updates) -> merged.put(key,
-				new GuardedUpdateGroup(updates)));
-		return new GuardedUpdateInterference(merged, mSourcesBeforeForkByThread, mManagedScript, mPredicateFactory);
+		final List<GroupedInterference<GuardedUpdateGroup>> groupedInterferences = new ArrayList<>();
+		updatesByGroup.forEach((key, updates) -> groupedInterferences
+				.add(new GroupedInterference<>(key.context(), key.sourceLocations(), new GuardedUpdateGroup(updates))));
+		return new GuardedUpdateInterference(groupedInterferences, mSourcesBeforeForkByThread, mManagedScript,
+				mPredicateFactory);
 	}
 
 	private GuardedUpdate tryCreateUpdate(final TranslatedEdgeInterference edge, final IPredicate sharedPreState) {

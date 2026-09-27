@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,7 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.DagInterpreter;
@@ -99,31 +101,42 @@ public final class ThreadAnalyzer {
 		return Set.copyOf(exits);
 	}
 
-	public void analyzeAllThreads(final IInterferenceSet interference, final ThreadInvariants threadInvariants) {
-		threadInvariants.beginRound();
-		for (final String threadId : mForkGraph.getThreadIds()) {
-			final SingleThreadIcfg threadIcfg = mThreadIcfgs.get(threadId);
+	public List<String> getThreadIds() {
+		return mForkGraph.getThreadIds();
+	}
 
-			mConcurrentTools.configureForThread(threadId, interference, threadInvariants.locationInvariants(), mDomain);
-			try {
-				final IcfgLocation entryLocation = threadIcfg.getProcedureEntryNodes().get(threadId);
-				final IPredicate initialState = mConcurrentTools.applyInterferences(
-						mConcurrentTools.getInitialStatePredicate(), entryLocation);
+	public Map<IcfgLocation, IPredicate> analyzeThread(final String threadId, final IInterferenceSet interference,
+			final Map<IcfgLocation, IPredicate> locationInvariants) {
+		final SingleThreadIcfg threadIcfg = mThreadIcfgs.get(threadId);
+		mConcurrentTools.configureForThread(threadId, interference, locationInvariants, mDomain);
+		try {
+			final IcfgLocation entryLocation = threadIcfg.getProcedureEntryNodes().get(threadId);
+			final IPredicate initialState =
+					mConcurrentTools.applyInterferences(mConcurrentTools.getInitialStatePredicate(), entryLocation);
 
-				mConcurrentTools.rememberThreadLocationState(entryLocation, initialState);
-				final Map<IcfgLocation, IPredicate> threadResult = analyzeSingleThread(threadId, initialState);
-				final Map<IcfgLocation, IPredicate> observed = mConcurrentTools.getObservedThreadLocationStates();
-				threadInvariants.updateThread(threadId, threadResult, observed);
-			} finally {
-				mConcurrentTools.clearThreadContext();
-			}
+			mConcurrentTools.rememberThreadLocationState(entryLocation, initialState);
+			final IcfgInterpreter interpreter =
+					mThreadInterpreters.computeIfAbsent(threadId, this::createThreadInterpreter);
+			final Map<IcfgLocation, IPredicate> threadResult = interpreter.interpret(initialState);
+			final Map<IcfgLocation, IPredicate> observed = mConcurrentTools.getObservedThreadLocationStates();
+			updateLocationInvariants(locationInvariants, threadResult, observed);
+			final Map<IcfgLocation, IPredicate> threadStates = new LinkedHashMap<>(observed);
+			threadStates.putAll(threadResult);
+			return threadStates;
+		} finally {
+			mConcurrentTools.clearThreadContext();
 		}
 	}
 
-	private Map<IcfgLocation, IPredicate> analyzeSingleThread(final String threadId, final IPredicate initialState) {
-		final IcfgInterpreter interpreter = mThreadInterpreters.computeIfAbsent(threadId,
-				this::createThreadInterpreter);
-		return interpreter.interpret(initialState);
+	private static void updateLocationInvariants(final Map<IcfgLocation, IPredicate> locationInvariants,
+			final Map<IcfgLocation, IPredicate> threadResult, final Map<IcfgLocation, IPredicate> observed) {
+		locationInvariants.putAll(threadResult);
+		for (final var entry : observed.entrySet()) {
+			if (!threadResult.containsKey(entry.getKey()) || entry.getKey().getOutgoingEdges().stream()
+					.anyMatch(edge -> edge instanceof IIcfgForkTransitionThreadCurrent<?>)) {
+				locationInvariants.put(entry.getKey(), entry.getValue());
+			}
+		}
 	}
 
 	private void prepareThreadIcfgsAndLois() {

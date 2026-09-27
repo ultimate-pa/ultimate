@@ -28,12 +28,24 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 
-public record InterferenceGroupKey(String threadId, AbstractLocationPair abstractLocations, Set<String> lockset,
-		String forkedThreadId, Set<IcfgLocation> sourceLocations) {
-	public InterferenceGroupKey {
-		lockset = Set.copyOf(lockset);
+public record GroupedInterference<I>(InterferenceContext context, Set<IcfgLocation> sourceLocations,
+		I mergedInterference) {
+	public GroupedInterference {
 		sourceLocations = Set.copyOf(sourceLocations);
+	}
+
+	public record Key(InterferenceContext context, Set<IcfgLocation> sourceLocations) {
+		public Key {
+			sourceLocations = Set.copyOf(sourceLocations);
+		}
+	}
+
+	public Key key() {
+		return new Key(context, sourceLocations);
+	}
+
+	public GroupedInterference<I> withMergedInterference(final I mergedInterference) {
+		return new GroupedInterference<>(context, sourceLocations, mergedInterference);
 	}
 }

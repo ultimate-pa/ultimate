@@ -25,7 +25,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
 
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -36,12 +35,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocksetAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.TransFormulaToInterferencePredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ThreadInvariants;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-public abstract class GroupedInterferenceFactory<A> {
+public abstract class GroupedInterferenceFactory<G> {
 
 	protected final InterferenceEdgeCollector mEdgeCollector;
 	protected final TransFormulaToInterferencePredicate mTranslator;
@@ -68,37 +66,31 @@ public abstract class GroupedInterferenceFactory<A> {
 		mFalsePredicate = predicateFactory.newPredicate(managedScript.getScript().term("false"));
 	}
 
-	public final IInterferenceSet buildFromThreadInvariants(final ThreadInvariants invariants) {
-		final Map<String, Map<IcfgLocation, IPredicate>> perThreadStates = invariants.threadInvariants();
-		final Map<IcfgLocation, IPredicate> allStates = mergeStates(perThreadStates);
-		final A accumulator = createAccumulator();
-		for (final TranslatedEdgeInterference edge : mEdgeCollector.collect(allStates)) {
-			if (requiresChangedGlobals() && edge.changedGlobals().isEmpty()) {
+	public final void addThreadInterferences(final G groupedInterferences, final String threadId,
+			final Map<IcfgLocation, IPredicate> threadStates) {
+		for (final TranslatedEdgeInterference edge : mEdgeCollector.collect(threadStates)) {
+			if (!threadId.equals(edge.source().getProcedure())
+					|| requiresChangedGlobals() && edge.changedGlobals().isEmpty()) {
 				continue;
 			}
-			final Map<IcfgLocation, IPredicate> threadStates = perThreadStates.get(edge.source().getProcedure());
-			if (threadStates == null) {
-				continue;
-			}
-			accumulateEdgeInterference(accumulator, edge, threadStates);
+			addEdgeInterference(groupedInterferences, edge, threadStates);
 		}
-		return buildInterferenceSet(accumulator);
 	}
 
 	protected boolean requiresChangedGlobals() {
 		return true;
 	}
 
-	protected abstract A createAccumulator();
+	public abstract G createInterferenceGroups();
 
-	protected abstract void accumulateEdgeInterference(A accumulator, TranslatedEdgeInterference edge,
+	protected abstract void addEdgeInterference(G groupedInterferences, TranslatedEdgeInterference edge,
 			Map<IcfgLocation, IPredicate> threadStates);
 
-	protected abstract IInterferenceSet buildInterferenceSet(A accumulator);
+	public abstract IInterferenceSet buildInterferenceSet(G groupedInterferences);
 
-	protected final InterferenceGroupKey groupKeyFor(final TranslatedEdgeInterference edge) {
-		return new InterferenceGroupKey(edge.source().getProcedure(), edge.abstractLocationPair(),
-				mustHeldLocksAroundEdge(edge), edge.forkedThreadId(), Set.of(edge.source()));
+	protected final InterferenceContext contextFor(final TranslatedEdgeInterference edge) {
+		return new InterferenceContext(edge.source().getProcedure(), edge.abstractLocationPair(),
+				mustHeldLocksAroundEdge(edge), edge.forkedThreadId());
 	}
 
 	protected final Set<String> mustHeldLocksAroundEdge(final TranslatedEdgeInterference edge) {
@@ -138,12 +130,5 @@ public abstract class GroupedInterferenceFactory<A> {
 	protected final IPredicate disjoin(final IPredicate left, final IPredicate right) {
 		return mPredicateFactory
 				.newPredicate(SmtUtils.or(mManagedScript.getScript(), left.getFormula(), right.getFormula()));
-	}
-
-	protected static Map<IcfgLocation, IPredicate> mergeStates(
-			final Map<String, Map<IcfgLocation, IPredicate>> perThreadStates) {
-		final Map<IcfgLocation, IPredicate> merged = new LinkedHashMap<>();
-		perThreadStates.values().forEach(merged::putAll);
-		return merged;
 	}
 }

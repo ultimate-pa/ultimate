@@ -26,19 +26,19 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.strongestpostcondition;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGroupKey;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterferenceSet;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition.PreparedRelation;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
@@ -61,17 +61,17 @@ public final class StrongestPostconditionInterference
 			new IdentityHashMap<>();
 
 	public StrongestPostconditionInterference(
-			final Map<InterferenceGroupKey, RelationalInterference> interferenceByGroup,
+			final Collection<GroupedInterference<RelationalInterference>> groupedInterferences,
 			final Map<String, Set<IcfgLocation>> sourcesBeforeForkByThread,
 			final RelationalPredicatePostcondition postcondition) {
-		this(interferenceByGroup, sourcesBeforeForkByThread, postcondition, false);
+		this(groupedInterferences, sourcesBeforeForkByThread, postcondition, false);
 	}
 
 	private StrongestPostconditionInterference(
-			final Map<InterferenceGroupKey, RelationalInterference> interferenceByGroup,
+			final Collection<GroupedInterference<RelationalInterference>> groupedInterferences,
 			final Map<String, Set<IcfgLocation>> sourcesBeforeForkByThread,
 			final RelationalPredicatePostcondition postcondition, final boolean isWidened) {
-		super(interferenceByGroup, sourcesBeforeForkByThread);
+		super(groupedInterferences, sourcesBeforeForkByThread);
 		mPostcondition = postcondition;
 		mIsWidened = isWidened;
 	}
@@ -80,11 +80,11 @@ public final class StrongestPostconditionInterference
 	public IPredicate applyUntilFixpoint(final IPredicate state, final String observerThreadId,
 			final Set<String> activeThreadIds, final Set<String> observerLockset, final IDomain domain,
 			final int wideningThreshold, final SifaStats stats) {
-		if (mInterferenceByGroup.isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
+		if (isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
 				|| SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;
 		}
-		final List<Entry<InterferenceGroupKey, RelationalInterference>> applicable =
+		final List<GroupedInterference<RelationalInterference>> applicable =
 				selectApplicableInterference(observerThreadId, activeThreadIds, observerLockset, stats);
 		if (applicable.isEmpty()) {
 			return state;
@@ -142,12 +142,12 @@ public final class StrongestPostconditionInterference
 	}
 
 	private List<RelationalInterference> mergeByLocationPair(
-			final List<Entry<InterferenceGroupKey, RelationalInterference>> applicable, final IDomain domain) {
+			final List<GroupedInterference<RelationalInterference>> applicable, final IDomain domain) {
 		final Map<LocationPairKey, RelationalInterference> byPair = new LinkedHashMap<>();
-		for (final Entry<InterferenceGroupKey, RelationalInterference> entry : applicable) {
+		for (final GroupedInterference<RelationalInterference> group : applicable) {
 			final LocationPairKey pairKey =
-					new LocationPairKey(entry.getKey().threadId(), entry.getKey().abstractLocations());
-			byPair.merge(pairKey, entry.getValue(), (a, b) -> joinRelationalInterferences(a, b, domain));
+					new LocationPairKey(group.context().threadId(), group.context().abstractLocations());
+			byPair.merge(pairKey, group.mergedInterference(), (a, b) -> joinRelationalInterferences(a, b, domain));
 		}
 		return new ArrayList<>(byPair.values());
 	}
@@ -195,8 +195,9 @@ public final class StrongestPostconditionInterference
 	}
 
 	@Override
-	protected GroupedInterferenceSet<RelationalInterference> withInterference(
-			final Map<InterferenceGroupKey, RelationalInterference> interferenceByGroup) {
-		return new StrongestPostconditionInterference(interferenceByGroup, mSourcesBeforeForkByThread, mPostcondition, true);
+	protected GroupedInterferenceSet<RelationalInterference> withGroupedInterferences(
+			final Collection<GroupedInterference<RelationalInterference>> groupedInterferences) {
+		return new StrongestPostconditionInterference(groupedInterferences, mSourcesBeforeForkByThread, mPostcondition,
+				true);
 	}
 }

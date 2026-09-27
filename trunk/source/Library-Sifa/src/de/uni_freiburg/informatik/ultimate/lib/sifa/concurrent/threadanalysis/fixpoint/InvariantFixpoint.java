@@ -25,12 +25,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.fixpoint;
 
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.publish.PublishOnAcquire;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ThreadInvariants;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
 final class InvariantFixpoint {
@@ -63,18 +64,19 @@ final class InvariantFixpoint {
 		mRerunWithStableInterferences = false;
 	}
 
-	void configureForAnalysis(final ThreadInvariants invariants) {
-		mLocationInvariants.rememberCurrentStates(invariants.locationInvariants());
+	void configureForAnalysis(final Map<IcfgLocation, IPredicate> locationInvariants) {
+		mLocationInvariants.rememberCurrentStates(locationInvariants);
 		mTools.setMutexInvariants(mMutexInvariants);
 	}
 
-	StabilityOutcome checkInvariantStability(final ThreadInvariants invariants, final int iteration) {
-		final PublishOnAcquire extracted = extractFrom(invariants);
+	StabilityOutcome checkInvariantStability(final Map<IcfgLocation, IPredicate> locationInvariants,
+			final int iteration) {
+		final PublishOnAcquire extracted = extractFrom(locationInvariants);
 		if (!extracted.isSubsumedBy(mMutexInvariants, mDomain)) {
 			advance(extracted, iteration);
 			return StabilityOutcome.UPDATE;
 		}
-		if (mRerunWithStableInterferences || mLocationInvariants.areUnchanged(invariants.locationInvariants())) {
+		if (mRerunWithStableInterferences || mLocationInvariants.areUnchanged(locationInvariants)) {
 			return StabilityOutcome.STABLE;
 		}
 		mRerunWithStableInterferences = true;
@@ -82,12 +84,12 @@ final class InvariantFixpoint {
 		return StabilityOutcome.ONE_EXTRA_ROUND;
 	}
 
-	void advance(final ThreadInvariants invariants, final int iteration) {
-		advance(extractFrom(invariants), iteration);
+	void advance(final Map<IcfgLocation, IPredicate> locationInvariants, final int iteration) {
+		advance(extractFrom(locationInvariants), iteration);
 	}
 
-	private PublishOnAcquire extractFrom(final ThreadInvariants invariants) {
-		return mInitialMutexInvariants.recomputePublishedInvariants(invariants.locationInvariants(), mDomain,
+	private PublishOnAcquire extractFrom(final Map<IcfgLocation, IPredicate> locationInvariants) {
+		return mInitialMutexInvariants.recomputePublishedInvariants(locationInvariants, mDomain,
 				mTools::postWithoutInterference);
 	}
 
