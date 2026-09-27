@@ -164,6 +164,7 @@ public class EGraph {
 	private void addSelectTerm(final ApplicationTerm selectTerm) {
 		assert selectTerm.getFunction().getName().equals("select");
 		assert selectTerm.getParameters().length == 2;
+		addTerm(selectTerm);
 		final Term array = selectTerm.getParameters()[0];
 		final Term index = selectTerm.getParameters()[1];
 
@@ -222,7 +223,8 @@ public class EGraph {
 				}
 			}
 		} else {
-			throw new UnsupportedOperationException("Unsupported term type");
+			mUnionFind.findAndConstructEquivalenceClassIfNeeded(term);
+			// throw new UnsupportedOperationException("Unsupported term type");
 		}
 
 	}
