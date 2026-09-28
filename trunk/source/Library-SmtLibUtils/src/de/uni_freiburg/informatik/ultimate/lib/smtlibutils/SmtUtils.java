@@ -265,7 +265,7 @@ public final class SmtUtils {
 		final long overallTimeMs = (endTime - startTime) / 1_000_000;
 		// write warning if simplification takes more than 5 seconds
 		if (overallTimeMs >= 5000) {
-			logger.warn(generateSimplificationLogMessage(formula, simplified, overallTimeMs));
+			logger.warn(generateSimplificationLogMessage(formula, simplified, overallTimeMs, "formula simplification"));
 			// Matthias 2023-08-01: The following is a hack for writing simplification
 			// benchmarks to a file. We write only if the simplification took at least 5s
 			// (see if above) and if the context is equivalent to true.
@@ -280,19 +280,19 @@ public final class SmtUtils {
 	/**
 	 * Log message for simplification that took a long time.
 	 */
-	private static String generateSimplificationLogMessage(final Term formula, final Term simplified,
-			final long overallTimeMs) {
+	public static String generateSimplificationLogMessage(final Term inputFormula, final Term outputFormula,
+			final long overallTimeMs, final String task) {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Spent ").append(CoreUtil.humanReadableTime(overallTimeMs, TimeUnit.MILLISECONDS, 2))
-				.append(" on a formula simplification");
-		if (formula.equals(simplified)) {
+		sb.append("Spent ").append(CoreUtil.humanReadableTime(overallTimeMs, TimeUnit.MILLISECONDS, 2)).append(" on a ")
+				.append(task);
+		if (inputFormula.equals(outputFormula)) {
 			sb.append(" that was a NOOP. DAG size: ");
-			sb.append(new DagSizePrinter(formula));
+			sb.append(new DagSizePrinter(inputFormula));
 		} else {
 			sb.append(". DAG size of input: ");
-			sb.append(new DagSizePrinter(formula));
+			sb.append(new DagSizePrinter(inputFormula));
 			sb.append(" DAG size of output: ");
-			sb.append(new DagSizePrinter(simplified));
+			sb.append(new DagSizePrinter(outputFormula));
 		}
 		sb.append(" (called from ").append(ReflectionUtil.getCallerSignatureFiltered(Set.of(SmtUtils.class)))
 				.append(")");
