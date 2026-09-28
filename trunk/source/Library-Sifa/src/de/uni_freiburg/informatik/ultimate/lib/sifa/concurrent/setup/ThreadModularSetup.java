@@ -85,12 +85,11 @@ public final class ThreadModularSetup {
 		}
 		mActivityPreanalysis = ThreadActivityPreanalysis.compute(icfg, mForkGraph, settings.joinPrecision());
 		final boolean needsLocksetAnalysis = settings.locksetAwareInterference() || settings.publishOnAcquire();
-		mLocksetInfo = needsLocksetAnalysis
-				? MustLocksetAnalysis.create(icfg, mActivityPreanalysis)
+		mLocksetInfo = needsLocksetAnalysis ? MustLocksetAnalysis.create(icfg, mActivityPreanalysis)
 				: MustLocksetAnalysis.disabled();
 		mAbstractLocationIds = Map.copyOf(computeLocationIds(settings, services, icfg, interferenceLocksetInfo()));
-		mPreForkSourcesByThread = mForkGraph.computePreForkSourcesByThread(icfg,
-				mActivityPreanalysis.getMultiForkedThreads());
+		mPreForkSourcesByThread =
+				mForkGraph.computePreForkSourcesByThread(icfg, mActivityPreanalysis.getMultiForkedThreads());
 		mGhostVariables = GhostVariableManager.create(toolkit.getManagedScript(), mAbstractLocationIds,
 				new LinkedHashSet<>(mForkGraph.getThreadIds()), icfg.getProcedureEntryNodes(), mSymbolTable,
 				mActivityPreanalysis.getMultiForkedThreads());
@@ -112,23 +111,24 @@ public final class ThreadModularSetup {
 		if (mSettings.publishOnAcquire()) {
 			logger.info("Publish-on-acquire enabled (protected globals discovered: %s)", !mutexInvariants.isEmpty());
 		}
-		final AbstractLocationPartitionedDomain partitionedDomain = mSettings.useBuckets()
-				? AbstractLocationPartitionedDomain.create(baseDomain, tools,
-						mGhostVariables.getLocationTermVariablesByThread(), mSettings.maxBuckets(),
-						mSettings.maxDisjunctsPerBucket())
-				: null;
+		final AbstractLocationPartitionedDomain partitionedDomain =
+				mSettings.useBuckets()
+						? AbstractLocationPartitionedDomain.create(baseDomain, tools,
+								mGhostVariables.getLocationTermVariablesByThread(), mSettings.maxBuckets(),
+								mSettings.maxDisjunctsPerBucket())
+						: null;
 		if (partitionedDomain != null) {
 			logger.info("Abstract-location partitioned domain enabled");
 		}
 		final IDomain domain = partitionedDomain != null ? partitionedDomain : baseDomain;
 		final var translator = new TransFormulaToInterferencePredicate(mServices, script, factory, mSymbolTable,
 				mGhostVariables, mAbstractLocationIds, mIcfg.getProcedureEntryNodes());
-		final RelationalPredicatePostcondition postcondition = new RelationalPredicatePostcondition(mServices, script,
-				factory, mSymbolTable, true);
+		final RelationalPredicatePostcondition postcondition =
+				new RelationalPredicatePostcondition(mServices, script, factory, mSymbolTable, true);
 		final InterferenceEdgeCollector edgeTraverser = new InterferenceEdgeCollector(mIcfg, translator);
-		final GroupedInterferenceFactory<?> interferenceFactory = createInterferenceFactory(
-				mSettings.interferenceApplicatorType(), edgeTraverser, translator, postcondition, domain, factory,
-				script, interferenceLocksetInfo(), mPreForkSourcesByThread);
+		final GroupedInterferenceFactory<?> interferenceFactory =
+				createInterferenceFactory(mSettings.interferenceApplicatorType(), edgeTraverser, translator,
+						postcondition, domain, factory, script, interferenceLocksetInfo(), mPreForkSourcesByThread);
 		logger.info("Interference method: %s (%s)", mSettings.interferenceApplicatorType(),
 				interferenceFactory.getClass().getSimpleName());
 		logger.info("Interference grouping: abstract-location pairs via %s", mSettings.locationAbstractionType());
@@ -165,6 +165,7 @@ public final class ThreadModularSetup {
 
 	public static record SetupResult(ThreadForkGraph forkGraph, IDomain domain,
 			GroupedInterferenceFactory<?> interferenceFactory, RelationalPredicatePostcondition postcondition,
-			Set<String> joinedThreads, Map<IcfgLocation, Integer> abstractLocationIds, PublishOnAcquire mutexInvariants) {
+			Set<String> joinedThreads, Map<IcfgLocation, Integer> abstractLocationIds,
+			PublishOnAcquire mutexInvariants) {
 	}
 }

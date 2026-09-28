@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.domain.IThreadLocalDomainContext;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats.Key;
@@ -98,7 +97,8 @@ public abstract class GroupedInterferenceSet<I> implements IInterferenceSet {
 		return applicable;
 	}
 
-	private boolean allSourcesPrecedeObserverFork(final String observerThreadId, final Set<IcfgLocation> sourceLocations) {
+	private boolean allSourcesPrecedeObserverFork(final String observerThreadId,
+			final Set<IcfgLocation> sourceLocations) {
 		final Set<IcfgLocation> sourcesBeforeFork = mSourcesBeforeForkByThread.getOrDefault(observerThreadId, Set.of());
 		return !sourceLocations.isEmpty() && sourcesBeforeFork.containsAll(sourceLocations);
 	}
@@ -119,7 +119,6 @@ public abstract class GroupedInterferenceSet<I> implements IInterferenceSet {
 		final GroupedInterferenceSet<I> typedOther = (GroupedInterferenceSet<I>) other;
 		final Map<GroupedInterference.Key, GroupedInterference<I>> widened = new LinkedHashMap<>();
 		for (final GroupedInterference<I> group : mGroupedInterferences.values()) {
-			IThreadLocalDomainContext.setIfApplicable(domain, group.context().threadId());
 			final GroupedInterference<I> otherGroup = typedOther.mGroupedInterferences.get(group.key());
 			final I widenedInterference;
 			if (otherGroup == null) {
@@ -149,7 +148,6 @@ public abstract class GroupedInterferenceSet<I> implements IInterferenceSet {
 		}
 		final GroupedInterferenceSet<I> typedOther = (GroupedInterferenceSet<I>) other;
 		for (final GroupedInterference<I> group : mGroupedInterferences.values()) {
-			IThreadLocalDomainContext.setIfApplicable(domain, group.context().threadId());
 			final GroupedInterference<I> otherGroup = typedOther.mGroupedInterferences.get(group.key());
 			if (otherGroup == null
 					|| !isInterferenceSubsumedBy(group.mergedInterference(), otherGroup.mergedInterference(), domain)) {

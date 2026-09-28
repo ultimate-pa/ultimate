@@ -45,10 +45,10 @@ final class DefinitelyJoinedThreadAnalysis {
 	private DefinitelyJoinedThreadAnalysis() {
 	}
 
-	static Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> computeTrackedJoins(
-			final ThreadForkGraph forkGraph, final Set<String> selfForkingThreads) {
-		final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> candidates = new LinkedHashMap<>(
-				forkGraph.getMatchedJoins());
+	static Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String>
+			computeTrackedJoins(final ThreadForkGraph forkGraph, final Set<String> selfForkingThreads) {
+		final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> candidates =
+				new LinkedHashMap<>(forkGraph.getMatchedJoins());
 		final Map<String, Integer> joinCount = new HashMap<>();
 		candidates.values().forEach(threadId -> joinCount.merge(threadId, 1, Integer::sum));
 		candidates.entrySet().removeIf(entry -> forkGraph.getForksForThread(entry.getValue()).size() != 1

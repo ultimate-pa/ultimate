@@ -271,10 +271,10 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 		containerSizeLimitFluid.addItem(integer(LABEL_SIZELIMITFLUID_MAX_DISJUNCTS,
 				TOOLTIP_SIZELIMITFLUID_MAX_DISJUNCTS, DEFAULT_SIZELIMITFLUID_MAX_DISJUNCTS));
 
-		final UltimatePreferenceItemContainer containerConcurrent = new UltimatePreferenceItemContainer(
-				"Thread-Modular");
-		containerConcurrent.addItem(combo(LABEL_INTERFERENCE_APPLICATOR, DEFAULT_INTERFERENCE_APPLICATOR,
-				VALUES_INTERFERENCE_APPLICATOR));
+		final UltimatePreferenceItemContainer containerConcurrent =
+				new UltimatePreferenceItemContainer("Thread-Modular");
+		containerConcurrent.addItem(
+				combo(LABEL_INTERFERENCE_APPLICATOR, DEFAULT_INTERFERENCE_APPLICATOR, VALUES_INTERFERENCE_APPLICATOR));
 		containerConcurrent
 				.addItem(combo(LABEL_LOCATION_ABSTRACTION, DEFAULT_LOCATION_ABSTRACTION, VALUES_LOCATION_ABSTRACTION));
 		containerConcurrent.addItem(integer(LABEL_OUTER_WIDENING_THRESHOLD, TOOLTIP_OUTER_WIDENING_THRESHOLD,
@@ -285,14 +285,14 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 				TOOLTIP_JOIN_PRECISION, PreferenceType.Boolean));
 		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_USE_BUCKETS, DEFAULT_USE_BUCKETS,
 				TOOLTIP_USE_BUCKETS, PreferenceType.Boolean));
-		containerConcurrent.addItem(integer(LABEL_MAX_BUCKETS, TOOLTIP_MAX_BUCKETS, DEFAULT_MAX_BUCKETS,
-				1, Integer.MAX_VALUE));
+		containerConcurrent
+				.addItem(integer(LABEL_MAX_BUCKETS, TOOLTIP_MAX_BUCKETS, DEFAULT_MAX_BUCKETS, 1, Integer.MAX_VALUE));
 		containerConcurrent.addItem(integer(LABEL_MAX_DISJUNCTS_PER_BUCKET, TOOLTIP_MAX_DISJUNCTS_PER_BUCKET,
 				DEFAULT_MAX_DISJUNCTS_PER_BUCKET, 1, Integer.MAX_VALUE));
 		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_LOCKSET_AWARE_INTERFERENCE,
 				DEFAULT_LOCKSET_AWARE_INTERFERENCE, TOOLTIP_LOCKSET_AWARE_INTERFERENCE, PreferenceType.Boolean));
-		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_PUBLISH_ON_ACQUIRE,
-				DEFAULT_PUBLISH_ON_ACQUIRE, TOOLTIP_PUBLISH_ON_ACQUIRE, PreferenceType.Boolean));
+		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_PUBLISH_ON_ACQUIRE, DEFAULT_PUBLISH_ON_ACQUIRE,
+				TOOLTIP_PUBLISH_ON_ACQUIRE, PreferenceType.Boolean));
 		containerConcurrent.addItem(new UltimatePreferenceItem<>(LABEL_RESULT_PRINT, DEFAULT_RESULT_PRINT,
 				TOOLTIP_RESULT_PRINT, PreferenceType.Boolean));
 

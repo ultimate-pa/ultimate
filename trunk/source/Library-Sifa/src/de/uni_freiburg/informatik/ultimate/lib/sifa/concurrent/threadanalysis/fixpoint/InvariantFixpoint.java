@@ -95,8 +95,8 @@ final class InvariantFixpoint {
 
 	private void advance(final PublishOnAcquire extracted, final int iteration) {
 		mRerunWithStableInterferences = false;
-		mMutexInvariants = iteration >= mWideningThreshold + MUTEX_WIDENING_DELAY
-				? mMutexInvariants.widen(extracted, mDomain)
-				: extracted;
+		mMutexInvariants =
+				iteration >= mWideningThreshold + MUTEX_WIDENING_DELAY ? mMutexInvariants.widen(extracted, mDomain)
+						: extracted;
 	}
 }

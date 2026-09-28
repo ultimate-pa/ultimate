@@ -88,8 +88,7 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 		final File inputDir = UltimateRunDefinitionGenerator.getFileFromTrunkDir(INPUT_DIR);
 		final List<File> inputFiles = TestUtil.getFiles(inputDir, FILE_ENDING).stream()
 				.filter(file -> !file.getAbsolutePath().matches(EXCLUDE_REGEX))
-				.sorted((a, b) -> a.getAbsolutePath().compareTo(b.getAbsolutePath()))
-				.collect(Collectors.toList());
+				.sorted((a, b) -> a.getAbsolutePath().compareTo(b.getAbsolutePath())).collect(Collectors.toList());
 		if (inputFiles.isEmpty()) {
 			throw new IllegalStateException("No " + FILE_ENDING + " test inputs found in " + inputDir);
 		}
@@ -128,13 +127,13 @@ public class SifaThreadModularRegressionSoundnessTest extends AbstractTraceAbstr
 			}
 
 			final SafetyCheckerOverallResult expected = expectedResultFinder.getExpectedResult();
-			final boolean expectedUnsafe = expected == SafetyCheckerOverallResult.UNSAFE
-					|| expected == SafetyCheckerOverallResult.UNSAFE_DEREF
-					|| expected == SafetyCheckerOverallResult.UNSAFE_FREE
-					|| expected == SafetyCheckerOverallResult.UNSAFE_MEMTRACK
-					|| expected == SafetyCheckerOverallResult.UNSAFE_OVERAPPROXIMATED;
-			final boolean actualSafe = actual == SafetyCheckerOverallResult.SAFE
-					|| actual == SafetyCheckerOverallResult.VALID_ANNOTATION;
+			final boolean expectedUnsafe =
+					expected == SafetyCheckerOverallResult.UNSAFE || expected == SafetyCheckerOverallResult.UNSAFE_DEREF
+							|| expected == SafetyCheckerOverallResult.UNSAFE_FREE
+							|| expected == SafetyCheckerOverallResult.UNSAFE_MEMTRACK
+							|| expected == SafetyCheckerOverallResult.UNSAFE_OVERAPPROXIMATED;
+			final boolean actualSafe =
+					actual == SafetyCheckerOverallResult.SAFE || actual == SafetyCheckerOverallResult.VALID_ANNOTATION;
 
 			if (expectedUnsafe && actualSafe) {
 				mTestResult = TestResult.FAIL;

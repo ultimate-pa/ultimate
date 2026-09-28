@@ -41,8 +41,9 @@ public final class GuardedUpdateUtils {
 	private GuardedUpdateUtils() {
 	}
 
-	public static IPredicate extractTransitionAwareGuard(final IPredicate fullRelation, final Set<? extends Term> primedVars,
-			final ManagedScript managedScript, final BasicPredicateFactory predicateFactory) {
+	public static IPredicate extractTransitionAwareGuard(final IPredicate fullRelation,
+			final Set<? extends Term> primedVars, final ManagedScript managedScript,
+			final BasicPredicateFactory predicateFactory) {
 		final Term[] conjuncts = SmtUtils.getConjuncts(fullRelation.getFormula());
 		final List<Term> preOnly = new ArrayList<>();
 		for (final Term conjunct : conjuncts) {

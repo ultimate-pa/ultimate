@@ -162,8 +162,8 @@ public class InterferencePrecisionRegressionTest {
 	public void postOnlyKeepsRaceValueInsideMutex() {
 		initializeAnalysis();
 
-		final IPredicate state = predicate(
-				and(eq(varTv(mW), num(1)), eq(varTv(mRaceX), num(0)), eq(varTv(mLocWriter), num(1))));
+		final IPredicate state =
+				predicate(and(eq(varTv(mW), num(1)), eq(varTv(mRaceX), num(0)), eq(varTv(mLocWriter), num(1))));
 		final IPredicate writeCriticalSection = writerWriteRaceZero();
 
 		mManagedScript.unlock(this);
@@ -178,14 +178,13 @@ public class InterferencePrecisionRegressionTest {
 	public void interferenceFixpointJoinWorks() {
 		initializeAnalysis();
 
-		final IPredicate state = predicate(
-				and(eq(varTv(mW), num(1)), eq(varTv(mRaceX), num(0)), eq(varTv(mLocWriter), num(1))));
+		final IPredicate state =
+				predicate(and(eq(varTv(mW), num(1)), eq(varTv(mRaceX), num(0)), eq(varTv(mLocWriter), num(1))));
 		final IInterferenceSet itf = mutexInterferences();
 
 		mManagedScript.unlock(this);
-		final IPredicate fixedJoin =
-				itf.applyUntilFixpoint(state, OBSERVER_THREAD_ID, Set.of(INTERFERING_THREAD_ID), Set.of(),
-						mIntervalDomain, 20, mStats);
+		final IPredicate fixedJoin = itf.applyUntilFixpoint(state, OBSERVER_THREAD_ID, Set.of(INTERFERING_THREAD_ID),
+				Set.of(), mIntervalDomain, 20, mStats);
 		mManagedScript.lock(this);
 
 		assertUnsat(and(fixedJoin.getFormula(), eq(varTv(mRaceX), num(1))));
@@ -196,16 +195,15 @@ public class InterferencePrecisionRegressionTest {
 	public void symbolicPostThenFixpointJoinWorks() {
 		initializeAnalysis();
 
-		final IPredicate state = predicate(
-				and(eq(varTv(mW), num(1)), eq(varTv(mRaceX), num(0)), eq(varTv(mLocWriter), num(1))));
+		final IPredicate state =
+				predicate(and(eq(varTv(mW), num(1)), eq(varTv(mRaceX), num(0)), eq(varTv(mLocWriter), num(1))));
 		final IIcfgInternalTransition<IcfgLocation> transition = identityTransition();
 		final IInterferenceSet itf = mutexInterferences();
 
 		mManagedScript.unlock(this);
 		final IPredicate post = mTools.post(state, transition);
-		final IPredicate fixedJoin =
-				itf.applyUntilFixpoint(post, OBSERVER_THREAD_ID, Set.of(INTERFERING_THREAD_ID), Set.of(),
-						mIntervalDomain, 20, mStats);
+		final IPredicate fixedJoin = itf.applyUntilFixpoint(post, OBSERVER_THREAD_ID, Set.of(INTERFERING_THREAD_ID),
+				Set.of(), mIntervalDomain, 20, mStats);
 		mManagedScript.lock(this);
 
 		assertUnsat(and(fixedJoin.getFormula(), eq(varTv(mRaceX), num(1))));
@@ -219,13 +217,13 @@ public class InterferencePrecisionRegressionTest {
 
 		mPrimedSymbolTable = new PrimedDefaultIcfgSymbolTable(mBaseSymbolTable, Collections.emptySet(), mManagedScript);
 		mPredicateFactory = new BasicPredicateFactory(mServices, mManagedScript, mPrimedSymbolTable);
-		mRelationalPost = new RelationalPredicatePostcondition(mServices, mManagedScript, mPredicateFactory,
-				mPrimedSymbolTable);
+		mRelationalPost =
+				new RelationalPredicatePostcondition(mServices, mManagedScript, mPredicateFactory, mPrimedSymbolTable);
 
 		mStats = new SifaStats();
-		final CfgSmtToolkit toolkit = new CfgSmtToolkit(new ModifiableGlobalsTable(new HashRelation<>()),
-				mManagedScript, mPrimedSymbolTable, Collections.emptySet(), Collections.emptyMap(),
-				Collections.emptyMap(), null, null, null);
+		final CfgSmtToolkit toolkit =
+				new CfgSmtToolkit(new ModifiableGlobalsTable(new HashRelation<>()), mManagedScript, mPrimedSymbolTable,
+						Collections.emptySet(), Collections.emptyMap(), Collections.emptyMap(), null, null, null);
 		mTools = new TestSymbolicTools(mServices, mStats, new MinimalIcfg(toolkit), SimplificationTechnique.NONE,
 				mPrimedSymbolTable);
 		final ILogger logger = mServices.getLoggingService().getLogger(getClass());
@@ -284,8 +282,8 @@ public class InterferencePrecisionRegressionTest {
 	}
 
 	private ProgramNonOldVar createIntGlobal(final String name) {
-		final ProgramNonOldVar var = ProgramVarUtils.constructGlobalProgramVarPair(name, mIntSort, mManagedScript,
-				this);
+		final ProgramNonOldVar var =
+				ProgramVarUtils.constructGlobalProgramVarPair(name, mIntSort, mManagedScript, this);
 		mBaseSymbolTable.add(var);
 		return var;
 	}

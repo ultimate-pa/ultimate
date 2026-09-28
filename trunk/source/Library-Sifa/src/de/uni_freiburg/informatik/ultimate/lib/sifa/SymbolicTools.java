@@ -81,8 +81,8 @@ public class SymbolicTools {
 	}
 
 	protected SymbolicTools(final IUltimateServiceProvider services, final SifaStats stats,
-			final IIcfg<IcfgLocation> icfg,
-			final SimplificationTechnique simplification, final IIcfgSymbolTable symbolTable) {
+			final IIcfg<IcfgLocation> icfg, final SimplificationTechnique simplification,
+			final IIcfgSymbolTable symbolTable) {
 		mServices = services;
 		mStats = stats;
 		mIcfg = icfg;

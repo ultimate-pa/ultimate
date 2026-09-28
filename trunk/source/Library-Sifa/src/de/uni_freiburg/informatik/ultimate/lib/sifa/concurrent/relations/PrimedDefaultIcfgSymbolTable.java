@@ -142,8 +142,8 @@ public class PrimedDefaultIcfgSymbolTable extends DefaultIcfgSymbolTable {
 		if (mFunSym2ProgramFunction.containsKey(funSym)) {
 			return;
 		}
-		final IProgramConst primedConst = new ProgramConst(var.getGloballyUniqueId() + "_primed", primedConstant,
-				false);
+		final IProgramConst primedConst =
+				new ProgramConst(var.getGloballyUniqueId() + "_primed", primedConstant, false);
 		mFunSym2ProgramFunction.put(funSym, primedConst);
 		mConstants.add(primedConst);
 	}

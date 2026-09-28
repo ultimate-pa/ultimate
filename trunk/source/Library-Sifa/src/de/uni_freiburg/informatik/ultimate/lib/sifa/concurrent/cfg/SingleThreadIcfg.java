@@ -67,8 +67,8 @@ public class SingleThreadIcfg implements IIcfg<IcfgLocation> {
 		mFilteredInitialNodes = Set.of(entryNode);
 
 		mReachableLocations = Set.copyOf(computeIntraThreadReachable(entryNode));
-		mReachableProcedures = Set
-				.copyOf(mReachableLocations.stream().map(IcfgLocation::getProcedure).collect(Collectors.toSet()));
+		mReachableProcedures =
+				Set.copyOf(mReachableLocations.stream().map(IcfgLocation::getProcedure).collect(Collectors.toSet()));
 
 		mFilteredProgramPoints = filterProgramPoints(delegate.getProgramPoints());
 		mFilteredProcedureEntryNodes = filterLocationMap(delegate.getProcedureEntryNodes());
@@ -83,8 +83,8 @@ public class SingleThreadIcfg implements IIcfg<IcfgLocation> {
 		return mFilteredInitialNodes;
 	}
 
-	private Map<String, Map<DebugIdentifier, IcfgLocation>> filterProgramPoints(
-			final Map<String, Map<DebugIdentifier, IcfgLocation>> programPoints) {
+	private Map<String, Map<DebugIdentifier, IcfgLocation>>
+			filterProgramPoints(final Map<String, Map<DebugIdentifier, IcfgLocation>> programPoints) {
 		final Map<String, Map<DebugIdentifier, IcfgLocation>> filtered = new HashMap<>();
 		for (final var entry : programPoints.entrySet()) {
 			final String procedure = entry.getKey();

@@ -143,8 +143,8 @@ public final class ThreadAnalyzer {
 		for (final String threadId : mForkGraph.getThreadIds()) {
 			final SingleThreadIcfg threadIcfg = new SingleThreadIcfg(mIcfg, threadId);
 			mThreadIcfgs.put(threadId, threadIcfg);
-			final Collection<IcfgLocation> baseLois = LoiExpansion.getLocationsOfInterestForThread(threadId, threadIcfg,
-					mRequestedLocationsOfInterest);
+			final Collection<IcfgLocation> baseLois =
+					LoiExpansion.getLocationsOfInterestForThread(threadId, threadIcfg, mRequestedLocationsOfInterest);
 			final Set<IcfgLocation> expandedLois = new LinkedHashSet<>(baseLois);
 			expandedLois.addAll(mForkGraph.getForkSources(threadId));
 			if (mJoinedThreads.contains(threadId)) {

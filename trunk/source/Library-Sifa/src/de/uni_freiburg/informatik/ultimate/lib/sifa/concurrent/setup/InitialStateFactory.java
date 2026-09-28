@@ -114,8 +114,8 @@ public final class InitialStateFactory {
 		final String forkingTid = fork.getSource().getProcedure();
 		final IcfgLocation forkedEntry = mGhostVariables.getEntryLocation(forkedThreadId);
 
-		final IPredicate updated = mLocationStateUpdater.addLocationUpdate(sharedForkState, forkingTid,
-				fork.getTarget());
+		final IPredicate updated =
+				mLocationStateUpdater.addLocationUpdate(sharedForkState, forkingTid, fork.getTarget());
 		return mLocationStateUpdater.addLocationUpdate(updated, forkedThreadId, forkedEntry);
 	}
 

@@ -37,7 +37,8 @@ public record GuardedUpdate(IPredicate guard, IPredicate effect, Set<TermVariabl
 		List<Term> guardDisjuncts, boolean hasFalseEffect) {
 
 	public GuardedUpdate(final IPredicate guard, final IPredicate effect, final Set<TermVariable> modifiedGlobals) {
-		this(guard, effect, modifiedGlobals, guard == null ? List.of() : List.of(SmtUtils.getDisjuncts(guard.getFormula())),
+		this(guard, effect, modifiedGlobals,
+				guard == null ? List.of() : List.of(SmtUtils.getDisjuncts(guard.getFormula())),
 				SmtUtils.isFalseLiteral(effect.getFormula()));
 	}
 

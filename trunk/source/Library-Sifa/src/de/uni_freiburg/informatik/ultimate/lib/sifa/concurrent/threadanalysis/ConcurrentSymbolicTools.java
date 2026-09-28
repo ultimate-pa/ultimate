@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.LocationMarkerTransition;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.domain.IThreadLocalDomainContext;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostLocationStateUpdater;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
@@ -82,9 +81,12 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		mGhostVariables = ghostVariables;
 		mThreadActivityPreanalysis = activityPreanalysis;
 		mLocksetInfo = locksetInfo;
-		mLocationStateUpdater = new GhostLocationStateUpdater(services, getManagedScript(), getFactory(), ghostVariables);
-		mInitialStateFactory = new InitialStateFactory(this, services, forkGraph, ghostVariables, mLocationStateUpdater);
-		mJoinHandler = new JoinHandler(this, services, icfg, ghostVariables, mLocationStateUpdater, activityPreanalysis);
+		mLocationStateUpdater =
+				new GhostLocationStateUpdater(services, getManagedScript(), getFactory(), ghostVariables);
+		mInitialStateFactory =
+				new InitialStateFactory(this, services, forkGraph, ghostVariables, mLocationStateUpdater);
+		mJoinHandler =
+				new JoinHandler(this, services, icfg, ghostVariables, mLocationStateUpdater, activityPreanalysis);
 	}
 
 	public ThreadModularSifaSettings getSettings() {
@@ -109,9 +111,8 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 
 	public void configureForThread(final String threadId, final IInterferenceSet interference,
 			final Map<IcfgLocation, IPredicate> locationPredicates, final IDomain domain) {
-		IThreadLocalDomainContext.setIfApplicable(domain, threadId);
-		mThreadContext = new ThreadAnalysisContext(threadId, interference, domain, locationPredicates,
-				mGhostVariables, mThreadActivityPreanalysis);
+		mThreadContext = new ThreadAnalysisContext(threadId, interference, domain, locationPredicates, mGhostVariables,
+				mThreadActivityPreanalysis);
 	}
 
 	public void clearThreadContext() {
@@ -159,14 +160,14 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		if (interferenceCannotChangeState(state)) {
 			return state;
 		}
-		final Set<String> activeThreadIds = mThreadContext.activeInterferenceThreadsAt(location,
-				mThreadActivityPreanalysis);
+		final Set<String> activeThreadIds =
+				mThreadContext.activeInterferenceThreadsAt(location, mThreadActivityPreanalysis);
 		if (activeThreadIds.isEmpty()) {
 			return state;
 		}
 		final Set<String> observerLockset = mLocksetInfo.mustLocksetAt(location);
-		final Set<String> interferenceObserverLockset = mSettings.locksetAwareInterference() ? observerLockset
-				: Set.of();
+		final Set<String> interferenceObserverLockset =
+				mSettings.locksetAwareInterference() ? observerLockset : Set.of();
 		final IPredicate afterInterference = mThreadContext.interference().applyUntilFixpoint(state,
 				mThreadContext.threadId(), activeThreadIds, interferenceObserverLockset, mThreadContext.domain(),
 				mSettings.innerWideningThreshold(), mStats);
@@ -186,7 +187,8 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 			updated = mLocationStateUpdater.addLocationUpdate(updated, fork.getNameOfForkedProcedure(),
 					mGhostVariables.getEntryLocation(fork.getNameOfForkedProcedure()));
 		}
-		updated = mJoinHandler.refineWithJoinedThreadExitState(updated, transition, mThreadContext.locationPredicates());
+		updated =
+				mJoinHandler.refineWithJoinedThreadExitState(updated, transition, mThreadContext.locationPredicates());
 		if (isThreadLocalTransition(transition)) {
 			return updated;
 		}

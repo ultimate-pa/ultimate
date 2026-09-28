@@ -70,8 +70,8 @@ public class GhostVariableManager {
 			final Map<IcfgLocation, Integer> locationIds, final Set<String> threadIds,
 			final Map<String, IcfgLocation> entryLocations, final PrimedDefaultIcfgSymbolTable symbolTable,
 			final Set<String> impreciseLocationThreads) {
-		final GhostVariableManager manager = new GhostVariableManager(managedScript, locationIds, entryLocations,
-				impreciseLocationThreads);
+		final GhostVariableManager manager =
+				new GhostVariableManager(managedScript, locationIds, entryLocations, impreciseLocationThreads);
 		managedScript.lock(manager);
 		try {
 			manager.initializeLocationVariables(threadIds, symbolTable);

@@ -150,8 +150,8 @@ final class ControlPartitioningHeuristics {
 		if (guardVarsByLocation.isEmpty()) {
 			return abstractLocationMapping;
 		}
-		final Set<IProgramVar> relevantGuardVars = guardVarsByLocation.values().stream().flatMap(Set::stream)
-				.collect(Collectors.toSet());
+		final Set<IProgramVar> relevantGuardVars =
+				guardVarsByLocation.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
 		final Map<String, Set<IcfgLocation>> locationsByProcedure = groupByProcedure(basePartition.keySet());
 		for (final String procedure : sortedKeys(locationsByProcedure)) {
 			final Set<IcfgLocation> procedureLocations = locationsByProcedure.get(procedure);

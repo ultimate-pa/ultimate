@@ -80,8 +80,7 @@ public final class StrongestPostconditionInterference
 	public IPredicate applyUntilFixpoint(final IPredicate state, final String observerThreadId,
 			final Set<String> activeThreadIds, final Set<String> observerLockset, final IDomain domain,
 			final int wideningThreshold, final SifaStats stats) {
-		if (isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
-				|| SmtUtils.isFalseLiteral(state.getFormula())) {
+		if (isEmpty() || SmtUtils.isTrueLiteral(state.getFormula()) || SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;
 		}
 		final List<GroupedInterference<RelationalInterference>> applicable =
@@ -174,10 +173,8 @@ public final class StrongestPostconditionInterference
 	@Override
 	protected RelationalInterference widenInterference(final RelationalInterference left,
 			final RelationalInterference right, final IDomain domain) {
-		final IPredicate widenedRelation =
-				domain.widen(left.relationalInterference(), right.relationalInterference());
-		final IPredicate widenedPostState =
-				domain.widen(left.unconditionalPostState(), right.unconditionalPostState());
+		final IPredicate widenedRelation = domain.widen(left.relationalInterference(), right.relationalInterference());
+		final IPredicate widenedPostState = domain.widen(left.unconditionalPostState(), right.unconditionalPostState());
 		return new RelationalInterference(widenedRelation, mPostcondition.prepareRelation(widenedRelation),
 				widenedPostState);
 	}
@@ -190,8 +187,7 @@ public final class StrongestPostconditionInterference
 	@Override
 	protected boolean isInterferenceSubsumedBy(final RelationalInterference left, final RelationalInterference right,
 			final IDomain domain) {
-		return domain.isSubsetEq(left.relationalInterference(), right.relationalInterference())
-				.isTrueForAbstraction();
+		return domain.isSubsetEq(left.relationalInterference(), right.relationalInterference()).isTrueForAbstraction();
 	}
 
 	@Override

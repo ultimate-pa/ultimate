@@ -62,8 +62,8 @@ public final class MustLocksetAnalysis {
 			return disabled();
 		}
 		Map<IcfgLocation, Set<String>> mustLocksets = computeMustLocksets(icfg, lockVars);
-		final Set<IProgramVar> demoted = LockVariableDiscovery.releasedWithoutHold(icfg, lockVars, mustLocksets,
-				activity);
+		final Set<IProgramVar> demoted =
+				LockVariableDiscovery.releasedWithoutHold(icfg, lockVars, mustLocksets, activity);
 		if (!demoted.isEmpty()) {
 			lockVars = new LinkedHashSet<>(lockVars);
 			lockVars.removeAll(demoted);
@@ -104,8 +104,8 @@ public final class MustLocksetAnalysis {
 				}
 				final Set<String> afterEdge = mustLocksetAfter(current, edge, lockVars);
 				final Set<String> existing = mustHeldAt.get(target);
-				final Set<String> merged = existing == null ? afterEdge
-						: DataStructureUtils.intersection(existing, afterEdge);
+				final Set<String> merged =
+						existing == null ? afterEdge : DataStructureUtils.intersection(existing, afterEdge);
 				if (!merged.equals(existing)) {
 					mustHeldAt.put(target, merged);
 					worklist.add(target);

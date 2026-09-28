@@ -82,8 +82,8 @@ public final class ThreadForkGraph {
 		final List<String> threadIds = discoverThreadIds(forkTargetsByThread, forksByThread.keySet());
 		final Map<IIcfgJoinTransitionThreadCurrent<IcfgLocation>, String> matchedJoins = new LinkedHashMap<>();
 		for (final var join : concurrency.getJoinTransitions()) {
-			final String threadId = threadByForkId
-					.get(List.of(join.getJoinSmtArguments().getThreadIdArguments().terms()));
+			final String threadId =
+					threadByForkId.get(List.of(join.getJoinSmtArguments().getThreadIdArguments().terms()));
 			if (threadId != null) {
 				matchedJoins.put(join, threadId);
 			}
@@ -114,7 +114,8 @@ public final class ThreadForkGraph {
 		candidateThreads.retainAll(configuredThreads);
 		final Map<String, Set<String>> mayForkThreads = new HashMap<>();
 		for (final String threadId : candidateThreads) {
-			mayForkThreads.put(threadId, computeMayForkThreads(threadId, directForkChildrenByThread, configuredThreads));
+			mayForkThreads.put(threadId,
+					computeMayForkThreads(threadId, directForkChildrenByThread, configuredThreads));
 		}
 		return new ThreadForkGraph(threadIds, forksByThread, forkSourcesByThread, matchedJoins, mayForkThreads);
 	}
@@ -202,8 +203,8 @@ public final class ThreadForkGraph {
 	private static Set<String> computeMayForkThreads(final String threadId,
 			final Map<String, Set<String>> directForkChildrenByThread, final Set<String> threadIds) {
 		final Set<String> mayForkThreads = new HashSet<>();
-		final ArrayDeque<String> pendingForkThreads = new ArrayDeque<>(
-				directForkChildrenByThread.getOrDefault(threadId, Set.of()));
+		final ArrayDeque<String> pendingForkThreads =
+				new ArrayDeque<>(directForkChildrenByThread.getOrDefault(threadId, Set.of()));
 		while (!pendingForkThreads.isEmpty()) {
 			final String forkThread = pendingForkThreads.removeFirst();
 			if (!mayForkThreads.add(forkThread)) {

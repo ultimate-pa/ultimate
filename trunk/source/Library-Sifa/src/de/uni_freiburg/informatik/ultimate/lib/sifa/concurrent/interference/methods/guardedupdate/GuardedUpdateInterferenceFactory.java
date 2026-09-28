@@ -63,8 +63,7 @@ public final class GuardedUpdateInterferenceFactory extends
 
 	private Map<String, Map<Integer, LocationMoveInterference>> mLocationMoveInterferenceByThread;
 
-	private final Map<TranslatedEdgeInterference, CachedGuardedUpdate> mCachedUpdatesByEdge =
-			new IdentityHashMap<>();
+	private final Map<TranslatedEdgeInterference, CachedGuardedUpdate> mCachedUpdatesByEdge = new IdentityHashMap<>();
 	private final Map<IPredicate, IPredicate> mSharedStateProjections = new IdentityHashMap<>();
 
 	private record CachedGuardedUpdate(IPredicate sourceState, GuardedUpdate update) {
@@ -108,8 +107,7 @@ public final class GuardedUpdateInterferenceFactory extends
 			final IPredicate sharedPreState =
 					mSharedStateProjections.computeIfAbsent(sourceState, mTranslator::projectPreStateToSharedState);
 			final GuardedUpdate created = tryCreateUpdate(edge, sharedPreState);
-			update = created != null && InterferenceUtils.isNullOrFalse(created.effect()) ? null
-					: created;
+			update = created != null && InterferenceUtils.isNullOrFalse(created.effect()) ? null : created;
 			mCachedUpdatesByEdge.put(edge, new CachedGuardedUpdate(sourceState, update));
 		}
 		if (update == null) {
@@ -129,7 +127,8 @@ public final class GuardedUpdateInterferenceFactory extends
 	}
 
 	private boolean isLocationMove(final TranslatedEdgeInterference edge) {
-		return edge.changedGlobals().isEmpty() && edge.forkedThreadId() == null && sourceAbstractLocation(edge) != targetAbstractLocation(edge)
+		return edge.changedGlobals().isEmpty() && edge.forkedThreadId() == null
+				&& sourceAbstractLocation(edge) != targetAbstractLocation(edge)
 				&& mTranslator.getLocationTermVarOrNull(edge.source().getProcedure()) != null;
 	}
 
@@ -158,8 +157,10 @@ public final class GuardedUpdateInterferenceFactory extends
 			}
 			final String thread = edge.source().getProcedure();
 			moveGraph.computeIfAbsent(thread, t -> new LinkedHashMap<>())
-					.computeIfAbsent(sourceAbstractLocation(edge), s -> new LinkedHashSet<>()).add(targetAbstractLocation(edge));
-			representatives.computeIfAbsent(thread, t -> new LinkedHashMap<>()).putIfAbsent(sourceAbstractLocation(edge), edge);
+					.computeIfAbsent(sourceAbstractLocation(edge), s -> new LinkedHashSet<>())
+					.add(targetAbstractLocation(edge));
+			representatives.computeIfAbsent(thread, t -> new LinkedHashMap<>())
+					.putIfAbsent(sourceAbstractLocation(edge), edge);
 			concreteSources.computeIfAbsent(thread, t -> new LinkedHashMap<>())
 					.computeIfAbsent(sourceAbstractLocation(edge), s -> new LinkedHashSet<>()).add(edge.source());
 		}
@@ -167,9 +168,10 @@ public final class GuardedUpdateInterferenceFactory extends
 		moveGraph.forEach((thread, successors) -> {
 			final TermVariable locVar = mTranslator.getLocationTermVarOrNull(thread);
 			final Map<Integer, LocationMoveInterference> perSource = new LinkedHashMap<>();
-			successors.keySet().forEach(src -> perSource.put(src,
-					createLocationMoveInterference(thread, locVar, src, writeFreeClosure(src, successors),
-							representatives.get(thread).get(src), concreteSources.get(thread).get(src))));
+			successors.keySet()
+					.forEach(src -> perSource.put(src,
+							createLocationMoveInterference(thread, locVar, src, writeFreeClosure(src, successors),
+									representatives.get(thread).get(src), concreteSources.get(thread).get(src))));
 			interferenceByThread.put(thread, perSource);
 		});
 		mLocationMoveInterferenceByThread = interferenceByThread;
@@ -189,8 +191,8 @@ public final class GuardedUpdateInterferenceFactory extends
 	}
 
 	private LocationMoveInterference createLocationMoveInterference(final String thread, final TermVariable locVar,
-			final int sourceAbstractLocation, final Set<Integer> reachable, final TranslatedEdgeInterference representative,
-			final Set<IcfgLocation> sources) {
+			final int sourceAbstractLocation, final Set<Integer> reachable,
+			final TranslatedEdgeInterference representative, final Set<IcfgLocation> sources) {
 		final IPredicate guard = mPredicateFactory.newPredicate(locEquality(locVar, sourceAbstractLocation));
 		final IPredicate effect = mPredicateFactory.newPredicate(SmtUtils.or(mManagedScript.getScript(),
 				reachable.stream().map(target -> locEquality(locVar, target)).toList()));

@@ -72,10 +72,11 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		mOuterFixpoint = new OuterInterferenceFixpoint<>(logger, mConcurrentTools, setup.domain(),
 				setup.interferenceFactory(), setup.mutexInvariants(),
 				mConcurrentTools.getSettings().outerWideningThreshold(), threadAnalysis);
-		mResultPrinter = mConcurrentTools.getSettings().resultPrint()
-				? new SifaResultPrinter(logger, setup.abstractLocationIds(),
-						mConcurrentTools.getThreadActivityPreanalysis())
-				: null;
+		mResultPrinter =
+				mConcurrentTools.getSettings().resultPrint()
+						? new SifaResultPrinter(logger, setup.abstractLocationIds(),
+								mConcurrentTools.getThreadActivityPreanalysis())
+						: null;
 	}
 
 	@Override
@@ -87,8 +88,8 @@ public class ThreadModularSifaInterpreter implements ISifaInterpreter {
 		return requestedLocationPredicates(invariants);
 	}
 
-	private Map<IcfgLocation, IPredicate> requestedLocationPredicates(
-			final Map<IcfgLocation, IPredicate> locationInvariants) {
+	private Map<IcfgLocation, IPredicate>
+			requestedLocationPredicates(final Map<IcfgLocation, IPredicate> locationInvariants) {
 		final Map<IcfgLocation, IPredicate> result = new LinkedHashMap<>();
 		for (final IcfgLocation location : mRequestedLocationsOfInterest) {
 			result.put(location, locationInvariants.getOrDefault(location, mConcurrentTools.bottom()));

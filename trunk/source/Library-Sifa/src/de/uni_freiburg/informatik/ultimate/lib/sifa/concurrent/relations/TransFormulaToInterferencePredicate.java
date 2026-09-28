@@ -107,8 +107,8 @@ public class TransFormulaToInterferencePredicate {
 	private IPredicate translateForInterferenceInternal(final TransFormula tf, final String interferingThread,
 			final IcfgLocation sourceLocation, final IcfgLocation targetLocation, final String forkedThreadId,
 			final IcfgLocation forkedEntry, final Set<IProgramVar> additionallyModifiedGlobals) {
-		final Set<IProgramVar> extraModified = additionallyModifiedGlobals == null ? Set.of()
-				: Set.copyOf(additionallyModifiedGlobals);
+		final Set<IProgramVar> extraModified =
+				additionallyModifiedGlobals == null ? Set.of() : Set.copyOf(additionallyModifiedGlobals);
 		final List<Term> conjuncts = new ArrayList<>();
 		conjuncts.add(translateBase(tf));
 		conjuncts.add(

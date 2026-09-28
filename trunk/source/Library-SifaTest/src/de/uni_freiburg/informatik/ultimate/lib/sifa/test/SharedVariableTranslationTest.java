@@ -103,8 +103,8 @@ public class SharedVariableTranslationTest {
 		// Translate both
 		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Collections.emptySet(), mMgdScript);
 		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
-		final var translator = new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory,
-				primedTable, null);
+		final var translator =
+				new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory, primedTable, null);
 		final IPredicate rel1 = translator.translateForInterference(tf1, null, null, null);
 		final IPredicate rel2 = translator.translateForInterference(tf2, null, null, null);
 
@@ -144,8 +144,8 @@ public class SharedVariableTranslationTest {
 
 		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Set.of("testProc"), mMgdScript);
 		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
-		final var translator = new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory,
-				primedTable, null);
+		final var translator =
+				new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory, primedTable, null);
 
 		mMgdScript.unlock(this);
 
@@ -173,14 +173,14 @@ public class SharedVariableTranslationTest {
 
 		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Collections.emptySet(), mMgdScript);
 		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
-		final GhostVariableManager ghostVars = createGhostVariables(
-				Map.of(mainSource, 10, mainTarget, 11, workerEntry, 20), Set.of("main", "worker"),
-				Map.of("main", mainSource, "worker", workerEntry), primedTable);
-		final var translator = new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory,
-				primedTable, ghostVars);
+		final GhostVariableManager ghostVars =
+				createGhostVariables(Map.of(mainSource, 10, mainTarget, 11, workerEntry, 20), Set.of("main", "worker"),
+						Map.of("main", mainSource, "worker", workerEntry), primedTable);
+		final var translator =
+				new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory, primedTable, ghostVars);
 
-		final IPredicate rel = translator.translateForInterferenceWithFork(tf, "main", mainSource, mainTarget, "worker",
-				workerEntry);
+		final IPredicate rel =
+				translator.translateForInterferenceWithFork(tf, "main", mainSource, mainTarget, "worker", workerEntry);
 		final TermVariable workerLoc = ghostVars.getLocationTermVar("worker");
 		final TermVariable workerLocPrimed = getPrimedVarFor(workerLoc, primedTable);
 
@@ -203,11 +203,11 @@ public class SharedVariableTranslationTest {
 
 		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Collections.emptySet(), mMgdScript);
 		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
-		final GhostVariableManager ghostVars = createGhostVariables(
-				Map.of(mainSource, 10, mainTarget, 11, workerEntry, 20), Set.of("main", "worker"),
-				Map.of("main", mainSource, "worker", workerEntry), primedTable);
-		final var translator = new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory,
-				primedTable, ghostVars);
+		final GhostVariableManager ghostVars =
+				createGhostVariables(Map.of(mainSource, 10, mainTarget, 11, workerEntry, 20), Set.of("main", "worker"),
+						Map.of("main", mainSource, "worker", workerEntry), primedTable);
+		final var translator =
+				new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory, primedTable, ghostVars);
 
 		final IPredicate rel = translator.translateForInterference(tf, "main", mainSource, mainTarget);
 		final TermVariable workerLoc = ghostVars.getLocationTermVar("worker");
@@ -232,14 +232,14 @@ public class SharedVariableTranslationTest {
 
 		final var primedTable = new PrimedDefaultIcfgSymbolTable(mSymbolTable, Collections.emptySet(), mMgdScript);
 		final var primedFactory = new BasicPredicateFactory(mServices, mMgdScript, primedTable);
-		final GhostVariableManager ghostVars = createGhostVariables(
-				Map.of(mainSource, 10, mainTarget, 11, workerEntry, 20), Set.of("main", "worker"),
-				Map.of("main", mainSource, "worker", workerEntry), primedTable);
-		final var translator = new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory,
-				primedTable, ghostVars);
+		final GhostVariableManager ghostVars =
+				createGhostVariables(Map.of(mainSource, 10, mainTarget, 11, workerEntry, 20), Set.of("main", "worker"),
+						Map.of("main", mainSource, "worker", workerEntry), primedTable);
+		final var translator =
+				new TransFormulaToInterferencePredicate(mServices, mMgdScript, primedFactory, primedTable, ghostVars);
 
-		final IPredicate rel = translator.translateForInterferenceWithFork(tf, "main", mainSource, mainTarget, "worker",
-				workerEntry);
+		final IPredicate rel =
+				translator.translateForInterferenceWithFork(tf, "main", mainSource, mainTarget, "worker", workerEntry);
 		final TermVariable mainLoc = ghostVars.getLocationTermVar("main");
 
 		final Term inactive = SmtUtils.and(mScript, rel.getFormula(), eq(mainLoc, num(0)));
@@ -291,8 +291,8 @@ public class SharedVariableTranslationTest {
 	}
 
 	private ILocalProgramVar createLocalIntVar(final String name, final String procedure) {
-		final ILocalProgramVar var = ProgramVarUtils.constructLocalProgramVar(name, procedure, mIntSort, mMgdScript,
-				this);
+		final ILocalProgramVar var =
+				ProgramVarUtils.constructLocalProgramVar(name, procedure, mIntSort, mMgdScript, this);
 		mSymbolTable.add(var);
 		return var;
 	}
@@ -310,9 +310,9 @@ public class SharedVariableTranslationTest {
 	}
 
 	private TermVariable getPrimedVarFor(final TermVariable baseTv, final PrimedDefaultIcfgSymbolTable primedTable) {
-		final IProgramVar baseVar = primedTable.getAllGlobalBaseVars().stream()
-				.filter(v -> v.getTermVariable().equals(baseTv)).findFirst()
-				.orElseThrow(() -> new AssertionError("Missing base variable for " + baseTv));
+		final IProgramVar baseVar =
+				primedTable.getAllGlobalBaseVars().stream().filter(v -> v.getTermVariable().equals(baseTv)).findFirst()
+						.orElseThrow(() -> new AssertionError("Missing base variable for " + baseTv));
 		return primedTable.getPrimedVar(baseVar);
 	}
 

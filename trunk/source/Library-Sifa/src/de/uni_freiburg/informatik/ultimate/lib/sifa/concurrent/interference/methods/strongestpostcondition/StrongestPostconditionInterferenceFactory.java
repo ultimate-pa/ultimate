@@ -70,8 +70,7 @@ public final class StrongestPostconditionInterferenceFactory
 			final Map<GroupedInterference.Key, GroupedInterference<RelationalInterference>> groupedInterferences,
 			final TranslatedEdgeInterference edge, final Map<IcfgLocation, IPredicate> threadStates) {
 		final IPredicate relationalInterference = relationalInterferenceOf(edge, threadStates);
-		if (relationalInterference == null
-				|| InterferenceUtils.isNullOrFalse(relationalInterference)) {
+		if (relationalInterference == null || InterferenceUtils.isNullOrFalse(relationalInterference)) {
 			return;
 		}
 		final RelationalInterference interference = new RelationalInterference(relationalInterference,

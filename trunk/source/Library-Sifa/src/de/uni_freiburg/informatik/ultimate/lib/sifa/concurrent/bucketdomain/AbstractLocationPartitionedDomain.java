@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.domain.IThreadLocalDomainContext;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -47,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-public final class AbstractLocationPartitionedDomain implements IDomain, IThreadLocalDomainContext {
+public final class AbstractLocationPartitionedDomain implements IDomain {
 	private static final Map<String, Term> UNKNOWN = Map.of();
 
 	private final IDomain mUnderlyingDomain;
@@ -71,13 +70,6 @@ public final class AbstractLocationPartitionedDomain implements IDomain, IThread
 		final Set<String> names = new LinkedHashSet<>();
 		locVarsByThread.values().forEach(tv -> names.add(tv.getName()));
 		return new AbstractLocationPartitionedDomain(underlying, tools, names, maxBuckets, maxDisjunctsPerBucket);
-	}
-
-	@Override
-	public void setCurrentThreadId(final String threadId) {
-		if (mUnderlyingDomain instanceof final IThreadLocalDomainContext ctx) {
-			ctx.setCurrentThreadId(threadId);
-		}
 	}
 
 	@Override

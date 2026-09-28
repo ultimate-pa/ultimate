@@ -51,10 +51,10 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public final class InterferenceUtils {
 
-	public static final Comparator<TranslatedEdgeInterference> INTERFERENCE_EDGE_ORDER = Comparator
-			.comparing((final TranslatedEdgeInterference edge) -> edge.source().toString())
-			.thenComparing(edge -> edge.target().toString())
-			.thenComparing(edge -> edge.transitionPredicate().getFormula().toString());
+	public static final Comparator<TranslatedEdgeInterference> INTERFERENCE_EDGE_ORDER =
+			Comparator.comparing((final TranslatedEdgeInterference edge) -> edge.source().toString())
+					.thenComparing(edge -> edge.target().toString())
+					.thenComparing(edge -> edge.transitionPredicate().getFormula().toString());
 
 	private InterferenceUtils() {
 	}
@@ -134,8 +134,8 @@ public final class InterferenceUtils {
 		if (!(edge instanceof final IIcfgJoinTransitionThreadCurrent<?> joinCurrent)) {
 			return Set.of();
 		}
-		final List<IProgramVar> globals = joinCurrent.getJoinSmtArguments().getAssignmentLhs().stream()
-				.filter(IProgramVar::isGlobal).toList();
+		final List<IProgramVar> globals =
+				joinCurrent.getJoinSmtArguments().getAssignmentLhs().stream().filter(IProgramVar::isGlobal).toList();
 		return globals.isEmpty() ? Set.of() : Set.copyOf(globals);
 	}
 

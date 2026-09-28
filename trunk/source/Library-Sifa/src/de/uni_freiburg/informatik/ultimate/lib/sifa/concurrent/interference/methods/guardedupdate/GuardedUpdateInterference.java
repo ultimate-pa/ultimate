@@ -54,7 +54,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-public final class GuardedUpdateInterference extends GroupedInterferenceSet<GuardedUpdateInterference.GuardedUpdateGroup> {
+public final class GuardedUpdateInterference
+		extends GroupedInterferenceSet<GuardedUpdateInterference.GuardedUpdateGroup> {
 
 	public record GuardedUpdateGroup(Map<TranslatedEdgeInterference, GuardedUpdate> updatesByEdge) {
 		public GuardedUpdateGroup {
@@ -82,10 +83,8 @@ public final class GuardedUpdateInterference extends GroupedInterferenceSet<Guar
 	@Override
 	public IPredicate applyUntilFixpoint(final IPredicate state, final String observerThreadId,
 			final Set<String> activeThreadIds, final Set<String> observerLockset, final IDomain domain,
-			final int wideningThreshold,
-			final SifaStats stats) {
-		if (isEmpty() || SmtUtils.isTrueLiteral(state.getFormula())
-				|| SmtUtils.isFalseLiteral(state.getFormula())) {
+			final int wideningThreshold, final SifaStats stats) {
+		if (isEmpty() || SmtUtils.isTrueLiteral(state.getFormula()) || SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;
 		}
 		final List<GroupedInterference<GuardedUpdateGroup>> applicable =
@@ -139,8 +138,8 @@ public final class GuardedUpdateInterference extends GroupedInterferenceSet<Guar
 		}
 	}
 
-	private IPredicate applyGroupToFrontier(final IPredicate frontier,
-			final GuardedUpdateGroup groupedInterference, final IDomain domain) {
+	private IPredicate applyGroupToFrontier(final IPredicate frontier, final GuardedUpdateGroup groupedInterference,
+			final IDomain domain) {
 		boolean hasResult = false;
 		IPredicate result = mFalsePredicate;
 		for (final GuardedUpdate update : groupedInterference.updates()) {
@@ -252,17 +251,15 @@ public final class GuardedUpdateInterference extends GroupedInterferenceSet<Guar
 
 	private static void addOverwriteResult(final ArrayList<Term> results, final Term state, final Term guard,
 			final GuardedUpdate update, final Script script) {
-		final Term guardedState = guard == null ? state
-				: SmtUtils.andWithExtendedLocalSimplification(script, state, guard);
-		if (SmtUtils.isFalseLiteral(guardedState)
-				|| SmtUtils.checkSatTerm(script, guardedState) == LBool.UNSAT) {
+		final Term guardedState =
+				guard == null ? state : SmtUtils.andWithExtendedLocalSimplification(script, state, guard);
+		if (SmtUtils.isFalseLiteral(guardedState) || SmtUtils.checkSatTerm(script, guardedState) == LBool.UNSAT) {
 			return;
 		}
 		final Term projected = update.modifiedGlobals().isEmpty() ? guardedState
 				: forgetChangedConjuncts(guardedState, update.modifiedGlobals(), script);
 		results.add(SmtUtils.and(script, projected, update.effect().getFormula()));
 	}
-
 
 	private static Term forgetChangedConjuncts(final Term formula, final Set<TermVariable> changedVars,
 			final Script script) {
@@ -271,8 +268,7 @@ public final class GuardedUpdateInterference extends GroupedInterferenceSet<Guar
 				.filter(conjunct -> Stream.of(conjunct.getFreeVars()).noneMatch(changedVars::contains))
 				.toArray(Term[]::new);
 		return kept.length == conjuncts.length ? formula
-				: kept.length == 0 ? script.term("true")
-						: kept.length == 1 ? kept[0] : SmtUtils.and(script, kept);
+				: kept.length == 0 ? script.term("true") : kept.length == 1 ? kept[0] : SmtUtils.and(script, kept);
 	}
 
 	private static Set<TermVariable> mergeModifiedGlobals(final GuardedUpdate left, final GuardedUpdate right) {
