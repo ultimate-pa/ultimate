@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.HoareCoreBackwardPostprocessor;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.IPredicatePostprocessor;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.TraceInterpolationException;
@@ -301,7 +302,11 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				postprocs.clear();
 				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
 				tt.start();
-				mInterpolantsFp = spt.applyBackwardHoareCorePostprocessing(tp, postprocs, rtf).getPredicates();
+				mInterpolantsFp = HoareCoreBackwardPostprocessor
+						.apply(mCsToolkit, mPrecondition, mPostcondition, mLogger, mTrace, mPendingContexts,
+								mPredicateFactory, rtf, mCfgManagedScript, mServices, mSimplificationTechnique,
+								mBoogie2SmtSymbolTable, mCsToolkit.getModifiableGlobalsTable(), postprocs, tp)
+						.getPredicates();
 				tt.stop();
 				mLogger.info("Time for Hoare core postprocessing: " + tt.elapsedTime(TimeUnit.MILLISECONDS) + " ms");
 			} catch (final ToolchainCanceledException tce) {
