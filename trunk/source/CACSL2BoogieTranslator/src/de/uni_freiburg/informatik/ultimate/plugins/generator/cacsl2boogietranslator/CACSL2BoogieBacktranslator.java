@@ -148,6 +148,11 @@ public class CACSL2BoogieBacktranslator extends
 	}
 
 	@Override
+	public BacktranslatedExpression declareAndTranslateAuxiliaryVariable(final Expression variable) {
+		return mBoogie2ACSL.declareAndTranslateAuxiliaryVariable((IdentifierExpression) variable);
+	}
+
+	@Override
 	public List<CACSLLocation> translateTrace(final List<BoogieASTNode> trace) {
 		// dirty but quick: convert trace to program execution
 		// TODO: set the correct step info (but how?)

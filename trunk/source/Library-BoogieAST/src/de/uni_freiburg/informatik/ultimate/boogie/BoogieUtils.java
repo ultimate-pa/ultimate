@@ -58,6 +58,9 @@ public class BoogieUtils {
 	public static final String INIT_PROCEDURE = "ULTIMATE.init";
 	public static final String START_PROCEDURE = "ULTIMATE.start";
 
+	// A prefix that is added to the names of ghost variables during backtranslation.
+	public static final String GHOST_VARIABLE_PREFIX = "~ghost~";
+
 	private BoogieUtils() {
 		// Prevent instantiation of this utility class
 	}

@@ -1,0 +1,71 @@
+// Example used in the POPL'26 paper.
+// ------------------------------------------------------
+
+//@ variables (x Int) (y Int) (z Int)
+
+//@ semantics [0] { } (> x 0)
+//@ semantics [1] {y} (= y x)
+//@ semantics [2] { } (> y 0)
+//@ semantics [3] {y} (= y (- |old(y)| 1))
+//@ semantics [4] {x} (= x (+ |old(x)| 1))
+//@ semantics [5] { } (>= y x)
+//@ semantics [6] { } (distinct x 0)
+//@ semantics [7] {z} (= z (div z x))
+//@ semantics [8] {x} (= x (+ |old(x)| 1))
+//@ semantics [9] { } (< x 3)
+
+PetriNet program = (
+  alphabet    = { "[0]" "[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" "[8]" "[9]" },
+  places      = { "p0" "p1" "p2" "p3" "p4" "p5" "p6" "p7" "e1" "e2" },
+  transitions = {
+    ({ "p0" } "[0]" { "p1" "p5" })
+    ({ "p1" } "[1]" { "p2" })
+    ({ "p2" } "[2]" { "p3" })
+    ({ "p3" } "[3]" { "p2" })
+    ({ "p2" } "[4]" { "p4" })
+    ({ "p4" } "[5]" { "e1" })
+    ({ "p5" } "[6]" { "p6" })
+    ({ "p6" } "[7]" { "p5" })
+    ({ "p5" } "[8]" { "p7" })
+    ({ "p4" "p7" } "[9]" { "e2" })
+  },
+  initialMarking = { "p0" },
+  acceptingPlaces = { "e1" "e2" }
+);
+
+FiniteAutomaton proof1 = (
+     alphabet      = { "[0]" "[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" "[8]" "[9]" },
+     states        = { "true" "(> x 0)" "(and (> x 0) (<= y x))" "(> x 1)" "(and (> x 1) (<= y x))" "(and (> x 1) (< y x))" "(and (> x 2) (< y x))" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+       ("true"  "[0]" "(> x 0)")
+
+       ("(> x 0)" "[6]" "(> x 0)")
+       ("(> x 0)" "[7]" "(> x 0)")
+       ("(> x 0)" "[1]" "(and (> x 0) (<= y x))")
+       ("(> x 0)" "[8]" "(> x 1)")
+
+       ("(and (> x 0) (<= y x))" "[2]" "(and (> x 0) (<= y x))")
+       ("(and (> x 0) (<= y x))" "[3]" "(and (> x 0) (<= y x))")
+       ("(and (> x 0) (<= y x))" "[6]" "(and (> x 0) (<= y x))")
+       ("(and (> x 0) (<= y x))" "[7]" "(and (> x 0) (<= y x))")
+       ("(and (> x 0) (<= y x))" "[4]" "(and (> x 1) (< y x))")
+       ("(and (> x 0) (<= y x))" "[8]" "(and (> x 1) (<= y x))")
+
+       ("(> x 1)" "[1]" "(and (> x 1) (<= y x))")
+
+       ("(and (> x 1) (< y x))" "[6]" "(and (> x 1) (< y x))")
+       ("(and (> x 1) (< y x))" "[7]" "(and (> x 1) (< y x))")
+       ("(and (> x 1) (< y x))" "[8]" "(and (> x 2) (< y x))")
+       ("(and (> x 1) (< y x))" "[5]" "false")
+
+       ("(and (> x 1) (<= y x))" "[2]" "(and (> x 1) (<= y x))")
+       ("(and (> x 1) (<= y x))" "[3]" "(and (> x 1) (<= y x))")
+       ("(and (> x 1) (<= y x))" "[4]" "(and (> x 2) (< y x))")
+
+       ("(and (> x 2) (< y x))" "[5]" "false")
+       ("(and (> x 2) (< y x))" "[9]" "false")
+     }
+);
+

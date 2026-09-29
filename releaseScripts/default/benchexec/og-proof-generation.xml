@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="shell" memlimit="8GB" timelimit="300" hardtimelimit="320">
+  <resultfiles></resultfiles>
+
+  <option name="success">1 tests successful</option>
+  <option name="failure">1 tests failed</option>
+
+  <rundefinition name="ModularLegalFocusOG-WithAssert">
+    <option name="command">env JAVA_TOOL_OPTIONS='-DOwickiGries.Timeout=-1' ${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$ModularLegalFocusOG ${inputfile_name} true</option>
+  </rundefinition>
+
+  <rundefinition name="ModularLegalFocusOG-NoAssert">
+    <option name="command">env JAVA_TOOL_OPTIONS='-DOwickiGries.Timeout=-1' ${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$ModularLegalFocusOG ${inputfile_name} false</option>
+  </rundefinition>
+
+  <rundefinition name="ModularLegalFocusOG-Validate">
+    <option name="command">env JAVA_TOOL_OPTIONS='-DOwickiGries.Timeout=-1 -DOwickiGries.Validate=true' ${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$ModularLegalFocusOG ${inputfile_name} false</option>
+  </rundefinition>
+
+
+  <rundefinition name="GlobalLegalFocusOG-WithAssert">
+    <option name="command">env JAVA_TOOL_OPTIONS='-DOwickiGries.Timeout=-1' ${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$GlobalLegalFocusOG ${inputfile_name} true</option>
+  </rundefinition>
+
+  <rundefinition name="GlobalLegalFocusOG-NoAssert">
+    <option name="command">env JAVA_TOOL_OPTIONS='-DOwickiGries.Timeout=-1' ${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$GlobalLegalFocusOG ${inputfile_name} false</option>
+  </rundefinition>
+
+  <rundefinition name="GlobalLegalFocusOG-Validate">
+    <option name="command">env JAVA_TOOL_OPTIONS='-DOwickiGries.Timeout=-1 -DOwickiGries.Validate=true' ${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$GlobalLegalFocusOG ${inputfile_name} false</option>
+  </rundefinition>
+
+
+  <rundefinition name="EmpireAutomatonOG-WithAssert">
+    <option name="command">env JAVA_TOOL_OPTIONS='-DOwickiGries.Timeout=-1' ${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$EmpireAutomatonOG ${inputfile_name} true</option>
+  </rundefinition>
+
+  <rundefinition name="EmpireAutomatonOG-NoAssert">
+    <option name="command">env JAVA_TOOL_OPTIONS='-DOwickiGries.Timeout=-1' ${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$EmpireAutomatonOG ${inputfile_name} false</option>
+  </rundefinition>
+
+  <rundefinition name="EmpireAutomatonOG-Validate">
+    <option name="command">env JAVA_TOOL_OPTIONS='-DOwickiGries.Timeout=-1 -DOwickiGries.Validate=true' ${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$EmpireAutomatonOG ${inputfile_name} false</option>
+  </rundefinition>
+
+
+  <rundefinition name="NaiveOG-WithAssert">
+    <option name="command">env JAVA_TOOL_OPTIONS='-DOwickiGries.Timeout=-1' ${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$NaiveOG ${inputfile_name} true</option>
+  </rundefinition>
+
+  <rundefinition name="NaiveOG-NoAssert">
+    <option name="command">env JAVA_TOOL_OPTIONS='-DOwickiGries.Timeout=-1' ${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$NaiveOG ${inputfile_name} false</option>
+  </rundefinition>
+
+  <rundefinition name="NaiveOG-Validate">
+    <option name="command">env JAVA_TOOL_OPTIONS='-DOwickiGries.Timeout=-1 -DOwickiGries.Validate=true' ${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$NaiveOG ${inputfile_name} false</option>
+  </rundefinition>
+  
+
+  <tasks name="SVBenchmarks-ConcurrencySafety">
+    <include>../../../trunk/examples/concurrent/OwickiGries/PetriPrograms/ReachSafety.*.ats</include>
+  </tasks>
+
+  <tasks name="SVBenchmarks-MemSafety">
+    <include>../../../trunk/examples/concurrent/OwickiGries/PetriPrograms/MemSafety.*.ats</include>
+  </tasks>
+
+  <tasks name="SVBenchmarks-NoDataRace">
+    <include>../../../trunk/examples/concurrent/OwickiGries/PetriPrograms/NoDataRace.*.ats</include>
+  </tasks>
+
+  <tasks name="SVBenchmarks-NoOverflow">
+    <include>../../../trunk/examples/concurrent/OwickiGries/PetriPrograms/NoOverflow.*.ats</include>
+  </tasks>
+
+  <tasks name="canary">
+    <include>../../../trunk/examples/concurrent/OwickiGries/PetriPrograms/separate-threads*.ats</include>
+    <include>../../../trunk/examples/concurrent/OwickiGries/PetriPrograms/ReachSafety.test-*.ats</include>
+  </tasks>
+</benchmark>

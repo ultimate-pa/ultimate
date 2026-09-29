@@ -1,0 +1,39 @@
+// Simple test for computation of Owicki-Gries annotation
+// ------------------------------------------------------
+
+//@ variables (x Int)
+
+//@ semantics [1] {x} (>= x 0)
+//@ semantics [2] {x} (= x (+ |old(x)| 1))
+//@ semantics [3] { } (< x 0)
+
+PetriNet program = (
+  alphabet    = { "[1]" "[2]" "[3]" },
+  places      = { "l0" "l1" "l2" "e" },
+  transitions = {
+    ({ "l0" } "[1]" { "l1" "l2" })
+    ({ "l2" } "[2]" { "l2" })
+    ({ "l1" } "[3]" { "e" })
+  },
+  initialMarking = { "l0" },
+  acceptingPlaces = { "e" }
+);
+
+FiniteAutomaton proof = (
+     alphabet      = { "[1]" "[2]" "[3]" },
+     states        = { "true" "(>= x 0)" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+         ("true"     "[1]" "(>= x 0)")
+         ("true"     "[2]" "true")
+         ("true"     "[3]" "true")
+         ("(>= x 0)" "[1]" "(>= x 0)")
+         ("(>= x 0)" "[2]" "(>= x 0)")
+         ("(>= x 0)" "[3]" "false")
+         ("false"    "[1]" "false")
+         ("false"    "[2]" "false")
+         ("false"    "[3]" "false")
+     }
+);
+

@@ -1,0 +1,45 @@
+// Simple test for conflicts
+// -------------------------------------------------------------------------------------------
+
+//@ variables (x Int)
+
+//@ semantics [0] {  } (> x 0)
+//@ semantics [1] {  } (<= x 0)
+//@ semantics [2] {x} (= x 5)
+
+PetriNet program = (
+  alphabet    = { "[0]" "[1]" "[2]" },
+  places      = { "l0" "l1" "l2" "l3" "e" },
+  transitions = {
+    ({ "l0" } "[0]" { "l1" })
+    ({ "l0" } "[1]" { "l2" })
+    ({ "l1" } "[1]" { "e" })
+    ({ "l2" } "[2]" { "l3" })
+    ({ "l3" } "[1]" { "e" })
+},
+  initialMarking = { "l0" },
+  acceptingPlaces = { "e" }
+);
+
+FiniteAutomaton proof1 = (
+     alphabet      = { "[0]" "[1]" "[2]" },
+     states        = { "true" "(> x 0)" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+       ("true" "[0]" "(> x 0)")
+       ("(> x 0)" "[1]" "false")
+     }
+);
+
+FiniteAutomaton proof2 = (
+     alphabet      = { "[0]" "[1]" "[2]" },
+     states        = { "true" "(<= x 0)" "(> x 0)" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+       ("true" "[1]" "(<= x 0)")
+       ("(<= x 0)" "[2]" "(> x 0)")
+       ("(> x 0)" "[1]" "false")
+     }
+);

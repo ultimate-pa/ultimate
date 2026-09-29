@@ -76,9 +76,9 @@ public class PredicateUtils {
 	public static long computeDagSizeOfPredicate(final IPredicate p, final FormulaSize size) {
 		switch (size) {
 		case DAGSIZE:
-			return (new DAGSize()).size(p.getFormula());
+			return new DAGSize().size(p.getFormula());
 		case TREESIZE:
-			return (new DAGSize()).treesize(p.getFormula());
+			return new DAGSize().treesize(p.getFormula());
 		default:
 			throw new AssertionError("unknown " + size);
 		}
@@ -209,8 +209,7 @@ public class PredicateUtils {
 			values[i] = entry.getValue();
 			i++;
 		}
-		final Term result = script.let(vars, values, psTerm);
-		return result;
+		return script.let(vars, values, psTerm);
 	}
 
 	/**
@@ -226,7 +225,7 @@ public class PredicateUtils {
 	public static Term formulaWithIndexedVars(final UnmodifiableTransFormula tf, final int idxInVar,
 			final int idxOutVar, final Set<IProgramVar> assignedVars, final Map<String, Term> indexedConstants,
 			final Script script) {
-		assert (assignedVars != null && assignedVars.isEmpty());
+		assert assignedVars != null && assignedVars.isEmpty();
 		final Set<TermVariable> notYetSubst = new HashSet<>(Arrays.asList(tf.getFormula().getFreeVars()));
 		Term fTrans = tf.getFormula();
 		final Map<TermVariable, IProgramVar> reverseMapping = new HashMap<>();
@@ -379,12 +378,10 @@ public class PredicateUtils {
 				final IProgramNonOldVar nonOldVar = ((IProgramOldVar) bv).getNonOldVar();
 				if (modifiableGlobalsPred.contains(nonOldVar)) {
 					// var modifiable, do nothing
+				} else if (primedRequired.contains(bv)) {
+					nonModifiableGlobalsPrimed.add(nonOldVar);
 				} else {
-					if (primedRequired.contains(bv)) {
-						nonModifiableGlobalsPrimed.add(nonOldVar);
-					} else {
-						nonModifiableGlobalsUnprimed.add(nonOldVar);
-					}
+					nonModifiableGlobalsUnprimed.add(nonOldVar);
 				}
 			}
 		}
@@ -401,7 +398,7 @@ public class PredicateUtils {
 			}
 			substitutionMapping.put(bv.getTermVariable(), constant);
 		}
-		final Term result = (PureSubstitution.apply(script, substitutionMapping, postcond.getFormula()));
+		final Term result = PureSubstitution.apply(script, substitutionMapping, postcond.getFormula());
 		assert result.getFreeVars().length == 0 : "there are free vars";
 		return result;
 	}

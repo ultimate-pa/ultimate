@@ -129,10 +129,10 @@ public class EagerReuseCegarLoop<L extends IIcfgTransition<?>> extends ReuseCega
 
 		final PowersetDeterminizer<L, IPredicate> psd =
 				new PowersetDeterminizer<>(reuseAut, true, mPredicateFactoryInterpolantAutomata);
-		final boolean explointSigmaStarConcatOfIA = true;
+		final boolean exploitSigmaStarConcatOfIA = true;
 		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff =
 				new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement, mAbstraction,
-						reuseAut, psd, explointSigmaStarConcatOfIA);
+						reuseAut, psd, exploitSigmaStarConcatOfIA);
 
 		if (reuseAut instanceof AbstractInterpolantAutomaton) {
 			final AbstractInterpolantAutomaton<L> aiReuseAut = (AbstractInterpolantAutomaton<L>) reuseAut;

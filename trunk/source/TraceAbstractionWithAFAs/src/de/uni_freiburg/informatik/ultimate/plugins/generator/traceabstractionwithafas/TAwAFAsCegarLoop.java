@@ -282,9 +282,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 				sb.append("[").append(letter).append("] ");
 			}
 			mLogger.debug("Calculating RD DAGs for " + sb);
-			final List<DataflowDAG<TraceCodeBlock>> dags =
-					ReachingDefinitions.computeRDForTrace((List<CodeBlock>) word, mLogger, mIcfg);
-			return dags;
+			return ReachingDefinitions.computeRDForTrace((List<CodeBlock>) word, mLogger, mIcfg);
 		} catch (final Throwable e) {
 			mLogger.fatal("DataflowDAG generation threw an exception.", e);
 			throw new AssertionError();
@@ -378,9 +376,8 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 			}
 		}
 
-		final Term substitutedTerm = Substitution.apply(mCsToolkit.getManagedScript(), substitutionMapping,
+		return Substitution.apply(mCsToolkit.getManagedScript(), substitutionMapping,
 				nodeLabel.getBlock().getTransformula().getFormula());
-		return substitutedTerm;
 	}
 
 	/**
@@ -388,9 +385,8 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 	 */
 	private Term buildVersion(final IProgramVar bv) {
 		final int index = mSsaIndex++;
-		final Term constant = PredicateUtils.getIndexedConstant(bv, index, mIndexedConstants,
+		return PredicateUtils.getIndexedConstant(bv, index, mIndexedConstants,
 				mCsToolkit.getManagedScript().getScript());
-		return constant;
 	}
 
 	/**
@@ -530,7 +526,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 		mStateFactoryForRefinement.setIteration(getIteration());
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-		final boolean explointSigmaStarConcatOfIA = mProofUpdater == null || mProofUpdater.exploitSigmaStarConcatOfIa();
+		final boolean exploitSigmaStarConcatOfIA = mProofUpdater == null || mProofUpdater.exploitSigmaStarConcatOfIa();
 
 		final INestedWordAutomaton<L, IPredicate> oldAbstraction = mAbstraction;
 		final IHoareTripleChecker htc = getEfficientHoareTripleChecker(); // change to CegarLoopConcurrentAutomata
@@ -552,7 +548,7 @@ public class TAwAFAsCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 					oldAbstraction, determinized, psd2, false);
 		} else {
 			diff = new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
-					oldAbstraction, determinized, psd2, explointSigmaStarConcatOfIA);
+					oldAbstraction, determinized, psd2, exploitSigmaStarConcatOfIA);
 		}
 		assert !mCsToolkit.getManagedScript().isLocked();
 		assert checkInterpolantAutomatonInductivity(mInterpolAutomaton, mRefinementResult.getPredicateUnifier());

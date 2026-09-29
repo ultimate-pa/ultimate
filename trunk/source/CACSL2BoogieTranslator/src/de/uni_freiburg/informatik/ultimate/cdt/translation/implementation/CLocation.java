@@ -223,8 +223,14 @@ public class CLocation extends CACSLLocation {
 
 	@Override
 	public String getFunction() {
-		return getUniqueElementOrNull(
-				mNodes.stream().map(x -> CdtASTUtils.findScope(x).getDeclarator().getName().toString()));
+		return getUniqueElementOrNull(mNodes.stream().map(x -> {
+			final var scope = CdtASTUtils.findScope(x);
+			if (scope == null) {
+				// global scope
+				return null;
+			}
+			return scope.getDeclarator().getName().toString();
+		}));
 	}
 
 	/**
