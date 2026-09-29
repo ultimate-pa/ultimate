@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -651,12 +652,17 @@ public final class Translator {
 		final var assignReturn = new AssignmentStatement(null, assignments.toArray(new VariableLHS[0]),
 				returnExpressions.toArray(Expression[]::new));
 
+		final var setContain = new FunctionApplication(null, JOIN_POOL_CONTAINS_FUNCTION,
+				new Expression[] { getJoinPoolExpression(), getParameterExpression(tidParam) });
+		final var assume = new AssumeStatement(null, setContain);
+
 		final var getCall = new CallStatement(null, new NamedAttribute[0], false, new VariableLHS[0], "One_Get",
 				new Expression[] { getJoinPoolExpression(), getParameterExpression(tidParam) });
 
-		final var atomicAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP, new Body(null,
-				new VariableDeclaration[0],
-				(assignments.size() > 0) ? new Statement[] { assignReturn, getCall } : new Statement[] { getCall }));
+		final var atomicAction = new AnonymousAction(LAYER_IMPLEMENTATIONS, LAYER_TOP,
+				new Body(null, new VariableDeclaration[0],
+						(assignments.size() > 0) ? new Statement[] { assignReturn, assume, getCall }
+								: new Statement[] { assume, getCall }));
 
 		final var yieldProc = new YieldProcedure(LAYER_BASE, joinName, new ParameterDeclaration[] { tidParam },
 				returnVariables.stream()

@@ -261,17 +261,12 @@ final class BodyTransformer extends BoogieTransformer {
 
 			case final ForkStatement forkStmt:
 				newStatements.add(annotationCheck);
-				// final var annotationCheck =
-				// Translator.callYieldInvariant(yieldInvariant, mCurrentTids, new Expression[] { annotation });
-
 				newStatements.addAll(processForkStatement(forkStmt, positiveGhostUpdates));
-				newStatements.addAll(positiveGhostUpdates);
 				break;
 
 			case final JoinStatement joinStmt:
 				// add tid when joined
 				mTidNeedsLinearity.add(new Tid(joinStmt.getThreadID()));
-				//$FALL-THROUGH$
 
 				newStatements.add(annotationCheck);
 				mTranslator.addJoin(mProcedureName, mAtomicStatementCounter, joinStmt);
