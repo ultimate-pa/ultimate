@@ -54,7 +54,7 @@ public class PartialQuantifierElimination {
 	/**
 	 * Write input and output of expensive quantifier eliminations to disk for further analysis.
 	 */
-	private static boolean DEBUG_DUMP_EXPENSIVE_ELIMINATIONS = false;
+	private static final boolean DEBUG_DUMP_EXPENSIVE_ELIMINATIONS = !false;
 
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final Term term, final SimplificationTechnique simplificationTechnique) {
