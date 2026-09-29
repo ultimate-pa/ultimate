@@ -2,7 +2,7 @@
 <feature
       id="BA_FeatureUltimateDeltaDebugger"
       label="BA_FeatureUltimateDeltaDebugger"
-      version="0.3.1"
+      version="0.3.2"
       provider-name="Ultimate Program Analysis Team">
 
    <requires>

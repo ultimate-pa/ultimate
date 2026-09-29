@@ -932,22 +932,16 @@ public class InitializationHandler {
 			final Expression initializationValue, final Collection<Overapprox> overAppr, final IASTNode hook) {
 		assert lhs != null;
 
-		List<Statement> assigningStatements;
 		if (onHeap) {
 			if (useSelectInsteadOfStoreForOnHeapAssignment && mUseSelectForArrayCellInitIfPossible) {
-				assigningStatements =
-						mMemoryHandler.getInitCall(loc, (HeapLValue) lhs, initializationValue, cType, hook);
-			} else {
-				assigningStatements =
-						mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, initializationValue, cType, true);
+				return mMemoryHandler.getInitCall(loc, (HeapLValue) lhs, initializationValue, cType, hook);
 			}
-		} else {
-			final AssignmentStatement assignment = StatementFactory.constructAssignmentStatement(loc,
-					new LeftHandSide[] { ((LocalLValue) lhs).getLhs() }, new Expression[] { initializationValue });
-			addOverApprToStatementAnnots(overAppr, assignment);
-			assigningStatements = Collections.singletonList(assignment);
+			return mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, initializationValue, cType, true);
 		}
-		return assigningStatements;
+		final AssignmentStatement assignment =
+				mCHandler.constructAssignmentWithoutFlexibleArray(loc, (LocalLValue) lhs, initializationValue);
+		addOverApprToStatementAnnots(overAppr, assignment);
+		return Collections.singletonList(assignment);
 	}
 
 	private Expression getDefaultValueForSimpleType(final ILocation loc, final ICType cTypeRaw) {

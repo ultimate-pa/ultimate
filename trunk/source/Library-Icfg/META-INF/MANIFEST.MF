@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Library-Icfg
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.icfg
 Bundle-Vendor: Ultimate Program Analysis Team
-Bundle-Version: 0.3.1
+Bundle-Version: 0.3.2
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.icfg,
  de.uni_freiburg.informatik.ultimate.lib.icfg.util
 Bundle-RequiredExecutionEnvironment: JavaSE-21

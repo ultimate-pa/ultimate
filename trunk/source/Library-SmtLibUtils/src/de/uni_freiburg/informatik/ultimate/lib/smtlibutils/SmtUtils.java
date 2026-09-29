@@ -26,10 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -269,39 +265,38 @@ public final class SmtUtils {
 		final long overallTimeMs = (endTime - startTime) / 1_000_000;
 		// write warning if simplification takes more than 5 seconds
 		if (overallTimeMs >= 5000) {
-			final StringBuilder sb = new StringBuilder();
-			sb.append("Spent ").append(CoreUtil.humanReadableTime(overallTimeMs, TimeUnit.MILLISECONDS, 2))
-					.append(" on a formula simplification");
-			if (formula.equals(simplified)) {
-				sb.append(" that was a NOOP. DAG size: ");
-				sb.append(new DagSizePrinter(formula));
-			} else {
-				sb.append(". DAG size of input: ");
-				sb.append(new DagSizePrinter(formula));
-				sb.append(" DAG size of output: ");
-				sb.append(new DagSizePrinter(simplified));
-			}
-			sb.append(" (called from ").append(ReflectionUtil.getCallerSignatureFiltered(Set.of(SmtUtils.class)))
-					.append(")");
-			logger.warn(sb);
+			logger.warn(generateSimplificationLogMessage(formula, simplified, overallTimeMs, "formula simplification"));
 			// Matthias 2023-08-01: The following is a hack for writing simplification
 			// benchmarks to a file. We write only if the simplification took at least 5s
 			// (see if above) and if the context is equivalent to true.
 			final boolean writeSimplificationBenchmarksToFile = false;
 			if (writeSimplificationBenchmarksToFile && SmtUtils.isTrueLiteral(context)) {
-				try (FileWriter fw = new FileWriter("SimplificationBenchmark_" + overallTimeMs);
-						BufferedWriter bw = new BufferedWriter(fw);
-						PrintWriter out = new PrintWriter(bw)) {
-					out.println(SmtTestGenerationUtils.generateStringForTestfile(formula));
-					out.close();
-					bw.close();
-					fw.close();
-				} catch (final IOException e) {
-					throw new AssertionError(e);
-				}
+				SmtTestGenerationUtils.dumpSimplificationOpportunity("ExpensiveSimplification", formula, simplified);
 			}
 		}
 		return simplified;
+	}
+
+	/**
+	 * Log message for simplification that took a long time.
+	 */
+	public static String generateSimplificationLogMessage(final Term inputFormula, final Term outputFormula,
+			final long overallTimeMs, final String task) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Spent ").append(CoreUtil.humanReadableTime(overallTimeMs, TimeUnit.MILLISECONDS, 2)).append(" on a ")
+				.append(task);
+		if (inputFormula.equals(outputFormula)) {
+			sb.append(" that was a NOOP. DAG size: ");
+			sb.append(new DagSizePrinter(inputFormula));
+		} else {
+			sb.append(". DAG size of input: ");
+			sb.append(new DagSizePrinter(inputFormula));
+			sb.append(" DAG size of output: ");
+			sb.append(new DagSizePrinter(outputFormula));
+		}
+		sb.append(" (called from ").append(ReflectionUtil.getCallerSignatureFiltered(Set.of(SmtUtils.class)))
+				.append(")");
+		return sb.toString();
 	}
 
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript mgdScript, final Term formula,
