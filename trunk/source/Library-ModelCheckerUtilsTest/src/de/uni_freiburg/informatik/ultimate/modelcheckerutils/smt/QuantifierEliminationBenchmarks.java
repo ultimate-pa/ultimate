@@ -535,5 +535,15 @@ public class QuantifierEliminationBenchmarks {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void ExpensiveElimination_2c0d2d51_2001c959_Treesizes_244_3() {
+		final FunDecl[] funDecls = {
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_aws_linked_list_prev_harness_#t~ret683#1"),
+		};
+		final String formulaAsString = "(exists ((k1 Int) (k2 Int) (a (Array Int Int)) (k3 Int) (k4 Int) (k5 Int) (k6 Int) (k7 Int) (k8 Int) (k9 Int) (k10 Int) (k11 Int)) (and (<= (+ 16 k8) (select a (+ 8 k8))) (<= (+ 16 k11) (select a (+ 8 k11))) (= (select a (select a (+ 8 k8))) k8) (= (select a (select a (+ 8 k1))) k1) (= (select a (select a (+ 8 k11))) k11) (<= (+ 16 k2) (select a (+ 8 k2))) (<= (+ 16 k4) (select a (+ 8 k4))) (= (select a (select a (+ 8 k5))) k5) (= (select a (select a (+ 8 k7))) k7) (= (select a (select a (+ 8 k6))) k6) (<= (+ 16 k9) (select a (+ 8 k9))) (= k2 (select a (select a (+ 8 k2)))) (or (and (= (select a (+ (select a (select a (+ 8 k10))) 8)) (select a (+ 8 k10))) (= |ULTIMATE.start_aws_linked_list_prev_harness_#t~ret683#1| 1)) (and (= |ULTIMATE.start_aws_linked_list_prev_harness_#t~ret683#1| 0) (not (= (select a (+ (select a (select a (+ 8 k10))) 8)) (select a (+ 8 k10)))))) (<= (+ 16 k10) (select a (+ 8 k10))) (<= (+ 16 k5) (select a (+ 8 k5))) (<= (+ 16 k1) (select a (+ 8 k1))) (= (select a (select a (+ 8 k4))) k4) (= (select a (select a (+ 8 k3))) k3) (<= (+ 16 k6) (select a (+ 8 k6))) (<= (+ 16 k3) (select a (+ 8 k3))) (= (select a (select a (+ 8 k9))) k9) (<= (+ 16 k7) (select a (+ 8 k7))) (= (select a (select a (+ 8 k10))) k10)))";
+		final String expectedResult = "(= |ULTIMATE.start_aws_linked_list_prev_harness_#t~ret683#1| 1)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	//@formatter:on
 }
