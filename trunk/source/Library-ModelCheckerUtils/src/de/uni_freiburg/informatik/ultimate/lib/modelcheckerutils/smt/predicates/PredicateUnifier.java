@@ -988,7 +988,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 					}
 					mEquivalentGtQuantifiedPredicates.add(other);
 					if (DEBUG_DUMP_ELIMINATION_OPPORTUNITIES) {
-						SmtTestGenerationUtils.dumpEliminationOpportunities("EliminationOpportunity",
+						SmtTestGenerationUtils.dumpEliminationOpportunity("EliminationOpportunity",
 								other.getFormula(), mTerm);
 					}
 				}
