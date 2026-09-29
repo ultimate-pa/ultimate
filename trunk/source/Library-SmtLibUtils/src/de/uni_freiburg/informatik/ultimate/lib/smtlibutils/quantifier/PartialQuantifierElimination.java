@@ -68,7 +68,7 @@ public class PartialQuantifierElimination {
 			services.getLoggingService().getLogger(PartialQuantifierElimination.class).warn(
 					SmtUtils.generateSimplificationLogMessage(term, result, overallTimeMs, "quantifier elimination"));
 			if (DEBUG_DUMP_EXPENSIVE_ELIMINATIONS) {
-				SmtTestGenerationUtils.dumpSimplificationOpportunity("ExpensiveElimination", term, result);
+				SmtTestGenerationUtils.dumpEliminationOpportunities("ExpensiveElimination", term, result);
 			}
 		}
 		if (DEBUG_EXPECT_REMOVAL_OF_ALL_QUANTIFIERS && !QuantifierUtils.isQuantifierFree(result)) {
