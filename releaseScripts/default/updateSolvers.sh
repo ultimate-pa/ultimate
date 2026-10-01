@@ -64,9 +64,7 @@ update_cvc5(){
     rm -r "$TMP_DIR"
   done
   curl -sL -o adds/cvc5-LICENSE https://raw.githubusercontent.com/cvc5/cvc5/main/COPYING
-  version=$(adds/cvc5 -V | head -n1 | tr '\n' ' ' | sed 's/This is //g')
-  version+="from ""$(echo "$nightly" | grep -oP "\-\d+\-\d+\-\d+\-\K.*" | sed 's/.exe//g')"
-  echo "$version"
+  echo $(adds/cvc5 -V | head -n1)
 }
 
 ## bitwuzla
