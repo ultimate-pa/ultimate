@@ -410,6 +410,8 @@ public class CHandler {
 
 	private final IMemoryPointer mMemoryPointer;
 
+	private final Map<String, ICType> mTypedefs = new HashMap<>();
+
 	/**
 	 * Constructor for CHandler in pre-run mode.
 	 *
@@ -3198,6 +3200,17 @@ public class CHandler {
 		final Declaration boogieDec;
 		final Result result;
 		if (storageClass == CStorageClass.TYPEDEF) {
+			final ICType existingType = mTypedefs.put(bId, cDec.getType());
+			if (existingType != null) {
+				// C11 6.7.3: there shall be no more than one declaration of the identifier [...]
+				// except that a typedef name can be redefined to denote the same type as it currently does
+				if (existingType.getUnderlyingType().equals(cDec.getType().getUnderlyingType())) {
+					// Avoid adding duplicate Boogie declarations (otherwise the solver crashes later)
+					return skipOrSideEffects(declResult);
+				}
+				throw new AssertionError("error: conflicting types for " + cDec.getType() + "; have " + existingType);
+			}
+
 			boogieDec = new TypeDeclaration(loc, new Attribute[0], false, bId, new String[0], translatedType);
 
 			final BoogieType boogieType = mTypeHandler.getBoogieTypeForCType(cDec.getType());
