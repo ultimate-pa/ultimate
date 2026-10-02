@@ -100,8 +100,8 @@ public class IcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final CodeBlockSize DEF_CODE_BLOCK_SIZE = CodeBlockSize.LoopFreeBlock;
 	public static final String LABEL_SIMPLIFY = "Simplify code blocks";
 	public static final String LABEL_CNF = "Convert code blocks to CNF";
-	public static final String LABEL_REMOVE_GOTO_EDGES = "Remove goto edges from ICFG";
-	public static final String LABEL_REMOVE_UNNECESSARY_LABELS = "Remove unnecessary labels from ICFG";
+	public static final String LABEL_REMOVE_GOTO_EDGES = "Remove goto edges";
+	public static final String LABEL_REMOVE_UNNECESSARY_LABELS = "Remove unnecessary labels";
 	private static final String DESC_REMOVE_UNNECESSARY_LABELS =
 			"If enabled, any label that has no corresponding goto, or whose goto appears only on the line preceding "
 					+ "the label, is removed and not preserved in the ICFG. "
