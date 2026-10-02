@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: UltimateTest
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.ultimatetest;singleton:=true
 Bundle-Vendor: Ultimate Program Analysis Team
-Bundle-Version: 0.3.1
+Bundle-Version: 0.3.2
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ActivationPolicy: lazy
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
@@ -18,7 +18,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.icfgtransformer,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator,
  de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding,
  de.uni_freiburg.informatik.ultimate.plugins.blockencoding,

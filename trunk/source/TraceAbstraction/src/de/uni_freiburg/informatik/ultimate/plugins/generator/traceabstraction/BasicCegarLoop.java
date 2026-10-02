@@ -73,6 +73,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.PathProgram;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.PathProgram.PathProgramConstructionResult;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.util.IcfgAngelicProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -93,6 +96,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskStringIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
@@ -102,9 +106,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorlocalization.FlowSensitiveFaultLocalizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
@@ -165,7 +166,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			final IUltimateServiceProvider services, final Class<L> transitionClazz,
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(services, name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs);
-		mPathProgramDumpController = new PathProgramDumpController<>(getServices(), mPref, mIcfg);
+		mPathProgramDumpController =
+				new PathProgramDumpController<>(getServices(), mPref, mTaskFilename, mTaskDebugIdentifier, mIcfg);
 		InterpolationTechnique interpolation = taPrefs.interpolation();
 		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1
 				&& interpolation == InterpolationTechnique.FPandBP) {
@@ -198,10 +200,10 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			// Construct an empty file. We need this empty file in cases where
 			// the CFG does not have error location and no automaton is dumped.
 			mLogger.info("Dumping reuse automata for " + mTaskIdentifier.toString());
-			final String filename = mTaskIdentifier + "-reuse";
-			final String fullPath = mPref.dumpPath() + File.separator + filename + "."
-					+ mPrintAutomataLabeling.getFormat().getFileEnding();
-			final File file = new File(fullPath);
+			final String fullAutomataPath = getDumpPath(mPref.dumpAutomataBesideFile(), mPref.dumpDebugInfoDirectory(),
+					mPref.dumpAutomataFilename(), new SubtaskStringIdentifier(null, "reuse").toString()) + "."
+					+ mPref.dumpAutomataFormat().getFormat().getFileEnding();
+			final File file = new File(fullAutomataPath);
 			try {
 				final FileWriter fw = new FileWriter(file, false);
 				fw.close();
@@ -378,14 +380,13 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		mInterpolAutomaton = mRefinementResult.getInfeasibilityProof();
 
 		if (mPref.dumpAutomata()) {
-			final String filename =
-					new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()) + "_RawFloydHoareAutomaton";
-			super.writeAutomatonToFile(mInterpolAutomaton, filename);
+			writeAutomatonToFile(mInterpolAutomaton, getIteration(), "RawFloydHoareAutomaton");
 		}
 
 		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
 		if (NON_EA_INDUCTIVITY_CHECK) {
-			final boolean inductive = checkInterpolantAutomatonInductivity(mInterpolAutomaton);
+			final boolean inductive =
+					checkInterpolantAutomatonInductivity(mInterpolAutomaton, mRefinementResult.getPredicateUnifier());
 			if (!inductive) {
 				throw new AssertionError("not inductive");
 			}
@@ -399,7 +400,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		// unAssertCodeBlock unlocks a ManagedScript. If assertions are disabled, this remains locked. This leads to
 		// exceptions if other callers try to lock it. With assertions enabled, the line below causes the ManagedScript
 		// to be unlocked and no exceptions occur.
-		assert checkInterpolantAutomatonInductivity(mInterpolAutomaton);
+		assert checkInterpolantAutomatonInductivity(mInterpolAutomaton, mRefinementResult.getPredicateUnifier());
 	}
 
 	protected static boolean
@@ -502,7 +503,6 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 
 			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
 			mLogger.info("Dumping reuse automata for " + mTaskIdentifier.toString() + " " + automaton.getClass());
-			final String filename = mTaskIdentifier + "-reuse";
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> printedAutomaton;
 			final AutomataLibraryServices services = new AutomataLibraryServices(getServices());
 			final boolean addPredicateImplicationInformation = true;
@@ -525,9 +525,10 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			} else {
 				printedAutomaton = automaton;
 			}
-			new AutomatonDefinitionPrinter<String, String>(services, "nwa" + getIteration(),
-					mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "", !mFirstReuseDump,
-					printedAutomaton);
+			final String fullAutomataPath = getDumpPath(mPref.dumpAutomataBesideFile(), mPref.dumpAutomataDirectory(),
+					mPref.dumpAutomataFilename(), new SubtaskStringIdentifier(null, "reuse").toString());
+			new AutomatonDefinitionPrinter<String, String>(services, "nwa" + getIteration(), fullAutomataPath,
+					mPref.dumpAutomataFormat(), "", !mFirstReuseDump, printedAutomaton);
 			mFirstReuseDump = false;
 			mLogger.info("Finished dumping");
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
@@ -555,7 +556,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		assert isInterpolantAutomatonOfSingleStateType(
 				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), interpolantAutomaton).getResult());
 		assert checkInterpolantAutomatonInductivity(
-				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), interpolantAutomaton).getResult());
+				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), interpolantAutomaton).getResult(),
+				mRefinementResult.getPredicateUnifier());
 	}
 
 	private void debugLogBrokenInterpolantAutomaton(
@@ -658,10 +660,11 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		throw new IllegalStateException("Floyd-Hoare automata have not been stored");
 	}
 
-	protected boolean checkInterpolantAutomatonInductivity(final INestedWordAutomaton<L, IPredicate> automaton) {
-		return NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(),
-				new IncrementalHoareTripleChecker(mCsToolkit, false), mRefinementResult.getPredicateUnifier(),
-				automaton, true).getResult();
+	protected boolean checkInterpolantAutomatonInductivity(final INestedWordAutomaton<L, IPredicate> automaton,
+			final IPredicateUnifier predicateUnifier) {
+		final var htc = new IncrementalHoareTripleChecker(mCsToolkit, false);
+		return NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(), htc,
+				predicateUnifier, automaton, true).getResult();
 	}
 
 	public IPreconditionProvider getPreconditionProvider() {

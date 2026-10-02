@@ -76,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -1995,7 +1994,7 @@ public class MemoryHandler {
 					mExpressionTranslation.getCTypeOfPointerComponents());
 
 			final HeapLValue fieldHlv = LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, fieldType, null);
-			final StructAccessExpression sae = ExpressionFactory.constructStructAccessExpression(loc, value, fieldId);
+			final Expression sae = ExpressionFactory.constructStructAccessExpression(loc, value, fieldId);
 
 			stmt.addAll(getWriteCall(loc, fieldHlv, sae, fieldType, writeMode));
 		}

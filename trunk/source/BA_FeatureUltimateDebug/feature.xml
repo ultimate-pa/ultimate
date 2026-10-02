@@ -2,15 +2,13 @@
 <feature
       id="BA_FeatureUltimateDebug"
       label="BA_FeatureUltimateDebug"
-      version="0.3.1"
+      version="0.3.2"
       provider-name="Ultimate Program Analysis Team"
       os="linux,win32,macosx"
       arch="x86_64">
 
    <requires>
       <import feature="BA_FeatureDependenciesDebugE4"/>
-      <import feature="BA_FeatureDependenciesCommon"/>
-      <import feature="BA_FeatureUltimateCommon"/>
    </requires>
 
    <plugin
@@ -31,9 +29,6 @@
 
    <plugin
          id="edu.uci.ics.jung"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
 </feature>

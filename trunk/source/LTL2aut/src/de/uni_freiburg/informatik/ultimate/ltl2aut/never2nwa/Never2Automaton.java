@@ -55,6 +55,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlockFactory;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.BinaryOperator;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.BoolLiteral;
@@ -66,9 +69,6 @@ import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.Not;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.OptionStatement;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.SkipStatement;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.util.simplifier.NormalFormTransformer;
 
 /**

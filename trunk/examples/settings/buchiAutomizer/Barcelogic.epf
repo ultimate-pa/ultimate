@@ -4,7 +4,7 @@ file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Command\ for\ external\ solver\ (GNTA\ synthesis)=/home/matthias/ultimate/barcelogic-NIRA
 #Thu Sep 10 10:21:47 CEST 2015
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=
 file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
-@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/SMT\ solver=Internal_SMTInterpol
+@de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=0.0.1

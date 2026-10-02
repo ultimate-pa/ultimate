@@ -2,119 +2,13 @@
 <feature
       id="BA_FeatureDependenciesDebugE4"
       label="BA_FeatureDependenciesDebugE4"
-      version="0.3.1"
+      version="0.3.2"
       provider-name="Ultimate Program Analysis Team"
       arch="x86_64">
 
    <requires>
-      <import feature="BA_FeatureDependenciesCommon"/>
+      <import feature="BA_FeatureUltimateCommon"/>
    </requires>
-
-   <plugin
-         id="org.eclipse.e4.ui.widgets"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.e4.ui.bindings"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.ui.workbench"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.e4.ui.model.workbench"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.e4.ui.workbench.addons.swt"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.e4.ui.workbench"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.e4.ui.di"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.e4.ui.swt.gtk"
-         ws="gtk"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.jface"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.ui"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.jface.databinding"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.swt.win32.win32.x86_64"
-         os="win32"
-         ws="win32"
-         arch="x86_64"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.e4.ui.services"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.e4.ui.css.swt"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.e4.ui.workbench.renderers.swt"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.e4.ui.css.swt.theme"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.e4.ui.workbench.swt"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.e4.ui.css.core"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.swt"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.e4.ui.workbench3"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.swt.gtk.linux.x86_64"
-         os="linux"
-         ws="gtk"
-         arch="x86_64"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.swt.cocoa.macosx.x86_64"
-         os="macosx"
-         ws="cocoa"
-         arch="x86_64"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.e4.emf.xpath"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.commons.jxpath"
-         version="0.0.0"/>
 
    <plugin
          id="jakarta.annotation-api"
@@ -122,6 +16,10 @@
 
    <plugin
          id="org.apache.batik.anim"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.apache.batik.awt.util"
          version="0.0.0"/>
 
    <plugin
@@ -138,10 +36,6 @@
 
    <plugin
          id="org.apache.batik.dom.svg"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.batik.awt.util"
          version="0.0.0"/>
 
    <plugin
@@ -165,11 +59,7 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.apache.xalan"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.xmlgraphics"
+         id="org.apache.commons.commons-jxpath"
          version="0.0.0"/>
 
    <plugin
@@ -213,7 +103,63 @@
          version="0.0.0"/>
 
    <plugin
+         id="org.eclipse.e4.emf.xpath"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.e4.ui.bindings"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.e4.ui.css.core"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.e4.ui.css.swt"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.e4.ui.css.swt.theme"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.e4.ui.di"
+         version="0.0.0"/>
+
+   <plugin
          id="org.eclipse.e4.ui.dialogs"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.e4.ui.model.workbench"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.e4.ui.services"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.e4.ui.widgets"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.e4.ui.workbench3"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.e4.ui.workbench.addons.swt"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.e4.ui.workbench.renderers.swt"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.e4.ui.workbench.swt"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.e4.ui.workbench"
          version="0.0.0"/>
 
    <plugin
@@ -221,11 +167,11 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.emf.ecore"
+         id="org.eclipse.emf.ecore.change"
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.emf.ecore.change"
+         id="org.eclipse.emf.ecore"
          version="0.0.0"/>
 
    <plugin
@@ -241,7 +187,15 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.urischeme"
+         id="org.eclipse.jface"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.jface.databinding"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.jface.notifications"
          version="0.0.0"/>
 
    <plugin
@@ -249,7 +203,44 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.jface.notifications"
+         id="org.eclipse.swt"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.swt.cocoa.macosx.x86_64"
+         os="macosx"
+         ws="cocoa"
+         arch="x86_64"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.swt.gtk.linux.x86_64"
+         os="linux"
+         ws="gtk"
+         arch="x86_64"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.swt.svg"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.swt.win32.win32.x86_64"
+         os="win32"
+         ws="win32"
+         arch="x86_64"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.ui"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.ui.workbench"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.urischeme"
          version="0.0.0"/>
 
 </feature>

@@ -28,11 +28,16 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -196,15 +201,13 @@ public final class BitvectorUtils {
 			result = SmtUtils.mul(script, funcname, params);
 			break;
 		case bvand:
-			result = new Bvand().simplifiedResult(script, funcname, indices, params);
+			result = simplifyBvand(script, params);
 			break;
 		case bvor:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvor(x, y))
-					.simplifiedResult(script, funcname, indices, params);
+			result = simplifyBvor(script, params);
 			break;
 		case bvxor:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvxor(x, y))
-					.simplifiedResult(script, funcname, indices, params);
+			result = simplifyBvxor(script, params);
 			break;
 		case bvnot:
 			result = new Bvnot().simplifiedResult(script, funcname, indices, params);
@@ -275,7 +278,8 @@ public final class BitvectorUtils {
 			}
 			assert (getNumberOfIndices() == 0 && indices == null || getNumberOfIndices() == indices.length)
 					: "Wrong number of indices:" + Arrays.toString(indices);
-			if (getNumberOfParams() != params.length) {
+			// accept more than two params
+			if (getNumberOfParams() != -1 && getNumberOfParams() != params.length) {
 				throw new AssertionError(String.format("%s: params expected %s, params provided %s", funcname,
 						getNumberOfParams(), params.length));
 			}
@@ -376,6 +380,44 @@ public final class BitvectorUtils {
 			final BitvectorConstant bv =
 					BitvectorConstant.extract(bvs[0], indices[0].intValueExact(), indices[1].intValueExact());
 			return constructTerm(script, bv);
+		}
+
+		/**
+		 * Extract-over-extend simplification: sign_extend/zero_extend only add bits above the original value, so
+		 * extracting bits [hi:0] where hi falls anywhere from the original width up to (but not including) the full
+		 * extended width always gives back a smaller extend of the original value, e.g.
+		 * {@code (extract 2 0 (sign_extend 2 x))} -> {@code (sign_extend 1 x)} for a 3-bit x, and the special case
+		 * {@code (extract 1 0 (sign_extend 2 x))} -> {@code x} where no padding bits survive at all. Extracting the
+		 * full extended width, or reaching outside it, is out of scope for this rule.
+		 */
+		@Override
+		protected Term simplify_NonConstantCase(final Script script, final BigInteger[] indices, final Term[] params,
+				final BitvectorConstant[] bvs) {
+			final int hi = indices[0].intValueExact();
+			final int lo = indices[1].intValueExact();
+			if (lo == 0) {
+				String extendFuncName = "sign_extend";
+				ApplicationTerm extendApp = SmtUtils.getFunctionApplication(params[0], extendFuncName);
+				if (extendApp == null) {
+					extendFuncName = "zero_extend";
+					extendApp = SmtUtils.getFunctionApplication(params[0], extendFuncName);
+				}
+				if (extendApp != null) {
+					final Term innerValue = extendApp.getParameters()[0];
+					final int innerWidth = Integer.parseInt(innerValue.getSort().getIndices()[0]);
+					final int extendedWidth = Integer.parseInt(extendApp.getSort().getIndices()[0]);
+					if (hi >= innerWidth - 1 && hi < extendedWidth - 1) {
+						final int reducedExtendAmount = hi - (innerWidth - 1);
+						if (reducedExtendAmount == 0) {
+							return innerValue; // extract exactly undoes the extend
+						}
+						// fewer padding bits survive than before - shrink the extend instead of dropping it
+						return unfTerm(script, extendFuncName,
+								new BigInteger[] { BigInteger.valueOf(reducedExtendAmount) }, innerValue);
+					}
+				}
+			}
+			return super.simplify_NonConstantCase(script, indices, params, bvs);
 		}
 
 	}
@@ -608,22 +650,102 @@ public final class BitvectorUtils {
 
 	}
 
-	private static class Bvand extends RegularBitvectorOperation_BitvectorResult {
-
-		public Bvand() {
-			super("bvand", x -> y -> BitvectorConstant.bvand(x, y));
-		}
-
-		@Override
-		protected Term simplify_NonConstantCase(final Script script, final BigInteger[] indices, final Term[] params,
-				final BitvectorConstant[] bvs) {
-			for (final BitvectorConstant bvConst : bvs) {
-				if (bvConst != null && bvConst.getValue().equals(BigInteger.ZERO)) {
-					return constructTerm(script, bvConst);
-				}
-			}
-			return super.simplify_NonConstantCase(script, indices, params, bvs);
-		}
+	static Term simplifyBvand(final Script script, final Term[] params) {
+		return bitwiseOperationHelper(script, params, SMTLIBConstants.BVAND);
 	}
 
+	static Term simplifyBvor(final Script script, final Term[] params) {
+		return bitwiseOperationHelper(script, params, SMTLIBConstants.BVOR);
+	}
+
+	static Term simplifyBvxor(final Script script, final Term[] params) {
+		return bitwiseOperationHelper(script, params, SMTLIBConstants.BVXOR);
+	}
+
+	/**
+	 * @return true iff the given bitvector constant is the all-ones value (2^width - 1), i.e. every bit is set. Kept as
+	 *         a small reusable check (used here for absorption/annihilation) instead of recomputing the 2^width - 1
+	 *         formula inline.
+	 */
+	private static boolean isAllOnes(final BitvectorConstant bv) {
+		return bv.getValue().equals(BitvectorConstant.maxValue(bv.getIndex()).getValue());
+	}
+
+	/**
+	 * Simplifies an n-ary bitwise application: flattens nested same-operator applications, folds all literal operands
+	 * into one constant, deduplicates non-literal operands, applies absorption/annihilation, and assembles the final
+	 * term - all in one pass over a single Set. Flattening happens inline (no intermediate list) and annihilation is
+	 * checked directly inside the loop, since it only depends on the folded constant itself; absorption (dropping an
+	 * identity constant) has to wait until the loop finishes, since it depends on whether any non-literal survived.
+	 *
+	 * @param funcname
+	 *            one of {@link SMTLIBConstants#BVAND}, {@link SMTLIBConstants#BVOR}, {@link SMTLIBConstants#BVXOR}
+	 * @param params
+	 *            the top-level arguments of the application, not necessarily flattened or literal
+	 * @return the simplified term
+	 */
+	private static Term bitwiseOperationHelper(final Script script, final Term[] params, final String funcname) {
+		final BinaryOperator<BitvectorConstant> fold;
+		final Predicate<BitvectorConstant> isAnnihilating;
+		final Predicate<BitvectorConstant> isIdentity;
+		switch (funcname) {
+		case SMTLIBConstants.BVAND:
+			fold = BitvectorConstant::bvand;
+			isAnnihilating = bc -> bc.getValue().equals(BigInteger.ZERO);
+			isIdentity = BitvectorUtils::isAllOnes;
+			break;
+		case SMTLIBConstants.BVOR:
+			fold = BitvectorConstant::bvor;
+			isAnnihilating = BitvectorUtils::isAllOnes;
+			isIdentity = bc -> bc.getValue().equals(BigInteger.ZERO);
+			break;
+		case SMTLIBConstants.BVXOR:
+			fold = BitvectorConstant::bvxor;
+			isAnnihilating = bc -> false; // bvxor has no annihilating constant, only an identity (0)
+			isIdentity = bc -> bc.getValue().equals(BigInteger.ZERO);
+			break;
+		default:
+			throw new AssertionError("unsupported operator for bitwiseOperationHelper: " + funcname);
+		}
+		final boolean isXor = funcname.equals(SMTLIBConstants.BVXOR);
+
+		final Set<Term> result = new HashSet<>();
+		BitvectorConstant mergedConstant = null;
+		for (final Term p : params) {
+			// Unwrap one level of nested same-operator application, or process p itself. Arguments are built
+			// bottom-up and are therefore already flat, so a recursive descent would be redundant.
+			final ApplicationTerm appTerm = SmtUtils.getFunctionApplication(p, funcname);
+			final Term[] toProcess = appTerm != null ? appTerm.getParameters() : new Term[] { p };
+			for (final Term t : toProcess) {
+				final BitvectorConstant bc = constructBitvectorConstant(t);
+				if (bc != null) {
+					mergedConstant = (mergedConstant == null) ? bc : fold.apply(mergedConstant, bc);
+					if (isAnnihilating.test(mergedConstant)) {
+						return constructTerm(script, mergedConstant); // rest of params cannot change this anymore
+					}
+				} else {
+					final boolean isNewTerm = result.add(t);
+					if (!isNewTerm && isXor) {
+						result.remove(t); // second (or 4th, ...) occurrence cancels: X xor X = 0
+					}
+				}
+			}
+		}
+
+		if (mergedConstant != null && isIdentity.test(mergedConstant) && !result.isEmpty()) {
+			mergedConstant = null; // identity drops only if something else remains
+		}
+
+		if (mergedConstant != null) {
+			result.add(constructTerm(script, mergedConstant)); // surviving literal joins the same set
+		}
+
+		if (result.isEmpty()) {
+			return constructTerm(script, BigInteger.ZERO, params[0].getSort()); // e.g. "x xor x" -> 0
+		}
+		if (result.size() == 1) {
+			return result.iterator().next();
+		}
+		return CommuhashUtils.term(script, funcname, null, null, result.toArray(new Term[0]));
+	}
 }

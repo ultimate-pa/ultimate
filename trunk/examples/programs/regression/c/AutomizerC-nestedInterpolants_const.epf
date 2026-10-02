@@ -1,9 +1,9 @@
 #Thu Jan 30 13:20:28 CET 2014
 file_export_version=3.0
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
-@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/SMT\ solver=Internal_SMTInterpol
+@de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Convert\ code\ blocks\ to\ CNF=false
 @de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ separate\ solver\ for\ trace\ checks=false

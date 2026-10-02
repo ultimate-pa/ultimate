@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.in
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation.IndependenceConditions;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CoinflipMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
@@ -70,8 +70,15 @@ public final class TAPreferences {
 	private final InterpolationTechnique mInterpolation;
 	private final InterpolantAutomaton mInterpolantAutomaton;
 	private final boolean mDumpAutomata;
-	private final Format mAutomataFormat;
-	private final String mDumpPath;
+	private final Format mDumpAutomataFormat;
+	private final String mDumpAutomataDirectory;
+	private final String mDumpAutomataFilename;
+	private final boolean mDumpAutomataBesideFile;
+	private final boolean mDumpOnlyReuseAutomata;
+	private final boolean mDumpDebugInfo;
+	private final String mDumpDebugInfoDirectory;
+	private final String mDumpDebugInfoFilename;
+	private final boolean mDumpDebugInfoBesideFile;
 	private final InterpolantAutomatonEnhancement mDeterminiation;
 	private final Minimization mMinimize;
 	private final Concurrency mAutomataTypeConcurrency;
@@ -79,7 +86,6 @@ public final class TAPreferences {
 	@Reflected(excluded = true)
 	private final IPreferenceProvider mPrefs;
 	private final HoareAnnotationPositions mHoareAnnotationPositions;
-	private final boolean mDumpOnlyReuseAutomata;
 	private final int mLimitTraceHistogram;
 	private final int mErrorLocTimeLimit;
 	private final int mLimitPathProgramCount;
@@ -140,12 +146,22 @@ public final class TAPreferences {
 		mInterpolantAutomaton = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_AUTOMATON,
 				InterpolantAutomaton.class);
 
-		mDumpAutomata = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMPAUTOMATA);
+		mDumpAutomata = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_AUTOMATA);
+		mDumpAutomataFormat =
+				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_DUMP_AUTOMATA_FORMAT, Format.class);
+		mDumpAutomataDirectory = mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMP_AUTOMATA_DIRECTORY);
+		mDumpAutomataFilename = mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMP_AUTOMATA_FILENAME);
+		mDumpAutomataBesideFile =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_AUTOMATA_BESIDE_FILE);
+		mDumpOnlyReuseAutomata =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_AUTOMATA_ONLY_REUSE);
 
-		mAutomataFormat = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_AUTOMATAFORMAT, Format.class);
-
-		mDumpPath = mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMPPATH);
-		mDumpOnlyReuseAutomata = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_ONLY_REUSE);
+		mDumpDebugInfo = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_DEBUG_INFO);
+		mDumpDebugInfoDirectory =
+				mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMP_DEBUG_INFO_DIRECTORY);
+		mDumpDebugInfoFilename = mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMP_DEBUG_INFO_FILENAME);
+		mDumpDebugInfoBesideFile =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DUMP_DEBUG_INFO_BESIDE_FILE);
 
 		mDeterminiation = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT,
 				InterpolantAutomatonEnhancement.class);
@@ -246,27 +262,27 @@ public final class TAPreferences {
 	}
 
 	public SolverMode solverMode() {
-		return mPrefs.getEnum(RcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
+		return mPrefs.getEnum(IcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
 	}
 
 	public String commandExternalSolver() {
-		return mPrefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND);
+		return mPrefs.getString(IcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND);
 	}
 
 	public Logics logicForExternalSolver() {
-		return Logics.valueOf(mPrefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
+		return Logics.valueOf(mPrefs.getString(IcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
 	}
 
 	public boolean dumpSmtScriptToFile() {
-		return mPrefs.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_TO_FILE);
+		return mPrefs.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_TO_FILE);
 	}
 
 	public boolean compressDumpedSmtScript() {
-		return mPrefs.getBoolean(RcfgPreferenceInitializer.LABEL_COMPRESS_SMT_DUMP_FILE);
+		return mPrefs.getBoolean(IcfgPreferenceInitializer.LABEL_COMPRESS_SMT_DUMP_FILE);
 	}
 
 	public String pathOfDumpedScript() {
-		return mPrefs.getString(RcfgPreferenceInitializer.LABEL_DUMP_PATH);
+		return mPrefs.getString(IcfgPreferenceInitializer.LABEL_DUMP_PATH);
 	}
 
 	/**
@@ -315,19 +331,67 @@ public final class TAPreferences {
 		return mDumpAutomata && !mDumpOnlyReuseAutomata;
 	}
 
-	public Format getAutomataFormat() {
-		return mAutomataFormat;
+	/**
+	 * @return The automata dump format.
+	 */
+	public Format dumpAutomataFormat() {
+		return mDumpAutomataFormat;
 	}
 
 	/**
-	 * @return The dump path.
+	 * @return The automata dump directory.
 	 */
-	public String dumpPath() {
-		return mDumpPath;
+	public String dumpAutomataDirectory() {
+		return mDumpAutomataDirectory;
 	}
 
+	/**
+	 * @return The automata dump filename.
+	 */
+	public String dumpAutomataFilename() {
+		return mDumpAutomataFilename;
+	}
+
+	/**
+	 * @return The automata dump besides input file flag.
+	 */
+	public boolean dumpAutomataBesideFile() {
+		return mDumpAutomataBesideFile;
+	}
+
+	/**
+	 * @return The only-resue automata dump flag.
+	 */
 	public boolean dumpOnlyReuseAutomata() {
 		return mDumpAutomata && mDumpOnlyReuseAutomata;
+	}
+
+	/**
+	 * @return The debug information dump flag.
+	 */
+	public boolean dumpDebugInfo() {
+		return mDumpDebugInfo;
+	}
+
+	/**
+	 * @return The debug information dump directory.
+	 */
+	public String dumpDebugInfoDirectory() {
+		return mDumpDebugInfoDirectory;
+	}
+
+	/**
+	 * @return The debug information dump filename.
+	 */
+	public String dumpDebugInfoFilename() {
+		return mDumpDebugInfoFilename;
+	}
+
+	/**
+	 * @return The debug information dump besides input file flag.
+	 */
+	public boolean dumpDebugInfoBesideFile() {
+		return mDumpDebugInfoBesideFile;
 	}
 
 	/**
@@ -472,7 +536,7 @@ public final class TAPreferences {
 	}
 
 	public boolean fakeNonIncrementalSolver() {
-		return mPrefs.getBoolean(RcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
+		return mPrefs.getBoolean(IcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
 	}
 
 	public RefinementStrategy getRefinementStrategy() {

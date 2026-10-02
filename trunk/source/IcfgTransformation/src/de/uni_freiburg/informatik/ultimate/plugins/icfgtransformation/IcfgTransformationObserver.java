@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransform
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteIte;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.SimplifyPreprocessor;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TransitionPreprocessor;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ConjunctiveAbstractInterpretationUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ConjunctiveAbstractInterpretationUtils.Widening;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -86,7 +87,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.IntToBvBackTranslation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.preferences.IcfgTransformationPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.preferences.IcfgTransformationPreferences.TransformationTestType;
 

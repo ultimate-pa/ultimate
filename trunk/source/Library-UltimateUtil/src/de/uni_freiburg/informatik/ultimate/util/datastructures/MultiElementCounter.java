@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -44,24 +45,16 @@ public class MultiElementCounter<E> {
 	/**
 	 * Increase the counter for element by one and return the increased number.
 	 */
-	public Integer increment(final E element) {
-		final Integer lastIndex = mCounter.get(element);
-		final Integer newIndex;
-		if (lastIndex == null) {
-			newIndex = 1;
-		} else {
-			newIndex = lastIndex + 1;
-		}
-		mCounter.put(element, newIndex);
-		return newIndex;
+	public int increment(final E element) {
+		return increment(element, 1);
 	}
 
 	/**
 	 * Increase the counter for element by k and return the increased number.
 	 */
-	public Integer increment(final E element, final int k) {
+	public int increment(final E element, final int k) {
 		final Integer lastIndex = mCounter.get(element);
-		final Integer newIndex;
+		final int newIndex;
 		if (lastIndex == null) {
 			newIndex = k;
 		} else {
@@ -74,20 +67,50 @@ public class MultiElementCounter<E> {
 	/**
 	 * @return the number that is stored for elem
 	 */
-	public Integer getNumber(final E elem) {
+	public int getNumber(final E elem) {
 		final Integer number = mCounter.get(elem);
 		if (number == null) {
 			return 0;
-		} else {
-			return number;
 		}
+		return number;
+	}
+
+	/**
+	 * Decrease the counter for element by one and return the decreased number.
+	 *
+	 * @throws UnsupportedOperationException
+	 *             if the decreased number would be negative.
+	 */
+	public int decrement(final E element) {
+		return decrement(element, 1);
+	}
+
+	/**
+	 * Decrease the counter for element by k and return the decreased number.
+	 *
+	 * @throws UnsupportedOperationException
+	 *             if the decreased number would be negative.
+	 */
+	public int decrement(final E element, final int k) {
+		final Integer lastIndex = mCounter.get(element);
+		final int newIndex;
+		if (lastIndex == null || lastIndex < k) {
+			throw new UnsupportedOperationException("Cannot decrease counter below 0");
+		}
+		newIndex = lastIndex - k;
+		if (newIndex == 0) {
+			mCounter.remove(element);
+		} else {
+			mCounter.put(element, newIndex);
+		}
+		return newIndex;
 	}
 
 	/**
 	 * @return the set of all elements for which a number is stored
 	 */
 	public Set<E> getElements() {
-		return mCounter.keySet();
+		return Collections.unmodifiableSet(mCounter.keySet());
 	}
 
 	public static <E> MultiElementCounter<E> add(final MultiElementCounter<E> mec1, final MultiElementCounter<E> mec2) {
@@ -105,5 +128,4 @@ public class MultiElementCounter<E> {
 	public String toString() {
 		return String.valueOf(mCounter);
 	}
-
 }

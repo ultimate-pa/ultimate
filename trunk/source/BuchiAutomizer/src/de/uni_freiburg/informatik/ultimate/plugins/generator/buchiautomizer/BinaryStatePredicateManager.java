@@ -341,7 +341,7 @@ public class BinaryStatePredicateManager {
 			final boolean addGeq0) {
 		assert symbol.equals(">=") || symbol.equals(">");
 
-		Term equality = mScript.term(symbol, oldRankVariable.getTermVariable(), rfTerm);
+		Term equality = SmtUtils.unfTerm(mScript, symbol, null, null, oldRankVariable.getTermVariable(), rfTerm);
 		if (addGeq0) {
 			equality = SmtUtils.and(mScript, equality, getRankGeq0(oldRankVariable));
 		}
@@ -351,7 +351,7 @@ public class BinaryStatePredicateManager {
 	}
 
 	private Term getRankGeq0(final IProgramVar oldRankVariable) {
-		final Term geq = mScript.term(">=", oldRankVariable.getTermVariable(),
+		final Term geq = SmtUtils.geq(mScript, oldRankVariable.getTermVariable(),
 				SmtUtils.constructIntValue(mScript, BigInteger.ZERO));
 		return geq;
 	}

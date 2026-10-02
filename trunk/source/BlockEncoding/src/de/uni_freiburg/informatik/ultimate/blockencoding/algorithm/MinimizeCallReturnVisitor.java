@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.ShortcutErrEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Call;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Return;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Summary;
 
 /**
  * This visitor is responsible, to merge call and return edges in the graph. So if a method is loop-free and has no

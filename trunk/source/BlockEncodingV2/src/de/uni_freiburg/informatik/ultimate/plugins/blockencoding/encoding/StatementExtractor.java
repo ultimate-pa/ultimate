@@ -31,13 +31,13 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.ParallelComposition;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Summary;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.util.IcfgEdgeVisitor;
 
-public class StatementExtractor extends RCFGEdgeVisitor {
+public class StatementExtractor extends IcfgEdgeVisitor {
 
 	private final ILogger mLogger;
 	private List<Statement> mStatements;

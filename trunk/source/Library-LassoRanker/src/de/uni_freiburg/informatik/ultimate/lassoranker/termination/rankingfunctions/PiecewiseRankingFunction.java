@@ -117,8 +117,9 @@ public class PiecewiseRankingFunction extends RankingFunction {
 		for (int i = mranking.length - 1; i >= 0; --i) {
 			final AffineFunction af = mranking[i];
 			final AffineFunction gf = mpredicates[i];
-			final Term pred = script.term(">=", gf.asTerm(script), SmtUtils.constructIntValue(script, BigInteger.ZERO));
-			value = script.term("ite", pred, af.asTerm(script), value);
+			final Term pred =
+					SmtUtils.geq(script, gf.asTerm(script), SmtUtils.constructIntValue(script, BigInteger.ZERO));
+			value = SmtUtils.ite(script, pred, af.asTerm(script), value);
 		}
 		return new Term[] { value };
 	}

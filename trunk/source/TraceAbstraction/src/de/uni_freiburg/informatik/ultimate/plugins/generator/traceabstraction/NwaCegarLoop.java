@@ -66,6 +66,8 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.PathProgram;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.PathProgram.PathProgramConstructionResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -82,7 +84,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
@@ -90,8 +91,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
@@ -191,7 +190,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			return true;
 		}
 
-		if (mPref.dumpAutomata()) {
+		if (mPref.dumpDebugInfo()) {
 			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
 			mDumper.dumpNestedRun(mCounterexample);
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
@@ -394,9 +393,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			}
 
 			if (mPref.dumpAutomata()) {
-				final String filename =
-						new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()) + "AbstractionAfterDifference";
-				super.writeAutomatonToFile(subtrahend, filename);
+				writeAutomatonToFile(subtrahend, getIteration(), "AbstractionAfterDifference");
 			}
 			dumpOrAppendAutomatonForReuseIfEnabled(subtrahend, predicateUnifier);
 
@@ -416,9 +413,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			}
 			mAbstraction = diff.getResult();
 			if (mPref.dumpAutomata()) {
-				final String filename = new SubtaskIterationIdentifier(mTaskIdentifier, getIteration())
-						+ "AbstractionAfterDifferenceAndDeadEndRemoval";
-				super.writeAutomatonToFile(mAbstraction, filename);
+				writeAutomatonToFile(mAbstraction, getIteration(), "AbstractionAfterDifferenceAndDeadEndRemoval");
 			}
 
 		} finally {

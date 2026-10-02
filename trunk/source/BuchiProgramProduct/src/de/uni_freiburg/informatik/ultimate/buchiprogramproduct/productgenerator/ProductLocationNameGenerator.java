@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.productgenerator
 
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DuplicatedDebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  *

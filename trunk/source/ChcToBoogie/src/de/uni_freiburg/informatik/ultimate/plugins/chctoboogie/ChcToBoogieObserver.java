@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.chctoboogie;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -85,7 +86,7 @@ public class ChcToBoogieObserver implements IUnmanagedObserver {
 	public ChcToBoogieObserver(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mServices = services;
-		mNameOfMainEntryPointProc = "Ultimate.START";
+		mNameOfMainEntryPointProc = BoogieUtils.START_PROCEDURE;
 		mLocation = new BoogieLocation(this.getClass().getName(), 0, 0, 0, 0);
 		mPrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 	}

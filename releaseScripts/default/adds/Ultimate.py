@@ -277,6 +277,16 @@ def get_java():
     sys.exit(ExitCode.FAIL_NO_JAVA)
 
 
+@lru_cache(maxsize=1)
+def get_launcher_jar():
+    candidates = glob.glob(os.path.join(ultimatedir, "plugins", "org.eclipse.equinox.launcher_*.jar"))
+    if not candidates:
+        raise RuntimeError("Could not find any launcher JAR.")
+    if len(candidates) > 1:
+        raise RuntimeError("Found multiple launcher JARs: " + ", ".join(candidates))
+    return candidates[0]
+
+
 def create_ultimate_base_call():
     ultimate_bin = [
         get_java(),
@@ -290,10 +300,7 @@ def create_ultimate_base_call():
 
     ultimate_bin = ultimate_bin + [
         "-jar",
-        os.path.join(
-            ultimatedir,
-            "plugins/org.eclipse.equinox.launcher_1.6.800.v20240513-1750.jar",
-        ),
+        get_launcher_jar(),
         "-data",
         "@noDefault",
         "-ultimatedata",
@@ -519,12 +526,6 @@ def create_cli_settings(prop, validate_witness, witness_type, architecture, inpu
             "--traceabstraction.positions.where.we.compute.the.hoare.annotation"
         )
         ret.append("None")
-        # For now disable UnstructureCode in witness validation
-        # This is a workaround, in the future we always want to disable this.
-        ret.append(
-            "--preprocessor.replace.while.statements.and.if-then-else.statements"
-        )
-        ret.append("false")
         # For YAML violation witnesses, disable procedure inlining
         if witness_type == "violation_witness" and any(i.endswith(".yml") for i in input_files):
             ret.append("--procedureinliner.inline.calls.to.implemented.procedures")
@@ -685,8 +686,6 @@ def debug_environment():
     solver_versions = [
         ("z3", "-version"),
         ("mathsat", "-version"),
-        ("cvc4", "--version"),
-        ("cvc4nyu", "--version"),
         ("cvc5", "--version"),
         ("bitwuzla", "--version"),
     ]

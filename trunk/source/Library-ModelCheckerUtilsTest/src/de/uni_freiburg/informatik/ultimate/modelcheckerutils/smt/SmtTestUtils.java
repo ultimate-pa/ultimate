@@ -27,7 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import org.hamcrest.MatcherAssert;
+
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -72,6 +75,33 @@ public class SmtTestUtils {
 
 	public static boolean isSyntacticallyEquivalentToTrue(final Term term) {
 		return SmtUtils.isTrueLiteral(term);
+	}
+
+	/**
+	 * Asserts that {@code result} is logically equivalent to {@code input} using an SMT solver. Fails if the solver
+	 * disproves equivalence ({@link LBool#SAT}) or cannot decide it ({@link LBool#UNKNOWN}); succeeds only on
+	 * {@link LBool#UNSAT}.
+	 */
+	public static boolean checkLogicalEquivalence(final Script script, final Term result, final Term input) {
+		script.echo(new QuotedObject("Start correctness check for simplification."));
+		final LBool lbool = SmtUtils.checkEquivalence(result, input, script);
+		script.echo(new QuotedObject("Finished correctness check for simplification. Result: " + lbool));
+		final String errorMessage;
+		switch (lbool) {
+		case SAT:
+			errorMessage = "Not logically equivalent to expected result: " + result;
+			break;
+		case UNKNOWN:
+			errorMessage = "Insufficient ressources for checking equivalence to expected result: " + result;
+			break;
+		case UNSAT:
+			errorMessage = null;
+			break;
+		default:
+			throw new AssertionError("unknown value " + lbool);
+		}
+		MatcherAssert.assertThat(errorMessage, lbool == LBool.UNSAT);
+		return lbool == LBool.UNSAT;
 	}
 
 }

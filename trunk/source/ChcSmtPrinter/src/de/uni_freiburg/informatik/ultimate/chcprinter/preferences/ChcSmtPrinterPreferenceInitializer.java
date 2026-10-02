@@ -28,36 +28,16 @@ package de.uni_freiburg.informatik.ultimate.chcprinter.preferences;
 
 import de.uni_freiburg.informatik.ultimate.chcprinter.Activator;
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.FilePrinterUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 
 public class ChcSmtPrinterPreferenceInitializer extends UltimatePreferenceInitializer {
-
-	public static final String SAVE_IN_SOURCE_DIRECTORY_LABEL = "Save file in source directory";
-	private static final boolean SAVE_IN_SOURCE_DIRECTORY_DEFAULT = false;
-
-	public static final String UNIQUE_NAME_LABEL = "Use automatic naming";
-	private static final boolean UNIQUE_NAME_DEFAULT = false;
-
-	public static final String DUMP_PATH_LABEL = "Dump path";
-	private static final String DUMP_PATH_DEFAULT = System.getProperty("java.io.tmpdir");
-
-	public static final String FILE_NAME_LABEL = "File name";
-	private static final String FILE_NAME_DEFAULT = "chcSmtPrinter.smt2";
-
 	public ChcSmtPrinterPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<>(DUMP_PATH_LABEL, DUMP_PATH_DEFAULT, PreferenceType.Directory),
-				new UltimatePreferenceItem<>(FILE_NAME_LABEL, FILE_NAME_DEFAULT, PreferenceType.String),
-				new UltimatePreferenceItem<>(SAVE_IN_SOURCE_DIRECTORY_LABEL, SAVE_IN_SOURCE_DIRECTORY_DEFAULT,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(UNIQUE_NAME_LABEL, UNIQUE_NAME_DEFAULT, PreferenceType.Boolean),
-
-		};
+		return FilePrinterUtils.getPrinterPreferences("chcSmtPrinter.smt2");
 	}
 }

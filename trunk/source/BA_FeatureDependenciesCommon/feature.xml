@@ -2,7 +2,7 @@
 <feature
       id="BA_FeatureDependenciesCommon"
       label="BA_FeatureDependenciesCommon"
-      version="0.3.1"
+      version="0.3.2"
       provider-name="Ultimate Program Analysis Team"
       arch="x86_64">
 
@@ -11,7 +11,11 @@
          version="0.0.0"/>
 
    <plugin
-         id="com.ibm.icu"
+         id="com.sun.xml.bind.jaxb-impl"
+         version="0.0.0"/>
+
+   <plugin
+         id="jakarta.activation-api"
          version="0.0.0"/>
 
    <plugin
@@ -19,39 +23,19 @@
          version="0.0.0"/>
 
    <plugin
-         id="com.sun.xml.bind.jaxb-impl"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.glassfish.hk2.osgi-resource-locator"
-         version="0.0.0"/>
-
-   <plugin
-         id="jakarta.inject.jakarta.inject-api"
-         version="0.0.0"/>
-
-   <plugin
          id="org.apache.commons.commons-io"
          version="0.0.0"/>
 
    <plugin
-         id="org.apache.commons.logging"
+         id="org.apache.log4j"
          version="0.0.0"/>
 
    <plugin
-         id="org.apache.felix.scr"
+         id="org.apache.logging.log4j.api"
          version="0.0.0"/>
 
    <plugin
-         id="org.apache.xerces"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.xml.resolver"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.xml.serializer"
+         id="org.eclipse.cdt.build.gcc.core"
          version="0.0.0"/>
 
    <plugin
@@ -59,13 +43,8 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.cdt.core.native"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.cdt.core.win32.x86_64"
-         os="win32"
-         arch="x86_64"
+         id="org.eclipse.cdt.core.linux"
+         os="linux"
          version="0.0.0"/>
 
    <plugin
@@ -75,8 +54,12 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.cdt.core.linux"
-         os="linux"
+         id="org.eclipse.cdt.core.macosx"
+         os="macosx"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.cdt.core.native"
          version="0.0.0"/>
 
    <plugin
@@ -85,8 +68,9 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.cdt.core.macosx"
-         os="macosx"
+         id="org.eclipse.cdt.core.win32.x86_64"
+         os="win32"
+         arch="x86_64"
          version="0.0.0"/>
 
    <plugin
@@ -94,25 +78,7 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.core.contenttype"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.core.expressions"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.core.filebuffers"
-         version="0.0.0"/>
-
-   <plugin
          id="org.eclipse.core.filesystem"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.core.filesystem.win32.x86_64"
-         os="win32"
-         arch="x86_64"
          version="0.0.0"/>
 
    <plugin
@@ -127,17 +93,7 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.core.jobs"
-         version="0.0.0"/>
-
-   <plugin
          id="org.eclipse.core.resources"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.core.resources.win32.x86_64"
-         os="win32"
-         arch="x86_64"
          version="0.0.0"/>
 
    <plugin
@@ -145,15 +101,7 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.core.variables"
-         version="0.0.0"/>
-
-   <plugin
          id="org.eclipse.equinox.app"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.equinox.bidi"
          version="0.0.0"/>
 
    <plugin
@@ -161,27 +109,7 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.equinox.preferences"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.equinox.registry"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.ltk.core.refactoring"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.osgi.services"
-         version="0.0.0"/>
-
-   <plugin
          id="org.eclipse.osgi"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.osgi.util"
          version="0.0.0"/>
 
    <plugin
@@ -190,54 +118,6 @@
 
    <plugin
          id="org.jdom"
-         version="0.0.0"/>
-
-   <plugin
-         id="com.sun.jna"
-         version="0.0.0"/>
-
-   <plugin
-         id="com.sun.jna.platform"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.log4j"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.logging.log4j.api"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.cdt.managedbuilder.core"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.cdt.make.core"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.jdt.annotation"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.tools.templates.freemarker"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.cdt.build.gcc.core"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.eclipse.tools.templates.core"
-         version="0.0.0"/>
-
-   <plugin
-         id="jakarta.activation-api"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.apache.commons.lang3"
          version="0.0.0"/>
 
    <plugin
@@ -271,4 +151,5 @@
    <plugin
          id="wrapped.xerces.xercesImpl"
          version="0.0.0"/>
+
 </feature>

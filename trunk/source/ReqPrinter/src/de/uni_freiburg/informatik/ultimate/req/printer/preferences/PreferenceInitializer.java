@@ -27,41 +27,17 @@
 package de.uni_freiburg.informatik.ultimate.req.printer.preferences;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.FilePrinterUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.req.printer.Activator;
 
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
-
-	public static final String SAVE_IN_SOURCE_DIRECTORY_LABEL = "Save file in source directory";
-	private static final boolean SAVE_IN_SOURCE_DIRECTORY_DEFAULT = false;
-	private static final String SAVE_IN_SOURCE_DIRECTORY_DESC = null;
-
-	public static final String UNIQUE_NAME_LABEL = "Use automatic naming";
-	private static final boolean UNIQUE_NAME_DEFAULT = false;
-	private static final String UNIQUE_NAME_DESC = null;
-
-	public static final String DUMP_PATH_LABEL = "Output directory";
-	private static final String DUMP_PATH_DEFAULT = System.getProperty("java.io.tmpdir");
-	private static final String DUMP_PATH_DESC = null;
-
-	public static final String FILE_NAME_LABEL = "Output file name";
-	private static final String FILE_NAME_DEFAULT = "requirements.req";
-	private static final String FILE_NAME_DESC = null;
-
 	public PreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<>(DUMP_PATH_LABEL, DUMP_PATH_DEFAULT, DUMP_PATH_DESC,
-						PreferenceType.Directory),
-				new UltimatePreferenceItem<>(FILE_NAME_LABEL, FILE_NAME_DEFAULT, FILE_NAME_DESC, PreferenceType.String),
-				new UltimatePreferenceItem<>(SAVE_IN_SOURCE_DIRECTORY_LABEL, SAVE_IN_SOURCE_DIRECTORY_DEFAULT,
-						SAVE_IN_SOURCE_DIRECTORY_DESC, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(UNIQUE_NAME_LABEL, UNIQUE_NAME_DEFAULT, UNIQUE_NAME_DESC,
-						PreferenceType.Boolean), };
+		return FilePrinterUtils.getPrinterPreferences("requirements.req");
 	}
 }

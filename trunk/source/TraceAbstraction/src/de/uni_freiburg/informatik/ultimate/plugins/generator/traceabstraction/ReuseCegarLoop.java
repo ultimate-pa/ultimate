@@ -83,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsAggregator;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
@@ -638,7 +639,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop<L
 
 		private final StatisticsData mPredicateUnifierStats;
 		private final Benchmark mTime;
-		private final StatisticsData mHtcStats;
+		private final StatisticsAggregator mHtcStats;
 
 		private boolean mRunning = false;
 		private int mAutomataFromFile;
@@ -659,7 +660,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop<L
 
 		public ReuseStatisticsGenerator() {
 			mPredicateUnifierStats = new StatisticsData();
-			mHtcStats = new StatisticsData();
+			mHtcStats = new StatisticsAggregator();
 			mTime = new Benchmark();
 			mTime.register(String.valueOf(ReuseStatisticsDefinitions.REUSE_TIME));
 			mAutomataFromFile = 0;

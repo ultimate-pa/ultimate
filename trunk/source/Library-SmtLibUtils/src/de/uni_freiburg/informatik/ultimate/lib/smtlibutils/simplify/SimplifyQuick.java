@@ -29,6 +29,9 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.simplify;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrerBooleanCore;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SimplifyDDA2;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -50,6 +53,11 @@ public class SimplifyQuick {
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
 	private static final int TIMOUT_IN_SECONDS = 10;
+	/**
+	 * Version 1 is slightly faster (maybe because repeated simplification is switched off). Version 2 yields slightly
+	 * smaller formulas.
+	 */
+	private static final boolean SIMPLIFY_DDA_VERSION_TWO = true;
 
 	public SimplifyQuick(final Script script, final IUltimateServiceProvider services) {
 		mScript = script;
@@ -66,9 +74,16 @@ public class SimplifyQuick {
 		final Term foreign = towards.transform(inputTerm);
 
 		simplificationScript.setOption(":check-type", "QUICK");
-		final SimplifyDDAWithTimeout dda = new SimplifyDDAWithTimeout(simplificationScript, false, mServices);
-		final Term foreignsimplified = dda.getSimplifiedTerm(foreign);
-		// simplificationScript.setOption(":check-type", "FULL");
+		final Term foreignsimplified;
+		if (SIMPLIFY_DDA_VERSION_TWO) {
+			foreignsimplified =
+					SimplifyDDA2.simplify(mServices, new ManagedScript(mServices, simplificationScript), foreign);
+		} else {
+			final SimplifyDDAWithTimeout dda = new SimplifyDDAWithTimeout(simplificationScript, false, mServices);
+			// 2026-07-30 Matthias: SimplifyDDA with quick-check returns terms that are not in UNF, e.g., nested
+			// conjunctions (I don't know why). Hence, we have to bring it in UNF additionally.
+			foreignsimplified = new UnfTransformer(simplificationScript).transform(dda.getSimplifiedTerm(foreign));
+		}
 
 		final TermTransferrer back =
 				new TermTransferrer(simplificationScript, mScript, towards.getBacktransferMapping(), false);

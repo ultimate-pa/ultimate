@@ -45,6 +45,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -84,6 +85,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Call;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlockFactory;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.ForkThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.GotoEdge;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.JoinThreadCurrent;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.LiveIcfgUtils;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Return;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Summary;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.util.TransFormulaAdder;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.util.WeakestPreconditionOfCall;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
@@ -115,13 +130,14 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.AtomicBlockAnalyzer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.AtomicBlockInfo;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.LargeBlockEncoding;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.cfg.LargeBlockEncoding.InternalLbeMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.WeakestPrecondition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.LargeBlockEncoding.InternalLbeMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
 
 /**
  * This class generates a recursive control flow graph (in the style of POPL'10 - Heizmann, Hoenicke, Podelski - Nested
@@ -134,9 +150,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Tr
 
 // TODO How to give every location the right line number
 public class CfgBuilder {
-
-	private static final String ULTIMATE_START = "ULTIMATE.start";
-
 	/**
 	 * ILogger for this plugin.
 	 */
@@ -217,7 +230,7 @@ public class CfgBuilder {
 		mRcfgBacktranslator = backtranslator;
 
 		final ConcurrencyInformation ci = new ConcurrencyInformation(mForks, Collections.emptyMap(), mJoins);
-		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2Smt, ci);
+		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2Smt, ci, mLogger);
 		mCbf = mIcfg.getCodeBlockFactory();
 		mCbf.storeFactory(mServices.getStorage());
 	}
@@ -231,7 +244,8 @@ public class CfgBuilder {
 	 */
 	public IIcfg<BoogieIcfgLocation> createIcfg(final Unit unit) {
 		mLogger.info("Building ICFG");
-		mTransFormulaAdder = new TransFormulaAdder(mBoogie2Smt, mServices);
+		mTransFormulaAdder = new TransFormulaAdder(mBoogie2Smt, mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLIFY));
 
 		// Build entry, final and exit node for all procedures that have an
 		// implementation
@@ -298,13 +312,14 @@ public class CfgBuilder {
 		AtomicBlockAnalyzer.ensureAtomicCompositionIsComplete(mIcfg, mLogger);
 
 		final Set<BoogieIcfgLocation> initialNodes = icfg.getProcedureEntryNodes().entrySet().stream()
-				.filter(a -> a.getKey().equals(ULTIMATE_START)).map(Entry::getValue).collect(Collectors.toSet());
+				.filter(a -> a.getKey().equals(BoogieUtils.START_PROCEDURE)).map(Entry::getValue)
+				.collect(Collectors.toSet());
 		if (initialNodes.isEmpty()) {
 			mLogger.info("Using library mode");
 			icfg.getInitialNodes().addAll(icfg.getProcedureEntryNodes().values());
 		} else {
 			mLogger.info("Using the " + initialNodes.size() + " location(s) as analysis (start of procedure "
-					+ ULTIMATE_START + ")");
+					+ BoogieUtils.START_PROCEDURE + ")");
 			icfg.getInitialNodes().addAll(initialNodes);
 		}
 		ModelUtils.copyAnnotations(unit, icfg);
@@ -1378,35 +1393,41 @@ public class CfgBuilder {
 			// Violations against the requires part of the procedure
 			// specification. Omit intruduction of these additional auxiliary
 			// assert statements if current procedure is START_PROCEDURE.
-			//
+			addErrorEdgesForPreconditions(locNode, callee, st, st.getArguments());
+		}
 
-			// in fork throw unsuportedOperationException
-			if (requiresNonFree != null && !requiresNonFree.isEmpty()) {
-				for (final RequiresSpecification spec : requiresNonFree) {
-					// use implementation if available and specification
-					// otherwise. To use the implementation is important in
-					// cases where signature of procedure and implementation are
-					// different.
-					Procedure proc;
-					if (mBoogieDeclarations.getProcImplementation().containsKey(callee)) {
-						proc = mBoogieDeclarations.getProcImplementation().get(callee);
-					} else {
-						proc = mBoogieDeclarations.getProcSpecification().get(callee);
-					}
-					final Expression violatedRequires =
-							getNegation(new WeakestPrecondition(spec.getFormula(), st, proc).getResult());
-					AssumeStatement assumeSt;
-					assumeSt = new AssumeStatement(st.getLocation(), violatedRequires);
-					final Statement st1 = assumeSt;
-					ModelUtils.copyAnnotations(st, st1);
-					mRcfgBacktranslator.putAux(assumeSt, new BoogieASTNode[] { st, spec });
-					final BoogieIcfgLocation errorLocNode =
-							addErrorNode(mCurrentProcedureName, st, Check.getAnnotation(spec), mProcLocNodes);
-					final StatementSequence errorCB = mCbf.constructStatementSequence(locNode, errorLocNode, assumeSt);
-					ModelUtils.copyAnnotations(spec, errorCB);
-					ModelUtils.copyAnnotationsExcept(spec, errorLocNode, ILocation.class);
-					mEdges.add(errorCB);
+		private void addErrorEdgesForPreconditions(final BoogieIcfgLocation sourceLoc, final String callee,
+				final Statement st, final Expression[] arguments) {
+			final List<RequiresSpecification> requiresNonFree = mBoogieDeclarations.getRequiresNonFree().get(callee);
+			if (requiresNonFree == null || requiresNonFree.isEmpty()) {
+				return;
+			}
+
+			for (final RequiresSpecification spec : requiresNonFree) {
+				// use implementation if available and specification
+				// otherwise. To use the implementation is important in
+				// cases where signature of procedure and implementation are
+				// different.
+				final Procedure proc;
+				if (mBoogieDeclarations.getProcImplementation().containsKey(callee)) {
+					proc = mBoogieDeclarations.getProcImplementation().get(callee);
+				} else {
+					proc = mBoogieDeclarations.getProcSpecification().get(callee);
 				}
+
+				final Expression violatedRequires = getNegation(WeakestPreconditionOfCall
+						.substitutePrecondition(spec.getFormula(), proc.getInParams(), arguments, st));
+
+				final AssumeStatement assumeSt = new AssumeStatement(st.getLocation(), violatedRequires);
+				ModelUtils.copyAnnotations(st, assumeSt);
+				mRcfgBacktranslator.putAux(assumeSt, new BoogieASTNode[] { st, spec });
+
+				final BoogieIcfgLocation errorLocNode =
+						addErrorNode(mCurrentProcedureName, st, Check.getAnnotation(spec), mProcLocNodes);
+				final StatementSequence errorCB = mCbf.constructStatementSequence(sourceLoc, errorLocNode, assumeSt);
+				ModelUtils.copyAnnotations(spec, errorCB);
+				ModelUtils.copyAnnotationsExcept(spec, errorLocNode, ILocation.class);
+				mEdges.add(errorCB);
 			}
 		}
 
@@ -1475,6 +1496,7 @@ public class CfgBuilder {
 				ModelUtils.copyAnnotations(st, cb);
 			}
 			mEdges.add(forkCurrentThreadEdge);
+			addErrorEdgesForPreconditions(locNode, st.getProcedureName(), st, st.getArguments());
 			mCurrent = forkCurrentNode;
 		}
 

@@ -77,11 +77,29 @@ In order to modify bootstrap styling, download a node package manager (for Windo
 
 Edit [bootstrap_dev/scss/main.scss](bootstrap_dev/scss/main.scss) and then run `npm run css` to apply changes.
 
+
 ### 1.3 JavaScript Dependencies
+
 * [ace-editor](https://ace.c9.io/)
 * [jquery](https://jquery.com/)
 * [handlebars](https://handlebarsjs.com/)
 * [bootstrap](https://getbootstrap.com/)
+
+
+### 1.4 Maintenance: Dependency Updates
+
+Run the following commands to update dependencies:
+
+```
+cd trunk/source/WebsiteStatic # if necessary
+bundle update
+cd bootstrap_dev
+npm update
+```
+
+Review and commit the changes to `Gemfile.lock` and `bootstrap_dev/package-lock.json`.
+
+For larger upgrades, edit `Gemfile` resp. `bootstrap_dev/package.json` first and then run the commands above.
 
 
 ## 2. Adding a new tool
@@ -93,6 +111,7 @@ To add a new tool to the website, follow these steps:
   After recompilation (since you edited `_config.yml`, you must restart `jekyll`) the tool should now show up on the website.
 
 ### 2.1 Adding your tool to the Web Interface
+
 - In order to have support for your tool in the web interface, you must declare at least one entry in the `languages` array of the tool page's YAML frontmatter.
   Specify the supported input language, and a unique name for the worker (see `Web Interface > Glossary`), typically by combining language and tool name.
 - For each worker, add a toolchain XML (with the same name as the worker) in `webinterface/workers/`.

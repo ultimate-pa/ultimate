@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.blockencoding.converter;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
 
 /**
  * This is basically a dummy code block, which we need while converting a shortcut edge (to an error location). For the

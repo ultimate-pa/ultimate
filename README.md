@@ -20,12 +20,13 @@ The main active developers of Ultimate are:
 * Frank Schüssele (@schuessf)
 * Manuel Bentele (@bahnwaerter)
 * Marcel Ebbinghaus (@ebbima)
+* Max Barth (@MaxBarth95)
 
 You can find an extensive list of past and current contributors [on our website](https://ultimate-pa.org/developers/).
 
 ## Verification Tools (SV-COMP)
 
-Among other plugins and libraries, Ultimate contains several program verification tools with which we participate in the [International Competition on Software Verification (SV-COMP)](sv-comp.sosy-lab.org/). In this competition, various fully-automatic verifiers and bug finding tools from academia and industry compete, to see which tool can successfully analyse the most programs wrt. a given property. We currently compete with 4 tools: Automizer, Taipan, Kojak and GemCutter.
+Among other plugins and libraries, Ultimate contains several program verification tools with which we participate in the [International Competition on Software Verification (SV-COMP)](sv-comp.sosy-lab.org/). In this competition, various fully-automatic verifiers and bug finding tools from academia and industry compete, to see which tool can successfully analyse the most programs wrt. a given property. We currently compete with 5 tools: Automizer, Taipan, Kojak, GemCutter and (in the witness validation track) Referee.
 
 ### Ultimate Automizer
 Contact: Matthias Heizmann

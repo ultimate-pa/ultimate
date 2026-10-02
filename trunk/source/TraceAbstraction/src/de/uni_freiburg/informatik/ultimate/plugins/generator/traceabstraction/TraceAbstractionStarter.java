@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -73,7 +74,6 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IFloydHoareAnno
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.IcfgFloydHoareValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -88,9 +88,6 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	public enum CegarRestartBehaviour {
 		ONLY_ONE_CEGAR, ONE_CEGAR_PER_THREAD_INSTANCE, ONE_CEGAR_PER_ERROR_LOCATION,
 	}
-
-	public static final String ULTIMATE_INIT = "ULTIMATE.init";
-	public static final String ULTIMATE_START = "ULTIMATE.start";
 
 	private static final long MILLISECONDS_PER_SECOND = 1000L;
 

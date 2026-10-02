@@ -74,12 +74,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.Never2Automaton;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -303,7 +303,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		}
 		if (cbf == null) {
 			throw new IllegalArgumentException(
-					"The CodeBlockFactory is missing. Did you run the RCFGBuilder before this plugin?");
+					"The CodeBlockFactory is missing. Did you run the IcfgBuilder before this plugin?");
 		}
 
 		INestedWordAutomaton<CodeBlock, String> nwa;

@@ -12,11 +12,11 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Choose\ the\ strategy\ for\ the\ edge\ rating\:=DISJUNCTIVE_RATING
 #Tue Jul 15 20:56:38 EST 2014
 file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Simplify\ code\ blocks=true
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
-@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Simplify\ code\ blocks=true
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/SMT\ solver=Internal_SMTInterpol
+@de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Convert\ code\ blocks\ to\ CNF=false
 #Tue Jul 15 20:56:38 EST 2014
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1

@@ -250,8 +250,8 @@ public final class ResultUtil {
 		}
 		if (oldResult instanceof TimeoutResultAtElement<?>
 				|| oldResult instanceof UserSpecifiedLimitReachedResultAtElement<?>
-				|| oldResult instanceof CounterExampleResult<?, ?, ?>
-				|| oldResult instanceof UnprovableResult<?, ?, ?>) {
+				|| oldResult instanceof CounterExampleResult<?, ?, ?> || oldResult instanceof UnprovableResult<?, ?, ?>
+				|| oldResult instanceof NotAnalyzedResult<?>) {
 			return oldResult;
 		}
 		assert oldResult instanceof PositiveResult<?> : "Unsupported location-specific result: " + oldResult;

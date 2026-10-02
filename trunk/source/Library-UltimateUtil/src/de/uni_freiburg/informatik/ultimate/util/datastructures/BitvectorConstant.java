@@ -333,6 +333,13 @@ public class BitvectorConstant {
 		return mValue.equals(BigInteger.ONE);
 	}
 
+	/**
+	 * @return true iff this represents a bitvector constant in which all bits are set to one.
+	 */
+	public boolean isAllOnes() {
+		return mValue.bitLength() == mIndex.intValueExact() && mValue.bitCount() == mIndex.intValueExact();
+	}
+
 	@Override
 	public int hashCode() {
 		return Objects.hash(mIndex, mValue);

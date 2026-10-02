@@ -48,6 +48,8 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier
  */
 public abstract class TaskIdentifier {
 
+	public static final String SEPARATOR = "_";
+
 	private final TaskIdentifier mParentTaskIdentifier;
 
 	protected abstract String getSubtaskIdentifier();
@@ -61,7 +63,7 @@ public abstract class TaskIdentifier {
 		if (mParentTaskIdentifier == null) {
 			return getSubtaskIdentifier();
 		} else {
-			return mParentTaskIdentifier.toString() + "_" + getSubtaskIdentifier();
+			return mParentTaskIdentifier.toString() + SEPARATOR + getSubtaskIdentifier();
 		}
 	}
 

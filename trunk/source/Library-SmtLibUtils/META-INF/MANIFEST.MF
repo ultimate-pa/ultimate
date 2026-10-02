@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Library-SmtLibUtils
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.smtlibutils
 Bundle-Vendor: Ultimate Program Analysis Team
-Bundle-Version: 0.3.1
+Bundle-Version: 0.3.2
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils,
@@ -11,6 +11,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.sc
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation,
+ de.uni_freiburg.informatik.ultimate.lib.smtlibutils.egraph,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier,

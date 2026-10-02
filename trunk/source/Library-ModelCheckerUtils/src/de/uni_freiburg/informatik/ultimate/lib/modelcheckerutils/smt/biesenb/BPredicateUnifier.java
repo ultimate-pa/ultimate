@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifierStatisticsGenerator.PredicateUnifierStatisticsType;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -221,8 +221,11 @@ public class BPredicateUnifier implements IPredicateUnifier {
 
 	private IPredicate getOrConstructPredicateInternal(final Term term) {
 		mStatisticsTracker.continueTime();
-		final Term commuNF = new CommuhashNormalForm(mServices, mScript).transform(term);
-		final IPredicate predicate = mBasicPredicateFactory.newPredicate(commuNF);
+		// FIXME 2026-08-23 Matthias: Replaced transformation to CommuhashNormalForm with this
+		// sanity check, since term should already be in normal form here. Remove if it hasn't
+		// fired within two months.
+		assert CommuhashUtils.isInCommuhashNormalForm(term) : "Not in CommuhashNormalForm";
+		final IPredicate predicate = mBasicPredicateFactory.newPredicate(term);
 		// catch terms equal to true of false
 		final IPredicate tfPred = catchTrueOrFalse(predicate);
 		if (tfPred != null) {

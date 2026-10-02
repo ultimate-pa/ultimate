@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.uti
 import java.util.HashSet;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class Utils {
 	public static String insertLineBreaks(final int chopSize, String s) {

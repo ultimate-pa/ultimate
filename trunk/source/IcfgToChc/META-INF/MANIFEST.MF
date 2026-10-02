@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: IcfgToChc
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.icfgtochc;singleton:=true
 Bundle-Vendor: Ultimate Program Analysis Team
-Bundle-Version: 0.3.1
+Bundle-Version: 0.3.2
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.Activator
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.util,
@@ -15,7 +15,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
  de.uni_freiburg.informatik.ultimate.lib.chc,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
+ de.uni_freiburg.informatik.ultimate.lib.icfg,
  de.uni_freiburg.informatik.ultimate.lib.automata
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-21

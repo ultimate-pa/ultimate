@@ -20,15 +20,6 @@ file_export_version=3.0
 
 
 #Fri Apr 03 17:28:56 CEST 2015
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
-file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
-@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ SMT\ script\ to\ file=false
-
-#Fri Apr 03 17:28:56 CEST 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
@@ -85,11 +76,4 @@ file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.witnessprinter=
 /instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Generate\ YAML\ witnesses=false
 @de.uni_freiburg.informatik.ultimate.witnessprinter=0.3.0
-file_export_version=3.0
-
-
-#Wed Nov 05 12:34:37 CET 2025
-\!/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.preprocessor/Replace\ while\ statements\ and\ if-then-else\ statements=false
-@de.uni_freiburg.informatik.ultimate.boogie.preprocessor=0.3.0
 file_export_version=3.0

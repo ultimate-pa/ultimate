@@ -173,7 +173,8 @@ public class AffineFunction implements Serializable {
 		if (coefficient.equals(BigInteger.ONE)) {
 			return t;
 		}
-		return script.term("*", SmtUtils.constructIntValue(script, coefficient), t);
+		return SmtUtils.mul(script, SmtSortUtils.getIntSort(script), SmtUtils.constructIntValue(script, coefficient),
+				t);
 	}
 
 	/**

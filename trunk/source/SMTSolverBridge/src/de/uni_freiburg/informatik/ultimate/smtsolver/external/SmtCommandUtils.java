@@ -489,6 +489,47 @@ public class SmtCommandUtils {
 		}
 	}
 
+	public static class CheckSatAssumingCommand implements ISmtCommand<LBool> {
+		private final Term[] mAssumptions;
+
+		public CheckSatAssumingCommand(final Term... assumptions) {
+			mAssumptions = assumptions;
+		}
+
+		public static String buildString(final Term... assumptions) {
+			final StringBuilder sb = new StringBuilder("(check-sat-assuming (");
+			final PrintTerm pt = new PrintTerm();
+			String sep = "";
+			for (final Term t : assumptions) {
+				sb.append(sep);
+				pt.append(sb, t);
+				sep = " ";
+			}
+			sb.append("))");
+			return sb.toString();
+		}
+
+		@Override
+		public LBool executeWithScript(final Script script) {
+			return script.checkSatAssuming(mAssumptions);
+		}
+
+		@Override
+		public String toString() {
+			return buildString(mAssumptions);
+		}
+
+		@Override
+		public LBool executeWithExecutor(final Executor executor, final PrintWriter pw) {
+			final String command = toString();
+			if (pw != null) {
+				pw.println(command);
+			}
+			executor.input(command);
+			return executor.parseCheckSatResult();
+		}
+	}
+
 	public static class EchoCommand implements ISmtCommand<Void> {
 		final QuotedObject mMsg;
 

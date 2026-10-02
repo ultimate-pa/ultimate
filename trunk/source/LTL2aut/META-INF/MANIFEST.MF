@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: LTL2aut
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.ltl2aut;singleton:=true
 Bundle-Vendor: Ultimate Program Analysis Team
-Bundle-Version: 0.3.1
+Bundle-Version: 0.3.2
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.ltl2aut.Activator
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.util,
@@ -12,7 +12,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.boogie.parser,
  de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
+ de.uni_freiburg.informatik.ultimate.lib.icfg,
  de.uni_freiburg.informatik.ultimate.lib.automata,
  com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer,

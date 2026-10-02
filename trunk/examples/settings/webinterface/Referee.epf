@@ -2,7 +2,7 @@
 file_export_version=3.0
 @UltimateCore=0.0.1
 /instance/UltimateCore/Generate\ benchmark\ results=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Future-live\ optimization=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Future-live\ optimization=false
 
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=

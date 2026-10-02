@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ObjectContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
 
 public class NWAContainer extends ObjectContainer<INestedWordAutomaton<CodeBlock, String>>
 		implements IVisualizable<VisualizationNode> {

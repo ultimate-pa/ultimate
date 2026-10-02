@@ -303,20 +303,21 @@ public final class CongruenceDomainValue
 			return script.term("false");
 		}
 		if (mIsConstant) {
-			return script.term("=", var, SmtUtils.constructIntValue(script, mValue));
+			return SmtUtils.equality(script, var, SmtUtils.constructIntegerValue(script, sort, mValue));
 		}
 		final Term nonZeroTerm =
-				script.term("not", script.term("=", var, SmtUtils.constructIntValue(script, BigInteger.ZERO)));
+				SmtUtils.distinct(script, var, SmtUtils.constructIntegerValue(script, sort, BigInteger.ZERO));
 		if (mValue.equals(BigInteger.ONE)) {
 			if (mNonZero) {
 				return nonZeroTerm;
 			}
 			return script.term("true");
 		}
-		final Term modTerm = script.term("=", script.term("mod", var, SmtUtils.constructIntValue(script, mValue)),
-				SmtUtils.constructIntValue(script, BigInteger.ZERO));
+		final Term modTerm = SmtUtils.equality(script,
+				SmtUtils.mod(script, var, SmtUtils.constructIntegerValue(script, sort, mValue)),
+				SmtUtils.constructIntegerValue(script, sort, BigInteger.ZERO));
 		if (mNonZero) {
-			return script.term("and", modTerm, nonZeroTerm);
+			return SmtUtils.and(script, modTerm, nonZeroTerm);
 		}
 		return modTerm;
 

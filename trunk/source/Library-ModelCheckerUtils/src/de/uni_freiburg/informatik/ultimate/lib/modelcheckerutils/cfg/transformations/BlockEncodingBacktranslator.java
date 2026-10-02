@@ -101,6 +101,11 @@ public class BlockEncodingBacktranslator extends
 		if (oldPe == null) {
 			throw new IllegalArgumentException("programExecution is null");
 		}
+		// For an empty execution, just return it again. This is important, since
+		// IcfgProgramExecution.getClassFromAtomicTraceElements does not work for empty traces.
+		if (oldPe.getLength() == 0) {
+			return oldPe;
+		}
 
 		if (!(oldPe instanceof IcfgProgramExecution)) {
 			throw new IllegalArgumentException("argument is not IcfgProgramExecution but " + oldPe.getClass());

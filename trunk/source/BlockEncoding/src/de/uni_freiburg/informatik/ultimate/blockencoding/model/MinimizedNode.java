@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IModifiableExplicit
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgLocation;
 
 /**
  * This is a node in our model to store all steps of the minimization. Basically we store here all steps, hence all

@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -280,9 +281,12 @@ public class HCSSABuilder {
 		final HornClause currentHornClause = currentSubTree.getRootSymbol();
 
 		// the interpolant term in terms of the TermVariabels of the HornClause
-		final Term backSubstitutedTerm = PureSubstitution.apply(mScript,
-				currentSsaSubtree.getRoot().getBackSubstitution(), currentInterpolantTermInSsa);
-
+		final Term backSubstitutedTerm;
+		{
+			final Term tmp = PureSubstitution.apply(mScript, currentSsaSubtree.getRoot().getBackSubstitution(),
+					currentInterpolantTermInSsa);
+			backSubstitutedTerm = UnfTransformer.apply(mScript.getScript(), tmp);
+		}
 		final IPredicate backSubstitutedPredicate = mPredicateUnifier.getOrConstructPredicate(backSubstitutedTerm);
 
 		final List<TreeRun<HornClause, IPredicate>> children = new ArrayList<>();

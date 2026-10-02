@@ -32,8 +32,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer;
 
 /**
  * Provides a method that checks compatibility of interpolation related preferences.
@@ -67,10 +67,10 @@ public class InterpolationPreferenceChecker {
 			throw new AssertionError("unknown option " + interpolation);
 		}
 		final SolverMode currentSolverMode = services.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getEnum(RcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
+				.getEnum(IcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
 		if (!legalSolverSettings.contains(currentSolverMode)) {
 			final String errorMessage = "Incompatible preferences. You want to use " + interpolation + " in the "
-					+ pluginName + " plugin. This requires that " + RcfgPreferenceInitializer.LABEL_SOLVER + " in the "
+					+ pluginName + " plugin. This requires that " + IcfgPreferenceInitializer.LABEL_SOLVER + " in the "
 					+ Activator.PLUGIN_ID + " has one of the following values. " + legalSolverSettings.toString();
 			throw new UnsupportedOperationException(errorMessage);
 		}

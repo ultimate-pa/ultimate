@@ -162,8 +162,8 @@ public class MusEnumerationScript extends WrapperScript {
 	 * generate the Sequence of Interpolants that is returned. The enumeration of Muses, the heuristic and
 	 * getInterpolants use different timeouts, respectively. The timeout for enumeration and heuristics can be set with
 	 * the keys in {@link MusOptions}, the interpolant generation is set with the timeout key in
-	 * {@link SMTInterpolConstants}. If the timeout for the enumeration is exceeded, it returns the muses found so far. If
-	 * the timeout for the heuristic is exceeded, it returns the best mus found so far wrt. the heuristic. If the
+	 * {@link SMTInterpolConstants}. If the timeout for the enumeration is exceeded, it returns the muses found so far.
+	 * If the timeout for the heuristic is exceeded, it returns the best mus found so far wrt. the heuristic. If the
 	 * timeout for the enumeration is exceeded, before any MUSes could be produced, this method uses the
 	 * Vanilla-SMTInterpol proof for interpolant generation. An exception occurs, if the timeout for interpolant
 	 * generation is exceeded.
@@ -496,9 +496,9 @@ public class MusEnumerationScript extends WrapperScript {
 
 	private String findName(final Annotation[] annotations) {
 		String name = null;
-		for (int i = 0; i < annotations.length; i++) {
-			if (annotations[i].getKey().equals(":named")) {
-				name = (String) annotations[i].getValue();
+		for (final Annotation annotation : annotations) {
+			if (annotation.getKey().equals(":named")) {
+				name = (String) annotation.getValue();
 			}
 		}
 		return name;
@@ -598,7 +598,7 @@ public class MusEnumerationScript extends WrapperScript {
 		default:
 			throw new SMTLIBException("Unknown Enum for Interpolation heuristic");
 		}
-		if (mLogAdditionalInformation.getValue() == true) {
+		if (mLogAdditionalInformation.getValue()) {
 			final String heuristic = mInterpolationHeuristic.getValue().toString();
 			mLogger.fatal("Heuristic: " + heuristic);
 			final HeuristicsType heurType = mInterpolationHeuristic.getValue();
@@ -648,8 +648,8 @@ public class MusEnumerationScript extends WrapperScript {
 	 * {@link Heuristics#chooseWidestAmongSmallMuses(ArrayList, double, Random, TerminationRequest)} or
 	 * {@link Heuristics#chooseSmallestAmongWideMuses(ArrayList, double, Random, TerminationRequest)}). To set the
 	 * timeout for the enumeration, the heuristic or the Interpolation, set the values of the the keys
-	 * {@link MusOptions#ENUMERATION_TIMEOUT}, {@link MusOptions#HEURISTIC_TIMEOUT}, {@link SMTInterpolConstants#TIMEOUT}
-	 * respectively (the timeout is treated as MILLISECONDS!).
+	 * {@link MusOptions#ENUMERATION_TIMEOUT}, {@link MusOptions#HEURISTIC_TIMEOUT},
+	 * {@link SMTInterpolConstants#TIMEOUT} respectively (the timeout is treated as MILLISECONDS!).
 	 *
 	 * If the option ":log-additional-information" is set to true with {@link #setOption(String, Object)}, then
 	 * additional information about the enumeration and the chosen muses is logged on the level "fatal".

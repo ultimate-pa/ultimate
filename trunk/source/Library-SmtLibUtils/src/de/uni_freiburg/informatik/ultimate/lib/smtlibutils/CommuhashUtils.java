@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -52,19 +53,24 @@ public class CommuhashUtils {
 	/**
 	 * Dangerous! A function may be commutative in some theory but it is not in e.g., QF_UF
 	 */
-	public static final String[] COMMUTATIVE_OPERATORS =
-			{ "and", "or", "=", "distinct", "+", "*", "bvadd", "bvmul", "bvand", "bvor", "bvxor" };
+	public static final Set<String> COMMUTATIVE_OPERATORS =
+			Set.of("and", "or", "=", "distinct", "+", "*", "bvadd", "bvmul", "bvand", "bvor", "bvxor");
 
+	/**
+	 * Orders {@link Term}s by hash code, using {@code toString()} as a tie-breaker for distinct instances whose hash
+	 * codes collide.
+	 * <p>
+	 * A {@link Term} with a smaller hash code is considered smaller; if hash codes are equal, terms are ordered
+	 * lexicographically by their {@code toString()} value.
+	 */
 	public final static Comparator<Term> HASH_BASED_COMPERATOR = (arg0, arg1) -> {
 		if (arg0 == arg1) {
 			return 0;
-		} else {
-			if (arg0.hashCode() == arg1.hashCode()) {
-				return arg0.toString().compareTo(arg1.toString());
-			} else {
-				return Integer.compare(arg0.hashCode(), arg1.hashCode());
-			}
 		}
+		if (arg0.hashCode() == arg1.hashCode()) {
+			return arg0.toString().compareTo(arg1.toString());
+		}
+		return Integer.compare(arg0.hashCode(), arg1.hashCode());
 	};
 
 	/**
@@ -75,22 +81,7 @@ public class CommuhashUtils {
 	 * @return
 	 */
 	public static boolean isKnownToBeCommutative(final String name) {
-		switch (name) {
-		case "and":
-		case "or":
-		case "=":
-		case "distinct":
-		case "+":
-		case "*":
-		case "bvadd":
-		case "bvmul":
-		case "bvand":
-		case "bvor":
-		case "bvxor":
-			return true;
-		default:
-			return false;
-		}
+		return COMMUTATIVE_OPERATORS.contains(name);
 	}
 
 	public static Term[] sortByHashCode(final Term... params) {
@@ -107,16 +98,16 @@ public class CommuhashUtils {
 		return script.term(funcname, indices, returnSort, params);
 	}
 
-	public static boolean isInCommuhashNormalForm(final Term term, final String... operators) {
-		final Predicate<Term> property = (x -> !rootInCommuhashNormalForm(x, operators));
+	public static boolean isInCommuhashNormalForm(final Term term) {
+		final Predicate<Term> property = (x -> !rootInCommuhashNormalForm(x));
 		return !new SubtermPropertyChecker(property).isSatisfiedBySomeSubterm(term);
 	}
 
-	private static boolean rootInCommuhashNormalForm(final Term term, final String... operators) {
+	private static boolean rootInCommuhashNormalForm(final Term term) {
 		final boolean result;
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (Arrays.asList(operators).contains(appTerm.getFunction().getName())) {
+			if (COMMUTATIVE_OPERATORS.contains(appTerm.getFunction().getName())) {
 				result = areParamsSorted(appTerm.getParameters());
 			} else {
 				result = true;

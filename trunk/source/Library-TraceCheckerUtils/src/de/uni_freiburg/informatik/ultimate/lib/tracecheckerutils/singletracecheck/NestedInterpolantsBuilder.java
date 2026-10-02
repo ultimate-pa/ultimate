@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.UnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
@@ -71,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ConstantTermNormalizer;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -158,6 +158,9 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 
 		traceCheck.cleanupAndUnlockSolver();
 		for (int i = 0; i < mCraigInterpolants.length; i++) {
+			// FIXME 20260826 Matthias: This seems to be the appropriate place to bring the interpolation result to UNF.
+			// However if I apply the UnfTransformer here, I get error messages that function symbols are not known
+			// by the theory. Debug this issue with Jochen.
 			mLogger.debug(new DebugMessage("NestedInterpolant {0}: {1}", i, mCraigInterpolants[i]));
 		}
 		mInterpolants = buildPredicates();
@@ -470,7 +473,9 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 				&& new SubtermPropertyChecker(x -> isAtDiffTerm(x)).isSatisfiedBySomeSubterm(withoutIndices)) {
 			throw new UnsupportedOperationException(DIFF_IS_UNSUPPORTED);
 		}
-		final Term withoutIndicesNormalized = new ConstantTermNormalizer().transform(withoutIndices);
+		// FIXME 20260826 Matthias: Better would be to bring the interpolation output (for the trace check script)
+		// directly into UNF, but I did not manage to do so. See comment in constructor of this class.
+		final Term withoutIndicesNormalized = UnfTransformer.apply(mMgdScriptCfg.getScript(), withoutIndices);
 		final Term lessQuantifiers = PartialQuantifierElimination.eliminate(mServices, mMgdScriptCfg,
 				withoutIndicesNormalized, mSimplificationTechnique);
 		return lessQuantifiers;

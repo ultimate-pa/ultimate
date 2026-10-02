@@ -1,7 +1,9 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2026 Dominik Klumpp (klumpp@lix.polytechnique.fr)
  * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2026 École Polytechnique
  *
  * This file is part of the ULTIMATE Core.
  *
@@ -28,6 +30,10 @@
 
 package de.uni_freiburg.informatik.ultimate.boogie.output;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.function.BiConsumer;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
@@ -41,15 +47,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IToString;
 
 /**
- * Provides a static method to get a prettyprinted String representation of a (Boogie) Statement.
+ * Provides static methods to get a pretty-printed String representation of Boogie AST nodes.
  *
  * @author heizmann@informatik.uni-freiburg.de
  * @author dietsch@informatik.uni-freiburg.de
+ * @author Dominik Klumpp (klumpp@lix.polytechnique.fr)
  *
  */
-
 public final class BoogiePrettyPrinter {
-
 	private static final String LINEBREAK = System.getProperty("line.separator");
 	private static final IToString<BoogieASTNode> BOOGIE_STRING_PROVIDER = new BoogieStringProvider();
 
@@ -58,138 +63,83 @@ public final class BoogiePrettyPrinter {
 	}
 
 	public static String print(final Axiom axiom) {
-		final BoogieOutput output = new BoogieOutput(null);
-		final StringBuilder sb = new StringBuilder();
-		output.appendAxiom(sb, axiom);
-		removeLastLinebreak(sb);
-		return sb.toString();
+		return printWithoutLastLinebreak(axiom, BoogieOutput::printAxiom);
 	}
 
-	/**
-	 * @return prettyprinted String representation the Statement st
-	 */
-	public static String print(final Statement st) {
-		final BoogieOutput output = new BoogieOutput(null);
-		final StringBuilder sb = new StringBuilder();
-		output.appendStatement(sb, st);
-		removeLastLinebreak(sb);
-		return sb.toString();
+	public static String print(final Statement stmt) {
+		return printWithoutLastLinebreak(stmt, BoogieOutput::printStatement);
 	}
 
-	/**
-	 * @return prettyprinted Expression
-	 */
 	public static String print(final Expression expr) {
-		final BoogieOutput output = new BoogieOutput(null);
-		final StringBuilder sb = new StringBuilder();
-		output.appendExpression(sb, expr);
-		removeLastLinebreak(sb);
-		return sb.toString();
+		return printWithoutLastLinebreak(expr, BoogieOutput::printExpression);
 	}
 
 	public static String print(final Specification spec) {
-		final BoogieOutput output = new BoogieOutput(null);
-		final StringBuilder sb = new StringBuilder();
-		output.appendSpecification(sb, spec);
-		removeLastLinebreak(sb);
-		return sb.toString();
+		return printWithoutLastLinebreak(spec, BoogieOutput::printSpecification);
 	}
 
 	public static String print(final VariableDeclaration decl) {
-		final BoogieOutput output = new BoogieOutput(null);
-		final StringBuilder sb = new StringBuilder();
-		output.appendVariableDeclaration(sb, decl);
-		removeLastLinebreak(sb);
-		return sb.toString();
+		return printWithoutLastLinebreak(decl, BoogieOutput::printVariableDeclaration);
 	}
 
-	public static String print(final VarList[] decl) {
-		final BoogieOutput output = new BoogieOutput(null);
-		final StringBuilder sb = new StringBuilder();
-		output.appendVarList(sb, decl);
-		removeLastLinebreak(sb);
-		return sb.toString();
+	public static String print(final VarList... decl) {
+		return printWithoutLastLinebreak(decl, BoogieOutput::printVarList);
 	}
 
 	public static String print(final VarList decl) {
-		final BoogieOutput output = new BoogieOutput(null);
-		final StringBuilder sb = new StringBuilder();
-		output.appendVarList(sb, new VarList[] { decl });
-		removeLastLinebreak(sb);
-		return sb.toString();
+		return printWithoutLastLinebreak(decl, BoogieOutput::printVarList);
 	}
 
 	public static String printSignature(final Procedure decl) {
 		final Procedure actual = new Procedure(decl.getLocation(), decl.getAttributes(), decl.getIdentifier(),
 				decl.getTypeParams(), decl.getInParams(), decl.getOutParams(), decl.getSpecification(), null);
-		final BoogieOutput output = new BoogieOutput(null);
-		final StringBuilder sb = new StringBuilder();
-		output.appendProcedure(sb, actual);
-		removeLastLinebreak(sb);
-		return sb.toString();
+		return printWithoutLastLinebreak(actual, BoogieOutput::printProcedure);
 	}
 
 	public static String print(final ASTType astType) {
-		final BoogieOutput output = new BoogieOutput(null);
-		final StringBuilder sb = new StringBuilder();
-		output.appendType(sb, astType, 0);
-		removeLastLinebreak(sb);
-		return sb.toString();
+		return printWithoutLastLinebreak(astType, BoogieOutput::printType);
 	}
 
 	public static String print(final Attribute[] attrs) {
-		final BoogieOutput output = new BoogieOutput(null);
-		final StringBuilder sb = new StringBuilder();
-		output.appendAttributes(sb, attrs);
-		removeLastSpace(sb);
-		return sb.toString();
+		return printToString(attrs, BoogieOutput::printAttributes);
 	}
 
 	public static IToString<BoogieASTNode> getBoogieToStringProvider() {
 		return BOOGIE_STRING_PROVIDER;
 	}
 
-	private static void removeLastLinebreak(final StringBuilder sb) {
-		final int length = sb.length();
-		final int linebreakLength = LINEBREAK.length();
-		if (length < linebreakLength) {
-			return;
+	private static <T> String printToString(final T elem, final BiConsumer<BoogieOutput, T> printer) {
+		final StringWriter strWriter = new StringWriter();
+		try (var output = new BoogieOutput(new PrintWriter(strWriter))) {
+			printer.accept(output, elem);
 		}
-
-		if (sb.substring(length - linebreakLength, length).equals(LINEBREAK)) {
-			sb.replace(length - linebreakLength, length, "");
-		}
+		return strWriter.toString();
 	}
 
-	private static void removeLastSpace(final StringBuilder sb) {
-		final int length = sb.length();
-		final int spaceLength = " ".length();
-		if (length < spaceLength) {
-			return;
-		}
+	private static <T> String printWithoutLastLinebreak(final T elem, final BiConsumer<BoogieOutput, T> printer) {
+		return removeLastLinebreak(printToString(elem, printer));
+	}
 
-		if (sb.substring(length - spaceLength, length).equals(" ")) {
-			sb.replace(length - spaceLength, length, "");
+	private static String removeLastLinebreak(final String str) {
+		final int length = str.length();
+		final int linebreakLength = LINEBREAK.length();
+		if (length >= linebreakLength && str.substring(length - linebreakLength, length).equals(LINEBREAK)) {
+			return str.substring(0, length - linebreakLength);
 		}
+		return str;
 	}
 
 	private static final class BoogieStringProvider implements IToString<BoogieASTNode> {
 		@Override
 		public String toString(final BoogieASTNode elem) {
-			if (elem instanceof Expression) {
-				return BoogiePrettyPrinter.print((Expression) elem);
-			}
-			if (elem instanceof Statement) {
-				return BoogiePrettyPrinter.print((Statement) elem);
-			} else if (elem instanceof VarList) {
-				return BoogiePrettyPrinter.print((VarList) elem);
-			} else if (elem instanceof VariableDeclaration) {
-				return BoogiePrettyPrinter.print((VariableDeclaration) elem);
-			} else if (elem instanceof Specification) {
-				return BoogiePrettyPrinter.print((Specification) elem);
-			} else {
-				return elem.toString();
-			}
+			return switch (elem) {
+			case final Expression expr -> print(expr);
+			case final Statement stmt -> print(stmt);
+			case final VarList vlist -> print(vlist);
+			case final VariableDeclaration decl -> print(decl);
+			case final Specification spec -> print(spec);
+			default -> elem.toString();
+			};
 		}
 	}
 }

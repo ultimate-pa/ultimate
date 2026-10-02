@@ -124,7 +124,7 @@ public class ExplicitValueDomain implements IDomain {
 	}
 
 	private Term entryToEq(final Map.Entry<Term, Term> entry) {
-		return mTools.getScript().term("=", entry.getKey(), entry.getValue());
+		return SmtUtils.equality(mTools.getScript(), entry.getKey(), entry.getValue());
 	}
 
 	private static Map<Term, Term> joinMapsOfVarsToValues(final Map<Term, Term> leftMap,

@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastr
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers.AddInitializingEdgesIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers.MemlocArrayUpdaterTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.transformers.PartitionProjectionTransitionTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.vpdomain.CongruenceClosureSmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -62,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityana
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  *

@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefGraphAnnotationProvider;
@@ -51,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.preferences.ReachingDefinitionsPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.rcfg.ReachDefRCFG;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.trace.ReachDefTrace;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class ReachingDefinitions implements IAnalysis {
 
@@ -86,7 +86,7 @@ public class ReachingDefinitions implements IAnalysis {
 	@Override
 	public List<IObserver> getObservers() {
 		if (mCurrentGraphType.getCreator()
-				.equals(de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator.PLUGIN_ID)) {
+				.equals(de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.Activator.PLUGIN_ID)) {
 			final IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider =
 					new ReachDefGraphAnnotationProvider<>(null);
 			final IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider =

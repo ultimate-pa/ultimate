@@ -4,10 +4,10 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Property\ to\ check=[] a \r\n a\: x > 42
 \!/instance/de.uni_freiburg.informatik.ultimate.ltl2aut=
 #Mon Mar 30 03:41:40 CEST 2015
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=
 file_export_version=3.0
-@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Convert\ code\ blocks\ to\ CNF=true
 #Mon Mar 30 03:41:40 CEST 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ if\ freed\ pointer\ was\ valid=false

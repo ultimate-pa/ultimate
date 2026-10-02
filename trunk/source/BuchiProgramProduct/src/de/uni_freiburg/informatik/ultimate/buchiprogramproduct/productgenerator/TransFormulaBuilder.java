@@ -26,12 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.productgenerator;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.util.TransFormulaAdder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
 
 /**
  *
@@ -43,9 +42,8 @@ public class TransFormulaBuilder {
 	private final TransFormulaAdder mTransForumlaAdder;
 	private final SimplificationTechnique mSimplificationTechnique;
 
-	public TransFormulaBuilder(final BoogieIcfgContainer node, final IUltimateServiceProvider services,
-			final SimplificationTechnique simplificationTechnique) {
-		mTransForumlaAdder = new TransFormulaAdder(node.getBoogie2SMT(), services);
+	public TransFormulaBuilder(final BoogieIcfgContainer node, final SimplificationTechnique simplificationTechnique) {
+		mTransForumlaAdder = new TransFormulaAdder(node.getBoogie2SMT(), false);
 		mSimplificationTechnique = simplificationTechnique;
 	}
 

@@ -63,22 +63,23 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Call;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlockFactory;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.GotoEdge;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Return;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.SequentialComposition;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Summary;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.util.TransFormulaAdder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer;
 
 /**
  * This special visitor class is responsible for the conversion from MinimizedEdges and MinimizedNodes, back to
@@ -133,6 +134,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 */
 	private final boolean mExtPqe = false;
 
+	private final boolean mTransformToCNF;
+
 	/**
 	 * @param boogie2smt
 	 * @param root
@@ -148,7 +151,9 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		mVisitedEdges = new HashSet<>();
 		mBoogie2SMT = boogie2smt;
 		mCheckForMultipleFormula = new HashMap<>();
-		mTransFormBuilder = new TransFormulaAdder(boogie2smt, mServices);
+		mTransformToCNF =
+				IcfgPreferenceInitializer.getPreferences(mServices).getBoolean(IcfgPreferenceInitializer.LABEL_CNF);
+		mTransFormBuilder = new TransFormulaAdder(boogie2smt, simplify);
 		mModGlobalVarManager = root.getRootAnnot().getCfgSmtToolkit().getModifiableGlobalsTable();
 		mCbf = root.getRootAnnot().getCodeBlockFactory();
 		mSeqComposedBlocks = new Stack<>();
@@ -240,7 +245,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				} else if (edge instanceof ShortcutErrEdge) {
 					if (cb instanceof ShortcutCodeBlock) {
 						cb = mCbf.constructSequentialCompositionAndDisconnectEdges(null, null, false, false,
-								Arrays.asList(((ShortcutCodeBlock) cb).getCodeBlocks()), mSimplificationTechnique);
+								Arrays.asList(((ShortcutCodeBlock) cb).getCodeBlocks()), mSimplificationTechnique,
+								mTransformToCNF);
 					} else {
 						throw new IllegalArgumentException(
 								"Converted CodeBlock for ShortcutErrEdge" + " is no ShortcutCodeBlock");
@@ -439,14 +445,14 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					}
 					return mCbf.constructSequentialCompositionAndDisconnectEdges(null, null, simplify, extPqe,
 							Collections.singletonList(replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1))),
-							mSimplificationTechnique);
+							mSimplificationTechnique, mTransformToCNF);
 				}
 				if (edge instanceof ShortcutErrEdge) {
 					return new ShortcutCodeBlock(null, null, composeEdges.toArray(new CodeBlock[composeEdges.size()]),
 							mLogger);
 				}
 				return mCbf.constructSequentialCompositionAndDisconnectEdges(null, null, simplify, extPqe,
-						Collections.unmodifiableList(composeEdges), mSimplificationTechnique);
+						Collections.unmodifiableList(composeEdges), mSimplificationTechnique, mTransformToCNF);
 			}
 			if (edge instanceof DisjunctionEdge) {
 				final ArrayList<CodeBlock> composeEdges = new ArrayList<>();
@@ -485,7 +491,9 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				final List<CodeBlock> parallelCodeBlocks = new ArrayList<>();
 				parallelCodeBlocks.add(composeEdges.get(0));
 				parallelCodeBlocks.add(composeEdges.get(1));
-				return mCbf.constructParallelComposition(null, null, parallelCodeBlocks, mSimplificationTechnique);
+				return mCbf.constructParallelComposition(null, null, parallelCodeBlocks, mSimplificationTechnique,
+						IcfgPreferenceInitializer.getPreferences(mServices)
+								.getBoolean(IcfgPreferenceInitializer.LABEL_CNF));
 			}
 		}
 		// should never reach this end here?

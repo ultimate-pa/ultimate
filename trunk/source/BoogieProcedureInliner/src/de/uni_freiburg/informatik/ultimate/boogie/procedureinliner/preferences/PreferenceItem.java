@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNodeLabel;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
@@ -88,7 +89,7 @@ public enum PreferenceItem {
 	PROCESS_ONLY_ENTRY_AND_RE_ENTRY_PROCEDURES("Process only entry and re-entry procedures", null, Boolean.TRUE,
 			PreferenceType.Boolean),
 
-	ENTRY_PROCEDURES("Entry procedures", "Procedure IDs/names separated by whitespace.", "ULTIMATE.start",
+	ENTRY_PROCEDURES("Entry procedures", "Procedure IDs/names separated by whitespace.", BoogieUtils.START_PROCEDURE,
 			PreferenceType.String),
 
 	ENTRY_PROCEDURE_FALLBACK("Fallback to processing everything",

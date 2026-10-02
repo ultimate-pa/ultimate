@@ -106,6 +106,7 @@ public class MonniauxMapEliminator implements IIcfgTransformer<IcfgLocation> {
 
 		final BasicIcfg<IcfgLocation> resultIcfg =
 				new BasicIcfg<>(mIcfg.getIdentifier() + "ME", mIcfg.getCfgSmtToolkit(), IcfgLocation.class);
+		ModelUtils.copyAnnotations(mIcfg, resultIcfg);
 		final ILocationFactory<IcfgLocation, IcfgLocation> funLocFac = (oldLocation, debugIdentifier, procedure) -> {
 			final IcfgLocation rtr = new IcfgLocation(debugIdentifier, procedure);
 			ModelUtils.copyAnnotations(oldLocation, rtr);

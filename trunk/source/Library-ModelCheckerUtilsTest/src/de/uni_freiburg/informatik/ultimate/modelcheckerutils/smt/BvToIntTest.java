@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -45,7 +46,7 @@ public class BvToIntTest {
 
 	private static final String SOLVER_COMMAND_Z3 =
 			"z3 SMTLIB2_COMPLIANT=true -t:6000 -memory:2024 -smt2 -in smt.arith.solver=2";
-	private static final String SOLVER_COMMAND_CVC4 = "cvc4 --incremental --print-success --lang smt --tlimit-per=6000";
+	private static final String SOLVER_COMMAND_CVC5 = "cvc5 --incremental --print-success --lang smt --tlimit-per=6000";
 	private static final String SOLVER_COMMAND_MATHSAT = "mathsat";
 	/**
 	 * If DEFAULT_SOLVER_COMMAND is not null we ignore the solver specified for each test and use only the solver
@@ -79,7 +80,8 @@ public class BvToIntTest {
 	}
 
 	private Term parse(final String inputSTR) {
-		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, inputSTR);
+		final Term formulaAsTerm =
+				CommuhashNormalFormTransformer.apply(mScript, TermParseUtils.parseTerm(mScript, inputSTR));
 		return formulaAsTerm;
 	}
 

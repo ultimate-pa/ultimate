@@ -70,6 +70,67 @@ public class QuantifierUtils {
 
 	private static final String UNKNOWN_QUANTIFIER = "unknown quantifier";
 
+	public enum Quantifier {
+		EXISTS(QuantifiedFormula.EXISTS), FORALL(QuantifiedFormula.FORALL);
+
+		private final int mNumericCode;
+
+		Quantifier(final int numericCode) {
+			mNumericCode = numericCode;
+		}
+
+		/**
+		 * @return The numeric code for this quantifier (0 for EXISTS, 1 for FORALL).
+		 */
+		public int getNumericCode() {
+			return mNumericCode;
+		}
+
+		/**
+		 * @return The ASCII abbreviation for this quantifier ("E" for EXISTS, "A" for FORALL).
+		 */
+		public String getAsciiAbbreviation() {
+			return this == EXISTS ? "E" : "A";
+		}
+
+		public Quantifier getDualQuantifier() {
+			return this == EXISTS ? FORALL : EXISTS;
+		}
+
+		/**
+		 * Convert from numeric encoding to enum.
+		 *
+		 */
+		public static Quantifier of(final int numericCode) {
+			if (numericCode == QuantifiedFormula.EXISTS) {
+				return EXISTS;
+			} else if (numericCode == QuantifiedFormula.FORALL) {
+				return FORALL;
+			} else {
+				throw new AssertionError(UNKNOWN_QUANTIFIER);
+			}
+		}
+
+		/**
+		 * Convert from ASCII abbreviation to enum.
+		 *
+		 * @param abbreviation
+		 *            The ASCII abbreviation ("E" for EXISTS, "A" for FORALL).
+		 * @return The corresponding Quantifier enum value.
+		 * @throws AssertionError
+		 *             if the abbreviation is invalid.
+		 */
+		public static Quantifier fromAsciiAbbreviation(final String abbreviation) {
+			if ("E".equals(abbreviation)) {
+				return EXISTS;
+			} else if ("A".equals(abbreviation)) {
+				return FORALL;
+			} else {
+				throw new AssertionError(UNKNOWN_QUANTIFIER);
+			}
+		}
+	}
+
 	private QuantifierUtils() {
 		// do not instantiate
 	}
@@ -97,9 +158,9 @@ public class QuantifierUtils {
 
 	public static int getDualQuantifier(final int quantifier) {
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			return 1;
+			return QuantifiedFormula.FORALL;
 		} else if (quantifier == QuantifiedFormula.FORALL) {
-			return 0;
+			return QuantifiedFormula.EXISTS;
 		} else {
 			throw new UnsupportedOperationException(UNKNOWN_QUANTIFIER);
 		}

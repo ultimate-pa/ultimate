@@ -35,8 +35,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.RootNode;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -55,7 +55,7 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(final IElement root) {
 		final BoogieIcfgContainer icfgContainer = (BoogieIcfgContainer) root;
-		final RootNode artificialRoot = icfgContainer.constructRootNode();
+		final RootNode artificialRoot = icfgContainer.constructRootNode(Activator.PLUGIN_ID);
 		new BlockEncoder(mLogger, mServices).startMinimization(artificialRoot);
 		final RootNode newRoot = new MinModelConverter(mServices).startConversion(artificialRoot);
 		mRoot = makeContainerFromRoot(newRoot);
@@ -65,7 +65,7 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 	private BoogieIcfgContainer makeContainerFromRoot(final RootNode newRoot) {
 		final BoogieIcfgContainer rootAnnot = newRoot.getRootAnnot();
 		final BoogieIcfgContainer container = new BoogieIcfgContainer(mServices,
-				newRoot.getRootAnnot().getBoogieDeclarations(), newRoot.getRootAnnot().getBoogie2SMT(), null);
+				newRoot.getRootAnnot().getBoogieDeclarations(), newRoot.getRootAnnot().getBoogie2SMT(), null, mLogger);
 		// container.getProcedureEntryNodes().putAll(m);
 		return newRoot.getRootAnnot();
 	}

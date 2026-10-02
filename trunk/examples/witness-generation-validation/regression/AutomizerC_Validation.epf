@@ -21,20 +21,14 @@ file_export_version=3.0
 
 
 #Mon Nov 18 15:11:19 CET 2024
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
-file_export_version=3.0
-@de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=External_DefaultMode
-
-
-#Mon Nov 18 15:11:19 CET 2024
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/SMT\ solver=External_DefaultMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Convert\ code\ blocks\ to\ CNF=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:2000
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=External_DefaultMode
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/SMT\ solver=External_DefaultMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Dump\ SMT\ script\ to\ file=false
 
 

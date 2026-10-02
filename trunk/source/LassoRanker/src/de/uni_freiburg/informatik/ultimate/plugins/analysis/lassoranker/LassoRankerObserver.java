@@ -63,8 +63,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(final IElement root) throws IOException {
 		if (!(root instanceof IIcfg)) {
-			throw new UnsupportedOperationException(
-					"LassoRanker can only be applied to models constructed" + " by the RCFGBuilder");
+			throw new UnsupportedOperationException("LassoRanker can only be applied to ICFGs.");
 		}
 		new LassoRankerStarter((IIcfg<IcfgLocation>) root, mServices);
 		return false;

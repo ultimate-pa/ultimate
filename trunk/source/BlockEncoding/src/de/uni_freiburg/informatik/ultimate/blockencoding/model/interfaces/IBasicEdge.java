@@ -29,7 +29,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
 
 /**
  * Such edges map to the original RCFG.

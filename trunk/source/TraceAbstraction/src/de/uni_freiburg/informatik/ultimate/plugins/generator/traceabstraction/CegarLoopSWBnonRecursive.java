@@ -325,7 +325,8 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 		mLogger.debug("Epimorphism:");
 		mEpimorphism.print();
 
-		assert checkInterpolantAutomatonInductivity(mInterpolAutomaton) : "Not inductive";
+		assert checkInterpolantAutomatonInductivity(mInterpolAutomaton, mRefinementResult.getPredicateUnifier())
+				: "Not inductive";
 
 		mnofStates.add(mAbstraction.size());
 		int ii = 0;

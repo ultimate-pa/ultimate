@@ -2,8 +2,8 @@
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.printer=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.printer=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Use\ automatic\ naming?=true
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Save\ file\ in\ source\ directory?=true
+/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Use\ automatic\ naming=true
+/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Save\ file\ in\ source\ directory=true
 
 
 #Tue Feb 18 11:27:46 CET 2014
