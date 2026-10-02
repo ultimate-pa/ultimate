@@ -103,8 +103,10 @@ public class IcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_REMOVE_GOTO_EDGES = "Remove goto edges from ICFG";
 	public static final String LABEL_REMOVE_UNNECESSARY_LABELS = "Remove unnecessary labels from ICFG";
 	private static final String DESC_REMOVE_UNNECESSARY_LABELS =
-			"If this option is enabled, any label that has no corresponding goto, or whose goto appears only on the line preceding the label, is removed and not preserved in the ICFG. "
-					+ "Otherwise, this optimization is only applied for auxiliary labels.";
+			"If enabled, any label that has no corresponding goto, or whose goto appears only on the line preceding "
+					+ "the label, is removed and not preserved in the ICFG. "
+					+ "Otherwise, this optimization is only applied for auxiliary labels. "
+					+ "Warning: This optimization does not allow to output invariants at all labels.";
 	public static final String LABEL_DUMP_TO_FILE = "Dump SMT script to file";
 	public static final String LABEL_COMPRESS_SMT_DUMP_FILE = "Compress dumped SMT script";
 	public static final String DESC_COMPRESS_SMT_DUMP_FILE = "Compress the written .smt2 script with GZip";
