@@ -51,17 +51,63 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Internal data structure that we use to construct simplified conjunctions and disjunction. We distinguish three kinds
- * of parameters of the disjunction/conjunction.
+ * Internal data structure that we use to construct simplified conjunctions and disjunctions. We distinguish three
+ * kinds of parameters of the disjunction/conjunction.
+ * <ul>
  * <li>polynomial parameter: params that can be converted into a {@link IPolynomialRelation}
  * <li>negative parameters: params that cannot be converted into a {@link IPolynomialRelation} and are negated
- * <li>negative parameters: all other params.
+ * <li>positive parameters: all other params.
+ * </ul>
  *
  * Based on a pairwise comparison of params, we decide whether a parameter is redundant and can be omitted or whether
  * the result for two parameters is already the absorbing element of the operation.
  *
  * For disjunctions we store negated versions of the {@link IPolynomialRelation}s, apply the rules for conjunctions, and
  * negate all {@link IPolynomialRelation} before computing the result.
+ * <p>
+ * <b>Bitvector inequalities.</b> Bitvector inequalities ({@code bvult}, {@code bvule}, {@code bvslt}, {@code bvsle}
+ * and their "greater" counterparts) cannot be a {@link PolynomialRelation}, see {@link BitvectorInequalityRelation}.
+ * {@link #add} therefore first asks the shared factory {@code IPolynomialRelation.of} and, if that returns
+ * {@code null}, builds a {@link BitvectorInequalityRelation} itself. These relations are kept in their own indexes
+ * next to {@code mPolyRels}:
+ * <ul>
+ * <li>{@code mBvInequalityRels}: relations with a constant on exactly one side, keyed by the other side. The key is
+ * the bare variable or, for example for {@code x + y <=u 5}, the whole expression including its offset. Only relations
+ * with the same key are compared.
+ * <li>{@code mBvTwins}: the alternative spellings of the stored relations (see below). Used for comparison only and
+ * never part of the result.
+ * <li>{@code mCompoundBvInequalityRels}: all other relations, for example {@code x <=u y}. They are kept as they are
+ * and never compared, to avoid an expensive scan.
+ * </ul>
+ * A new relation is compared with the stored relations under the same key. Both are first brought to an "effective
+ * inclusive boundary" ({@code x <u 9} behaves like {@code x <=u 8}). Relations with different signedness, or whose
+ * boundary would overflow or underflow, are not compared. Two bounds in the same direction: the tighter one wins, the
+ * looser one is dropped or not added. Two bounds in opposite directions: if no value is left between them, the
+ * conjunction is inconsistent. Examples:
+ * <ul>
+ * <li>{@code x <=u 7 and x <u 9} gives {@code x <=u 7}
+ * <li>{@code x >=u 10 and x <=u 5} is inconsistent, i.e. {@code false}
+ * <li>{@code x <=u 5 and x >=u 5} is fused to {@code x = 5}
+ * </ul>
+ * For a bare variable, bounds also interact with other facts about it in {@code mPolyRels}:
+ * <ul>
+ * <li>A known equality {@code x = c} (stored as {@code x = c} or as {@code c = x}) makes a bound redundant if
+ * {@code c} satisfies it and inconsistent if not. In the other order, an equality that is added after a bound drops
+ * the bound or makes the conjunction inconsistent.
+ * <li>{@code x != c} together with a bound whose effective boundary is {@code c} gives the strict bound:
+ * {@code x != 3 and x <=u 3} is {@code x <u 3}. If no value is left, e.g. for {@code x != 0 and x <=u 0}, the
+ * conjunction is inconsistent.
+ * </ul>
+ * The same fact can be written as a bound on an expression or as a bound on its bitwise complement. The
+ * {@link PolynomialTermTransformer} reads {@code bvneg x} as {@code -x} and {@code bvnot x} as {@code -x-1}, so such
+ * relations get the expression as key. To let a new relation meet a stored fact that is written the other way round,
+ * the alternative spelling (the "twin", see {@link BitvectorInequalityRelation#constructAlternativeRepresentation}) of
+ * every stored relation is indexed as well. Example: {@code (bvnot x) <=u 100} means {@code x >=u 155}, which
+ * contradicts a stored {@code x <=u 5}.
+ * <p>
+ * Disjunctions use these rules on the negated relations: {@code x <=u 10 or x >=u 5} is {@code true}, because
+ * {@code x >u 10 and x <u 5} leaves no value. {@link PolyPoNeWithContext} compares a new relation with the relations
+ * of its context in the same way, but read-only (see {@link #checkBvInequalityRel}).
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
