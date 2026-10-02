@@ -39,7 +39,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- *
+ * {@link PolyPoNe} that simplifies its params relative to a context, a conjunction of facts that is assumed to hold.
+ * The context is collected in a separate {@link PolyPoNe}. Every new relation is first checked against it: a relation
+ * the context already implies is not added, a relation that contradicts the context makes the result inconsistent.
+ * <p>
+ * Bitvector inequalities ({@link BitvectorInequalityRelation}) are checked against the context read-only, see
+ * {@link PolyPoNe#checkBvInequalityRel}, because they have no single polynomial term. For the same reason they are
+ * never fused with relations of the context. See the class documentation of {@link PolyPoNe} for how bitvector
+ * inequalities are compared.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */

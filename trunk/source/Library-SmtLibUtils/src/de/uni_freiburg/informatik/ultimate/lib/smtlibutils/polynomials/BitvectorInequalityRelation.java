@@ -42,19 +42,46 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 
 /**
- * {@link IPolynomialRelation} implementation for bitvector inequalities. Keeps the left-hand side ({@link #mLhs}) and
- * right-hand side ({@link #mRhs}) as two separate polynomial terms, never combined via subtraction - reducing to a
- * single term compared against zero (the way {@link PolynomialRelation} does it) is unsound for bitvector
- * inequalities under two's-complement wraparound.
+ * {@link IPolynomialRelation} implementation for bitvector inequalities, i.e. {@code bvult}, {@code bvule},
+ * {@code bvslt}, {@code bvsle} and their "greater" counterparts.
  * <p>
- * The relation symbol is canonicalized on construction: the four "greater" symbols are mirrored to their "less"
- * counterpart (swapping the sides), so only BVULT, BVULE, BVSLT and BVSLE occur.
+ * <b>Why a separate class.</b> {@link PolynomialRelation} brings a relation {@code lhs op rhs} into the form
+ * {@code lhs - rhs op 0}. That is sound for Int/Real inequalities and for equalities of every sort, but not for
+ * bitvector inequalities, because the subtraction wraps around modulo 2^n: {@code x <=u 5} holds for
+ * {@code x = 0..5}, while {@code x - 5 <=u 0} only holds for {@code x = 5}. This class therefore keeps the left-hand
+ * side ({@link #mLhs}) and the right-hand side ({@link #mRhs}) as two separate polynomial terms and never combines
+ * them. Equalities and disequalities of bitvectors are not handled here, they stay on {@link PolynomialRelation}.
  * <p>
- * {@link PolyPoNe} compares relations that have a constant on one side (see {@link #isPolynomialVsConstant()}). The
- * shared factory methods of {@link IPolynomialRelation} deliberately never build this class and return {@code null}
- * for bitvector inequalities; {@link PolyPoNe} calls {@link #of(Script, Term)} itself.
+ * <b>Canonical form.</b> The constructor mirrors the four "greater" symbols to their "less" counterpart and swaps
+ * the sides, so only BVULT, BVULE, BVSLT and BVSLE occur. For example, {@code (bvuge x 5)} is stored as
+ * {@code 5 bvule x}. {@link #negate()} stays inside this form because it goes through the same constructor.
  * <p>
- * {@code equals} and {@code hashCode} are deliberately not overridden: {@link PolyPoNe} relies on object identity.
+ * <b>Shapes.</b> What can be done with a relation depends on which sides are constants:
+ * <ul>
+ * <li><i>bare variable vs. bare constant</i> ({@code x <=u 5}, {@code 5 <u x}, see
+ * {@link #isBareVariableVsBareConstant()}): a simple bound on one variable. Only for this shape can a relation
+ * collapse at the sort boundary (see {@link #toTerm(Script)}), be solved for its variable
+ * ({@link #solveForSubject(Script, Term)}), and be checked by {@link PolyPoNe} against known equalities and
+ * disequalities {@code x != c} of that variable.
+ * <li><i>polynomial vs. constant</i> ({@code x + y <=u 5}, {@code (bvnot x) <=u 100}, see
+ * {@link #isPolynomialVsConstant()}): exactly one side is a constant, the other side is any polynomial.
+ * {@link PolyPoNe} treats that polynomial as one unknown value and compares such relations only by their
+ * constants.
+ * <li><i>anything else</i> ({@code x <=u y}): there is no useful way to compare these, {@link PolyPoNe} keeps them
+ * as they are.
+ * </ul>
+ * <p>
+ * <b>Alternative representation.</b> A fact about an expression {@code e} can also be written as a fact about its
+ * bitwise complement {@code -e-1}. For 8 bit, {@code x <=u 5} says the same as {@code 250 <=u bvnot(x)}.
+ * {@link #constructAlternativeRepresentation()} computes this second spelling, and {@link PolyPoNe} uses it to compare
+ * facts that are written differently. Plain negation {@code v -> -v} cannot be used for this: it reverses the order
+ * of the values except at 0 (unsigned) and at the most negative value (signed), which is also why {@link #mul} is not
+ * supported. The complement {@code v -> -v-1} reverses the order of all values without an exception.
+ * <p>
+ * <b>Usage.</b> The shared factory methods of {@link IPolynomialRelation} deliberately never build this class and
+ * return {@code null} for bitvector inequalities; {@link PolyPoNe} calls {@link #of(Script, Term)} itself (see its
+ * class documentation for how these relations are simplified). {@code equals} and {@code hashCode} are deliberately
+ * not overridden: {@link PolyPoNe} relies on object identity.
  *
  * @author Roman Vintonyak
  */
