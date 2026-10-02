@@ -163,7 +163,7 @@ public class PolyPoNeTwoSidedTest {
 		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv5 8))"), true);
 		final Term result = polyPoNe.and();
 		final Term expected = parse("(and (bvult x (_ bv0 8)) (bvule x (_ bv5 8)))");
-		Assert.assertNotEquals(LBool.SAT, SmtUtils.checkEquivalence(result, expected, mScript));
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
 	}
 
 	@Test
@@ -279,7 +279,7 @@ public class PolyPoNeTwoSidedTest {
 		final Term result = PolyPoNeUtils.and(mScript, params);
 		// "and" is commutative and may reorder its arguments, so compare by equivalence rather than exact term
 		final Term expected = parse("(and (bvule x (_ bv5 8)) p)");
-		Assert.assertNotEquals(LBool.SAT, SmtUtils.checkEquivalence(result, expected, mScript));
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
 	}
 
 	@Test
@@ -298,7 +298,7 @@ public class PolyPoNeTwoSidedTest {
 				result instanceof ApplicationTerm && ((ApplicationTerm) result).getFunction().getName().equals("or");
 		Assert.assertFalse("not-wrapped inequality was not recognized - stayed as an opaque disjunct", stayedAsOr);
 		final Term expected = parse("(bvult (_ bv5 8) x)");
-		Assert.assertNotEquals(LBool.SAT, SmtUtils.checkEquivalence(result, expected, mScript));
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
 	}
 
 	// --- context path (PolyPoNeWithContext, used by the simplifier and quantifier elimination) ---
