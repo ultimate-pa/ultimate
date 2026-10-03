@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.RewriteEqualityTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.OctagonRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
@@ -78,7 +78,7 @@ public class OctagonDomain extends StateBasedDomain<OctagonState> {
 			final List<OctagonRelation> octRelations = new ArrayList<>();
 			final Set<Term> vars = new HashSet<>();
 			for (final Term conjunct : conjuncts) {
-				final PolynomialRelation polynomial = PolynomialRelation.of(mScript, conjunct);
+				final IPolynomialRelation polynomial = IPolynomialRelation.of(mScript, conjunct);
 				if (polynomial == null) {
 					continue;
 				}

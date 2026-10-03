@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimension
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiIndexArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionDer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -237,7 +237,7 @@ public class SimultaneousUpdate {
 		final Term[] conjuncts = SmtUtils.getConjuncts(conjunction);
 		for (final Term conjunct : conjuncts) {
 			if (Arrays.asList(conjunct.getFreeVars()).contains(outVar)) {
-				final PolynomialRelation polyRel = PolynomialRelation.of(script, conjunct);
+				final IPolynomialRelation polyRel = IPolynomialRelation.of(script, conjunct);
 				final SolvedBinaryRelation sbr = polyRel.solveForSubject(script, outVar);
 				if (sbr != null) {
 					final Term lhs = sbr.getLeftHandSide();
@@ -329,7 +329,7 @@ public class SimultaneousUpdate {
 							return new Triple<>(renamed, nondetUpdate.getSecond(), null);
 						}
 						// not array sort
-						final PolynomialRelation polyRel = PolynomialRelation.of(mgdScript.getScript(), appTerm);
+						final IPolynomialRelation polyRel = IPolynomialRelation.of(mgdScript.getScript(), appTerm);
 						assert polyRel != null : "Must succeed for equality";
 						sbr = polyRel.solveForSubject(mgdScript.getScript(), outVar);
 						if (sbr == null) {
@@ -423,7 +423,7 @@ public class SimultaneousUpdate {
 			// TODO: Do not use SolvedBinaryRelation. Nondet update may also occur in array
 			// access (pointer array). Better: replace select temporarily by variable, check
 			// if renaming variables are modified.
-			final PolynomialRelation polyRel = PolynomialRelation.of(mgdScript.getScript(), conjunct);
+			final IPolynomialRelation polyRel = IPolynomialRelation.of(mgdScript.getScript(), conjunct);
 			if (polyRel != null) {
 				final SolvedBinaryRelation sbr = polyRel.solveForSubject(mgdScript.getScript(), entry.getValue());
 				if (sbr != null) {

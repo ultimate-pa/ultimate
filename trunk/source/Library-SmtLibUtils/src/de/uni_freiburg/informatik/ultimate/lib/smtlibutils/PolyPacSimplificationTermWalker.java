@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransforma
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.Repetition;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context.CcTransformation;
@@ -59,8 +59,8 @@ import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
  * this simplification is usually much faster than {@link SimplifyDDA}. In some cases it could be more effective than
  * {@link SimplifyDDA} because currently {@link SimplifyDDA} considers quantified subformulas as atoms. <br />
  * TOOO 20210421 Matthias: There is still some room for improving efficiency. Currently we transform very often the same
- * terms to {@link PolynomialRelation}s. We could store the the context as {@link PolynomialRelation}s instead of terms
- * or add a cache from which one can obtain the {@link PolynomialRelation} of a term.
+ * terms to {@link IPolynomialRelation}s. We could store the the context as {@link IPolynomialRelation}s instead of terms
+ * or add a cache from which one can obtain the {@link IPolynomialRelation} of a term.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -70,7 +70,7 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	private final ManagedScript mMgdScript;
 	/**
 	 * Replace terms of the form `x = l ∧ φ(x)` by `x = l ∧ φ(l)` and replace terms of the form `x ≠ l ∨ φ(x)` by `x ≠ l
-	 * ∨ φ(l)`, where l is a literal (of sort Real, Int, or BitVec) and x is a variable in a {@link PolynomialRelation}
+	 * ∨ φ(l)`, where l is a literal (of sort Real, Int, or BitVec) and x is a variable in a {@link IPolynomialRelation}
 	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a select term `(select a k)`.)
 	 */
 	private static final boolean APPLY_CONSTANT_PROPAGATION = true;
