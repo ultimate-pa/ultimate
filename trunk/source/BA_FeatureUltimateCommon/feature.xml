@@ -5,7 +5,7 @@
       version="0.3.2"
       provider-name="Ultimate Program Analysis Team"
       os="linux,win32,macosx"
-      arch="x86_64">
+      arch="aarch64,x86_64">
 
    <requires>
       <import feature="BA_FeatureDependenciesCommon"/>
