@@ -72,8 +72,9 @@ public class MemoryAddressing1D extends MemoryAdressingBase<MemoryPointer1D> {
 		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer, pointer,
 				settings.getPointerIntegerCastMode(), functionDeclarations,
 				new MemoryMetadataDefault1D(typeHandler, exprTranslation, booleanArrayHelper));
-		mMemoryManagementStrategy = new SimpleIncreasingStrategy(typeSizes, exprTranslation, typeHandler,
-				typeSizeAndOffsetComputer, settings.isBitvectorTranslation());
+		mMemoryManagementStrategy =
+				new SimpleIncreasingStrategy(typeSizes, exprTranslation, typeHandler, typeSizeAndOffsetComputer,
+						settings.isBitvectorTranslation(), settings.assumeHeapAllocationAlwaysSucceeds());
 	}
 
 	@Override

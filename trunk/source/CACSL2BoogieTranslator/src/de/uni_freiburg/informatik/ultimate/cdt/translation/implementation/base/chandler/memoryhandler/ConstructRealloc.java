@@ -96,12 +96,13 @@ public final class ConstructRealloc {
 	private final MemoryModel mMemoryModel;
 	private final RequiredMemoryModelFeatures mRequiredMemoryModelFeatures;
 	private final MemoryModelDeclarationsHandler mMemoryModelDeclarationsHandler;
+	private final boolean mAssumeAllocationAlwaysSucceeds;
 
 	public ConstructRealloc(final MemoryHandler memoryHandler, final ProcedureManager procedureHandler,
 			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
 			final ExpressionTranslation expressionTranslation, final IMemoryPointer memoryPointer,
 			final MemoryModel memoryModel, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler declarationsHandler) {
+			final MemoryModelDeclarationsHandler declarationsHandler, final boolean assumeAllocationAlwaysSucceeds) {
 		mMemoryHandler = memoryHandler;
 		mProcedureManager = procedureHandler;
 		mTypeHandler = typeHandler;
@@ -111,6 +112,7 @@ public final class ConstructRealloc {
 		mMemoryModel = memoryModel;
 		mRequiredMemoryModelFeatures = requiredMemoryModelFeatures;
 		mMemoryModelDeclarationsHandler = declarationsHandler;
+		mAssumeAllocationAlwaysSucceeds = assumeAllocationAlwaysSucceeds;
 	}
 
 	/**
@@ -161,20 +163,25 @@ public final class ConstructRealloc {
 		final List<Declaration> bodyDecl = new ArrayList<>();
 		final List<Statement> bodyStmts = new ArrayList<>();
 
-		// if (ptr == NULL) { return malloc(size) }
-		final Expression condition = ExpressionFactory.newBinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPEQ,
-				ptrIdExprImpl,
-				mMemoryPointer.constructNullPointer(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents()));
-		final Statement mallocCallStm =
-				mMemoryHandler.getUltimateMemAllocCall(sizeIdExprImpl, resultLhsImpl, ignoreLoc, MemoryArea.HEAP);
-		final Statement returnStm = new ReturnStatement(ignoreLoc);
-
-		final Statement ifStatement = StatementFactory.constructIfStatement(ignoreLoc, condition,
-				new Statement[] { mallocCallStm, returnStm }, new Statement[0]);
-		bodyStmts.add(ifStatement);
-		// res := malloc(size)
+		// #res := malloc(size)
 		bodyStmts
 				.add(mMemoryHandler.getUltimateMemAllocCall(sizeIdExprImpl, resultLhsImpl, ignoreLoc, MemoryArea.HEAP));
+
+		// if (ptr == NULL || #res == null) return;
+		// (we omit #res == NULL if mAssumAllocationAlwaysSucceeds is true)
+		final Expression nullPtr =
+				mMemoryPointer.constructNullPointer(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents());
+		final Expression ptrIsNull = ExpressionFactory.newBinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPEQ,
+				ptrIdExprImpl, nullPtr);
+		final Expression resIsNull =
+				mAssumeAllocationAlwaysSucceeds ? ExpressionFactory.createBooleanLiteral(ignoreLoc, false)
+						: ExpressionFactory.newBinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPEQ,
+								resultExprImpl, nullPtr);
+		final Expression condition = ExpressionFactory.or(ignoreLoc, ptrIsNull, resIsNull);
+		final Statement returnStm = new ReturnStatement(ignoreLoc);
+		final Statement ifStatement = StatementFactory.constructIfStatement(ignoreLoc, condition,
+				new Statement[] { returnStm }, new Statement[0]);
+		bodyStmts.add(ifStatement);
 
 		bodyStmts.addAll(mMemoryModel.constructReallocBodyStatements(ignoreLoc, reallocProcName, heapDataArrays,
 				pointerType, ptrIdExprImpl, resultLhsImpl, resultExprImpl, sizeIdExprImpl, mRequiredMemoryModelFeatures,
