@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessAssumption;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -43,13 +44,20 @@ public class WitnessGuidedAssertOrder<L extends IAction> implements IAssertOrder
 	private static final boolean USE_UNDERLYING_ASSERTORDER_FOR_FIRST_SEGMENT = false;
 
 	private final IAssertOrder<L> mUnderlying;
+	private final ILogger mLogger;
 
-	public WitnessGuidedAssertOrder(final IAssertOrder<L> underlying) {
+	public WitnessGuidedAssertOrder(final IAssertOrder<L> underlying, final ILogger logger) {
 		mUnderlying = underlying;
+		mLogger = logger;
 	}
 
 	@Override
 	public List<Set<Integer>> partition(final Counterexample<L> counterexample) {
+		final List<L> statements = counterexample.getWord().asList();
+		final long invariants = statements.stream().filter(x -> isMatchingWitnessAssumption(x, false)).count();
+		final long negatedInvariants = statements.stream().filter(x -> isMatchingWitnessAssumption(x, true)).count();
+		mLogger.info("Trace contains %d invariants and %d negated invariants", invariants, negatedInvariants);
+
 		final var startEnd = computeStartEnd(counterexample);
 		final List<Set<Integer>> underlyingPartitions = mUnderlying.partition(counterexample);
 		// We use the following partitioning:
