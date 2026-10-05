@@ -61,7 +61,7 @@ public class MusEnumeratorTest {
 
 	@Test
 	public void testEnumerate() {
-		mScriptSubsetSolver.setLogic(Logics.QF_LRA);
+		mScriptSubsetSolver.setLogic(Logics.valueOf("QF_LRA"));
 
 		final Sort realSort = mScriptSubsetSolver.getTheory().getRealSort();
 		mScriptSubsetSolver.declareFun("x", new Sort[0], realSort);

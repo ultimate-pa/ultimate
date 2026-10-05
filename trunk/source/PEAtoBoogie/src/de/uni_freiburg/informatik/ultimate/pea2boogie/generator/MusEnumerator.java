@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
 /**
@@ -231,7 +230,7 @@ public class MusEnumerator {
 				assert fs.getParameterSorts().length == 0
 						&& fs.getReturnSort().equals(mScript.getTheory().getBooleanSort());
 
-				final Term valueTerm = model.getFunctionDefinition(fs.getName(), new TermVariable[0]);
+				final Term valueTerm = model.getFunctionDefinition(fs).getSubterm();
 				evaluations.put(Integer.valueOf(fs.getName()), valueTerm);
 			}
 
