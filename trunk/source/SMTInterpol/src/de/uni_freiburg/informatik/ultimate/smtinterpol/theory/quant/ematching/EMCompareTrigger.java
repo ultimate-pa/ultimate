@@ -18,26 +18,25 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.ematching;
 
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCParameter;
 
 /**
- * A trigger for comparing two CCTerms. It has to be installed into the CClosure. Upon activation, the remaining
+ * A trigger for comparing two values. It has to be installed into the CClosure. Upon activation, the remaining
  * E-Matching code can be executed with the given register.
- * 
+ *
  * @author Tanja Schindler
  */
 public class EMCompareTrigger extends de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CompareTrigger {
 
 	private final EMatching mEMatching;
 	private final ICode mRemainingCode;
-	private final CCTerm mLhs;
-	private final CCTerm mRhs;
-	private final CCTerm[] mRegister;
+	private final CCParameter mLhs;
+	private final CCParameter mRhs;
+	private final CCParameter[] mRegister;
 	private final int mDecisionLevel;
 
-	public EMCompareTrigger(final EMatching eMatching, final CCTerm lhs, final CCTerm rhs, final ICode remainingCode,
-			final CCTerm[] register,
-			final int decisionLevel) {
+	public EMCompareTrigger(final EMatching eMatching, final CCParameter lhs, final CCParameter rhs,
+			final ICode remainingCode, final CCParameter[] register, final int decisionLevel) {
 		mEMatching = eMatching;
 		mLhs = lhs;
 		mRhs = rhs;
@@ -46,11 +45,13 @@ public class EMCompareTrigger extends de.uni_freiburg.informatik.ultimate.smtint
 		mDecisionLevel = decisionLevel;
 	}
 
-	public CCTerm getLhs() {
+	@Override
+	public CCParameter getLhs() {
 		return mLhs;
 	}
 
-	public CCTerm getRhs() {
+	@Override
+	public CCParameter getRhs() {
 		return mRhs;
 	}
 

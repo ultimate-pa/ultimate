@@ -19,99 +19,75 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
 
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleListable;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class CCAppTerm extends CCTerm {
-	final CCTerm mFunc, mArg;
-	final Parent mLeftParInfo, mRightParInfo;
+	final FunctionSymbol mFunc;
+	/**
+	 * The arguments of the application as {@link CCParameter}s: argument {@code i} of the represented application has
+	 * value {@code mArgs[i]}, i.e. {@code mArgs[i].getCCTerm() + mArgs[i].getOffset()}. An offset-free argument is a
+	 * bare {@link CCTerm} (no wrapper object), so a term like {@code f(x+5)} stores the offset-free CCTerm {@code x}
+	 * wrapped in an {@link OffsettedCCTerm} remembering the {@code +5} only for that one argument; plain congruence
+	 * closure allocates nothing extra.
+	 */
+	final CCParameter[] mArgs;
 	Term mSmtTerm;
 
-	class Parent extends SimpleListable<Parent> {
-		private boolean mMark = false;
+	CongruenceTrigger mCongTrigger;
+	FindTriggerTrigger mFindTrigger;
+	/**
+	 * The reverse trigger signatures created for this application by {@link MasterReverseTrigger#activate}, one per
+	 * master trigger watching this application's function symbol. They must be removed together with this term (see
+	 * {@code CClosure.removeTerm}), otherwise a stale application entry survives a pop and later trigger merges
+	 * activate reverse triggers on the removed term.
+	 */
+	ArrayList<ReverseTriggerTrigger> mReverseTriggers;
 
-		CCAppTerm getData() {
-			return CCAppTerm.this;
-		}
-
-		public final boolean isMarked() {
-			assert (!mMark || CCAppTerm.this.mRepStar.mNumMembers > 1);
-			return mMark;
-		}
-
-		@Override
-		public String toString() {
-			return CCAppTerm.this.toString();
-		}
-	}
-
-	public CCAppTerm(final boolean isFunc, final int parentPos, final CCTerm func, final CCTerm arg,
+	public CCAppTerm(FunctionSymbol fsym, final CCParameter[] args,
 			final CClosure engine, final boolean isFromQuant) {
-		super(isFunc, parentPos, HashUtils.hashJenkins(func.hashCode(), arg),
-				(!isFromQuant ? 0 : Math.max(func.mAge, arg.mAge + 1)));
-		mFunc = func;
-		mArg = arg;
-		mLeftParInfo = new Parent();
-		mRightParInfo = new Parent();
+		super(HashUtils.hashJenkins(fsym.hashCode(), (Object[]) args), isFromQuant ? CCAppTerm.computeAge(args) : 0);
+		mFunc = fsym;
+		mArgs = args;
 	}
 
-	public CCTerm getFunc() {
+	private final static int computeAge(CCParameter[] args) {
+		int age = 1;
+		for (int i = 0; i < args.length; i++) {
+			age = Math.max(age, args[i].getCCTerm().mAge + 1);
+		}
+		return age;
+	}
+
+	public FunctionSymbol getFunctionSymbol() {
 		return mFunc;
 	}
 
-	public CCTerm getArg() {
-		return mArg;
+	/** The number of arguments of this application. */
+	public int getArgCount() {
+		return mArgs.length;
 	}
 
 	/**
-	 * Add this app term to the parent info lists of its function and argument. Also adds it to the mCCPars of all the
-	 * oldReps on the path to the repStar, which is necessary for unmerging correctly.
-	 *
-	 * @param engine
-	 *            the congruence closure engine.
+	 * @return the constant offset added to the argument at the given position, i.e. the argument value is
+	 *         {@code getArgParam(argPosition).getCCTerm() + getArgOffset(argPosition)}.
 	 */
-	public void addParentInfo(final CClosure engine) {
-		CCTerm func = mFunc;
-		CCTerm arg = mArg;
-
-		/*
-		 * Store the parent info in all mCCPars of the representatives occuring on the path to the root, so that it is
-		 * still present when we unmerge later.
-		 *
-		 * Also find the first congruent application term.
-		 */
-		while (func.mRep != func || arg.mRep != arg) {
-			if (arg.mMergeTime < func.mMergeTime) {
-				// Reverse arg rep
-				arg.mCCPars.addParentInfo(func.mParentPosition, mRightParInfo, false, null);
-				arg = arg.mRep;
-			} else {
-				// Reverse func rep
-				func.mCCPars.addParentInfo(0, mLeftParInfo, false, null);
-				func = func.mRep;
-			}
-		}
-		func.mCCPars.addParentInfo(0, mLeftParInfo, true, engine);
-		arg.mCCPars.addParentInfo(func.mParentPosition, mRightParInfo, true, engine);
-		assert invariant();
-		assert func.invariant();
-		assert arg.invariant();
+	public Rational getArgOffset(int argPosition) {
+		return mArgs[argPosition].getOffset();
 	}
 
-	public void unlinkParentInfos() {
-		mLeftParInfo.removeFromList();
-		mRightParInfo.removeFromList();
-	}
-
-	public void markParentInfos() {
-		mLeftParInfo.mMark = mRightParInfo.mMark = true;
-	}
-
-	public void unmarkParentInfos() {
-		mLeftParInfo.mMark = mRightParInfo.mMark = false;
+	/**
+	 * The value of the argument at the given position as a {@link CCParameter} ("a CCTerm up to a constant offset").
+	 * This is the only argument accessor: callers that genuinely want the offset-free structural CCTerm must say so
+	 * explicitly via {@code getArgParam(i).getCCTerm()}.
+	 */
+	public CCParameter getArgParam(int argPosition) {
+		return mArgs[argPosition];
 	}
 
 	@Override
@@ -119,9 +95,7 @@ public class CCAppTerm extends CCTerm {
 		final StringBuilder sb = new StringBuilder();
 		final HashMap<CCAppTerm, Integer> visited = new HashMap<>();
 		final ArrayDeque<Object> todo = new ArrayDeque<>();
-		todo.add(")");
 		todo.add(this);
-		todo.add("(");
 		while (!todo.isEmpty()) {
 			final Object item = todo.removeLast();
 			if (item instanceof String) {
@@ -133,15 +107,16 @@ public class CCAppTerm extends CCTerm {
 					sb.append("@" + id);
 				} else {
 					visited.put(app, visited.size());
-					if (app.mArg instanceof CCAppTerm) {
-						todo.add(")");
-						todo.add(app.mArg);
-						todo.add("(");
-					} else {
-						todo.add(app.mArg);
+					todo.add(")");
+					for (int i = app.mArgs.length - 1; i >= 0; i--) {
+						if (!app.getArgOffset(i).equals(Rational.ZERO)) {
+							todo.add("+" + app.getArgOffset(i));
+						}
+						todo.add(app.mArgs[i].getCCTerm());
+						todo.add(" ");
 					}
-					todo.add(" ");
-					todo.add(app.mFunc);
+					todo.add(app.mFunc.getApplicationString());
+					todo.add("(");
 				}
 			} else if (item instanceof CCBaseTerm) {
 				sb.append(item);
