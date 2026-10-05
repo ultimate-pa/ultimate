@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ILiteral;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ITheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCParameter;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CClosure;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinArSolve;
@@ -927,16 +928,18 @@ public class QuantifierTheory implements ITheory {
 	}
 
 	/**
-	 * Get the term that is the current CC representative of the given term, if such term exists.
+	 * Get the term that canonically denotes the current value of the given term in CC, if the term has a CC value. With
+	 * offset equalities this is the flat term of the class representative plus the value's offset to it, so two terms
+	 * yield the same representative term exactly if CC knows them to be equal (same class at the same offset).
 	 *
 	 * @param term
 	 *            a term.
-	 * @return the the term corresponding to the current CC representative of the given term, if it exists, the input
+	 * @return the term corresponding to the current CC representative value of the given term, if it exists, the input
 	 *         term else.
 	 */
 	Term getRepresentativeTerm(final Term term) {
-		final CCTerm ccTerm = getClausifier().getCCTerm(term);
-		return ccTerm == null ? term : ccTerm.getRepresentative().getFlatTerm();
+		final CCParameter ccParam = getClausifier().getCCParameter(term);
+		return ccParam == null ? term : ccParam.getValueKey().getFlatTerm();
 	}
 
 	private void addGroundCCTerms(final Term term, final SourceAnnotation source) {
@@ -947,9 +950,11 @@ public class QuantifierTheory implements ITheory {
 			final Term subTerm = todo.pop();
 			if (subTerm instanceof ApplicationTerm && seen.add(subTerm)) {
 				if (subTerm.getFreeVars().length == 0) {
-					final CCTerm ccTerm = mClausifier.getCCTerm(subTerm);
-					if (ccTerm == null && (Clausifier.needCCTerm(subTerm) || subTerm.getSort().isArraySort())) {
-						mClausifier.createCCTerm(subTerm, source);
+					// a ground term with a constant summand is represented by the CCTerm of its offset-free part
+					final Term offsetFree = mClausifier.getOffsetFreeTerm(subTerm);
+					final CCTerm ccTerm = mClausifier.getCCTerm(offsetFree);
+					if (ccTerm == null && (Clausifier.needCCTerm(offsetFree) || offsetFree.getSort().isArraySort())) {
+						mClausifier.createCCTerm(offsetFree, source);
 					}
 				} else {
 					for (final Term arg : ((ApplicationTerm) subTerm).getParameters()) {

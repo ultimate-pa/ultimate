@@ -19,7 +19,7 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.ematching;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCParameter;
 
 /**
  * Code to find a function application for a given function symbol that has the given term as argument at the given
@@ -49,8 +49,8 @@ public class ReverseCode implements ICode {
 	}
 
 	@Override
-	public void execute(final CCTerm[] register, final int decisionLevel) {
-		final CCTerm arg = register[mArgRegIndex];
+	public void execute(final CCParameter[] register, final int decisionLevel) {
+		final CCParameter arg = register[mArgRegIndex];
 		mEMatching.installReverseTrigger(mFunc, arg, mArgPos, mOutRegIndex, mRemainingCode, register, decisionLevel);
 	}
 

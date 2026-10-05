@@ -18,17 +18,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
-import java.security.Signature;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
@@ -46,13 +50,13 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.FindTriggerTrigger.AppTermEntry;
-// import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm.Parent;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.EQAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ArrayQueue;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 
 /**
  * This class implements the theory of equality, a.k.a. congruence closure.
@@ -174,11 +178,11 @@ public class CClosure implements ITheory {
 	/**
 	 * Global map from signature to trigger. Used for congruence finder and reverse
 	 * triggers. Signatures are rehashed at checkpoint when the todo is processed.
-	 * When moving a signature to its new hash (after representative change), we
-	 * remove the old entry by key reference (see
-	 * {@link #removeSignatureByRef(Signature)}) and then put the same key again
-	 * (its hashCode/equals use representatives, so it now maps to the new bucket).
-	 * We do not keep the old key in the map, since that would leave the map
+	 * When a representative changes, the affected signature is taken out of this
+	 * map ({@link #moveToSignatureTodo}) and appended to {@link #mSignatureTodo};
+	 * the next checkpoint puts the same key back ({@link #addSignatureHash}), where
+	 * it now maps to a new bucket since its hashCode/equals use representatives and
+	 * offsets. We do not keep the old key in the map, since that would leave the map
 	 * inconsistent.
 	 */
 	final Map<SignatureTrigger, SignatureTrigger> mSignatureTriggers = new HashMap<>();
@@ -186,12 +190,22 @@ public class CClosure implements ITheory {
 	 * Todo list of deferred signatures.
 	 */
 	final SimpleList<SignatureTrigger> mSignatureTodo = new SimpleList<SignatureTrigger>();
+	/**
+	 * The master reverse triggers of this engine, one per (function symbol, argument position) pair, see
+	 * {@link MasterReverseTrigger#of}. This must be per engine (not a global unifier): solver instances may share the
+	 * theory and thus the function symbols, but each engine needs its own find trigger registration.
+	 */
+	private final UnifyHash<MasterReverseTrigger> mMasterReverseTriggers = new UnifyHash<>();
 
 	private long mInvertEdgeTime, mEqTime, mCcTime, mSetRepTime, mSigHashTime;
 	private long mCcCount, mMergeCount;
 
 	public CClosure(final Clausifier clausifier) {
 		mClausifier = clausifier;
+	}
+
+	UnifyHash<MasterReverseTrigger> getMasterReverseTriggers() {
+		return mMasterReverseTriggers;
 	}
 
 	public DPLLEngine getEngine() {
@@ -204,6 +218,18 @@ public class CClosure implements ITheory {
 
 	public boolean isProofGenerationEnabled() {
 		return getEngine().isProofGenerationEnabled();
+	}
+
+	/**
+	 * Whether offset equalities are created. When enabled, arithmetic terms are turned into offset-free CCTerms (with
+	 * the constant carried as an offset) and equalities between numeric terms become offset equalities, so that a
+	 * congruence class is an affine class: every member has a known constant offset to the representative. When
+	 * disabled, every offset is zero and the structure degenerates to plain congruence closure.
+	 *
+	 * The flag itself lives in the clausifier, which builds the terms, so that the two cannot disagree.
+	 */
+	public boolean createOffsetEqualities() {
+		return mClausifier.createOffsetEqualities();
 	}
 
 	public CCTerm createAnonTerm(final Term term) {
@@ -275,7 +301,12 @@ public class CClosure implements ITheory {
 		}
 	}
 
-	public CCTerm createAppTerm(FunctionSymbol func, final CCTerm[] args, final SourceAnnotation source) {
+	/**
+	 * Create a function application CCTerm. Each argument is a {@link CCParameter}, i.e. a CCTerm together with a
+	 * constant offset, so the actual argument is {@code args[i].getCCTerm() + args[i].getOffset()} (the offset carries
+	 * e.g. the {@code +5} in {@code f(x+5)}). Offset-free arguments are bare {@link CCTerm}s.
+	 */
+	public CCTerm createAppTerm(FunctionSymbol func, final CCParameter[] args, final SourceAnnotation source) {
 		assert args.length > 0;
 		if (args.length > 0) {
 			final CCAppTerm term = new CCAppTerm(func, args, this, source.isFromQuantTheory());
@@ -316,24 +347,162 @@ public class CClosure implements ITheory {
 		return parents;
 	}
 
+	/** Pseudo argument position of the array element-value group, see {@link #getNumericClashSlots}. */
+	private static final int POS_ARRAY_ELEMENT = -1;
+
+	/**
+	 * Key of a numeric clash slot: a (function symbol, argument position) pair, or, for the array element-value group,
+	 * the array sort together with {@link #POS_ARRAY_ELEMENT}. Both function symbols and sorts are unified by the
+	 * theory, so the key compares them by identity.
+	 */
+	private static final class ClashKey {
+		final Object mSym;
+		final int mPos;
+
+		ClashKey(final Object sym, final int pos) {
+			mSym = sym;
+			mPos = pos;
+		}
+
+		@Override
+		public int hashCode() {
+			return mSym.hashCode() * 31 + mPos;
+		}
+
+		@Override
+		public boolean equals(final Object other) {
+			if (!(other instanceof ClashKey)) {
+				return false;
+			}
+			final ClashKey key = (ClashKey) other;
+			return mSym == key.mSym && mPos == key.mPos;
+		}
+	}
+
+	/**
+	 * Enumerate the numeric clash slots for model-based theory combination, on demand. A clash slot groups the
+	 * {@link CCParameter}s occupying one (function symbol, argument position) whose argument sort is numeric. Two
+	 * members of the same slot with equal value but in distinct congruence classes are an equality that MBTC may
+	 * propose: merging them is what makes the two applications congruent at that position. Only members whose class
+	 * has a linear-arithmetic value ({@code getRepresentative().getSharedTerm() != null}) are kept &mdash; a class
+	 * without a shared term is free to receive a non-clashing value at model construction, so it cannot be forced to
+	 * clash.
+	 * <p>
+	 * MBTC runs only in {@code finalCheck}, so the slots are computed on demand here rather than maintained in a
+	 * persistent, backtracked index; the signature todo queue is drained at every checkpoint, so all installed
+	 * reverse triggers are in the signature map by then.
+	 * <p>
+	 * Three sources are enumerated: the <em>congruence</em> source (every function-application argument position), the
+	 * <em>reverse-trigger</em> source &mdash; an installed reverse trigger (e.g. from e-matching) watches a (symbol,
+	 * position) for applications whose argument has the watched value, so that value is a slot member, too: an MBTC
+	 * merge that moves an argument onto it activates the trigger &mdash; and the <em>array element-value</em> source
+	 * described below. The deferred datatype numeric-field feed is still future work.
+	 * <p>
+	 * The array element-value group exists because {@link ArrayTheory} reads distinct congruence classes as distinct
+	 * values: its weakeq-ext fingerprints (and the weakeq propagations) tell two arrays apart by comparing the classes
+	 * of their element values, so if two such classes end up with the same value in the model, an array disequality
+	 * silently becomes false there. The element values it compares are the select applications of its {@code mSelects}
+	 * maps and the values of {@code const} arrays, so both are collected into one group per array sort &mdash; one
+	 * group, since a const value must also be comparable to a select value (read-const-weakeq), which per-(symbol,
+	 * position) slots can never do. Store values need no entry of their own: {@code addStoreAxiom} always asserts
+	 * {@code (= (select (store a i v) i) v)}, so the class of {@code v} contains a select application.
+	 *
+	 * @return the slots as lists of members; each list holds the numeric, LA-valued members at one (symbol, position)
+	 *         or the numeric element values of one array sort.
+	 */
+	public Collection<List<CCParameter>> getNumericClashSlots() {
+		final Map<ClashKey, List<CCParameter>> slots = new LinkedHashMap<>();
+		for (final CCTerm term : mAllTerms) {
+			if (!(term instanceof CCAppTerm)) {
+				continue;
+			}
+			final CCAppTerm app = (CCAppTerm) term;
+			final FunctionSymbol sym = app.getFunctionSymbol();
+			for (int pos = 0; pos < app.getArgCount(); pos++) {
+				addClashMember(slots, new ClashKey(sym, pos), app.getArgParam(pos));
+			}
+			addArrayElementValue(slots, app);
+		}
+		for (final SignatureTrigger sigTrigger : mSignatureTriggers.values()) {
+			if (!(sigTrigger instanceof ReverseTriggerTrigger)) {
+				continue;
+			}
+			for (final ReverseTrigger trigger : ((ReverseTriggerTrigger) sigTrigger).getTriggers()) {
+				final CCParameter arg = trigger.getArgument();
+				if (arg != null && trigger.getArgPosition() >= 0) {
+					addClashMember(slots, new ClashKey(trigger.getFunctionSymbol(), trigger.getArgPosition()), arg);
+				}
+			}
+		}
+		return slots.values();
+	}
+
+	/**
+	 * Feed the array element-value group of one application: a select application contributes its own value, a
+	 * {@code const} application the value it is filled with. See {@link #getNumericClashSlots}.
+	 */
+	private static void addArrayElementValue(final Map<ClashKey, List<CCParameter>> slots, final CCAppTerm app) {
+		final String name = app.getFunctionSymbol().getName();
+		final Sort arraySort;
+		final CCParameter value;
+		if (name.equals(SMTLIBConstants.SELECT)) {
+			arraySort = app.getArgParam(0).getCCTerm().getFlatTerm().getSort();
+			value = app;
+		} else if (name.equals(SMTLIBConstants.CONST)) {
+			arraySort = app.getFlatTerm().getSort();
+			value = app.getArgParam(0);
+		} else {
+			return;
+		}
+		addClashMember(slots, new ClashKey(arraySort, POS_ARRAY_ELEMENT), value);
+	}
+
+	/**
+	 * Add one member to its clash slot, filtering to numeric, LA-valued members (see {@link #getNumericClashSlots}).
+	 */
+	private static void addClashMember(final Map<ClashKey, List<CCParameter>> slots, final ClashKey key,
+			final CCParameter arg) {
+		if (!arg.getCCTerm().getFlatTerm().getSort().isNumericSort()) {
+			return;
+		}
+		if (arg.getRepresentative().getSharedTerm() == null) {
+			return;
+		}
+		List<CCParameter> members = slots.get(key);
+		if (members == null) {
+			members = new ArrayList<>();
+			slots.put(key, members);
+		}
+		members.add(arg);
+	}
+
 	/**
 	 * Insert a Compare trigger that will be activated as soon as the two given
-	 * CCTerms are equal. It is inserted into the pair hash tables and all
-	 * intermediate pair infos.
+	 * values are equal. It is inserted into the pair hash tables and all
+	 * intermediate pair infos, keyed on the offset between the two base terms
+	 * (mirroring {@link #insertEqualityEntry}). The two values may already be in
+	 * the same congruence class at a different offset; the trigger is then parked
+	 * in the merge-boundary pair info, which becomes live again when the merge is
+	 * undone.
 	 *
-	 * @param t1      the first CCTerm.
-	 * @param t2      the second CCTerm.
+	 * @param lhs     the first value.
+	 * @param rhs     the second value.
 	 * @param trigger the Compare trigger.
 	 */
-	public void insertCompareTrigger(CCTerm t1, CCTerm t2, final CompareTrigger trigger) {
-		assert t1.getRepresentative() != t2.getRepresentative();
+	public void insertCompareTrigger(final CCParameter lhs, final CCParameter rhs, final CompareTrigger trigger) {
+		assert !lhs.sameValueAs(rhs);
 		assert !trigger.inList();
+		CCTerm t1 = lhs.getCCTerm();
+		CCTerm t2 = rhs.getCCTerm();
+		// The trigger fires when value(lhs) == value(rhs), i.e. value(t1) - value(t2) == offset.
+		Rational offset = rhs.getOffset().sub(lhs.getOffset());
 		while (true) {
 			// make t1 the term that was merged before t2 was merged.
 			if (t1.mMergeTime > t2.mMergeTime) {
 				final CCTerm tmp = t1;
 				t1 = t2;
 				t2 = tmp;
+				offset = offset.negate();
 			}
 
 			// if t1 is its own representative, then t2 should also be the representative
@@ -341,9 +510,9 @@ public class CClosure implements ITheory {
 			if (t1.mRep == t1) {
 				assert t2.mRep == t2;
 				// Insert this entry into the pair hash, create it if necessary.
-				CCTermPairHash.Info info = mPairHash.getInfo(t1, t2);
+				CCTermPairHash.Info info = mPairHash.getInfo(t1, t2, offset);
 				if (info == null) {
-					info = new CCTermPairHash.Info(t1, t2);
+					info = new CCTermPairHash.Info(t1, t2, offset);
 					mPairHash.add(info);
 				}
 				info.mCompareTriggers.prependIntoJoined(trigger, true);
@@ -351,24 +520,31 @@ public class CClosure implements ITheory {
 			}
 
 			// find the pair info entry in the pair info list of t1 or create a new one.
-			assert t1.mRep != t2;
+			// isLast is set if t1 was merged with t2; in this case the compare trigger
+			// lists were not joined.
+			final boolean isLast = t1.mRep == t2;
 			boolean found = false;
 			for (final CCTermPairHash.Info.Entry pentry : t1.mPairInfos) {
 				final CCTermPairHash.Info info = pentry.getInfo();
 				// info might have blocked compare triggers but no eqlits
 				// assert (!info.eqlits.isEmpty());
-				if (pentry.mOther == t2) {
-					info.mCompareTriggers.prependIntoJoined(trigger, false);
+				if (pentry.mOther == t2 && pentry.getOffsetToOther().equals(offset)) {
+					info.mCompareTriggers.prependIntoJoined(trigger, isLast);
 					found = true;
 					break;
 				}
 			}
 			if (!found) {
 				// we need to create a new entry.
-				final CCTermPairHash.Info info = new CCTermPairHash.Info(t1, t2);
+				final CCTermPairHash.Info info = new CCTermPairHash.Info(t1, t2, offset);
 				info.mRhsEntry.unlink();
-				info.mCompareTriggers.prependIntoJoined(trigger, false);
+				info.mCompareTriggers.prependIntoJoined(trigger, isLast);
 			}
+			if (isLast) {
+				break;
+			}
+			// walk t1 up to its representative; value(t1) - value(t1.mRep) = t1.mOffsetToRep - t1.mRep.mOffsetToRep
+			offset = offset.sub(t1.getOffsetToRep()).add(t1.mRep.getOffsetToRep());
 			t1 = t1.mRep;
 		}
 	}
@@ -377,8 +553,8 @@ public class CClosure implements ITheory {
 	 * Remove a given Compare trigger.
 	 */
 	public void removeCompareTrigger(final CompareTrigger trigger) {
-		CCTerm t1 = trigger.getLhs();
-		CCTerm t2 = trigger.getRhs();
+		CCTerm t1 = trigger.getLhs().getCCTerm();
+		CCTerm t2 = trigger.getRhs().getCCTerm();
 		if (!mAllTerms.contains(t1) || !mAllTerms.contains(t2)) {
 			return; // FIXME This is a workaround for the problem that pop() first removes terms,
 					// then triggers, as it
@@ -386,41 +562,46 @@ public class CClosure implements ITheory {
 			// where the
 			// corresponding terms have already been removed.
 		}
+		Rational offset = trigger.getRhs().getOffset().sub(trigger.getLhs().getOffset());
 		while (true) {
 			// make t1 the term that was merged before t2 was merged.
 			if (t1.mMergeTime > t2.mMergeTime) {
 				final CCTerm tmp = t1;
 				t1 = t2;
 				t2 = tmp;
+				offset = offset.negate();
 			}
 
 			// if t1 is its own representative, then t2 should also be the representative
 			// because of merge time
 			if (t1.mRep == t1) {
 				assert t2.mRep == t2;
-				// Insert this entry into the pair hash, create it if necessary.
-				final CCTermPairHash.Info info = mPairHash.getInfo(t1, t2);
+				final CCTermPairHash.Info info = mPairHash.getInfo(t1, t2, offset);
 				assert info != null;
 				info.mCompareTriggers.undoPrependIntoJoined(trigger, true);
 				break;
 			}
 
-			// find the pair info entry in the pair info list of t1 or create a new one.
-			// isLast is set if t1 was merged with t2; in this case the equality entry lists
-			// were not joined.
-			assert t1.mRep != t2;
+			// find the pair info entry in the pair info list of t1.
+			// isLast is set if t1 was merged with t2; in this case the compare trigger
+			// lists were not joined.
+			final boolean isLast = t1.mRep == t2;
 			boolean found = false;
 			for (final CCTermPairHash.Info.Entry pentry : t1.mPairInfos) {
 				final CCTermPairHash.Info info = pentry.getInfo();
 				// info might have blocked compare triggers but no eqlits
 				// assert (!info.eqlits.isEmpty());
-				if (pentry.mOther == t2) {
-					info.mCompareTriggers.undoPrependIntoJoined(trigger, false);
+				if (pentry.mOther == t2 && pentry.getOffsetToOther().equals(offset)) {
+					info.mCompareTriggers.undoPrependIntoJoined(trigger, isLast);
 					found = true;
 					break;
 				}
 			}
 			assert found;
+			if (isLast) {
+				break;
+			}
+			offset = offset.sub(t1.getOffsetToRep()).add(t1.mRep.getOffsetToRep());
 			t1 = t1.mRep;
 		}
 	}
@@ -457,15 +638,15 @@ public class CClosure implements ITheory {
 
 	/**
 	 * Insert a Reverse trigger that will be activated as soon as a new function
-	 * application of the given function symbol with a given argument at a given
-	 * position exists.
+	 * application of the given function symbol with a given argument value at a
+	 * given position exists.
 	 *
 	 * @param fSym    the function symbol.
-	 * @param arg     the argument the new term should contain.
+	 * @param arg     the argument value the new term should contain; must equal {@code trigger.getArgument()}.
 	 * @param argPos  the position of this argument.
 	 * @param trigger the Reverse trigger.
 	 */
-	public void insertReverseTrigger(final FunctionSymbol sym, CCTerm arg, final int argPos,
+	public void insertReverseTrigger(final FunctionSymbol sym, final CCParameter arg, final int argPos,
 			final ReverseTrigger trigger) {
 		assert trigger.mSignatureTrigger == null;
 		final MasterReverseTrigger masterTrigger = MasterReverseTrigger.of(this, sym, argPos);
@@ -553,26 +734,30 @@ public class CClosure implements ITheory {
 	}
 
 	/**
-	 * Find the representative CCTerm for the given term. This function does not
+	 * Find the representative value for the given term. This function does not
 	 * create new terms. If there is no equivalent CCTerm, it returns null. If a
 	 * term that is congruent to the given term already exists, it will return the
-	 * representative of this congruent term.
+	 * value of this congruent term, canonicalized as the class representative plus
+	 * the value's offset to it.
 	 *
 	 * @param term The term which a representative is searched for.
-	 * @return The representative, or null if no congruent term exists in the
+	 * @return The representative value, or null if no congruent term exists in the
 	 *         CClosure.
 	 */
-	public CCTerm getCCTermRep(final Term term) {
-		if (mAnonTerms.containsKey(term)) {
-			return mAnonTerms.get(term).getRepresentative();
+	public CCParameter getCCParamRep(final Term term) {
+		final Rational constant = mClausifier.getTermConstant(term);
+		final Term offsetFree = constant.equals(Rational.ZERO) ? term : mClausifier.getOffsetFreeTerm(term);
+		if (mAnonTerms.containsKey(offsetFree)) {
+			final CCTerm ccTerm = mAnonTerms.get(offsetFree);
+			return CCParameter.of(ccTerm.getRepresentative(), ccTerm.getOffsetToRep().add(constant));
 		}
-		if (term instanceof ApplicationTerm) {
-			final ApplicationTerm at = (ApplicationTerm) term;
+		if (offsetFree instanceof ApplicationTerm) {
+			final ApplicationTerm at = (ApplicationTerm) offsetFree;
 			final FunctionSymbol funcSym = at.getFunction();
 			final Term[] params = at.getParameters();
-			final CCTerm[] argReps = new CCTerm[params.length];
+			final CCParameter[] argReps = new CCParameter[params.length];
 			for (int i = 0; i < params.length; i++) {
-				argReps[i] = getCCTermRep(params[i]);
+				argReps[i] = getCCParamRep(params[i]);
 				if (argReps[i] == null) {
 					return null;
 				}
@@ -580,30 +765,40 @@ public class CClosure implements ITheory {
 			final SignatureTrigger sig = new SignatureTrigger(funcSym, argReps);
 			final CongruenceTrigger congTrigger = (CongruenceTrigger) mSignatureTriggers.get(sig);
 			if (congTrigger != null) {
-				return congTrigger.getApp().getRepresentative();
+				final CCAppTerm app = congTrigger.getApp();
+				return CCParameter.of(app.getRepresentative(), app.getOffsetToRep().add(constant));
 			}
 		}
 		return null;
 	}
 
 	/**
-	 * For two given CCTerms, check if the equality is set.
+	 * For two given values, check if the equality is set.
 	 *
-	 * @return true if the terms are in the same congruence class, false otherwise.
+	 * @return true if the values are currently equal (same congruence class at the same offset), false otherwise.
 	 */
-	public boolean isEqSet(final CCTerm first, final CCTerm second) {
-		return first.getRepresentative() == second.getRepresentative();
+	public boolean isEqSet(final CCParameter first, final CCParameter second) {
+		return first.sameValueAs(second);
 	}
 
 	/**
-	 * For two given CCTerms, check if the disequality is set.
+	 * For two given values, check if the disequality is known to hold, either because a disequality literal is set or
+	 * because the values are in the same congruence class at different offsets (so they provably differ by a non-zero
+	 * constant).
 	 *
-	 * @return true if the disequality is set, false otherwise.
+	 * @return true if the disequality holds, false otherwise.
 	 */
-	public boolean isDiseqSet(final CCTerm first, final CCTerm second) {
+	public boolean isDiseqSet(final CCParameter first, final CCParameter second) {
 		final CCTerm firstRep = first.getRepresentative();
 		final CCTerm secondRep = second.getRepresentative();
-		final CCTermPairHash.Info diseqInfo = mPairHash.getInfo(firstRep, secondRep);
+		final Rational offset = second.getOffsetToRep().sub(first.getOffsetToRep());
+		if (firstRep == secondRep) {
+			// Same class: the value difference is the known constant offset.
+			return !offset.equals(Rational.ZERO);
+		}
+		// A diseq disproves value(first) == value(second), i.e. value(firstRep) - value(secondRep) ==
+		// second.mOffsetToRep - first.mOffsetToRep.
+		final CCTermPairHash.Info diseqInfo = mPairHash.getInfo(firstRep, secondRep, offset);
 		return diseqInfo != null && diseqInfo.mDiseq != null;
 	}
 
@@ -616,13 +811,15 @@ public class CClosure implements ITheory {
 	 * @param eqentry the equality entry that should be inserted into the pair
 	 *                infos.
 	 */
-	public void insertEqualityEntry(CCTerm t1, CCTerm t2, final CCEquality.Entry eqentry) {
+	public void insertEqualityEntry(CCTerm t1, CCTerm t2, Rational offset, final CCEquality.Entry eqentry) {
+		// offset == value(t1) - value(t2)
 		while (true) {
 			// make t1 the term that was merged before t2 was merged.
 			if (t1.mMergeTime > t2.mMergeTime) {
 				final CCTerm tmp = t1;
 				t1 = t2;
 				t2 = tmp;
+				offset = offset.negate();
 			}
 
 			// if t1 is its own representative, then t2 should also be the representative
@@ -630,9 +827,9 @@ public class CClosure implements ITheory {
 			if (t1.mRep == t1) {
 				assert t2.mRep == t2;
 				// Insert this entry into the pair hash, create it if necessary.
-				CCTermPairHash.Info info = mPairHash.getInfo(t1, t2);
+				CCTermPairHash.Info info = mPairHash.getInfo(t1, t2, offset);
 				if (info == null) {
-					info = new CCTermPairHash.Info(t1, t2);
+					info = new CCTermPairHash.Info(t1, t2, offset);
 					mPairHash.add(info);
 				}
 				info.mEqlits.prependIntoJoined(eqentry, true);
@@ -648,7 +845,7 @@ public class CClosure implements ITheory {
 				final CCTermPairHash.Info info = pentry.getInfo();
 				// info might have blocked compare triggers but no eqlits
 				// assert (!info.eqlits.isEmpty());
-				if (pentry.mOther == t2) {
+				if (pentry.mOther == t2 && pentry.getOffsetToOther().equals(offset)) {
 					info.mEqlits.prependIntoJoined(eqentry, isLast);
 					found = true;
 					break;
@@ -656,18 +853,27 @@ public class CClosure implements ITheory {
 			}
 			if (!found) {
 				// we need to create a new entry.
-				final CCTermPairHash.Info info = new CCTermPairHash.Info(t1, t2);
+				final CCTermPairHash.Info info = new CCTermPairHash.Info(t1, t2, offset);
 				info.mRhsEntry.unlink();
 				info.mEqlits.prependIntoJoined(eqentry, isLast);
 			}
 			if (isLast) {
 				break;
 			}
+			// walk t1 up to its representative; value(t1) - value(t1.mRep) = t1.mOffsetToRep - t1.mRep.mOffsetToRep
+			offset = offset.sub(t1.getOffsetToRep()).add(t1.mRep.getOffsetToRep());
 			t1 = t1.mRep;
 		}
 	}
 
-	public CCEquality createCCEquality(final int stackLevel, CCTerm t1, CCTerm t2) {
+	public CCEquality createCCEquality(final int stackLevel, final CCTerm t1, final CCTerm t2) {
+		return createCCEquality(stackLevel, t1, t2, Rational.ZERO);
+	}
+
+	/**
+	 * Create a CCEquality stating {@code value(t1) == value(t2) + offset}.
+	 */
+	public CCEquality createCCEquality(final int stackLevel, CCTerm t1, CCTerm t2, Rational offset) {
 		assert (t1 != t2);
 		CCEquality eq = null;
 		assert t1.invariant();
@@ -679,9 +885,10 @@ public class CClosure implements ITheory {
 			final CCTerm tmp = t2;
 			t2 = t1;
 			t1 = tmp;
+			offset = offset.negate();
 		}
-		eq = new CCEquality(stackLevel, t1, t2);
-		insertEqualityEntry(t1, t2, eq.getEntry());
+		eq = new CCEquality(stackLevel, t1, t2, offset);
+		insertEqualityEntry(t1, t2, offset, eq.getEntry());
 		getEngine().addAtom(eq);
 
 		assert t1.invariant();
@@ -690,18 +897,27 @@ public class CClosure implements ITheory {
 		assert t2.pairHashValid(this);
 
 		if (t1.mRepStar == t2.mRepStar) {
-			if (getLogger().isDebugEnabled()) {
-				getLogger().debug("CC-Prop: " + eq + " repStar: " + t1.mRepStar);
+			// The two terms are already in the same class. The equality is implied true only if the offset matches the
+			// offset they already have; otherwise it is implied false but we leave it for the SAT solver (setLiteral
+			// detects the conflict if it is ever set true).
+			final Rational existingDiff = t1.getOffsetToRep().sub(t2.getOffsetToRep());
+			if (existingDiff.equals(offset)) {
+				if (getLogger().isDebugEnabled()) {
+					getLogger().debug("CC-Prop: " + eq + " repStar: " + t1.mRepStar);
+				}
+				mPendingLits.add(eq);
+				mRecheckOnBacktrackLits.add(eq);
 			}
-			mPendingLits.add(eq);
-			mRecheckOnBacktrackLits.add(eq);
 		} else {
-			final CCEquality diseq = mPairHash.getInfo(t1.mRepStar, t2.mRepStar).mDiseq;
+			// value(t1Rep) - value(t2Rep) under the equality
+			final Rational repOffset = offset.sub(t1.getOffsetToRep()).add(t2.getOffsetToRep());
+			final CCTermPairHash.Info repInfo = mPairHash.getInfo(t1.mRepStar, t2.mRepStar, repOffset);
+			final CCEquality diseq = repInfo == null ? null : repInfo.mDiseq;
 			if (diseq != null) {
 				if (getLogger().isDebugEnabled()) {
 					getLogger().debug("CC-Prop: " + eq.negate() + " diseq: " + diseq);
 				}
-				eq.mDiseqReason = diseq;
+				eq.setDiseqReason(diseq);
 				mPendingLits.add(eq.negate());
 				mRecheckOnBacktrackLits.add(eq.negate());
 			}
@@ -731,6 +947,8 @@ public class CClosure implements ITheory {
 	public Literal getPropagatedLiteral() {
 		final Literal lit = mPendingLits.poll();
 		assert (lit == null || checkPending(lit));
+		// Lazy explanation: the reason for a propagated disequality is computed on demand in getUnitClause /
+		// computeAntiCycle (which no longer mutates the graph and orients the diseq from eq.mDiseqOrientation).
 		return lit;
 	}
 
@@ -752,7 +970,7 @@ public class CClosure implements ITheory {
 		} else {
 			/* ComputeAntiCycle */
 			final CCEquality eq = (CCEquality) lit.negate();
-			return computeAntiCycle(eq);
+			return computeAntiCycle(eq.mDiseqReason, eq.mDiseqOrientation, eq);
 		}
 	}
 
@@ -794,10 +1012,11 @@ public class CClosure implements ITheory {
 	 * @param backRefs the list of (signature, listIndex, trigger) back-refs from
 	 *                 that representative.
 	 */
-	void rehashSignatures(final CCTerm oldRep, final CCTerm newRep, final SimpleList<SignatureBackRef> backRefs) {
+	void rehashSignatures(final CCTerm oldRep, final CCTerm newRep, final Rational offsetDelta,
+			final SimpleList<SignatureBackRef> backRefs) {
 		for (final SignatureBackRef backRef : backRefs) {
 			final SignatureTrigger signatureTrigger = backRef.getSignatureTrigger();
-			signatureTrigger.rehash(this, backRef.getArgPosition(), oldRep, newRep);
+			signatureTrigger.rehash(this, backRef.getArgPosition(), oldRep, newRep, offsetDelta);
 		}
 	}
 
@@ -836,6 +1055,15 @@ public class CClosure implements ITheory {
 				if (conflict != null) {
 					return conflict;
 				}
+			} else {
+				// The terms are already in the same class. Asserting the equality is a conflict if their actual offset
+				// differs from the offset claimed by the equality (e.g. asserting x == x + 1). The conflict clause is
+				// {¬eq, ¬path}: eq is true, so ¬eq is false, and the path literals are all true, so the clause is
+				// falsified. (computeCycle would put eq positively and yield a satisfied clause.)
+				final Rational existingDiff = eq.getLhs().getOffsetToRep().sub(eq.getRhs().getOffsetToRep());
+				if (!existingDiff.equals(eq.getOffset())) {
+					return computeAntiCycle(null, false, eq);
+				}
 			}
 		} else {
 			final CCTerm left = eq.getLhs().mRepStar;
@@ -843,12 +1071,16 @@ public class CClosure implements ITheory {
 
 			/* Check for conflict */
 			if (left == right) {
-				final Clause conflict = computeCycle(eq);
-				if (conflict != null) {
-					return conflict;
+				// They are in the same class. The disequality is a conflict only if they are equal at exactly the
+				// offset the equality claims; if their actual offset differs, the disequality already holds and there
+				// is nothing to separate.
+				final Rational existingDiff = eq.getLhs().getOffsetToRep().sub(eq.getRhs().getOffsetToRep());
+				if (existingDiff.equals(eq.getOffset())) {
+					return computeCycle(eq);
 				}
+			} else {
+				separate(left, right, eq);
 			}
-			separate(left, right, eq);
 		}
 		final LAEquality laeq = eq.getLASharedData();
 		if (laeq != null) {
@@ -885,24 +1117,47 @@ public class CClosure implements ITheory {
 				return;
 			}
 		}
-		final CCTermPairHash.Info info = mPairHash.getInfo(lhs, rhs);
-		assert info.mDiseq == null;
+		final CCTermPairHash.Info info = mPairHash.getInfo(lhs, rhs, repOffset(diseq));
+		if (info.mDiseq != null) {
+			/*
+			 * The two classes are already separated at this offset by another asserted disequality, e.g. by an atom
+			 * between other members of the two classes; this happens when a merge brings the two atoms onto the same
+			 * representative pair and the second one is then set false by the arithmetic solver (so it has no diseq
+			 * reason to short-circuit on above). This literal adds no information: keep the recorded disequality and
+			 * skip the propagation, which it has already done. Overwriting it would be wrong, since undoSep() would
+			 * then drop the separation on backtracking while the other literal is still asserted. The recorded
+			 * disequality outlives this one, as it was asserted earlier.
+			 */
+			return;
+		}
 
 		mUndoStack.push(new SepUndoInfo(diseq));
 		info.mDiseq = diseq;
 		/* Propagate inequalities */
 		for (final CCEquality.Entry eqentry : info.mEqlits) {
 			final CCEquality eq = eqentry.getCCEquality();
-			assert eq.getDecideStatus() == null || eq == diseq;
+			// eq cannot be decided true here: that would merge lhs and rhs, contradicting that they are distinct
+			// representatives. With offset equalities it may already be decided false (propagated by an earlier
+			// offset merge); such an eq keeps its existing reason and is simply skipped.
+			assert eq.getDecideStatus() != eq || eq == diseq;
 			if (eq.getDecideStatus() == null) {
-				eq.mDiseqReason = diseq;
+				eq.setDiseqReason(diseq);
 				addPending(eq.negate());
 			}
 		}
 	}
 
+	/**
+	 * The offset of an equality as seen between the representatives of its two sides, i.e.
+	 * {@code value(eq.getLhs().mRepStar) - value(eq.getRhs().mRepStar)} implied by the equality.
+	 */
+	private static Rational repOffset(final CCEquality eq) {
+		return eq.getOffset().sub(eq.getLhs().getOffsetToRep()).add(eq.getRhs().getOffsetToRep());
+	}
+
 	private void undoSep(final CCEquality atom) {
-		final CCTermPairHash.Info destInfo = mPairHash.getInfo(atom.getLhs().mRepStar, atom.getRhs().mRepStar);
+		final CCTermPairHash.Info destInfo =
+				mPairHash.getInfo(atom.getLhs().mRepStar, atom.getRhs().mRepStar, repOffset(atom));
 		assert destInfo != null && destInfo.mDiseq == atom;
 		destInfo.mDiseq = null;
 	}
@@ -914,30 +1169,71 @@ public class CClosure implements ITheory {
 		return res;
 	}
 
-	public Clause computeCycle(final CCTerm lconstant, final CCTerm rconstant) {
-		final CongruencePath congPath = new CongruencePath(this);
-		return congPath.computeCycle(lconstant, rconstant, isProofGenerationEnabled());
+	/**
+	 * Compute the conflict clause for a shared-term clash detected during a merge (the merged values of the two classes'
+	 * shared terms are provably distinct, e.g. an integer shared term forced to a non-integer value). See
+	 * {@link CongruencePath#computeMergeConflictCycle}.
+	 */
+	public Clause computeSharedConflictCycle(final CCTerm lshared, final CCTerm rshared, final CCTerm lhs,
+			final CCTerm rhsTerm, final CCEquality reason, final Rational bridgeOff) {
+		return new CongruencePath(this).computeMergeConflictCycle(lhs, rhsTerm, bridgeOff, reason, lshared, rshared,
+				null, isProofGenerationEnabled());
 	}
 
-	public Clause computeAntiCycle(final CCEquality eq) {
-		final CCTerm left = eq.getLhs();
-		final CCTerm right = eq.getRhs();
-		final CCEquality diseq = eq.mDiseqReason;
-		assert left.mRepStar != right.mRepStar;
-		assert diseq.getLhs().mRepStar == left.mRepStar || diseq.getLhs().mRepStar == right.mRepStar;
-		assert diseq.getRhs().mRepStar == left.mRepStar || diseq.getRhs().mRepStar == right.mRepStar;
+	/**
+	 * Compute the conflict clause when a merge of two classes is forbidden by a disequality {@code diseq} registered
+	 * between them at exactly the merge offset. {@code srcEnd}/{@code destEnd} are the two sides of {@code diseq},
+	 * oriented into the source class (reachable from {@code lhs}) and destination class (reachable from {@code rhsTerm});
+	 * the path crosses the freshly added (not-yet-united) merge bridge, so it is built as two single-class halves. See
+	 * {@link CongruencePath#computeMergeConflictCycle}.
+	 */
+	public Clause computeMergeDiseqCycle(final CCTerm srcEnd, final CCTerm destEnd, final CCTerm lhs,
+			final CCTerm rhsTerm, final CCEquality reason, final Rational bridgeOff, final CCEquality diseq) {
+		return new CongruencePath(this).computeMergeConflictCycle(lhs, rhsTerm, bridgeOff, reason, srcEnd, destEnd,
+				diseq, isProofGenerationEnabled());
+	}
 
-		left.invertEqualEdges(this);
-		left.mEqualEdge = right;
-		left.mOldRep = left.mRepStar;
-		assert left.mOldRep.mReasonLiteral == null;
-		left.mOldRep.mReasonLiteral = eq;
-		final Clause c = computeCycle(diseq);
-		assert left.mEqualEdge == right && left.mOldRep == left.mRepStar;
-		left.mOldRep.mReasonLiteral = null;
-		left.mOldRep = null;
-		left.mEqualEdge = null;
-		return c;
+	/**
+	 * Compute a conflict explaining incompatibility of eq and diseq. Called when
+	 * asserting eq would create a conflict on merge with the given diseq.
+	 */
+	public Clause computeAntiCycle(final CCEquality diseq, final boolean diseqOrientation, final CCEquality eq) {
+		final CCTerm lhsDiseq;
+		final CCTerm rhsDiseq;
+		if (diseq == null) {
+			// No separating disequality (e.g. x != x+5): the two sides are in the same class at a deviating offset.
+			assert eq.getLhs().mRepStar == eq.getRhs().mRepStar;
+			assert !eq.getLhs().getOffsetToRep().sub(eq.getRhs().getOffsetToRep()).equals(eq.getOffset());
+			lhsDiseq = eq.getLhs();
+			rhsDiseq = eq.getLhs();
+		} else {
+			// A concrete disequality separates eq's two sides. This works whether they are
+			// still in different classes or were
+			// merged later: orient diseq from eq's stored orientation (live reps can no
+			// longer tell the two sides apart after
+			// a merge), then build the two single-class halves and stitch them across the
+			// eq bridge.
+			lhsDiseq = diseqOrientation ? diseq.getLhs() : diseq.getRhs();
+			rhsDiseq = diseqOrientation ? diseq.getRhs() : diseq.getLhs();
+		}
+		return new CongruencePath(this).computeMergeConflictCycle(eq.getLhs(), eq.getRhs(), eq.getOffset(), eq, lhsDiseq,
+				rhsDiseq, diseq, isProofGenerationEnabled());
+	}
+
+	/**
+	 * Compute the conflict clause when a congruence merge finds its two function applications already in the same
+	 * congruence class at an offset different from the zero offset that congruence implies (e.g. f(x) and f(y) are
+	 * congruent but the class already records f(x) = f(y) + k for k != 0). A degenerate
+	 * {@link CongruencePath#computeMergeConflictCycle}: the bridge is the congruence ({@code reason == null}, justified by
+	 * the argument equalities) and the endpoints coincide ({@code srcEnd == destEnd == first}), so the destination half
+	 * is the existing class path from {@code second} back to {@code first} and the trivial diseq
+	 * {@code (first@0, first@existingDiff)} is EQ-discharged.
+	 */
+	public Clause computeCongruenceAntiCycle(final CCAppTerm first, final CCAppTerm second) {
+		assert first.getRepresentative() == second.getRepresentative();
+		assert first.getFunctionSymbol() == second.getFunctionSymbol();
+		return new CongruencePath(this).computeMergeConflictCycle(first, second, Rational.ZERO, null, first, first, null,
+				isProofGenerationEnabled());
 	}
 
 	/**
@@ -964,6 +1260,12 @@ public class CClosure implements ITheory {
 			final CCEquality eq = (CCEquality) literal.negate();
 			final CCTerm left = eq.getLhs();
 			final CCTerm right = eq.getRhs();
+			if (left.mRepStar == right.mRepStar) {
+				// Offset disequality: the two sides are in the same class at an offset different from eq's, so eq is
+				// false with no separating disequality atom (mDiseqReason stays null; the path is the reason).
+				assert !left.getOffsetToRep().sub(right.getOffsetToRep()).equals(eq.getOffset());
+				return true;
+			}
 			final CCEquality diseq = eq.mDiseqReason;
 			assert left.mRepStar != right.mRepStar;
 			assert diseq.getLhs().mRepStar == left.mRepStar || diseq.getLhs().mRepStar == right.mRepStar;
@@ -990,14 +1292,35 @@ public class CClosure implements ITheory {
 		return buildCongruence();
 	}
 
-	public CCEquality createEquality(final CCTerm t1, final CCTerm t2, final boolean createLAEquality) {
-		assert t1 != t2;
-		final EqualityProxy ep = mClausifier.createEqualityProxy(t1.getFlatTerm(), t2.getFlatTerm(), null);
+	public CCEquality createEquality(final CCParameter t1, final CCParameter t2, final boolean createLAEquality) {
+		// Use the structural offset (CCParameter.getOffset()), so the created literal is keyed like the original
+		// clause literals (see CCProofGenerator.collectClauseLiterals). The dynamic getOffsetToRep() must not be used:
+		// the two parameters need not be in the same congruence class when this literal is created.
+		return createEquality(t1.getCCTerm(), t2.getCCTerm(), t2.getOffset().sub(t1.getOffset()), createLAEquality);
+	}
+
+	/**
+	 * Create (and propagate) an equality {@code value(t1) == value(t2) + offset} between two shared terms. The offset is
+	 * encoded into the right-hand term ({@code t2 + offset}) so that the resulting CCEquality carries the offset and the
+	 * linked LAEquality carries the matching constant. With a zero offset this is the classic shared-term equality.
+	 */
+	public CCEquality createEquality(final CCTerm t1, final CCTerm t2, final Rational offset,
+			final boolean createLAEquality) {
+		assert t1 != t2 || !offset.equals(Rational.ZERO);
+		final Term lhsTerm = t1.getFlatTerm();
+		Term rhsTerm = t2.getFlatTerm();
+		if (!offset.equals(Rational.ZERO)) {
+			// Build the flattened polynomial term t2 + offset. A nested (+ t2 offset) would not be re-parsed
+			// correctly by Polynomial when t2 is itself a normalized sum (the inner sum is treated as one monomial).
+			rhsTerm = mClausifier.addConstantToTerm(rhsTerm, offset);
+		}
+		final EqualityProxy ep = mClausifier.createEqualityProxy(lhsTerm, rhsTerm,
+				SourceAnnotation.EMPTY_SOURCE_ANNOT);
 		if (ep == EqualityProxy.getFalseProxy()) {
 			return null;
 		}
 		if (!createLAEquality) {
-			final Literal res = ep.getLiteral(null);
+			final Literal res = ep.getLiteral(SourceAnnotation.EMPTY_SOURCE_ANNOT);
 			if (res instanceof CCEquality) {
 				final CCEquality eq = (CCEquality) res;
 				if ((eq.getLhs() == t1 && eq.getRhs() == t2) || (eq.getLhs() == t2 && eq.getRhs() == t1)) {
@@ -1005,7 +1328,12 @@ public class CClosure implements ITheory {
 				}
 			}
 		}
-		return ep.createCCEquality(t1.getFlatTerm(), t2.getFlatTerm());
+		// t1 and t2 are the offset-free CC nodes; pass them with this call's offset (which may differ from the proxy's
+		// canonical offset for a scaled equivalent) rather than round-tripping through the synthesized rhsTerm.
+		// This path creates an LAEquality, so it must only be taken for numeric equalities; a non-numeric equality
+		// always matches the literal above (a mismatch would indicate a stale atom referencing removed CCTerms).
+		assert lhsTerm.getSort().isNumericSort();
+		return ep.createCCEquality(t1, t2, offset);
 	}
 
 	@Override
@@ -1018,6 +1346,9 @@ public class CClosure implements ITheory {
 				String comma = "";
 				for (final CCTerm t2 : t.mMembers) {
 					sb.append(comma).append(t2);
+					if (!t2.getOffsetToRep().equals(Rational.ZERO)) {
+						sb.append("[+").append(t2.getOffsetToRep()).append(']');
+					}
 					comma = "=";
 				}
 				logger.info(sb.toString());
@@ -1048,15 +1379,16 @@ public class CClosure implements ITheory {
 				if (t1.getRepresentative() != t2.getRepresentative() && t2 instanceof CCAppTerm) {
 					final CCAppTerm a2 = (CCAppTerm) t2;
 					if (a1.getFunctionSymbol() == a2.getFunctionSymbol()) {
-						final CCTerm[] args1 = a1.mArgs;
-						final CCTerm[] args2 = a2.mArgs;
+						final int arity = a1.mArgs.length;
 						int i;
-						for (i = 0; i < args1.length; i++) {
-							if (args1[i].getRepresentative() != args2[i].getRepresentative()) {
+						for (i = 0; i < arity; i++) {
+							// congruent requires the arguments to have the same value, i.e. same representative AND
+							// same offset (offset-free arguments are compared as plain representatives).
+							if (!a1.getArgParam(i).sameValueAs(a2.getArgParam(i))) {
 								break;
 							}
 						}
-						if (i == args1.length) {
+						if (i == arity) {
 							getLogger().fatal("Should be congruent: " + t1 + " and " + t2);
 							return false;
 						}
@@ -1129,11 +1461,14 @@ public class CClosure implements ITheory {
 			/* check if literal is still implied by the graph */
 			boolean repropagate = false;
 			if (l.getSign() > 0) {
-				repropagate = (lhs == rhs);
+				// implied true only if the terms are in the same class at the equality's offset
+				repropagate = (lhs == rhs
+						&& eq.getLhs().getOffsetToRep().sub(eq.getRhs().getOffsetToRep()).equals(eq.getOffset()));
 			} else {
-				final CCEquality diseq = mPairHash.getInfo(lhs, rhs).mDiseq;
+				final CCTermPairHash.Info info = mPairHash.getInfo(lhs, rhs, repOffset(eq));
+				final CCEquality diseq = info == null ? null : info.mDiseq;
 				if (diseq != null) {
-					eq.mDiseqReason = diseq;
+					eq.setDiseqReason(diseq);
 					repropagate = true;
 				}
 			}
@@ -1167,8 +1502,6 @@ public class CClosure implements ITheory {
 	}
 
 	void addPendingCongruence(final CCAppTerm first, final CCAppTerm second) {
-		// assert (first.mLeftParInfo.inList() && second.mLeftParInfo.inList());
-		// assert (first.mRightParInfo.inList() && second.mRightParInfo.inList());
 		getLogger().debug("addPendingCongruence: %s %s", first, second);
 		mPendingCongruences.add(new SymmetricPair<>(first, second));
 	}
@@ -1235,21 +1568,23 @@ public class CClosure implements ITheory {
 	public void removeAtom(final DPLLAtom atom) {
 		if (atom instanceof CCEquality) {
 			final CCEquality cceq = (CCEquality) atom;
-			removeCCEquality(cceq.getLhs(), cceq.getRhs(), cceq);
+			removeCCEquality(cceq.getLhs(), cceq.getRhs(), cceq.getOffset(), cceq);
 		}
 	}
 
-	private void removeCCEquality(CCTerm t1, CCTerm t2, final CCEquality eq) {
+	private void removeCCEquality(CCTerm t1, CCTerm t2, Rational offset, final CCEquality eq) {
 		// TODO Need test for this!!!
+		// offset == value(t1) - value(t2)
 		if (t1.mMergeTime > t2.mMergeTime) {
 			final CCTerm tmp = t1;
 			t1 = t2;
 			t2 = tmp;
+			offset = offset.negate();
 		}
 
 		if (t1.mRep == t1) {
 			assert t2.mRep == t2;
-			final CCTermPairHash.Info info = mPairHash.getInfo(t1, t2);
+			final CCTermPairHash.Info info = mPairHash.getInfo(t1, t2, offset);
 			if (info != null) {
 				// Remove pair hash info
 				info.mEqlits.prepareRemove(eq.getEntry());
@@ -1263,7 +1598,7 @@ public class CClosure implements ITheory {
 			boolean found = false;
 			for (final CCTermPairHash.Info.Entry pentry : t1.mPairInfos) {
 				final CCTermPairHash.Info info = pentry.getInfo();
-				if (pentry.mOther == t2) {
+				if (pentry.mOther == t2 && pentry.getOffsetToOther().equals(offset)) {
 					info.mEqlits.prepareRemove(eq.getEntry());
 					found = true;
 					break;
@@ -1273,7 +1608,7 @@ public class CClosure implements ITheory {
 			if (isLast) {
 				eq.getEntry().removeFromList();
 			} else {
-				removeCCEquality(t1.mRep, t2, eq);
+				removeCCEquality(t1.mRep, t2, offset.sub(t1.getOffsetToRep()).add(t1.mRep.getOffsetToRep()), eq);
 			}
 		}
 		if (eq.getLASharedData() != null) {
@@ -1292,6 +1627,14 @@ public class CClosure implements ITheory {
 			final CCAppTerm appTerm = (CCAppTerm) t;
 			removeSignature(appTerm.mCongTrigger);
 			removeSignature(appTerm.mFindTrigger);
+			if (appTerm.mReverseTriggers != null) {
+				// remove the reverse trigger signatures created for this application (all merges are already
+				// undone at pop time, so each application entry is back in its own signature).
+				for (final ReverseTriggerTrigger trigger : appTerm.mReverseTriggers) {
+					removeSignature(trigger);
+				}
+				appTerm.mReverseTriggers = null;
+			}
 		}
 	}
 
@@ -1369,33 +1712,11 @@ public class CClosure implements ITheory {
 	}
 
 	/**
-	 * Entry for the signature todo stack: old representative and its back-ref list
-	 * to process at checkpoint.
-	 */
-	static final class SignatureTodoEntry {
-		final CCTerm mOldRep;
-		final SimpleList<SignatureBackRef> mBackRefs;
-
-		final SignatureTrigger mSingleTrigger;
-
-		SignatureTodoEntry(final CCTerm oldRep, final SimpleList<SignatureBackRef> backRefs) {
-			mOldRep = oldRep;
-			mBackRefs = backRefs;
-			mSingleTrigger = null;
-		}
-
-		SignatureTodoEntry(final SignatureTrigger singleTrigger) {
-			mOldRep = null;
-			mBackRefs = null;
-			mSingleTrigger = singleTrigger;
-		}
-	}
-
-	/**
-	 * Record for undoing a trigger merge: remove the merged trigger from the map by
-	 * reference (see {@link #removeSignatureByRef(Signature)}) and put
-	 * (mMergedTrigger, mPreviousTrigger). The same key object then hashes back to
-	 * the old bucket after merge undo.
+	 * Record for undoing a trigger merge: undo the merge on mMergedTrigger and put
+	 * mPreviousTrigger back on {@link #mSignatureTodo}, so the next checkpoint
+	 * re-inserts it into {@link #mSignatureTriggers}. The same key object then
+	 * hashes back to its old bucket, since the merge undo also restored the
+	 * representatives and offsets its hash is computed from.
 	 */
 	static final class TriggerMergeUndoEntry extends UndoInfo {
 		final SignatureTrigger mMergedTrigger;

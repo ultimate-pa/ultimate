@@ -149,6 +149,16 @@ public class PrintTerm {
 					}
 				}
 				appender.append('(');
+			} else if (next instanceof int[]) {
+				final int[] arr = (int[]) next;
+				mTodo.addLast(")");
+				for (int i = arr.length - 1; i >= 0; i--) {
+					mTodo.addLast(arr[i]);
+					if (i > 0) {
+						mTodo.addLast(" ");
+					}
+				}
+				appender.append('(');
 			} else {
 				appender.append(next.toString());
 			}

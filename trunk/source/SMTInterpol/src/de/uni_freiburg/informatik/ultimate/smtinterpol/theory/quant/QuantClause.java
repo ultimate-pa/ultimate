@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCParameter;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Polynomial;
 
@@ -450,8 +451,8 @@ public class QuantClause {
 			final FunctionSymbol func = entry.getKey();
 			final BitSet pos = entry.getValue();
 			for (int i = pos.nextSetBit(0); i >= 0; i = pos.nextSetBit(i + 1)) {
-				for (CCAppTerm appTerm : mQuantTheory.getCClosure().getAllFuncApps(func)) {
-					interestingTerms.add(appTerm.getArgument(i).getFlatTerm());
+				for (final CCAppTerm appTerm : mQuantTheory.getCClosure().getAllFuncApps(func)) {
+					interestingTerms.add(appTerm.getArgParam(i).getFlatTerm());
 				}
 			}
 		}
@@ -460,7 +461,8 @@ public class QuantClause {
 			final String funcName = func.getName();
 			final Term[] args = arrayFuncTerm.getParameters();
 			final Term array = args[0];
-			final CCTerm arrayCC = mQuantTheory.getCClosure().getCCTermRep(array);
+			// arrays are not numeric, so the value is a bare CCTerm (the cast checks this)
+			final CCTerm arrayCC = (CCTerm) mQuantTheory.getCClosure().getCCParamRep(array);
 			final CCTerm weakRep = arrayCC == null ? null
 					: mQuantTheory.getClausifier().getArrayTheory().getWeakRep(arrayCC);
 			if (args[1] == var) { // The variable is an array index
@@ -482,7 +484,7 @@ public class QuantClause {
 					final CCTerm stArr = ArrayTheory.getArrayFromStore(st);
 					if (weakRep == null ? stArr.getFlatTerm().getSort() == array.getSort()
 							: weakRep == mQuantTheory.getClausifier().getArrayTheory().getWeakRep(stArr)) {
-						final Term indexTerm = ArrayTheory.getIndexFromStore((CCAppTerm) st).getFlatTerm();
+						final Term indexTerm = ArrayTheory.getIndexFromStore(st).getFlatTerm();
 						interestingTerms.add(indexTerm);
 						if (funcName == "select" && var.getSort().getName() == "Int"
 								&& !QuantUtil.isLambda(indexTerm)) {
@@ -506,7 +508,7 @@ public class QuantClause {
 						final CCTerm selArr = ArrayTheory.getArrayFromSelect(sel);
 						if (weakRep == null ? selArr.getFlatTerm().getSort() == array.getSort()
 								: weakRep == mQuantTheory.getClausifier().getArrayTheory().getWeakRep(selArr)) {
-							final CCTerm index = ArrayTheory.getIndexFromSelect((CCAppTerm) sel);
+							final CCParameter index = ArrayTheory.getIndexFromSelect(sel);
 							interestingTerms.add(index.getFlatTerm());
 						}
 					}

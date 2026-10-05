@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCParameter;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.util.Pair;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.util.Triple;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantBoundConstraint;
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Polynomial;
 public class EMatching {
 
 	private final QuantifierTheory mQuantTheory;
-	private Deque<Triple<ICode, CCTerm[], Integer>> mTodoStack;
+	private Deque<Triple<ICode, CCParameter[], Integer>> mTodoStack;
 	private final Map<Integer, EMUndoInformation> mUndoInformation;
 
 	/**
@@ -66,7 +66,7 @@ public class EMatching {
 	 * corresponding SubstitutionInfo
 	 */
 	private final Map<QuantLiteral, Dawg<Term, SubstitutionInfo>> mAtomSubsDawgs;
-	private final Map<QuantClause, ArrayList<Triple<ICode, CCTerm[], Integer>>> mClauseCodes;
+	private final Map<QuantClause, ArrayList<Triple<ICode, CCParameter[], Integer>>> mClauseCodes;
 	private final Set<QuantLiteral> mEmatchingAtoms, mPartialEmatchingAtoms;
 	final SubstitutionInfo mEmptySubs;
 
@@ -76,7 +76,7 @@ public class EMatching {
 		mAtomSubsDawgs = new HashMap<>();
 		mClauseCodes = new HashMap<>();
 		mUndoInformation = new LinkedHashMap<>();
-		mEmptySubs = new SubstitutionInfo(new ArrayList<CCTerm>(), new LinkedHashMap<>());
+		mEmptySubs = new SubstitutionInfo(new ArrayList<CCParameter>(), new LinkedHashMap<>());
 		mEmatchingAtoms = new HashSet<>();
 		mPartialEmatchingAtoms = new HashSet<>();
 	}
@@ -90,7 +90,7 @@ public class EMatching {
 	 */
 	public void addClause(final QuantClause qClause) {
 		assert !mClauseCodes.containsKey(qClause);
-		final ArrayList<Triple<ICode, CCTerm[], Integer>> clauseCodes = new ArrayList<>();
+		final ArrayList<Triple<ICode, CCParameter[], Integer>> clauseCodes = new ArrayList<>();
 		for (final QuantLiteral qLit : qClause.getQuantLits()) {
 			final QuantLiteral qAtom = qLit.getAtom();
 			if (!qLit.isArithmetical() && QuantUtil.containsArithmeticOnQuantOnlyAtTopLevel(qAtom)) {
@@ -125,7 +125,7 @@ public class EMatching {
 				}
 
 				if (!patterns.isEmpty()) {
-					final Pair<ICode, CCTerm[]> newCode =
+					final Pair<ICode, CCParameter[]> newCode =
 							new PatternCompiler(mQuantTheory, qAtom, patterns.toArray(new Term[patterns.size()]))
 									.compile();
 					addCode(newCode.getFirst(), newCode.getSecond(), 0);
@@ -169,7 +169,7 @@ public class EMatching {
 		assert mTodoStack.isEmpty() && mUndoInformation.isEmpty();
 		for (final QuantClause qClause : clauses) {
 			assert mClauseCodes.containsKey(qClause);
-			for (final Triple<ICode, CCTerm[], Integer> code : mClauseCodes.get(qClause)) {
+			for (final Triple<ICode, CCParameter[], Integer> code : mClauseCodes.get(qClause)) {
 				mTodoStack.add(code);
 			}
 		}
@@ -197,7 +197,7 @@ public class EMatching {
 			time = System.nanoTime();
 		}
 		while (!mTodoStack.isEmpty() && !mQuantTheory.getEngine().isTerminationRequested()) {
-			final Triple<ICode, CCTerm[], Integer> code = mTodoStack.pop();
+			final Triple<ICode, CCParameter[], Integer> code = mTodoStack.pop();
 			mQuantTheory.getLogger().debug("EM-Code: %s", code);
 			assert code.getThird() <= mQuantTheory.getEngine().getDecideLevel();
 			code.getFirst().execute(code.getSecond(), code.getThird());
@@ -232,8 +232,8 @@ public class EMatching {
 			}
 		}
 		mQuantTheory.getLogger().debug("Remaining levels: %s", mUndoInformation.keySet());
-		final Deque<Triple<ICode, CCTerm[], Integer>> undoneTodoStack = new ArrayDeque<>();
-		for (final Triple<ICode, CCTerm[], Integer> todo : mTodoStack) {
+		final Deque<Triple<ICode, CCParameter[], Integer>> undoneTodoStack = new ArrayDeque<>();
+		for (final Triple<ICode, CCParameter[], Integer> todo : mTodoStack) {
 			if (todo.getThird() <= decisionLevel) {
 				undoneTodoStack.add(todo);
 			}
@@ -270,31 +270,31 @@ public class EMatching {
 	 * @param code
 	 *            the remaining code.
 	 * @param register
-	 *            the candidate CCTerms for this execution.
+	 *            the candidate values for this execution.
 	 * @param decisionLevel
 	 *            the decision level that is relevant for this execution.
 	 */
-	void addCode(final ICode code, final CCTerm[] register, final int decisionLevel) {
-		final Triple<ICode, CCTerm[], Integer> todo =
+	void addCode(final ICode code, final CCParameter[] register, final int decisionLevel) {
+		final Triple<ICode, CCParameter[], Integer> todo =
 				new Triple<>(code, register, decisionLevel);
 		assert decisionLevel <= mQuantTheory.getEngine().getDecideLevel();
 		mTodoStack.add(todo);
 	}
 
 	/**
-	 * Add a new interesting substitution for a quantified literal, together with the corresponding CCTerms.
+	 * Add a new interesting substitution for a quantified literal, together with the corresponding values.
 	 *
 	 * @param qLit
 	 *            the quantified Literal
 	 * @param varSubs
 	 *            the variable substitution ordered as the variables in the clause.
 	 * @param equivalentCCTerms
-	 *            the corresponding CCTerms for the EUTerms in the literal.
+	 *            the corresponding values for the EUTerms in the literal.
 	 * @param decisionLevel
 	 *            the decision level relevant for this substitution.
 	 */
-	void addInterestingSubstitution(final QuantLiteral qLit, final List<CCTerm> varSubs,
-			final Map<Term, CCTerm> equivalentCCTerms, final int decisionLevel) {
+	void addInterestingSubstitution(final QuantLiteral qLit, final List<CCParameter> varSubs,
+			final Map<Term, CCParameter> equivalentCCTerms, final int decisionLevel) {
 		final long time = System.nanoTime();
 		assert mAtomSubsDawgs.containsKey(qLit);
 		Dawg<Term, SubstitutionInfo> subsDawg = mAtomSubsDawgs.get(qLit);
@@ -312,12 +312,12 @@ public class EMatching {
 	}
 
 	/**
-	 * Install a trigger into the CClosure that compares two CCTerms.
+	 * Install a trigger into the CClosure that compares two values.
 	 *
 	 * @param lhs
-	 *            the first CCTerm.
+	 *            the first value.
 	 * @param rhs
-	 *            the other CCTerm it should be compared with.
+	 *            the other value it should be compared with.
 	 * @param remainingCode
 	 *            the remaining E-Matching code.
 	 * @param register
@@ -325,8 +325,8 @@ public class EMatching {
 	 * @param decisionLevel
 	 *            the decision level relevant for the compare trigger.
 	 */
-	void installCompareTrigger(final CCTerm lhs, final CCTerm rhs, final ICode remainingCode,
-			final CCTerm[] register, final int decisionLevel) {
+	void installCompareTrigger(final CCParameter lhs, final CCParameter rhs, final ICode remainingCode,
+			final CCParameter[] register, final int decisionLevel) {
 		assert decisionLevel <= mQuantTheory.getClausifier().getEngine().getDecideLevel();
 		final EMCompareTrigger trigger = new EMCompareTrigger(this, lhs, rhs, remainingCode, register, decisionLevel);
 		mQuantTheory.getCClosure().insertCompareTrigger(lhs, rhs, trigger);
@@ -348,7 +348,7 @@ public class EMatching {
 	 *            the decision level relevant for the find trigger.
 	 */
 	void installFindTrigger(final FunctionSymbol func, final int regIndex, final ICode remainingCode,
-			final CCTerm[] register, final int decisionLevel) {
+			final CCParameter[] register, final int decisionLevel) {
 		mQuantTheory.getLogger().debug("Install Find Trigger: FIND %s (decide@%d)", func, decisionLevel);
 		final EMReverseTrigger trigger =
 				new EMReverseTrigger(this, remainingCode, func, -1, null, register, regIndex, decisionLevel);
@@ -374,8 +374,8 @@ public class EMatching {
 	 * @param decisionLevel
 	 *            the decision level relevant for the reverse trigger.
 	 */
-	void installReverseTrigger(final FunctionSymbol func, final CCTerm arg, final int argPos,
-			final int regIndex, final ICode remainingCode, final CCTerm[] register, final int decisionLevel) {
+	void installReverseTrigger(final FunctionSymbol func, final CCParameter arg, final int argPos,
+			final int regIndex, final ICode remainingCode, final CCParameter[] register, final int decisionLevel) {
 		mQuantTheory.getLogger().debug("Install Reverse Trigger: REV %s,%d on %s (decide@%d)", func, argPos, arg,
 				decisionLevel);
 		assert decisionLevel <= mQuantTheory.getClausifier().getEngine().getDecideLevel();
@@ -467,26 +467,26 @@ public class EMatching {
 
 	/**
 	 * This class stores information about a substitution found by the E-Matching. That is, the variable substitutions,
-	 * as well as for each pattern the CCTerm that is equivalent to the ground term that would result from applying the
+	 * as well as for each pattern the value that is equivalent to the ground term that would result from applying the
 	 * substitution to the pattern.
 	 *
 	 * @author Tanja Schindler
 	 *
 	 */
 	public class SubstitutionInfo {
-		final List<CCTerm> mVarSubs;
-		final Map<Term, CCTerm> mEquivalentCCTerms;
+		final List<CCParameter> mVarSubs;
+		final Map<Term, CCParameter> mEquivalentCCTerms;
 
-		SubstitutionInfo(final List<CCTerm> varSubs, final Map<Term, CCTerm> equivalentCCTerms) {
+		SubstitutionInfo(final List<CCParameter> varSubs, final Map<Term, CCParameter> equivalentCCTerms) {
 			mVarSubs = varSubs;
 			mEquivalentCCTerms = equivalentCCTerms;
 		}
 
-		public List<CCTerm> getVarSubs() {
+		public List<CCParameter> getVarSubs() {
 			return mVarSubs;
 		}
 
-		public Map<Term, CCTerm> getEquivalentCCTerms() {
+		public Map<Term, CCParameter> getEquivalentCCTerms() {
 			return mEquivalentCCTerms;
 		}
 

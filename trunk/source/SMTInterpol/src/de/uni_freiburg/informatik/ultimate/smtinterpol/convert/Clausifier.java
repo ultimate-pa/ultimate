@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol.Proof
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.bitvector.BvToIntUtils;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.ArrayTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCParameter;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CClosure;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.DTReverseTrigger;
@@ -131,6 +132,11 @@ public class Clausifier {
 
 	// TODO: make map or use option map
 	boolean mIsEprEnabled;
+	/**
+	 * Whether offset equalities may be created, see {@link CClosure#createOffsetEqualities}. Set from the
+	 * {@code :offset-equalities} option before the theories are created.
+	 */
+	private boolean mOffsetEqualities = true;
 	private InstantiationMethod mInstantiationMethod;
 	private boolean mIsUnknownTermDawgsEnabled;
 	private boolean mPropagateUnknownTerms;
@@ -221,10 +227,10 @@ public class Clausifier {
 	 *            The source annotation that is used for auxiliary axioms.
 	 * @return the ccterm.
 	 */
-	public CCTerm createCCTerm(final Term term, final SourceAnnotation source) {
+	public CCParameter createCCTerm(final Term term, final SourceAnnotation source) {
 		final boolean wasRunning = mIsRunning;
 		mIsRunning = true;
-		final CCTerm ccterm = new CCTermBuilder(this, source).convert(term);
+		final CCParameter ccterm = new CCTermBuilder(this, source).convert(term);
 		mIsRunning = wasRunning;
 		if (!wasRunning) {
 			run();
@@ -261,8 +267,13 @@ public class Clausifier {
 	}
 
 	public void share(final CCTerm ccTerm, final LASharedTerm laTerm) {
+		// With offset equalities several terms (e.g. 2x+4y, 2x+4y+1, 2x+4y+5) map to the same offset-free CCTerm. Each
+		// of them is a distinct value, so each full-value LASharedTerm must be registered with linear arithmetic (so
+		// mbtc sees every value); but the offset-free CCTerm is shared with congruence closure only once.
 		getLASolver().addSharedTerm(laTerm);
-		getCClosure().addSharedTerm(ccTerm);
+		if (ccTerm.getSharedTerm() != ccTerm) {
+			getCClosure().addSharedTerm(ccTerm);
+		}
 	}
 
 	public void shareLATerm(final Term term, final LASharedTerm laTerm) {
@@ -284,6 +295,10 @@ public class Clausifier {
 	}
 
 	public void addTermAxioms(final Term term, final SourceAnnotation source) {
+		// Axioms are added for offset-free terms only; an offseted term (x+5) carries its constant structurally and its
+		// offset-free part (x) gets the axioms. The only callers with user terms (EqualityProxy, createEqualityProxy)
+		// normalize via getOffsetFreeTerm before calling.
+		assert getTermConstant(term).equals(Rational.ZERO) : "addTermAxioms on offseted term " + term;
 		final int termFlags = getTermFlags(term);
 		if ((termFlags & Clausifier.AUX_AXIOM_ADDED) == 0) {
 			final boolean wasRunning = mIsRunning;
@@ -293,7 +308,7 @@ public class Clausifier {
 				CCTerm ccTerm = getCCTerm(term);
 				if (ccTerm == null && (needCCTerm(term) || term.getSort().isArraySort())) {
 					final CCTermBuilder cc = new CCTermBuilder(this, source);
-					ccTerm = cc.convert(term);
+					ccTerm = (CCTerm) cc.convert(term);
 				}
 
 				final ApplicationTerm at = (ApplicationTerm) term;
@@ -329,7 +344,7 @@ public class Clausifier {
 					final String funcName = at.getFunction().getName();
 					final boolean isStore = funcName.equals("store");
 					final boolean isConst = funcName.equals(SMTLIBConstants.CONST);
-					mArrayTheory.notifyArray(getCCTerm(term), isStore, isConst);
+					mArrayTheory.notifyArray(ccTerm, isStore, isConst);
 				}
 
 				if (fs.isConstructor()) {
@@ -353,6 +368,15 @@ public class Clausifier {
 
 			}
 			if (term.getSort().isNumericSort()) {
+				// With offset equalities the CCTerm is offset-free (value 2x+4y for a term 2x+4y+1) and the
+				// constant is carried structurally at the use sites. The LASharedTerm must then be offset-free
+				// too, so it stays value-consistent with the offset-free CCTerm: clash-slot MBTC values a member
+				// as value(rep) + offsetToRep and must not double-count the constant. Terms differing only by a
+				// constant share one offset-free CCTerm; each still registers its own offset-free LASharedTerm
+				// (same value), which is harmless and recognized as already-known by the offset-aware guards.
+				//
+				// Without offset equalities the LASharedTerm carries the full value (its constant), as before,
+				// so whole-term mbtc groups shared terms by their true value.
 				boolean needsLA = term instanceof ConstantTerm;
 				if (term instanceof ApplicationTerm) {
 					final String func = ((ApplicationTerm) term).getFunction().getName();
@@ -364,6 +388,9 @@ public class Clausifier {
 					final MutableAffineTerm mat = createMutableAffinTerm(new Polynomial(term), source);
 					assert mat.getConstant().mEps == 0;
 					if (!mLATerms.containsKey(term)) {
+						// The LASharedTerm shares the term's value with linear arithmetic. The term is offset-free (see
+						// the precondition), so this stays consistent with getCCTerm and the endScope unshare loop, which
+						// look up CC nodes by the (offset-free) key.
 						shareLATerm(term, new LASharedTerm(term, mat.getSummands(), mat.getConstant().mReal));
 					}
 				}
@@ -569,12 +596,87 @@ public class Clausifier {
 		return res;
 	}
 
+	/**
+	 * Get the CCTerm for the given term, or null if there is none. A null term has no CCTerm either; callers like the
+	 * E-matching instantiation look up substitutions that may be unconstrained (a null entry in a dawg key is its
+	 * default case) and treat null as "no CCTerm".
+	 */
 	public CCTerm getCCTerm(final Term term) {
+		// mCCTerms is keyed by offset-free terms only; an offseted term has no entry of its own (its CCParameter, with
+		// the constant as offset, is produced at build time by createCCTerm). Callers must normalize via
+		// getOffsetFreeTerm first, or use getCCParameter for a possibly offseted term.
+		assert term == null || getTermConstant(term).equals(Rational.ZERO) : "getCCTerm on offseted term " + term;
 		return mCCTerms.get(term);
+	}
+
+	/**
+	 * Get the {@link CCParameter} denoting the value of the given term: the CCTerm of the term's offset-free part plus
+	 * the term's constant. Unlike {@link #getCCTerm} this accepts terms with a constant summand. This function does not
+	 * create new terms.
+	 *
+	 * @return the value of the term, or null if the term is null (see {@link #getCCTerm}) or no CCTerm exists for the
+	 *         term's offset-free part.
+	 */
+	public CCParameter getCCParameter(final Term term) {
+		if (term == null) {
+			return null;
+		}
+		final Rational constant = getTermConstant(term);
+		final CCTerm ccTerm = getCCTerm(constant.equals(Rational.ZERO) ? term : getOffsetFreeTerm(term));
+		return ccTerm == null ? null : CCParameter.of(ccTerm, constant);
 	}
 
 	public LASharedTerm getLATerm(final Term term) {
 		return mLATerms.get(term);
+	}
+
+	/**
+	 * Whether offset equalities are enabled in the congruence closure. When enabled, numeric terms are represented by
+	 * offset-free CCTerms with the constant carried as an offset. This is the one place where the option is stored;
+	 * {@link CClosure#createOffsetEqualities} asks here. Without a congruence closure there is no CCTerm that could
+	 * carry an offset, so a numeric term keeps its constant.
+	 */
+	public boolean createOffsetEqualities() {
+		return mOffsetEqualities && getCClosure() != null;
+	}
+
+	/**
+	 * The constant offset of a numeric term, i.e. the value such that {@code term == offsetFreeTerm + constant}. Returns
+	 * {@link Rational#ZERO} when offset equalities are disabled or the term is not numeric.
+	 */
+	public Rational getTermConstant(final Term term) {
+		if (!createOffsetEqualities() || !term.getSort().isNumericSort()) {
+			return Rational.ZERO;
+		}
+		return new Polynomial(term).getConstant();
+	}
+
+	/**
+	 * Build the normalized term for {@code term + constant}. The result is a single flattened polynomial term (not a
+	 * nested {@code (+ term constant)}), so that re-parsing it as a Polynomial recovers all summands.
+	 */
+	public Term addConstantToTerm(final Term term, final Rational constant) {
+		return CCParameter.addConstant(term, constant);
+	}
+
+	/**
+	 * The offset-free part of a numeric term, i.e. the term with its constant
+	 * summand removed. Two terms that differ only by a constant (e.g.
+	 * {@code 2x+4y+1} and {@code 2x+4y+5}) yield the same canonical offset-free
+	 * term, so they share a single CCTerm. Returns the term itself when it has no
+	 * constant or offset equalities are disabled.
+	 */
+	public Term getOffsetFreeTerm(final Term term) {
+		if (!createOffsetEqualities() || !term.getSort().isNumericSort()) {
+			return term;
+		}
+		final Polynomial poly = new Polynomial(term);
+		final Rational constant = poly.getConstant();
+		if (constant.equals(Rational.ZERO)) {
+			return term;
+		}
+		poly.add(constant.negate());
+		return mCompiler.unifyPolynomial(poly, term.getSort());
 	}
 
 	public ILiteral getILiteral(final Term term) {
@@ -745,6 +847,35 @@ public class Clausifier {
 		for (int i = params.length - 1; i >= 1; i--) {
 			bc.collectLiteral(params[i]);
 		}
+	}
+
+	/**
+	 * Rewrite a clause literal into a form for which {@link CollectLiteral} can create a literal. Equalities need this:
+	 * an equality between Boolean terms is not a literal, so it is rewritten to {@code (not (xor lhs rhs))}, and an
+	 * equality between store terms is rewritten to an equality on the simpler sort (see
+	 * {@link LogicSimplifier#convertBinaryEq}). A negated literal is rewritten recursively.
+	 *
+	 * This is called for every literal the clausifier collects, so axioms that are built from terms instead of from
+	 * converted input (like {@link #addDiffAxiom} or {@link #addMatchAxiom}) work for Boolean sorts, too, without
+	 * having to convert their literals themselves.
+	 *
+	 * @param literal the literal to rewrite, possibly negated.
+	 * @return the rewrite proof from the literal to the collectable form. When nothing has to be rewritten this is a
+	 *         reflexivity proof, which the proof tracker removes again, so proofs are unchanged in that case.
+	 */
+	public Term rewriteLiteral(final Term literal) {
+		if (literal instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) literal;
+			final Term[] params = appTerm.getParameters();
+			if (appTerm.getFunction() == mTheory.mNot) {
+				return mUtils.convertNot(
+						mTracker.congruence(mTracker.reflexivity(literal), new Term[] { rewriteLiteral(params[0]) }));
+			}
+			if (appTerm.getFunction().getName() == SMTLIBConstants.EQUALS && params.length == 2) {
+				return mUtils.convertBinaryEq(mTracker.reflexivity(literal));
+			}
+		}
+		return mTracker.reflexivity(literal);
 	}
 
 	public void buildTautology(final Theory theory, final Term[] clause, final Annotation rule,
@@ -1070,9 +1201,7 @@ public class Clausifier {
 		final Term v = store.getParameters()[2];
 		final Term axiom = theory.term("=", theory.term("select", store, i), v);
 
-		final Term provedAxiom = mTracker.modusPonens(mTracker.tautology(axiom, ProofConstants.TAUT_ARRAY_STORE),
-				mUtils.convertBinaryEq(mTracker.reflexivity(axiom)));
-		buildClause(provedAxiom, source);
+		buildClause(mTracker.tautology(axiom, ProofConstants.TAUT_ARRAY_STORE), source);
 		if (Config.ARRAY_ALWAYS_ADD_READ
 				|| !isStablyInfinite(v.getSort())) {
 			final Term a = store.getParameters()[0];
@@ -1296,8 +1425,13 @@ public class Clausifier {
 		if (sort.getName().equals("Int") && !diff.getConstant().isIntegral()) {
 			return EqualityProxy.getFalseProxy();
 		}
-		addTermAxioms(lhs, source);
-		addTermAxioms(rhs, source);
+		// The proxy works on the offset-free sides plus the offset (value(offLhs) == value(offRhs) + offset). The
+		// offset is the difference of the two sides' constants.
+		final Term offLhs = getOffsetFreeTerm(lhs);
+		final Term offRhs = getOffsetFreeTerm(rhs);
+		final Rational offset = getTermConstant(rhs).sub(getTermConstant(lhs));
+		addTermAxioms(offLhs, source);
+		addTermAxioms(offRhs, source);
 		// we cannot really normalize the sign of the term. Try both signs.
 		EqualityProxy eqForm = mEqualities.get(diff);
 		if (eqForm != null) {
@@ -1308,7 +1442,7 @@ public class Clausifier {
 		if (eqForm != null) {
 			return eqForm;
 		}
-		eqForm = new EqualityProxy(this, lhs, rhs);
+		eqForm = new EqualityProxy(this, offLhs, offRhs, offset);
 		mEqualities.put(diff, eqForm);
 		return eqForm;
 	}
@@ -1493,6 +1627,14 @@ public class Clausifier {
 		mIsUnknownTermDawgsEnabled = enableUnknownTermDawgs;
 		mPropagateUnknownTerms = propagateUnknownTerm;
 		mPropagateUnknownAux = propagateUnknownAux;
+	}
+
+	/**
+	 * Enable or disable offset equalities. This must be called before the logic is set, as it decides how numeric terms
+	 * are represented in the congruence closure.
+	 */
+	public void setOffsetEqualities(final boolean enabled) {
+		mOffsetEqualities = enabled;
 	}
 
 	private boolean isBasicStablyInfinite(final Sort sort) {

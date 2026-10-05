@@ -37,8 +37,12 @@ public final class CongruenceTrigger extends SignatureTrigger {
 	 *
 	 * @param app
 	 *            the (kept) application term for this signature.
+	 * @param func
+	 *            the function symbol (signature id).
+	 * @param args
+	 *            the application's arguments as {@link CCParameter}s (shared with the app term).
 	 */
-	public CongruenceTrigger(final CCAppTerm app, FunctionSymbol func, CCTerm[] args) {
+	public CongruenceTrigger(final CCAppTerm app, FunctionSymbol func, CCParameter[] args) {
 		super(func, args);
 		mApp = app;
 	}

@@ -89,7 +89,7 @@ public class CongruentAddTest {
 		for (int i = 0; i < 6; ++i) {// NOCHECKSTYLE
 			final String xi = "x" + i;
 			mTheory.declareFunction(xi, Script.EMPTY_SORT_ARRAY, sort);
-			mTerms[i] = mClausifier.createCCTerm(mTheory.term(xi), null);
+			mTerms[i] = (CCTerm) mClausifier.createCCTerm(mTheory.term(xi), null);
 		}
 		mTheory.declareFunction("d", Script.EMPTY_SORT_ARRAY, sort);
 		mTheory.declareFunction("c", Script.EMPTY_SORT_ARRAY, sort);
@@ -99,10 +99,10 @@ public class CongruentAddTest {
 		final Term termc = mTheory.term("c");
 		final Term termb = mTheory.term("b");
 		final Term terma = mTheory.term("a");
-		mD = mClausifier.createCCTerm(termd, null);
-		mC = mClausifier.createCCTerm(termc, null);
-		mB = mClausifier.createCCTerm(termb, null);
-		mA = mClausifier.createCCTerm(terma, null);
+		mD = (CCTerm) mClausifier.createCCTerm(termd, null);
+		mC = (CCTerm) mClausifier.createCCTerm(termc, null);
+		mB = (CCTerm) mClausifier.createCCTerm(termb, null);
+		mA = (CCTerm) mClausifier.createCCTerm(terma, null);
 		final EqualityProxy eqab = mClausifier.createEqualityProxy(terma, termb, mSource);
 		Assert.assertNotSame(EqualityProxy.getTrueProxy(), eqab);
 		Assert.assertNotSame(EqualityProxy.getFalseProxy(), eqab);

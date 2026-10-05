@@ -1,0 +1,11 @@
+(set-option :print-success false)
+(set-logic UFLIA)
+(set-info :source |E-matching with offset equalities: matching f(x) against the ground
+term f(a+3) must bind x := a+3 (not the offset-free x := a).|)
+(set-info :status unsat)
+(declare-fun f (Int) Int)
+(declare-fun a () Int)
+(assert (forall ((x Int)) (= (f x) x)))
+(assert (not (= (f (+ a 3)) (+ a 3))))
+(check-sat)
+(exit)

@@ -160,13 +160,15 @@ public class ArrayTheory implements ITheory {
 		 * classes and to quickly compute new equivalences. We only have to remember one of the select terms for each
 		 * index, since the other are supposed to be equal.
 		 *
-		 * The key is always the representative of the index of the corresponding select.
+		 * The key is always the value identity (representative and offset-to-representative) of the index of the
+		 * corresponding select, i.e. {@link CCParameter#getValueKey()} of {@link #getIndexParamFromSelect}. Two selects
+		 * on indices with the same value share a key.
 		 *
 		 * This is an arbitrary map for weak representative (no primary edge), should be a singleton for weak-i
 		 * representatives (primary edge exists, but no secondary edge) and empty for all other nodes (where both edges
 		 * exist).
 		 */
-		Map<CCTerm, CCAppTerm> mSelects;
+		Map<CCParameter, CCAppTerm> mSelects;
 
 		CCAppTerm mConstTerm;
 
@@ -205,11 +207,11 @@ public class ArrayTheory implements ITheory {
 		 *            the index i for which the weak-i equivalence class representative should be returned.
 		 * @return the representative array node.
 		 */
-		public ArrayNode getWeakIRepresentative(CCTerm index) {
-			index = index.getRepresentative();
+		public ArrayNode getWeakIRepresentative(CCParameter index) {
+			index = index.getValueKey();
 			ArrayNode node = this;
 			while (node.mPrimaryEdge != null) {
-				if (getIndexFromStore(node.mPrimaryStore).getRepresentative() == index) {
+				if (getIndexFromStore(node.mPrimaryStore).getValueKey().equals(index)) {
 					if (node.mSecondaryEdge == null) {
 						break;
 					}
@@ -230,7 +232,7 @@ public class ArrayTheory implements ITheory {
 		public void makeWeakIRepresentative() {
 			assert mPrimaryEdge != null;
 			assert mSecondaryEdge != null;
-			final CCTerm index = getIndexFromStore(mPrimaryStore).getRepresentative();
+			final CCParameter index = getIndexFromStore(mPrimaryStore).getValueKey();
 			assert getWeakIRepresentative(index) != getWeakRepresentative();
 			ArrayNode prev = this;
 			ArrayNode next = prev.mSecondaryEdge;
@@ -265,12 +267,12 @@ public class ArrayTheory implements ITheory {
 			}
 			// hash map from store indices we have seen on the primary path to the previous destination/new source of
 			// the primary edge (or in other words, to the new candidate for weak-i equivalence class).
-			final LinkedHashMap<CCTerm, ArrayNode> seenStores = new LinkedHashMap<>();
+			final LinkedHashMap<CCParameter, ArrayNode> seenStores = new LinkedHashMap<>();
 			// for each index, the information about secondary edge that we later need to invert.
-			final LinkedHashMap<CCTerm, ArrayNode> todoSecondary = new LinkedHashMap<>();
-			final LinkedHashMap<CCTerm, CCAppTerm> todoSecondaryStores = new LinkedHashMap<>();
+			final LinkedHashMap<CCParameter, ArrayNode> todoSecondary = new LinkedHashMap<>();
+			final LinkedHashMap<CCParameter, CCAppTerm> todoSecondaryStores = new LinkedHashMap<>();
 			// the select information for the new root node.
-			final LinkedHashMap<CCTerm, CCAppTerm> newSelectMap = new LinkedHashMap<>();
+			final LinkedHashMap<CCParameter, CCAppTerm> newSelectMap = new LinkedHashMap<>();
 			ArrayNode node = this;
 			ArrayNode prev = null;
 			CCAppTerm prevStore = null;
@@ -281,7 +283,7 @@ public class ArrayTheory implements ITheory {
 				node.mPrimaryEdge = prev;
 				node.mPrimaryStore = prevStore;
 
-				final CCTerm index = getIndexFromStore(nextStore).getRepresentative();
+				final CCParameter index = getIndexFromStore(nextStore).getValueKey();
 				final ArrayNode old = seenStores.put(index, next);
 				if (old == node) {
 					// the node is in the middle of two consecutive stores on the same
@@ -300,7 +302,7 @@ public class ArrayTheory implements ITheory {
 						// insert the secondary edge of node into old node. The reasoning is that
 						// the old node is connected using only primary edges on different indices, so it has
 						// the same weak-i representative as node.
-						assert (getIndexFromStore(old.mPrimaryStore).getRepresentative() == index);
+						assert (getIndexFromStore(old.mPrimaryStore).getValueKey().equals(index));
 						assert (old.mSecondaryEdge == null);
 						old.mSecondaryEdge = node.mSecondaryEdge;
 						old.mSecondaryStore = node.mSecondaryStore;
@@ -328,19 +330,19 @@ public class ArrayTheory implements ITheory {
 			node.mPrimaryStore = prevStore;
 			mConstTerm = node.mConstTerm;
 			node.mConstTerm = null;
-			final Map<CCTerm, CCAppTerm> rootSelects = node.mSelects;
+			final Map<CCParameter, CCAppTerm> rootSelects = node.mSelects;
 			node.mSelects = Collections.emptyMap();
-			for (final Entry<CCTerm, ArrayNode> entry : seenStores.entrySet()) {
+			for (final Entry<CCParameter, ArrayNode> entry : seenStores.entrySet()) {
 				// The seen stores get the new representatives of their weak-i equivalence groups
-				final CCTerm index = entry.getKey();
+				final CCParameter index = entry.getKey();
 				final CCAppTerm select = rootSelects.remove(index);
 				if (select != null) {
 					entry.getValue().mSelects = Collections.singletonMap(index, select);
 				}
 			}
 			// Now invert the secondary edges
-			for (final Entry<CCTerm, ArrayNode> entry : todoSecondary.entrySet()) {
-				final CCTerm index = entry.getKey();
+			for (final Entry<CCParameter, ArrayNode> entry : todoSecondary.entrySet()) {
+				final CCParameter index = entry.getKey();
 				ArrayNode dest = entry.getValue();
 				dest = dest.findSecondaryNode(index);
 				if (dest.mSecondaryEdge != null) {
@@ -373,31 +375,32 @@ public class ArrayTheory implements ITheory {
 
 			// merge the consts;
 			// this map collects all selects in the other class, that may need to be merge with the const.
-			final LinkedHashMap<CCTerm, CCAppTerm> mergeConstSelects = new LinkedHashMap<>();
+			final LinkedHashMap<CCParameter, CCAppTerm> mergeConstSelects = new LinkedHashMap<>();
 			if (mConstTerm != null) {
 				if (storeNode.mConstTerm == null) {
 					storeNode.mConstTerm = mConstTerm;
 					mConstTerm = null;
 					mergeConstSelects.putAll(storeNode.mSelects);
 				} else {
-					final CCTerm const1 = getValueFromConst(mConstTerm);
-					final CCTerm const2 = getValueFromConst(storeNode.mConstTerm);
-					if (const1.getRepresentative() != const2.getRepresentative()) {
+					final CCParameter const1 = getValueFromConst(mConstTerm);
+					final CCParameter const2 = getValueFromConst(storeNode.mConstTerm);
+					if (const1.getRepresentative() != const2.getRepresentative()
+							|| !const1.getOffsetToRep().equals(const2.getOffsetToRep())) {
 						propLemmas.add(new ArrayLemma(RuleKind.CONST_WEAKEQ, const1, const2));
 					}
 				}
 			} else if (storeNode.mConstTerm != null) {
 				mergeConstSelects.putAll(mSelects);
 			}
-			mergeConstSelects.remove(getIndexFromStore(store).getRepresentative());
+			mergeConstSelects.remove(getIndexFromStore(store).getValueKey());
 
 			// merge the selects;
-			Map<CCTerm, CCAppTerm> newSelects = Collections.emptyMap();
-			for (final Entry<CCTerm, CCAppTerm> entry : mSelects.entrySet()) {
-				final CCTerm index = entry.getKey();
+			Map<CCParameter, CCAppTerm> newSelects = Collections.emptyMap();
+			for (final Entry<CCParameter, CCAppTerm> entry : mSelects.entrySet()) {
+				final CCParameter index = entry.getKey();
 				final CCAppTerm select = entry.getValue();
 				assert select != null;
-				if (index == getIndexFromStore(store).getRepresentative()) {
+				if (index.equals(getIndexFromStore(store).getValueKey())) {
 					newSelects = Collections.singletonMap(index, select);
 				} else {
 					final CCAppTerm otherSelect = storeNode.mSelects.get(index);
@@ -406,7 +409,9 @@ public class ArrayTheory implements ITheory {
 						storeNode.mSelects.put(index, select);
 					} else {
 						mergeConstSelects.remove(index);
-						if (select.getRepresentative() != otherSelect.getRepresentative()) {
+						// Offset-aware: two selects in the same class but at different offsets are NOT already equal —
+						// the propagated equality is a (false) offset equality that raises the conflict.
+						if (!select.sameValueAs(otherSelect)) {
 							// add propagated equality
 							propLemmas.add(new ArrayLemma(RuleKind.READ_OVER_WEAKEQ, select, otherSelect));
 						}
@@ -415,16 +420,18 @@ public class ArrayTheory implements ITheory {
 			}
 			mSelects = newSelects;
 			if (storeNode.mConstTerm != null) {
-				final CCTerm const1 = getValueFromConst(storeNode.mConstTerm);
+				final CCParameter const1 = getValueFromConst(storeNode.mConstTerm);
 				final ArrayNode constNode = mCongRoots.get(storeNode.mConstTerm.getRepresentative());
-				for (final Entry<CCTerm, CCAppTerm> entry : mergeConstSelects.entrySet()) {
-					final CCTerm index = entry.getKey();
+				for (final Entry<CCParameter, CCAppTerm> entry : mergeConstSelects.entrySet()) {
+					final CCParameter index = entry.getKey();
 					final CCAppTerm select = entry.getValue();
 					// check if selected array is weakly equal to the const array
 					if (constNode.getWeakIRepresentative(index) == storeNode) {
 						// do not keep select, we will merge it with the constant value
 						storeNode.mSelects.remove(index);
-						if (select.getRepresentative() != const1.getRepresentative()) {
+						// Offset-aware: a select in the same class as the const value but at a different offset is NOT
+						// already equal — propagating the (false) offset equality raises the conflict.
+						if (!select.sameValueAs(const1)) {
 							propLemmas.add(new ArrayLemma(RuleKind.READ_CONST_WEAKEQ, select, const1));
 						}
 					}
@@ -447,13 +454,13 @@ public class ArrayTheory implements ITheory {
 		public void mergeSecondary(final ArrayNode storeNode, final CCAppTerm store, final Collection<ArrayLemma> propEqualities) {
 			assert storeNode.mPrimaryEdge == null;
 			assert mPrimaryEdge != null;
-			assert getIndexFromStore(mPrimaryStore).getRepresentative() != getIndexFromStore(store).getRepresentative();
+			assert !getIndexFromStore(mPrimaryStore).sameValueAs(getIndexFromStore(store));
 			if (mSecondaryEdge != null) {
 				makeWeakIRepresentative();
 			}
 			mSecondaryEdge = storeNode;
 			mSecondaryStore = store;
-			final CCTerm storeIndex = getIndexFromStore(mPrimaryStore).getRepresentative();
+			final CCParameter storeIndex = getIndexFromStore(mPrimaryStore).getValueKey();
 			if (!mSelects.isEmpty()) {
 				final CCAppTerm select = mSelects.get(storeIndex);
 				assert (select != null);
@@ -461,7 +468,7 @@ public class ArrayTheory implements ITheory {
 				if (otherSelect == null) {
 					storeNode.mSelects.put(storeIndex, select);
 				} else {
-					if (select.getRepresentative() != otherSelect.getRepresentative()) {
+					if (!select.sameValueAs(otherSelect)) {
 						propEqualities.add(new ArrayLemma(RuleKind.READ_OVER_WEAKEQ, select, otherSelect));
 					}
 				}
@@ -474,8 +481,8 @@ public class ArrayTheory implements ITheory {
 				if (constNode.getWeakIRepresentative(storeIndex) == storeNode) {
 					// do not keep select, we will merge it with the constant value
 					final CCAppTerm select = storeNode.mSelects.remove(storeIndex);
-					final CCTerm const1 = getValueFromConst(storeNode.mConstTerm);
-					if (select != null && select.getRepresentative() != const1.getRepresentative()) {
+					final CCParameter const1 = getValueFromConst(storeNode.mConstTerm);
+					if (select != null && !select.sameValueAs(const1)) {
 						propEqualities.add(new ArrayLemma(RuleKind.READ_CONST_WEAKEQ, select, const1));
 					}
 				}
@@ -489,12 +496,12 @@ public class ArrayTheory implements ITheory {
 		 *            the index i.
 		 * @return the number of secondary edges from this to the weak-i root.
 		 */
-		public int countSecondaryEdges(final CCTerm index) {
-			assert index.isRepresentative();
+		public int countSecondaryEdges(final CCParameter index) {
+			assert index.getValueKey().equals(index);
 			int count = 0;
 			ArrayNode node = this;
 			while (node.mPrimaryEdge != null) {
-				if (getIndexFromStore(node.mPrimaryStore).getRepresentative() == index) {
+				if (getIndexFromStore(node.mPrimaryStore).getValueKey().equals(index)) {
 					if (node.mSecondaryEdge == null) {
 						break;
 					}
@@ -510,10 +517,10 @@ public class ArrayTheory implements ITheory {
 		/**
 		 * Find the next node on the primary chain where the primary edge uses the given index.
 		 */
-		public ArrayNode findSecondaryNode(final CCTerm index) {
-			assert index.isRepresentative();
+		public ArrayNode findSecondaryNode(final CCParameter index) {
+			assert index.getValueKey().equals(index);
 			ArrayNode node = this;
-			while (node.mPrimaryEdge != null && getIndexFromStore(node.mPrimaryStore).getRepresentative() != index) {
+			while (node.mPrimaryEdge != null && !getIndexFromStore(node.mPrimaryStore).getValueKey().equals(index)) {
 				node = node.mPrimaryEdge;
 			}
 			return node;
@@ -551,10 +558,10 @@ public class ArrayTheory implements ITheory {
 
 	private static class ArrayLemma {
 		RuleKind mRule;
-		SymmetricPair<CCTerm> mPropagatedEq;
+		SymmetricPair<CCParameter> mPropagatedEq;
 		Set<CCEquality> mUndecidedLits;
 
-		public ArrayLemma(final RuleKind rule, final CCTerm lhs, final CCTerm rhs) {
+		public ArrayLemma(final RuleKind rule, final CCParameter lhs, final CCParameter rhs) {
 			mRule = rule;
 			mPropagatedEq = new SymmetricPair<>(lhs, rhs);
 		}
@@ -563,7 +570,7 @@ public class ArrayTheory implements ITheory {
 			return mRule;
 		}
 
-		public SymmetricPair<CCTerm> getEquality() {
+		public SymmetricPair<CCParameter> getEquality() {
 			return mPropagatedEq;
 		}
 
@@ -617,7 +624,7 @@ public class ArrayTheory implements ITheory {
 	 * The value is the select cc term representative. If there is no select term for that index, the value is the
 	 * weak-i representative node. At index null, the map stores the weak representative node.
 	 */
-	Map<ArrayNode, Map<CCTerm, Object>> mArrayModels = null;
+	Map<ArrayNode, Map<CCParameter, Object>> mArrayModels = null;
 
 	// =============== STATISTICS ===============
 	private int mNumInstsSelect = 0;
@@ -738,7 +745,7 @@ public class ArrayTheory implements ITheory {
 	}
 
 	private Clause explainPropagation(final ArrayLemma lemma) {
-		final SymmetricPair<CCTerm> equality = lemma.getEquality();
+		final SymmetricPair<CCParameter> equality = lemma.getEquality();
 		final long start = System.nanoTime();
 		mNumInstsSelect++;
 		final WeakCongruencePath path = new WeakCongruencePath(this);
@@ -798,11 +805,11 @@ public class ArrayTheory implements ITheory {
 		if (!logger.isInfoEnabled()) {
 			return;
 		}
-		for (final Entry<ArrayNode, Map<CCTerm, Object>> entry : mArrayModels.entrySet()) {
+		for (final Entry<ArrayNode, Map<CCParameter, Object>> entry : mArrayModels.entrySet()) {
 			final StringBuilder sb = new StringBuilder();
 			sb.append(entry.getKey().mTerm).append(" = store[");
 			sb.append(entry.getKey().getWeakRepresentative().mTerm);
-			for (final Entry<CCTerm, Object> storeEntry : entry.getValue().entrySet()) {
+			for (final Entry<CCParameter, Object> storeEntry : entry.getValue().entrySet()) {
 				if (storeEntry.getKey() == null) {
 					continue;
 				}
@@ -908,8 +915,10 @@ public class ArrayTheory implements ITheory {
 				// constant array or
 				// it's not weakly equivalent to one.
 				if (node.mConstTerm != null) {
-					final CCTerm value = getValueFromConst(node.mConstTerm).getRepresentative();
-					final Term nodeValue = t.term(SMTLIBConstants.CONST, null, arraySort, builder.getModelValue(value));
+					// getModelValue shifts the representative's value by the const value's offset; using
+					// getRepresentative() would drop the offset and build a wrong model value.
+					final Term nodeValue = t.term(SMTLIBConstants.CONST, null, arraySort,
+							builder.getModelValue(getValueFromConst(node.mConstTerm)));
 					builder.setModelValue(node.mTerm, nodeValue);
 				} else {
 					Term nodeValue;
@@ -917,7 +926,7 @@ public class ArrayTheory implements ITheory {
 						// the array is based on a certain const value, see computeWeakEqExt()
 						final Term valueTerm;
 						if (hasFiniteElemSort(node.mTerm.getFlatTerm().getSort())) {
-							final CCTerm value = (CCTerm) mArrayModels.get(node).get(null);
+							final CCParameter value = (CCParameter) mArrayModels.get(node).get(null);
 							valueTerm = builder.getModelValue(value);
 						} else {
 							valueTerm = model.extendFresh(valueSort);
@@ -928,9 +937,11 @@ public class ArrayTheory implements ITheory {
 						nodeValue = model.extendFresh(arraySort);
 					}
 					// change all indices to the right select value
-					for (final Entry<CCTerm, CCAppTerm> indexValuePairs : node.mSelects.entrySet()) {
-						final CCTerm index = indexValuePairs.getKey();
-						final CCTerm value = indexValuePairs.getValue().getRepresentative();
+					for (final Entry<CCParameter, CCAppTerm> indexValuePairs : node.mSelects.entrySet()) {
+						final CCParameter index = indexValuePairs.getKey();
+						// value identity (getValueKey), so a select whose value sits at a non-zero offset from its
+						// representative renders the shifted value, not the representative's.
+						final CCParameter value = indexValuePairs.getValue().getValueKey();
 						nodeValue = t.term("store", nodeValue, builder.getModelValue(index),
 								builder.getModelValue(value));
 					}
@@ -943,7 +954,7 @@ public class ArrayTheory implements ITheory {
 							continue;
 						}
 						assert other.mSelects.size() == 1;
-						final CCTerm index = other.mSelects.keySet().iterator().next();
+						final CCParameter index = other.mSelects.keySet().iterator().next();
 						if (!node.mSelects.containsKey(index)) {
 							// we have another array in the weak-equivalence class that may by accident
 							// store the
@@ -979,11 +990,11 @@ public class ArrayTheory implements ITheory {
 				} else {
 					secondParentTerm = null;
 				}
-				final CCTerm ccIndex = getIndexFromStore(node.mPrimaryStore).getRepresentative();
-				final CCTerm ccValue = node.mSelects.get(ccIndex);
+				final CCParameter ccIndex = getIndexFromStore(node.mPrimaryStore).getValueKey();
+				final CCAppTerm ccValue = node.mSelects.get(ccIndex);
 				final Term index = builder.getModelValue(ccIndex);
 				final Term value = secondParentTerm != null ? arraySortInterpretation.getSelect(secondParentTerm, index)
-						: ccValue == null ? model.extendFresh(valueSort) : builder.getModelValue(ccValue);
+						: ccValue == null ? model.extendFresh(valueSort) : builder.getModelValue(ccValue.getValueKey());
 				Term nodeValue = t.term("store", parentTerm, index, value);
 				nodeValue = arraySortInterpretation.normalizeStoreTerm(nodeValue);
 				builder.setModelValue(node.mTerm, nodeValue);
@@ -1007,28 +1018,28 @@ public class ArrayTheory implements ITheory {
 		mDiffs.add(diff);
 	}
 
-	public static boolean isSelectTerm(final CCTerm term) {
+	public static boolean isSelectTerm(final CCParameter term) {
 		if (term instanceof CCAppTerm) {
 			return ((CCAppTerm) term).getFunctionSymbol().getName().equals(SMTLIBConstants.SELECT);
 		}
 		return false;
 	}
 
-	public static boolean isStoreTerm(final CCTerm term) {
+	public static boolean isStoreTerm(final CCParameter term) {
 		if (term instanceof CCAppTerm) {
 			return ((CCAppTerm) term).getFunctionSymbol().getName().equals(SMTLIBConstants.STORE);
 		}
 		return false;
 	}
 
-	public static boolean isConstTerm(final CCTerm term) {
+	public static boolean isConstTerm(final CCParameter term) {
 		if (term instanceof CCAppTerm) {
 			return ((CCAppTerm) term).getFunctionSymbol().getName().equals(SMTLIBConstants.CONST);
 		}
 		return false;
 	}
 
-	public static boolean isDiffTerm(final CCTerm term) {
+	public static boolean isDiffTerm(final CCParameter term) {
 		if (term instanceof CCAppTerm) {
 			return ((CCAppTerm) term).getFunctionSymbol().getName().equals(SMTInterpolConstants.DIFF);
 		}
@@ -1037,42 +1048,54 @@ public class ArrayTheory implements ITheory {
 
 	public static CCTerm getArrayFromSelect(final CCAppTerm select) {
 		assert isSelectTerm(select);
-		return select.getArgument(0);
+		// the array argument is never numeric; the cast asserts it carries no offset
+		return (CCTerm) select.getArgParam(0);
 	}
 
-	public static CCTerm getIndexFromSelect(final CCAppTerm select) {
+	/**
+	 * The value of the index of a select term as a {@link CCParameter}, i.e. argument 1 together with its structural
+	 * offset. With offset equalities the index of {@code (select a (+ i 5))} is the CCTerm {@code i} plus offset 5.
+	 */
+	public static CCParameter getIndexFromSelect(final CCAppTerm select) {
 		assert isSelectTerm(select);
-		return select.getArgument(1);
+		return select.getArgParam(1);
 	}
 
 	public static CCTerm getArrayFromStore(final CCAppTerm store) {
 		assert isStoreTerm(store);
-		return store.getArgument(0);
+		// the array argument is never numeric; the cast asserts it carries no offset
+		return (CCTerm) store.getArgParam(0);
 	}
 
-	public static CCTerm getIndexFromStore(final CCAppTerm store) {
+	/**
+	 * The value of the index of a store term as a {@link CCParameter}, i.e. argument 1 together with its structural
+	 * offset (see {@link #getIndexFromSelect}).
+	 */
+	public static CCParameter getIndexFromStore(final CCAppTerm store) {
 		assert isStoreTerm(store);
-		return store.getArgument(1);
+		return store.getArgParam(1);
 	}
 
-	public static CCTerm getValueFromStore(final CCAppTerm store) {
+	public static CCParameter getValueFromStore(final CCAppTerm store) {
 		assert isStoreTerm(store);
-		return store.getArgument(2);
+		return store.getArgParam(2);
 	}
 
-	public static CCTerm getValueFromConst(final CCAppTerm constArr) {
+	public static CCParameter getValueFromConst(final CCAppTerm constArr) {
 		assert isConstTerm(constArr);
-		return constArr.getArgument(0);
+		return constArr.getArgParam(0);
 	}
 
 	public static CCTerm getLeftFromDiff(final CCAppTerm diff) {
 		assert isDiffTerm(diff);
-		return diff.getArgument(0);
+		// diff arguments are arrays, never numeric; the cast asserts they carry no offset
+		return (CCTerm) diff.getArgParam(0);
 	}
 
 	public static CCTerm getRightFromDiff(final CCAppTerm diff) {
 		assert isDiffTerm(diff);
-		return diff.getArgument(1);
+		// diff arguments are arrays, never numeric; the cast asserts they carry no offset
+		return (CCTerm) diff.getArgParam(1);
 	}
 
 	public static Sort getArraySortFromSelect(final CCAppTerm select) {
@@ -1085,9 +1108,9 @@ public class ArrayTheory implements ITheory {
 		return store.getFunctionSymbol().getParameterSorts()[0];
 	}
 
-	CCAppTerm findConst(final CCTerm value) {
+	CCAppTerm findConst(final CCParameter value) {
 		for (final CCAppTerm constTerm : mConsts) {
-			if (value == getValueFromConst(constTerm)) {
+			if (value.equals(getValueFromConst(constTerm))) {
 				return constTerm;
 			}
 		}
@@ -1095,18 +1118,18 @@ public class ArrayTheory implements ITheory {
 	}
 
 	private void setConst(final CCAppTerm term) {
-		final CCTerm const1 = getValueFromConst(term);
+		final CCParameter const1 = getValueFromConst(term);
 		final CCTerm rep = term.getRepresentative();
 		final ArrayNode node = mCongRoots.get(rep);
 		if (node.mConstTerm != null) {
-			final CCTerm const2 = getValueFromConst(node.mConstTerm);
-			if (const1.getRepresentative() != const2.getRepresentative()) {
+			final CCParameter const2 = getValueFromConst(node.mConstTerm);
+			if (!const1.sameValueAs(const2)) {
 				mPropClauses.add(new ArrayLemma(RuleKind.CONST_WEAKEQ, const1, const2));
 			}
 		} else {
 			node.mConstTerm = term;
 			for (final CCAppTerm select : node.mSelects.values()) {
-				if (select.getRepresentative() != const1.getRepresentative()) {
+				if (!select.sameValueAs(const1)) {
 					mPropClauses.add(new ArrayLemma(RuleKind.READ_CONST_WEAKEQ, select, const1));
 				}
 			}
@@ -1124,7 +1147,7 @@ public class ArrayTheory implements ITheory {
 		mNumMerges++;
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(
-					"Merge: [" + getIndexFromStore(store).getRepresentative() + "] " + arrayNode + " and " + storeNode);
+					"Merge: [" + getIndexFromStore(store).getValueKey() + "] " + arrayNode + " and " + storeNode);
 		}
 
 		arrayNode.makeWeakRepresentative();
@@ -1141,12 +1164,12 @@ public class ArrayTheory implements ITheory {
 			// Otherwise arrayNode would have stayed its representative.
 			// We need to insert appropriate select edges.
 
-			final HashSet<CCTerm> seenIndices = new HashSet<>();
-			final CCTerm storeIndex = getIndexFromStore(store).getRepresentative();
+			final HashSet<CCParameter> seenIndices = new HashSet<>();
+			final CCParameter storeIndex = getIndexFromStore(store).getValueKey();
 			seenIndices.add(storeIndex);
 			ArrayNode node = arrayNode;
 			while (node.mPrimaryEdge != null) {
-				final CCTerm index = getIndexFromStore(node.mPrimaryStore).getRepresentative();
+				final CCParameter index = getIndexFromStore(node.mPrimaryStore).getValueKey();
 				/*
 				 * add the index to the seen indices and merge weak-i equivalence classes if index was not seen before
 				 * and they are not already the same.
@@ -1183,7 +1206,7 @@ public class ArrayTheory implements ITheory {
 		 * @param storeIndices
 		 *            a map where the store indices are collected to.
 		 */
-		public void collectOverPrimaries(ArrayNode destNode, final Set<CCTerm> storeIndices) {
+		public void collectOverPrimaries(ArrayNode destNode, final Set<CCParameter> storeIndices) {
 			// compute the steps to the common root
 			int steps1 = mNode.countPrimaryEdges();
 			int steps2 = destNode.countPrimaryEdges();
@@ -1217,7 +1240,7 @@ public class ArrayTheory implements ITheory {
 		 * @param storeIndices
 		 *            All store indices are added to this map as side-effect.
 		 */
-		private void collectOneSecondary(final CCTerm index, final Set<CCTerm> storeIndices) {
+		private void collectOneSecondary(final CCParameter index, final Set<CCParameter> storeIndices) {
 			final ArrayNode selectNode = mNode.findSecondaryNode(index);
 			final CCAppTerm store = selectNode.mSecondaryStore;
 			final CCTerm array = getArrayFromStore(store);
@@ -1244,7 +1267,7 @@ public class ArrayTheory implements ITheory {
 		 * @param storeIndices
 		 *            initially an empty map. All store indices are added to this map as side-effect.
 		 */
-		public void collect(final CCTerm index, final Cursor dest, final Set<CCTerm> storeIndices) {
+		public void collect(final CCParameter index, final Cursor dest, final Set<CCParameter> storeIndices) {
 			int steps1 = mNode.countSecondaryEdges(index);
 			int steps2 = dest.mNode.countSecondaryEdges(index);
 			while (steps1 > steps2) {
@@ -1275,33 +1298,44 @@ public class ArrayTheory implements ITheory {
 	 * @param storeIndices
 	 *            initially an empty map. All store indices are added to this map as side-effect.
 	 */
-	private void computeStoreIndices(final CCTerm index, final CCTerm array1, final CCTerm array2, final Set<CCTerm> storeIndices) {
+	private void computeStoreIndices(final CCParameter index, final CCTerm array1, final CCTerm array2, final Set<CCParameter> storeIndices) {
 		final ArrayNode node1 = mCongRoots.get(array1.getRepresentative());
 		final ArrayNode node2 = mCongRoots.get(array2.getRepresentative());
 		final Cursor cursor1 = new Cursor(array1, node1);
 		final Cursor cursor2 = new Cursor(array2, node2);
-		assert index == index.getRepresentative();
+		assert index.getValueKey().equals(index);
 		cursor1.collect(index, cursor2, storeIndices);
+	}
+
+	/**
+	 * Create the equality literal expressing that the two index values are equal, i.e.
+	 * {@code value(index) == value(storeIndex)}. With offsets this is the offset equality
+	 * {@code index.ccTerm == storeIndex.ccTerm + (storeIndex.offset - index.offset)}. If both share the same underlying
+	 * CCTerm but differ by a constant the equality is unsatisfiable, so no literal is created (returns {@code null}); the
+	 * disjunct it would contribute is always false and can be dropped from the array lemma.
+	 */
+	private CCEquality createIndexEquality(final CCParameter index, final CCParameter storeIndex) {
+		return getCClosure().createEquality(index, storeIndex, false);
 	}
 
 	private void createPropagatedClauses() {
 		for (final ArrayLemma lemma : mPropClauses) {
-			final CCTerm lhs = lemma.getEquality().getFirst();
-			final CCTerm rhs = lemma.getEquality().getSecond();
-			assert lhs.getRepresentative() != rhs.getRepresentative();
+			final CCParameter lhs = lemma.getEquality().getFirst();
+			final CCParameter rhs = lemma.getEquality().getSecond();
+			assert !lhs.sameValueAs(rhs);
 			switch (lemma.getRule()) {
 			case READ_OVER_WEAKEQ: {
 				final CCAppTerm select1 = (CCAppTerm) lhs;
 				final CCAppTerm select2 = (CCAppTerm) rhs;
-				final CCTerm index1 = getIndexFromSelect(select1);
+				final CCParameter index1 = getIndexFromSelect(select1);
 				final CCTerm array1 = getArrayFromSelect(select1);
 				final CCTerm array2 = getArrayFromSelect(select2);
-				final Set<CCTerm> storeIndices = new LinkedHashSet<>();
-				computeStoreIndices(index1.getRepresentative(), array1, array2, storeIndices);
+				final Set<CCParameter> storeIndices = new LinkedHashSet<>();
+				computeStoreIndices(index1.getValueKey(), array1, array2, storeIndices);
 				final Set<CCEquality> propClause = new LinkedHashSet<>();
-				for (final CCTerm idx : storeIndices) {
-					assert index1.getRepresentative() != idx.getRepresentative();
-					final CCEquality lit = getCClosure().createEquality(index1, idx, false);
+				for (final CCParameter idx : storeIndices) {
+					assert !index1.sameValueAs(idx);
+					final CCEquality lit = createIndexEquality(index1, idx);
 					if (lit != null) {
 						assert lit.getDecideStatus() != lit;
 						if (lit.getDecideStatus() == null) {
@@ -1331,15 +1365,15 @@ public class ArrayTheory implements ITheory {
 			}
 			case READ_CONST_WEAKEQ: {
 				final CCAppTerm select1 = (CCAppTerm) lhs;
-				final CCTerm index1 = getIndexFromSelect(select1);
+				final CCParameter index1 = getIndexFromSelect(select1);
 				final CCTerm array1 = getArrayFromSelect(select1);
 				final CCTerm array2 = findConst(rhs);
-				final Set<CCTerm> storeIndices = new LinkedHashSet<>();
-				computeStoreIndices(index1.getRepresentative(), array1, array2, storeIndices);
+				final Set<CCParameter> storeIndices = new LinkedHashSet<>();
+				computeStoreIndices(index1.getValueKey(), array1, array2, storeIndices);
 				final Set<CCEquality> propClause = new LinkedHashSet<>();
-				for (final CCTerm idx : storeIndices) {
-					assert index1.getRepresentative() != idx.getRepresentative();
-					final CCEquality lit = getCClosure().createEquality(index1, idx, false);
+				for (final CCParameter idx : storeIndices) {
+					assert !index1.sameValueAs(idx);
+					final CCEquality lit = createIndexEquality(index1, idx);
 					if (lit != null) {
 						assert lit.getDecideStatus() != lit;
 						if (lit.getDecideStatus() == null) {
@@ -1373,9 +1407,8 @@ public class ArrayTheory implements ITheory {
 		for (final CCTerm select : mCClosure.getAllFuncApps(selectFsym)) {
 			final CCAppTerm selectApp = (CCAppTerm) select;
 			final CCTerm array = getArrayFromSelect(selectApp);
-			final CCTerm index = getIndexFromSelect(selectApp);
 			final ArrayNode node = mCongRoots.get(array.getRepresentative());
-			node.mSelects.put(index.getRepresentative(), selectApp);
+			node.mSelects.put(getIndexFromSelect(selectApp).getValueKey(), selectApp);
 		}
 	}
 
@@ -1438,8 +1471,8 @@ public class ArrayTheory implements ITheory {
 		 * fact mSelects is empty since we removed them).
 		 */
 		mArrayModels = new LinkedHashMap<>();
-		final HashMap<Sort, CCTerm> defaultValue = new HashMap<>();
-		final HashMap<Sort, HashMap<Map<CCTerm, Object>, ArrayNode>> inverse = new HashMap<>();
+		final HashMap<Sort, CCParameter> defaultValue = new HashMap<>();
+		final HashMap<Sort, HashMap<Map<CCParameter, Object>, ArrayNode>> inverse = new HashMap<>();
 		final HashSet<SymmetricPair<ArrayNode>> propEqualities = new LinkedHashSet<>();
 		final ArrayDeque<ArrayNode> todoQueue = new ArrayDeque<>(mCongRoots.values());
 		while (!todoQueue.isEmpty()) {
@@ -1454,12 +1487,16 @@ public class ArrayTheory implements ITheory {
 			}
 			final Sort arraySort = node.mTerm.getFlatTerm().getSort();
 			todoQueue.removeFirst();
-			final HashMap<CCTerm, Object> nodeMapping = new LinkedHashMap<>();
+			final HashMap<CCParameter, Object> nodeMapping = new LinkedHashMap<>();
 			final ArrayNode weakRep = node.getWeakRepresentative();
 			if (node == weakRep) {
-				CCTerm constRep = null;
+				// The element values stored in the fingerprint are value identities (getValueKey = representative +
+				// offsetToRep), not bare representatives: two arrays whose elements agree up to a constant offset must
+				// NOT get the same fingerprint, or weakeq-ext would propagate a spurious array equality (e.g.
+				// store(c,i,y) vs store(c,i,y+1)). Comparisons against constRep therefore use equals(), not ==.
+				CCParameter constRep = null;
 				if (weakRep.mConstTerm != null) {
-					constRep = getValueFromConst(weakRep.mConstTerm).getRepresentative();
+					constRep = getValueFromConst(weakRep.mConstTerm).getValueKey();
 					nodeMapping.put(null, constRep);
 				} else if (hasFiniteIndexSort(arraySort)) {
 					// For finite index sorts we cannot just assume that non weak-equivalent arrays
@@ -1482,7 +1519,7 @@ public class ArrayTheory implements ITheory {
 								cleanCaches();
 								return true;
 							}
-							constRep = weakRep.mSelects.values().iterator().next().getRepresentative();
+							constRep = weakRep.mSelects.values().iterator().next().getValueKey();
 							defaultValue.put(arraySort, constRep);
 						}
 						nodeMapping.put(null, constRep);
@@ -1498,22 +1535,23 @@ public class ArrayTheory implements ITheory {
 				} else {
 					nodeMapping.put(null, node);
 				}
-				for (final Entry<CCTerm, CCAppTerm> e : node.mSelects.entrySet()) {
-					final CCTerm value = e.getValue().getRepresentative();
-					if (value != constRep) {
+				for (final Entry<CCParameter, CCAppTerm> e : node.mSelects.entrySet()) {
+					final CCParameter value = e.getValue().getValueKey();
+					if (!value.equals(constRep)) {
 						nodeMapping.put(e.getKey(), value);
 					}
 				}
 			} else {
-				final CCTerm storeIndex = getIndexFromStore(node.mPrimaryStore).getRepresentative();
+				final CCParameter storeIndex = getIndexFromStore(node.mPrimaryStore).getValueKey();
 				nodeMapping.putAll(mArrayModels.get(node.mPrimaryEdge));
 				final Object constRep = nodeMapping.get(null);
 				nodeMapping.remove(storeIndex);
 				final ArrayNode weakiRep = node.getWeakIRepresentative(storeIndex);
-				final CCTerm value = weakiRep.mSelects.get(storeIndex);
-				if (value != null) { // NOPMD
-					if (value.getRepresentative() != constRep) {
-						nodeMapping.put(storeIndex, value.getRepresentative());
+				final CCAppTerm valueSelect = weakiRep.mSelects.get(storeIndex);
+				if (valueSelect != null) { // NOPMD
+					final CCParameter value = valueSelect.getValueKey();
+					if (!value.equals(constRep)) {
+						nodeMapping.put(storeIndex, value);
 					}
 				} else if (weakiRep != weakRep) {
 					nodeMapping.put(storeIndex, weakiRep);

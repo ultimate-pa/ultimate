@@ -18,6 +18,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
+import java.util.ArrayList;
+
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
@@ -33,19 +35,21 @@ public final class MasterReverseTrigger extends ReverseTrigger {
 	private final FunctionSymbol mFunctionSymbol;
 	private final int mArgPosition;
 
-	static final UnifyHash<MasterReverseTrigger> sUnifier = new UnifyHash<>();
-
 	public static MasterReverseTrigger of(final CClosure engine, final FunctionSymbol functionSymbol,
 			final int argPosition) {
+		// The unifier must be per engine: solver instances may share the theory and thus the function
+		// symbols (e.g. the interpolant checking solver is a clone of the main solver), and each engine
+		// needs its own master trigger registered as find trigger.
+		final UnifyHash<MasterReverseTrigger> unifier = engine.getMasterReverseTriggers();
 		final int hash = HashUtils.hashJenkins(argPosition, functionSymbol);
-		for (final MasterReverseTrigger masterReverseTrigger : sUnifier.iterateHashCode(hash)) {
+		for (final MasterReverseTrigger masterReverseTrigger : unifier.iterateHashCode(hash)) {
 			if (masterReverseTrigger.mFunctionSymbol == functionSymbol
 					&& masterReverseTrigger.mArgPosition == argPosition) {
 				return masterReverseTrigger;
 			}
 		}
 		final MasterReverseTrigger masterReverseTrigger = new MasterReverseTrigger(engine, functionSymbol, argPosition);
-		sUnifier.put(hash, masterReverseTrigger);
+		unifier.put(hash, masterReverseTrigger);
 		engine.insertFindTrigger(functionSymbol, masterReverseTrigger);
 		return masterReverseTrigger;
 	}
@@ -63,7 +67,7 @@ public final class MasterReverseTrigger extends ReverseTrigger {
 	}
 
 	@Override
-	public CCTerm getArgument() {
+	public CCParameter getArgument() {
 		return null;
 	}
 
@@ -78,5 +82,10 @@ public final class MasterReverseTrigger extends ReverseTrigger {
 		assert appTerm.getFunctionSymbol() == mFunctionSymbol;
 		final ReverseTriggerTrigger reverseTriggerTrigger = new ReverseTriggerTrigger(this, appTerm, mArgPosition);
 		mEngine.addSignature(reverseTriggerTrigger);
+		// remember the signature on the term, so it is removed with the term on pop.
+		if (appTerm.mReverseTriggers == null) {
+			appTerm.mReverseTriggers = new ArrayList<>();
+		}
+		appTerm.mReverseTriggers.add(reverseTriggerTrigger);
 	}
 }

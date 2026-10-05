@@ -31,11 +31,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.DataType;
 import de.uni_freiburg.informatik.ultimate.logic.DataType.Constructor;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.SortSymbol;
@@ -113,13 +115,22 @@ public class DataTypeTheory implements ITheory {
 	 */
 	private Clause processPendingLemmas() {
 		for (final DataTypeLemma lemma : mPendingLemmas) {
-			final SymmetricPair<CCTerm> eq = lemma.getMainEquality();
+			final SymmetricPair<CCParameter> eq = lemma.getMainEquality();
 			if (eq == null) {
 				// this is a conflict lemma, not a lemma that proves an equality.
 				return computeClause(null, lemma);
 			}
-			if (eq.getFirst().mRepStar != eq.getSecond().mRepStar) {
-				final CCEquality eqAtom = mCClosure.createEquality(eq.getFirst(), eq.getSecond(), false);
+			final CCParameter first = eq.getFirst();
+			final CCParameter second = eq.getSecond();
+			// the lemma propagates value(first) == value(second); only act if that is not already the case
+			if (!first.sameValueAs(second)) {
+				if (first.getCCTerm() == second.getCCTerm()) {
+					// same CCTerm but different offset: value-equality is trivially unsatisfiable -> conflict
+					return computeClause(null, lemma);
+				}
+				// encode the offset into the equality: value(first.cc) == value(second.cc) + offset
+				final Rational offset = second.getOffset().sub(first.getOffset());
+				final CCEquality eqAtom = mCClosure.createEquality(first.getCCTerm(), second.getCCTerm(), offset, false);
 				if (eqAtom == null) {
 					// this is a trivial disequality, so we need to create a conflict.
 					return computeClause(null, lemma);
@@ -176,11 +187,15 @@ public class DataTypeTheory implements ITheory {
 			@SuppressWarnings("unchecked")
 			final SymmetricPair<CCTerm>[] reason = new SymmetricPair[] { new SymmetricPair<>(lhs, rhs) };
 			if (lhsApp.getFunction() == rhsApp.getFunction()) {
+				// lhs/rhs are constructor applications, hence the CCAppTerms; read each argument as a CCParameter so
+				// a numeric field keeps its offset (cons(y+5) = cons(z) propagates the offset equality y+5 = z).
+				final CCAppTerm lhsCons = (CCAppTerm) lhs;
+				final CCAppTerm rhsCons = (CCAppTerm) rhs;
 				for (int i = 0; i < lhsApp.getParameters().length; i++) {
-					final CCTerm lhsArg = mClausifier.getCCTerm(lhsApp.getParameters()[i]);
-					final CCTerm rhsArg = mClausifier.getCCTerm(rhsApp.getParameters()[i]);
-					if (rhsArg.mRepStar != lhsArg.mRepStar) {
-						final SymmetricPair<CCTerm> eqPair = new SymmetricPair<>(lhsArg, rhsArg);
+					final CCParameter lhsArg = lhsCons.getArgParam(i);
+					final CCParameter rhsArg = rhsCons.getArgParam(i);
+					if (!lhsArg.sameValueAs(rhsArg)) {
+						final SymmetricPair<CCParameter> eqPair = new SymmetricPair<>(lhsArg, rhsArg);
 						// dt_injective: cons(args1) != cons(args2) or args1[i] == args2[i]
 						addPendingLemma(new DataTypeLemma(RuleKind.DT_INJECTIVE, eqPair, reason, lhs, rhs));
 					}
@@ -199,6 +214,34 @@ public class DataTypeTheory implements ITheory {
 
 	@Override
 	public Clause checkpoint() {
+		return runToCompletion(this::checkpointOnce);
+	}
+
+	/**
+	 * Run one pass of a rule application method and repeat it as long as it installed a master reverse trigger whose
+	 * applications CClosure has not collected yet, letting CClosure catch up in between. Without this, a pass that
+	 * asks a freshly installed trigger for the applications of a selector always sees none and can miss a rule
+	 * instance, e.g. rule 5 would not create the testers for a term whose selector applications all exist already.
+	 * The same pattern is used by QuantifierTheory for E-matching and by ArrayTheory for the weak equivalence graph.
+	 */
+	private Clause runToCompletion(final Supplier<Clause> onePass) {
+		while (true) {
+			mNewTrigger = false;
+			Clause conflict = onePass.get();
+			if (conflict != null) {
+				return conflict;
+			}
+			if (!mNewTrigger) {
+				return null;
+			}
+			conflict = mCClosure.checkpoint();
+			if (conflict != null) {
+				return conflict;
+			}
+		}
+	}
+
+	private Clause checkpointOnce() {
 		final Clause conflict = processPendingLemmas();
 		if (conflict != null) {
 			return conflict;
@@ -213,7 +256,7 @@ public class DataTypeTheory implements ITheory {
 				final ApplicationTerm at = (ApplicationTerm) t.mFlatTerm;
 				final CCAppTerm trueIsApp = (CCAppTerm) t;
 				if (at.getFunction().getName() == "is") {
-					final CCTerm argRep = trueIsApp.getArgument(0).getRepresentative();
+					final CCTerm argRep = ((CCTerm) trueIsApp.getArgParam(0)).getRepresentative();
 					if (!visited.containsKey(argRep)) {
 						visited.put(argRep, trueIsApp);
 						addConstructorLemma(trueIsApp);
@@ -228,8 +271,9 @@ public class DataTypeTheory implements ITheory {
 							final ArrayList<SymmetricPair<CCTerm>> reason = new ArrayList<>();
 							reason.add(new SymmetricPair<>(prevIsApp, trueCC));
 							reason.add(new SymmetricPair<>(trueIsApp, trueCC));
-							if (prevIsApp.getArgument(0) != trueIsApp.getArgument(0)) {
-								reason.add(new SymmetricPair<>(prevIsApp.getArgument(0), trueIsApp.getArgument(0)));
+							if ((CCTerm) prevIsApp.getArgParam(0) != (CCTerm) trueIsApp.getArgParam(0)) {
+								reason.add(new SymmetricPair<>((CCTerm) prevIsApp.getArgParam(0),
+										(CCTerm) trueIsApp.getArgParam(0)));
 							}
 							final Term[] testers = new Term[2];
 							testers[0] = prevIsApp.mFlatTerm;
@@ -252,7 +296,7 @@ public class DataTypeTheory implements ITheory {
 			if (cct instanceof CCAppTerm) {
 				final CCAppTerm appTerm = (CCAppTerm) cct;
 				if (appTerm.getFunctionSymbol().getName().equals(SMTLIBConstants.IS)) {
-					final CCTerm arg = appTerm.getArgument(0);
+					final CCTerm arg = (CCTerm) appTerm.getArgParam(0);
 					falseIsFuns.putIfAbsent(arg.getRepresentative(), new LinkedHashSet<>());
 					falseIsFuns.get(arg.getRepresentative()).add(appTerm);
 				}
@@ -279,7 +323,7 @@ public class DataTypeTheory implements ITheory {
 					for (final Constructor consName : dt.getConstructors()) {
 						final CCAppTerm isFun = isIndices.get(consName.getName());
 						testers[i++] = isFun.mFlatTerm;
-						final CCTerm arg = isFun.getArgument(0);
+						final CCTerm arg = (CCTerm) isFun.getArgParam(0);
 						reason.add(new SymmetricPair<>(isFun, falseCC));
 						if (firstArg == null) {
 							firstArg = arg;
@@ -362,6 +406,10 @@ public class DataTypeTheory implements ITheory {
 
 	@Override
 	public Clause finalCheck() {
+		return runToCompletion(this::finalCheckOnce);
+	}
+
+	private Clause finalCheckOnce() {
 
 		// Get list of all data types. This prevents a concurrent modification error.
 		final List<CCTerm> dataTypeTerms = new ArrayList<>();
@@ -402,11 +450,11 @@ public class DataTypeTheory implements ITheory {
 							mCClosure.getLogger().error("Unpropagated equality on different conses");
 							computeInjectiveDisjointLemmas(consTerm, member);
 						} else {
-							// check we propagated all equalities between constructor arguments.
+							// check we propagated all equalities between constructor arguments (offset-aware).
 							for (int i = 0; i < memberAt.getParameters().length; i++) {
-								final CCTerm consArg = mClausifier.getCCTerm(consAt.getParameters()[i]);
-								final CCTerm memArg = mClausifier.getCCTerm(memberAt.getParameters()[i]);
-								if (memArg.mRepStar != consArg.mRepStar) {
+								final CCParameter consArg = ((CCAppTerm) consTerm).getArgParam(i);
+								final CCParameter memArg = ((CCAppTerm) member).getArgParam(i);
+								if (!memArg.sameValueAs(consArg)) {
 									mCClosure.getLogger().error("Unpropagated constructor argument equality");
 									computeInjectiveDisjointLemmas(consTerm, member);
 								}
@@ -423,7 +471,7 @@ public class DataTypeTheory implements ITheory {
 			final CCAppTerm appTerm = (CCAppTerm) ccTerm;
 			final FunctionSymbol fs = appTerm.getFunctionSymbol();
 			if (fs.isSelector() || fs.getName().equals(SMTLIBConstants.IS)) {
-				final CCTerm argTerm = appTerm.getArgument(0);
+				final CCTerm argTerm = (CCTerm) appTerm.getArgParam(0);
 				final CCTerm consTerm = argTerm.getRepresentative().getSharedTerm();
 				if (consTerm != null) {
 					final ApplicationTerm consApp = (ApplicationTerm) consTerm.getFlatTerm();
@@ -440,7 +488,7 @@ public class DataTypeTheory implements ITheory {
 							@SuppressWarnings("unchecked")
 							final SymmetricPair<CCTerm>[] reason = consTerm == argTerm ? new SymmetricPair[0]
 									: new SymmetricPair[] { new SymmetricPair<>(consTerm, argTerm) };
-							final SymmetricPair<CCTerm> mainEq = new SymmetricPair<>(ccTerm, truthCC);
+							final SymmetricPair<CCParameter> mainEq = new SymmetricPair<>(ccTerm, truthCC);
 							final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_TESTER, mainEq, reason, consTerm);
 							addPendingLemma(lemma);
 						}
@@ -450,13 +498,15 @@ public class DataTypeTheory implements ITheory {
 						final String[] allSelectorNames = constructor.getSelectors();
 						for (int i = 0; i < allSelectorNames.length; i++) {
 							if (allSelectorNames[i].equals(fs.getName())) {
-								final CCTerm consArg = ((CCAppTerm) consTerm).getArgument(i);
-								if (ccTerm.getRepresentative() != consArg.getRepresentative()) {
+								// the field may be numeric, so keep its offset; ccTerm (the selector application) is
+								// offset-free, and the propagated equality is value(ccTerm) == value(field).
+								final CCParameter consArg = ((CCAppTerm) consTerm).getArgParam(i);
+								if (!ccTerm.sameValueAs(consArg)) {
 									mCClosure.getLogger().error("Unpropagated selector of constructor");
 									@SuppressWarnings("unchecked")
 									final SymmetricPair<CCTerm>[] reason = consTerm == argTerm ? new SymmetricPair[0]
 											: new SymmetricPair[] { new SymmetricPair<>(consTerm, argTerm) };
-									final SymmetricPair<CCTerm> mainEq = new SymmetricPair<>(ccTerm, consArg);
+									final SymmetricPair<CCParameter> mainEq = new SymmetricPair<>(ccTerm, consArg);
 									final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_PROJECT, mainEq, reason,
 											consTerm);
 									addPendingLemma(lemma);
@@ -486,7 +536,7 @@ public class DataTypeTheory implements ITheory {
 		for (final Constructor constructor : dataType.getConstructors()) {
 			for (final String selector : constructor.getSelectors()) {
 				final FunctionSymbol selectorFunc = mTheory.getFunction(selector, dataTypeSort);
-				final MasterReverseTrigger master = MasterReverseTrigger.of(mCClosure, selectorFunc, 0);
+				final MasterReverseTrigger master = masterTrigger(selectorFunc);
 				final ReverseTriggerTrigger revTriggerTrigger = (ReverseTriggerTrigger) mCClosure.mSignatureTriggers.get(new SignatureTrigger(master, new CCTerm[] { ccTerm }));
 				if (revTriggerTrigger != null) {
 					for (final AppTermEntry appTerm : revTriggerTrigger.getApplications()) {
@@ -496,7 +546,7 @@ public class DataTypeTheory implements ITheory {
 				}
 			}
 			final FunctionSymbol isFunc = mTheory.getFunctionWithResult(SMTLIBConstants.IS, new String[] { constructor.getName() }, null, dataTypeSort);
-			final MasterReverseTrigger master = MasterReverseTrigger.of(mCClosure, isFunc, 0);
+			final MasterReverseTrigger master = masterTrigger(isFunc);
 			final ReverseTriggerTrigger revTriggerTrigger = (ReverseTriggerTrigger) mCClosure.mSignatureTriggers.get(new SignatureTrigger(master, new CCTerm[] { ccTerm }));
 			if (revTriggerTrigger != null) {
 				for (final AppTermEntry appTerm : revTriggerTrigger.getApplications()) {
@@ -534,7 +584,8 @@ public class DataTypeTheory implements ITheory {
 			// check if this is a constructor with arguments.
 			if (sharedTerm instanceof CCAppTerm) {
 				final CCAppTerm func = (CCAppTerm) sharedTerm;
-				for (final CCTerm arg : func.getArguments()) {
+				for (int i = 0; i < func.getArgCount(); i++) {
+					final CCTerm arg = func.getArgParam(i).getCCTerm();
 					if (arg.getFlatTerm().getSort().getSortSymbol().isDatatype()) {
 						children.add(arg);
 					}
@@ -544,7 +595,7 @@ public class DataTypeTheory implements ITheory {
 		}
 
 		final DataType datatype = (DataType) rep.mFlatTerm.getSort().getSortSymbol();
-		final CCTerm trueRep = mClausifier.getCCTerm(mTheory.mTrue).mRepStar;
+		final CCTerm trueRep = mClausifier.getCCTerm(mTheory.mTrue).getRepresentative();
 		final Set<CCAppTerm> selectors = new LinkedHashSet<>();
 		FunctionSymbol trueTester = null;
 		final Set<FunctionSymbol> falseTesters = new LinkedHashSet<>();
@@ -626,7 +677,7 @@ public class DataTypeTheory implements ITheory {
 				// Get the corresponding tester or create it if it does not exists.
 				// If it exists, the corresponding tester is true.
 				final CCAppTerm selectTerm = (CCAppTerm) currentAsChild;
-				prevAsParent = selectTerm.getArgument(0);
+				prevAsParent = (CCTerm) selectTerm.getArgParam(0);
 				final FunctionSymbol selectorFunc = selectTerm.getFunctionSymbol();
 				final Constructor cons = getConstructor(selectorFunc);
 				final Term isTerm = mTheory.term(mTheory.getFunctionWithResult(SMTLIBConstants.IS, new String[] { cons.getName() },
@@ -729,7 +780,7 @@ public class DataTypeTheory implements ITheory {
 			ApplicationTerm constructor = null;
 			final CCAppTerm checkTerm = iter.next();
 			final FunctionSymbol selectorOrTester = checkTerm.getFunctionSymbol();
-			final CCTerm selectOrIsArg = checkTerm.getArgument(0);
+			final CCTerm selectOrIsArg = (CCTerm) checkTerm.getArgParam(0);
 			assert selectorOrTester.isSelector() || selectorOrTester.getName().equals(SMTLIBConstants.IS);
 			for (final CCTerm ct : selectOrIsArg.getRepresentative().mMembers) {
 				if (ct.mFlatTerm instanceof ApplicationTerm && ((ApplicationTerm) ct.mFlatTerm).getFunction().isConstructor()) {
@@ -754,9 +805,9 @@ public class DataTypeTheory implements ITheory {
 				assert c.getName().equals(constructor.getFunction().getName());
 				for (int i = 0; i < c.getSelectors().length; i++) {
 					if (selName.equals(c.getSelectors()[i])) {
-						final CCTerm arg = mClausifier.getCCTerm(constructor.getParameters()[i]);
-						if (arg.mRepStar != checkTerm.mRepStar) {
-							final SymmetricPair<CCTerm> provedEq = new SymmetricPair<>(checkTerm, arg);
+						final CCParameter arg = ((CCAppTerm) constructorCCTerm).getArgParam(i);
+						if (!checkTerm.sameValueAs(arg)) {
+							final SymmetricPair<CCParameter> provedEq = new SymmetricPair<>(checkTerm, arg);
 							final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_PROJECT, provedEq, reason,
 									constructorCCTerm);
 							addPendingLemma(lemma);
@@ -774,7 +825,7 @@ public class DataTypeTheory implements ITheory {
 				}
 				final CCTerm ccTruthValue = mClausifier.getCCTerm(truthValue);
 				if (ccTruthValue.mRepStar != checkTerm.mRepStar) {
-					final SymmetricPair<CCTerm> provedEq = new SymmetricPair<>(checkTerm, ccTruthValue);
+					final SymmetricPair<CCParameter> provedEq = new SymmetricPair<>(checkTerm, ccTruthValue);
 					final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_TESTER, provedEq, reason,
 							constructorCCTerm);
 					addPendingLemma(lemma);
@@ -812,6 +863,9 @@ public class DataTypeTheory implements ITheory {
 	public void pop() {
 		mPendingLemmas.clear();
 		mPendingEqualities.clear();
+		// The triggers are removed together with the terms they were installed for, so they may have to be
+		// installed (and collected by CClosure) again.
+		mInstalledTriggers.clear();
 		mRecheckOnBacktrack.endScope();
 		recheckTrigger();
 	}
@@ -831,7 +885,7 @@ public class DataTypeTheory implements ITheory {
 	 */
 	private void addConstructorLemma(final CCAppTerm isTerm) {
 		// check if there is already a constructor application equal to the argument
-		final CCTerm arg = isTerm.getArgument(0);
+		final CCTerm arg = (CCTerm) isTerm.getArgParam(0);
 		if (arg.getRepresentative().getSharedTerm() != null) {
 			// We don't care which constructor it is. If it's the wrong constructor
 			// there should already be a trigger that set the isTerm to false.
@@ -857,13 +911,38 @@ public class DataTypeTheory implements ITheory {
 		// create a new constructor application like C(s1(x), s2(x), ..., sm(x))
 		final Sort consType = c.needsReturnOverload() ? dtTerm.getSort() : null;
 		final Term consTerm = mTheory.term(consName, null, consType, selectorTerms);
-		final CCTerm consCCTerm = mClausifier.createCCTerm(consTerm, SourceAnnotation.EMPTY_SOURCE_ANNOT);
-		final SymmetricPair<CCTerm> eq = new SymmetricPair<>(arg, consCCTerm);
+		final CCTerm consCCTerm = (CCTerm) mClausifier.createCCTerm(consTerm, SourceAnnotation.EMPTY_SOURCE_ANNOT);
+		final SymmetricPair<CCParameter> eq = new SymmetricPair<>(arg, consCCTerm);
 		@SuppressWarnings("unchecked")
 		final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_CONSTRUCTOR, eq,
 				new SymmetricPair[] { new SymmetricPair<>(isTerm, mClausifier.getCCTerm(mTheory.mTrue)) });
 		mClausifier.getLogger().debug("New DT_CONSTRUCTOR lemma for %s", dtTerm);
 		addPendingLemma(lemma);
+	}
+
+	/**
+	 * The function symbols for which we already installed a master reverse trigger. Used by
+	 * {@link #masterTrigger(FunctionSymbol)} to detect a fresh installation, which the completion loops in
+	 * {@link #checkpoint()} and {@link #finalCheck()} have to let CClosure process before they can trust the trigger.
+	 */
+	private final HashSet<FunctionSymbol> mInstalledTriggers = new HashSet<>();
+	/** Set by {@link #masterTrigger(FunctionSymbol)} when it installed a trigger that CClosure has not processed. */
+	private boolean mNewTrigger;
+
+	/**
+	 * Get the master reverse trigger that collects the applications of the given function symbol at argument position
+	 * 0, installing it on first use.
+	 *
+	 * A freshly installed trigger only <em>queues</em> its activation on the applications that already exist (the
+	 * find trigger goes to CClosure's signature queue), so its application list is still empty when this returns. A
+	 * caller that concludes something from an empty list must therefore let CClosure process the queue and repeat;
+	 * that is what the loops in {@link #checkpoint()} and {@link #finalCheck()} use {@link #mNewTrigger} for.
+	 */
+	private MasterReverseTrigger masterTrigger(final FunctionSymbol funcSymbol) {
+		if (mInstalledTriggers.add(funcSymbol)) {
+			mNewTrigger = true;
+		}
+		return MasterReverseTrigger.of(mCClosure, funcSymbol, 0);
 	}
 
 	private boolean checkMissingInfiniteSelector(final CCTerm ccterm, Constructor constr) {
@@ -872,7 +951,7 @@ public class DataTypeTheory implements ITheory {
 		for (int i = 0; i < constr.getArgumentSorts().length; i++) {
 			if (mClausifier.isStablyInfinite(constr.getArgumentSorts()[i].mapSort(dataTypeSort.getArguments()))) {
 				final FunctionSymbol selector = mTheory.getFunction(constr.getSelectors()[i], dataTypeSort);
-				final MasterReverseTrigger master = MasterReverseTrigger.of(mCClosure, selector, 0);
+				final MasterReverseTrigger master = masterTrigger(selector);
 				final ReverseTriggerTrigger revTriggerTrigger = (ReverseTriggerTrigger) mCClosure.mSignatureTriggers.get(new SignatureTrigger(master, new CCTerm[] { ccterm }));
 				if (revTriggerTrigger == null || revTriggerTrigger.getApplications().isEmpty()) {
 					return true;
@@ -940,9 +1019,13 @@ public class DataTypeTheory implements ITheory {
 
 	private class ConstrTerm {
 		FunctionSymbol mConstr;
-		CCTerm[] mArguments;
+		/**
+		 * The constructor's arguments as {@link CCParameter}s, so a numeric field's offset (e.g. the {@code +5} in
+		 * {@code cons(x+5)}) is kept and shows up in the model value. {@code null} entries are holes (no known value).
+		 */
+		CCParameter[] mArguments;
 
-		public ConstrTerm(FunctionSymbol constr, CCTerm[] args) {
+		public ConstrTerm(FunctionSymbol constr, CCParameter[] args) {
 			mConstr = constr;
 			mArguments = args;
 		}
@@ -978,11 +1061,15 @@ public class DataTypeTheory implements ITheory {
 					if (sharedTerm instanceof CCAppTerm) {
 						final CCAppTerm constrAppTerm = (CCAppTerm) sharedTerm;
 						final FunctionSymbol constr = constrAppTerm.getFunctionSymbol();
-						final CCTerm[] args = constrAppTerm.getArguments();
+						// keep each argument as a CCParameter so a numeric field's offset is preserved
+						final CCParameter[] args = new CCParameter[constrAppTerm.getArgCount()];
+						for (int i = 0; i < args.length; i++) {
+							args[i] = constrAppTerm.getArgParam(i);
+						}
 						valueMap.put(ct, new ConstrTerm(constr, args));
 					} else {
 						final ApplicationTerm appTerm = (ApplicationTerm) sharedTerm.getFlatTerm();
-						valueMap.put(ct, new ConstrTerm(appTerm.getFunction(), new CCTerm[0]));
+						valueMap.put(ct, new ConstrTerm(appTerm.getFunction(), new CCParameter[0]));
 					}
 				} else {
 					final Map<FunctionSymbol, CCAppTerm> selectorsAndTester = getSelectorsAndTesters(ct);
@@ -990,7 +1077,8 @@ public class DataTypeTheory implements ITheory {
 					// we can use any constructor for which no tester exists. We use the first one.
 					final String[] selectors = constr.getSelectors();
 					final Sort[] argSorts = new Sort[selectors.length];
-					final CCTerm[] args = new CCTerm[selectors.length];
+					// a selector application's value already is the field value (no structural offset)
+					final CCParameter[] args = new CCParameter[selectors.length];
 					for (int i = 0; i < selectors.length; i++) {
 						final FunctionSymbol selector = mTheory.getFunction(selectors[i], sort);
 						argSorts[i] = selector.getReturnSort();
@@ -1028,14 +1116,17 @@ public class DataTypeTheory implements ITheory {
 				boolean undefined = false;
 				boolean hasHole = false;
 				for (int i = 0; i < argModels.length; i++) {
-					CCTerm arg = constrTerm.mArguments[i];
+					final CCParameter arg = constrTerm.mArguments[i];
 					if (arg != null) {
-						arg = arg.getRepresentative();
+						// offset-aware: a numeric field cons(.., y+5, ..) contributes value(y) + 5
 						argModels[i] = modelBuilder.getModelValue(arg);
 						if (argModels[i] == null) {
-							assert valueMap.containsKey(arg);
+							// only datatype-typed fields can be unresolved here (numeric deps come first and are
+							// offset-free w.r.t. their own representative); recurse on the field's representative
+							final CCTerm argRep = arg.getCCTerm().getRepresentative();
+							assert valueMap.containsKey(argRep);
 							path.add(ct);
-							todoStack.addLast(arg);
+							todoStack.addLast(argRep);
 							undefined = true;
 							break;
 						}

@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.LitInfo;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.Occurrence;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitesimalNumber;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.OffsetEqKey;
 
 /**
  * The interpolator for congruence-closure theory lemmata.
@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 public class CCInterpolator {
 
 	Interpolator mInterpolator;
-	LitInfo mDiseqOccurrences;
-	HashMap<SymmetricPair<Term>, LitInfo> mEqualityOccurrences;
+	OffsetLitInfo mDiseqInfo;
+	HashMap<OffsetEqKey, OffsetLitInfo> mEqualityOccurrences;
 
 	Theory mTheory;
 	int mNumInterpolants;
@@ -172,13 +172,13 @@ public class CCInterpolator {
 			}
 		}
 
-		public void closeAPathMixed(final TermVariable mixedVar, final Occurrence occur) {
+		public void closeAPathMixed(final OffsetLitInfo diseqInfo, final Occurrence occur) {
 			// go to the mixed parent and insert the EQ to the boundary term for all partitions on the path.
 			while (occur.isBLocal(mColor)) {
 				final int color = mColor;
 				mColor = getParent(color);
 				assert color < mMaxColor;
-				mInterpolants[color].add(mTheory.term(Interpolator.EQ, mixedVar, mTerm[color]));
+				mInterpolants[color].add(diseqInfo.buildEQ(mTerm[color]));
 				mTerm[color] = null;
 			}
 		}
@@ -244,19 +244,20 @@ public class CCInterpolator {
 		final Term[] interpolants = new Term[mNumInterpolants];
 		final Term[] leftParams = left.getParameters();
 		final Term[] rightParams = right.getParameters();
-		final LitInfo[] paramInfos = new LitInfo[leftParams.length];
+		final OffsetLitInfo[] paramInfos = new OffsetLitInfo[leftParams.length];
 		assert left.getFunction() == right.getFunction() && leftParams.length == rightParams.length;
 
+		final OffsetLitInfo diseqInfo = mDiseqInfo.reorient(mInterpolator.key(left, right));
 		for (int i = 0; i < leftParams.length; i++) {
 			if (leftParams[i] == rightParams[i]) {
 				paramInfos[i] = null;
 			} else {
-				paramInfos[i] = mEqualityOccurrences.get(new SymmetricPair<>(leftParams[i], rightParams[i]));
+				paramInfos[i] = getEqualityInfo(leftParams[i], rightParams[i]);
 			}
 		}
 
 		for (int part = 0; part < mNumInterpolants; part++) {
-			if (mDiseqOccurrences.isBorShared(part)) {
+			if (diseqInfo.isBorShared(part)) {
 				final ArrayDeque<Term> terms = new ArrayDeque<>(leftParams.length);
 				for (int paramNr = 0; paramNr < leftParams.length; paramNr++) {
 					// Collect A-local literals.
@@ -264,14 +265,14 @@ public class CCInterpolator {
 						terms.add(mTheory.term("=", leftParams[paramNr], rightParams[paramNr]));
 					} else if (paramInfos[paramNr] != null && paramInfos[paramNr].isMixed(part)) {
 						// Collect A-local parts in mixed parameter equalities.
-						final TermVariable mixedVar = paramInfos[paramNr].getMixedVar();
-						final Term sideA = paramInfos[paramNr].getLhsOccur().isALocal(part) ? leftParams[paramNr]
+						final Term mixedBoundary = paramInfos[paramNr].getMixedBoundary();
+						final Term sideA = paramInfos[paramNr].isLeftALocal(part) ? leftParams[paramNr]
 								: rightParams[paramNr];
-						terms.add(mTheory.term("=", mixedVar, sideA));
+						terms.add(mTheory.term("=", mixedBoundary, sideA));
 					}
 				}
 				interpolants[part] = mTheory.and(terms.toArray(new Term[terms.size()]));
-			} else if (mDiseqOccurrences.isALocal(part)) {
+			} else if (diseqInfo.isALocal(part)) {
 				final ArrayDeque<Term> terms = new ArrayDeque<>(leftParams.length);
 				for (int paramNr = 0; paramNr < leftParams.length; paramNr++) {
 					// Collect negated B-local literals.
@@ -279,10 +280,10 @@ public class CCInterpolator {
 						terms.add(mTheory.not(mTheory.term("=", leftParams[paramNr], rightParams[paramNr])));
 					} else if (paramInfos[paramNr] != null && paramInfos[paramNr].isMixed(part)) {
 						// Collect B-local parts in mixed parameter equalities.
-						final TermVariable mixedVar = paramInfos[paramNr].getMixedVar();
-						final Term sideB = paramInfos[paramNr].getLhsOccur().isBLocal(part) ? leftParams[paramNr]
+						final Term mixedBoundary = paramInfos[paramNr].getMixedBoundary();
+						final Term sideB = paramInfos[paramNr].isLeftBLocal(part) ? leftParams[paramNr]
 								: rightParams[paramNr];
-						terms.add(mTheory.not(mTheory.term("=", mixedVar, sideB)));
+						terms.add(mTheory.not(mTheory.term("=", mixedBoundary, sideB)));
 					}
 				}
 				interpolants[part] = mTheory.or(terms.toArray(new Term[terms.size()]));
@@ -296,8 +297,8 @@ public class CCInterpolator {
 						// term occurs left and right, so this is obviously shared
 						boundaryTerms[paramNr] = leftParams[paramNr];
 					} else if (paramInfos[paramNr].isMixed(part)) {
-						// mixed case: take mixed var
-						boundaryTerms[paramNr] = paramInfos[paramNr].getMixedVar();
+						// mixed case: take mixed var (shifted to the level of the congruence arguments)
+						boundaryTerms[paramNr] = paramInfos[paramNr].getMixedBoundary();
 					} else if (paramInfos[paramNr].isAorShared(part)) {
 						// the argument of the B-local side of the congruence is shared
 						boundaryTerms[paramNr] = isLeftAlocal ? rightParams[paramNr] : leftParams[paramNr];
@@ -310,7 +311,7 @@ public class CCInterpolator {
 					}
 				}
 				final Term sharedTerm = mTheory.term(left.getFunction(), boundaryTerms);
-				interpolants[part] = mTheory.term(Interpolator.EQ, mDiseqOccurrences.getMixedVar(), sharedTerm);
+				interpolants[part] = diseqInfo.buildEQ(sharedTerm);
 			}
 		}
 		return interpolants;
@@ -344,25 +345,26 @@ public class CCInterpolator {
 		for (int i = 0; i < mPath.length - 1; i++) {
 			final Term left = mPath[i];
 			final Term right = mPath[i + 1];
-			final LitInfo info = mEqualityOccurrences.get(new SymmetricPair<>(left, right));
-			mTail.closeAPath(mHead, left, info);
-			mTail.openAPath(mHead, left, info);
+			final OffsetLitInfo info = getEqualityInfo(left, right);
+			mTail.closeAPath(mHead, left, info.getLitInfo());
+			mTail.openAPath(mHead, left, info.getLitInfo());
 			if (info.getMixedVar() != null) {
 				final Occurrence occ = mInterpolator.getOccurrence(right);
-				mTail.closeAPath(mHead, info.getMixedVar(), occ);
-				mTail.openAPath(mHead, info.getMixedVar(), occ);
+				mTail.closeAPath(mHead, info.getMixedBoundary(), occ);
+				mTail.openAPath(mHead, info.getMixedBoundary(), occ);
 			}
 		}
 		// add the disequality if present
-		if (mDiseqOccurrences != null) {
-			mTail.closeAPath(mHead, tailTerm, mDiseqOccurrences);
-			mTail.openAPath(mHead, tailTerm, mDiseqOccurrences);
-			mHead.closeAPath(mTail, headTerm, mDiseqOccurrences);
-			mHead.openAPath(mTail, headTerm, mDiseqOccurrences);
+		if (mDiseqInfo != null) {
+			final OffsetLitInfo diseqInfo = mDiseqInfo.reorient(mInterpolator.key(headTerm, tailTerm));
+			mTail.closeAPath(mHead, tailTerm, diseqInfo.getLitInfo());
+			mTail.openAPath(mHead, tailTerm, diseqInfo.getLitInfo());
+			mHead.closeAPath(mTail, headTerm, diseqInfo.getLitInfo());
+			mHead.openAPath(mTail, headTerm, diseqInfo.getLitInfo());
 
-			if (mDiseqOccurrences.getMixedVar() != null) {
-				mTail.closeAPathMixed(mDiseqOccurrences.getMixedVar(), headOccur);
-				mHead.closeAPathMixed(mDiseqOccurrences.getMixedVar(), tailOccur);
+			if (diseqInfo.getMixedVar() != null) {
+				mTail.closeAPathMixed(diseqInfo, headOccur);
+				mHead.closeAPathMixed(diseqInfo, tailOccur);
 			}
 		}
 		// close the still open ends where head and tail have different color. The headTerm/tailTerm must be
@@ -424,13 +426,13 @@ public class CCInterpolator {
 						terms.add(lits[i]);
 					} else if (litInfo.isMixed(part)) {
 						final TermVariable mixedVar = litInfo.getMixedVar();
-						InterpolatorAtomInfo atomInfo = mInterpolator.getAtomTermInfo(atom);
+						final InterpolatorAtomInfo atomInfo = mInterpolator.getAtomTermInfo(atom);
 						if (atomInfo.isCCEquality()) {
 							// Collect B-part from splitting mixed literal.
 							final Term sideB = litInfo.getLhsOccur().isBLocal(part)
 									? ((ApplicationTerm) atom).getParameters()[0]
 									: ((ApplicationTerm) atom).getParameters()[1];
-	
+
 							if (mInterpolator.isNegatedTerm(lits[i])) {
 								terms.add(mTheory.not(mTheory.term(SMTLIBConstants.EQUALS, mixedVar, sideB)));
 							} else {
@@ -480,7 +482,7 @@ public class CCInterpolator {
 					} else if (litInfo.isMixed(part)) {
 						// Collect A-part from splitting mixed literal.
 						final TermVariable mixedVar = litInfo.getMixedVar();
-						InterpolatorAtomInfo atomInfo = mInterpolator.getAtomTermInfo(atom);
+						final InterpolatorAtomInfo atomInfo = mInterpolator.getAtomTermInfo(atom);
 						if (atomInfo.isCCEquality()) {
 							final Term sideA = litInfo.getLhsOccur().isALocal(part)
 									? ((ApplicationTerm) atom).getParameters()[0]
@@ -523,21 +525,35 @@ public class CCInterpolator {
 		return interpolants;
 	}
 
+	/**
+	 * Find the literal info for a clause equality justifying the step {@code left = right}. The literal may differ
+	 * from the step by a constant shift and may have swapped sides; the returned info accounts for both.
+	 *
+	 * @return the reoriented literal info, or null if the clause contains no matching equality.
+	 */
+	private OffsetLitInfo getEqualityInfo(final Term left, final Term right) {
+		final OffsetEqKey key = mInterpolator.key(left, right);
+		final OffsetLitInfo info = mEqualityOccurrences.get(key);
+		return info == null ? null : info.reorient(key);
+	}
+
 	public Term[] computeInterpolants(final InterpolatorClauseInfo proofTermInfo) {
 		// Collect the literal infos for all equalities in the clause.
 		mEqualityOccurrences = new HashMap<>();
 		for (final Term literal : proofTermInfo.getLiterals()) {
 			final Term atom = mInterpolator.getAtom(literal);
+			final InterpolatorAtomInfo atomTermInfo = mInterpolator.getAtomTermInfo(atom);
+			final LitInfo occInfo = mInterpolator.getAtomOccurenceInfo(atom);
+			assert atomTermInfo.isCCEquality();
+			final ApplicationTerm eq = atomTermInfo.getEquality();
+			final OffsetEqKey key = mInterpolator.key(eq.getParameters()[0], eq.getParameters()[1]);
+			final OffsetLitInfo info = new OffsetLitInfo(mTheory, occInfo, key);
 			if (atom != literal) {
 				// negated equality in clause, i.e., positive in conflict.
-				final InterpolatorAtomInfo atomTermInfo = mInterpolator.getAtomTermInfo(atom);
-				final LitInfo occInfo = mInterpolator.getAtomOccurenceInfo(atom);
-				assert atomTermInfo.isCCEquality();
-				final ApplicationTerm eq = atomTermInfo.getEquality();
-				mEqualityOccurrences.put(new SymmetricPair<>(eq.getParameters()[0], eq.getParameters()[1]), occInfo);
+				mEqualityOccurrences.put(key, info);
 			} else {
-				assert mDiseqOccurrences == null;
-				mDiseqOccurrences = mInterpolator.getAtomOccurenceInfo(atom);
+				assert mDiseqInfo == null;
+				mDiseqInfo = info;
 			}
 		}
 

@@ -19,31 +19,47 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class CCAppTerm extends CCTerm {
 	final FunctionSymbol mFunc;
-	final CCTerm[] mArgs;
+	/**
+	 * The arguments of the application as {@link CCParameter}s: argument {@code i} of the represented application has
+	 * value {@code mArgs[i]}, i.e. {@code mArgs[i].getCCTerm() + mArgs[i].getOffset()}. An offset-free argument is a
+	 * bare {@link CCTerm} (no wrapper object), so a term like {@code f(x+5)} stores the offset-free CCTerm {@code x}
+	 * wrapped in an {@link OffsettedCCTerm} remembering the {@code +5} only for that one argument; plain congruence
+	 * closure allocates nothing extra.
+	 */
+	final CCParameter[] mArgs;
 	Term mSmtTerm;
 
 	CongruenceTrigger mCongTrigger;
 	FindTriggerTrigger mFindTrigger;
+	/**
+	 * The reverse trigger signatures created for this application by {@link MasterReverseTrigger#activate}, one per
+	 * master trigger watching this application's function symbol. They must be removed together with this term (see
+	 * {@code CClosure.removeTerm}), otherwise a stale application entry survives a pop and later trigger merges
+	 * activate reverse triggers on the removed term.
+	 */
+	ArrayList<ReverseTriggerTrigger> mReverseTriggers;
 
-	public CCAppTerm(FunctionSymbol fsym, final CCTerm[] args,
+	public CCAppTerm(FunctionSymbol fsym, final CCParameter[] args,
 			final CClosure engine, final boolean isFromQuant) {
 		super(HashUtils.hashJenkins(fsym.hashCode(), (Object[]) args), isFromQuant ? CCAppTerm.computeAge(args) : 0);
 		mFunc = fsym;
 		mArgs = args;
 	}
 
-	private final static int computeAge(CCTerm[] args) {
+	private final static int computeAge(CCParameter[] args) {
 		int age = 1;
 		for (int i = 0; i < args.length; i++) {
-			age = Math.max(age, args[i].mAge + 1);
+			age = Math.max(age, args[i].getCCTerm().mAge + 1);
 		}
 		return age;
 	}
@@ -52,11 +68,25 @@ public class CCAppTerm extends CCTerm {
 		return mFunc;
 	}
 
-	public CCTerm[] getArguments() {
-		return mArgs;
+	/** The number of arguments of this application. */
+	public int getArgCount() {
+		return mArgs.length;
 	}
 
-	public CCTerm getArgument(int argPosition) {
+	/**
+	 * @return the constant offset added to the argument at the given position, i.e. the argument value is
+	 *         {@code getArgParam(argPosition).getCCTerm() + getArgOffset(argPosition)}.
+	 */
+	public Rational getArgOffset(int argPosition) {
+		return mArgs[argPosition].getOffset();
+	}
+
+	/**
+	 * The value of the argument at the given position as a {@link CCParameter} ("a CCTerm up to a constant offset").
+	 * This is the only argument accessor: callers that genuinely want the offset-free structural CCTerm must say so
+	 * explicitly via {@code getArgParam(i).getCCTerm()}.
+	 */
+	public CCParameter getArgParam(int argPosition) {
 		return mArgs[argPosition];
 	}
 
@@ -79,7 +109,10 @@ public class CCAppTerm extends CCTerm {
 					visited.put(app, visited.size());
 					todo.add(")");
 					for (int i = app.mArgs.length - 1; i >= 0; i--) {
-						todo.add(app.mArgs[i]);
+						if (!app.getArgOffset(i).equals(Rational.ZERO)) {
+							todo.add("+" + app.getArgOffset(i));
+						}
+						todo.add(app.mArgs[i].getCCTerm());
 						todo.add(" ");
 					}
 					todo.add(app.mFunc.getApplicationString());

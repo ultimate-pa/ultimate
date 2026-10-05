@@ -1,0 +1,11 @@
+(set-logic QF_UFLIA)
+(declare-fun f (Int) Int)
+(declare-const x Int)
+(declare-const y Int)
+(declare-const z Int)
+
+(set-info :status unsat)
+(assert (= (f x) (f y)))
+(assert (= (* 2 x) z))
+(assert (= (* 2 y) (+ z 1)))
+(check-sat)

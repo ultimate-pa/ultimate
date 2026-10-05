@@ -57,7 +57,7 @@ public class DTReverseTrigger extends ReverseTrigger {
 	}
 
 	@Override
-	public CCTerm getArgument() {
+	public CCParameter getArgument() {
 		return mArg;
 	}
 
@@ -77,9 +77,12 @@ public class DTReverseTrigger extends ReverseTrigger {
 		mClausifier.getLogger().debug("DTReverseTrigger: %s on %s", appTerm, mArg);
 		final ApplicationTerm argAT = (ApplicationTerm) mArg.mFlatTerm;
 		final SymmetricPair<CCTerm>[] reason;
-		if (appTerm.getArgument(0) != mArg) {
+		// this trigger fires on a selector/tester, whose argument is the datatype value (never numeric, so offset-free);
+		// the cast asserts that no-offset assumption at runtime
+		final CCTerm appArg = (CCTerm) appTerm.getArgParam(0);
+		if (appArg != mArg) {
 			reason = new SymmetricPair[] {
-				new SymmetricPair<>(appTerm.getArgument(0), mArg)
+				new SymmetricPair<>(appArg, mArg)
 			};
 		} else {
 			reason = new SymmetricPair[0];
@@ -94,7 +97,7 @@ public class DTReverseTrigger extends ReverseTrigger {
 			} else {
 				truthValue = mClausifier.getTheory().mFalse;
 			}
-			final SymmetricPair<CCTerm> mainEq = new SymmetricPair<>(appTerm, mClausifier.getCCTerm(truthValue));
+			final SymmetricPair<CCParameter> mainEq = new SymmetricPair<>(appTerm, mClausifier.getCCTerm(truthValue));
 			final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_TESTER, mainEq, reason, mArg);
 			mDTTheory.addPendingLemma(lemma);
 			if (isFresh) {
@@ -107,8 +110,10 @@ public class DTReverseTrigger extends ReverseTrigger {
 			final Constructor c = argDT.getConstructor(argAT.getFunction().getName());
 			for (int i = 0; i < c.getSelectors().length; i++) {
 				if (mFunctionSymbol.getName() == c.getSelectors()[i]) {
-					final SymmetricPair<CCTerm> mainEq = new SymmetricPair<>(appTerm,
-							mClausifier.getCCTerm(argAT.getParameters()[i]));
+					// mArg is the constructor application; read field i as a CCParameter so a numeric field keeps
+					// its offset, making the propagated equality value(sel(u)) == value(field).
+					final CCParameter mainArg = ((CCAppTerm) mArg).getArgParam(i);
+					final SymmetricPair<CCParameter> mainEq = new SymmetricPair<>(appTerm, mainArg);
 					final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_PROJECT, mainEq, reason, mArg);
 					mDTTheory.addPendingLemma(lemma);
 					if (isFresh) {

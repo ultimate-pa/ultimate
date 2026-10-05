@@ -21,12 +21,15 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleListable;
 
 /**
+ * A trigger that is activated when two values become equal. The two values are {@link CCParameter}s; the trigger fires
+ * when their congruence classes are merged such that the values coincide (same representative and same offset to it).
+ *
  * @author Tanja Schindler
  */
 public abstract class CompareTrigger extends SimpleListable<CompareTrigger> {
-	public abstract CCTerm getLhs();
+	public abstract CCParameter getLhs();
 
-	public abstract CCTerm getRhs();
+	public abstract CCParameter getRhs();
 
 	public abstract void activate();
 }

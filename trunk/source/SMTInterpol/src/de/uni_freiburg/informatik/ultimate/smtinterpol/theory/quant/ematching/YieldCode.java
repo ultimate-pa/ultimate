@@ -26,7 +26,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCParameter;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantLiteral;
 
 /**
@@ -66,8 +66,8 @@ public class YieldCode implements ICode {
 	}
 
 	@Override
-	public void execute(CCTerm[] register, final int decisionLevel) {
-		final List<CCTerm> varSubs = new ArrayList<CCTerm>(mVarOrder.length);
+	public void execute(final CCParameter[] register, final int decisionLevel) {
+		final List<CCParameter> varSubs = new ArrayList<>(mVarOrder.length);
 		for (int i = 0; i < mVarOrder.length; i++) {
 			if (mVarPos.containsKey(mVarOrder[i])) {
 				varSubs.add(register[mVarPos.get(mVarOrder[i])]);
@@ -75,7 +75,7 @@ public class YieldCode implements ICode {
 				varSubs.add(null);
 			}
 		}
-		final Map<Term, CCTerm> equivalentCCTerms = new HashMap<>();
+		final Map<Term, CCParameter> equivalentCCTerms = new HashMap<>();
 		for (final Entry<Term, Integer> pos : mEquivCCTermPos.entrySet()) {
 			equivalentCCTerms.put(pos.getKey(), register[pos.getValue()]);
 		}

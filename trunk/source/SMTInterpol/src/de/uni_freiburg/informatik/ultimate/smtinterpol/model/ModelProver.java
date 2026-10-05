@@ -948,7 +948,7 @@ public class ModelProver extends TermTransformer {
 		}
 
 		case SMTLIBConstants.CONST:
-			return theory.term(fs, args[0]);
+			return annotateProof(mProofRules.refl(funcTerm), funcTerm);
 
 		case SMTLIBConstants.SELECT: {
 			// we assume that the array parameter is a term of the form

@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCParameter;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.util.Pair;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitesimalNumber;
@@ -550,8 +551,8 @@ public class InstantiationManager {
 	 * @return the age of the CCTerm if the term has a CCTerm, 0 else.
 	 */
 	private int getTermAge(final Term t) {
-		final CCTerm cc = mClausifier.getCCTerm(t);
-		return cc != null ? cc.getAge() : 0;
+		final CCParameter cc = mClausifier.getCCParameter(t);
+		return cc != null ? cc.getCCTerm().getAge() : 0;
 	}
 
 	/**
@@ -756,9 +757,8 @@ public class InstantiationManager {
 	private SubstitutionInfo mapToFirstChecked(final SubstitutionInfo first, final SubstitutionInfo second) {
 		if (Config.EXPENSIVE_ASSERTS) {
 			assert first.getEquivalentCCTerms().keySet().equals(second.getEquivalentCCTerms().keySet());
-			for (final Entry<Term, CCTerm> equi : first.getEquivalentCCTerms().entrySet()) {
-				assert first.getEquivalentCCTerms().get(equi.getKey()).getRepresentative() == second
-						.getEquivalentCCTerms().get(equi.getKey()).getRepresentative();
+			for (final Entry<Term, CCParameter> equi : first.getEquivalentCCTerms().entrySet()) {
+				assert equi.getValue().sameValueAs(second.getEquivalentCCTerms().get(equi.getKey()));
 			}
 		}
 		return first;
@@ -768,10 +768,10 @@ public class InstantiationManager {
 		final int length = qLit.getClause().getVars().length;
 		final List<Term> termSubs = new ArrayList<>();
 		if (!info.equals(mEMatching.getEmptySubs())) {
-			final List<CCTerm> ccSubs = info.getVarSubs();
+			final List<CCParameter> ccSubs = info.getVarSubs();
 			assert ccSubs.size() == length;
 			for (int i = 0; i < length; i++) {
-				final CCTerm ccTerm = ccSubs.get(i);
+				final CCParameter ccTerm = ccSubs.get(i);
 				termSubs.add(ccTerm == null ? null : ccTerm.getFlatTerm());
 			}
 		}
@@ -842,15 +842,15 @@ public class InstantiationManager {
 		final List<Term> clauseVarSubs = clauseInstInfo.getSubs();
 		if (clauseInstInfo.getInstValue() != InstanceValue.IRRELEVANT && !clauseVarSubs.isEmpty()) {
 			// Complete the equivalent term map from info by adding the variable substitution from the key
-			final Map<Term, CCTerm> equivalentTerms = new HashMap<>();
+			final Map<Term, CCParameter> equivalentTerms = new HashMap<>();
 			equivalentTerms.putAll(litSubsInfo.getEquivalentCCTerms());
 			for (int i = 0; i < clauseVars.length; i++) {
-				final CCTerm clauseSubs = mClausifier.getCCTerm(clauseVarSubs.get(i));
+				final CCParameter clauseSubs = mClausifier.getCCParameter(clauseVarSubs.get(i));
 				if (clauseSubs != null) {
-					final CCTerm litSubs =
+					final CCParameter litSubs =
 							litSubsInfo.equals(mEMatching.getEmptySubs()) ? null : litSubsInfo.getVarSubs().get(i);
 					if (litSubs != null) { // If the substitutionInfo has a substitution for the variable, keep it.
-						assert litSubs.getRepresentative().equals(clauseSubs.getRepresentative());
+						assert litSubs.sameValueAs(clauseSubs);
 					} else { // Use the subs from the clause.
 						equivalentTerms.put(clauseVars[i], clauseSubs);
 					}
@@ -1066,10 +1066,10 @@ public class InstantiationManager {
 	/**
 	 * Helper method to build a map from Term to Term, given a map from Term to CCTerm.
 	 */
-	private Map<Term, Term> buildSharedMapFromCCMap(final Map<Term, CCTerm> ccMap) {
+	private Map<Term, Term> buildSharedMapFromCCMap(final Map<Term, CCParameter> ccMap) {
 		final Map<Term, Term> sharedMap = new HashMap<>();
-		for (final Entry<Term, CCTerm> entry : ccMap.entrySet()) {
-			final CCTerm ccTerm = entry.getValue();
+		for (final Entry<Term, CCParameter> entry : ccMap.entrySet()) {
+			final CCParameter ccTerm = entry.getValue();
 			final Term term = ccTerm.getFlatTerm();
 			sharedMap.put(entry.getKey(), term);
 		}
@@ -1356,15 +1356,16 @@ public class InstantiationManager {
 	 *            the substitution info containing the known ground terms for the quantified terms in the literal.
 	 * @return the InstanceValue of the substituted literal.
 	 */
-	private InstanceValue evaluateCCEqualityKnownShared(final QuantEquality qEq, final Map<Term, CCTerm> equivalentCCTerms) {
-		final CCTerm leftCC, rightCC;
+	private InstanceValue evaluateCCEqualityKnownShared(final QuantEquality qEq,
+			final Map<Term, CCParameter> equivalentCCTerms) {
+		final CCParameter leftCC, rightCC;
 		if (qEq.getLhs().getFreeVars().length == 0) {
-			leftCC = mClausifier.getCCTerm(qEq.getLhs());
+			leftCC = mClausifier.getCCParameter(qEq.getLhs());
 		} else {
 			leftCC = equivalentCCTerms.get(qEq.getLhs());
 		}
 		if (qEq.getRhs().getFreeVars().length == 0) {
-			rightCC = mClausifier.getCCTerm(qEq.getRhs());
+			rightCC = mClausifier.getCCParameter(qEq.getRhs());
 		} else {
 			rightCC = equivalentCCTerms.get(qEq.getRhs());
 		}
@@ -1395,8 +1396,8 @@ public class InstantiationManager {
 		final Term left = finder.findEquivalentShared(qEq.getLhs());
 		final Term right = finder.findEquivalentShared(qEq.getRhs());
 		if (left != null && right != null) {
-			final CCTerm leftCC = mClausifier.getCCTerm(left);
-			final CCTerm rightCC = mClausifier.getCCTerm(right);
+			final CCParameter leftCC = mClausifier.getCCParameter(left);
+			final CCParameter rightCC = mClausifier.getCCParameter(right);
 			if (leftCC != null && rightCC != null) {
 				if (mQuantTheory.getCClosure().isEqSet(leftCC, rightCC)) {
 					return InstanceValue.TRUE;
@@ -1655,7 +1656,7 @@ public class InstantiationManager {
 					}
 				}
 				final Term instAppTerm = mClausifier.getTheory().term(mFunc, instArgs);
-				final CCTerm ccTermRep = mQuantTheory.getCClosure().getCCTermRep(instAppTerm);
+				final CCParameter ccTermRep = mQuantTheory.getCClosure().getCCParamRep(instAppTerm);
 				if (ccTermRep != null) {
 					mTerms.put(mTerm, ccTermRep.getFlatTerm());
 				}
@@ -1677,7 +1678,7 @@ public class InstantiationManager {
 				if (instAffine != null) {
 					final Term instTerm = instAffine.toTerm(mTerm.getSort());
 					// Note: This will often not find a CC term.
-					final CCTerm ccTermRep = mQuantTheory.getCClosure().getCCTermRep(instTerm);
+					final CCParameter ccTermRep = mQuantTheory.getCClosure().getCCParamRep(instTerm);
 					if (ccTermRep != null) {
 						mTerms.put(mTerm, ccTermRep.getFlatTerm());
 					}

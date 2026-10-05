@@ -22,7 +22,7 @@ import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCParameter;
 
 /**
  * Code to get the specified argument of the candidate for a specified term.
@@ -48,12 +48,12 @@ public class GetArgCode implements ICode {
 	}
 
 	@Override
-	public void execute(final CCTerm[] register, final int decisionLevel) {
-		final CCTerm appTerm = register[mAppTermRegIndex];
-		assert appTerm instanceof CCAppTerm;
-		CCAppTerm partialApp = (CCAppTerm) appTerm;
-		CCTerm arg = partialApp.getArgument(mArgPos);
-		final CCTerm[] updatedRegister = Arrays.copyOf(register, register.length);
+	public void execute(final CCParameter[] register, final int decisionLevel) {
+		// a candidate for a function application is always a bare CCAppTerm (offset 0)
+		assert register[mAppTermRegIndex] instanceof CCAppTerm;
+		final CCAppTerm partialApp = (CCAppTerm) register[mAppTermRegIndex];
+		final CCParameter arg = partialApp.getArgParam(mArgPos);
+		final CCParameter[] updatedRegister = Arrays.copyOf(register, register.length);
 		updatedRegister[mOutRegIndex] = arg;
 		mEMatching.addCode(mRemainingCode, updatedRegister, decisionLevel);
 	}

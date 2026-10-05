@@ -35,13 +35,18 @@ public final class ReverseTriggerTrigger extends SignatureTrigger {
 
 
 	public ReverseTriggerTrigger(MasterReverseTrigger masterTrigger, ReverseTrigger trigger) {
-		super(masterTrigger, new CCTerm[] { trigger.getArgument() });
+		super(masterTrigger, new CCParameter[] { trigger.getArgument() });
 		mTriggers.append(trigger);
 	}
 
 	public ReverseTriggerTrigger(MasterReverseTrigger masterTrigger, CCAppTerm app, int argPosition) {
-		super(masterTrigger, new CCTerm[] { app.getArgument(argPosition) });
+		// key the signature on the argument value (including its offset), so it matches the trigger's watched value
+		super(masterTrigger, new CCParameter[] { app.getArgParam(argPosition) });
 		mApplications.append(new AppTermEntry(app));
+	}
+
+	public SimpleList<ReverseTrigger> getTriggers() {
+		return mTriggers;
 	}
 
 	public SimpleList<AppTermEntry> getApplications() {

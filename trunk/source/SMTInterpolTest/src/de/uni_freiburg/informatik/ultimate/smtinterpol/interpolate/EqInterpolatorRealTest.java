@@ -107,7 +107,7 @@ public class EqInterpolatorRealTest {
 		@SuppressWarnings("unchecked")
 		final Set<String>[] partition = new Set[] { empty, empty };
 		mInterpolator = new Interpolator(mSolver.getLogger(), null, null, mTheory, partition, new int[partition.length],
-				new TimeoutHandler(mSolver.getTerminationRequest()));
+				true, new TimeoutHandler(mSolver.getTerminationRequest()));
 		final HashSet<Term> bsubTerms = mInterpolator.getSubTerms(bSmt);
 		final HashSet<Term> asubTerms = mInterpolator.getSubTerms(aSmt);
 		for (final Term sub : asubTerms) {

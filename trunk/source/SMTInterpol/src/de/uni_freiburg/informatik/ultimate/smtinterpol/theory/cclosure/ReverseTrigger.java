@@ -40,11 +40,12 @@ public abstract class ReverseTrigger extends SimpleListable<ReverseTrigger> {
 	SignatureTrigger mSignatureTrigger;
 
 	/**
-	 * Get the argument on which the reverse trigger is installed.
+	 * Get the argument value on which the reverse trigger is installed, as a {@link CCParameter} so the offset (if any)
+	 * is part of the watched value.
 	 *
-	 * @return the argument term.
+	 * @return the argument value.
 	 */
-	public abstract CCTerm getArgument();
+	public abstract CCParameter getArgument();
 
 	/**
 	 * Get the position in the function application where the argument should be.

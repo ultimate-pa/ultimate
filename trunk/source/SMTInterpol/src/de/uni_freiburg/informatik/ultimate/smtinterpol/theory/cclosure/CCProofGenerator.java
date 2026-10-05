@@ -52,59 +52,46 @@ public class CCProofGenerator {
 	 * This class is used to keep together paths and their indices (i.e. null for subpaths, and weakpathindex else).
 	 */
 	private static class IndexedPath {
-		private final CCTerm mIndex;
-		private final CCTerm[] mPath;
+		private final CCParameter mIndex;
+		/** The path nodes as CCParameters (with offsets); a step's offset is justified by an offset equality. */
+		private final CCParameter[] mPath;
+		/**
+		 * The select/const edge justifying this weak path's single weak-congruence step, or {@code null}. See
+		 * {@link CCAnnotation#mSelectEdges}: {@code mSelectEdge[0]} is on the {@code mPath[0]} side.
+		 */
+		private final CCParameter[] mSelectEdge;
 
-		public IndexedPath(final CCTerm index, final CCTerm[] path) {
+		public IndexedPath(final CCParameter index, final CCParameter[] path, final CCParameter[] selectEdge) {
 			mIndex = index;
 			mPath = path;
+			mSelectEdge = selectEdge;
 		}
 
-		public CCTerm getIndex() {
+		public CCParameter getIndex() {
 			return mIndex;
 		}
 
-		public CCTerm[] getPath() {
+		public CCParameter[] getPath() {
 			return mPath;
 		}
 
-		public SymmetricPair<CCTerm> getPathEnds() {
+		public CCParameter[] getSelectEdge() {
+			return mSelectEdge;
+		}
+
+		/** The two path ends as a CCParameter pair (with offsets), i.e. the equality this path proves. */
+		public SymmetricPair<CCParameter> getPathEndParams() {
 			return new SymmetricPair<>(mPath[0], mPath[mPath.length - 1]);
+		}
+
+		/** The offset-aware key of the path ends, used to look the path up among shared subpaths. */
+		public OffsetPair getPathEnds() {
+			return key(getPathEndParams());
 		}
 
 		@Override
 		public String toString() {
 			return mIndex + ": " + Arrays.toString(mPath);
-		}
-	}
-
-	/**
-	 * This class is used to represent a select edge and select-const edges in weak congruences.
-	 */
-	private static class SelectEdge {
-		private final CCTerm mLeft;
-		private final CCTerm mRight;
-
-		public SelectEdge(final CCTerm left, final CCTerm right) {
-			mLeft = left;
-			mRight = right;
-		}
-
-		public SymmetricPair<CCTerm> toSymmetricPair() {
-			return new SymmetricPair<>(mLeft, mRight);
-		}
-
-		public CCTerm getLeft() {
-			return mLeft;
-		}
-
-		public CCTerm getRight() {
-			return mRight;
-		}
-
-		@Override
-		public String toString() {
-			return mLeft + " <-> " + mRight;
 		}
 	}
 
@@ -131,9 +118,10 @@ public class CCProofGenerator {
 
 		// Information needed to build the proof graph
 		/**
-		 * The equality this lemma proves.
+		 * The equality this lemma proves, as a CCParameter pair (with offsets); the offset-free key (see
+		 * {@link CCProofGenerator#key}) is used for the lookup maps.
 		 */
-		private SymmetricPair<CCTerm> mLemmaDiseq;
+		private SymmetricPair<CCParameter> mLemmaDiseq;
 		/**
 		 * The literals this lemma requires for the proof.
 		 */
@@ -159,7 +147,7 @@ public class CCProofGenerator {
 			mNumVisitedParents = 0;
 		}
 
-		public SymmetricPair<CCTerm> getDiseq() {
+		public SymmetricPair<CCParameter> getDiseq() {
 			return mLemmaDiseq;
 		}
 
@@ -196,7 +184,7 @@ public class CCProofGenerator {
 			mProofLiterals.add(new ProofLiteral(literal.getAtom().getSMTFormula(theory), literal.getSign() > 0));
 		}
 
-		private void addAuxLiteral(SymmetricPair<CCTerm> equality, boolean positive) {
+		private void addAuxLiteral(SymmetricPair<CCParameter> equality, boolean positive) {
 			final Term eqTerm = addAuxEquality(equality);
 			mProofLiterals.add(new ProofLiteral(eqTerm, positive));
 		}
@@ -209,14 +197,15 @@ public class CCProofGenerator {
 		/**
 		 * Collect the proof info for one path.
 		 */
-		private boolean collectEquality(final SymmetricPair<CCTerm> termPair) {
+		private boolean collectEquality(final SymmetricPair<CCParameter> termPair) {
+			final OffsetPair termKey = key(termPair);
 			if (isEqualityLiteral(termPair)) {
 				// equality literals are just added
-				addLiteral(mEqualityLiterals.get(termPair));
+				addLiteral(mEqualityLiterals.get(termKey));
 				return true;
-			} else if (mPathProofMap.containsKey(termPair)) {
+			} else if (mPathProofMap.containsKey(termKey)) {
 				// already created sub proof; add it
-				addSubProof(mPathProofMap.get(termPair));
+				addSubProof(mPathProofMap.get(termKey));
 				return true;
 			} else {
 				// create congruence sub proof
@@ -224,7 +213,7 @@ public class CCProofGenerator {
 				if (congruence == null) {
 					return false;
 				}
-				mPathProofMap.put(termPair, congruence);
+				mPathProofMap.put(termKey, congruence);
 				addSubProof(congruence);
 				return true;
 			}
@@ -235,25 +224,26 @@ public class CCProofGenerator {
 		 */
 		private void collectStrongPath(final IndexedPath indexedPath) {
 			assert (indexedPath.getIndex() == null);
-			final CCTerm[] path = indexedPath.getPath();
+			final CCParameter[] path = indexedPath.getPath();
 			// Check cases (i) - (iv) for all term pairs.
 			for (int i = 0; i < path.length - 1; i++) {
-				final CCTerm firstTerm = path[i];
-				final CCTerm secondTerm = path[i + 1];
-				final SymmetricPair<CCTerm> termPair = new SymmetricPair<>(firstTerm, secondTerm);
+				final CCParameter firstTerm = path[i];
+				final CCParameter secondTerm = path[i + 1];
+				final SymmetricPair<CCParameter> termPair = new SymmetricPair<>(firstTerm, secondTerm);
 				if (!collectEquality(termPair)) {
 					throw new IllegalArgumentException("Cannot explain term pair " + termPair.toString());
 				}
 			}
 		}
 
-		private void collectSelectIndexEquality(final CCTerm select, final CCTerm pathIndex) {
-			if (ArrayTheory.isSelectTerm(select)) {
-				final CCTerm index = ArrayTheory.getIndexFromSelect((CCAppTerm) select);
-				if (index != pathIndex) {
-					if (!collectEquality(new SymmetricPair<>(pathIndex, index))) {
-						throw new AssertionError("Cannot find select index equality " + pathIndex + " = " + index);
-					}
+		private void collectSelectIndexEquality(final CCParameter select, final CCTerm array, final CCParameter pathIndex) {
+			if (!ArrayTheory.isSelectTerm(select) || ArrayTheory.getArrayFromSelect((CCAppTerm) select) != array) {
+				throw new AssertionError();
+			}
+			final CCParameter index = ArrayTheory.getIndexFromSelect((CCAppTerm) select);
+			if (!index.equals(pathIndex)) {
+				if (!collectEquality(new SymmetricPair<CCParameter>(pathIndex, index))) {
+					throw new AssertionError("Cannot find select index equality " + pathIndex + " = " + index);
 				}
 			}
 		}
@@ -263,13 +253,17 @@ public class CCProofGenerator {
 		 */
 		private void collectWeakPath(final IndexedPath indexedPath) {
 			assert (indexedPath.getIndex() != null || mRule == RuleKind.WEAKEQ_EXT || mRule == RuleKind.CONST_WEAKEQ);
-			final CCTerm pathIndex = indexedPath.getIndex();
-			final CCTerm[] path = indexedPath.getPath();
-			// Check cases (i) - (iv) for all term pairs.
+			final CCParameter pathIndex = indexedPath.getIndex();
+			final CCParameter[] path = indexedPath.getPath();
+			// Check cases (i) - (iv) for all term pairs. Array path nodes are offset-free, so we use the structural
+			// CCTerms for the array cases and the CCParameters only for the equality (case i).
 			for (int i = 0; i < path.length - 1; i++) {
-				final CCTerm firstTerm = path[i];
-				final CCTerm secondTerm = path[i + 1];
-				final SymmetricPair<CCTerm> termPair = new SymmetricPair<>(firstTerm, secondTerm);
+				final CCParameter firstParam = path[i];
+				final CCParameter secondParam = path[i + 1];
+				// Array terms are offset free, this cast should never fail.
+				final CCTerm firstTerm = (CCTerm) firstParam;
+				final CCTerm secondTerm = (CCTerm) secondParam;
+				final SymmetricPair<CCParameter> termPair = new SymmetricPair<>(firstParam, secondParam);
 				// Case (i)
 				if (collectEquality(termPair)) {
 					continue;
@@ -288,32 +282,33 @@ public class CCProofGenerator {
 					if (pathIndex == null) {
 						continue;
 					}
-					final CCTerm storeIndex = ArrayTheory.getIndexFromStore((CCAppTerm) storeTerm);
-					final SymmetricPair<CCTerm> indexPair = new SymmetricPair<>(pathIndex, storeIndex);
+					final CCParameter storeIndex = ArrayTheory.getIndexFromStore((CCAppTerm) storeTerm);
+					final SymmetricPair<CCParameter> indexPair = new SymmetricPair<>(pathIndex, storeIndex);
 					if (isDisequalityLiteral(indexPair)) {
-						addLiteral(mEqualityLiterals.get(indexPair));
+						addLiteral(mEqualityLiterals.get(key(indexPair)));
 						continue;
 					}
 					if (isTrivialDisequality(indexPair)) {
-						mTrivialDisequalities.add(indexPair);
+						mTrivialDisequalities.add(addAuxEquality(indexPair));
 						addAuxLiteral(indexPair, true);
 						continue;
 					}
 				}
 				// Case (iv) select
 				if (mRule == RuleKind.WEAKEQ_EXT && pathIndex != null) {
-					final SelectEdge selectEdge = findSelectPath(termPair, pathIndex);
+					// Use the select/const edge recorded in the annotation.
+					final CCParameter[] selectEdge = indexedPath.getSelectEdge();
 					if (selectEdge != null) {
-						if (selectEdge.getLeft() != selectEdge.getRight()) {
-							if (!collectEquality(selectEdge.toSymmetricPair())) {
+						if (selectEdge[0] != selectEdge[1]) {
+							if (!collectEquality(new SymmetricPair<>(selectEdge[0], selectEdge[1]))) {
 								throw new AssertionError("Cannot find select edge " + selectEdge);
 							}
 						}
-						if (!isConst(firstTerm, selectEdge.getLeft())) {
-							collectSelectIndexEquality(selectEdge.getLeft(), pathIndex);
+						if (!isConst(firstTerm, selectEdge[0])) {
+							collectSelectIndexEquality(selectEdge[0], firstTerm, pathIndex);
 						}
-						if (!isConst(secondTerm, selectEdge.getRight())) {
-							collectSelectIndexEquality(selectEdge.getRight(), pathIndex);
+						if (!isConst(secondTerm, selectEdge[1])) {
+							collectSelectIndexEquality(selectEdge[1], secondTerm, pathIndex);
 						}
 						continue;
 					}
@@ -335,19 +330,101 @@ public class CCProofGenerator {
 
 	// Store the self-built auxiliary equality literals, such that the
 	// arguments of the equality are always in the same order.
-	private HashMap<SymmetricPair<CCTerm>, Term> mAuxLiterals;
-	private HashMap<SymmetricPair<CCTerm>, Literal> mEqualityLiterals;
-	private HashMap<SymmetricPair<CCTerm>, ProofInfo> mPathProofMap;
-	private LinkedHashSet<SymmetricPair<CCTerm>> mAllEqualities;
-	private LinkedHashSet<SymmetricPair<CCTerm>> mTrivialDisequalities;
+	private HashMap<OffsetPair, Term> mAuxLiterals;
+	private HashMap<OffsetPair, Literal> mEqualityLiterals;
+	private HashMap<OffsetPair, ProofInfo> mPathProofMap;
+	private LinkedHashSet<OffsetPair> mAllEqualities;
+	/** The normalized literals of the trivial disequalities; each of them is proved by its own EQ lemma. */
+	private LinkedHashSet<Term> mTrivialDisequalities;
 	private ProofRules mProofRules;
+
+	/**
+	 * A lookup key identifying an (offset) equality fact between two CCTerms: {@code value(first) == value(second) +
+	 * offset}. The maps in this class are keyed on this triple so that two facts sharing offset-free endpoints but
+	 * differing in offset — e.g. {@code car(x) = y} (offset 0, a dt-project consequence) and {@code car(x) = y-1}
+	 * (offset -1, asserted) in an offset anti-cycle — are kept distinct, while different renderings of the <em>same</em>
+	 * fact (e.g. {@code x+5 = y+7} and {@code x+7 = y+9}, both {@code x = y+2}) still collapse to one key. The key is
+	 * canonical under swapping the two terms (which negates the offset), mirroring {@link CCTermPairHash}.
+	 */
+	static final class OffsetPair {
+		final CCTerm mFirst;
+		final CCTerm mSecond;
+		final Rational mOffset;
+
+		OffsetPair(final CCParameter first, final CCParameter second) {
+			mFirst = first.getCCTerm();
+			mSecond = second.getCCTerm();
+			// Structural offset (matching CCEquality.getOffset() used in collectClauseLiterals); the dynamic
+			// getOffsetToRep() must not be used here, as disequality endpoints are not in the same class.
+			mOffset = second.getOffset().sub(first.getOffset());
+		}
+
+		OffsetPair(final CCTerm first, final CCTerm second, final Rational offset) {
+			mFirst = first;
+			mSecond = second;
+			mOffset = offset;
+		}
+
+		CCTerm getFirst() {
+			return mFirst;
+		}
+
+		CCTerm getSecond() {
+			return mSecond;
+		}
+
+		@Override
+		public int hashCode() {
+			// symmetric in (first, second); offsetHash is invariant under (first, second, off) -> (second, first, -off)
+			return (mFirst.hashCode() ^ mSecond.hashCode()) + CCTermPairHash.offsetHash(mFirst, mSecond, mOffset);
+		}
+
+		@Override
+		public boolean equals(final Object other) {
+			if (this == other) {
+				return true;
+			}
+			if (!(other instanceof OffsetPair)) {
+				return false;
+			}
+			final OffsetPair o = (OffsetPair) other;
+			// Both orientations must be tried, not just the first one that matches the two terms: for a degenerate
+			// key, where both sides are the same CCTerm, the terms match in either orientation while only one of them
+			// matches the offset. Such a key states that a term differs from itself by a constant, e.g. the main
+			// disequality of a same-class offset conflict, and (t, t, off) and (t, t, -off) are the same fact - as
+			// hashCode (via the offset.abs() fallback in offsetHash) and addAuxEquality (which normalizes the sign of
+			// the offset) already treat them.
+			if (mFirst == o.mFirst && mSecond == o.mSecond && mOffset.equals(o.mOffset)) {
+				return true;
+			}
+			return mFirst == o.mSecond && mSecond == o.mFirst && mOffset.equals(o.mOffset.negate());
+		}
+
+		@Override
+		public String toString() {
+			return mOffset.equals(Rational.ZERO) ? "(" + mFirst + "," + mSecond + ")"
+					: "(" + mFirst + "," + mSecond + "+" + mOffset + ")";
+		}
+	}
+
+	/**
+	 * The offset-aware key of a CCParameter equality: {@code value(first) == value(second) + offset}, where
+	 * {@code offset = second.getOffset() - first.getOffset()} is the constant offset between the two underlying CCTerms.
+	 * See {@link OffsetPair}.
+	 */
+	static OffsetPair key(final SymmetricPair<CCParameter> pair) {
+		final CCParameter first = pair.getFirst();
+		final CCParameter second = pair.getSecond();
+		return new OffsetPair(first, second);
+	}
 
 	public CCProofGenerator(final CCAnnotation arrayAnnot) {
 		mAnnot = arrayAnnot;
 		mRule = arrayAnnot.mRule;
-		mIndexedPaths = new IndexedPath[arrayAnnot.getPaths().length];
+		mIndexedPaths = new IndexedPath[arrayAnnot.getParamPaths().length];
 		for (int i = 0; i < mIndexedPaths.length; i++) {
-			mIndexedPaths[i] = new IndexedPath(arrayAnnot.getWeakIndices()[i], arrayAnnot.getPaths()[i]);
+			mIndexedPaths[i] = new IndexedPath(arrayAnnot.getWeakIndices()[i], arrayAnnot.getParamPaths()[i],
+					arrayAnnot.getSelectEdges()[i]);
 		}
 	}
 
@@ -376,14 +453,13 @@ public class CCProofGenerator {
 		// Collect the paths needed to prove the main disequality
 		final ProofInfo mainInfo = findMainPaths();
 		if (mAnnot.mDiseq != null) {
-			final SymmetricPair<CCTerm> mainDiseq = mAnnot.mDiseq;
+			final SymmetricPair<CCParameter> mainDiseq = mAnnot.mDiseq;
 			if (!isDisequalityLiteral(mainDiseq)) {
 				assert isTrivialDisequality(mainDiseq);
-				mTrivialDisequalities.add(mainDiseq);
-				addAuxEquality(mainDiseq);
+				mTrivialDisequalities.add(addAuxEquality(mainDiseq));
 			}
 			mainInfo.mLemmaDiseq = mainDiseq;
-			mPathProofMap.put(mainDiseq, mainInfo);
+			mPathProofMap.put(key(mainDiseq), mainInfo);
 		} else {
 			assert mAnnot.mRule == RuleKind.DT_CASES || mAnnot.mRule == RuleKind.DT_UNIQUE
 					|| mAnnot.mRule == RuleKind.DT_DISJOINT
@@ -407,7 +483,9 @@ public class CCProofGenerator {
 		for (int i = 0; i < clause.getSize(); i++) {
 			final Literal literal = clause.getLiteral(i);
 			final CCEquality atom = (CCEquality) literal.getAtom();
-			final SymmetricPair<CCTerm> pair = new SymmetricPair<>(atom.getLhs(), atom.getRhs());
+			// key on the actual offset so two literals between the same terms but with different offsets
+			// (e.g. car(x)=y and car(x)=y-1 in an offset anti-cycle) stay distinct.
+			final OffsetPair pair = new OffsetPair(atom.getLhs(), atom.getRhs(), atom.getOffset());
 			mEqualityLiterals.put(pair, literal);
 			if (literal.getSign() < 0) {
 				/* equality in conflict (negated in clause) */
@@ -429,8 +507,9 @@ public class CCProofGenerator {
 			// never a strong equality, even though its weak index is null.
 			if (indexedPath.getIndex() == null
 					&& ((mRule != RuleKind.WEAKEQ_EXT && mRule != RuleKind.CONST_WEAKEQ) || i > 0)) {
-				final CCTerm[] path = indexedPath.getPath();
-				final SymmetricPair<CCTerm> pathEnds = new SymmetricPair<>(path[0], path[path.length - 1]);
+				final CCParameter[] path = indexedPath.getPath();
+				final SymmetricPair<CCParameter> pathEndParams = indexedPath.getPathEndParams();
+				final OffsetPair pathEnds = key(pathEndParams);
 				if (mAllEqualities.add(pathEnds) && !mPathProofMap.containsKey(pathEnds)) {
 					if (path.length == 2) {
 						// A path of length 2 must be a congruence, otherwise we would not be able to explain it
@@ -439,7 +518,7 @@ public class CCProofGenerator {
 						mPathProofMap.put(pathEnds, congruence);
 					} else {
 						final ProofInfo pathInfo = new ProofInfo();
-						pathInfo.mLemmaDiseq = pathEnds;
+						pathInfo.mLemmaDiseq = pathEndParams;
 						pathInfo.mProofPaths = new IndexedPath[] { indexedPath };
 						pathInfo.collectStrongPath(indexedPath);
 						mPathProofMap.put(pathEnds, pathInfo);
@@ -463,13 +542,13 @@ public class CCProofGenerator {
 			return mPathProofMap.get(mIndexedPaths[0].getPathEnds());
 		case READ_OVER_WEAKEQ: {
 			// collect index equality and the weak path
-			final SymmetricPair<CCTerm> selectEquality = mAnnot.mDiseq;
+			final SymmetricPair<CCParameter> selectEquality = mAnnot.mDiseq;
 			assert ArrayTheory.isSelectTerm(selectEquality.getFirst())
 					&& ArrayTheory.isSelectTerm(selectEquality.getSecond());
 			// collect the index equality
-			final CCTerm idx1 = ArrayTheory.getIndexFromSelect((CCAppTerm) selectEquality.getFirst());
-			final CCTerm idx2 = ArrayTheory.getIndexFromSelect((CCAppTerm) selectEquality.getSecond());
-			if (idx1 != idx2) {
+			final CCParameter idx1 = ArrayTheory.getIndexFromSelect((CCAppTerm) selectEquality.getFirst());
+			final CCParameter idx2 = ArrayTheory.getIndexFromSelect((CCAppTerm) selectEquality.getSecond());
+			if (!idx1.equals(idx2)) {
 				mainProof.collectEquality(new SymmetricPair<>(idx1, idx2));
 			}
 			// Only a weak path, which must be the first path
@@ -514,7 +593,8 @@ public class CCProofGenerator {
 		case DT_TESTER:
 		case DT_UNIQUE:
 			for (final SymmetricPair<CCTerm> dependentEq : mAnnot.mDTLemma.getReason()) {
-				mainProof.collectEquality(dependentEq);
+				// datatype lemma reasons are offset-free
+				mainProof.collectEquality(new SymmetricPair<CCParameter>(dependentEq.getFirst(), dependentEq.getSecond()));
 			}
 			mainProof.mProofPaths = new IndexedPath[0];
 			break;
@@ -558,22 +638,39 @@ public class CCProofGenerator {
 		return proofOrder;
 	}
 
-	private Term addAuxEquality(SymmetricPair<CCTerm> equality) {
-		if (!mAuxLiterals.containsKey(equality)) {
+	private Term addAuxEquality(SymmetricPair<CCParameter> equality) {
+		final OffsetPair eqKey = key(equality);
+		if (!mAuxLiterals.containsKey(eqKey)) {
 			final Theory theory = mProofRules.getTheory();
-			Term lhs = equality.getFirst().getFlatTerm();
-			Term rhs = equality.getSecond().getFlatTerm();
-			// to make cc equalities different from la equalities, ensure that rhs is not a
-			// constant.
-			if (rhs.getSort().isNumericSort() && rhs instanceof ConstantTerm
-					&& ((ConstantTerm) rhs).getValue().equals(Rational.ZERO)) {
-				final Term constantTerm = rhs;
-				rhs = lhs;
-				lhs = constantTerm;
+			/*
+			 * Normalize the equality the same way CCEquality.getSMTFormula() renders an offset equality, i.e. as
+			 * (= offset-free-lhs (+ offset-free-rhs offset)), so that all equalities stating the same affine fact
+			 * produce the same term. For a degenerate key, where both sides have the same offset-free term, the sign
+			 * of the offset is not determined by the order of the sides, so it is normalized to be positive; this way
+			 * two trivial disequalities like 1 != 0 and 1 != 2 share the same clause literal (= 0 1).
+			 */
+			Term lhs = eqKey.getFirst().getFlatTerm();
+			Term rhs = eqKey.getSecond().getFlatTerm();
+			Rational offset = eqKey.mOffset;
+			final boolean needsSwap;
+			if (lhs == rhs) {
+				// the order of the sides carries no information; normalize the offset to be positive
+				needsSwap = offset.signum() < 0;
+			} else {
+				// to make cc equalities different from la equalities, ensure that rhs is not a constant.
+				needsSwap = rhs.getSort().isNumericSort() && rhs instanceof ConstantTerm
+						&& ((ConstantTerm) rhs).getValue().equals(Rational.ZERO);
 			}
-			mAuxLiterals.put(equality, theory.term("=", lhs, rhs));
+			if (needsSwap) {
+				// (= lhs (+ rhs offset)) states the same fact as (= rhs (+ lhs -offset))
+				final Term swapped = lhs;
+				lhs = rhs;
+				rhs = swapped;
+				offset = offset.negate();
+			}
+			mAuxLiterals.put(eqKey, theory.term("=", lhs, CCParameter.addConstant(rhs, offset)));
 		}
-		return mAuxLiterals.get(equality);
+		return mAuxLiterals.get(eqKey);
 	}
 
 	private Term buildLemma(final ProofRules proofRules, RuleKind rule, final ProofInfo info, final Term mainEq) {
@@ -595,7 +692,7 @@ public class CCProofGenerator {
 		if (rule == RuleKind.CONG) {
 			// this is a transitivity or congruence lemma
 			assert info.getPaths().length == 1;
-			final CCTerm[] path = info.getPaths()[0].getPath();
+			final CCParameter[] path = info.getPaths()[0].getPath();
 			final Term[] subs = new Term[path.length];
 			for (int j = 0; j < path.length; ++j) {
 				subs[j] = path[j].getFlatTerm();
@@ -604,7 +701,7 @@ public class CCProofGenerator {
 			subannots = subs;
 		} else {
 			final IndexedPath[] paths = info.getPaths();
-			final SymmetricPair<CCTerm> infoDiseq = info.getDiseq();
+			final SymmetricPair<CCParameter> infoDiseq = info.getDiseq();
 			Object[] lemmaAnnot = new Object[0];
 			if (mAnnot.mDTLemma != null && mAnnot.mDTLemma.getAnnotation() != null) {
 				lemmaAnnot = mAnnot.mDTLemma.getAnnotation();
@@ -620,8 +717,8 @@ public class CCProofGenerator {
 				subannots[k++] = annot;
 			}
 			for (final IndexedPath p : paths) {
-				final CCTerm index = p.getIndex();
-				final CCTerm[] path = p.getPath();
+				final CCParameter index = p.getIndex();
+				final CCParameter[] path = p.getPath();
 				final Term[] subs = new Term[path.length];
 				for (int j = 0; j < path.length; ++j) {
 					subs[j] = path[j].getFlatTerm();
@@ -631,7 +728,16 @@ public class CCProofGenerator {
 					subannots[k++] = subs;
 				} else {
 					subannots[k++] = ":weakpath";
-					subannots[k++] = new Object[] { index.getFlatTerm(), subs };
+					final CCParameter[] edge = p.getSelectEdge();
+					if (edge == null) {
+						subannots[k++] = new Object[] { index.getFlatTerm(), subs };
+					} else {
+						// Append the select/const edge {left, right} that justifies this weak path's weak-congruence
+						// step; left is on the subs[0] side. Consumers that predate this element ignore it (they read
+						// only [0] and [1]).
+						subannots[k++] = new Object[] { index.getFlatTerm(), subs,
+								new Object[] { edge[0].getFlatTerm(), edge[1].getFlatTerm() } };
+					}
 				}
 			}
 		}
@@ -654,23 +760,22 @@ public class CCProofGenerator {
 		// The equality proved by the lemma. It is null for rules without main equality
 		final Term mainEq = mainInfo.getDiseq() == null ? null
 				: isDisequalityLiteral(mainInfo.getDiseq())
-						? mEqualityLiterals.get(mainInfo.getDiseq()).getSMTFormula(theory)
-						: mAuxLiterals.get(mainInfo.getDiseq());
+						? mEqualityLiterals.get(key(mainInfo.getDiseq())).getSMTFormula(theory)
+						: mAuxLiterals.get(key(mainInfo.getDiseq()));
 		Term proof = buildLemma(proofRules, mRule, mainInfo, mainEq);
 		// Resolve with sub-lemmas.
 		for (int lemmaNo = 1; lemmaNo < proofOrder.size(); lemmaNo++) {
 			// Build the lemma clause.
 			final ProofInfo info = proofOrder.get(lemmaNo);
 			// auxLiteral should already have been created by the lemma that needs it.
-			assert mAuxLiterals.containsKey(info.getDiseq());
-			final Term provedEq = mAuxLiterals.get(info.getDiseq());
+			assert mAuxLiterals.containsKey(key(info.getDiseq()));
+			final Term provedEq = mAuxLiterals.get(key(info.getDiseq()));
 
 			// Build lemma annotations.
 			final Term lemma = buildLemma(proofRules, RuleKind.CONG, info, provedEq);
 			proof = proofRules.resolutionRule(provedEq, lemma, proof);
 		}
-		for (final SymmetricPair<CCTerm> trivialDiseq : mTrivialDisequalities) {
-			final Term provedEq = mAuxLiterals.get(trivialDiseq);
+		for (final Term provedEq : mTrivialDisequalities) {
 			final ProofLiteral[] proofLits = new ProofLiteral[] { new ProofLiteral(provedEq, false) };
 			final Term diseqLemma = proofRules.oracle(proofLits, EQAnnotation.getAnnotation());
 			proof = proofRules.resolutionRule(provedEq, proof, diseqLemma);
@@ -678,26 +783,25 @@ public class CCProofGenerator {
 		return proof;
 	}
 
-	private boolean isEqualityLiteral(final SymmetricPair<CCTerm> termPair) {
-		return mEqualityLiterals.containsKey(termPair) && mEqualityLiterals.get(termPair).getSign() < 0;
+	private boolean isEqualityLiteral(final SymmetricPair<CCParameter> termPair) {
+		final OffsetPair k = key(termPair);
+		return mEqualityLiterals.containsKey(k) && mEqualityLiterals.get(k).getSign() < 0;
 	}
 
-	private boolean isDisequalityLiteral(final SymmetricPair<CCTerm> termPair) {
-		return mEqualityLiterals.containsKey(termPair) && mEqualityLiterals.get(termPair).getSign() > 0;
+	private boolean isDisequalityLiteral(final SymmetricPair<CCParameter> termPair) {
+		final OffsetPair k = key(termPair);
+		return mEqualityLiterals.containsKey(k) && mEqualityLiterals.get(k).getSign() > 0;
 	}
 
-	private boolean isTrivialDisequality(final SymmetricPair<CCTerm> termPair) {
-		final CCTerm first = termPair.getFirst();
-		final CCTerm second = termPair.getSecond();
-		final Polynomial smtAffine = new Polynomial(first.getFlatTerm());
-		smtAffine.add(Rational.MONE, second.getFlatTerm());
+	private boolean isTrivialDisequality(final SymmetricPair<CCParameter> termPair) {
+		// use the CCParameter flat terms so an offset clash (e.g. x+2 vs x+5) is detected
+		final Polynomial smtAffine = new Polynomial(termPair.getFirst().getFlatTerm());
+		smtAffine.add(Rational.MONE, termPair.getSecond().getFlatTerm());
 		if (smtAffine.isConstant()) {
 			return smtAffine.getConstant() != Rational.ZERO;
 		}
 		return smtAffine.isAllIntSummands() && !smtAffine.getConstant().div(smtAffine.getGcd()).isIntegral();
 	}
-
-
 
 	/**
 	 * Find argument paths for a congruence. These may also be literals from the original clause. Note that a function
@@ -706,33 +810,51 @@ public class CCProofGenerator {
 	 * @return The argument paths, if they exist for all arguments, or null to indicate that the termpair is not a
 	 *         congruence.
 	 */
-	private ProofInfo findCongruencePaths(CCTerm first, CCTerm second) {
-		final ProofInfo proofInfo = new ProofInfo();
-		proofInfo.mLemmaDiseq = new SymmetricPair<>(first, second);
-		proofInfo.mProofPaths = new IndexedPath[] { new IndexedPath(null, new CCTerm[] { first, second }) };
-		if (!(first instanceof CCAppTerm) || !(second instanceof CCAppTerm)) {
+	private ProofInfo findCongruencePaths(final CCParameter first, final CCParameter second) {
+		final CCTerm firstTerm = first.getCCTerm();
+		final CCTerm secondTerm = second.getCCTerm();
+		if (!(firstTerm instanceof CCAppTerm) || !(secondTerm instanceof CCAppTerm)
+				|| !first.getOffset().equals(second.getOffset())) {
 			// This is not a congruence
 			return null;
 		}
-		final CCAppTerm firstApp = (CCAppTerm) first;
-		final CCAppTerm secondApp = (CCAppTerm) second;
+		final CCAppTerm firstApp = (CCAppTerm) firstTerm;
+		final CCAppTerm secondApp = (CCAppTerm) secondTerm;
 		if (firstApp.getFunctionSymbol() != secondApp.getFunctionSymbol()) {
 			// This is not a congruence
 			return null;
 		}
 
-		final CCTerm[] firstArgs = firstApp.getArguments();
-		final CCTerm[] secondArgs = secondApp.getArguments();
-		assert firstArgs.length == secondArgs.length;
-		for (int i = 0; i < firstArgs.length; i++) {
-			if (firstArgs[i] != secondArgs[i]) {
-				final SymmetricPair<CCTerm> argPair = new SymmetricPair<>(firstArgs[i], secondArgs[i]);
+		final ProofInfo proofInfo = new ProofInfo();
+		// A congruence is offset-free: f(a) and f(b) have equal value once their arguments are equal, so the two app
+		// terms always sit at the same offset on a path and the congruence proves the offset-free f(a) = f(b). Render
+		// the lemma and its (length-2) proof path with the offset-free app terms; the surrounding :trans/:cong checker
+		// absorbs the common constant shift. Carrying the offset (e.g. (= (+ f(a) -1) (+ f(b) -1)) :cong) is not a valid
+		// single congruence — that step is over +, not over f — and breaks the lowlevel proof. The diseq key is offset
+		// invariant (the offset cancels in the difference), so all lookups are unaffected.
+		proofInfo.mLemmaDiseq = new SymmetricPair<>(firstTerm, secondTerm);
+		proofInfo.mProofPaths =
+				new IndexedPath[] { new IndexedPath(null, new CCParameter[] { firstTerm, secondTerm }, null) };
+
+		assert firstApp.getArgCount() == secondApp.getArgCount();
+		for (int i = 0; i < firstApp.getArgCount(); i++) {
+			final CCParameter firstArg = firstApp.getArgParam(i);
+			final CCParameter secondArg = secondApp.getArgParam(i);
+			// Resolve on the exact CCParameter equality of the arguments. Offset-free this is a direct literal or
+			// subpath lookup; the lookup maps are keyed offset-free so a shared offset edge is reused.
+			// A shifted version of the same argument equality needs no bridging lemma: the key holds the offset
+			// between the two CCTerms, i.e. the fact itself, not the offsets it happens to be rendered with. For
+			// f(x,x+2) = f(y+2,y+4) both arguments key on (x, y, 2), and the (x, y) subpath, whose ends are rendered
+			// so that they denote the same value, keys on 2 as well.
+			if (firstArg.getCCTerm() != secondArg.getCCTerm()) {
+				final SymmetricPair<CCParameter> argPair = new SymmetricPair<>(firstArg, secondArg);
+				final OffsetPair argKey = key(argPair);
 				if (isEqualityLiteral(argPair)) {
-					proofInfo.addLiteral(mEqualityLiterals.get(argPair));
-				} else if (mPathProofMap.containsKey(argPair)) {
-					proofInfo.addSubProof(mPathProofMap.get(argPair));
+					proofInfo.addLiteral(mEqualityLiterals.get(argKey));
+				} else if (mPathProofMap.containsKey(argKey)) {
+					proofInfo.addSubProof(mPathProofMap.get(argKey));
 				} else {
-					// If no path was found for the arguments, termPair is not a congruence!
+					// If no path was found for the arguments, termpair is not a congruence!
 					return null;
 				}
 			}
@@ -741,64 +863,9 @@ public class CCProofGenerator {
 	}
 
 	/**
-	 * Search for a select path between two given arrays and paths from the select indices to the weakpath index for
-	 * which one wants to prove equality of the array elements.
-	 *
-	 * @return the select path and (if needed) index paths, or null if there were no suitable paths for the term pair.
-	 */
-	private SelectEdge findSelectPath(final SymmetricPair<CCTerm> termPair, final CCTerm weakpathindex) {
-		// first check for trivial select-const edges, i.e., (const (select a j)) and a with j = weakpathindex.
-		if (ArrayTheory.isConstTerm(termPair.getFirst())) {
-			final CCTerm value = ArrayTheory.getValueFromConst((CCAppTerm) termPair.getFirst());
-			if (isSelect(value, termPair.getSecond(), weakpathindex)) {
-				return new SelectEdge(value, value);
-			}
-		}
-		if (ArrayTheory.isConstTerm(termPair.getSecond())) {
-			final CCTerm value = ArrayTheory.getValueFromConst((CCAppTerm) termPair.getSecond());
-			if (isSelect(value, termPair.getFirst(), weakpathindex)) {
-				return new SelectEdge(value, value);
-			}
-		}
-
-		for (final SymmetricPair<CCTerm> equality : mAllEqualities) {
-			// Find some select path.
-			final CCTerm start = equality.getFirst();
-			final CCTerm end = equality.getSecond();
-			if (isGoodSelectStep(start, end, termPair, weakpathindex)) {
-				return new SelectEdge(start, end);
-			}
-			if (isGoodSelectStep(end, start, termPair, weakpathindex)) {
-				return new SelectEdge(end, start);
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Check if the equality sel1 == sel2 explains the weak step on weakpathindex for termPair.
-	 */
-	private boolean isGoodSelectStep(final CCTerm sel1, final CCTerm sel2, final SymmetricPair<CCTerm> termPair,
-			final CCTerm weakpathindex) {
-		return (isSelect(sel1, termPair.getFirst(), weakpathindex) || isConst(termPair.getFirst(), sel1))
-				&& (isSelect(sel2, termPair.getSecond(), weakpathindex) || isConst(termPair.getSecond(), sel2));
-	}
-
-	/**
-	 * Check if select is a select on array on weakpathindex or something equal to weakpathindex.
-	 */
-	private boolean isSelect(final CCTerm select, final CCTerm array, final CCTerm weakpathindex) {
-		if (!ArrayTheory.isSelectTerm(select) || ArrayTheory.getArrayFromSelect((CCAppTerm) select) != array) {
-			return false;
-		}
-		final CCTerm index = ArrayTheory.getIndexFromSelect((CCAppTerm) select);
-		return (index == weakpathindex || mAllEqualities.contains(new SymmetricPair<>(weakpathindex, index)));
-	}
-
-	/**
 	 * Check if array is an application of const on value
 	 */
-	private boolean isConst(final CCTerm array, final CCTerm value) {
-		return (ArrayTheory.isConstTerm(array) && ArrayTheory.getValueFromConst((CCAppTerm) array) == value);
+	private boolean isConst(final CCParameter array, final CCParameter value) {
+		return (ArrayTheory.isConstTerm(array) && ArrayTheory.getValueFromConst((CCAppTerm) array).equals(value));
 	}
 }

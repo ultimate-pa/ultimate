@@ -22,7 +22,7 @@ import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCParameter;
 
 /**
  * A trigger to find new function applications. It has to be installed into the CClosure. Upon activation, the remaining
@@ -36,13 +36,13 @@ public class EMReverseTrigger extends de.uni_freiburg.informatik.ultimate.smtint
 	private final ICode mRemainingCode;
 	private final FunctionSymbol mFunc;
 	private final int mArgPos;
-	private final CCTerm mArg;
-	private final CCTerm[] mRegister;
+	private final CCParameter mArg;
+	private final CCParameter[] mRegister;
 	private final int mOutRegIndex;
 	private final int mDecisionLevel;
 
 	public EMReverseTrigger(final EMatching eMatching, final ICode remainingCode, final FunctionSymbol func,
-			final int argPos, final CCTerm arg, final CCTerm[] register, final int outRegIndex,
+			final int argPos, final CCParameter arg, final CCParameter[] register, final int outRegIndex,
 			final int decisionLevel) {
 		mEMatching = eMatching;
 		mRemainingCode = remainingCode;
@@ -55,7 +55,7 @@ public class EMReverseTrigger extends de.uni_freiburg.informatik.ultimate.smtint
 	}
 
 	@Override
-	public CCTerm getArgument() {
+	public CCParameter getArgument() {
 		return mArg;
 	}
 
@@ -71,13 +71,14 @@ public class EMReverseTrigger extends de.uni_freiburg.informatik.ultimate.smtint
 
 	@Override
 	public void activate(final CCAppTerm appTerm, final boolean isFresh) {
-		final CCTerm[] updatedRegister = Arrays.copyOf(mRegister, mRegister.length);
+		final CCParameter[] updatedRegister = Arrays.copyOf(mRegister, mRegister.length);
 		updatedRegister[mOutRegIndex] = appTerm;
 
 		if (mArg != null) { // Reverse
-			final CCTerm candArg = appTerm.getArgument(mArgPos);
+			// the values match by signature; the decide level comes from the path between the base terms
+			final CCParameter candArg = appTerm.getArgParam(mArgPos);
 			final int termDecisionLevel = mEMatching.getQuantTheory().getCClosure()
-					.getDecideLevelForPath(mArg, candArg);
+					.getDecideLevelForPath(mArg.getCCTerm(), candArg.getCCTerm());
 
 			mEMatching.addCode(mRemainingCode, updatedRegister,
 					termDecisionLevel > mDecisionLevel ? termDecisionLevel : mDecisionLevel);

@@ -1,3 +1,4 @@
+(set-option :produce-proofs true)
 (set-logic QF_UFNIA)
 
 (declare-const x Int)
