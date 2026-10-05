@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
@@ -53,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *
  */
 public class ExtractedLoopInvariant extends ExtractedWitnessInvariant {
-	public ExtractedLoopInvariant(final String invariant, final IASTNode match) {
-		super(invariant, match);
+	public ExtractedLoopInvariant(final ILogger logger, final String invariant, final IASTNode match) {
+		super(logger, invariant, match);
 	}
 
 	@Override

@@ -34,6 +34,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieDagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
@@ -50,7 +51,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessAssumption;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLDagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assertion;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnotStmt;
 
 /**
  *
@@ -59,10 +64,12 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
  */
 public abstract class ExtractedWitnessInvariant implements IExtractedWitnessEntry {
 
+	private final ILogger mLogger;
 	private final String mInvariant;
 	private final IASTNode mMatchedAstNode;
 
-	public ExtractedWitnessInvariant(final String invariant, final IASTNode match) {
+	public ExtractedWitnessInvariant(final ILogger logger, final String invariant, final IASTNode match) {
+		mLogger = logger;
 		mInvariant = invariant;
 		mMatchedAstNode = match;
 	}
@@ -102,12 +109,31 @@ public abstract class ExtractedWitnessInvariant implements IExtractedWitnessEntr
 		} catch (final Exception e) {
 			throw new AssertionError(e);
 		}
+		logDagSizeOfAcslExpression(acslNode);
 		final ExpressionResult assertResult = (ExpressionResult) dispatcher.dispatch(acslNode, mMatchedAstNode);
+		logDagSizeOfBoogieExpression(assertResult);
 		if (checkValidity) {
 			return assertResult;
 		}
 		return new ExpressionResultBuilder(assertResult)
 				.resetStatements(AssertReplacer.replaceAsserts(assertResult.getStatements())).build();
+	}
+
+	private void logDagSizeOfAcslExpression(final ACSLNode acslNode) {
+		if ((acslNode instanceof final CodeAnnotStmt stmt)
+				&& (stmt.getCodeStmt() instanceof final Assertion assertion)) {
+			mLogger.info("DAG size of ACSL expression of witness invariant %s: %s", mInvariant,
+					ACSLDagSizePrinter.print(assertion.getFormula()));
+		}
+	}
+
+	private void logDagSizeOfBoogieExpression(final ExpressionResult assertResult) {
+		for (final Statement statement : assertResult.getStatements()) {
+			if (statement instanceof final AssertStatement assertStatement) {
+				mLogger.info("DAG size of Boogie expression of witness invariant %s: %s", mInvariant,
+						BoogieDagSizePrinter.print(assertStatement.getFormula()));
+			}
+		}
 	}
 
 	/**

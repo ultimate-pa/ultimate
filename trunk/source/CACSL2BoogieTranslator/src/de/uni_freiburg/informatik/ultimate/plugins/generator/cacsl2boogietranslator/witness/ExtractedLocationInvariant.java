@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Class for a location invariant extracted from the witness
@@ -49,8 +50,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 public class ExtractedLocationInvariant extends ExtractedWitnessInvariant {
 	private final boolean mIsBefore;
 
-	public ExtractedLocationInvariant(final String invariant, final IASTNode match, final boolean isBefore) {
-		super(invariant, match);
+	public ExtractedLocationInvariant(final ILogger logger, final String invariant, final IASTNode match,
+			final boolean isBefore) {
+		super(logger, invariant, match);
 		mIsBefore = isBefore;
 	}
 
