@@ -89,9 +89,9 @@ public class BvToIntUtils {
 		final Polynomial arg0 = new Polynomial(lhs);
 		arg0.mod(maxNumber);
 		final Term div = arg0.isConstant() ? arg0.getConstant().div(maxNumber).floor().toTerm(sort)
-				: theory.term("div", arg0.toTerm(sort), maxNumber.toTerm(sort));
+				: theory.term("div", mPolyUnifier.unifyPolynomial(arg0, sort), maxNumber.toTerm(sort));
 		arg0.add(maxNumber.negate(), div);
-		return arg0.toTerm(sort);
+		return mPolyUnifier.unifyPolynomial(arg0, sort);
 	}
 
 	private Rational pow2(int exponent) {
@@ -164,7 +164,7 @@ public class BvToIntUtils {
 				final int shiftAsInt = shiftValue.numerator().intValue();
 				final Polynomial multiply = new Polynomial();
 				multiply.add(pow2(shiftAsInt), translatedLHS);
-				transformedAsInt = multiply.toTerm(mInteger);
+				transformedAsInt = mPolyUnifier.unifyPolynomial(multiply, mInteger);
 			}
 		} else {
 			final int logWidth = log2(width);
@@ -175,11 +175,11 @@ public class BvToIntUtils {
 				final Polynomial compare = new Polynomial();
 				compare.add(shiftStep);
 				compare.add(Rational.MONE, shift);
-				final Term cond = theory.term("<=", compare.toTerm(mInteger), zero);
+				final Term cond = theory.term("<=", mPolyUnifier.unifyPolynomial(compare, mInteger), zero);
 				shift.add(Rational.ONE, theory.term("ite", cond, shiftStep.negate().toTerm(mInteger), zero));
 				final Polynomial multiply = new Polynomial();
 				multiply.add(pow2(1 << i), result);
-				result = theory.term("ite", cond, multiply.toTerm(mInteger), result);
+				result = theory.term("ite", cond, mPolyUnifier.unifyPolynomial(multiply, mInteger), result);
 			}
 			transformedAsInt = result;
 		}
@@ -223,7 +223,7 @@ public class BvToIntUtils {
 				final Polynomial compare = new Polynomial();
 				compare.add(shiftStep);
 				compare.add(Rational.MONE, shift);
-				final Term cond = theory.term("<=", compare.toTerm(mInteger), zero);
+				final Term cond = theory.term("<=", mPolyUnifier.unifyPolynomial(compare, mInteger), zero);
 				shift.add(Rational.ONE, theory.term("ite", cond, shiftStep.negate().toTerm(mInteger), zero));
 				final Term divide = theory.term(SMTLIBConstants.DIV, result, pow2(1 << i).toTerm(mInteger));
 				result = theory.term("ite", cond, divide, result);
@@ -318,14 +318,14 @@ public class BvToIntUtils {
 			poly.add(signBit);
 		}
 		poly.mod(maxNumber);
-		final Term shiftedX = poly.toTerm(mInteger);
+		final Term shiftedX = mPolyUnifier.unifyPolynomial(poly, mInteger);
 		if (!poly.isConstant()) {
 			poly.add(maxNumber.negate(), theory.term(SMTLIBConstants.DIV, shiftedX, maxNumber.toTerm(mInteger)));
 		}
 		if (isSigned) {
 			poly.add(signBit.negate());
 		}
-		return poly.toTerm(mInteger);
+		return mPolyUnifier.unifyPolynomial(poly, mInteger);
 	}
 
 	public Term bitBlastAndConstant(final Term lhs, final Rational rhs, int width) {
@@ -362,7 +362,7 @@ public class BvToIntUtils {
 			final Rational powHighRat = Rational.valueOf(powHigh, BigInteger.ONE);
 			result.add(powHighRat.negate(), theory.term(SMTLIBConstants.DIV, lhs, powHighRat.toTerm(mInteger)));
 		}
-		return result.toTerm(mInteger);
+		return mPolyUnifier.unifyPolynomial(result, mInteger);
 	}
 
 	public Term bitBlastAnd(final Term lhs, final Term rhs, int width) {
@@ -381,7 +381,7 @@ public class BvToIntUtils {
 			final Term ite = theory.term("ite", theory.term("=", isel(i, lhs), one), isel(i, rhs), zero);
 			poly.add(pow2(i), ite);
 		}
-		return poly.toTerm(mInteger);
+		return mPolyUnifier.unifyPolynomial(poly, mInteger);
 	}
 
 	public Term translateBvandSum(final IProofTracker tracker, final FunctionSymbol fsym, final Term convertedApp) {
@@ -415,7 +415,7 @@ public class BvToIntUtils {
 		final Polynomial poly = new Polynomial(lhs);
 		poly.add(Rational.ONE, rhs);
 		poly.add(Rational.MONE, bitBlastAnd(lhs, rhs, width));
-		final Term transformed = int2bv(poly.toTerm(mInteger), bvSort.getIndices());
+		final Term transformed = int2bv(mPolyUnifier.unifyPolynomial(poly, mInteger), bvSort.getIndices());
 		return trackBvRewrite(convertedApp, transformed, ProofConstants.RW_BVBLAST);
 	}
 
@@ -428,7 +428,7 @@ public class BvToIntUtils {
 		final Polynomial poly = new Polynomial(lhs);
 		poly.add(Rational.ONE, rhs);
 		poly.add(Rational.TWO.negate(), bitBlastAnd(lhs, rhs, width));
-		final Term transformed = int2bv(poly.toTerm(mInteger), bvSort.getIndices());
+		final Term transformed = int2bv(mPolyUnifier.unifyPolynomial(poly, mInteger), bvSort.getIndices());
 		return trackBvRewrite(convertedApp, transformed, ProofConstants.RW_BVBLAST);
 	}
 

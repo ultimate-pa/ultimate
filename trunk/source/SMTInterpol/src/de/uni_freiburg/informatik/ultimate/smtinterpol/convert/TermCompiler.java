@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IProofTracker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofConstants;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.resolute.BitvectorRules;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.bitvector.BvToIntUtils;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCParameter;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.IPolynomialUnifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Polynomial;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.TermUtils;
@@ -783,24 +784,39 @@ public class TermCompiler extends TermTransformer implements IPolynomialUnifier 
 	}
 
 	/**
-	 * Canonicalize a polynomial, i.e. check if we already created this term with the summands in a different order.
+	 * Canonicalize a polynomial, i.e. check if we already created this term with
+	 * the summands in a different order.
 	 *
-	 * @param poly
-	 *            the polynomial to canonicalize and convert to a term.
-	 * @param sort
-	 *            the Sort of the resulting term.
+	 * <p>
+	 * A polynomial with a non-zero constant (and at least one other summand) is
+	 * canonicalized as the canonic term of its constant-free part with the constant
+	 * appended as <em>last</em> summand ({@link CCParameter#addConstant}). Thus a
+	 * canonic term and its offset-free term (the flat term of the base CCTerm when
+	 * offset equalities are enabled) agree summand-for-summand, and dropping the
+	 * trailing constant from a canonic term syntactically recovers its canonic
+	 * offset-free term.
+	 *
+	 * @param poly the polynomial to canonicalize and convert to a term.
+	 * @param sort the Sort of the resulting term.
 	 * @return the canonic summation term.
 	 */
 	@Override
 	public Term unifyPolynomial(final Polynomial poly, final Sort sort) {
-		final int hash = poly.hashCode() ^ sort.hashCode();
+		Polynomial basePoly = poly;
+		final Rational offset = poly.getConstant();
+		if (offset != Rational.ZERO) {
+			basePoly = new Polynomial();
+			basePoly.add(Rational.ONE, poly);
+			basePoly.add(offset.negate());
+		}
+		final int hash = basePoly.hashCode() ^ sort.hashCode();
 		for (final Term canonic : mCanonicalPolys.iterateHashCode(hash)) {
-			if (canonic.getSort() == sort && poly.equals(new Polynomial(canonic))) {
-				return canonic;
+			if (canonic.getSort() == sort && basePoly.equals(new Polynomial(canonic))) {
+				return CCParameter.addConstant(canonic, offset);
 			}
 		}
-		final Term canonic = poly.toTerm(sort);
+		final Term canonic = basePoly.toTerm(sort);
 		mCanonicalPolys.put(hash, canonic);
-		return canonic;
+		return CCParameter.addConstant(canonic, offset);
 	}
 }

@@ -63,6 +63,19 @@ class CollectLiteral implements Operation {
 	@Override
 	public void perform() {
 		final Theory theory = mLiteral.getTheory();
+		/*
+		 * Rewrite the literal if it is not in a form for which we can create a literal, e.g. an equality between
+		 * Boolean terms, and collect the rewritten literal instead. Like the quantified case below, we remove this
+		 * literal from the clause and resolve the clause with the rewrite.
+		 */
+		final Term litRewrite = mClausifier.rewriteLiteral(mLiteral);
+		final Term rewrittenLit = mClausifier.mTracker.getProvedTerm(litRewrite);
+		if (rewrittenLit != mLiteral) {
+			mClauseBuilder.mCurrentLits.remove(mLiteral);
+			mClauseBuilder.addResolution(mClausifier.mTracker.rewriteToClause(mLiteral, litRewrite), mLiteral);
+			mClauseBuilder.collectLiteral(rewrittenLit);
+			return;
+		}
 		Term idx = mLiteral;
 		boolean quantified = false;
 		boolean positive = true;

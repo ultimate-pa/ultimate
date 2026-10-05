@@ -1,0 +1,13 @@
+(set-option :print-success false)
+(set-logic UFLIA)
+(set-info :source |E-matching with offset equalities: binding x := a (offset dropped)
+from the candidate f(a+1) would produce the instance f(a)=7 => a=a+1 with f(a)
+wrongly identified with f(a+1), i.e. a spurious unsat. The correct binding
+x := a+1 gives a trivially true instance.|)
+(set-info :status sat)
+(declare-fun f (Int) Int)
+(declare-fun a () Int)
+(assert (= (f (+ a 1)) 7))
+(assert (forall ((x Int)) (=> (= (f x) 7) (= x (+ a 1)))))
+(check-sat)
+(exit)

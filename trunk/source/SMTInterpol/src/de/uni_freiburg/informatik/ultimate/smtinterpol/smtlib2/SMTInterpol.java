@@ -633,6 +633,7 @@ public class SMTInterpol extends NoopScript {
 					mSolverOptions.getInstantiationMethod(), getBooleanOption(SMTInterpolConstants.UNKNOWN_TERM_DAWGS),
 					getBooleanOption(SMTInterpolConstants.PROPAGATE_UNKNOWN_TERMS),
 					getBooleanOption(SMTInterpolConstants.PROPAGATE_UNKNOWN_AUX));
+			mClausifier.setOffsetEqualities(getBooleanOption(SMTInterpolConstants.OFFSET_EQUALITIES));
 			mClausifier.setLogic(logic);
 			final boolean produceAssignments = getBooleanOption(SMTLIBConstants.PRODUCE_ASSIGNMENTS);
 			mClausifier.setAssignmentProduction(produceAssignments);
@@ -915,7 +916,7 @@ public class SMTInterpol extends NoopScript {
 			final Term[] ipls;
 			try {
 				final Interpolator interpolator = new Interpolator(mLogger, checkingSolver, mAssertions, getTheory(),
-						parts, startOfSubtree, mResourceLimit);
+						parts, startOfSubtree, mClausifier.createOffsetEqualities(), mResourceLimit);
 				ipls = interpolator.getInterpolants(proofTree);
 				if (checkingSolver != null) {
 					mLogger.info("FOUND VALID INTERPOLANT");
