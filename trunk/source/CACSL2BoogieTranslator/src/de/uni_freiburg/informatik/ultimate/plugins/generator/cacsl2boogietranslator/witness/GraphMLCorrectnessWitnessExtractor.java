@@ -158,7 +158,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		return newInvariant;
 	}
 
-	private static LabeledInvariant mergeInvariants(final LabeledInvariant ewi1, final LabeledInvariant ewi2) {
+	private LabeledInvariant mergeInvariants(final LabeledInvariant ewi1, final LabeledInvariant ewi2) {
 		if (ewi2 == null) {
 			return ewi1;
 		}
@@ -188,9 +188,9 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		// If one of the invariants is a loop invariant, the result should be as well
 		if (ewi1.getInvariant() instanceof ExtractedLoopInvariant
 				|| ewi2.getInvariant() instanceof ExtractedLoopInvariant) {
-			result = new ExtractedLoopInvariant(newInvariant, ewi1.getRelatedAstNode());
+			result = new ExtractedLoopInvariant(mLogger, newInvariant, ewi1.getRelatedAstNode());
 		} else {
-			result = new ExtractedLocationInvariant(newInvariant, ewi1.getRelatedAstNode(),
+			result = new ExtractedLocationInvariant(mLogger, newInvariant, ewi1.getRelatedAstNode(),
 					((ExtractedLocationInvariant) ewi1.getInvariant()).isBefore());
 		}
 		return new LabeledInvariant(result, newNodeLabels);
@@ -326,7 +326,8 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 			}
 			mLogger.info("Matched downward: " + loopHead.toStringSimple());
 			for (final var node : loopStatements) {
-				final ExtractedLoopInvariant loopInvariant = new ExtractedLoopInvariant(dwnode.getInvariant(), node);
+				final ExtractedLoopInvariant loopInvariant =
+						new ExtractedLoopInvariant(mLogger, dwnode.getInvariant(), node);
 				rtr.put(node, new LabeledInvariant(loopInvariant, labels));
 			}
 			iter.remove();
@@ -360,20 +361,21 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		}
 		final ImmutableSet<String> labels = ImmutableSet.of(Set.of(dwnode.getName()));
 		for (final var node : loopStatements) {
-			final ExtractedLoopInvariant loopInvariant = new ExtractedLoopInvariant(dwnode.getInvariant(), node);
+			final ExtractedLoopInvariant loopInvariant =
+					new ExtractedLoopInvariant(mLogger, dwnode.getInvariant(), node);
 			rtr.put(node, new LabeledInvariant(loopInvariant, labels));
 		}
 		loopHeads.clear();
 		return rtr;
 	}
 
-	private static Map<IASTNode, LabeledInvariant> extractStatementInvariants(final DecoratedWitnessNode dwnode,
+	private Map<IASTNode, LabeledInvariant> extractStatementInvariants(final DecoratedWitnessNode dwnode,
 			final Set<MatchedASTNode> candidateNodes) {
 		final Map<IASTNode, LabeledInvariant> rtr = new HashMap<>();
 		final ImmutableSet<String> labels = ImmutableSet.of(Set.of(dwnode.getName()));
 		for (final var node : candidateNodes) {
 			final ExtractedLocationInvariant invariant =
-					new ExtractedLocationInvariant(dwnode.getInvariant(), node.getNode(), !node.isIncoming());
+					new ExtractedLocationInvariant(mLogger, dwnode.getInvariant(), node.getNode(), !node.isIncoming());
 			rtr.put(node.getNode(), new LabeledInvariant(invariant, labels));
 		}
 		candidateNodes.clear();

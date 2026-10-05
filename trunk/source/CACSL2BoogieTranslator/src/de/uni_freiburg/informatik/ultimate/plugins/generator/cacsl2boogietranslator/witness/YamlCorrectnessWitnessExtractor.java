@@ -157,13 +157,13 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			throw new UnsupportedOperationException("Loop transition invariant is only allowed at loop (found "
 					+ node.getClass().getSimpleName() + ")");
 		}
-		result.addInvariant(node, new ExtractedLoopInvariant(
+		result.addInvariant(node, new ExtractedLoopInvariant(null,
 				instrumentTransitionInvariant(loopTransitionInvariant.getInvariant(), node, result), node));
 	}
 
 	private void addLocationTransitionInvariant(final LocationTransitionInvariant locationTransitionInvariant,
 			final IASTNode node, final YamlExtractedCorrectnessWitness result) {
-		result.addInvariant(node, new ExtractedLocationInvariant(
+		result.addInvariant(node, new ExtractedLocationInvariant(null,
 				instrumentTransitionInvariant(locationTransitionInvariant.getInvariant(), node, result), node, true));
 	}
 
@@ -281,17 +281,17 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 				new ExtractedFunctionContract(functionContract.getRequires(), functionContract.getEnsures(), node));
 	}
 
-	private static void addLocationInvariant(final LocationInvariant current, final IASTNode node,
+	private void addLocationInvariant(final LocationInvariant current, final IASTNode node,
 			final Map<IASTNode, ExtractedLocationInvariant> locationInvariants) {
 		String invariant = current.getInvariant();
 		final ExtractedLocationInvariant old = locationInvariants.get(node);
 		if (old != null) {
 			invariant = conjunctInvariants(old.getInvariant(), invariant);
 		}
-		locationInvariants.put(node, new ExtractedLocationInvariant(invariant, node, true));
+		locationInvariants.put(node, new ExtractedLocationInvariant(mLogger, invariant, node, true));
 	}
 
-	private static void addLoopInvariant(final LoopInvariant current, final IASTNode node,
+	private void addLoopInvariant(final LoopInvariant current, final IASTNode node,
 			final Map<IASTNode, ExtractedLoopInvariant> loopInvariants) {
 		if (!(node instanceof IASTWhileStatement) && !(node instanceof IASTForStatement)
 				&& !(node instanceof IASTDoStatement)) {
@@ -305,7 +305,7 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 		if (old != null) {
 			invariant = conjunctInvariants(old.getInvariant(), invariant);
 		}
-		loopInvariants.put(node, new ExtractedLoopInvariant(invariant, node));
+		loopInvariants.put(node, new ExtractedLoopInvariant(mLogger, invariant, node));
 	}
 
 	private static String conjunctInvariants(final String invariant1, final String invariant2) {
