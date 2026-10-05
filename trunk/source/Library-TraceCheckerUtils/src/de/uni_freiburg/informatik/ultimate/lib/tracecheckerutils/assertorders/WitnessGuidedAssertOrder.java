@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessAssumption;
@@ -39,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class WitnessGuidedAssertOrder<L extends IAction> implements IAssertOrder<L> {
+	private static final boolean USE_UNDERLYING_ASSERTORDER_FOR_FIRST_SEGMENT = false;
+
 	private final IAssertOrder<L> mUnderlying;
 
 	public WitnessGuidedAssertOrder(final IAssertOrder<L> underlying) {
@@ -63,8 +66,14 @@ public class WitnessGuidedAssertOrder<L extends IAction> implements IAssertOrder
 		// We could also change the order of the second and third block or merge them, based on the expected
 		// invariants to improve the possible performance (i.e., are there more invalid invariants than invariants
 		// that are not inductive)
-		final Stream<Set<Integer>> betweenInvariants =
-				filterPartitions(underlyingPartitions, x -> startEnd.getFirst() <= x && x <= startEnd.getSecond());
+		final Stream<Set<Integer>> betweenInvariants;
+		if (USE_UNDERLYING_ASSERTORDER_FOR_FIRST_SEGMENT) {
+			betweenInvariants =
+					filterPartitions(underlyingPartitions, x -> startEnd.getFirst() <= x && x <= startEnd.getSecond());
+		} else {
+			betweenInvariants = Stream.of(IntStream.rangeClosed(startEnd.getFirst(), startEnd.getSecond()).boxed()
+					.collect(Collectors.toSet()));
+		}
 		final Stream<Set<Integer>> beforeInvariant =
 				filterPartitions(underlyingPartitions, x -> x < startEnd.getFirst());
 		final Stream<Set<Integer>> afterInvariant =
