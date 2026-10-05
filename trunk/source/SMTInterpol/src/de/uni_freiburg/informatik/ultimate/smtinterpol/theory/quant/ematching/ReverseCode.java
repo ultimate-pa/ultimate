@@ -18,12 +18,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.ematching;
 
-import java.util.Arrays;
-import java.util.List;
-
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCParameter;
 
 /**
  * Code to find a function application for a given function symbol that has the given term as argument at the given
@@ -53,25 +49,9 @@ public class ReverseCode implements ICode {
 	}
 
 	@Override
-	public void execute(final CCTerm[] register, final int decisionLevel) {
-		final CCTerm arg = register[mArgRegIndex];
+	public void execute(final CCParameter[] register, final int decisionLevel) {
+		final CCParameter arg = register[mArgRegIndex];
 		mEMatching.installReverseTrigger(mFunc, arg, mArgPos, mOutRegIndex, mRemainingCode, register, decisionLevel);
-		final List<CCTerm> funcApps =
-				mEMatching.getQuantTheory().getCClosure().getAllFuncAppsForArg(mFunc, arg, mArgPos);
-		for (final CCTerm cand : funcApps) {
-			final CCTerm[] updatedReg = Arrays.copyOf(register, register.length);
-			updatedReg[mOutRegIndex] = cand;
-			assert cand instanceof CCAppTerm;
-			CCAppTerm partialApp = (CCAppTerm) cand;
-			for (int i = 0; i < mFunc.getParameterSorts().length - mArgPos - 1; i++) {
-				partialApp = (CCAppTerm) ((CCAppTerm) partialApp).getFunc();
-			}
-			final CCTerm candArg = partialApp.getArg();
-			final int termDecisionLevel = mEMatching.getQuantTheory().getCClosure().getDecideLevelForPath(arg, candArg);
-
-			mEMatching.addCode(mRemainingCode, updatedReg,
-					termDecisionLevel > decisionLevel ? termDecisionLevel : decisionLevel);
-		}
 	}
 
 	@Override

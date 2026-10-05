@@ -136,6 +136,9 @@ public class SolverOptions {
 				"Quantifier Theory: Allow propagation on atoms with non-existing term."));
 		options.addOption(SMTInterpolConstants.PROPAGATE_UNKNOWN_AUX, new BooleanOption(false, false,
 				"Quantifier Theory: Allow propagation on atoms with non-existing @AUX applications."));
+		options.addOption(SMTInterpolConstants.OFFSET_EQUALITIES, new BooleanOption(true, false,
+				"Congruence Closure: Use affine equality classes, i.e. represent a numeric term as an offset-free "
+				+ "term plus a constant and allow equalities of the form a = b + k."));
 
 		// simplifier options
 		options.addOption(SMTInterpolConstants.SIMPLIFY_CHECK_TYPE, mSimpCheckType);

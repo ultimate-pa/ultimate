@@ -29,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCParameter;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.epr.util.Pair;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantLiteral;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifierTheory;
@@ -64,10 +64,10 @@ public class PatternCompiler {
 	 *
 	 * @return the resulting code and the corresponding register.
 	 */
-	public Pair<ICode, CCTerm[]> compile() {
+	public Pair<ICode, CCParameter[]> compile() {
 		collectTermInfos(mPatterns);
 		final ICode code = generateCode();
-		final CCTerm[] register = new CCTerm[getNextFreeRegIndex()];
+		final CCParameter[] register = new CCParameter[getNextFreeRegIndex()];
 		for (final TermInfo termInfo : mTermInfos.values()) {
 			if (termInfo.mGroundTerm != null) {
 				register[termInfo.mRegIndex] = termInfo.mGroundTerm;
@@ -271,7 +271,7 @@ public class PatternCompiler {
 	 */
 	class TermInfo {
 
-		CCTerm mGroundTerm;
+		CCParameter mGroundTerm;
 		/**
 		 * The number of occurrences of the subterm.
 		 */

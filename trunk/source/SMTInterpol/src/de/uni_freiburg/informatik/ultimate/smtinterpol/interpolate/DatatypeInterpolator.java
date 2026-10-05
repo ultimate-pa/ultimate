@@ -21,6 +21,7 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.DataType;
@@ -31,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.LitInfo;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator.Occurrence;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.OffsetEqKey;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
 /**
@@ -97,6 +99,24 @@ public class DatatypeInterpolator {
 		default:
 			throw new UnsupportedOperationException("lemma unknown in datatype interpolator");
 		}
+	}
+
+	/**
+	 * Compute the literal info oriented and shifted to match the annotation-level equality
+	 * {@code left = right}. For numeric sorts the clause literal is canonicalized and may
+	 * therefore differ from the equality in the lemma annotation by a constant offset (and
+	 * by swapped sides), e.g. clause literal {@code (= b (+ a (- 2)))} for the annotation
+	 * equality {@code (= (+ b 7) (+ a 5))} in a dt-injective lemma.
+	 *
+	 * @param atomPair the clause atom's parameters in atom order.
+	 * @param info     the literal info of the clause atom.
+	 * @param left     the left-hand side of the annotation equality.
+	 * @param right    the right-hand side of the annotation equality.
+	 */
+	private OffsetLitInfo getAnnotationLitInfo(final SymmetricPair<Term> atomPair, final LitInfo info,
+			final Term left, final Term right) {
+		final OffsetEqKey litKey = mInterpolator.key(atomPair.getFirst(), atomPair.getSecond());
+		return new OffsetLitInfo(mTheory, info, litKey).reorient(mInterpolator.key(left, right));
 	}
 
 	/**
@@ -207,11 +227,15 @@ public class DatatypeInterpolator {
 		final ApplicationTerm diseqAtom = (ApplicationTerm) annot[0];
 		final Term[] diseqParams = diseqAtom.getParameters();
 		assert mDisequalityInfos.size() == 1;
-		final SymmetricPair<Term> diseqPair = mDisequalityInfos.keySet().iterator().next();
-		final LitInfo diseqInfo = mDisequalityInfos.get(diseqPair);
+		final Entry<SymmetricPair<Term>, LitInfo> diseqEntry = mDisequalityInfos.entrySet().iterator().next();
+		final OffsetLitInfo diseqInfo = getAnnotationLitInfo(diseqEntry.getKey(), diseqEntry.getValue(),
+				diseqParams[0], diseqParams[1]);
 		final ApplicationTerm firstConsTerm = (ApplicationTerm) annot[2];
 		final ApplicationTerm secondConsTerm = (ApplicationTerm) annot[3];
-		final LitInfo eqInfo = mEqualityInfos.get(new SymmetricPair<>(firstConsTerm, secondConsTerm));
+		assert mEqualityInfos.size() == 1;
+		final Entry<SymmetricPair<Term>, LitInfo> eqEntry = mEqualityInfos.entrySet().iterator().next();
+		final OffsetLitInfo eqInfo = getAnnotationLitInfo(eqEntry.getKey(), eqEntry.getValue(),
+				firstConsTerm, secondConsTerm);
 		String selFunc = null;
 
 		for (int partition = 0; partition < mNumInterpolants; partition++) {
@@ -228,18 +252,18 @@ public class DatatypeInterpolator {
 				if (selFunc == null) {
 					selFunc = getSelectorForPair(firstConsTerm, secondConsTerm, diseqParams);
 				}
+				// sharedSelTerm equals the constructor arguments at annotation level, so the
+				// shared term must also be the annotation-level argument on the other side.
 				final Term sharedSelTerm = mTheory.term(selFunc, eqInfo.getMixedVar());
 				if (diseqInfo.isAorShared(partition)) {
-					final Term sharedTerm = eqInfo.getLhsOccur().isALocal(partition) ? diseqPair.getSecond()
-							: diseqPair.getFirst();
+					final Term sharedTerm = eqInfo.isLeftALocal(partition) ? diseqParams[1] : diseqParams[0];
 					interpolants[partition] = mTheory.term(SMTLIBConstants.NOT,
 							mTheory.term(SMTLIBConstants.EQUALS, sharedTerm, sharedSelTerm));
 				} else if (diseqInfo.isBLocal(partition)) {
-					final Term sharedTerm = eqInfo.getLhsOccur().isALocal(partition) ? diseqPair.getFirst()
-							: diseqPair.getSecond();
+					final Term sharedTerm = eqInfo.isLeftALocal(partition) ? diseqParams[0] : diseqParams[1];
 					interpolants[partition] = mTheory.term(SMTLIBConstants.EQUALS, sharedTerm, sharedSelTerm);
 				} else {
-					interpolants[partition] = mTheory.term(Interpolator.EQ, diseqInfo.getMixedVar(), sharedSelTerm);
+					interpolants[partition] = diseqInfo.buildEQ(sharedSelTerm);
 				}
 			}
 		}
@@ -361,7 +385,9 @@ public class DatatypeInterpolator {
 
 		// equality is missing because it is trivial
 		if (mEqualityInfos.size() == 0) {
-			final LitInfo diseqInfo = mDisequalityInfos.values().iterator().next();
+			final Entry<SymmetricPair<Term>, LitInfo> diseqEntry = mDisequalityInfos.entrySet().iterator().next();
+			final OffsetLitInfo diseqInfo = getAnnotationLitInfo(diseqEntry.getKey(), diseqEntry.getValue(),
+					goalEq.getParameters()[0], goalEq.getParameters()[1]);
 			for (int partition = 0; partition < mNumInterpolants; partition++) {
 				if (diseqInfo.isAorShared(partition)) {
 					interpolants[partition] = mTheory.mFalse;
@@ -371,14 +397,14 @@ public class DatatypeInterpolator {
 					// mixed case is possible only with quantifiers
 					assert diseqInfo.isMixed(partition);
 					final Term sharedTerm = goalEq.getParameters()[1];
-					interpolants[partition] = mTheory.term(Interpolator.EQ, diseqInfo.getMixedVar(), sharedTerm);
+					interpolants[partition] = diseqInfo.buildEQ(sharedTerm);
 				}
 			}
 			return interpolants;
 		}
 		assert (mEqualityInfos.size() == 1);
 		if (mDisequalityInfos.size() == 0) {
-			final LitInfo eqInfo = mDisequalityInfos.values().iterator().next();
+			final LitInfo eqInfo = mEqualityInfos.values().iterator().next();
 			for (int partition = 0; partition < mNumInterpolants; partition++) {
 				if (eqInfo.isAorShared(partition)) {
 					interpolants[partition] = mTheory.mFalse;
@@ -392,8 +418,9 @@ public class DatatypeInterpolator {
 		}
 		assert (mDisequalityInfos.size() == 1);
 
-		final SymmetricPair<Term> diseqLit = mDisequalityInfos.keySet().iterator().next();
-		final LitInfo diseqInfo = mDisequalityInfos.get(diseqLit);
+		final Entry<SymmetricPair<Term>, LitInfo> diseqEntry = mDisequalityInfos.entrySet().iterator().next();
+		final OffsetLitInfo diseqInfo = getAnnotationLitInfo(diseqEntry.getKey(), diseqEntry.getValue(),
+				goalEq.getParameters()[0], goalEq.getParameters()[1]);
 
 		final SymmetricPair<Term> eqLit = mEqualityInfos.keySet().iterator().next();
 		final LitInfo eqInfo = mEqualityInfos.get(eqLit);
@@ -415,7 +442,7 @@ public class DatatypeInterpolator {
 					shared1Term = goalEq.getParameters()[1];
 				}
 				if (diseqInfo.isMixed(partition)) {
-					interpolants[partition] = mTheory.term(Interpolator.EQ, diseqInfo.getMixedVar(), shared1Term);
+					interpolants[partition] = diseqInfo.buildEQ(shared1Term);
 				} else if (diseqInfo.isALocal(partition)) {
 					interpolants[partition] = mTheory.term(SMTLIBConstants.NOT,
 							mTheory.term(SMTLIBConstants.EQUALS, shared0Term, goalEq.getParameters()[1]));

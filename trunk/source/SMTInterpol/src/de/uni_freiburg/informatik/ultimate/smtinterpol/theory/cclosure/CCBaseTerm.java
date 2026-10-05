@@ -23,8 +23,8 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 public class CCBaseTerm extends CCTerm {
 	Object mSymbol;
 
-	public CCBaseTerm(final boolean isFunc, final int parentPos, final Object symb) {
-		super(isFunc, parentPos, symb.hashCode(), 0);
+	public CCBaseTerm(final Object symb) {
+		super(symb.hashCode(), 0);
 		mSymbol = symb;
 	}
 
@@ -32,12 +32,7 @@ public class CCBaseTerm extends CCTerm {
 	public String toString() {
 		String res = mSymbol.toString();
 		if (mSymbol instanceof FunctionSymbol) {
-			res = ((FunctionSymbol) mSymbol).getName();
-			if (((FunctionSymbol) mSymbol).getIndices() != null) {
-				for (String ind : ((FunctionSymbol) mSymbol).getIndices()) {
-					res = res + "_" + ind;
-				}
-			}
+			return ((FunctionSymbol) mSymbol).getApplicationString();
 		}
 		return res;
 	}

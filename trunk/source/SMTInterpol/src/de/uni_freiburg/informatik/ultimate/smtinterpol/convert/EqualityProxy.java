@@ -36,7 +36,7 @@ public class EqualityProxy {
 	 */
 	public static final class TrueEqualityProxy extends EqualityProxy {
 		private TrueEqualityProxy() {
-			super(null, null, null);
+			super(null, null, null, null);
 		}
 		@Override
 		public DPLLAtom getLiteral(final SourceAnnotation source) {
@@ -49,7 +49,7 @@ public class EqualityProxy {
 	 */
 	public static final class FalseEqualityProxy extends EqualityProxy {
 		private FalseEqualityProxy() {
-			super(null, null, null);
+			super(null, null, null, null);
 		}
 		@Override
 		public DPLLAtom getLiteral(final SourceAnnotation source) {
@@ -69,21 +69,31 @@ public class EqualityProxy {
 	}
 
 	final Clausifier mClausifier;
+	/** The offset-free sides and the constant offset: this proxy states {@code value(mLhs) == value(mRhs) + mOffset}. */
 	final Term mLhs, mRhs;
+	final Rational mOffset;
 
-	public EqualityProxy(final Clausifier clausifier, final Term lhs, final Term rhs) {
+	public EqualityProxy(final Clausifier clausifier, final Term lhs, final Term rhs, final Rational offset) {
 		mClausifier = clausifier;
 		mLhs = lhs;
 		mRhs = rhs;
+		mOffset = offset;
 	}
 
 	public LAEquality createLAEquality() {
-		/* create la part */
+		// The proxy's canonical equality as a linear constraint: mLhs - mRhs - mOffset == 0.
 		final Polynomial affine = new Polynomial(mLhs);
 		affine.add(Rational.MONE, mRhs);
+		affine.add(mOffset.negate());
 		return mClausifier.getLASolver().createEquality(mClausifier.createMutableAffinTerm(affine, null));
 	}
 
+	/**
+	 * The norm factor for a CCEquality between {@code lhs} and {@code rhs}: it relates the CCEquality to the proxy's
+	 * shared LAEquality via {@code factor * (lhs - rhs) == laeq.getVar()}. It is per CCEquality, not per proxy, since
+	 * equivalent equalities can be scaled (e.g. {@code 2x = 2y+4} vs {@code x = y+2} share a proxy but need factors 1/2
+	 * and 1). The constant offset does not affect the gcd, so it is irrelevant here.
+	 */
 	public Rational computeNormFactor(final Term lhs, final Term rhs) {
 		final Polynomial affine = new Polynomial(lhs);
 		affine.add(Rational.MONE, rhs);
@@ -104,40 +114,55 @@ public class EqualityProxy {
 	 */
 	public CCEquality createCCEquality(final Term lhs, final Term rhs) {
 		assert lhs.getSort().isNumericSort();
-		final CCTerm ccLhs = mClausifier.getCCTerm(lhs);
-		final CCTerm ccRhs = mClausifier.getCCTerm(rhs);
+		// Resolve the offset-free CC nodes and the offset (the difference of the sides' constants); both are per call,
+		// not the proxy's, since this lhs/rhs may be a scaled equivalent of the proxy's canonical equality.
+		return createCCEquality(mClausifier.getCCTerm(mClausifier.getOffsetFreeTerm(lhs)),
+				mClausifier.getCCTerm(mClausifier.getOffsetFreeTerm(rhs)),
+				mClausifier.getTermConstant(rhs).sub(mClausifier.getTermConstant(lhs)));
+	}
+
+	/**
+	 * Create a CCEquality {@code value(ccLhs) == value(ccRhs) + offset} linked to this proxy's LAEquality. The offset
+	 * and norm factor are derived from {@code ccLhs}/{@code ccRhs}/{@code offset} (not from the proxy's canonical
+	 * {@link #mOffset}), because equivalent equalities can be scaled and share this proxy at different offsets.
+	 */
+	public CCEquality createCCEquality(final CCTerm ccLhs, final CCTerm ccRhs, final Rational offset) {
 		assert ccLhs != null && ccRhs != null;
-		final DPLLAtom eqAtom = getLiteral(null);
+		final DPLLAtom eqAtom = getLiteral(SourceAnnotation.EMPTY_SOURCE_ANNOT);
 		LAEquality laeq;
 		if (eqAtom instanceof CCEquality) {
 			final CCEquality eq = (CCEquality) eqAtom;
 			laeq = eq.getLASharedData();
 			if (laeq == null) {
-				final Rational normFactor = computeNormFactor(mLhs, mRhs);
 				laeq = createLAEquality();
 				laeq.addDependentAtom(eq);
-				eq.setLASharedData(laeq, normFactor);
+				eq.setLASharedData(laeq, computeNormFactor(eq.getLhs().getFlatTerm(), eq.getRhs().getFlatTerm()));
 			}
 		} else {
 			laeq = (LAEquality) eqAtom;
 		}
 		for (final CCEquality eq : laeq.getDependentEqualities()) {
 			assert (eq.getLASharedData() == laeq);
-			if (eq.getLhs() == ccLhs && eq.getRhs() == ccRhs) {
+			// The offset must match too: two CCEqualities between the same pair of CCTerms but with different offsets
+			// (e.g. x == y and x == y + 3) are distinct facts and must not be conflated, otherwise propagating one
+			// would wrongly set the other. eq states getLhs() == getRhs() + eq.getOffset().
+			if (eq.getLhs() == ccLhs && eq.getRhs() == ccRhs && eq.getOffset().equals(offset)) {
 				return eq;
 			}
-			if (eq.getRhs() == ccLhs && eq.getLhs() == ccRhs) {
+			if (eq.getLhs() == ccRhs && eq.getRhs() == ccLhs && eq.getOffset().equals(offset.negate())) {
 				return eq;
 			}
 		}
-		final CCEquality eq = mClausifier.getCClosure().createCCEquality(mClausifier.getStackLevel(), ccLhs, ccRhs);
-		final Rational normFactor = computeNormFactor(lhs, rhs);
+		final CCEquality eq =
+				mClausifier.getCClosure().createCCEquality(mClausifier.getStackLevel(), ccLhs, ccRhs, offset);
 		laeq.addDependentAtom(eq);
-		eq.setLASharedData(laeq, normFactor);
+		eq.setLASharedData(laeq, computeNormFactor(ccLhs.getFlatTerm(), ccRhs.getFlatTerm()));
 		return eq;
 	}
 
 	private DPLLAtom createAtom(final Term eqTerm, final SourceAnnotation source) {
+		// mLhs/mRhs are offset-free, so axioms, existence probes and LinVar creation operate directly on them; the
+		// offset (mOffset) is reintroduced when the CCEquality is built below.
 		mClausifier.addTermAxioms(mLhs, source);
 		mClausifier.addTermAxioms(mRhs, source);
 
@@ -166,8 +191,8 @@ public class EqualityProxy {
 			return createLAEquality();
 		} else {
 			/* let them share congruence closure */
-			final CCTerm ccLhs = mClausifier.createCCTerm(mLhs, source);
-			final CCTerm ccRhs = mClausifier.createCCTerm(mRhs, source);
+			final CCTerm ccLhs = mClausifier.createCCTerm(mLhs, source).getCCTerm();
+			final CCTerm ccRhs = mClausifier.createCCTerm(mRhs, source).getCCTerm();
 
 			/* Creating the CC terms could have created the equality */
 			final DPLLAtom atom = (DPLLAtom) mClausifier.getILiteral(eqTerm);
@@ -176,12 +201,29 @@ public class EqualityProxy {
 			}
 
 			/* create CC equality */
-			return mClausifier.getCClosure().createCCEquality(mClausifier.getStackLevel(), ccLhs, ccRhs);
+			final CCEquality cceq =
+					mClausifier.getCClosure().createCCEquality(mClausifier.getStackLevel(), ccLhs, ccRhs, mOffset);
+			if (mClausifier.createOffsetEqualities() && mLhs.getSort().isNumericSort()) {
+				// With offset equalities, clash-slot MBTC only creates LAEqualities for shared terms that occupy a
+				// function-argument position; a numeric (dis)equality between other shared terms (e.g. two selector or
+				// div results) would otherwise have no LAEquality, so linear arithmetic would never learn the
+				// disequality and model construction could pick a model that violates it. Create the LAEquality eagerly
+				// (it forces the necessary LinVars, here both sides are numeric) and link it to the CCEquality, exactly
+				// as createCCEquality does once a term is already shared.
+				final LAEquality laeq = createLAEquality();
+				laeq.addDependentAtom(cceq);
+				cceq.setLASharedData(laeq, computeNormFactor(mLhs, mRhs));
+			}
+			return cceq;
 		}
 	}
 
 	public DPLLAtom getLiteral(final SourceAnnotation source) {
-		final Term eqTerm = mLhs.getTheory().term("=", mLhs, mRhs);
+		// Reconstruct the offset-aware equality term (mLhs == mRhs + mOffset) as the literal/flag key, so proxies that
+		// differ only by their offset get distinct atoms (mirrors CCEquality.getSMTFormula).
+		final Term rhsWithOffset =
+				mOffset.equals(Rational.ZERO) ? mRhs : mClausifier.addConstantToTerm(mRhs, mOffset);
+		final Term eqTerm = mLhs.getTheory().term("=", mLhs, rhsWithOffset);
 		DPLLAtom lit = (DPLLAtom) mClausifier.getILiteral(eqTerm);
 		if (lit == null) {
 			lit = createAtom(eqTerm, source);
@@ -201,6 +243,9 @@ public class EqualityProxy {
 		pt.append(sb, mLhs);
 		sb.append(" == ");
 		pt.append(sb, mRhs);
+		if (!mOffset.equals(Rational.ZERO)) {
+			sb.append(" + ").append(mOffset);
+		}
 		return sb.toString();
 	}
 

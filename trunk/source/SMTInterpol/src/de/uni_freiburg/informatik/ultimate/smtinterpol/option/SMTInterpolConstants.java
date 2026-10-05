@@ -55,4 +55,5 @@ public interface SMTInterpolConstants {
 	public String PROPAGATE_UNKNOWN_TERMS = ":propagate-unknown-terms";
 	public String PROPAGATE_UNKNOWN_AUX = ":propagate-unknown-aux";
 	public String SIMPLIFY_REPEATEDLY = ":simplify-repeatedly";
+	public String OFFSET_EQUALITIES = ":offset-equalities";
 }

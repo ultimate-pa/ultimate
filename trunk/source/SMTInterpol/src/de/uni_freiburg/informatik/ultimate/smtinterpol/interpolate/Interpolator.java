@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.InterpolatorClauseInfo.ClauseKind;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.TerminationRequest;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitesimalNumber;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.OffsetEqKey;
 
 /**
  * This interpolator computes the interpolants of a refutation for the partitions specified by the user. It works in a
@@ -193,9 +194,21 @@ public class Interpolator extends NonRecursive {
 		}
 	}
 
+	/**
+	 * Whether the terms of the proof were built with offset equalities, see
+	 * {@link de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier#createOffsetEqualities}. The theory
+	 * interpolators use it to key their (dis)equalities the same way the terms were built.
+	 */
+	private final boolean mOffsetEqualities;
+
+	/** Build the lookup key for the (dis)equality {@code lhs = rhs}, see {@link #mOffsetEqualities}. */
+	OffsetEqKey key(final Term lhs, final Term rhs) {
+		return new OffsetEqKey(lhs, rhs, mOffsetEqualities);
+	}
+
 	public Interpolator(final LogProxy logger, final Script checkingSolver, final Collection<Term> allAssertions,
 			final Theory theory, final Set<String>[] partitions, final int[] startOfSubTrees,
-			final TerminationRequest cancel) {
+			final boolean offsetEqualities, final TerminationRequest cancel) {
 		assert partitions.length == startOfSubTrees.length;
 		mPartitions = new HashMap<>();
 		for (int i = 0; i < partitions.length; i++) {
@@ -206,6 +219,7 @@ public class Interpolator extends NonRecursive {
 		}
 		mLogger = logger;
 		mCancel = cancel;
+		mOffsetEqualities = offsetEqualities;
 		if (checkingSolver != null) {
 			mChecker = new InterpolantChecker(this, checkingSolver);
 			mChecker.assertUnpartitionedFormulas(allAssertions, mPartitions.keySet());

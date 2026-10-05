@@ -9,7 +9,13 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 public class DataTypeLemma {
 
 	private final RuleKind mRule;
-	private final SymmetricPair<CCTerm> mMainEquality;
+	/**
+	 * The propagated equality as a pair of {@link CCParameter}s, i.e. the equality of the two <em>values</em>
+	 * {@code first.getCCTerm() + first.getOffset() == second.getCCTerm() + second.getOffset()}. For all rules except
+	 * dt-project and dt-injective both sides are offset-free (a bare {@link CCTerm}); those two carry the offset of a
+	 * numeric constructor argument. {@code null} for conflict lemmas that prove no equality.
+	 */
+	private final SymmetricPair<CCParameter> mMainEquality;
 	private final SymmetricPair<CCTerm>[] mReason;
 	private final Object[] mAnnotation;
 
@@ -20,7 +26,7 @@ public class DataTypeLemma {
 	 * @param mainEquality the propagated equality {@code u = C(s1(u),...,sn(u))}.
 	 * @param reason       the equality isC(u) = true.
 	 */
-	public DataTypeLemma(final RuleKind rule, final SymmetricPair<CCTerm> mainEquality,
+	public DataTypeLemma(final RuleKind rule, final SymmetricPair<CCParameter> mainEquality,
 			final SymmetricPair<CCTerm>[] reason) {
 		mRule = rule;
 		mReason = reason;
@@ -37,7 +43,7 @@ public class DataTypeLemma {
 	 * @param reason       the equalities to prove u = consTerm
 	 * @param consTerm1    the constructor {@code C(a1,...,an)} to which u is equal.
 	 */
-	public DataTypeLemma(final RuleKind rule, final SymmetricPair<CCTerm> mainEquality,
+	public DataTypeLemma(final RuleKind rule, final SymmetricPair<CCParameter> mainEquality,
 			final SymmetricPair<CCTerm>[] reason, final CCTerm consTerm) {
 		assert rule == RuleKind.DT_PROJECT || rule == RuleKind.DT_TESTER;
 		mRule = rule;
@@ -55,7 +61,7 @@ public class DataTypeLemma {
 	 * @param consTerm1    the first constructor {@code C(a1,...,an)}
 	 * @param consTerm2    the second constructor {@code C(b1,...,bn)}
 	 */
-	public DataTypeLemma(final RuleKind rule, final SymmetricPair<CCTerm> mainEquality,
+	public DataTypeLemma(final RuleKind rule, final SymmetricPair<CCParameter> mainEquality,
 			final SymmetricPair<CCTerm>[] reason, final CCTerm consTerm1, final CCTerm consTerm2) {
 		assert rule == RuleKind.DT_INJECTIVE;
 		mRule = rule;
@@ -102,7 +108,7 @@ public class DataTypeLemma {
 		return mRule;
 	}
 
-	public SymmetricPair<CCTerm> getMainEquality() {
+	public SymmetricPair<CCParameter> getMainEquality() {
 		return mMainEquality;
 	}
 
