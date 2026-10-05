@@ -106,8 +106,9 @@ public class AnnotateAndAsserter<L extends IAction> {
 		// TODO: For testing, WitnessGuidedAssertOrder is hardcoded here.
 		// What is the best way to handle this here? If we are not using witness guided verification, we just use the
 		// underlying assert order from getAssertOrder here (as there are no WitnessAssumptions in this case).
-		final List<Set<Integer>> partitions = new WitnessGuidedAssertOrder<>(getAssertOrder(mAssertCodeBlocksOrder))
-				.partition(mSSA.getCounterexample());
+		final List<Set<Integer>> partitions =
+				new WitnessGuidedAssertOrder<>(getAssertOrder(mAssertCodeBlocksOrder), mLogger)
+						.partition(mSSA.getCounterexample());
 
 		mLogger.info(String.format("Assert order %s partitioned %s statements into %s equivalence classes.",
 				mAssertCodeBlocksOrder, mSSA.getCounterexample().length(), partitions.size()));
