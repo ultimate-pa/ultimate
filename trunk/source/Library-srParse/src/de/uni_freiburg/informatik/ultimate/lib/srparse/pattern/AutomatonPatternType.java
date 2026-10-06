@@ -105,6 +105,11 @@ public abstract class AutomatonPatternType<T extends AutomatonPatternType<?>> ex
 
 		}
 
+		final List<AutomatonPatternType<?>> nextTransitions = getAllOutgoingEdges(allPatterns, getTargetLocation());
+		if (nextTransitions.isEmpty()) {
+			result.add(buildTermination());
+		}
+
 		// TODO check if target location of transition has outgoing edges. If not add t;l;!l;t to counter traces
 
 		return result;
@@ -191,13 +196,13 @@ public abstract class AutomatonPatternType<T extends AutomatonPatternType<?>> ex
 	}
 
 	/**
-	 * Formula 17: event is set from entry (event is true and stays true)
+	 * Formula 18: event is set from entry (event is true and stays true)
 	 */
 	private CounterTrace buildEventLocked(final List<AutomatonPatternType<?>> outgoingTransitions) {
 		CDD otherTransitions = CDD.FALSE;
 
 		for (final AutomatonPatternType<?> transition : outgoingTransitions) {
-			if (transition.getEvent() != CDD.TRUE && transition.getEvent() == getEvent()) {
+			if (transition.getEvent() != CDD.TRUE && transition.getEvent().isEqual(getEvent())) {
 				continue;
 			}
 			otherTransitions = otherTransitions
@@ -210,7 +215,7 @@ public abstract class AutomatonPatternType<T extends AutomatonPatternType<?>> ex
 	}
 
 	/**
-	 * Formula 18: event is not set (and may trigger a transition)
+	 * Formula 19: event is not set (and may trigger a transition)
 	 */
 	private CounterTrace buildEventArmed(final List<AutomatonPatternType<?>> outgoingTransitions) {
 		CDD otherTransitions = CDD.FALSE;
@@ -226,23 +231,26 @@ public abstract class AutomatonPatternType<T extends AutomatonPatternType<?>> ex
 	}
 
 	/**
-	 * Formula 20: time bounds in locations
+	 * Formula 21: time bounds in locations
 	 */
 	protected CounterTrace buildTimeBound(final List<AutomatonPatternType<?>> outgoingTransitions) {
 		CDD otherTransitions = CDD.FALSE;
 
 		for (final AutomatonPatternType<?> transition : outgoingTransitions) {
-			if (transition.getEvent() != CDD.TRUE && transition.getEvent() == getEvent()) {
+			if (!cddAreEquivalent(getTargetLocation(), transition.getTargetLocation()) || transition == this) {
 				continue;
 			}
 			otherTransitions = otherTransitions
 					.or(transition.getTargetLocation().and(transition.getGuard()).and(transition.getEvent()));
 		}
 
-		// TODO TK hier bin ich mir nicht mehr sicher
 		final CDD thirdPhase = getTargetLocation().and(getEvent()).and(getGuard()).and(otherTransitions.negate());
 		return counterTrace(phaseT(), phase(getSourceLocation(), invertBound(getBoundType()), getBoundValue()),
 				phase(thirdPhase), phaseT());
+	}
+
+	protected CounterTrace buildTermination() {
+		return counterTrace(phaseT(), phase(getTargetLocation()), phase(getTargetLocation().negate()), phaseT());
 	}
 
 	private static BoundTypes invertBound(final BoundTypes boundType) {
