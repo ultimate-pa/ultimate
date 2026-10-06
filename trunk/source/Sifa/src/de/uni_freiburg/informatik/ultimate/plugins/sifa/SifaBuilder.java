@@ -257,11 +257,7 @@ public class SifaBuilder {
 		private final IDomain mDomain;
 		private final SifaStats mStats;
 
-		public SifaComponents(final IcfgInterpreter icfgInterpreter, final IDomain domain, final SifaStats stats) {
-			this((ISifaInterpreter) icfgInterpreter, domain, stats);
-		}
-
-		private SifaComponents(final ISifaInterpreter interpreter, final IDomain domain, final SifaStats stats) {
+		public SifaComponents(final ISifaInterpreter interpreter, final IDomain domain, final SifaStats stats) {
 			mInterpreter = interpreter;
 			mDomain = domain;
 			mStats = stats;
@@ -269,13 +265,6 @@ public class SifaBuilder {
 
 		public ISifaInterpreter getInterpreter() {
 			return mInterpreter;
-		}
-
-		public IcfgInterpreter getIcfgInterpreter() {
-			if (mInterpreter instanceof final IcfgInterpreter interpreter) {
-				return interpreter;
-			}
-			throw new IllegalStateException("The ICFG interpreter is only available for sequential programs");
 		}
 
 		public IDomain getDomain() {

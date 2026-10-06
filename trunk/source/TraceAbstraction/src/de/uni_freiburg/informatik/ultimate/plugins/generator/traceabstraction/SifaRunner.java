@@ -98,7 +98,7 @@ public final class SifaRunner<L extends IIcfgTransition<?>> implements IInterpol
 				services.getProgressMonitorService(), locationOfInterestSet);
 		final Map<IcfgLocation, IPredicate> predicates;
 		try {
-			predicates = sifaComponents.getIcfgInterpreter().interpret();
+			predicates = sifaComponents.getInterpreter().interpret();
 		} catch (final ToolchainCanceledException tce) {
 			mTracecheckFinishedNormally = false;
 			mPostcondition = null;
