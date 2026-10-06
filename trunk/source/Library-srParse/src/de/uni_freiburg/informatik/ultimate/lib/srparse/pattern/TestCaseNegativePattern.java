@@ -6,37 +6,24 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeTestCase;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
- * {scope}, TestCase for R1, trace is forbidden to hold: (c1, expr1), (c2, expr2), ...
+ * TestCase for R1, trace is forbidden to hold: (c1, expr1), (c2, expr2), ...
  *
- * Counterpart of {@link TestCasePositivePattern} for "is forbidden to hold" - see that class for the rationale.
+ * Carries a concrete example trace, not a property to verify - no PEA is built for it, the trace is only used in
+ * Req2BoogieTranslator. The requirement it is checked against is part of the scope ({@link SrParseScopeTestCase}).
  */
 public class TestCaseNegativePattern extends PatternType<TestCaseNegativePattern> {
 
-	private final String mTargetReqId;
-
 	public TestCaseNegativePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<Rational> durations, final List<String> durationNames, final String targetReqId) {
+			final List<Rational> durations, final List<String> durationNames) {
 		super(scope, id, cdds, durations, durationNames);
-		mTargetReqId = targetReqId;
 	}
 
 	public String getTargetReqId() {
-		return mTargetReqId;
-	}
-
-	@Override
-	public TestCaseNegativePattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<Rational> durations, final List<String> durationNames) {
-		return new TestCaseNegativePattern(scope, id, cdds, durations, durationNames, mTargetReqId);
-	}
-
-	@Override
-	public TestCaseNegativePattern rename(final String newName) {
-		return new TestCaseNegativePattern(getScope(), newName, getCdds(), getDurations(), getDurationNames(),
-				mTargetReqId);
+		return ((SrParseScopeTestCase) getScope()).getTargetReqId();
 	}
 
 	@Override
@@ -54,7 +41,7 @@ public class TestCaseNegativePattern extends PatternType<TestCaseNegativePattern
 		if (getScope() != null) {
 			sb.append(getScope());
 		}
-		sb.append("TestCase trace is forbidden to hold: ");
+		sb.append("trace is forbidden to hold: ");
 		appendTrace(sb);
 		return sb.toString();
 	}

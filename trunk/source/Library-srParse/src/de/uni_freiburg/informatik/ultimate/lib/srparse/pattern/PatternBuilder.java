@@ -97,7 +97,6 @@ public class PatternBuilder {
 	private final List<CDD> mCDDs;
 	private final List<Rational> mDurations;
 	private final List<String> mDurationNames;
-	private String mTargetReqId;
 	private String mId;
 	private Class<? extends PatternType<?>> mClazz;
 	private SrParseScope<?> mScope;
@@ -113,10 +112,8 @@ public class PatternBuilder {
 		return this;
 	}
 
-	/** Only for TestCasePositivePattern/TestCaseNegativePattern: which requirement this test checks against. */
-	public PatternBuilder addTargetReqId(final String id) {
-		mTargetReqId = id;
-		return this;
+	public boolean isTestCase() {
+		return mClazz == TestCasePositivePattern.class || mClazz == TestCaseNegativePattern.class;
 	}
 
 	/** Only for TestCasePositivePattern/TestCaseNegativePattern: unpacks a parsed trace into cdds/durations. */
@@ -180,12 +177,6 @@ public class PatternBuilder {
 		if (mScope == null) {
 			throw new IllegalStateException("Scope of pattern not yet specified");
 		}
-		if (mClazz == TestCasePositivePattern.class) {
-			return new TestCasePositivePattern(mScope, mId, mCDDs, mDurations, mDurationNames, mTargetReqId);
-		}
-		if (mClazz == TestCaseNegativePattern.class) {
-			return new TestCaseNegativePattern(mScope, mId, mCDDs, mDurations, mDurationNames, mTargetReqId);
-		}
 		final PatternTypeConstructor constr = getConstructor(mClazz);
 		if (mDurationNames.stream().allMatch(Objects::isNull)) {
 			return constr.construct(mScope, mId, mCDDs, mDurations, Collections.emptyList());
@@ -223,11 +214,6 @@ public class PatternBuilder {
 		pb.mClazz = (Class<? extends PatternType<?>>) p.getClass();
 		pb.mDurationNames.addAll(p.getDurationNames());
 		pb.mCDDs.addAll(p.getCdds());
-		if (p instanceof TestCasePositivePattern) {
-			pb.mTargetReqId = ((TestCasePositivePattern) p).getTargetReqId();
-		} else if (p instanceof TestCaseNegativePattern) {
-			pb.mTargetReqId = ((TestCaseNegativePattern) p).getTargetReqId();
-		}
 		final Rational durationScale = durations.computeScalingFactor();
 		for (final Rational d : p.getDurations()) {
 			pb.mDurations.add(d.mul(durationScale));

@@ -206,7 +206,12 @@ patternset ::=
 	;
 
 property ::= propid?:id scope:s COMMA? pattern:p DOT?
-               {: p.setScope(s).setId(id); RESULT = parser.registerNonInitPattern(p.build(parser.mDurations)); :}
+               {: if ((s instanceof SrParseScopeTestCase) != p.isTestCase()) {
+                      parser.report_error("\"TestCase for <ReqID>\" and \"trace ...\" can only be used together");
+                      RESULT = null;
+                  } else {
+                      p.setScope(s).setId(id); RESULT = parser.registerNonInitPattern(p.build(parser.mDurations));
+                  } :}
             | error
                {: RESULT = null; :}
           	| INPUT cid:i IS ID:t
@@ -242,6 +247,8 @@ scope ::=
       {: RESULT = new SrParseScopeBetween(p,q); :}
   | AFTER expression:p UNTIL expression:q
       {: RESULT = new SrParseScopeAfterUntil(p,q); :}
+  | TESTCASE FOR ID:reqId
+      {: RESULT = new SrParseScopeTestCase(reqId); :}
   ;
   
 pattern ::=	IT IS NEVER THE CASE THAT expression:r HOLDS
@@ -262,11 +269,11 @@ pattern ::=	IT IS NEVER THE CASE THAT expression:r HOLDS
 			{: RESULT = r; :}
 	  	| IT IS ALWAYS THE CASE THAT rtpattern:r
 	  		{: RESULT = r; :}
-	  	| TESTCASE FOR ID:reqId COMMA TRACE HAS TO HOLD IDSEP testCaseTrace:t
-        	{: RESULT = new PatternBuilder(); RESULT.setType(TestCasePositivePattern.class); RESULT.addTargetReqId(reqId); RESULT.addTrace(t); :}
-	    | TESTCASE FOR ID:reqId COMMA TRACE IS FORBIDDEN TO HOLD IDSEP testCaseTrace:t
-	        {: RESULT = new PatternBuilder(); RESULT.setType(TestCaseNegativePattern.class); RESULT.addTargetReqId(reqId); RESULT.addTrace(t); :}
-	    ;
+	  	| TRACE HAS TO HOLD IDSEP testCaseTrace:t
+	  		{: RESULT = new PatternBuilder(); RESULT.setType(TestCasePositivePattern.class); RESULT.addTrace(t); :}
+	  	| TRACE IS FORBIDDEN TO HOLD IDSEP testCaseTrace:t
+	  		{: RESULT = new PatternBuilder(); RESULT.setType(TestCaseNegativePattern.class); RESULT.addTrace(t); :}
+	     ;
   
 opattern ::= IF expression:r HOLDS COMMA? THEN expression:s PREVIOUSLY HELD
       			{: RESULT = new PatternBuilder(); RESULT.setType(PrecedencePattern.class); RESULT.addCdd(s,r); :}
@@ -324,11 +331,12 @@ rtpattern ::= ONCE expression:r BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST d
   			;
   			
   			
-testCaseTrace ::= LPAR num:n COMMA expr:e RPAR
-	  {: RESULT = new ArrayList<Pair<Rational,CDD>>(); RESULT.add(new Pair<>(n,e)); :}
-	| testCaseTrace:l COMMA LPAR num:n COMMA expr:e RPAR
-	  {: l.add(new Pair<>(n,e)); RESULT = l; :}
-	;
+ testCaseTrace ::= LPAR num:n COMMA expr:e RPAR
+          {: RESULT = new ArrayList<Pair<Rational,CDD>>(); RESULT.add(new Pair<>(n,e)); :}
+        | testCaseTrace:l COMMA LPAR num:n COMMA expr:e RPAR
+          {: l.add(new Pair<>(n,e)); RESULT = l; :}
+        ;
+
 
 expression ::= QUOTE expr:e QUOTE {: RESULT = e; :}
  			;

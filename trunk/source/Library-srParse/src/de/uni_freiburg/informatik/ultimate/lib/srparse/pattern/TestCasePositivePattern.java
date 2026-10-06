@@ -6,39 +6,24 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeTestCase;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
- * {scope}, TestCase for R1, trace has to hold: (c1, expr1), (c2, expr2), ...
+ * TestCase for R1, trace has to hold: (c1, expr1), (c2, expr2), ...
  *
- * Carries a concrete example trace, not a property to verify. transform() therefore returns a trivial, unconstrained
- * PEA - the trace itself is only used later, in Req2BoogieTranslator.
+ * Carries a concrete example trace, not a property to verify - no PEA is built for it, the trace is only used in
+ * Req2BoogieTranslator. The requirement it is checked against is part of the scope ({@link SrParseScopeTestCase}).
  */
 public class TestCasePositivePattern extends PatternType<TestCasePositivePattern> {
 
-	private final String mTargetReqId;
-
 	public TestCasePositivePattern(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<Rational> durations, final List<String> durationNames, final String targetReqId) {
+			final List<Rational> durations, final List<String> durationNames) {
 		super(scope, id, cdds, durations, durationNames);
-		mTargetReqId = targetReqId;
 	}
 
 	public String getTargetReqId() {
-		return mTargetReqId;
-	}
-
-	// create()/rename() overridden so mTargetReqId survives post-processing
-	@Override
-	public TestCasePositivePattern create(final SrParseScope<?> scope, final String id, final List<CDD> cdds,
-			final List<Rational> durations, final List<String> durationNames) {
-		return new TestCasePositivePattern(scope, id, cdds, durations, durationNames, mTargetReqId);
-	}
-
-	@Override
-	public TestCasePositivePattern rename(final String newName) {
-		return new TestCasePositivePattern(getScope(), newName, getCdds(), getDurations(), getDurationNames(),
-				mTargetReqId);
+		return ((SrParseScopeTestCase) getScope()).getTargetReqId();
 	}
 
 	@Override
@@ -56,7 +41,7 @@ public class TestCasePositivePattern extends PatternType<TestCasePositivePattern
 		if (getScope() != null) {
 			sb.append(getScope());
 		}
-		sb.append("TestCase trace has to hold: ");
+		sb.append("trace has to hold: ");
 		appendTrace(sb);
 		return sb.toString();
 	}
