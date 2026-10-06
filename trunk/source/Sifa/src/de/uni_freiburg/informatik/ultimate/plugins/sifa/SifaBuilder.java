@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ILoopSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.InterpretCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.ReUseSupersetCallSummarizer;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.summarizers.TopInputCallSummarizer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.sifa.preferences.SifaPreferences;
 
 /**
@@ -94,34 +95,38 @@ public class SifaBuilder {
 	public SifaComponents construct(final IIcfg<IcfgLocation> icfg, final IProgressAwareTimer timer,
 			final Collection<IcfgLocation> locationsOfInterest) {
 		final SifaStats stats = new SifaStats();
-		final ThreadModularSetup setup =
-				IcfgUtils.isConcurrent(icfg) ? new ThreadModularSetup(mServices, icfg, constructThreadModularSettings())
-						: null;
-		final SymbolicTools tools = constructTools(stats, icfg, setup);
-		final IDomain domain = constructStatsDomain(stats, tools, timer);
 		final IFluid fluid = constructStatsFluid(stats);
-		final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSum =
-				constructLoopSummarizer(stats, timer, tools, domain, fluid);
-		final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSum =
-				constructCallSummarizer(stats, tools, domain);
-
-		final ISifaInterpreter interpreter;
-		if (tools instanceof final ConcurrentSymbolicTools concurrentTools) {
-			interpreter = new ThreadModularSifaInterpreter(mLogger, timer, stats, concurrentTools, icfg,
-					locationsOfInterest, setup.initialize(domain, concurrentTools), fluid, loopSum, callSum);
-		} else {
-			interpreter = new IcfgInterpreter(mLogger, timer, stats, tools, icfg, locationsOfInterest, domain, fluid,
-					loopSum, callSum);
+		final var simplificationTechnique =
+				mPrefs.getEnum(SifaPreferences.LABEL_SIMPLIFICATION, SifaPreferences.CLASS_SIMPLIFICATION);
+		if (IcfgUtils.isConcurrent(icfg)) {
+			return constructConcurrent(stats, icfg, timer, fluid, locationsOfInterest, simplificationTechnique);
 		}
+		return constructSequential(stats, icfg, timer, fluid, locationsOfInterest, simplificationTechnique);
+	}
+
+	private SifaComponents constructConcurrent(final SifaStats stats, final IIcfg<IcfgLocation> icfg,
+			final IProgressAwareTimer timer, final IFluid fluid, final Collection<IcfgLocation> locationsOfInterest,
+			final SimplificationTechnique simplificationTechnique) {
+		final ThreadModularSetup setup = new ThreadModularSetup(mServices, icfg, constructThreadModularSettings());
+		final ConcurrentSymbolicTools tools = setup.createTools(stats, simplificationTechnique);
+		final IDomain domain = constructStatsDomain(stats, tools, timer);
+		final var loopSum = constructLoopSummarizer(stats, timer, tools, domain, fluid);
+		final var callSum = constructCallSummarizer(stats, tools, domain);
+		final var interpreter = new ThreadModularSifaInterpreter(mLogger, timer, stats, tools, icfg,
+				locationsOfInterest, setup.initialize(domain, tools), fluid, loopSum, callSum);
 		return new SifaComponents(interpreter, domain, stats);
 	}
 
-	private SymbolicTools constructTools(final SifaStats stats, final IIcfg<IcfgLocation> icfg,
-			final ThreadModularSetup setup) {
-		final var simplification =
-				mPrefs.getEnum(SifaPreferences.LABEL_SIMPLIFICATION, SifaPreferences.CLASS_SIMPLIFICATION);
-		return setup == null ? new SymbolicTools(mServices, stats, icfg, simplification)
-				: setup.createTools(stats, simplification);
+	private SifaComponents constructSequential(final SifaStats stats, final IIcfg<IcfgLocation> icfg,
+			final IProgressAwareTimer timer, final IFluid fluid, final Collection<IcfgLocation> locationsOfInterest,
+			final SimplificationTechnique simplificationTechnique) {
+		final SymbolicTools tools = new SymbolicTools(mServices, stats, icfg, simplificationTechnique);
+		final IDomain domain = constructStatsDomain(stats, tools, timer);
+		final var loopSum = constructLoopSummarizer(stats, timer, tools, domain, fluid);
+		final var callSum = constructCallSummarizer(stats, tools, domain);
+		final var interpreter = new IcfgInterpreter(mLogger, timer, stats, tools, icfg, locationsOfInterest, domain,
+				fluid, loopSum, callSum);
+		return new SifaComponents(interpreter, domain, stats);
 	}
 
 	private ThreadModularSifaSettings constructThreadModularSettings() {
