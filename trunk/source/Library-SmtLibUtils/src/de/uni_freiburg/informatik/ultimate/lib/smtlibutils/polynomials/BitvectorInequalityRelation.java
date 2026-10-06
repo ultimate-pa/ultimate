@@ -93,10 +93,9 @@ public class BitvectorInequalityRelation implements IPolynomialRelation {
 
 	/**
 	 * The 4 "greater" relation symbols get mirrored to their "less" counterpart by the constructor (swapping lhs and
-	 * rhs), exactly like {@link de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils#unfTerm} does for
-	 * terms via its {@code mirrorGreaterOperator} helper. This keeps every instance in canonical form (only
-	 * BVULT/BVULE/BVSLT/BVSLE ever end up in {@link #mRelationSymbol}) from construction onward, so later
-	 * comparison/fusion logic only has to handle 4 shapes instead of 8.
+	 * rhs). This keeps every instance in canonical form (only BVULT/BVULE/BVSLT/BVSLE ever end up in
+	 * {@link #mRelationSymbol}) from construction onward, so later comparison/fusion logic only has to handle 4 shapes
+	 * instead of 8. The mirroring happens on the relation only; terms outside of this class are not rewritten.
 	 */
 	private BitvectorInequalityRelation(final RelationSymbol relationSymbol, final AbstractGeneralizedAffineTerm<?> lhs,
 			final AbstractGeneralizedAffineTerm<?> rhs) {
