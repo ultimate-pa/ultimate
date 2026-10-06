@@ -101,6 +101,13 @@ public class PolyPoNeTwoSidedTest {
 		return BitvectorInequalityRelation.of(mScript, parse(formulaAsString));
 	}
 
+	private static void assertNoGreaterSymbol(final Term term) {
+		final String termAsString = term.toString();
+		for (final String symbol : new String[] { "bvugt", "bvuge", "bvsgt", "bvsge" }) {
+			Assert.assertFalse(symbol + " survived in " + termAsString, termAsString.contains(symbol));
+		}
+	}
+
 	@Test
 	public void tighterUpperBoundDropsLooserOne() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
@@ -267,6 +274,60 @@ public class PolyPoNeTwoSidedTest {
 		final List<Term> params = List.of(parse("(bvule x (_ bv5 8))"), parse("(bvuge x (_ bv5 8))"));
 		final Term result = PolyPoNeUtils.and(mScript, params);
 		MatcherAssert.assertThat(result, IsEqual.equalTo(parse("(= (_ bv5 8) x)")));
+	}
+
+	@Test
+	public void publicEntryPointMirrorsGreaterSymbolsInConjunction() {
+		// The 4 "greater" symbols are mirrored to their "less" counterpart by BitvectorInequalityRelation, and PolyPoNe
+		// rebuilds every atom it keeps from that canonical form. x, y, z give relations without a constant, which are
+		// kept as they are and never compared, so every atom survives and must come out mirrored.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y", "z") };
+		declare(funDecls);
+		final List<Term> params =
+				List.of(parse("(bvugt x y)"), parse("(bvuge y z)"), parse("(bvsgt x z)"), parse("(bvsge z y)"));
+		final Term result = PolyPoNeUtils.and(mScript, params);
+		assertNoGreaterSymbol(result);
+		final Term expected = mScript.term("and", params.toArray(new Term[0]));
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
+	}
+
+	@Test
+	public void publicEntryPointMirrorsGreaterSymbolsInDisjunction() {
+		// Same as the conjunction case, but through the negating path of PolyPoNe#or: the atoms are negated before they
+		// are stored and negated again when the disjunction is rebuilt.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y", "z") };
+		declare(funDecls);
+		final List<Term> params =
+				List.of(parse("(bvugt x y)"), parse("(bvuge y z)"), parse("(bvsgt x z)"), parse("(bvsge z y)"));
+		final Term result = PolyPoNeUtils.or(mScript, params);
+		assertNoGreaterSymbol(result);
+		final Term expected = mScript.term("or", params.toArray(new Term[0]));
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
+	}
+
+	@Test
+	public void publicEntryPointMirrorsGreaterBoundsAgainstConstants() {
+		// 1 <u x and x <u 5 describe a non-empty range that is not adjacent to a single point, so both bounds stay.
+		// The "greater" bound must come out mirrored, as "1 <u x".
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final List<Term> params = List.of(parse("(bvugt x (_ bv1 8))"), parse("(bvult x (_ bv5 8))"));
+		final Term result = PolyPoNeUtils.and(mScript, params);
+		assertNoGreaterSymbol(result);
+		final Term expected = mScript.term("and", params.toArray(new Term[0]));
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
+	}
+
+	@Test
+	public void publicEntryPointMirrorsSignedGreaterBoundsAgainstConstants() {
+		// Signed counterpart: 1 <s x and x <=s 5 keep both bounds, the "greater" one comes out mirrored.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final List<Term> params = List.of(parse("(bvsgt x (_ bv1 8))"), parse("(bvsle x (_ bv5 8))"));
+		final Term result = PolyPoNeUtils.and(mScript, params);
+		assertNoGreaterSymbol(result);
+		final Term expected = mScript.term("and", params.toArray(new Term[0]));
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
 	}
 
 	@Test
