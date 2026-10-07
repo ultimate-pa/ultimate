@@ -357,6 +357,7 @@ public class PEAMinimization {
 			}
 
 			// compute equivalence classes
+			// TODO: das ist glaub bissle dumm
 			boolean changed;
 			do {
 				changed = false;

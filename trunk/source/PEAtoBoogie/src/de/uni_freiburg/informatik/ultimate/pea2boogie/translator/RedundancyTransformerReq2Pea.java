@@ -30,19 +30,15 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PEAMinimization;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.Durations;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaToBoogie;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2Pea;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.IReq2PeaAnnotator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqCheckAnnotator;
@@ -87,24 +83,9 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 			final List<Entry<CounterTrace, PhaseEventAutomata>> totalCt2pea = new ArrayList<>();
 
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : ct2pea) {
-				final PhaseEventAutomata peaToComplement = pea.getValue();
-				assert (peaToComplement.getName().contains(PEAMinimization.MIN_POSTFIX));
-				final PEAMinimization minimizePea = new PEAMinimization(peaToComplement, constVars);
-				// final PEAComplement complementPea = new PEAComplement(peaToComplement, constVars);
-				final PhaseEventAutomata totalisedPea = minimizePea.getTotalisedPEA();
-				final PhaseEventAutomata minimizedPea = minimizePea.getMinimizedPEA();
 
-				final IPreferenceProvider prefProvider =
-						mServices.getPreferenceProvider(PeaToBoogie.class.getPackage().getName());
-
-				final Boolean minimize = prefProvider.getBoolean(Pea2BoogiePreferences.LABEL_MINIMIZE_PEAS);
-				if (minimize) {
-					totalCt2pea.add(new Pair<>(pea.getKey(), minimizedPea));
-					builder.addPea(pattern, minimizedPea);
-				} else {
-					totalCt2pea.add(new Pair<>(pea.getKey(), totalisedPea));
-					builder.addPea(pattern, totalisedPea);
-				}
+				totalCt2pea.add(new Pair<>(pea.getKey(), pea.getValue()));
+				builder.addPea(pattern, pea.getValue());
 
 			}
 			mReqPeas.add(new ReqPeas(pattern, totalCt2pea));
