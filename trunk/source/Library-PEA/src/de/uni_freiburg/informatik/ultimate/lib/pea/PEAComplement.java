@@ -87,7 +87,9 @@ public class PEAComplement {
 		// prepare initial phases
 		final List<InitialTransition> totalisedInit = new ArrayList<>();
 		for (final Phase p : sourcePea.getInit()) {
-			totalisedInit.add(new InitialTransition(CDD.TRUE, totalisedPhases.get(p.getName())));
+
+			totalisedInit
+					.add(new InitialTransition(p.getInitialTransition().getGuard(), totalisedPhases.get(p.getName())));
 		}
 		if (sinkPhase.isInit()) {
 			totalisedInit.add(new InitialTransition(sinkPhase.getInitialTransition().getGuard(), sinkPhase));

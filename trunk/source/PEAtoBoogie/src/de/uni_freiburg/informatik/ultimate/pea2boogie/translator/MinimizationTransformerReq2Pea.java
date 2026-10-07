@@ -101,6 +101,7 @@ public class MinimizationTransformerReq2Pea implements IReq2Pea {
 
 		final List<Entry<CounterTrace, PhaseEventAutomata>> originalCtPea = new ArrayList<>();
 		final List<Entry<CounterTrace, PhaseEventAutomata>> minimizedCtPea = new ArrayList<>();
+		final List<Entry<CounterTrace, PhaseEventAutomata>> doubleMinimizedCtPea = new ArrayList<>();
 
 		for (final Entry<CounterTrace, PhaseEventAutomata> pea : ct2pea) {
 
@@ -111,6 +112,10 @@ public class MinimizationTransformerReq2Pea implements IReq2Pea {
 			final PhaseEventAutomata totalisedPea = peaMinimization.getTotalisedPEA();
 
 			final PhaseEventAutomata minimizedPea = peaMinimization.getMinimizedPEA();
+
+			final PEAMinimization doubleMinimization = new PEAMinimization(minimizedPea);
+
+			final PhaseEventAutomata doubleMinPEA = doubleMinimization.getMinimizedPEA();
 
 			totalisedPeaNumberOfLocations += totalisedPea.getNumberOfLocations();
 
@@ -129,12 +134,15 @@ public class MinimizationTransformerReq2Pea implements IReq2Pea {
 
 			originalCtPea.add(new Pair<>(pea.getKey(), totalisedPea));
 			minimizedCtPea.add(new Pair<>(pea.getKey(), minimizedPea));
+			doubleMinimizedCtPea.add(new Pair<>(pea.getKey(), doubleMinPEA));
 			builder.addPea(pattern, totalisedPea);
 			builder.addPea(pattern, minimizedPea);
+			builder.addPea(pattern, doubleMinPEA);
 
 		}
 		mReqPeas.add(new ReqPeas(pattern, minimizedCtPea));
 		mReqPeas.add(new ReqPeas(pattern, originalCtPea));
+		mReqPeas.add(new ReqPeas(pattern, minimizedCtPea));
 		mSymbolTable = builder.constructSymbolTable();
 
 		for (final ReqPeas reqPeas : mReqPeas) {
