@@ -123,7 +123,7 @@ public class YamlCorrectnessWitnessGenerator {
 				.noneMatch(YamlCorrectnessWitnessGenerator::containsACSL)) {
 			return "c_expression";
 		}
-		return "acsl_expression";
+		return "ext_c_expression";
 	}
 
 	private static boolean containsACSL(final String expression) {
