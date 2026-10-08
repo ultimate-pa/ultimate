@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgGraphProvider;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GraphMLCorrectnessWitnessGenerator;
@@ -202,13 +201,9 @@ public class WitnessPrinter implements IOutput {
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
 			if (createYaml) {
-				if (IcfgUtils.isConcurrent(root)) {
-					mLogger.warn("YAML witness skipped, because there is no support for concurrent programs yet.");
-				} else {
-					final String witness =
-							new YamlViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeYamlString();
-					suppliers.add(new ResultWitness(filename, YAML, witness, cex));
-				}
+				final String witness =
+						new YamlViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeYamlString();
+				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
 			}
 		}
 		return suppliers;
