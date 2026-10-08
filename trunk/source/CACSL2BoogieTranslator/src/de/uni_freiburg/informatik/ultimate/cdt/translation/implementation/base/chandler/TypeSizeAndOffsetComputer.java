@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -234,7 +235,10 @@ public class TypeSizeAndOffsetComputer {
 		if (mStructOffsets.containsKey(cStruct)) {
 			throw new AssertionError("must not be computed");
 		}
-		final List<Member> members = cStruct.getMembers();
+		final List<Member> members = new ArrayList<>();
+		for (final Member m : cStruct.getMembers()) {
+			members.addAll(m.flatten());
+		}
 		final int fieldCount = members.size();
 		final Offset[] offsets = new Offset[fieldCount];
 		mStructOffsets.put(cStruct, offsets);
@@ -264,7 +268,7 @@ public class TypeSizeAndOffsetComputer {
 			return new SizeTValueAggregatorMax().aggregate(loc, Arrays.asList(fieldTypeSizes));
 		}
 		for (int i = 0; i < fieldCount; i++) {
-			final Member member = cStruct.getMember(i);
+			final Member member = members.get(i);
 			final int bitsize;
 			if (mBitPreciseBitfields) {
 				bitsize = member.bitFieldWidth();
