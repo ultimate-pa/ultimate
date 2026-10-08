@@ -35,7 +35,7 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 public class WaypointFunctionReturn extends Waypoint {
 
 	public WaypointFunctionReturn(final String constraint, final Location location, final Integer threadId) {
-		super(constraint, "acsl_expression", location, threadId);
+		super(constraint, "ext_c_expression", location, threadId);
 	}
 
 	@Override
