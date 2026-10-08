@@ -134,6 +134,10 @@ public class YamlViolationWitnessGenerator<TE, E> {
 										getLocation(currentATE, false)),
 								segmentType));
 			}
+			if (currentATE.hasAnyStepInfo(StepInfo.FORK)) {
+				segments.add(
+						new Segment(List.of(), new WaypointFunctionEnter(getLocation(currentATE, false)), segmentType));
+			}
 		}
 		return segments;
 	}
