@@ -34,8 +34,8 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
  */
 public class WaypointAssumption extends Waypoint {
 
-	public WaypointAssumption(final String constraint, final Location location) {
-		super(constraint, "c_expression", location);
+	public WaypointAssumption(final String constraint, final Location location, final Integer threadId) {
+		super(constraint, "c_expression", location, threadId);
 	}
 
 	@Override

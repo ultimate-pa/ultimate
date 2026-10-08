@@ -40,11 +40,14 @@ public abstract class Waypoint {
 	private final String mConstraint;
 	private final Location mLocation;
 	private final String mConstraintFormat;
+	private final Integer mThreadId;
 
-	protected Waypoint(final String constraint, final String constraintFormat, final Location location) {
+	protected Waypoint(final String constraint, final String constraintFormat, final Location location,
+			final Integer threadId) {
 		mConstraint = constraint;
 		mConstraintFormat = constraintFormat;
 		mLocation = location;
+		mThreadId = threadId;
 	}
 
 	public String getConstraint() {
@@ -53,6 +56,10 @@ public abstract class Waypoint {
 
 	public Location getLocation() {
 		return mLocation;
+	}
+
+	public Integer getThreadId() {
+		return mThreadId;
 	}
 
 	public abstract String getType();
@@ -80,6 +87,9 @@ public abstract class Waypoint {
 			wpMap.put("constraint", constraintMap);
 		}
 		wpMap.put("location", mLocation.toMap());
+		if (mThreadId != null) {
+			wpMap.put("thread_id", mThreadId);
+		}
 
 		return wpMap;
 	}

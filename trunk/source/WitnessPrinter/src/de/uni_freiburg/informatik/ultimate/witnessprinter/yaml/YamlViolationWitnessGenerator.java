@@ -66,6 +66,7 @@ public class YamlViolationWitnessGenerator<TE, E> {
 	private final ProgramStatePrinter<TE, E> mProgramStatePrinter;
 	private IProgramExecution<TE, E> mStem;
 	private IProgramExecution<TE, E> mLoop;
+	private final boolean mAddThreadIds;
 
 	// TODO: If when we produce assumptions, we should exclude them for the loop of termination witnesses
 	private static final boolean PRODUCE_ASSUMPTIONS = false;
@@ -90,6 +91,7 @@ public class YamlViolationWitnessGenerator<TE, E> {
 		final String arch = mPreferences.getString(PreferenceInitializer.LABEL_GRAPH_DATA_ARCHITECTURE);
 		final FormatVersion formatVersion =
 				FormatVersion.fromString(mPreferences.getString(PreferenceInitializer.LABEL_YAML_FORMAT_VERSION));
+		mAddThreadIds = formatVersion.compareTo(new FormatVersion(2, 2)) >= 0;
 		final String version = new UltimateCore().getUltimateVersionString();
 		final Map<String, String> programHashes = Map.of(filename, hash);
 		mWriter = YamlWitnessWriter.construct(formatVersion,
@@ -106,40 +108,53 @@ public class YamlViolationWitnessGenerator<TE, E> {
 				final String previousState = mProgramStatePrinter.stateAsExpression(
 						i == 0 ? null : execution.getProgramState(i - 1), ProgramStatePrinter::isValidCVariable);
 				if (previousState != null) {
-					segments.add(new Segment(List.of(),
-							new WaypointAssumption(previousState, getLocation(currentATE, false)), segmentType));
+					segments.add(new Segment(List.of(), new WaypointAssumption(previousState,
+							getLocation(currentATE, false), getThreadId(currentATE)), segmentType));
 				}
 			}
 
 			if (addTargetWaypoint && i == execution.getLength() - 1) {
-				segments.add(new Segment(List.of(), new WaypointTarget(getLocation(currentATE, true)), segmentType));
+				segments.add(new Segment(List.of(),
+						new WaypointTarget(getLocation(currentATE, true), getThreadId(currentATE)), segmentType));
 			}
 			if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
-				segments.add(new Segment(List.of(), new WaypointBranching("false", getLocation(currentATE, false)),
+				segments.add(new Segment(List.of(),
+						new WaypointBranching("false", getLocation(currentATE, false), getThreadId(currentATE)),
 						segmentType));
 			}
 			if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE)) {
-				segments.add(new Segment(List.of(), new WaypointBranching("true", getLocation(currentATE, false)),
+				segments.add(new Segment(List.of(),
+						new WaypointBranching("true", getLocation(currentATE, false), getThreadId(currentATE)),
 						segmentType));
 			}
 			if (currentATE.hasStepInfo(StepInfo.PROC_CALL)) {
-				segments.add(
-						new Segment(List.of(), new WaypointFunctionEnter(getLocation(currentATE, false)), segmentType));
+				segments.add(new Segment(List.of(),
+						new WaypointFunctionEnter(getLocation(currentATE, false), getThreadId(currentATE)),
+						segmentType));
 			}
 			if (currentATE.hasStepInfo(StepInfo.PROC_RETURN)) {
-				segments.add(
-						new Segment(List.of(),
-								new WaypointFunctionReturn(mProgramStatePrinter
-										.stateAsExpression(execution.getProgramState(i), "\\result"::equals),
-										getLocation(currentATE, false)),
-								segmentType));
+				segments.add(new Segment(List.of(),
+						new WaypointFunctionReturn(mProgramStatePrinter.stateAsExpression(execution.getProgramState(i),
+								"\\result"::equals), getLocation(currentATE, false), getThreadId(currentATE)),
+						segmentType));
 			}
 			if (currentATE.hasAnyStepInfo(StepInfo.FORK)) {
-				segments.add(
-						new Segment(List.of(), new WaypointFunctionEnter(getLocation(currentATE, false)), segmentType));
+				segments.add(new Segment(List.of(),
+						new WaypointFunctionEnter(getLocation(currentATE, false), getThreadId(currentATE)),
+						segmentType));
 			}
 		}
 		return segments;
+	}
+
+	private Integer getThreadId(final AtomicTraceElement<TE> ate) {
+		if (!mAddThreadIds) {
+			return null;
+		}
+		if (ate.hasAnyStepInfo(StepInfo.FORK)) {
+			return ate.getForkedThreadId();
+		}
+		return ate.getThreadId();
 	}
 
 	private Location getLocation(final AtomicTraceElement<TE> ate, final boolean isTarget) {
