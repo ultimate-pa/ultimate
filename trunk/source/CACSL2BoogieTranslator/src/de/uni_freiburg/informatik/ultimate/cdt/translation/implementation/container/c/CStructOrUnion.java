@@ -289,10 +289,10 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	}
 
 	public boolean hasFlexibleArrayMember() {
-		if (mFieldTypes.length == 0) {
+		if (mMembers.isEmpty()) {
 			return false;
 		}
-		final ICType lastMember = mFieldTypes[mFieldTypes.length - 1];
+		final ICType lastMember = getFlattenedMembers().reduce((first, second) -> second).orElseThrow().type();
 		return lastMember instanceof CArray && lastMember.isIncomplete();
 	}
 
