@@ -148,7 +148,7 @@ public class YamlViolationWitnessGenerator<TE, E> {
 	}
 
 	private Integer getThreadId(final AtomicTraceElement<TE> ate) {
-		if (!mAddThreadIds) {
+		if (!mAddThreadIds || !ate.hasThreadId()) {
 			return null;
 		}
 		if (ate.hasAnyStepInfo(StepInfo.FORK)) {
