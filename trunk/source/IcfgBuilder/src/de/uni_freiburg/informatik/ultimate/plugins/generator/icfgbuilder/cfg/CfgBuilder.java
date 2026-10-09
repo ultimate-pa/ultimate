@@ -1097,7 +1097,10 @@ public class CfgBuilder {
 				// A merge in the other direction is not possible, because currentElement
 				// might be a the successor of an if-then-else. If we replace currentElement
 				// here, we also would have to replace it for the other branches.
-				mergeLocNodes(newLoc, (BoogieIcfgLocation) currentElement, true);
+				// For the ILocation of the resulting node, we take the ILocation of the currentElement,
+				// because there might be more incoming edges to currentElement that don't go through the label
+				// (e.g., a while loop) and this
+				mergeLocNodes(newLoc, (BoogieIcfgLocation) currentElement, false);
 				resultLoc = (BoogieIcfgLocation) currentElement;
 			} else {
 				endStatementSequence((StatementSequence) currentElement, newLoc);
@@ -1619,7 +1622,7 @@ public class CfgBuilder {
 				if (st instanceof Label && locNode.getDebugIdentifier() == labelId) {
 					loc.annotate(locNode);
 				}
-				ModelUtils.copyAnnotations(st, locNode);
+				ModelUtils.copyAnnotationsExcept(st, locNode, ILocation.class);
 				return locNode;
 			}
 			locNode = new BoogieIcfgLocation(labelId, mCurrentProcedureName, false, st);
