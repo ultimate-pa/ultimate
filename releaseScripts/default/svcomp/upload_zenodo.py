@@ -34,6 +34,8 @@ def token_string_or_file(arg):
 
 
 ACCESS_TOKEN = None
+# seconds; same as zenodo_client's default for its own uploads
+UPLOAD_TIMEOUT = 300
 logging.basicConfig(format="%(message)s", stream=sys.stdout)
 logger = logging.getLogger(__package__)
 
@@ -194,7 +196,9 @@ def update(
     logger.debug(f"populate_new_version PUT response: {pformat(update_res.json())}")
 
     # Upload new files. If no files have changed, there will be no update
-    self._upload_files(bucket=newversion_data["links"]["bucket"], paths=paths)
+    self._upload_files(
+        bucket=newversion_data["links"]["bucket"], paths=paths, timeout=UPLOAD_TIMEOUT
+    )
 
     # Send the publish command
     return retry_request(lambda: self.publish(new_deposition_id), "Publishing")
@@ -282,7 +286,7 @@ def create(self: Zenodo, data: Data, paths: Paths) -> requests.Response:
         raise ValueError(f"No bucket in response. Got: {res_deposition_json}")
 
     logger.info("Uploading files to bucket %s", bucket)
-    self._upload_files(bucket=bucket, paths=paths)
+    self._upload_files(bucket=bucket, paths=paths, timeout=UPLOAD_TIMEOUT)
 
     deposition_id = res_deposition_json["id"]
     logger.info("Publishing files to deposition %s", deposition_id)
@@ -364,25 +368,29 @@ def upload_tools(args, tools):
 
         new_path = f"u{tool.lower()}.zip"
         os.rename(path, new_path)
-
-        paths = [
-            new_path,
-        ]
-        data = create_metadata(toolname=tool, version=version, svcomp_year=args.year)
-        result = log_request_error(
-            lambda: upload(tool, data, paths, sandbox=args.sandbox), "Upload"
-        )
-        if result and result.ok:
-            data = result.json()
-            if "doi" in data:
-                doi = data["doi"]
-                url = data["links"]["html"]
-                logger.info(
-                    f"Success: DOI for {tool} with version {version} is {doi} at {url}"
-                )
-                tool_to_doi[tool] = doi = data["doi"]
-            logger.debug(pformat(data))
-        os.rename(new_path, path)
+        # rename back even if the upload crashes, otherwise the next run skips this tool
+        try:
+            paths = [
+                new_path,
+            ]
+            data = create_metadata(
+                toolname=tool, version=version, svcomp_year=args.year
+            )
+            result = log_request_error(
+                lambda: upload(tool, data, paths, sandbox=args.sandbox), "Upload"
+            )
+            if result and result.ok:
+                data = result.json()
+                if "doi" in data:
+                    doi = data["doi"]
+                    url = data["links"]["html"]
+                    logger.info(
+                        f"Success: DOI for {tool} with version {version} is {doi} at {url}"
+                    )
+                    tool_to_doi[tool] = doi = data["doi"]
+                logger.debug(pformat(data))
+        finally:
+            os.rename(new_path, path)
         logger.info("--")
     return tool_to_doi
 
