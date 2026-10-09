@@ -55,7 +55,6 @@ def parse_args():
         "--sandbox",
         action=argparse.BooleanOptionalAction,
         default=True,
-        type=bool,
         help="Should we use Zenodo's sandbox instead of the real Zenodo? Default: Yes",
     )
     parser.add_argument(
