@@ -437,56 +437,59 @@ def tool_yaml(tool: str):
     return f"data/u{tool.lower()}.yml"
 
 
-# get_available_licenses()
-args = parse_args()
+def main(args):
+    # get_available_licenses()
+    tool_names = ["Automizer", "Kojak", "Taipan", "GemCutter", "Referee"]
+    tools = {k: tool_zip(k) for k in tool_names}
+    yaml_files = {k: tool_yaml(k) for k in tool_names}
 
-tool_names = ["Automizer", "Kojak", "Taipan", "GemCutter", "Referee"]
-tools = {k: tool_zip(k) for k in tool_names}
-yaml_files = {k: tool_yaml(k) for k in tool_names}
-
-tool_to_doi = upload_tools(args, tools)
-if args.fmtools_path:
-    p = Path(args.fmtools_path)
-    if p.is_dir() and p.exists():
-        for tool, f in yaml_files.items():
-            if tool not in tool_to_doi:
-                logger.error(f"No DOI for {tool}, skipping")
-                continue
-            yaml_file = p / Path(f)
-            if not yaml_file.is_file() or not yaml_file.exists():
-                logger.error(f"{yaml_file} for {tool} does not exist, skipping")
-                continue
-            content = None
-            with open(yaml_file, "r") as file:
-                yaml = YAML()
-                content = yaml.load(file)
-            if content["name"][1:].lower() != tool.lower():
-                logger.error(
-                    f"{yaml_file} for {tool} is actually for {content['name']}, skipping"
-                )
-                continue
-            if "versions" not in content:
-                logger.error(f"{yaml_file} for {tool} does not have 'versions' section")
-                continue
-
-            dump_yaml = False
-
-            def replace_if_matching(version):
-                global dump_yaml
-                target_ver = f"svcomp{args.year[2:]}"
-                if target_ver in version["version"]:
-                    new = version
-                    new["doi"] = tool_to_doi[tool]
-                    logger.info(f"Updated {tool} {version['version']} to {new['doi']}")
-                    dump_yaml = True
-                    return new
-                return version
-
-            content["versions"] = [replace_if_matching(c) for c in content["versions"]]
-
-            if dump_yaml:
-                with open(yaml_file, "w") as f:
+    tool_to_doi = upload_tools(args, tools)
+    if args.fmtools_path:
+        p = Path(args.fmtools_path)
+        if p.is_dir() and p.exists():
+            for tool, f in yaml_files.items():
+                if tool not in tool_to_doi:
+                    logger.error(f"No DOI for {tool}, skipping")
+                    continue
+                yaml_file = p / Path(f)
+                if not yaml_file.is_file() or not yaml_file.exists():
+                    logger.error(f"{yaml_file} for {tool} does not exist, skipping")
+                    continue
+                content = None
+                with open(yaml_file, "r") as file:
                     yaml = YAML()
-                    yaml.default_flow_style = False
-                    yaml.dump(content, f)
-                    logger.info(f"Updated {yaml_file} for {tool} with new DOI(s)")
+                    content = yaml.load(file)
+                if content["name"][1:].lower() != tool.lower():
+                    logger.error(
+                        f"{yaml_file} for {tool} is actually for {content['name']}, skipping"
+                    )
+                    continue
+                if "versions" not in content:
+                    logger.error(f"{yaml_file} for {tool} does not have 'versions' section")
+                    continue
+
+                dump_yaml = False
+
+                def replace_if_matching(version):
+                    nonlocal dump_yaml
+                    target_ver = f"svcomp{args.year[2:]}"
+                    if target_ver in version["version"]:
+                        new = version
+                        new["doi"] = tool_to_doi[tool]
+                        logger.info(f"Updated {tool} {version['version']} to {new['doi']}")
+                        dump_yaml = True
+                        return new
+                    return version
+
+                content["versions"] = [replace_if_matching(c) for c in content["versions"]]
+
+                if dump_yaml:
+                    with open(yaml_file, "w") as f:
+                        yaml = YAML()
+                        yaml.default_flow_style = False
+                        yaml.dump(content, f)
+                        logger.info(f"Updated {yaml_file} for {tool} with new DOI(s)")
+
+
+if __name__ == "__main__":
+    main(parse_args())
