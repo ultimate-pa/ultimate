@@ -607,7 +607,10 @@ def main(args):
     tool_to_doi = upload_tools(args, tools)
     if args.fmtools_path:
         p = Path(args.fmtools_path)
-        if p.is_dir() and p.exists():
+        target_ver = f"svcomp{args.year[2:]}"
+        if not p.is_dir():
+            logger.error(f"{p} is not a directory, not updating any YAML files")
+        else:
             for tool, f in yaml_files.items():
                 if tool not in tool_to_doi:
                     logger.error(f"No DOI for {tool}, skipping")
@@ -633,7 +636,6 @@ def main(args):
 
                 def replace_if_matching(version):
                     nonlocal dump_yaml
-                    target_ver = f"svcomp{args.year[2:]}"
                     if target_ver in version["version"]:
                         new = version
                         new["doi"] = tool_to_doi[tool]
@@ -650,6 +652,11 @@ def main(args):
                         yaml.default_flow_style = False
                         yaml.dump(content, f)
                         logger.info(f"Updated {yaml_file} for {tool} with new DOI(s)")
+                else:
+                    logger.warning(
+                        f"{yaml_file} has no version containing '{target_ver}', "
+                        "add one (e.g., with 'doi: ...') and run again"
+                    )
 
 
 if __name__ == "__main__":
