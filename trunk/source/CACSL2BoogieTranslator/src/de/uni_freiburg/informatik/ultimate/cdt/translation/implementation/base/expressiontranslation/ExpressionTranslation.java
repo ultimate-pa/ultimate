@@ -515,12 +515,13 @@ public abstract class ExpressionTranslation {
 	public abstract Expression convertInfinitePrecisionExpression(ILocation loc, Expression exp, CPrimitive type);
 
 	public static Statement modelUnsupportedFeature(final ILocation loc, final String reason) {
-		final Statement assertFalse = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
+		final ILocation ignoreLoc = LocationFactory.createIgnoreLocation(loc);
+		final Statement assertFalse =
+				new AssertStatement(ignoreLoc, ExpressionFactory.createBooleanLiteral(ignoreLoc, false));
 		new Overapprox(reason, loc).annotate(assertFalse);
 		new Check(Spec.UNSUPPORTED_FEATURE).annotate(assertFalse);
-		return new WhileStatement(LocationFactory.createIgnoreLocation(loc),
-				ExpressionFactory.createBooleanLiteral(loc, true), new LoopInvariantSpecification[0],
-				new Statement[] { assertFalse });
+		return new WhileStatement(ignoreLoc, ExpressionFactory.createBooleanLiteral(ignoreLoc, true),
+				new LoopInvariantSpecification[0], new Statement[] { assertFalse });
 	}
 
 	public abstract IFloatingPointHandler getFloatingPointHandler();
