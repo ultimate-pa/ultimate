@@ -16,6 +16,7 @@ from requests import JSONDecodeError
 from zenodo_client import Creator, Metadata, Zenodo
 from zenodo_client.api import Data, Paths
 import pystow
+from tqdm import tqdm
 
 from ruamel.yaml import YAML
 
@@ -166,17 +167,32 @@ def update(
         newversion_res.raise_for_status()
         return newversion_res
 
-    newversion_res = retry_request(create_new_version, "Create new version")
-    if not newversion_res:
-        logger.fatal(
-            f"Failed to create new version for deposition {deposition_id}, giving up"
+    draft = find_unpublished_draft(self, current_data["conceptrecid"])
+    if draft:
+        # An earlier run failed after creating the new version, and Zenodo refuses
+        # to create another one while this draft exists ("Please remove all files
+        # first"), so we finish this one instead
+        logger.warning(
+            f"Reusing unpublished draft {draft['id']} left over from an earlier run"
         )
-        return None
+        new_deposition_url = f"{self.depositions_base}/{draft['id']}"
+        new_deposition_id = draft["id"]
+        bucket = draft["links"]["bucket"]
+    else:
+        newversion_res = retry_request(create_new_version, "Create new version")
+        if not newversion_res:
+            logger.fatal(
+                f"Failed to create new version for deposition {deposition_id}, giving up"
+            )
+            return None
 
-    newversion_data = newversion_res.json()
-    logger.debug(f"create_new_version() POST response: {pformat(newversion_data)}")
-    new_deposition_url = newversion_data["links"]["latest_draft"]
-    new_deposition_id = newversion_data["record_id"]
+        newversion_data = newversion_res.json()
+        logger.debug(
+            f"create_new_version() POST response: {pformat(newversion_data)}"
+        )
+        new_deposition_url = newversion_data["links"]["latest_draft"]
+        new_deposition_id = newversion_data["record_id"]
+        bucket = newversion_data["links"]["bucket"]
     new_metadata["metadata"]["publication_date"] = datetime.datetime.today().strftime(
         "%Y-%m-%d"
     )
@@ -196,12 +212,81 @@ def update(
     logger.debug(f"populate_new_version PUT response: {pformat(update_res.json())}")
 
     # Upload new files. If no files have changed, there will be no update
-    self._upload_files(
-        bucket=newversion_data["links"]["bucket"], paths=paths, timeout=UPLOAD_TIMEOUT
-    )
+    upload_files(self, bucket=bucket, paths=paths)
 
     # Send the publish command
     return retry_request(lambda: self.publish(new_deposition_id), "Publishing")
+
+
+def find_unpublished_draft(self: Zenodo, conceptrecid: str):
+    """Return the unpublished new-version draft of the given concept record, if any."""
+
+    def get_drafts():
+        res = requests.get(
+            self.depositions_base,
+            params={
+                "access_token": self.access_token,
+                "q": f"conceptrecid:{conceptrecid}",
+            },
+        )
+        res.raise_for_status()
+        return res
+
+    res = retry_request(get_drafts, "Find unpublished draft")
+    if not res:
+        return None
+    drafts = [
+        d
+        for d in res.json()
+        if str(d.get("conceptrecid")) == str(conceptrecid) and not d["submitted"]
+    ]
+    if not drafts:
+        return None
+    if len(drafts) > 1:
+        logger.warning(
+            f"Found {len(drafts)} unpublished drafts for {conceptrecid}: {[d['id'] for d in drafts]}"
+        )
+
+    # search results lack the bucket link, so fetch the full deposition
+    def get_draft():
+        res = requests.get(
+            f"{self.depositions_base}/{drafts[0]['id']}",
+            params={"access_token": self.access_token},
+        )
+        res.raise_for_status()
+        return res
+
+    res = retry_request(get_draft, "Get unpublished draft")
+    return res.json() if res else None
+
+
+def upload_files(self: Zenodo, bucket: str, paths: Paths) -> None:
+    """Like Zenodo._upload_files, but with retries and a progress bar."""
+    for path in paths:
+        name = os.path.basename(path)
+
+        def put_file():
+            with open(path, "rb") as file, tqdm.wrapattr(
+                file,
+                "read",
+                total=os.path.getsize(path),
+                desc=name,
+                unit="B",
+                unit_scale=True,
+                unit_divisor=1024,
+            ) as progress:
+                res = requests.put(
+                    f"{bucket}/{name}",
+                    data=progress,
+                    params={"access_token": self.access_token},
+                    timeout=UPLOAD_TIMEOUT,
+                )
+            res.raise_for_status()
+            return res
+
+        # Raise if all retries failed: the draft still contains the previous
+        # version's file and must not be published
+        retry_request(put_file, f"Upload {name}").raise_for_status()
 
 
 def to_metadata_json(data: Data) -> str:
@@ -237,6 +322,7 @@ def log_request_error(fun, desc: str):
 
 def retry_request(fun, desc: str, max_retries=3, init_sleep=5):
     response = None
+    last_failure = None
     sleep = 0
     retries = 0
     while response is None and retries < max_retries:
@@ -250,9 +336,14 @@ def retry_request(fun, desc: str, max_retries=3, init_sleep=5):
         if response.status_code >= 500:
             sleep = init_sleep if sleep == 0 else sleep * 2
             retries = retries + 1
+            last_failure = response
             response = None
         elif response.ok:
             break
+
+    if response is None:
+        # all retries failed with 5xx
+        response = last_failure
 
     if response and response.ok and retries > 0:
         logger.warning(
@@ -286,7 +377,7 @@ def create(self: Zenodo, data: Data, paths: Paths) -> requests.Response:
         raise ValueError(f"No bucket in response. Got: {res_deposition_json}")
 
     logger.info("Uploading files to bucket %s", bucket)
-    self._upload_files(bucket=bucket, paths=paths, timeout=UPLOAD_TIMEOUT)
+    upload_files(self, bucket=bucket, paths=paths)
 
     deposition_id = res_deposition_json["id"]
     logger.info("Publishing files to deposition %s", deposition_id)
