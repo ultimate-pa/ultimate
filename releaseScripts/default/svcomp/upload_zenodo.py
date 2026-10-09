@@ -35,8 +35,8 @@ def token_string_or_file(arg):
 
 
 ACCESS_TOKEN = None
-# seconds; same as zenodo_client's default for its own uploads
-UPLOAD_TIMEOUT = 300
+# seconds to wait for Zenodo to answer; it can take minutes, especially when publishing
+TIMEOUT = 300
 logging.basicConfig(format="%(message)s", stream=sys.stdout)
 logger = logging.getLogger(__package__)
 
@@ -124,21 +124,26 @@ def update(
 ) -> requests.Response:
     """Create a new version of the given record with the given files."""
 
-    def get_current(id):
-        current = requests.get(
-            f"{self.depositions_base}/{id}",
-            params={"access_token": self.access_token},
-        )
-        current.raise_for_status()
-        return current
-
-    current = retry_request(lambda: get_current(deposition_id), "Get Current")
+    current = retry_request(lambda: get_deposition(self, deposition_id), "Get Current")
     if not current:
         logger.fatal(f"Could not get deposition {deposition_id}, giving up")
         return None
 
     current_data = current.json()
     logger.debug(f"get_current({deposition_id}) GET response: {pformat(current_data)}")
+
+    # The saved ID is outdated if an earlier run published a new version but failed
+    # before saving its ID, e.g., because Zenodo answered too slowly. Creating a new
+    # version from the outdated one would duplicate the published one.
+    latest_id = get_latest_version_id(self, current_data)
+    if latest_id is None:
+        logger.fatal(f"Could not get latest version of {deposition_id}, giving up")
+        return None
+    if latest_id != str(deposition_id):
+        logger.warning(
+            f"Deposition {deposition_id} is outdated, continuing with its latest version {latest_id}"
+        )
+        return update(self, latest_id, data, paths)
 
     if current_data["conceptrecid"] != deposition_id:
         logger.warning(
@@ -163,6 +168,7 @@ def update(
             f"{self.depositions_base}/{deposition_id}/actions/newversion",
             params={"access_token": self.access_token},
             json=new_metadata,
+            timeout=TIMEOUT,
         )
         newversion_res.raise_for_status()
         return newversion_res
@@ -204,18 +210,76 @@ def update(
             new_deposition_url,
             json=new_metadata,
             params={"access_token": self.access_token},
+            timeout=TIMEOUT,
         )
         update_res.raise_for_status()
         return update_res
 
     update_res = retry_request(populate_new_version, "Populate new version")
+    if not update_res:
+        logger.fatal(f"Could not set metadata of draft {new_deposition_id}, giving up")
+        return None
     logger.debug(f"populate_new_version PUT response: {pformat(update_res.json())}")
 
     # Upload new files. If no files have changed, there will be no update
     upload_files(self, bucket=bucket, paths=paths)
 
     # Send the publish command
-    return retry_request(lambda: self.publish(new_deposition_id), "Publishing")
+    return publish(self, new_deposition_id)
+
+
+def get_deposition(self: Zenodo, deposition_id) -> requests.Response:
+    res = requests.get(
+        f"{self.depositions_base}/{deposition_id}",
+        params={"access_token": self.access_token},
+        timeout=TIMEOUT,
+    )
+    res.raise_for_status()
+    return res
+
+
+def get_latest_version_id(self: Zenodo, deposition: dict):
+    """Return the ID of the newest published version of the deposition's record."""
+    url = deposition["links"].get("latest")
+    if url is None:
+        return str(deposition["id"])
+
+    def get_latest():
+        res = requests.get(
+            url, params={"access_token": self.access_token}, timeout=TIMEOUT
+        )
+        res.raise_for_status()
+        return res
+
+    res = retry_request(get_latest, "Get latest version")
+    return str(res.json()["id"]) if res else None
+
+
+def publish(self: Zenodo, deposition_id) -> requests.Response:
+    """Like Zenodo.publish, but waits longer than 15s for Zenodo to answer and checks
+    whether a request that failed published the deposition anyway."""
+
+    def post_publish():
+        # like Zenodo.publish, wait a bit in case of race conditions
+        time.sleep(1)
+        res = requests.post(
+            f"{self.depositions_base}/{deposition_id}/actions/publish",
+            params={"access_token": self.access_token},
+            timeout=TIMEOUT,
+        )
+        res.raise_for_status()
+        return res
+
+    res = retry_request(post_publish, "Publishing")
+    if res:
+        return res
+    state = retry_request(
+        lambda: get_deposition(self, deposition_id), "Check if published"
+    )
+    if state and state.json().get("state") == "done":
+        logger.warning(f"Publishing: Deposition {deposition_id} was published anyway")
+        return state
+    return res
 
 
 def find_unpublished_draft(self: Zenodo, conceptrecid: str):
@@ -228,6 +292,7 @@ def find_unpublished_draft(self: Zenodo, conceptrecid: str):
                 "access_token": self.access_token,
                 "q": f"conceptrecid:{conceptrecid}",
             },
+            timeout=TIMEOUT,
         )
         res.raise_for_status()
         return res
@@ -248,15 +313,9 @@ def find_unpublished_draft(self: Zenodo, conceptrecid: str):
         )
 
     # search results lack the bucket link, so fetch the full deposition
-    def get_draft():
-        res = requests.get(
-            f"{self.depositions_base}/{drafts[0]['id']}",
-            params={"access_token": self.access_token},
-        )
-        res.raise_for_status()
-        return res
-
-    res = retry_request(get_draft, "Get unpublished draft")
+    res = retry_request(
+        lambda: get_deposition(self, drafts[0]["id"]), "Get unpublished draft"
+    )
     return res.json() if res else None
 
 
@@ -279,14 +338,15 @@ def upload_files(self: Zenodo, bucket: str, paths: Paths) -> None:
                     f"{bucket}/{name}",
                     data=progress,
                     params={"access_token": self.access_token},
-                    timeout=UPLOAD_TIMEOUT,
+                    timeout=TIMEOUT,
                 )
             res.raise_for_status()
             return res
 
-        # Raise if all retries failed: the draft still contains the previous
-        # version's file and must not be published
-        retry_request(put_file, f"Upload {name}").raise_for_status()
+        if not retry_request(put_file, f"Upload {name}"):
+            # the draft still contains the previous version's file and must not be
+            # published
+            raise requests.RequestException(f"Uploading {name} failed")
 
 
 def to_metadata_json(data: Data) -> str:
@@ -321,35 +381,32 @@ def log_request_error(fun, desc: str):
 
 
 def retry_request(fun, desc: str, max_retries=3, init_sleep=5):
+    """Call fun, retrying on 5xx responses, timeouts and dropped connections.
+
+    Returns the last response, or None if no attempt got one."""
     response = None
-    last_failure = None
     sleep = 0
     retries = 0
-    while response is None and retries < max_retries:
+    while retries < max_retries:
         if retries > 0:
             logger.warning(
                 f"{desc}: Retrying up to {max_retries - retries} more times, using {sleep}s back-off"
             )
-        if sleep > 0:
             time.sleep(sleep)
-        response = log_request_error(fun, desc)
-        if response.status_code >= 500:
-            sleep = init_sleep if sleep == 0 else sleep * 2
-            retries = retries + 1
-            last_failure = response
+        try:
+            response = log_request_error(fun, desc)
+        except (requests.ConnectionError, requests.Timeout) as ex:
+            logger.warning(f"{desc}: {ex}")
             response = None
-        elif response.ok:
+        if response is not None and response.status_code < 500:
             break
+        sleep = init_sleep if sleep == 0 else sleep * 2
+        retries = retries + 1
 
-    if response is None:
-        # all retries failed with 5xx
-        response = last_failure
-
-    if response and response.ok and retries > 0:
+    if response and retries > 0:
         logger.warning(
             f"{desc}: Successful after {retries} retries with {response.status_code}"
         )
-    logger.debug(response.status_code)
     return response
 
 
@@ -368,6 +425,7 @@ def create(self: Zenodo, data: Data, paths: Paths) -> requests.Response:
         self.depositions_base,
         json=data,
         params={"access_token": self.access_token},
+        timeout=TIMEOUT,
     )
     res_deposition.raise_for_status()
 
@@ -382,7 +440,7 @@ def create(self: Zenodo, data: Data, paths: Paths) -> requests.Response:
     deposition_id = res_deposition_json["id"]
     logger.info("Publishing files to deposition %s", deposition_id)
 
-    res_publish = retry_request(lambda: self.publish(deposition_id), "Publishing")
+    res_publish = publish(self, deposition_id)
 
     if res_publish:
         return res_publish
@@ -467,9 +525,13 @@ def upload_tools(args, tools):
             data = create_metadata(
                 toolname=tool, version=version, svcomp_year=args.year
             )
-            result = log_request_error(
-                lambda: upload(tool, data, paths, sandbox=args.sandbox), "Upload"
-            )
+            try:
+                result = log_request_error(
+                    lambda: upload(tool, data, paths, sandbox=args.sandbox), "Upload"
+                )
+            except requests.RequestException as ex:
+                logger.fatal(f"Upload: Giving up on {tool}: {ex}")
+                result = None
             if result and result.ok:
                 data = result.json()
                 if "doi" in data:
