@@ -61,7 +61,7 @@
 
 		<!-- TODO: add sonar.junit.reportPaths -->
 
-		<sonar.coverage.jacoco.xmlReportPaths>${workspaceDir}/**/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+		<sonar.coverage.jacoco.aggregateXmlReportPaths>${workspaceDir}/**/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.aggregateXmlReportPaths>
 
 		<!-- Exclude files from Sonar coverage analysis -->
 		<sonar.coverage.exclusions>
