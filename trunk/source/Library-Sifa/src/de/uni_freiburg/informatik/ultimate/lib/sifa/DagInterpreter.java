@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.CallReturnSummary;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.LocationMarkerTransition;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.threadanalysis.ConcurrentSymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag.IDagOverlay;
@@ -204,27 +203,19 @@ public class DagInterpreter {
 			final ILoiPredicateStorage loiStorage) {
 		final IPredicate output;
 		if (trans instanceof LocationMarkerTransition) {
-			final IPredicate marked = postNoOpIfSupported(trans, input);
-			loiStorage.storePredicate(trans.getTarget(), marked);
-			output = marked;
+			loiStorage.storePredicate(trans.getTarget(), input);
+			output = input;
 		} else if (trans instanceof CallReturnSummary) {
 			output = ipretCallReturnSummary((CallReturnSummary) trans, input);
 		} else if (trans instanceof IIcfgInternalTransition) {
 			output = ipretInternal((IIcfgInternalTransition<IcfgLocation>) trans, input);
 		} else if (trans instanceof IIcfgForkTransitionThreadCurrent<?>
 				|| trans instanceof IIcfgJoinTransitionThreadCurrent<?>) {
-			output = postNoOpIfSupported(trans, input);
+			output = mTools.post(input, trans);
 		} else {
 			throw new UnsupportedOperationException("Unexpected transition type: " + trans.getClass());
 		}
 		return output;
-	}
-
-	private IPredicate postNoOpIfSupported(final IIcfgTransition<IcfgLocation> trans, final IPredicate input) {
-		if (mTools instanceof ConcurrentSymbolicTools) {
-			return ((ConcurrentSymbolicTools) mTools).postNoOpTransition(input, trans);
-		}
-		return input;
 	}
 
 	private IPredicate ipretCallReturnSummary(final CallReturnSummary trans, final IPredicate input) {

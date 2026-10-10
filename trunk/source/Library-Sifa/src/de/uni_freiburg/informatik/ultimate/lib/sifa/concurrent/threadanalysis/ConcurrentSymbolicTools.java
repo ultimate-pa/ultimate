@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing.LocationMarkerTransition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostLocationStateUpdater;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostVariableManager;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.IInterferenceSet;
@@ -146,14 +145,6 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 				+ "enable procedure inlining in the ICFG builder settings.", returnTransition.getSource());
 		throw new UnsupportedOperationException("Thread-modular SIFA does not support procedure calls (found return at "
 				+ returnTransition.getSource() + "). Enable procedure inlining or restrict to fork/join concurrency.");
-	}
-
-	public IPredicate postNoOpTransition(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
-		if (transition instanceof LocationMarkerTransition) {
-			mThreadContext.observedStateRecorder().recordTransitionInputState(transition, input);
-			return applyInterferences(input, transition.getTarget());
-		}
-		return post(input, transition);
 	}
 
 	public IPredicate applyInterferences(final IPredicate state, final IcfgLocation location) {
