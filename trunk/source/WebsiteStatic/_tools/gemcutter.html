@@ -10,13 +10,13 @@ description: "A verifier for concurrent programs based on commutativity – the 
 
 # Supported languages to be displayed in the frontend.
 languages: [
-  { "language": "Boogie", "worker": "boogieGemCutter" },
-  { "language": "C",      "worker": "cGemCutter" }
+{ "language": "Boogie", "worker": "boogieGemCutter", display: "Boogie" },
+{ "language": "C",      "worker": "cGemCutter",      display: "C" }
 ]
 ---
 
-<h1><span style="font-variant: small-caps">Ultimate</span>  GemCutter</h1>
-<p><span style="font-variant: small-caps">Ultimate</span>  GemCutter is a software model checker for concurrent programs.</p>
+<h1><span style="font-variant: small-caps">Ultimate</span> GemCutter</h1>
+<p><span style="font-variant: small-caps">Ultimate</span> GemCutter is a software model checker for concurrent programs.</p>
 <p>
   In order to verify a concurrent program, all possible interleavings of actions by different threads must be considered.
   GemCutter combines the abstraction refinement-based verification algorithm <em>trace abstraction</em>
@@ -67,33 +67,26 @@ languages: [
 
 <h2>Web interface</h2>
 <p>
-	<span style="font-variant: small-caps">Ultimate</span> GemCutter is
-	available via a <a href="{{ 'webinterface/?tool=gemcutter' | relative_url }}">web interface</a>.
+  <span style="font-variant: small-caps">Ultimate</span> GemCutter is available via a <a href="{{ 'webinterface/?tool=gemcutter' | relative_url }}">web interface</a>.
 </p>
 
 <h2>Developers</h2>
-<p><span style="font-variant: small-caps">Ultimate</span> GemCutter is maintained by <a
-      href="http://swt.informatik.uni-freiburg.de/staff/klumpp">Dominik Klumpp</a>.</p>
+<p>
+  <span style="font-variant: small-caps">Ultimate</span> GemCutter is maintained by <a href="http://swt.informatik.uni-freiburg.de/staff/klumpp">Dominik Klumpp</a>.
+</p>
 
-  <p>
-  Since <span style="font-variant: small-caps">Ultimate</span> GemCutter
-  is a toolchain of the <a
-      href="https://ultimate-pa.org"><span
-      style="font-variant: small-caps">Ultimate</span> software analysis
-  framework</a>, <a href="http://ultimate.informatik.uni-freiburg.de#developers">many
-  people</a> were involved in the development (especially our bachelor and
-  master students). If you are a student at our university and you like
-  to contribute to <span style="font-variant: small-caps">Ultimate</span>
-  in a project, laboratory, or thesis then contact <a
-      href="http://swt.informatik.uni-freiburg.de/staff/klumpp">Dominik Klumpp</a> or any other <span style="font-variant: small-caps">Ultimate</span>
-  developer.
+<p>
+  Since <span style="font-variant: small-caps">Ultimate</span> GemCutter is a toolchain of the <a href="https://ultimate-pa.org"><span style="font-variant: small-caps">Ultimate</span> software analysis framework</a>,
+  <a href="http://ultimate.informatik.uni-freiburg.de#developers">many people</a> were involved in the development (especially our bachelor and master students).
+  If you are a student at our university, and you like to contribute to <span style="font-variant: small-caps">Ultimate</span> in a project, laboratory, or thesis, then contact
+  <a href="http://swt.informatik.uni-freiburg.de/staff/klumpp">Dominik Klumpp</a> or any other <span style="font-variant: small-caps">Ultimate</span> developer.
 </p>
 
 <h2>Download</h2>
 <p>
-	We try to provide regular releases for Windows and Linux at <a
-		href="https://github.com/ultimate-pa/ultimate/releases">our
-		GitHub release page</a>.
+  We try to provide regular releases for Windows and Linux at <a
+  href="https://github.com/ultimate-pa/ultimate/releases">our
+  GitHub release page</a>.
 </p>
 
 <h2>Related Publications</h2>
