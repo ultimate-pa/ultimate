@@ -135,21 +135,19 @@ public class QuantifierPushUtils {
 			if (!isFlattened(et.getQuantifier(), currentDualFiniteJuncts)) {
 				final Term flattened = flattenQuantifiedFormulas(mgdScript, et.getQuantifier(),
 						currentEt.toTerm(mgdScript.getScript()));
-				// some quantifiers could be removed for trivial reasons
-				if (flattened instanceof QuantifiedFormula) {
-					final QuantifiedFormula qf = (QuantifiedFormula) flattened;
-					if (qf.getQuantifier() != currentEt.getQuantifier()) {
-						// some inner quantifier moved to root node due to simplifications
-						return new Pair<>(false, flattened);
-					} else {
-						// update EliminationTask, restart
-						currentEt = new EliminationTask(qf, currentEt.getContext());
-						continue;
-					}
-				} else {
-					// return because not quantified any more
+				if (!(flattened instanceof QuantifiedFormula)) {
+					// outer quantifiers were be removed for trivial reasons, return
 					return new Pair<>(false, flattened);
 				}
+				final QuantifiedFormula qf = (QuantifiedFormula) flattened;
+				if (qf.getQuantifier() != currentEt.getQuantifier()) {
+					// outer quantifiers were be removed for trivial reasons, a dual quantifier reached the top level,
+					// return
+					return new Pair<>(false, flattened);
+				}
+				// update EliminationTask, with flattened formula, restart preprocessing
+				currentEt = new EliminationTask(qf, currentEt.getContext());
+				continue;
 			}
 
 			// Step 3: Partition dualFiniteJuncts according to eliminatees and try to push
@@ -231,6 +229,7 @@ public class QuantifierPushUtils {
 			// return dual finite junction in the desired form
 			return new Pair<>(true, currentEt.toTerm(mgdScript.getScript()));
 		}
+
 	}
 
 	/**
