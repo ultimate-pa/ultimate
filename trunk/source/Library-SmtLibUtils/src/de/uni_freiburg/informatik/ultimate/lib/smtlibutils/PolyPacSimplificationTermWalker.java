@@ -73,7 +73,14 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	 * ∨ φ(l)`, where l is a literal (of sort Real, Int, or BitVec) and x is a variable in a {@link PolynomialRelation}
 	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a select term `(select a k)`.)
 	 */
-	private static final boolean APPLY_CONSTANT_PROPAGATION = true;
+	private static final boolean APPLY_CONSTANT_PROPAGATION = false;
+
+	/**
+	 * TODO: egraph, equalities, representative, substitution Probably just refer to the documentation of the method
+	 * which implements the propagation. </br />
+	 * If you enable equality propagation you should disable constant propagation.
+	 */
+	private static final boolean APPLY_EQUALITY_PROPAGATION = true;
 
 	/**
 	 * Try to simplify modulo terms.
@@ -131,6 +138,9 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 			return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 		}
 		Term result = term;
+		if (APPLY_EQUALITY_PROPAGATION) {
+			result = SimplificationUtils.applyEqualityPropagation(mMgdScript, context, result);
+		}
 		if (APPLY_CONSTANT_PROPAGATION) {
 			result = SimplificationUtils.applyConstantPropagation(mMgdScript, context, result);
 		}
