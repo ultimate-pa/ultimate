@@ -776,7 +776,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		}
 	}
 
-	public static ComparisonResult compareRepresentation(final PolynomialRelation lhs, final PolynomialRelation rhs) {
+	public static ComparisonResult compareRepresentation(final IPolynomialRelation lhs, final IPolynomialRelation rhs) {
 		if (!lhs.getPolynomialTerm().getSort().equals(rhs.getPolynomialTerm().getSort())) {
 			throw new AssertionError("Cannot compare polynomials of different sorts");
 		}
@@ -1249,8 +1249,8 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		return result;
 	}
 
-	public static boolean areRepresentationsFusible(final Junction junction, final PolynomialRelation lhs,
-			final PolynomialRelation rhs) {
+	public static boolean areRepresentationsFusible(final Junction junction, final IPolynomialRelation lhs,
+			final IPolynomialRelation rhs) {
 		if (!lhs.getPolynomialTerm().getSort().equals(rhs.getPolynomialTerm().getSort())) {
 			throw new AssertionError("Cannot compare polynomials of different sorts");
 		}

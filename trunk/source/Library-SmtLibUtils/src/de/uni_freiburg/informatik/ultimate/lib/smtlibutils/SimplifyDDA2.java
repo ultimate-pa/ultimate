@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransforma
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context.CcTransformation;
@@ -77,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 public class SimplifyDDA2 extends TermWalker<Term> {
 	/**
 	 * Replace terms of the form `x = l ∧ φ(x)` by `x = l ∧ φ(l)` and replace terms of the form `x ≠ l ∨ φ(x)` by `x ≠ l
-	 * ∨ φ(l)`, where l is a literal (of sort Real, Int, or BitVec) and x is a variable in a {@link PolynomialRelation}
+	 * ∨ φ(l)`, where l is a literal (of sort Real, Int, or BitVec) and x is a variable in a {@link IPolynomialRelation}
 	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a select term `(select a k)`.)
 	 */
 	private static final boolean APPLY_CONSTANT_FOLDING = false;

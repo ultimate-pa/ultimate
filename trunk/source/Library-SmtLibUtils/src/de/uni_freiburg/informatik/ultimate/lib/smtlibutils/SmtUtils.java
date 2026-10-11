@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineSub
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialTerm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialTermTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStore3;
@@ -729,7 +729,7 @@ public final class SmtUtils {
 					return SmtUtils.binaryEquality(script, appTerm.getParameters()[0], appTerm.getParameters()[1]);
 				}
 				if (funcName.equals("<") || funcName.equals("<=") || funcName.equals(">") || funcName.equals(">=")) {
-					final PolynomialRelation polyRel = PolynomialRelation.of(script, term);
+					final IPolynomialRelation polyRel = IPolynomialRelation.of(script, term);
 					return polyRel.negate().toTerm(script);
 				}
 			}
@@ -818,7 +818,7 @@ public final class SmtUtils {
 		if (!SmtSortUtils.isBitvecSort(rhs.getSort())) {
 			throw new UnsupportedOperationException("need BitVec sort");
 		}
-		return PolynomialRelation.of(script, RelationSymbol.EQ, lhs, rhs).toTerm(script);
+		return IPolynomialRelation.of(script, RelationSymbol.EQ, lhs, rhs).toTerm(script);
 	}
 
 	/**
@@ -832,7 +832,7 @@ public final class SmtUtils {
 		if (!rhs.getSort().isNumericSort()) {
 			throw new UnsupportedOperationException("need numeric sort");
 		}
-		return PolynomialRelation.of(script, RelationSymbol.EQ, lhs, rhs).toTerm(script);
+		return IPolynomialRelation.of(script, RelationSymbol.EQ, lhs, rhs).toTerm(script);
 	}
 
 	/**
@@ -1390,7 +1390,7 @@ public final class SmtUtils {
 			}
 		}
 		if (SmtSortUtils.isNumericSort(lhs.getSort())) {
-			return PolynomialRelation.of(script, RelationSymbol.convert(functionSymbol), lhs, rhs).toTerm(script);
+			return IPolynomialRelation.of(script, RelationSymbol.convert(functionSymbol), lhs, rhs).toTerm(script);
 		} else {
 			assert SmtSortUtils.isBitvecSort(lhs.getSort());
 			// TODO 20220908 Matthias: Minor improvements still possible. E.g., everything

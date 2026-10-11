@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.OctagonRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -163,8 +163,8 @@ public class OctagonRelationTest {
 	}
 
 	private String octRelAsString(final String termAsString) {
-		final PolynomialRelation polyRel =
-				PolynomialRelation.of(mScript, TermParseUtils.parseTerm(mScript, termAsString));
+		final IPolynomialRelation polyRel =
+				IPolynomialRelation.of(mScript, TermParseUtils.parseTerm(mScript, termAsString));
 		if (polyRel == null) {
 			throw new IllegalArgumentException("Invalid test case. Term was not affine.");
 		}
