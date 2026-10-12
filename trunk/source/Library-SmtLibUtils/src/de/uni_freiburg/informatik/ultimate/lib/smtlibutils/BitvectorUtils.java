@@ -409,7 +409,8 @@ public final class BitvectorUtils {
 					if (hi >= innerWidth - 1 && hi < extendedWidth - 1) {
 						final int reducedExtendAmount = hi - (innerWidth - 1);
 						if (reducedExtendAmount == 0) {
-							return innerValue; // extract exactly undoes the extend
+							// extract exactly undoes the extend
+							return innerValue;
 						}
 						// fewer padding bits survive than before - shrink the extend instead of dropping it
 						return unfTerm(script, extendFuncName,
@@ -701,7 +702,8 @@ public final class BitvectorUtils {
 			break;
 		case SMTLIBConstants.BVXOR:
 			fold = BitvectorConstant::bvxor;
-			isAnnihilating = bc -> false; // bvxor has no annihilating constant, only an identity (0)
+			// bvxor has no annihilating constant, only an identity (0)
+			isAnnihilating = bc -> false;
 			isIdentity = bc -> bc.getValue().equals(BigInteger.ZERO);
 			break;
 		default:
@@ -721,27 +723,32 @@ public final class BitvectorUtils {
 				if (bc != null) {
 					mergedConstant = (mergedConstant == null) ? bc : fold.apply(mergedConstant, bc);
 					if (isAnnihilating.test(mergedConstant)) {
-						return constructTerm(script, mergedConstant); // rest of params cannot change this anymore
+						// rest of params cannot change this anymore
+						return constructTerm(script, mergedConstant);
 					}
 				} else {
 					final boolean isNewTerm = result.add(t);
 					if (!isNewTerm && isXor) {
-						result.remove(t); // second (or 4th, ...) occurrence cancels: X xor X = 0
+						// second (or 4th, ...) occurrence cancels: X xor X = 0
+						result.remove(t);
 					}
 				}
 			}
 		}
 
 		if (mergedConstant != null && isIdentity.test(mergedConstant) && !result.isEmpty()) {
-			mergedConstant = null; // identity drops only if something else remains
+			// identity drops only if something else remains
+			mergedConstant = null;
 		}
 
 		if (mergedConstant != null) {
-			result.add(constructTerm(script, mergedConstant)); // surviving literal joins the same set
+			// surviving literal joins the same set
+			result.add(constructTerm(script, mergedConstant));
 		}
 
 		if (result.isEmpty()) {
-			return constructTerm(script, BigInteger.ZERO, params[0].getSort()); // e.g. "x xor x" -> 0
+			// e.g. "x xor x" -> 0
+			return constructTerm(script, BigInteger.ZERO, params[0].getSort());
 		}
 		if (result.size() == 1) {
 			return result.iterator().next();
