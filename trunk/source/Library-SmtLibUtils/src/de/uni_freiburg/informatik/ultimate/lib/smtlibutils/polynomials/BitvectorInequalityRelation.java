@@ -134,7 +134,8 @@ public class BitvectorInequalityRelation implements IPolynomialRelation {
 	public static BitvectorInequalityRelation of(final Script script, final Term term) {
 		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(term);
 		if (bnr == null || !isBitvectorInequality(bnr.getRelationSymbol(), bnr.getLhs().getSort())) {
-			return null; // not a bv inequality, not our job
+			// Not a bitvector inequality, so this class is not responsible for it.
+			return null;
 		}
 		final RelationSymbol relationSymbol = bnr.getRelationSymbol();
 		final AbstractGeneralizedAffineTerm<?> polyLhs = transformToPolynomialTerm(script, bnr.getLhs());
@@ -304,7 +305,8 @@ public class BitvectorInequalityRelation implements IPolynomialRelation {
 	 */
 	Term tryCollapseAtSortBoundary(final Script script) {
 		if (!isBareVariableVsBareConstant()) {
-			return null; // no cheap shape to check
+			// Only a bare variable compared with a bare constant can sit at the sort boundary.
+			return null;
 		}
 		final boolean unsigned = mRelationSymbol == RelationSymbol.BVULT || mRelationSymbol == RelationSymbol.BVULE;
 		final boolean strict = mRelationSymbol == RelationSymbol.BVULT || mRelationSymbol == RelationSymbol.BVSLT;
@@ -316,14 +318,16 @@ public class BitvectorInequalityRelation implements IPolynomialRelation {
 		final boolean constantIsMin = constant.equals(min);
 		final boolean constantIsMax = constant.equals(max);
 
-		if (variableIsUpperBounded) { // shape "x <> const"
+		if (variableIsUpperBounded) {
+			// Shape "x op const", the constant is an upper bound.
 			if (constantIsMin) {
 				return strict ? script.term("false") : buildBoundaryEquality(script);
 			}
 			if (constantIsMax && !strict) {
 				return script.term("true");
 			}
-		} else { // shape "const <> x"
+		} else {
+			// Shape "const op x", the constant is a lower bound.
 			if (constantIsMax) {
 				return strict ? script.term("false") : buildBoundaryEquality(script);
 			}
@@ -331,7 +335,8 @@ public class BitvectorInequalityRelation implements IPolynomialRelation {
 				return script.term("true");
 			}
 		}
-		return null; // no boundary hit, common case
+		// The constant is not at the boundary, the common case. Nothing to collapse.
+		return null;
 	}
 
 	private Term buildBoundaryEquality(final Script script) {
@@ -363,9 +368,10 @@ public class BitvectorInequalityRelation implements IPolynomialRelation {
 	@Override
 	public SolvedBinaryRelation solveForSubject(final Script script, final Term subject) {
 		if (!isBareVariableVsBareConstant() || !subject.equals(getBareVariableTerm(script))) {
-			return null; // wrong shape or wrong variable
+			// Wrong shape, or the subject is not the variable of this relation.
+			return null;
 		}
-		// variable on the right: mirror the symbol
+		// If the variable is on the right ("5 <=u x"), the solved form "x >=u 5" needs the mirrored symbol.
 		final RelationSymbol symbol = isVariableOnLhs() ? mRelationSymbol : mRelationSymbol.swapParameters();
 		return new SolvedBinaryRelation(subject, getBareConstantTerm(script), symbol);
 	}
