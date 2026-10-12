@@ -142,7 +142,7 @@ public class MinimizationTransformerReq2Pea implements IReq2Pea {
 		}
 		mReqPeas.add(new ReqPeas(pattern, minimizedCtPea));
 		mReqPeas.add(new ReqPeas(pattern, originalCtPea));
-		mReqPeas.add(new ReqPeas(pattern, minimizedCtPea));
+		// mReqPeas.add(new ReqPeas(pattern, minimizedCtPea));
 		mSymbolTable = builder.constructSymbolTable();
 
 		for (final ReqPeas reqPeas : mReqPeas) {
