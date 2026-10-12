@@ -27,14 +27,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -127,7 +127,7 @@ public class IntervalDomain extends StateBasedDomain<NonrelationalState<Interval
 		}
 
 		private List<SolvedBinaryRelation> solveForAllSubjects(final Term[] conjuncts) {
-			final List<SolvedBinaryRelation> result = new ArrayList<>();
+			final Set<SolvedBinaryRelation> result = new LinkedHashSet<>();
 			for (final Term term : conjuncts) {
 				final PolynomialRelation polyRel = PolynomialRelation.of(mScript, term);
 				if (polyRel == null) {
@@ -140,8 +140,7 @@ public class IntervalDomain extends StateBasedDomain<NonrelationalState<Interval
 					}
 				}
 			}
-			Collections.sort(result, new CompareNumberOfFreeVariablesInRhs(result));
-			return result;
+			return result.stream().sorted(new CompareNumberOfFreeVariablesInRhs(result)).toList();
 		}
 
 		/**
