@@ -36,6 +36,7 @@ import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Formatter;
 import java.util.HashMap;
@@ -130,7 +131,7 @@ public class PeaToDotTestSuite {
 
 		final ReqPeas reqPeas;
 		try {
-			reqPeas = mPattern.transformToPea(mLogger, mDurations);
+			reqPeas = mPattern.transformToPea(mLogger, mDurations, Collections.singletonList(mPattern));
 		} catch (final PatternScopeNotImplemented e) {
 			mLogger.fatal("Pattern not implemented: " + mPattern.getId());
 			return; // Oops, somebody forgot to implement this
