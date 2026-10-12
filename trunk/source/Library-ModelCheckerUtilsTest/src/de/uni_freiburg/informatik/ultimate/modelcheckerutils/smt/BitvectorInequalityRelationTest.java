@@ -300,19 +300,31 @@ public class BitvectorInequalityRelationTest {
 		// constants at the extremes of the 8 bit range (bv128 is -128 and bv127 is 127 when read signed)
 		final String[] boundaryRelations = {
 				// signed: always true, always false, and "everything except one value"
-				"(bvsle (_ bv128 8) x)", // -128 <= x
-				"(bvsle x (_ bv127 8))", // x <= 127
-				"(bvslt x (_ bv128 8))", // x < -128
-				"(bvslt (_ bv127 8) x)", // 127 < x
-				"(bvslt (_ bv128 8) x)", // -128 < x, i.e. x != -128
-				"(bvslt x (_ bv127 8))", // x < 127, i.e. x != 127
+				// -128 <= x
+				"(bvsle (_ bv128 8) x)",
+				// x <= 127
+				"(bvsle x (_ bv127 8))",
+				// x < -128
+				"(bvslt x (_ bv128 8))",
+				// 127 < x
+				"(bvslt (_ bv127 8) x)",
+				// -128 < x, i.e. x != -128
+				"(bvslt (_ bv128 8) x)",
+				// x < 127, i.e. x != 127
+				"(bvslt x (_ bv127 8))",
 				// unsigned: the same six cases
-				"(bvule (_ bv0 8) x)", // 0 <= x
-				"(bvule x (_ bv255 8))", // x <= 255
-				"(bvult x (_ bv0 8))", // x < 0
-				"(bvult (_ bv255 8) x)", // 255 < x
-				"(bvult (_ bv0 8) x)", // 0 < x, i.e. x != 0
-				"(bvult x (_ bv255 8))", // x < 255, i.e. x != 255
+				// 0 <= x
+				"(bvule (_ bv0 8) x)",
+				// x <= 255
+				"(bvule x (_ bv255 8))",
+				// x < 0
+				"(bvult x (_ bv0 8))",
+				// 255 < x
+				"(bvult (_ bv255 8) x)",
+				// 0 < x, i.e. x != 0
+				"(bvult (_ bv0 8) x)",
+				// x < 255, i.e. x != 255
+				"(bvult x (_ bv255 8))",
 		};
 		for (final String formula : boundaryRelations) {
 			final BitvectorInequalityRelation relation = BitvectorInequalityRelation.of(mScript, parse(formula));
