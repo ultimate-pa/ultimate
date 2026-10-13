@@ -181,28 +181,25 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	 * @param path
 	 *            the path of field names that leads to the member.
 	 * @param member
-	 *            the (direct) member that was found.
+	 *            the member that was found.
 	 */
-	private record FieldLookup(List<String> path, NamedMember member) {
+	private record FieldLookup(List<String> path, Member member) {
 	}
 
 	private FieldLookup loopupFieldRecursive(final String id) {
 		for (int i = 0; i < mMembers.size(); i++) {
-			switch (mMembers.get(i)) {
-			case final NamedMember named:
-				if (named.name().equals(id)) {
-					return new FieldLookup(List.of(id), named);
+			final Member member = mMembers.get(i);
+			final String fieldId = getFieldId(i);
+			if (fieldId.equals(id)) {
+				return new FieldLookup(List.of(id), member);
+			}
+			if (member instanceof final AnonymousMember anon
+					&& anon.type().getUnderlyingType() instanceof final CStructOrUnion nested) {
+				final FieldLookup nestedResult = nested.loopupFieldRecursive(id);
+				if (nestedResult != null) {
+					return new FieldLookup(DataStructureUtils.concat(List.of(getFieldId(i)), nestedResult.path()),
+							nestedResult.member());
 				}
-				break;
-			case final AnonymousMember anon:
-				if (anon.type().getUnderlyingType() instanceof final CStructOrUnion nested) {
-					final FieldLookup nestedResult = nested.loopupFieldRecursive(id);
-					if (nestedResult != null) {
-						return new FieldLookup(DataStructureUtils.concat(List.of(getFieldId(i)), nestedResult.path()),
-								nestedResult.member());
-					}
-				}
-				break;
 			}
 		}
 		return null;
