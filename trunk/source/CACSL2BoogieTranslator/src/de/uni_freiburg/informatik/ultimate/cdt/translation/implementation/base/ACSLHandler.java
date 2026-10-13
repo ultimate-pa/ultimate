@@ -842,12 +842,15 @@ public class ACSLHandler implements IACSLHandler {
 
 		resultBuilder.addAllExceptLrValue(r);
 
-		// TODO: CType
-		final Expression structAccessExpression =
-				ExpressionFactory.constructStructAccessExpression(loc, r.getLrValue().getValue(), field);
+		// Because of anonymous members, resolving the field access may result in a path of members.
+		// Therefore, we iterate over this path here.
+		final CStructOrUnion structType = (CStructOrUnion) r.getLrValue().getCType().getUnderlyingType();
+		Expression resultExpr = r.getLrValue().getValue();
+		for (final String structField : structType.getFieldPath(field)) {
+			resultExpr = ExpressionFactory.constructStructAccessExpression(loc, resultExpr, structField);
+		}
 
-		final RValue rval = new RValue(structAccessExpression,
-				((CStructOrUnion) r.getLrValue().getCType().getUnderlyingType()).getFieldType(field));
+		final RValue rval = new RValue(resultExpr, structType.getFieldType(field));
 		resultBuilder.setLrValue(rval);
 		return resultBuilder.build();
 	}
