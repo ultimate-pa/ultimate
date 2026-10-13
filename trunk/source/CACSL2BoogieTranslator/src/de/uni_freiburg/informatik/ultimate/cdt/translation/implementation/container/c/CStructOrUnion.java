@@ -55,14 +55,11 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	public sealed interface Member permits NamedMember, AnonymousMember {
 		ICType type();
 
-		/**
-		 * @return the width of the bitfield or -1 if the member is not a bitfield.
-		 */
 		int bitfieldWidth();
 	}
 
 	/**
-	 * A regular member with a name and an optional bitfield width (-1 if there is none).
+	 * A regular member with a name and an optional bitfield width
 	 */
 	public record NamedMember(String name, ICType type, int bitfieldWidth) implements Member {
 		public NamedMember {
@@ -98,19 +95,19 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 
 	private boolean mIsComplete;
 
+	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final List<Member> members) {
+		mIsStructOrUnion = isStructOrUnion;
+		mMembers = members;
+		mStructName = Objects.requireNonNull(name);
+		mIsComplete = true;
+	}
+
 	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name) {
 		assert name != null && !name.isEmpty();
 		mIsStructOrUnion = isStructOrUnion;
-		mStructName = Objects.requireNonNull(name);
 		mMembers = List.of();
-		mIsComplete = false;
-	}
-
-	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final List<Member> members) {
-		mIsStructOrUnion = isStructOrUnion;
 		mStructName = Objects.requireNonNull(name);
-		mMembers = List.copyOf(members);
-		mIsComplete = true;
+		mIsComplete = false;
 	}
 
 	@Override
@@ -119,7 +116,7 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	}
 
 	/**
-	 * Get the number of fields in this struct.
+	 * Get the number of fields in this struct. Anonymous fields are also considered.
 	 *
 	 * @return the number of fields.
 	 */
@@ -128,7 +125,7 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	}
 
 	/**
-	 * Returns the field type, i.e. the type of the field with the given id. Members of anonymous members are found
+	 * Returns the field type, i.e. the type of the field at the given index. Anonymous fields are looked up
 	 * recursively.
 	 *
 	 * @param id
@@ -137,39 +134,59 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	 */
 	public ICType getFieldType(final String id) {
 		assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
-		return findField(id).member().type();
+		return lookupField(id).member().type();
 	}
 
 	/**
-	 * @return the name of the member at the given position. Anonymous members get a generated name that is unique
-	 *         within this type (it contains '#' and hence cannot clash with C identifiers).
+	 * Getter for all field types, ordered according to occurence in C code!
+	 *
+	 * @return the types of this struct's fields.
+	 */
+	public ICType[] getFieldTypes() {
+		return mMembers.stream().map(Member::type).toArray(ICType[]::new);
+	}
+
+	/**
+	 * Returns the set of fields in this struct.
+	 *
+	 * @return the set of fields in this struct.
+	 */
+	public String[] getFieldIds() {
+		return IntStream.range(0, mMembers.size()).mapToObj(this::getFieldId).toArray(String[]::new);
+	}
+
+	/**
+	 * Returns the name of the member at the given position. Anonymous members get a generated name that is unique
+	 * within this type.
 	 */
 	private String getFieldId(final int index) {
-		final Member member = mMembers.get(index);
-		if (member instanceof final NamedMember named) {
+		if (mMembers.get(index) instanceof final NamedMember named) {
 			return named.name();
 		}
 		return "#anon~" + index;
 	}
 
+	@Override
+	public String getName() {
+		return mStructName;
+	}
+
+	public StructOrUnion isStructOrUnion() {
+		return mIsStructOrUnion;
+	}
+
 	/**
-	 * Result of a recursive member lookup.
+	 * Result of a recursive field lookup.
 	 *
 	 * @param path
-	 *            the chain of direct field names that leads to the member, i.e., a single element if the member is a
-	 *            direct member and a longer list if it is contained in (nested) anonymous members.
+	 *            the path of field names that leads to the member.
 	 * @param member
-	 *            the member that was found.
+	 *            the (direct) member that was found.
 	 */
 	private record FieldLookup(List<String> path, NamedMember member) {
 	}
 
-	/**
-	 * Recursively look up a member. Members of anonymous struct / union members are considered members of this type.
-	 *
-	 * @return the lookup result or {@code null} if there is no such member.
-	 */
-	private FieldLookup findFieldRecursive(final String id) {
+	private FieldLookup loopupFieldRecursive(final String id) {
 		for (int i = 0; i < mMembers.size(); i++) {
 			switch (mMembers.get(i)) {
 			case final NamedMember named:
@@ -179,7 +196,7 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 				break;
 			case final AnonymousMember anon:
 				if (anon.type().getUnderlyingType() instanceof final CStructOrUnion nested) {
-					final FieldLookup nestedResult = nested.findFieldRecursive(id);
+					final FieldLookup nestedResult = nested.loopupFieldRecursive(id);
 					if (nestedResult != null) {
 						return new FieldLookup(DataStructureUtils.concat(List.of(getFieldId(i)), nestedResult.path()),
 								nestedResult.member());
@@ -191,8 +208,8 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		return null;
 	}
 
-	private FieldLookup findField(final String id) {
-		final FieldLookup result = findFieldRecursive(id);
+	private FieldLookup lookupField(final String id) {
+		final FieldLookup result = loopupFieldRecursive(id);
 		if (result == null) {
 			throw new IllegalArgumentException("Field not in struct: " + id);
 		}
@@ -200,39 +217,10 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	}
 
 	/**
-	 * @return the chain of direct field names that leads to the member with the given name (see {@link FieldLookup}).
-	 * @throws IllegalArgumentException
-	 *             if the member does not exist.
+	 * Returns the path of field names through anonymous members that leads to the member with the given name.
 	 */
 	public List<String> getFieldPath(final String id) {
-		return findField(id).path();
-	}
-
-	/**
-	 * Getter for all field types, ordered according to occurence in C code!
-	 *
-	 * @return the types of this strut's fields.
-	 */
-	public ICType[] getFieldTypes() {
-		return mMembers.stream().map(Member::type).toArray(ICType[]::new);
-	}
-
-	/**
-	 * Returns the names of the fields in this struct, ordered according to occurence in C code.
-	 *
-	 * @return the names of the fields in this struct.
-	 */
-	public String[] getFieldIds() {
-		return IntStream.range(0, mMembers.size()).mapToObj(this::getFieldId).toArray(String[]::new);
-	}
-
-	@Override
-	public String getName() {
-		return mStructName;
-	}
-
-	public StructOrUnion isStructOrUnion() {
-		return mIsStructOrUnion;
+		return lookupField(id).path();
 	}
 
 	@Override
@@ -246,7 +234,7 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		sb.append(structOrUnionPrefix);
 		sb.append('~');
 		sb.append(getName());
-		for (int i = 0; i < mMembers.size(); i++) {
+		for (int i = 0; i < getFieldCount(); i++) {
 			sb.append("?");
 			sb.append(getFieldId(i));
 			sb.append("~");
@@ -272,20 +260,17 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		mIsComplete = true;
 	}
 
-	/**
-	 * @return the bitfield widths of all members (-1 for members that are no bitfields), ordered like the members.
-	 */
 	public List<Integer> getBitFieldWidths() {
 		return mMembers.stream().map(Member::bitfieldWidth).toList();
 	}
 
 	/**
 	 * If field with name id is a bitfield returns the bit width (i.e., number of bits of the bitfield) otherwise
-	 * returns -1. Members of anonymous members are found recursively.
+	 * returns -1. Anonymous fields are looked up recursively.
 	 */
 	public int getBitfieldWidth(final String id) {
 		assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
-		return findField(id).member().bitfieldWidth();
+		return lookupField(id).member().bitfieldWidth();
 	}
 
 	public static boolean isUnion(final ICType cType) {
