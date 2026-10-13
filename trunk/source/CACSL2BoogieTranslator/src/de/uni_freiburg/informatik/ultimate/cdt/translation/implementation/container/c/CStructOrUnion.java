@@ -205,6 +205,10 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		return null;
 	}
 
+	public boolean hasField(final String id) {
+		return loopupFieldRecursive(id) != null;
+	}
+
 	private FieldLookup lookupField(final String id) {
 		final FieldLookup result = loopupFieldRecursive(id);
 		if (result == null) {

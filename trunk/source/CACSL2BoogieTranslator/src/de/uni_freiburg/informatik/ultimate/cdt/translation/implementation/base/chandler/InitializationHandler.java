@@ -1224,7 +1224,18 @@ public class InitializationHandler {
 		int currentCellIndex = -1;
 		while (!rest.isEmpty() && (currentCellIndex < bound - 1 || rest.peekFirst().hasRootDesignator())) {
 			final InitializerResult firstOfRest = rest.peekFirst();
+			boolean designatesNestedMember = false;
 			if (firstOfRest.hasRootDesignator()) {
+				if (targetCType instanceof final CStructOrUnion structType
+						&& firstOfRest.getRootDesignator() instanceof final StructDesignator sd) {
+					if (!structType.hasField(sd.getStructFieldId())) {
+						// The designated member belongs to an enclosing type (we were handed down the rest of its
+						// list); give the remaining entries back to the caller.
+						break;
+					}
+					// member of an anonymous struct/union: the entry is handed down to the anonymous member
+					designatesNestedMember = structType.getFieldPath(sd.getStructFieldId()).size() > 1;
+				}
 				currentCellIndex = getCellIndex(targetCType, firstOfRest.getRootDesignator());
 			} else {
 				currentCellIndex++;
@@ -1240,11 +1251,11 @@ public class InitializationHandler {
 			 * union type. In the latter case, the initial value of the object, including unnamed members, is that of
 			 * the expression.
 			 */
-			if (firstOfRest.isInitializerList()
+			if (!designatesNestedMember && (firstOfRest.isInitializerList()
 					|| (firstOfRest.hasRootExpressionResult() && areCompatibleStructOrUnionTypes(cellType,
 							firstOfRest.getRootExpressionResult().getLrValue().getCType()))
 					|| (firstOfRest.getRootExpressionResult() instanceof StringLiteralResult
-							&& TypeHandler.isCharArray(cellType))) {
+							&& TypeHandler.isCharArray(cellType)))) {
 				/*
 				 * first case: "{", i.e. one more brace opens (initializer list). Then the cell is initialized with the
 				 * list belonging to that brace (until the matching brace). No residue is taken over if too many
@@ -1288,7 +1299,10 @@ public class InitializationHandler {
 		case final StructDesignator sd -> {
 			assert cType instanceof CStructOrUnion
 					: "Expected CStructOrUnion, but got " + cType.getClass().getSimpleName() + " (" + cType + ")";
-			yield CTranslationUtil.findIndexOfStructField((CStructOrUnion) cType, sd.getStructFieldId());
+			final CStructOrUnion structType = (CStructOrUnion) cType;
+			// The first element of the path is the field itself or the anonymous member that contains it
+			yield CTranslationUtil.findIndexOfStructField(structType,
+					structType.getFieldPath(sd.getStructFieldId()).getFirst());
 		}
 		};
 	}
