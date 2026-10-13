@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2013-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -37,11 +37,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -2325,6 +2327,69 @@ public class MemoryHandler {
 		final Set<ICType> relevantBaseTypes = CTranslationUtil.extractNonAggregateNonUnionTypes(cType);
 
 		return getInitializationForHeapAtPointer(loc, baseAddress, relevantBaseTypes);
+	}
+
+	/**
+	 * Constructs, for each relevant heap array, a single assume statement of the form
+	 * <code>assume (forall k :: 0 <= k && k < sizeof(cType) ==> heap[baseAddress + k] == defaultValue)</code>. This
+	 * does not use constant arrays and does not havoc the heap; it relies on the memory at the given address being
+	 * freshly allocated (as the "select" initialization strategy does).
+	 *
+	 * @param defaultValueProvider
+	 *            maps a non-aggregate C type to its default (zero) value
+	 */
+	public List<Statement> getForallDefaultInitializationForOnHeapVariable(final ILocation loc,
+			final HeapLValue baseAddress, final ICType cType, final Function<ICType, Expression> defaultValueProvider) {
+		assert CTranslationUtil.isAggregateOrUnionType(cType) : "Argument is not aggregate or union but " + cType;
+
+		// map each relevant heap array to the default value of its content
+		final Map<HeapDataArray, Expression> heapArrays = new LinkedHashMap<>();
+		for (final ICType baseType : CTranslationUtil.extractNonAggregateNonUnionTypes(cType)) {
+			assert !(baseType instanceof CNamed);
+			final HeapDataArray hda;
+			if (baseType instanceof CPointer) {
+				mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
+				hda = mMemoryModel.getPointerHeapArray();
+			} else if (baseType instanceof final CPrimitive cPrimitive) {
+				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(cPrimitive.getType());
+				hda = mMemoryModel.getDataHeapArray(cPrimitive.getType());
+			} else if (baseType instanceof CEnum) {
+				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(CPrimitives.INT);
+				hda = mMemoryModel.getDataHeapArray(CPrimitives.INT);
+			} else {
+				throw new AssertionError("unforseen case");
+			}
+			heapArrays.putIfAbsent(hda, defaultValueProvider.apply(baseType));
+		}
+
+		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();
+		final Expression size = mTypeSizeAndOffsetComputer.constructBytesizeExpression(loc, cType);
+		final String kName = "#heapInitOffset";
+		final Expression k =
+				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogieTypeForCType(sizeT), kName,
+						new DeclarationInformation(StorageClass.QUANTIFIED, null));
+		final List<VarList> quantifiedVars =
+				List.of(new VarList(loc, new String[] { kName }, mTypeHandler.cType2AstType(loc, sizeT)));
+
+		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ZERO);
+		final Expression inRange = ExpressionFactory.and(loc,
+				List.of(mExpressionTranslation.constructBinaryComparisonExpression(loc,
+						IASTBinaryExpression.op_lessEqual, zero, sizeT, k, sizeT),
+						mExpressionTranslation.constructBinaryComparisonExpression(loc,
+								IASTBinaryExpression.op_lessThan, k, sizeT, size, sizeT)));
+		final Expression address = mMemoryModel.addExpressionToPointer(loc, baseAddress.getAddress(), k);
+
+		final List<Statement> result = new ArrayList<>();
+		for (final Map.Entry<HeapDataArray, Expression> entry : heapArrays.entrySet()) {
+			final Expression cell = MemoryModelExpressionHelper.constructOneDimensionalArrayAccess(loc,
+					entry.getKey().getIdentifierExpression(), address);
+			final Expression hasDefault =
+					ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, cell, entry.getValue());
+			final Expression body =
+					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICIMPLIES, inRange, hasDefault);
+			result.add(new AssumeStatement(loc, ExpressionFactory.quantifier(loc, true, quantifiedVars, body)));
+		}
+		return result;
 	}
 
 	private List<Statement> getInitializationForHeapAtPointer(final ILocation loc, final HeapLValue baseAddress,

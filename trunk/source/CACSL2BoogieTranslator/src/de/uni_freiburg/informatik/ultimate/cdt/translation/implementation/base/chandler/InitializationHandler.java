@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2014-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  *
@@ -46,16 +46,23 @@ import org.eclipse.cdt.core.dom.ast.c.ICASTArrayDesignator;
 import org.eclipse.cdt.core.dom.ast.c.ICASTDesignatedInitializer;
 import org.eclipse.cdt.core.dom.ast.c.ICASTFieldDesignator;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
@@ -155,6 +162,8 @@ public class InitializationHandler {
 
 	private final boolean mUseConstantArrays;
 
+	private final boolean mUseForallArrayInit;
+
 	private final IMemoryPointer mMemoryPointer;
 
 	public InitializationHandler(final TranslationSettings settings, final MemoryHandler memoryHandler,
@@ -171,6 +180,7 @@ public class InitializationHandler {
 		mCHandler = chandler;
 		mExprResultTransformer = exprResultTransformer;
 		mUseConstantArrays = settings.useConstantArrays();
+		mUseForallArrayInit = settings.useForallArrayInitialization();
 		mUseSelectForArrayCellInitIfPossible = !settings.useStoreChains();
 		mMemoryPointer = memoryPointer;
 	}
@@ -252,6 +262,11 @@ public class InitializationHandler {
 
 		final boolean usingOnHeapInitializationViaConstArray =
 				onHeap && useConstArrayInitialization(targetCTypeRaw, initializerInfo, hook);
+		final boolean usingOnHeapInitializationViaForall = onHeap && !usingOnHeapInitializationViaConstArray
+				&& useForallOnHeapInitialization(targetCTypeRaw, initializerInfo, hook);
+		// in both "sophisticated" cases all cells are default-initialized up front
+		final boolean usingOnHeapDefaultInitializationUpFront =
+				usingOnHeapInitializationViaConstArray || usingOnHeapInitializationViaForall;
 		if (usingOnHeapInitializationViaConstArray) {
 			// in the "sophisticated" case: make a default initialization of all array cells first
 			final ExpressionResult defaultInit =
@@ -259,11 +274,16 @@ public class InitializationHandler {
 			// makeOnHeapDefaultInitializationForType(loc, (HeapLValue) lhs, targetCTypeRaw, true, hook);
 			// makeDefaultOrNondetInitialization(loc, lhs, targetCTypeRaw, onHeap, false, hook);
 			init.addAllExceptLrValue(defaultInit);
+		} else if (usingOnHeapInitializationViaForall) {
+			final ExpressionResultBuilder defaultInit = new ExpressionResultBuilder();
+			defaultInit.addStatements(mMemoryHandler.getForallDefaultInitializationForOnHeapVariable(loc,
+					(HeapLValue) lhs, targetCTypeRaw.getUnderlyingType(), t -> getDefaultValueForSimpleType(loc, t)));
+			init.addAllExceptLrValue(defaultInit.build());
 		}
 
 		{
 			final ExpressionResult mainInitCode = initRec(loc, targetCTypeRaw, initializerInfo, onHeap,
-					usingOnHeapInitializationViaConstArray, lhs, true, hook);
+					usingOnHeapDefaultInitializationUpFront, lhs, true, hook);
 			init.addAllExceptLrValue(mainInitCode);
 			if (mainInitCode.hasLRValue()) {
 				init.setLrValue(mainInitCode.getLrValue());
@@ -524,7 +544,8 @@ public class InitializationHandler {
 		 * case this is decided once per variable (passed via field usingConstOnHeapArrayInitialization)
 		 */
 		final boolean useConstOffHeapArrayInitialization =
-				!onHeap && outermostInNestedArray && useConstArrayInitialization(cArrayType, initInfo, hook);
+				!onHeap && outermostInNestedArray && (useConstArrayInitialization(cArrayType, initInfo, hook)
+						|| useForallArrayInitialization(cArrayType, initInfo, arrayLhsToInitialize, hook));
 		if (useConstOffHeapArrayInitialization) {
 			// in the "sophisticated" off heap case: make a default initialization of all array cells first
 			final ExpressionResult defaultInit =
@@ -762,9 +783,13 @@ public class InitializationHandler {
 			 * In the off-heap case, sophisticated initialization for arrays (e.g. with constant arrays) is only
 			 * applicable if the value type is simple, i.e., not a struct or union type.
 			 */
-			if (useConstArrayInitialization(cType, null, hook)
-					&& !(CTranslationUtil.getValueTypeOfNestedArray(cArray) instanceof CStructOrUnion)) {
-				return makeSophisticatedOffHeapDefaultInitializationForArray(loc, cArray, lhsToInitIfAny);
+			if (!nondet && !(CTranslationUtil.getValueTypeOfNestedArray(cArray) instanceof CStructOrUnion)) {
+				if (useConstArrayInitialization(cType, null, hook)) {
+					return makeSophisticatedOffHeapDefaultInitializationForArray(loc, cArray, lhsToInitIfAny);
+				}
+				if (useForallArrayInitialization(cType, null, lhsToInitIfAny, hook)) {
+					return makeForallOffHeapDefaultInitializationForArray(loc, cArray, lhsToInitIfAny);
+				}
 			}
 
 			return makeNaiveOffHeapDefaultOrNondetInitForArray(loc, cArray, lhsToInitIfAny, nondet, hook);
@@ -857,6 +882,81 @@ public class InitializationHandler {
 		initialization.addStatement(assignment);
 
 		return initialization.build();
+	}
+
+	/**
+	 * Default-initializes the given array with a havoc followed by a single assume statement of the form
+	 * <code>assume (forall i_1, ..., i_n :: a[i_1]...[i_n] == defaultValue)</code>.
+	 */
+	private ExpressionResult makeForallOffHeapDefaultInitializationForArray(final ILocation loc,
+			final CArray cArrayType, final LocalLValue lhsToInit) {
+		final VariableLHS arrayLhs = (VariableLHS) lhsToInit.getLhs();
+
+		final List<VarList> quantifiedVars = new ArrayList<>();
+		final List<Expression> indices = new ArrayList<>();
+		CArray currentArrayType = cArrayType;
+		int dim = 0;
+		while (true) {
+			final CPrimitive boundType = currentArrayType.getBoundType();
+			final String name = "#arrInitIdx~" + dim;
+			quantifiedVars.add(new VarList(loc, new String[] { name }, mTypeHandler.cType2AstType(loc, boundType)));
+			indices.add(
+					ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogieTypeForCType(boundType),
+							name, new DeclarationInformation(StorageClass.QUANTIFIED, null)));
+			dim++;
+			final ICType valueType = currentArrayType.getValueType().getUnderlyingType();
+			if (valueType instanceof final CArray nested) {
+				currentArrayType = nested;
+			} else {
+				break;
+			}
+		}
+
+		final Expression arrayExpr = ExpressionFactory.constructIdentifierExpression(loc,
+				(BoogieType) arrayLhs.getType(), arrayLhs.getIdentifier(), arrayLhs.getDeclarationInformation());
+		final Expression access = ExpressionFactory.constructNestedArrayAccessExpression(loc, arrayExpr,
+				indices.toArray(Expression[]::new));
+		final Expression defaultValue =
+				getDefaultValueForSimpleType(loc, CTranslationUtil.getValueTypeOfNestedArray(cArrayType));
+		final Expression equality = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, access, defaultValue);
+		final Expression forall = ExpressionFactory.quantifier(loc, true, quantifiedVars, equality);
+
+		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
+		initialization.addStatement(new HavocStatement(loc, new VariableLHS[] { arrayLhs }));
+		initialization.addStatement(new AssumeStatement(loc, forall));
+		return initialization.build();
+	}
+
+	/**
+	 * Decides whether an on-heap variable should be default-initialized by one quantified assume statement per relevant
+	 * heap array. Uses the same thresholds as constant arrays; constant arrays take precedence.
+	 */
+	private boolean useForallOnHeapInitialization(final ICType cType, final InitializerInfo initInfo,
+			final IASTNode hook) {
+		if (!mUseForallArrayInit || mUseConstantArrays) {
+			return false;
+		}
+		if (!CTranslationUtil.isAggregateOrUnionType(cType.getUnderlyingType())) {
+			return false;
+		}
+		return isSufficientlyLargeAndDefaultDominated(cType, initInfo, hook);
+	}
+
+	/**
+	 * Decides whether an off-heap array should be default-initialized by a single quantified assume statement. Uses the
+	 * same size/ratio thresholds as {@link #useConstArrayInitialization(ICType, InitializerInfo, IASTNode)}. Conflicts
+	 * with constant arrays: if those are enabled, they take precedence.
+	 */
+	private boolean useForallArrayInitialization(final ICType cType, final InitializerInfo initInfo, final LRValue lhs,
+			final IASTNode hook) {
+		if (!mUseForallArrayInit || mUseConstantArrays) {
+			return false;
+		}
+		// we need a variable that we can havoc and the value type must be simple
+		if (!(lhs instanceof final LocalLValue localLhs) || !(localLhs.getLhs() instanceof VariableLHS)) {
+			return false;
+		}
+		return isSufficientlyLargeAndDefaultDominated(cType, initInfo, hook);
 	}
 
 	/**
@@ -989,7 +1089,11 @@ public class InitializationHandler {
 			// make sure that const arrays are only used when the corresponding setting is switched on
 			return false;
 		}
+		return isSufficientlyLargeAndDefaultDominated(cType, initInfo, hook);
+	}
 
+	private boolean isSufficientlyLargeAndDefaultDominated(final ICType cType, final InitializerInfo initInfo,
+			final IASTNode hook) {
 		final BigInteger numberOfCells = countNumberOfPrimitiveElementInType(cType, hook);
 		if (numberOfCells
 				.compareTo(BigInteger.valueOf(MINIMAL_NUMBER_CELLS_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT)) < 0) {
@@ -1252,7 +1356,7 @@ public class InitializationHandler {
 				 *
 				 * second case: first list entry has a compatible struct or union type
 				 *
-				 * third case (C11 6.7.9 §21): If there are [...] fewer characters in a string literal used to
+				 * third case (C11 6.7.9 Â§21): If there are [...] fewer characters in a string literal used to
 				 * initialize an array of known size than there are elements in the array, the remainder of the
 				 * aggregate shall be initialized implicitly the same as objects that have static storage duration.
 				 */

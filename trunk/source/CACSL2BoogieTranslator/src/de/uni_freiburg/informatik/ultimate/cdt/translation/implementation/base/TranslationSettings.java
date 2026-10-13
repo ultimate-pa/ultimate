@@ -80,6 +80,7 @@ public final class TranslationSettings {
 	private final CheckMode mCheckSignedIntegerBounds;
 	private final boolean mCheckDataRaces;
 	private final boolean mUseConstantArrays;
+	private final boolean mUseForallArrayInitialization;
 	private final boolean mUseStoreChains;
 	private final boolean mEnableFesetround;
 	private final FloatingPointRoundingMode mInitialRoundingMode;
@@ -135,6 +136,7 @@ public final class TranslationSettings {
 		mOverapproximateFloatingPointOperations =
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
 		mUseConstantArrays = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_CONSTANT_ARRAYS);
+		mUseForallArrayInitialization = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_FORALL_ARRAY_INITIALIZATION);
 		mUseStoreChains = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_STORE_CHAINS);
 
 		mEnableFesetround = ups.getBoolean(CACSLPreferenceInitializer.LABEL_FP_ROUNDING_MODE_ENABLE_FESETROUND);
@@ -163,8 +165,8 @@ public final class TranslationSettings {
 			final boolean smtBoolArraysWorkaround, final String entryFunction, final boolean checkErrorFunction,
 			final boolean checkAssertions, final boolean checkAcsl, final boolean isSvcompMemtrackCompatibilityMode,
 			final Set<String> functionsCheckedForMemoryNeutrality, final CheckMode checkSignedIntegerBounds,
-			final boolean checkDataRaces, final boolean useConstantArrays, final boolean useStoreChains,
-			final boolean enableFesetround, final FloatingPointRoundingMode initialRoundingMode,
+			final boolean checkDataRaces, final boolean useConstantArrays, final boolean useForallArrayInitialization,
+			final boolean useStoreChains, final boolean enableFesetround, final FloatingPointRoundingMode initialRoundingMode,
 			final boolean adaptMemoryStructureResolutionOnPointerCasts, final int stringOverapproximationThreshold,
 			final UndefinedFunctionBehaviour undefinedFunctionBehaviour, final boolean enforceIfForConditional,
 			final MemoryAddressing memoryAddressingPreference, final boolean fixedAddressesForInitialization,
@@ -191,6 +193,7 @@ public final class TranslationSettings {
 		mCheckSignedIntegerBounds = checkSignedIntegerBounds;
 		mCheckDataRaces = checkDataRaces;
 		mUseConstantArrays = useConstantArrays;
+		mUseForallArrayInitialization = useForallArrayInitialization;
 		mUseStoreChains = useStoreChains;
 		mEnableFesetround = enableFesetround;
 		mInitialRoundingMode = initialRoundingMode;
@@ -299,6 +302,10 @@ public final class TranslationSettings {
 		return mUseConstantArrays;
 	}
 
+	public boolean useForallArrayInitialization() {
+		return mUseForallArrayInitialization;
+	}
+
 	/**
 	 * To recover the old behaviour (before SVCOMP-19), where initialization always happened through a list of
 	 * assignments/stores (in contrast to the new assume-select strategy), set this to true.
@@ -350,8 +357,8 @@ public final class TranslationSettings {
 				mCheckPointerSubtractionAndComparisonValidity, memoryStructure, mFpToIeeeBvExtension,
 				mSmtBoolArraysWorkaround, mEntryFunction, mCheckErrorFunction, mCheckAssertions, mCheckAcsl,
 				mIsSvcompMemtrackCompatibilityMode, mFunctionsCheckedForMemoryNeutrality, mCheckSignedIntegerBounds,
-				mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround, mInitialRoundingMode,
-				mAdaptMemoryStructureResolutionOnPointerCasts, mStringOverapproximationThreshold,
+				mCheckDataRaces, mUseConstantArrays, mUseForallArrayInitialization, mUseStoreChains, mEnableFesetround,
+				mInitialRoundingMode, mAdaptMemoryStructureResolutionOnPointerCasts, mStringOverapproximationThreshold,
 				mUndefinedFunctionBehaviour, mEnforceIfForConditional, mMemoryAddressing,
 				mFixedAddressesForInitialization, mAssumeHeapAllocationAlwaysSucceeds);
 	}
