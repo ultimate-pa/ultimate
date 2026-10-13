@@ -50,6 +50,7 @@ import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier.IASTEnumerator;
 import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
+import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -412,7 +413,20 @@ public class TypeHandler implements ITypeHandler {
 		final ArrayList<String> fNames = new ArrayList<>();
 		final ArrayList<ICType> fTypes = new ArrayList<>();
 		final ArrayList<Integer> bitFieldWidths = new ArrayList<>();
+		final ArrayList<Boolean> anonymousMembers = new ArrayList<>();
 		for (final IASTDeclaration dec : node.getDeclarations(false)) {
+			if (isAnonymousMember(dec)) {
+				// anonymous struct / union member, see C11 6.7.2.1.13
+				final Result anonResult = main.dispatch(((IASTSimpleDeclaration) dec).getDeclSpecifier());
+				if (!(anonResult instanceof final TypesResult tr)) {
+					throw new UnsupportedSyntaxException(loc, "Unexpected syntax in anonymous struct/union member!");
+				}
+				fNames.add(CStructOrUnion.constructAnonymousMemberName(fNames.size()));
+				fTypes.add(tr.getCType());
+				bitFieldWidths.add(-1);
+				anonymousMembers.add(true);
+				continue;
+			}
 			final Result r = main.dispatch(dec);
 			if (r instanceof DeclarationResult) {
 				final DeclarationResult rdec = (DeclarationResult) r;
@@ -420,6 +434,7 @@ public class TypeHandler implements ITypeHandler {
 					fNames.add(declaration.getName());
 					fTypes.add(declaration.getType());
 					bitFieldWidths.add(declaration.getBitfieldSize());
+					anonymousMembers.add(false);
 				}
 			} else if (r instanceof SkipResult) { // skip ;)
 			} else {
@@ -443,7 +458,7 @@ public class TypeHandler implements ITypeHandler {
 
 		if (mIncompleteCStructOrUnionObjects.containsKey(rslvName)) {
 			final CStructOrUnion structOrUnion = mIncompleteCStructOrUnionObjects.get(rslvName);
-			structOrUnion.complete(fNames, fTypes, bitFieldWidths);
+			structOrUnion.complete(fNames, fTypes, bitFieldWidths, anonymousMembers);
 			mStaticObjectsHandler.completeTypeDeclaration(structOrUnion.getName(), structOrUnion, this);
 			final TypesResult typeResult = mDefinedTypes.get(rslvName);
 			mDefinedTypes.put(rslvName, TypesResult.create(typeResult, structOrUnion));
@@ -455,7 +470,8 @@ public class TypeHandler implements ITypeHandler {
 			mIncompleteCStructOrUnionObjects.remove(rslvName);
 		}
 
-		final CStructOrUnion cvar = new CStructOrUnion(isStructOrUnion, rslvName, fNames, fTypes, bitFieldWidths);
+		final CStructOrUnion cvar =
+				new CStructOrUnion(isStructOrUnion, rslvName, fNames, fTypes, bitFieldWidths, anonymousMembers);
 
 		// TODO : boogie type
 		final NamedType namedType = new NamedType(loc, BoogieType.TYPE_ERROR, identifier, new ASTType[0]);
@@ -480,6 +496,14 @@ public class TypeHandler implements ITypeHandler {
 			mDefinedTypes.put(rslvName, result);
 		}
 		return result;
+	}
+
+	private static boolean isAnonymousMember(final IASTDeclaration dec) {
+		if (!(dec instanceof final IASTSimpleDeclaration simple) || simple.getDeclarators().length != 0) {
+			return false;
+		}
+		return simple.getDeclSpecifier() instanceof final IASTCompositeTypeSpecifier spec
+				&& spec.getName().toString().isEmpty();
 	}
 
 	private void redirectNamedType(final Set<String> names, final CStructOrUnion completeStruct, final IASTNode hook) {

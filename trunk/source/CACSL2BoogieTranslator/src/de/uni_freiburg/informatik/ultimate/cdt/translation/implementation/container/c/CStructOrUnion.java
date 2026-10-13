@@ -34,6 +34,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+
 /**
  * Struct / Union type (see C11 6.2.5.20.2/3)
  *
@@ -60,6 +62,12 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 
 	private List<Integer> mBitFieldWidths;
 
+	/**
+	 * Marks members that are anonymous structs / unions (see C11 6.7.2.1.13). Their names are generated and only serve
+	 * as unique keys; the members they contain are accessible as if they were members of this type.
+	 */
+	private boolean[] mAnonymous;
+
 	private boolean mIsComplete;
 
 	/**
@@ -75,13 +83,26 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	 */
 	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final List<String> fNames,
 			final List<ICType> fTypes, final List<Integer> bitFieldWidths) {
-		this(isStructOrUnion, name, fNames.toArray(String[]::new), fTypes.toArray(ICType[]::new), bitFieldWidths);
+		this(isStructOrUnion, name, fNames, fTypes, bitFieldWidths, Collections.nCopies(fNames.size(), false));
+	}
+
+	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final List<String> fNames,
+			final List<ICType> fTypes, final List<Integer> bitFieldWidths, final List<Boolean> anonymousMembers) {
+		this(isStructOrUnion, name, fNames.toArray(String[]::new), fTypes.toArray(ICType[]::new), bitFieldWidths,
+				toArray(anonymousMembers));
 	}
 
 	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final String[] fNames,
 			final ICType[] fTypes, final List<Integer> bitFieldWidths) {
+		this(isStructOrUnion, name, fNames, fTypes, bitFieldWidths, new boolean[fNames.length]);
+	}
+
+	private CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final String[] fNames,
+			final ICType[] fTypes, final List<Integer> bitFieldWidths, final boolean[] anonymous) {
 		assert name != null;
 		assert fNames.length == bitFieldWidths.size();
+		assert fNames.length == anonymous.length;
+		mAnonymous = anonymous;
 		mIsStructOrUnion = isStructOrUnion;
 		mFieldNames = fNames;
 		mFieldTypes = fTypes;
@@ -96,6 +117,7 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		mFieldNames = new String[0];
 		mFieldTypes = new ICType[0];
 		mBitFieldWidths = Collections.emptyList();
+		mAnonymous = new boolean[0];
 		mStructName = Objects.requireNonNull(name);
 		mIsComplete = false;
 	}
@@ -123,11 +145,70 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	 */
 	public ICType getFieldType(final String id) {
 		assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
+		final List<String> path = getFieldPath(id);
+		CStructOrUnion current = this;
+		for (int i = 0; i < path.size() - 1; i++) {
+			current = (CStructOrUnion) current.getDirectFieldType(path.get(i)).getUnderlyingType();
+		}
+		return current.getDirectFieldType(path.get(path.size() - 1));
+	}
+
+	private ICType getDirectFieldType(final String id) {
 		final int idx = Arrays.asList(mFieldNames).indexOf(id);
 		if (idx < 0) {
 			throw new IllegalArgumentException("Field not in struct: " + id);
 		}
 		return mFieldTypes[idx];
+	}
+
+	private static boolean[] toArray(final List<Boolean> list) {
+		final boolean[] result = new boolean[list.size()];
+		for (int i = 0; i < result.length; i++) {
+			result[i] = list.get(i);
+		}
+		return result;
+	}
+
+	/**
+	 * @return a generated, unique field name for the anonymous member at the given position. The name is only a key;
+	 *         whether a member is anonymous is determined by {@link #isAnonymousMember(String)}.
+	 */
+	public static String constructAnonymousMemberName(final int index) {
+		return "#anon~" + index;
+	}
+
+	/**
+	 * Recursively look up a member. Members of anonymous struct / union members are considered members of this type.
+	 *
+	 * @return the chain of direct field names that leads to the member, i.e., a single element if the member is a
+	 *         direct member and a longer list if it is contained in (nested) anonymous members. Returns {@code null} if
+	 *         there is no such member.
+	 */
+	private List<String> findFieldPath(final String id) {
+		if (Arrays.asList(mFieldNames).contains(id)) {
+			return List.of(id);
+		}
+		for (int i = 0; i < mFieldNames.length; i++) {
+			if (!(mFieldTypes[i].getUnderlyingType() instanceof final CStructOrUnion nested) || !mAnonymous[i]) {
+				continue;
+			}
+			final List<String> nestedPath = nested.findFieldPath(id);
+			if (nestedPath != null) {
+				return DataStructureUtils.concat(List.of(mFieldNames[i]), nestedPath);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Like {@link #findFieldPath(String)} but throws an {@link IllegalArgumentException} if the member does not exist.
+	 */
+	public List<String> getFieldPath(final String id) {
+		final List<String> path = findFieldPath(id);
+		if (path == null) {
+			throw new IllegalArgumentException("Field not in struct: " + id);
+		}
+		return path;
 	}
 
 	/**
@@ -200,7 +281,17 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	 */
 	public void complete(final List<String> memberNames, final List<ICType> memberTypes,
 			final List<Integer> bitfieldWidths) {
+		complete(memberNames, memberTypes, bitfieldWidths, Collections.nCopies(memberNames.size(), false));
+	}
+
+	/**
+	 * Like {@link #complete(List, List, List)} but additionally marks anonymous struct / union members.
+	 */
+	public void complete(final List<String> memberNames, final List<ICType> memberTypes,
+			final List<Integer> bitfieldWidths, final List<Boolean> anonymousMembers) {
 		assert memberNames.size() == bitfieldWidths.size();
+		assert memberNames.size() == anonymousMembers.size();
+		mAnonymous = toArray(anonymousMembers);
 		mFieldNames = memberNames.toArray(String[]::new);
 		mFieldTypes = memberTypes.toArray(ICType[]::new);
 		mBitFieldWidths = bitfieldWidths;
