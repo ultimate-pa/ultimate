@@ -267,16 +267,11 @@ public class InitializationHandler {
 				usingOnHeapInitializationViaConstArray || usingOnHeapInitializationViaForall;
 		if (usingOnHeapInitializationViaConstArray) {
 			// in the "sophisticated" case: make a default initialization of all array cells first
-			final ExpressionResult defaultInit =
-					makeOnHeapDefaultInitializationViaConstArray(loc, (HeapLValue) lhs, targetCTypeRaw);
-			// makeOnHeapDefaultInitializationForType(loc, (HeapLValue) lhs, targetCTypeRaw, true, hook);
-			// makeDefaultOrNondetInitialization(loc, lhs, targetCTypeRaw, onHeap, false, hook);
-			init.addAllExceptLrValue(defaultInit);
+			init.addStatements(mMemoryHandler.getInitializationForOnHeapVariableOfAggregateOrUnionType(loc,
+					(HeapLValue) lhs, targetCTypeRaw));
 		} else if (usingOnHeapInitializationViaForall) {
-			final ExpressionResultBuilder defaultInit = new ExpressionResultBuilder();
-			defaultInit.addStatements(mMemoryHandler.getForallDefaultInitializationForOnHeapVariable(loc,
-					(HeapLValue) lhs, targetCTypeRaw.getUnderlyingType(), t -> getDefaultValueForSimpleType(loc, t)));
-			init.addAllExceptLrValue(defaultInit.build());
+			init.addStatements(mMemoryHandler.getForallDefaultInitializationForOnHeapVariable(loc, (HeapLValue) lhs,
+					targetCTypeRaw.getUnderlyingType(), t -> getDefaultValueForSimpleType(loc, t)));
 		}
 
 		{
@@ -824,15 +819,6 @@ public class InitializationHandler {
 					makeNaiveOnHeapDefaultInitializationForType(loc, arrayAccessLhs, cArrayType.getValueType(), hook);
 			initialization.addAllExceptLrValue(arrayIndexInitialization);
 		}
-		return initialization.build();
-	}
-
-	private ExpressionResult makeOnHeapDefaultInitializationViaConstArray(final ILocation loc,
-			final HeapLValue baseAddress, final ICType cType) {
-		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
-		final List<Statement> initStatements =
-				mMemoryHandler.getInitializationForOnHeapVariableOfAggregateOrUnionType(loc, baseAddress, cType);
-		initialization.addStatements(initStatements);
 		return initialization.build();
 	}
 
