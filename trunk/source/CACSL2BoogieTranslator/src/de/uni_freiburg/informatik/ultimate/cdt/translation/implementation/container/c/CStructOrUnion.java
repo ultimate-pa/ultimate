@@ -133,7 +133,6 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	 * @return the field type.
 	 */
 	public ICType getFieldType(final String id) {
-		assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
 		return lookupField(id).member().type();
 	}
 
@@ -187,6 +186,7 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	}
 
 	private FieldLookup loopupFieldRecursive(final String id) {
+		assert !isIncomplete() : "Cannot check field in an incomplete struct type.";
 		for (int i = 0; i < mMembers.size(); i++) {
 			final Member member = mMembers.get(i);
 			final String fieldId = getFieldId(i);
@@ -205,7 +205,6 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	}
 
 	public boolean hasField(final String id) {
-		assert !isIncomplete() : "Cannot check field in an incomplete struct type.";
 		return loopupFieldRecursive(id) != null;
 	}
 
@@ -221,7 +220,6 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	 * Returns the path of field names through anonymous members that leads to the member with the given name.
 	 */
 	public List<String> getFieldPath(final String id) {
-		assert !isIncomplete() : "Cannot get field path in an incomplete struct type.";
 		return lookupField(id).path();
 	}
 
