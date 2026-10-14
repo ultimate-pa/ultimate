@@ -942,13 +942,12 @@ public class InitializationHandler {
 					&& isSufficientlyLargeAndDefaultDominated(cType, initInfo, hook);
 		}
 
-		// Off-heap forall initialization havocs its array variable and supports only simple leaf element types.
-		if (!(cType.getUnderlyingType() instanceof final CArray array)
-				|| CTranslationUtil.getValueTypeOfNestedArray(array) instanceof CStructOrUnion
-				|| !(lhs instanceof final LocalLValue localLhs) || !(localLhs.getLhs() instanceof VariableLHS)) {
-			return false;
+		if (cType.getUnderlyingType() instanceof final CArray array
+				&& !(CTranslationUtil.getValueTypeOfNestedArray(array) instanceof CStructOrUnion)
+				&& lhs instanceof final LocalLValue localLhs && localLhs.getLhs() instanceof VariableLHS) {
+			return isSufficientlyLargeAndDefaultDominated(cType, initInfo, hook);
 		}
-		return isSufficientlyLargeAndDefaultDominated(cType, initInfo, hook);
+		return false;
 	}
 
 	/**
