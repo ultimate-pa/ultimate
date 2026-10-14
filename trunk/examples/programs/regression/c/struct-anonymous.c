@@ -11,7 +11,8 @@ union u {
 
 int main(){
   union u *p = malloc(sizeof(union u));
-  if (p == NULL) return;
+  if (p == NULL) return -1;
   p->x = 2;
   //@ assert p->x == 2;
+  return 0;
 }

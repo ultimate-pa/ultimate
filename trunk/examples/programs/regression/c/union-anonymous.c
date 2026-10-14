@@ -11,7 +11,10 @@ struct s {
 
 int main() {
   struct s *p = malloc(sizeof(struct s));
-  if (p == NULL) return;
+  if (p == NULL) return 0;
   p->x = 5;
   //@ assert p->x == 5;
+  long *yp = &p->y;
+  //@ assert \valid(yp);
+  return 0;
 }
