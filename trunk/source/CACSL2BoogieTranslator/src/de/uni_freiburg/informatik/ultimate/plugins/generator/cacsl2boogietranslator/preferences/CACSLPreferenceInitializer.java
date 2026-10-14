@@ -384,7 +384,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_SMT_BOOL_ARRAYS_WORKAROUND, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_USE_CONSTANT_ARRAYS, false, DESC_USE_CONSTANT_ARRAYS,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_USE_FORALL_ARRAY_INITIALIZATION, false,
+				new UltimatePreferenceItem<>(LABEL_USE_FORALL_ARRAY_INITIALIZATION, true,
 						DESC_USE_FORALL_ARRAY_INITIALIZATION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_USE_STORE_CHAINS, false, "Only for benchmarking -- do not use",
 						PreferenceType.Boolean),
