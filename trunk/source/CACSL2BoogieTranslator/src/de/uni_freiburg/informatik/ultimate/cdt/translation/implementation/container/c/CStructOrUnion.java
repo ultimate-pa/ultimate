@@ -185,7 +185,7 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	private record FieldLookup(List<String> path, Member member) {
 	}
 
-	private FieldLookup loopupFieldRecursive(final String id) {
+	private FieldLookup lookupFieldRecursive(final String id) {
 		assert !isIncomplete() : "Cannot check field in an incomplete struct type.";
 		for (int i = 0; i < mMembers.size(); i++) {
 			final Member member = mMembers.get(i);
@@ -194,7 +194,7 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 				return new FieldLookup(List.of(id), member);
 			}
 			if (member instanceof final AnonymousMember anon) {
-				final FieldLookup nestedResult = anon.type().loopupFieldRecursive(id);
+				final FieldLookup nestedResult = anon.type().lookupFieldRecursive(id);
 				if (nestedResult != null) {
 					return new FieldLookup(DataStructureUtils.concat(List.of(fieldId), nestedResult.path()),
 							nestedResult.member());
@@ -205,11 +205,11 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	}
 
 	public boolean hasField(final String id) {
-		return loopupFieldRecursive(id) != null;
+		return lookupFieldRecursive(id) != null;
 	}
 
 	private FieldLookup lookupField(final String id) {
-		final FieldLookup result = loopupFieldRecursive(id);
+		final FieldLookup result = lookupFieldRecursive(id);
 		if (result == null) {
 			throw new IllegalArgumentException("Field not in struct: " + id);
 		}
