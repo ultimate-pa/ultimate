@@ -197,7 +197,7 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 					&& anon.type().getUnderlyingType() instanceof final CStructOrUnion nested) {
 				final FieldLookup nestedResult = nested.loopupFieldRecursive(id);
 				if (nestedResult != null) {
-					return new FieldLookup(DataStructureUtils.concat(List.of(getFieldId(i)), nestedResult.path()),
+					return new FieldLookup(DataStructureUtils.concat(List.of(fieldId), nestedResult.path()),
 							nestedResult.member());
 				}
 			}
