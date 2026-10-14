@@ -2346,19 +2346,7 @@ public class MemoryHandler {
 		final Map<HeapDataArray, Expression> heapArrays = new LinkedHashMap<>();
 		for (final ICType baseType : CTranslationUtil.extractNonAggregateNonUnionTypes(cType)) {
 			assert !(baseType instanceof CNamed);
-			final HeapDataArray hda;
-			if (baseType instanceof CPointer) {
-				mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-				hda = mMemoryModel.getPointerHeapArray();
-			} else if (baseType instanceof final CPrimitive cPrimitive) {
-				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(cPrimitive.getType());
-				hda = mMemoryModel.getDataHeapArray(cPrimitive.getType());
-			} else if (baseType instanceof CEnum) {
-				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(CPrimitives.INT);
-				hda = mMemoryModel.getDataHeapArray(CPrimitives.INT);
-			} else {
-				throw new AssertionError("unforseen case");
-			}
+			final HeapDataArray hda = getHeapDataArrayForType(baseType, false);
 			heapArrays.putIfAbsent(hda, defaultValueProvider.apply(baseType));
 		}
 
@@ -2398,26 +2386,7 @@ public class MemoryHandler {
 		final Set<HeapDataArray> relevantHeapArrays = new LinkedHashSet<>();
 		for (final ICType baseType : relevantBaseTypes) {
 			assert !(baseType instanceof CNamed);
-			if (baseType instanceof CPointer) {
-				mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-				final HeapDataArray hda = mMemoryModel.getPointerHeapArray();
-				mRequiredMemoryModelFeatures.reportPointerOnHeapInitFunctionRequired();
-				relevantHeapArrays.add(hda);
-			} else if (baseType instanceof final CPrimitive cPrimitive) {
-				final CPrimitives primitive = cPrimitive.getType();
-				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitive);
-				final HeapDataArray hda = mMemoryModel.getDataHeapArray(primitive);
-				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(primitive);
-				relevantHeapArrays.add(hda);
-			} else if (baseType instanceof CEnum) {
-				final CPrimitives primitive = CPrimitives.INT;
-				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitive);
-				final HeapDataArray hda = mMemoryModel.getDataHeapArray(primitive);
-				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(primitive);
-				relevantHeapArrays.add(hda);
-			} else {
-				throw new AssertionError("unforseen case");
-			}
+			relevantHeapArrays.add(getHeapDataArrayForType(baseType, true));
 		}
 
 		final List<Statement> result = new ArrayList<>();
@@ -2426,6 +2395,29 @@ public class MemoryHandler {
 			result.add(getInitializationForHeapArrayAtAddress(loc, relevantHeapArray, baseAddress));
 		}
 		return result;
+	}
+
+	private HeapDataArray getHeapDataArrayForType(final ICType baseType, final boolean requireInitializationFunction) {
+		if (baseType instanceof CPointer) {
+			mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
+			if (requireInitializationFunction) {
+				mRequiredMemoryModelFeatures.reportPointerOnHeapInitFunctionRequired();
+			}
+			return mMemoryModel.getPointerHeapArray();
+		}
+		final CPrimitives primitive;
+		if (baseType instanceof final CPrimitive cPrimitive) {
+			primitive = cPrimitive.getType();
+		} else if (baseType instanceof CEnum) {
+			primitive = CPrimitives.INT;
+		} else {
+			throw new AssertionError("unforseen case");
+		}
+		mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitive);
+		if (requireInitializationFunction) {
+			mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(primitive);
+		}
+		return mMemoryModel.getDataHeapArray(primitive);
 	}
 
 	private Statement getInitializationForHeapArrayAtAddress(final ILocation loc, final HeapDataArray relevantHeapArray,

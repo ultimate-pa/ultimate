@@ -263,7 +263,7 @@ public class InitializationHandler {
 		final boolean usingOnHeapInitializationViaConstArray =
 				onHeap && useConstArrayInitialization(targetCTypeRaw, initializerInfo, hook);
 		final boolean usingOnHeapInitializationViaForall = onHeap && !usingOnHeapInitializationViaConstArray
-				&& useForallOnHeapInitialization(targetCTypeRaw, initializerInfo, hook);
+				&& useForallDefaultInitialization(targetCTypeRaw, initializerInfo, lhs, true, hook);
 		// in both "sophisticated" cases all cells are default-initialized up front
 		final boolean usingOnHeapDefaultInitializationUpFront =
 				usingOnHeapInitializationViaConstArray || usingOnHeapInitializationViaForall;
@@ -545,7 +545,7 @@ public class InitializationHandler {
 		 */
 		final boolean useConstOffHeapArrayInitialization =
 				!onHeap && outermostInNestedArray && (useConstArrayInitialization(cArrayType, initInfo, hook)
-						|| useForallArrayInitialization(cArrayType, initInfo, arrayLhsToInitialize, hook));
+						|| useForallDefaultInitialization(cArrayType, initInfo, arrayLhsToInitialize, false, hook));
 		if (useConstOffHeapArrayInitialization) {
 			// in the "sophisticated" off heap case: make a default initialization of all array cells first
 			final ExpressionResult defaultInit =
@@ -787,7 +787,7 @@ public class InitializationHandler {
 				if (useConstArrayInitialization(cType, null, hook)) {
 					return makeSophisticatedOffHeapDefaultInitializationForArray(loc, cArray, lhsToInitIfAny);
 				}
-				if (useForallArrayInitialization(cType, null, lhsToInitIfAny, hook)) {
+				if (useForallDefaultInitialization(cType, null, lhsToInitIfAny, false, hook)) {
 					return makeForallOffHeapDefaultInitializationForArray(loc, cArray, lhsToInitIfAny);
 				}
 			}
@@ -928,32 +928,26 @@ public class InitializationHandler {
 	}
 
 	/**
-	 * Decides whether an on-heap variable should be default-initialized by one quantified assume statement per relevant
-	 * heap array. Uses the same thresholds as constant arrays; constant arrays take precedence.
+	 * Decides whether an on-heap aggregate or off-heap array should be default-initialized with quantified assumes. Uses
+	 * the same thresholds as constant arrays; constant arrays take precedence.
 	 */
-	private boolean useForallOnHeapInitialization(final ICType cType, final InitializerInfo initInfo,
-			final IASTNode hook) {
+	private boolean useForallDefaultInitialization(final ICType cType, final InitializerInfo initInfo, final LRValue lhs,
+			final boolean onHeap, final IASTNode hook) {
 		if (!mUseForallArrayInit || mUseConstantArrays) {
 			return false;
 		}
-		if (!CTranslationUtil.isAggregateOrUnionType(cType.getUnderlyingType())) {
+		if (initInfo != null && initInfo.isMakeNondeterministicInitialization()) {
 			return false;
 		}
-		return isSufficientlyLargeAndDefaultDominated(cType, initInfo, hook);
-	}
+		if (onHeap) {
+			return CTranslationUtil.isAggregateOrUnionType(cType.getUnderlyingType())
+					&& isSufficientlyLargeAndDefaultDominated(cType, initInfo, hook);
+		}
 
-	/**
-	 * Decides whether an off-heap array should be default-initialized by a single quantified assume statement. Uses the
-	 * same size/ratio thresholds as {@link #useConstArrayInitialization(ICType, InitializerInfo, IASTNode)}. Conflicts
-	 * with constant arrays: if those are enabled, they take precedence.
-	 */
-	private boolean useForallArrayInitialization(final ICType cType, final InitializerInfo initInfo, final LRValue lhs,
-			final IASTNode hook) {
-		if (!mUseForallArrayInit || mUseConstantArrays) {
-			return false;
-		}
-		// we need a variable that we can havoc and the value type must be simple
-		if (!(lhs instanceof final LocalLValue localLhs) || !(localLhs.getLhs() instanceof VariableLHS)) {
+		// Off-heap forall initialization havocs its array variable and supports only simple leaf element types.
+		if (!(cType.getUnderlyingType() instanceof final CArray array)
+				|| CTranslationUtil.getValueTypeOfNestedArray(array) instanceof CStructOrUnion
+				|| !(lhs instanceof final LocalLValue localLhs) || !(localLhs.getLhs() instanceof VariableLHS)) {
 			return false;
 		}
 		return isSufficientlyLargeAndDefaultDominated(cType, initInfo, hook);
