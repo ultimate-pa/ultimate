@@ -206,6 +206,7 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	}
 
 	public boolean hasField(final String id) {
+		assert !isIncomplete() : "Cannot check field in an incomplete struct type.";
 		return loopupFieldRecursive(id) != null;
 	}
 
