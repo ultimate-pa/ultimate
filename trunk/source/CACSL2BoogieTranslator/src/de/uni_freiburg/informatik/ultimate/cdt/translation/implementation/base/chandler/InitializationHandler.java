@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -922,17 +921,16 @@ public class InitializationHandler {
 		final Expression forall = ExpressionFactory.quantifier(loc, true, quantifiedVars, equality);
 
 		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
-		initialization.addStatement(new HavocStatement(loc, new VariableLHS[] { arrayLhs }));
 		initialization.addStatement(new AssumeStatement(loc, forall));
 		return initialization.build();
 	}
 
 	/**
-	 * Decides whether an on-heap aggregate or off-heap array should be default-initialized with quantified assumes. Uses
-	 * the same thresholds as constant arrays; constant arrays take precedence.
+	 * Decides whether an on-heap aggregate or off-heap array should be default-initialized with quantified assumes.
+	 * Uses the same thresholds as constant arrays; constant arrays take precedence.
 	 */
-	private boolean useForallDefaultInitialization(final ICType cType, final InitializerInfo initInfo, final LRValue lhs,
-			final boolean onHeap, final IASTNode hook) {
+	private boolean useForallDefaultInitialization(final ICType cType, final InitializerInfo initInfo,
+			final LRValue lhs, final boolean onHeap, final IASTNode hook) {
 		if (!mUseForallArrayInit || mUseConstantArrays) {
 			return false;
 		}
