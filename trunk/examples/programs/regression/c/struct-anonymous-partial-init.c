@@ -8,16 +8,20 @@
  *---------------------------------------------------------------------------*/
 
 struct s {
-  int a;
-  struct { int b; int c; };
-  int d;
+    int a;
+    struct {
+        int b;
+        int c;
+    };
+    int d;
 };
 
-int main(){
-  struct s s1 = {1, 2};
-  //@ assert s1.a == 1;
-  //@ assert s1.b == 2;
-  //@ assert s1.c == 0;
-  //@ assert s1.d == 0;
-  return 0;
+int main()
+{
+    struct s s1 = { 1, 2 };
+    //@ assert s1.a == 1;
+    //@ assert s1.b == 2;
+    //@ assert s1.c == 0;
+    //@ assert s1.d == 0;
+    return 0;
 }

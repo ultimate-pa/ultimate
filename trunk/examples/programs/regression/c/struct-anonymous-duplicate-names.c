@@ -9,13 +9,18 @@
  *---------------------------------------------------------------------------*/
 
 struct s {
-  struct { int x; };
-  struct { int x; };
+    struct {
+        int x;
+    };
+    struct {
+        int x;
+    };
 };
 
-int main(){
-  struct s s1;
-  s1.x = 1;
-  //@ assert s1.x == 1;
-  return 0;
+int main()
+{
+    struct s s1;
+    s1.x = 1;
+    //@ assert s1.x == 1;
+    return 0;
 }

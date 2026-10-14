@@ -7,15 +7,19 @@
  *---------------------------------------------------------------------------*/
 
 struct s {
-  int a;
-  struct { int b; int c; };
+    int a;
+    struct {
+        int b;
+        int c;
+    };
 };
 
-struct s g = {1, 2, 3};
+struct s g = { 1, 2, 3 };
 
-int main(){
-  //@ assert g.a == 1;
-  //@ assert g.b == 2;
-  //@ assert g.c == 3;
-  return 0;
+int main()
+{
+    //@ assert g.a == 1;
+    //@ assert g.b == 2;
+    //@ assert g.c == 3;
+    return 0;
 }

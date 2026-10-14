@@ -10,13 +10,17 @@
  *---------------------------------------------------------------------------*/
 
 union u {
-  struct { int x; int y; };
-  long z;
+    struct {
+        int x;
+        int y;
+    };
+    long z;
 };
 
-int main(){
-  union u u1 = {.x = 1, .y = 2};
-  //@ assert u1.x == 1;
-  //@ assert u1.y == 2;
-  return 0;
+int main()
+{
+    union u u1 = { .x = 1, .y = 2 };
+    //@ assert u1.x == 1;
+    //@ assert u1.y == 2;
+    return 0;
 }

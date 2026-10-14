@@ -9,19 +9,24 @@
  *---------------------------------------------------------------------------*/
 
 struct s {
-  int a;
-  struct { int b; };
-  int c;
+    int a;
+    struct {
+        int b;
+    };
+    int c;
 };
 
-int main(){
-  struct s *p = malloc(sizeof(struct s));
-  if (p == NULL) return -1;
-  p->a = 1;
-  p->b = 2;
-  p->c = 3;
-  //@ assert p->a == 1;
-  //@ assert p->b == 2;
-  //@ assert p->c == 3;
-  return 0;
+int main()
+{
+    struct s *p = malloc(sizeof(struct s));
+    if (p == NULL) {
+        return -1;
+    }
+    p->a = 1;
+    p->b = 2;
+    p->c = 3;
+    //@ assert p->a == 1;
+    //@ assert p->b == 2;
+    //@ assert p->c == 3;
+    return 0;
 }
