@@ -47,7 +47,6 @@ import org.eclipse.cdt.core.dom.ast.c.ICASTDesignatedInitializer;
 import org.eclipse.cdt.core.dom.ast.c.ICASTFieldDesignator;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -893,36 +892,28 @@ public class InitializationHandler {
 
 		final List<VarList> quantifiedVars = new ArrayList<>();
 		final List<Expression> indices = new ArrayList<>();
-		CArray currentArrayType = cArrayType;
+		ICType currentType = cArrayType;
 		int dim = 0;
-		while (true) {
+		while (currentType instanceof final CArray currentArrayType) {
 			final CPrimitive boundType = currentArrayType.getBoundType();
 			final String name = "#arrInitIdx~" + dim;
 			quantifiedVars.add(new VarList(loc, new String[] { name }, mTypeHandler.cType2AstType(loc, boundType)));
 			indices.add(
 					ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogieTypeForCType(boundType),
-							name, new DeclarationInformation(StorageClass.QUANTIFIED, null)));
+							name, DeclarationInformation.DECLARATIONINFO_QUANTIFIED));
 			dim++;
-			final ICType valueType = currentArrayType.getValueType().getUnderlyingType();
-			if (valueType instanceof final CArray nested) {
-				currentArrayType = nested;
-			} else {
-				break;
-			}
+			currentType = currentArrayType.getValueType().getUnderlyingType();
 		}
 
 		final Expression arrayExpr = ExpressionFactory.constructIdentifierExpression(loc,
 				(BoogieType) arrayLhs.getType(), arrayLhs.getIdentifier(), arrayLhs.getDeclarationInformation());
 		final Expression access = ExpressionFactory.constructNestedArrayAccessExpression(loc, arrayExpr,
 				indices.toArray(Expression[]::new));
-		final Expression defaultValue =
-				getDefaultValueForSimpleType(loc, CTranslationUtil.getValueTypeOfNestedArray(cArrayType));
-		final Expression equality = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, access, defaultValue);
-		final Expression forall = ExpressionFactory.quantifier(loc, true, quantifiedVars, equality);
-
-		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
-		initialization.addStatement(new AssumeStatement(loc, forall));
-		return initialization.build();
+		final Expression equality = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, access,
+				getDefaultValueForSimpleType(loc, currentType));
+		return new ExpressionResult(
+				List.of(new AssumeStatement(loc, ExpressionFactory.quantifier(loc, true, quantifiedVars, equality))),
+				null);
 	}
 
 	/**
