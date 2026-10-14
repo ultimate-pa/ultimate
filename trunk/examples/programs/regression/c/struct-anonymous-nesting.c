@@ -1,6 +1,6 @@
 // #Safe
 /*-----------------------------------------------------------------------------
- * Example with nested anonymous structs in a named (outer) struct
+ * Example with nested anonymous structs in a named (outer) struct.
  *-----------------------------------------------------------------------------
  * Author: Manuel Bentele
  *   Date: 13.11.2025

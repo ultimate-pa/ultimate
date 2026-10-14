@@ -1,22 +1,22 @@
 // #Safe
 /*-----------------------------------------------------------------------------
- * Example with an anonymous struct and variables in a named (outer) struct
+ * Example with an anonymous struct in an outer struct as part of a typedef.
  *-----------------------------------------------------------------------------
  * Author: Manuel Bentele
  *   Date: 13.11.2025
  *---------------------------------------------------------------------------*/
 
-struct foo {
+typedef struct {
     int a;
     struct {
         int b;
     };
     int c;
-};
+} foo_t;
 
 int main()
 {
-    struct foo f;
+    foo_t f;
     f.a = 10;
     f.b = 20;
     f.c = 30;
