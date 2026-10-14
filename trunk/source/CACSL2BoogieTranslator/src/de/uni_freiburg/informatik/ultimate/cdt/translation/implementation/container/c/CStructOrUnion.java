@@ -76,7 +76,7 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	 * An anonymous struct / union member (see C11 6.7.2.1.13). The members of its type are accessible as if they were
 	 * members of the surrounding type.
 	 */
-	public record AnonymousMember(ICType type) implements Member {
+	public record AnonymousMember(CStructOrUnion type) implements Member {
 		public AnonymousMember {
 			Objects.requireNonNull(type);
 		}
@@ -193,9 +193,8 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 			if (fieldId.equals(id)) {
 				return new FieldLookup(List.of(id), member);
 			}
-			if (member instanceof final AnonymousMember anon
-					&& anon.type().getUnderlyingType() instanceof final CStructOrUnion nested) {
-				final FieldLookup nestedResult = nested.loopupFieldRecursive(id);
+			if (member instanceof final AnonymousMember anon) {
+				final FieldLookup nestedResult = anon.type().loopupFieldRecursive(id);
 				if (nestedResult != null) {
 					return new FieldLookup(DataStructureUtils.concat(List.of(fieldId), nestedResult.path()),
 							nestedResult.member());

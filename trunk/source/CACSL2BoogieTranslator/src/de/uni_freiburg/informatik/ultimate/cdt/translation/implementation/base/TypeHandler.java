@@ -418,10 +418,11 @@ public class TypeHandler implements ITypeHandler {
 			if (isAnonymousMember(dec)) {
 				// anonymous struct / union member, see C11 6.7.2.1.13
 				final Result anonResult = main.dispatch(((IASTSimpleDeclaration) dec).getDeclSpecifier());
-				if (!(anonResult instanceof final TypesResult tr)) {
+				if (!(anonResult instanceof final TypesResult tr)
+						|| !(tr.getCType() instanceof final CStructOrUnion type)) {
 					throw new UnsupportedSyntaxException(loc, "Unexpected syntax in anonymous struct/union member!");
 				}
-				members.add(new AnonymousMember(tr.getCType()));
+				members.add(new AnonymousMember(type));
 				continue;
 			}
 			final Result r = main.dispatch(dec);
