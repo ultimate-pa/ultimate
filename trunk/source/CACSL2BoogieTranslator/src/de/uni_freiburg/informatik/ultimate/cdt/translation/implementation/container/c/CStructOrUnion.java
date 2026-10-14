@@ -269,7 +269,6 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	 * returns -1. Anonymous fields are looked up recursively.
 	 */
 	public int getBitfieldWidth(final String id) {
-		assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
 		return lookupField(id).member().bitfieldWidth();
 	}
 
