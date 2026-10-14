@@ -21,4 +21,5 @@ int main()
     //@ assert s1.x == s2.x;
     //@ assert s1.y == s2.y;
     //@ assert s1.z == s2.z;
+    return 0;
 }
