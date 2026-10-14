@@ -11,6 +11,7 @@ struct s {
 
 int main() {
   struct s *p = malloc(sizeof(struct s));
+  if (p == NULL) return;
   p->x = 5;
   //@ assert p->x == 5;
 }
