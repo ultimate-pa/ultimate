@@ -222,6 +222,7 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 	 * Returns the path of field names through anonymous members that leads to the member with the given name.
 	 */
 	public List<String> getFieldPath(final String id) {
+		assert !isIncomplete() : "Cannot get field path in an incomplete struct type.";
 		return lookupField(id).path();
 	}
 
