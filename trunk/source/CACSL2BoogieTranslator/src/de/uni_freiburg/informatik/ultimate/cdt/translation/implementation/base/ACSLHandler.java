@@ -846,8 +846,8 @@ public class ACSLHandler implements IACSLHandler {
 		// Therefore, we iterate over this path here.
 		final CStructOrUnion structType = (CStructOrUnion) r.getLrValue().getCType().getUnderlyingType();
 		Expression resultExpr = r.getLrValue().getValue();
-		for (final String structField : structType.getFieldPath(field)) {
-			resultExpr = ExpressionFactory.constructStructAccessExpression(loc, resultExpr, structField);
+		for (final String currentField : structType.getFieldPath(field)) {
+			resultExpr = ExpressionFactory.constructStructAccessExpression(loc, resultExpr, currentField);
 		}
 
 		final RValue rval = new RValue(resultExpr, structType.getFieldType(field));
