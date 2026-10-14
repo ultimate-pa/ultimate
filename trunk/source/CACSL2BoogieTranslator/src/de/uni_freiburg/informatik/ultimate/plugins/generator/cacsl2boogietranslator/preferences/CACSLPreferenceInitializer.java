@@ -144,8 +144,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_USE_FORALL_ARRAY_INITIALIZATION = "Use forall quantifier for array initialization";
 	private static final String DESC_USE_FORALL_ARRAY_INITIALIZATION =
 			"Initialize large arrays to their default value using a single assume statement with a forall "
-					+ "quantifier instead of one assignment per cell. Conflicts with 'Use constant arrays', which "
-					+ "takes precedence if both are enabled.";
+					+ "quantifier instead of one assignment per cell. "
+					+ "This setting is only applied, if 'Use constant arrays' is disabled.";
 
 	public static final String LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS =
 			"Adapt memory model on pointer casts if necessary";
