@@ -786,7 +786,8 @@ public class InitializationHandler {
 					return makeSophisticatedOffHeapDefaultInitializationForArray(loc, cArray, lhsToInitIfAny);
 				}
 				if (useForallDefaultInitialization(cType, null, lhsToInitIfAny, false, hook)) {
-					return makeForallOffHeapDefaultInitializationForArray(loc, cArray, lhsToInitIfAny);
+					return makeForallOffHeapDefaultInitializationForArray(loc, cArray,
+							(VariableLHS) lhsToInitIfAny.getLhs());
 				}
 			}
 
@@ -887,9 +888,7 @@ public class InitializationHandler {
 	 * <code>assume (forall i_1, ..., i_n :: a[i_1]...[i_n] == defaultValue)</code>.
 	 */
 	private ExpressionResult makeForallOffHeapDefaultInitializationForArray(final ILocation loc,
-			final CArray cArrayType, final LocalLValue lhsToInit) {
-		final VariableLHS arrayLhs = (VariableLHS) lhsToInit.getLhs();
-
+			final CArray cArrayType, final VariableLHS arrayLhs) {
 		final List<VarList> quantifiedVars = new ArrayList<>();
 		final List<Expression> indices = new ArrayList<>();
 		ICType currentType = cArrayType;
