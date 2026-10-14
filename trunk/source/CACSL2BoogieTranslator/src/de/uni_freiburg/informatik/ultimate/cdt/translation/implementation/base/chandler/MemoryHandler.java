@@ -2320,7 +2320,7 @@ public class MemoryHandler {
 	 * @param cType
 	 * @return
 	 */
-	public List<Statement> getInitializationForOnHeapVariableOfAggregateOrUnionType(final ILocation loc,
+	public List<Statement> getConstArrayInitializationForOnHeapVariableOfAggregateOrUnionType(final ILocation loc,
 			final HeapLValue baseAddress, final ICType cType) {
 		assert CTranslationUtil.isAggregateOrUnionType(cType) : "Argument is not aggregate or union but " + cType;
 
@@ -2338,7 +2338,7 @@ public class MemoryHandler {
 	 * @param defaultValueProvider
 	 *            maps a non-aggregate C type to its default (zero) value
 	 */
-	public List<Statement> getForallDefaultInitializationForOnHeapVariable(final ILocation loc,
+	public List<Statement> getQuantifierInitializationForOnHeapVariableOfAggregateOrUnionType(final ILocation loc,
 			final HeapLValue baseAddress, final ICType cType, final Function<ICType, Expression> defaultValueProvider) {
 		assert CTranslationUtil.isAggregateOrUnionType(cType) : "Argument is not aggregate or union but " + cType;
 

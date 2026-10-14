@@ -267,11 +267,11 @@ public class InitializationHandler {
 				usingOnHeapInitializationViaConstArray || usingOnHeapInitializationViaForall;
 		if (usingOnHeapInitializationViaConstArray) {
 			// in the "sophisticated" case: make a default initialization of all array cells first
-			init.addStatements(mMemoryHandler.getInitializationForOnHeapVariableOfAggregateOrUnionType(loc,
+			init.addStatements(mMemoryHandler.getConstArrayInitializationForOnHeapVariableOfAggregateOrUnionType(loc,
 					(HeapLValue) lhs, targetCTypeRaw));
 		} else if (usingOnHeapInitializationViaForall) {
-			init.addStatements(mMemoryHandler.getForallDefaultInitializationForOnHeapVariable(loc, (HeapLValue) lhs,
-					targetCTypeRaw.getUnderlyingType(), t -> getDefaultValueForSimpleType(loc, t)));
+			init.addStatements(mMemoryHandler.getQuantifierInitializationForOnHeapVariableOfAggregateOrUnionType(loc,
+					(HeapLValue) lhs, targetCTypeRaw.getUnderlyingType(), t -> getDefaultValueForSimpleType(loc, t)));
 		}
 
 		{
