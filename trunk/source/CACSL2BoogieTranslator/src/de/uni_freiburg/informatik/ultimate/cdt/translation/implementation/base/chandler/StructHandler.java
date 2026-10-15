@@ -30,13 +30,11 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -69,51 +67,33 @@ public class StructHandler {
 	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 	private final ExpressionTranslation mExpressionTranslation;
 	private final ITypeHandler mTypeHandler;
-	private final LocationFactory mLocationFactory;
 
 	public StructHandler(final MemoryHandler memoryHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
-			final LocationFactory locationFactory) {
+			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler) {
 		mMemoryHandler = memoryHandler;
 		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
 		mExpressionTranslation = expressionTranslation;
 		mTypeHandler = typeHandler;
-		mLocationFactory = locationFactory;
 	}
 
-	/**
-	 * Handle IASTFieldReference.
-	 *
-	 * @param main
-	 *            a reference to the main IDispatcher.
-	 * @param node
-	 *            the node to translate.
-	 * @param mMemoryHandler
-	 * @return the translation results.
-	 */
-	public Result handleFieldReference(final IDispatcher main, final ExpressionResultTransformer transformer,
-			final IASTFieldReference node) {
-		final ILocation loc = mLocationFactory.createCLocation(node);
-		final String field = node.getFieldName().toString();
-
-		ExpressionResult fieldOwner = (ExpressionResult) main.dispatch(node.getFieldOwner());
-
+	public ExpressionResult handleFieldReference(final ILocation loc, final ExpressionResultTransformer transformer,
+			ExpressionResult fieldOwner, final String field, final boolean isPointerDereference, final IASTNode hook) {
 		LRValue newValue = null;
 
 		final List<ExpressionResult> unionFieldToCType =
 				fieldOwner.getNeighbourUnionFields() == null ? new ArrayList<>()
 						: new ArrayList<>(fieldOwner.getNeighbourUnionFields());
 
-		final ICType foType = (node.isPointerDereference()
-				? ((CPointer) fieldOwner.getLrValue().getUnderlyingType()).getPointsToType()
-				: fieldOwner.getLrValue().getUnderlyingType());
+		final ICType foType =
+				(isPointerDereference ? ((CPointer) fieldOwner.getLrValue().getUnderlyingType()).getPointsToType()
+						: fieldOwner.getLrValue().getUnderlyingType());
 
 		final CStructOrUnion cStructType = (CStructOrUnion) foType.getUnderlyingType();
 		final ICType cFieldType = cStructType.getFieldType(field);
 		final int bitfieldWidth = cStructType.getBitfieldWidth(field);
 
-		if (node.isPointerDereference()) {
-			final ExpressionResult rFieldOwnerRex = transformer.switchToRValue(fieldOwner, loc, node);
+		if (isPointerDereference) {
+			final ExpressionResult rFieldOwnerRex = transformer.switchToRValue(fieldOwner, loc, hook);
 			final Expression address = rFieldOwnerRex.getLrValue().getValue();
 			fieldOwner = new ExpressionResult(rFieldOwnerRex.getStatements(),
 					LRValueFactory.constructHeapLValue(mTypeHandler, address, rFieldOwnerRex.getLrValue().getCType(),

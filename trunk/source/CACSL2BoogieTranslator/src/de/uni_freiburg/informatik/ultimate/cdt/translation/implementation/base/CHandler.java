@@ -468,8 +468,7 @@ public class CHandler {
 				mExpressionTranslation, mProcedureManager, mTypeSizeComputer, mAuxVarInfoBuilder, mSettings,
 				mMemoryPointer);
 
-		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler,
-				mLocationFactory);
+		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler);
 		mDataRaceChecker =
 				mSettings.checkDataRaces()
 						? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer,
@@ -562,8 +561,7 @@ public class CHandler {
 		// the memory handler also retains information from the prerun
 		mMemoryHandler = new MemoryHandler(prerunCHandler.mMemoryHandler, typeSizes, nameHandler, typeHandler,
 				expressionTranslation, procedureManager, typeSizeAndOffsetComputer, mAuxVarInfoBuilder, mSettings);
-		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler,
-				mLocationFactory);
+		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler);
 		mDataRaceChecker =
 				mSettings.checkDataRaces()
 						? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer,
@@ -1630,7 +1628,16 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTFieldReference node) {
-		return mStructHandler.handleFieldReference(main, mExprResultTransformer, node);
+		final ILocation loc = mLocationFactory.createCLocation(node);
+		final String field = node.getFieldName().toString();
+		final ExpressionResult fieldOwner = (ExpressionResult) main.dispatch(node.getFieldOwner());
+		return mStructHandler.handleFieldReference(loc, mExprResultTransformer, fieldOwner, field,
+				node.isPointerDereference(), node);
+	}
+
+	public ExpressionResult handleFieldReference(final ILocation loc, final ExpressionResult struct, final String field,
+			final IASTNode hook) {
+		return mStructHandler.handleFieldReference(loc, mExprResultTransformer, struct, field, false, hook);
 	}
 
 	/**
