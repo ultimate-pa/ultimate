@@ -187,16 +187,19 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 
 	private FieldLookup lookupFieldRecursive(final String id) {
 		assert !isIncomplete() : "Cannot check field in an incomplete struct type.";
+		// Anonymous member IDs are only unique within their owning struct. Resolve a local ID before searching
+		// fields of anonymous members, where the same generated ID may occur in a nested type.
+		for (int i = 0; i < mMembers.size(); i++) {
+			if (id.equals(getFieldId(i))) {
+				return new FieldLookup(List.of(id), mMembers.get(i));
+			}
+		}
 		for (int i = 0; i < mMembers.size(); i++) {
 			final Member member = mMembers.get(i);
-			final String fieldId = getFieldId(i);
-			if (fieldId.equals(id)) {
-				return new FieldLookup(List.of(id), member);
-			}
 			if (member instanceof final AnonymousMember anon) {
 				final FieldLookup nestedResult = anon.type().lookupFieldRecursive(id);
 				if (nestedResult != null) {
-					return new FieldLookup(DataStructureUtils.concat(List.of(fieldId), nestedResult.path()),
+					return new FieldLookup(DataStructureUtils.concat(List.of(getFieldId(i)), nestedResult.path()),
 							nestedResult.member());
 				}
 			}
