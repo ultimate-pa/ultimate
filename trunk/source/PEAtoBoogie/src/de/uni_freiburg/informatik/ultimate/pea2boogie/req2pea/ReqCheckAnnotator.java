@@ -148,6 +148,13 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mTestMinimization = prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE,
 				PEATransformerMode.class) == PEATransformerMode.REQ_MINIMIZATION_TEST;
 
+		if (mTestMinimization) {
+			// In the minimization test mode, only the redundancy checks are relevant
+			mCheckVacuity = false;
+			mCheckConsistency = false;
+			mCombinationNum = -1;
+		}
+
 		// log preferences
 		mLogger.info(
 				String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s, %s=%s", Pea2BoogiePreferences.LABEL_CHECK_VACUITY,

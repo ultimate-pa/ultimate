@@ -52,14 +52,6 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	private static final boolean DEF_CHECK_VACUITY = true;
 	private static final String DESC_CHECK_VACUITY = null;
 
-	public static final String LABEL_TEST_MINIMIZATION = "Test minimization";
-	private static final boolean DEF_TEST_MINIMIZATION = true;
-	private static final String DESC_TEST_MINIMIZATION = """
-			This setting tests the minimization procedure.  \
-			Expects a .req-file with two equal formalizations. \
-			One of them is minimized, then mutual language inclusion is tested with redundancy checking
-				""";
-
 	public static final String LABEL_MINIMIZE_PEAS = "use minimization";
 	private static final boolean DEF_MINIMIZE_PEAS = true;
 	private static final String DESC_MINIMIZE_PEAS =
@@ -149,8 +141,6 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY, DEF_CHECK_RT_INCONSISTENCY,
 						DESC_CHECK_RT_INCONSISTENCY, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_TEST_MINIMIZATION, DEF_TEST_MINIMIZATION, DESC_TEST_MINIMIZATION,
-						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_MINIMIZE_PEAS, DEF_MINIMIZE_PEAS, DESC_MINIMIZE_PEAS,
 						PreferenceType.Boolean),
 
