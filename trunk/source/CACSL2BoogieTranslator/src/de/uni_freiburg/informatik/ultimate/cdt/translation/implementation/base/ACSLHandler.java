@@ -829,7 +829,7 @@ public class ACSLHandler implements IACSLHandler {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final ExpressionResult array = (ExpressionResult) main.dispatch(node.getArray(), main.getAcslHook());
 		final ExpressionResult index = dispatchSwitch(main, node.getIndex(), loc);
-		return mCHandler.handleArraySubscriptExpression(array, index, main.getAcslHook());
+		return mCHandler.handleArraySubscriptExpression(loc, array, index, main.getAcslHook());
 	}
 
 	@Override

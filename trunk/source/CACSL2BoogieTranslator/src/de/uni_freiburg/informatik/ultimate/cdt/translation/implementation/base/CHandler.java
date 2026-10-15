@@ -833,12 +833,12 @@ public class CHandler {
 		final ExpressionResult array = (ExpressionResult) main.dispatch(node.getArrayExpression());
 		final ExpressionResult subscript =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getArgument());
-		return handleArraySubscriptExpression(array, subscript, node);
+		return handleArraySubscriptExpression(loc, array, subscript, node);
 	}
 
-	public ExpressionResult handleArraySubscriptExpression(final ExpressionResult array,
+	public ExpressionResult handleArraySubscriptExpression(final ILocation loc, final ExpressionResult array,
 			final ExpressionResult subscript, final IASTNode hook) {
-		return mArrayHandler.handleArraySubscriptExpression(array, subscript, hook);
+		return mArrayHandler.handleArraySubscriptExpression(loc, array, subscript, hook);
 	}
 
 	public Result visit(final IDispatcher main, final IASTASMDeclaration node) {

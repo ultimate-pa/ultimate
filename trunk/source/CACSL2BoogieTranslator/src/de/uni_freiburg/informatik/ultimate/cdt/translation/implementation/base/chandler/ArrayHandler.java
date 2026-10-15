@@ -110,9 +110,8 @@ public class ArrayHandler {
 	 * <li>a[i_1]...[i_n-1] is a pointer (so it might not have that array subscript form), then we need to do pointer
 	 * arithmetic, similar to the on-heap case
 	 */
-	public ExpressionResult handleArraySubscriptExpression(final ExpressionResult array,
+	public ExpressionResult handleArraySubscriptExpression(final ILocation loc, final ExpressionResult array,
 			final ExpressionResult subscript, final IASTNode hook) {
-		final ILocation loc = mLocationFactory.createCLocation(hook);
 		assert subscript.getLrValue().getCType().isIntegerType();
 
 		final LRValue leftlrValue = array.getLrValue();
