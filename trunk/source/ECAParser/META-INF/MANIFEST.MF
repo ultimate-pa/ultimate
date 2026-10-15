@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ECAParser
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.ecaparser;singleton:=true
+Bundle-Vendor: Ultimate Program Analysis Team
+Bundle-Version: 0.1.0
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Require-Bundle: com.github.jhoenicke.javacup,
+ de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
+ de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
+ de.uni_freiburg.informatik.ultimate.astbuilder
+Export-Package: de.uni_freiburg.informatik.ultimate.eca.parser.lexer.generated,
+ de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated,
+ de.uni_freiburg.informatik.ultimate.eca.parser.cup.generated
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.ecaparser

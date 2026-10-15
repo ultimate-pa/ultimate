@@ -1,0 +1,283 @@
+package de.uni_freiburg.informatik.ultimate.eca.parser.cup.generated;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.github.jhoenicke.javacup.runtime.Symbol;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.*;
+import de.uni_freiburg.informatik.ultimate.eca.parser.lexer.generated.EcaLexer;
+
+parser EcaParser;
+option symbols = EcaSymbols;
+option java15, compact_red;
+
+parser code {:
+    private String mFileName = "<eca-input>";
+
+    public EcaParser(final java.io.Reader reader, final String fileName) {
+        this(new EcaLexer(reader));
+        mFileName = fileName;
+    }
+
+    public String getFileName() {
+        return mFileName;
+    }
+
+    public EcaFile parseFile() throws Exception {
+        return (EcaFile) parse().value;
+    }
+
+    @Override
+    public void syntax_error(final Symbol token) {
+        throw new IllegalArgumentException(
+            mFileName + ": syntax error at " + token);
+    }
+:}
+
+action code {:
+    private ILocation at(final int firstLine, final int lastLine) {
+        return new DefaultLocation(parser.getFileName(), firstLine,
+            lastLine, 0, 0);
+    }
+
+    private BigInteger natural(final String digits) {
+        return new BigInteger(digits);
+    }
+
+    private BigInteger checkedUpper(final BigInteger lower,
+            final BigInteger upper) {
+        if (lower.compareTo(upper) > 0) {
+            throw new IllegalArgumentException(
+                "interval lower bound exceeds upper bound");
+        }
+        return upper;
+    }
+
+    private Duration.TimeUnit unit(final String spelling) {
+        switch (spelling) {
+        case "ms": return Duration.TimeUnit.MS;
+        case "s": return Duration.TimeUnit.S;
+        case "min": return Duration.TimeUnit.MIN;
+        case "h": return Duration.TimeUnit.H;
+        case "month":
+        case "months": return Duration.TimeUnit.MONTH;
+        case "year":
+        case "years": return Duration.TimeUnit.YEAR;
+        default: throw new IllegalArgumentException("unknown time unit: " + spelling);
+        }
+    }
+
+    private CompositeRule combine(final CompositeRule.RuleType type,
+            final EcaRule left, final EcaRule right, final int firstLine,
+            final int lastLine) {
+        return new CompositeRule(at(firstLine, lastLine), type,
+            new EcaRule[] {left, right});
+    }
+:}
+
+/* Keep terminal order aligned with the existing temporary EcaSymbols.java. */
+terminal VAR, TYPE_INTEGER, TYPE_BOOL, ON, IF, DO, INTERN, EXTERN, ONETIME;
+terminal String REPEAT_COUNT;
+terminal REPEAT, EVERY, UNTIL, AFTER, FOR, PAR, ROR;
+terminal String TIME_UNIT;
+terminal TRUE, FALSE, AND, OR, NOT, IMPLIES, EQ, NEQ, LE, GE, LT, GT;
+terminal PLUS, MINUS, TIMES, DIVIDE, MOD;
+terminal LPAR, RPAR, LBRACKET, RBRACKET, COLON, SEMI, COMMA;
+terminal String NATURAL_NUMBER, ID;
+
+non terminal EcaFile ecaFile;
+non terminal List<Declaration> declarations;
+non terminal Declaration declaration;
+non terminal IntInterval optionalIntInterval, intInterval;
+non terminal BigInteger signedInteger;
+non terminal List<EcaRule> topRules;
+non terminal EcaRule nestedParallelRule, choiceRule, sequenceRule, primaryRule;
+non terminal AtomicRule atomicRule;
+non terminal EcaEvent event, untilEvent;
+non terminal EcaAction action;
+non terminal ActionIdentifier actionId;
+non terminal Duration duration;
+non terminal Expression expression;
+
+precedence right IMPLIES;
+precedence left OR;
+precedence left AND;
+precedence left EQ, NEQ, LT, LE, GT, GE;
+precedence left PLUS, MINUS;
+precedence left TIMES;
+precedence right NOT;
+
+start with ecaFile;
+
+ecaFile ::= declarations:ds topRules:rs
+    {: RESULT = new EcaFile(at(rsleft, rsright), ds, rs); :}
+    ;
+
+declarations ::= /* empty */
+    {: RESULT = new ArrayList<Declaration>(); :}
+    | declarations:ds declaration:d
+    {: ds.add(d); RESULT = ds; :}
+    ;
+
+declaration ::= VAR:v ID:name COLON TYPE_INTEGER optionalIntInterval:i
+    {: RESULT = new IntegerDeclaration(at(vleft, iright), name, i); :}
+    | VAR:v ID:name COLON TYPE_BOOL:b
+    {: RESULT = new BooleanDeclaration(at(vleft, bright), name); :}
+    ;
+
+optionalIntInterval ::= /* empty */ {: RESULT = null; :}
+    | intInterval:i {: RESULT = i; :}
+    ;
+
+intInterval ::= LBRACKET:l signedInteger:low COLON signedInteger:high RBRACKET:r
+    {: RESULT = new IntInterval(at(lleft, rright), low,
+         checkedUpper(low, high)); :}
+    ;
+
+signedInteger ::= NATURAL_NUMBER:n {: RESULT = natural(n); :}
+    | MINUS NATURAL_NUMBER:n {: RESULT = natural(n).negate(); :}
+    ;
+
+/* Only top-level PAR is flattened into EcaFile.rules. */
+topRules ::= choiceRule:r
+    {: List<EcaRule> rules = new ArrayList<>(); rules.add(r); RESULT = rules; :}
+    | topRules:rs PAR choiceRule:r
+    {: rs.add(r); RESULT = rs; :}
+    ;
+
+/* A parenthesized PAR remains a nested rule node. */
+nestedParallelRule ::= choiceRule:r {: RESULT = r; :}
+    | nestedParallelRule:left PAR choiceRule:right
+    {: RESULT = combine(CompositeRule.RuleType.PARALLEL, left, right,
+         leftleft, rightright); :}
+    ;
+
+choiceRule ::= sequenceRule:r {: RESULT = r; :}
+    | choiceRule:left ROR sequenceRule:right
+    {: RESULT = combine(CompositeRule.RuleType.ROR, left, right,
+         leftleft, rightright); :}
+    ;
+
+sequenceRule ::= primaryRule:r {: RESULT = r; :}
+    | sequenceRule:left SEMI primaryRule:right
+    {: RESULT = combine(CompositeRule.RuleType.SEQUENTIAL, left, right,
+         leftleft, rightright); :}
+    ;
+
+primaryRule ::= atomicRule:r {: RESULT = r; :}
+    | LPAR nestedParallelRule:r RPAR {: RESULT = r; :}
+    ;
+
+atomicRule ::= ON:o event:e IF expression:c DO action:a
+    {: RESULT = new AtomicRule(at(oleft, aright), e, c, a); :}
+    ;
+
+event ::= INTERN:i actionId:id
+    {: RESULT = new InternalEvent(at(ileft, idright), id); :}
+    | EXTERN:e actionId:id
+    {: RESULT = new ExternalEvent(at(eleft, idright), id); :}
+    | EXTERN:e TRUE:t
+    {: RESULT = new TrueExternalEvent(at(eleft, tright)); :}
+    ;
+
+/* `false` is a never-satisfied termination condition, not a rule trigger. */
+untilEvent ::= event:e {: RESULT = e; :}
+    | FALSE:f {: RESULT = new FalseEvent(at(fleft, fright)); :}
+    ;
+
+actionId ::= ID:name
+    {: RESULT = new ActionIdentifier(at(nameleft, nameright), name); :}
+    ;
+
+action ::= ONETIME:o actionId:id
+    {: RESULT = new OnetimeAction(at(oleft, idright), id); :}
+    | REPEAT:r NATURAL_NUMBER:n actionId:id
+    {: RESULT = new RepeatAction(at(rleft, idright), id, natural(n)); :}
+    | REPEAT:r NATURAL_NUMBER:n actionId:id EVERY duration:d
+    {: RESULT = new RecurringCountAction(at(rleft, dright), id,
+         natural(n), d); :}
+    | REPEAT:r actionId:id EVERY duration:d UNTIL untilEvent:e
+    {: RESULT = new RecurringUntilAction(at(rleft, eright), id, d, e); :}
+    | REPEAT_COUNT:n actionId:id
+    {: RESULT = new RepeatAction(at(nleft, idright), id, natural(n)); :}
+    | REPEAT_COUNT:n actionId:id EVERY duration:d
+    {: RESULT = new RecurringCountAction(at(nleft, dright), id,
+         natural(n), d); :}
+    | actionId:id UNTIL untilEvent:e
+    {: RESULT = new ContinuousUntilAction(at(idleft, eright), id, e); :}
+    | actionId:id FOR duration:d
+    {: RESULT = new ContinuousForAction(at(idleft, dright), id, d); :}
+    | actionId:id AFTER duration:d
+    {: RESULT = new DelayedAction(at(idleft, dright), id, d); :}
+    ;
+
+duration ::= NATURAL_NUMBER:n TIME_UNIT:u
+    {: RESULT = new Duration(at(nleft, uright),
+         new ExactDurationValue(at(nleft, nright), natural(n)), unit(u)); :}
+    | LBRACKET:l NATURAL_NUMBER:low COLON NATURAL_NUMBER:high RBRACKET:r TIME_UNIT:u
+    {: BigInteger lower = natural(low); BigInteger upper = natural(high);
+       RESULT = new Duration(at(lleft, uright),
+         new IntervalDurationValue(at(lleft, rright), lower,
+             checkedUpper(lower, upper)), unit(u)); :}
+    ;
+
+/* The final type checker must distinguish Boolean, Integer and AA names. */
+expression ::= ID:name
+    {: RESULT = new IdentifierExpression(at(nameleft, nameright), name); :}
+    | NATURAL_NUMBER:n
+    {: RESULT = new IntegerLiteral(at(nleft, nright), n); :}
+    | TRUE:t
+    {: RESULT = new BooleanLiteral(at(tleft, tright), true); :}
+    | FALSE:f
+    {: RESULT = new BooleanLiteral(at(fleft, fright), false); :}
+    | LPAR expression:e RPAR {: RESULT = e; :}
+    | NOT:n expression:e
+    {: RESULT = new UnaryExpression(at(nleft, eright),
+         UnaryExpression.Operator.LOGICNEG, e); :}
+    | expression:l IMPLIES expression:r
+    {: RESULT = new BinaryExpression(at(lleft, rright),
+         BinaryExpression.Operator.LOGICIMPLIES, l, r); :}
+    | expression:l OR expression:r
+    {: RESULT = new BinaryExpression(at(lleft, rright),
+         BinaryExpression.Operator.LOGICOR, l, r); :}
+    | expression:l AND expression:r
+    {: RESULT = new BinaryExpression(at(lleft, rright),
+         BinaryExpression.Operator.LOGICAND, l, r); :}
+    | expression:l EQ expression:r
+    {: RESULT = new BinaryExpression(at(lleft, rright),
+         BinaryExpression.Operator.COMPEQ, l, r); :}
+    | expression:l NEQ expression:r
+    {: RESULT = new BinaryExpression(at(lleft, rright),
+         BinaryExpression.Operator.COMPNEQ, l, r); :}
+    | expression:l LT expression:r
+    {: RESULT = new BinaryExpression(at(lleft, rright),
+         BinaryExpression.Operator.COMPLT, l, r); :}
+    | expression:l LE expression:r
+    {: RESULT = new BinaryExpression(at(lleft, rright),
+         BinaryExpression.Operator.COMPLEQ, l, r); :}
+    | expression:l GT expression:r
+    {: RESULT = new BinaryExpression(at(lleft, rright),
+         BinaryExpression.Operator.COMPGT, l, r); :}
+    | expression:l GE expression:r
+    {: RESULT = new BinaryExpression(at(lleft, rright),
+         BinaryExpression.Operator.COMPGEQ, l, r); :}
+    | expression:l PLUS expression:r
+    {: RESULT = new BinaryExpression(at(lleft, rright),
+         BinaryExpression.Operator.ARITHPLUS, l, r); :}
+    | expression:l MINUS expression:r
+    {: RESULT = new BinaryExpression(at(lleft, rright),
+         BinaryExpression.Operator.ARITHMINUS, l, r); :}
+    | expression:l TIMES NATURAL_NUMBER:n
+    {: RESULT = new BinaryExpression(at(lleft, nright),
+         BinaryExpression.Operator.ARITHMUL, l,
+         new IntegerLiteral(at(nleft, nright), n)); :} %prec TIMES
+    ;

@@ -1,0 +1,118 @@
+package de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated;
+
+import java.math.BigInteger;
+import java.util.List;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+
+/**
+ * Common ECA AST node. Each node retains its source location.
+ * This schema describes data only; CUP actions and semantic validation must
+ * enforce the field combinations described below.
+ */
+EcaAstNode ::= location : ILocation
+(
+  /*
+   * File root. Declarations appear before rules in the input. The rules list
+   * contains the top-level operands of `par`, in source order.
+   */
+  {EcaFile}
+    declarations : List<Declaration>
+    rules        : List<EcaRule>
+
+| /* A variable declaration from the VC set. Its subtype determines its type. */
+  {Declaration}
+  (
+    {VariableDeclaration}
+      name : String
+    (
+      {IntegerDeclaration}
+        allowedValues : ?IntInterval
+    | {BooleanDeclaration}
+    )
+  )
+
+| /*
+   * Atomic rules carry an event, condition and action, but no child rules.
+   * Composite rules carry child rules, but none of those atomic fields.
+   * A nested `par` group may use PARALLEL; top-level `par` operands are
+   * represented directly by EcaFile.rules.
+   */
+  {EcaRule}
+  (
+    {AtomicRule}
+      event     : EcaEvent
+      condition : Expression
+      action    : EcaAction
+  | {CompositeRule}
+      ruleType   : RuleType { SEQUENTIAL, ROR, PARALLEL }
+      childRules : EcaRule[]
+  )
+
+| /* Named AA identifier shared by actions and named events. */
+  {ActionIdentifier}
+    name : String
+
+| /* Events in rule triggers and action termination conditions.
+   * FalseEvent is permitted only as an action termination condition. */
+  {EcaEvent}
+  (
+    {InternalEvent}
+      actionId : ActionIdentifier
+  | {ExternalEvent}
+      actionId : ActionIdentifier
+  | {TrueExternalEvent}
+  | {FalseEvent}
+  )
+
+| /*
+   * The concrete subtype identifies the action kind; no separate type field
+   * is needed. Its actionId refers to AA and may also be referenced by an
+   * event or a condition.
+   */
+  {EcaAction}
+    actionId : ActionIdentifier
+  (
+    {OnetimeAction}
+  | {RepeatAction}
+      repetitions : BigInteger
+  | {ContinuousAction}
+    (
+      {ContinuousUntilAction}
+        untilEvent : EcaEvent
+    | {ContinuousForAction}
+        duration : Duration
+    )
+  | {RecurringAction}
+    (
+      {RecurringUntilAction}
+        period     : Duration
+        untilEvent : EcaEvent
+    | {RecurringCountAction}
+        repetitions : BigInteger
+        period      : Duration
+    )
+  | {DelayedAction}
+      delay : Duration
+  )
+
+| /* Optional inclusive interval for an INTEGER variable. */
+  {IntInterval}
+    lower : BigInteger
+    upper : BigInteger
+
+| /* A duration has one time unit and either an exact or interval value. */
+  {Duration}
+    value : DurationValue
+    unit  : TimeUnit { MS, S, MIN, H, MONTH, YEAR }
+
+| /* Duration intervals are written [lower:upper] followed by one time unit. */
+  {DurationValue}
+  (
+    {ExactDurationValue}
+      amount : BigInteger
+  | {IntervalDurationValue}
+      lower : BigInteger
+      upper : BigInteger
+  )
+);

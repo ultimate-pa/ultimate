@@ -1,0 +1,68 @@
+<project name="ECAParser" default="compile" basedir=".">
+	<property name="sourceDir" location="${basedir}/src" />
+	<property name="lexerDir" location="${sourceDir}/de/uni_freiburg/informatik/ultimate/eca/parser/lexer" />
+	<property name="generatedDir" location="${lexerDir}/generated" />
+	<property name="flexSpec" location="${lexerDir}/EcaLexer.flex" />
+	<property name="astDir" location="${sourceDir}/de/uni_freiburg/informatik/ultimate/eca/parser/ast" />
+	<property name="astGeneratedDir" location="${astDir}/generated" />
+	<property name="astSpec" location="${astDir}/Eca.ast" />
+	<property name="cupDir" location="${sourceDir}/de/uni_freiburg/informatik/ultimate/eca/parser/cup" />
+	<property name="cupGeneratedDir" location="${cupDir}/generated" />
+	<property name="cupSpec" location="${cupDir}/EcaParser.cup" />
+	<property name="jflexJar" location="${basedir}/../JavaCup/JFlex.jar" />
+	<property name="javaCupJar" location="${basedir}/../JavaCup/jh-javacup-1.2.jar" />
+	<property name="astBuilderBin" location="${basedir}/../ASTBuilder/bin" />
+	<property name="javaCupBin" location="${basedir}/../JavaCup/bin" />
+	<property name="ultimateModelBin" location="${basedir}/../Library-UltimateModel/bin" />
+	<property name="ultimateCoreBin" location="${basedir}/../Library-UltimateCore/bin" />
+	<property name="boogieAstBin" location="${basedir}/../Library-BoogieAST/bin" />
+	<property name="outputDir" location="${basedir}/bin" />
+
+	<target name="generate" depends="generate-ast,generate-parser,generate-lexer" />
+
+	<target name="generate-parser">
+		<mkdir dir="${cupGeneratedDir}" />
+		<java classname="com.github.jhoenicke.javacup.Main"
+			dir="${cupGeneratedDir}" fork="true" failonerror="true">
+			<classpath>
+				<pathelement location="${javaCupBin}" />
+			</classpath>
+			<arg file="${cupSpec}" />
+		</java>
+	</target>
+
+	<target name="generate-lexer">
+		<mkdir dir="${generatedDir}" />
+		<java jar="${jflexJar}" fork="true" failonerror="true">
+			<arg value="--nobak" />
+			<arg value="-d" />
+			<arg file="${generatedDir}" />
+			<arg file="${flexSpec}" />
+		</java>
+	</target>
+
+	<target name="generate-ast">
+		<mkdir dir="${astGeneratedDir}" />
+		<java classname="de.uni_freiburg.informatik.ultimate.astbuilder.Main"
+			dir="${astGeneratedDir}" fork="true" failonerror="true">
+			<classpath>
+				<pathelement location="${astBuilderBin}" />
+				<pathelement location="${javaCupBin}" />
+			</classpath>
+			<arg file="${astSpec}" />
+		</java>
+	</target>
+
+	<target name="compile" depends="generate">
+		<mkdir dir="${outputDir}" />
+		<javac srcdir="${sourceDir}" destdir="${outputDir}" release="21"
+			encoding="UTF-8" includeantruntime="false">
+			<classpath>
+				<pathelement location="${javaCupJar}" />
+				<pathelement location="${ultimateModelBin}" />
+				<pathelement location="${ultimateCoreBin}" />
+				<pathelement location="${boogieAstBin}" />
+			</classpath>
+		</javac>
+	</target>
+</project>
