@@ -1,9 +1,8 @@
 // #Safe
 /*-----------------------------------------------------------------------------
- * Positional and designated initializers assign the same values to a struct
- * with anonymous struct members.
+ * Initialization of a struct with anonymous struct members.
  *-----------------------------------------------------------------------------
- *   Date: 2026-10-13
+ *   Date: 2026-10-15
  * Author: schuessf@informatik.uni-freiburg.de
  *---------------------------------------------------------------------------*/
 
@@ -18,9 +17,10 @@ struct s {
 int main()
 {
     struct s s1 = { 1, 2, 3 };
-    struct s s2 = { .z = 3, .y = 2, .x = 1 };
-    //@ assert s1.x == s2.x;
-    //@ assert s1.y == s2.y;
-    //@ assert s1.z == s2.z;
+    struct s s2 = { 1, { 2, 3 } };
+    struct s s3 = { .z = 3, .y = 2, .x = 1 };
+    //@ assert s1.x == 1 && s1.y == 2 && s1.z == 3; 
+    //@ assert s2.x == 1 && s2.y == 2 && s2.z == 3; 
+    //@ assert s3.x == 1 && s3.y == 2 && s3.z == 3; 
     return 0;
 }
