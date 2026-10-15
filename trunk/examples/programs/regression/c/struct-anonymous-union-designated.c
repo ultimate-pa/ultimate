@@ -22,5 +22,4 @@ int main()
     union u u1 = { .x = 1, .y = 2 };
     //@ assert u1.x == 1;
     //@ assert u1.y == 2;
-    return 0;
 }

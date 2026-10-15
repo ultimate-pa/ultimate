@@ -23,5 +23,4 @@ int main()
     if (sizeof(struct u) != 2 * sizeof(int) + sizeof(long long) + sizeof(long)) {
         reach_error();
     }
-    return 0;
 }

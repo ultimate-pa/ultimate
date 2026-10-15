@@ -28,5 +28,4 @@ int main()
     //@ assert p->a == 1;
     //@ assert p->b == 2;
     //@ assert p->c == 3;
-    return 0;
 }

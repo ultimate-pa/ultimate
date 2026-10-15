@@ -23,5 +23,4 @@ int main()
     //@ assert s1.b == 2;
     //@ assert s1.c == 0;
     //@ assert s1.d == 0;
-    return 0;
 }

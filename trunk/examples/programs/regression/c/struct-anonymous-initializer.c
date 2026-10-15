@@ -22,5 +22,4 @@ int main()
     //@ assert s1.x == 1 && s1.y == 2 && s1.z == 3; 
     //@ assert s2.x == 1 && s2.y == 2 && s2.z == 3; 
     //@ assert s3.x == 1 && s3.y == 2 && s3.z == 3; 
-    return 0;
 }

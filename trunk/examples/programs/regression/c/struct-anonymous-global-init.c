@@ -21,5 +21,4 @@ int main()
     //@ assert g.a == 1;
     //@ assert g.b == 2;
     //@ assert g.c == 3;
-    return 0;
 }

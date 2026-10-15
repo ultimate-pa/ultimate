@@ -35,5 +35,4 @@ int main()
     s1.f = 6;
     //@ assert s1.e == 5;
     //@ assert s1.f == 6;
-    return 0;
 }
