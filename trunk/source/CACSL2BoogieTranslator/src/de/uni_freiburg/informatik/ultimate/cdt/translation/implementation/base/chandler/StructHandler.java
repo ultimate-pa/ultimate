@@ -78,8 +78,6 @@ public class StructHandler {
 
 	public ExpressionResult handleFieldReference(final ILocation loc, final ExpressionResultTransformer transformer,
 			ExpressionResult fieldOwner, final String field, final boolean isPointerDereference, final IASTNode hook) {
-		LRValue newValue = null;
-
 		final List<ExpressionResult> unionFieldToCType =
 				fieldOwner.getNeighbourUnionFields() == null ? new ArrayList<>()
 						: new ArrayList<>(fieldOwner.getNeighbourUnionFields());
@@ -101,7 +99,7 @@ public class StructHandler {
 					rFieldOwnerRex.getDeclarations(), rFieldOwnerRex.getAuxVars(), rFieldOwnerRex.getOverapprs());
 		}
 
-		newValue = switch (fieldOwner.getLrValue()) {
+		final LRValue newValue = switch (fieldOwner.getLrValue()) {
 		case final HeapLValue fieldOwnerHlv -> {
 			final Offset fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, cStructType, field);
 
