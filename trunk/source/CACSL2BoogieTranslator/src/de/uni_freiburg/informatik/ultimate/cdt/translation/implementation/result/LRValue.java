@@ -95,12 +95,7 @@ public abstract sealed class LRValue permits RValue, LocalLValue, HeapLValue {
 			return false;
 		}
 
-		final Expression value;
-		if (this instanceof HeapLValue) {
-			value = ((HeapLValue) this).getAddress();
-			throw new AssertionError("unexpected: double check this case");
-		}
-		value = getValue();
+		final Expression value = getValue();
 
 		final BigInteger integerValue = CTranslationUtil.extractIntegerValue(value);
 		if (BigInteger.ZERO.equals(integerValue)) {
