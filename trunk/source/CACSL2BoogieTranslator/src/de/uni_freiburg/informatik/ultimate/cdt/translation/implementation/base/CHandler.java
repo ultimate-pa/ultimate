@@ -647,7 +647,7 @@ public class CHandler {
 						mSettings.checkErrorFunction(), mExprResultTransformer),
 				new TimeLibraryModel(helper, mExpressionTranslation, mAuxVarInfoBuilder),
 				new VariadicLibraryModel(helper, mMemoryHandler, mProcedureManager, mTypeHandler,
-						mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder),
+						mExprResultTransformer, mAuxVarInfoBuilder),
 				new StdintLibraryModel(), new LimitsLibraryModel(mTypeSizes, helper), new StdboolLibraryModel(helper));
 	}
 

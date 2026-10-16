@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -84,8 +83,7 @@ public class VariadicLibraryModel implements ILibraryModel {
 
 	public VariadicLibraryModel(final FunctionModelHelper helper, final MemoryHandler memoryHandler,
 			final ProcedureManager procedureManager, final ITypeHandler typeHandler,
-			final ExpressionResultTransformer exprResultTransformer, final ExpressionTranslation expressionTranslation,
-			final AuxVarInfoBuilder auxVarInfoBuilder) {
+			final ExpressionResultTransformer exprResultTransformer, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		mHelper = helper;
 		mMemoryHandler = memoryHandler;
 		mProcedureManager = procedureManager;
