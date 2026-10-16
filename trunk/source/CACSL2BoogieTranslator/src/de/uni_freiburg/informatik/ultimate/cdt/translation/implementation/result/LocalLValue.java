@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 
-public class LocalLValue extends LRValue {
+public final class LocalLValue extends LRValue {
 
 	private final LeftHandSide mLhs;
 	private final BitfieldInformation mBitfieldInformation;

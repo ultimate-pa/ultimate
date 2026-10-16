@@ -3708,10 +3708,9 @@ public class CHandler {
 	 * Handle the address operator according to Section 6.5.3.2 of C11.
 	 */
 	private Result handleAddressOfOperator(final ExpressionResult er, final IASTNode hook) throws AssertionError {
-		final RValue rVal;
-		if (er.getLrValue() instanceof HeapLValue) {
-			rVal = ((HeapLValue) er.getLrValue()).getAddressAsPointerRValue(mTypeHandler.getBoogiePointerType());
-		} else if (er.getLrValue() instanceof LocalLValue) {
+		final RValue rVal = switch (er.getLrValue()) {
+		case final HeapLValue heapLValue -> heapLValue.getAddressAsPointerRValue(mTypeHandler.getBoogiePointerType());
+		case final LocalLValue localLValue -> {
 			if (!mIsPrerun) {
 				throw new AssertionError("cannot take address of LocalLValue: this is a on-heap/off-heap bug");
 			}
@@ -3720,19 +3719,17 @@ public class CHandler {
 			// instead of the address. But we add variables to the
 			// heapVars and hence in the non-prerun mode the input
 			// will be a HeapLValue instead of a LocalLValue.
-			final Expression expr = er.getLrValue().getValue();
+			final Expression expr = localLValue.getValue();
 			if (expr instanceof IdentifierExpression) {
 				final IdentifierExpression idExpr = (IdentifierExpression) expr;
 				moveIdOnHeap(idExpr, hook);
 			} else {
-				moveArrayAndStructIdsOnHeap(er.getLrValue().getUnderlyingType(), expr, hook);
+				moveArrayAndStructIdsOnHeap(localLValue.getUnderlyingType(), expr, hook);
 			}
-			rVal = convertToPointerRValue(er.getLrValue(), mTypeHandler.getBoogiePointerType());
-		} else if (er.getLrValue() instanceof RValue) {
-			throw new AssertionError("cannot take address of RValue");
-		} else {
-			throw new AssertionError("Unknown value");
+			yield convertToPointerRValue(localLValue, mTypeHandler.getBoogiePointerType());
 		}
+		case final RValue rValue -> throw new AssertionError("cannot take address of RValue");
+		};
 		return new ExpressionResultBuilder().addAllExceptLrValue(er).setLrValue(rVal).build();
 	}
 

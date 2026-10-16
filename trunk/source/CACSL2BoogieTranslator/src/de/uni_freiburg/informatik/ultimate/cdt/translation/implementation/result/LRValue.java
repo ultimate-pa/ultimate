@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
  * @author Alexander Nutz, Matthias Heizmann
  *
  */
-public abstract class LRValue {
+public abstract sealed class LRValue permits RValue, LocalLValue, HeapLValue {
 
 	private final ICType mCType;
 
@@ -84,13 +84,11 @@ public abstract class LRValue {
 
 	@Override
 	public final String toString() {
-		if (this instanceof HeapLValue) {
-			return "address: " + ((HeapLValue) this).getAddress();
-		} else if (this instanceof LocalLValue) {
-			return "lhs: " + ((LocalLValue) this).getLhs();
-		} else {
-			return "value: " + getValue();
-		}
+		return switch (this) {
+		case HeapLValue heapLValue -> "address: " + heapLValue.getAddress();
+		case LocalLValue localLValue -> "lhs: " + localLValue.getLhs();
+		case RValue rValue -> "value: " + rValue.getValue();
+		};
 	}
 
 	/**

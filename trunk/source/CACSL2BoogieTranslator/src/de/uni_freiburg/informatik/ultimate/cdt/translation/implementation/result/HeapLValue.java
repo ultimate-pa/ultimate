@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 
-public class HeapLValue extends LRValue {
+public final class HeapLValue extends LRValue {
 
 	private final Expression mAddress;
 	private final BitfieldInformation mBitfieldInformation;

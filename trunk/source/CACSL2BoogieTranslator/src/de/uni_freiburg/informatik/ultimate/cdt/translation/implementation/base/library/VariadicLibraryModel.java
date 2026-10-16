@@ -105,15 +105,13 @@ public class VariadicLibraryModel implements ILibraryModel {
 	}
 
 	private List<Statement> makeVarargAssignment(final ILocation loc, final LRValue lhs, final Expression rhs) {
-		if (lhs instanceof LocalLValue) {
-			return List.of(StatementFactory.constructSingleAssignmentStatement(loc, ((LocalLValue) lhs).getLhs(), rhs));
-		} else if (lhs instanceof HeapLValue) {
-			return mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, rhs, lhs.getCType(), false);
-		} else if (lhs instanceof RValue) {
-			final RValue rValue = (RValue) lhs;
+		switch (lhs) {
+		case final LocalLValue localLValue:
+			return List.of(StatementFactory.constructSingleAssignmentStatement(loc, localLValue.getLhs(), rhs));
+		case final HeapLValue heapLValue:
+			return mMemoryHandler.getWriteCall(loc, heapLValue, rhs, lhs.getCType(), false);
+		case final RValue rValue:
 			return makeVarargAssignment(loc, new HeapLValue(rValue.getValue(), rValue.getCType(), null), rhs);
-		} else {
-			throw new UnsupportedOperationException("Unsupported type " + lhs.getClass().getSimpleName());
 		}
 	}
 

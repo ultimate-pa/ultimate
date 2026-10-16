@@ -101,9 +101,8 @@ public class StructHandler {
 					rFieldOwnerRex.getDeclarations(), rFieldOwnerRex.getAuxVars(), rFieldOwnerRex.getOverapprs());
 		}
 
-		if (fieldOwner.getLrValue() instanceof HeapLValue) {
-			final HeapLValue fieldOwnerHlv = (HeapLValue) fieldOwner.getLrValue();
-
+		newValue = switch (fieldOwner.getLrValue()) {
+		case final HeapLValue fieldOwnerHlv -> {
 			final Offset fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, cStructType, field);
 
 			// TODO: different calculations for unions
@@ -112,28 +111,28 @@ public class StructHandler {
 			final Expression newPointer = mMemoryHandler.constructAddressForStructField(loc, startAddress, fieldOffset,
 					mExpressionTranslation.getCTypeOfPointerComponents());
 
-			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
-			newValue = LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cFieldType, bi);
-
 			if (cStructType.isStructOrUnion() == StructOrUnion.UNION) {
 				unionFieldToCType.addAll(
 						computeNeighbourFieldsOfUnionField(loc, field, unionFieldToCType, cStructType, fieldOwnerHlv));
 			}
-		} else if (fieldOwner.getLrValue() instanceof RValue) {
-			final RValue rVal = (RValue) fieldOwner.getLrValue();
-			final Expression sexpr = ExpressionFactory.constructStructAccessExpression(loc, rVal.getValue(), field);
-			newValue = new RValue(sexpr, cFieldType);
-		} else {
-			final LocalLValue lVal = (LocalLValue) fieldOwner.getLrValue();
-			final StructLHS slhs = ExpressionFactory.constructStructAccessLhs(loc, lVal.getLhs(), field);
-			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
-			newValue = new LocalLValue(slhs, cFieldType, bi);
 
+			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
+			yield LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cFieldType, bi);
+		}
+		case final RValue rVal -> {
+			final Expression sexpr = ExpressionFactory.constructStructAccessExpression(loc, rVal.getValue(), field);
+			yield new RValue(sexpr, cFieldType);
+		}
+		case final LocalLValue lVal -> {
 			if (cStructType.isStructOrUnion() == StructOrUnion.UNION) {
 				unionFieldToCType
 						.addAll(computeNeighbourFieldsOfUnionField(loc, field, unionFieldToCType, cStructType, lVal));
 			}
+			final StructLHS slhs = ExpressionFactory.constructStructAccessLhs(loc, lVal.getLhs(), field);
+			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
+			yield new LocalLValue(slhs, cFieldType, bi);
 		}
+		};
 
 		return new ExpressionResult(fieldOwner.getStatements(), newValue, fieldOwner.getDeclarations(),
 				fieldOwner.getAuxVars(), fieldOwner.getOverapprs(), unionFieldToCType);
@@ -163,14 +162,14 @@ public class StructHandler {
 			}
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
-			if (fieldOwner instanceof LocalLValue) {
-				final StructLHS havocSlhs = ExpressionFactory.constructStructAccessLhs(loc,
-						((LocalLValue) fieldOwner).getLhs(), neighbourField);
-				builder.setLrValue(new LocalLValue(havocSlhs, foType.getFieldType(neighbourField), null));
-			} else {
-				assert fieldOwner instanceof HeapLValue;
-
-				final Expression unionAddress = ((HeapLValue) fieldOwner).getAddress();
+			final LRValue lrValue = switch (fieldOwner) {
+			case final LocalLValue localLValue -> {
+				final StructLHS havocSlhs =
+						ExpressionFactory.constructStructAccessLhs(loc, localLValue.getLhs(), neighbourField);
+				yield new LocalLValue(havocSlhs, foType.getFieldType(neighbourField), null);
+			}
+			case final HeapLValue heapLValue -> {
+				final Expression unionAddress = heapLValue.getAddress();
 
 				final Offset fieldOffset =
 						mTypeSizeAndOffsetComputer.constructOffsetForField(loc, foType, neighbourField);
@@ -178,12 +177,13 @@ public class StructHandler {
 				final Expression neighbourFieldAddress = mMemoryHandler.constructAddressForStructField(loc,
 						unionAddress, fieldOffset, mExpressionTranslation.getCTypeOfPointerComponents());
 
-				builder.setLrValue(LRValueFactory.constructHeapLValue(mTypeHandler, neighbourFieldAddress,
-						foType.getFieldType(neighbourField), null));
-
+				yield LRValueFactory.constructHeapLValue(mTypeHandler, neighbourFieldAddress,
+						foType.getFieldType(neighbourField), null);
 			}
+			case final RValue rValue -> throw new AssertionError("Union field owner must be an lvalue");
+			};
 
-			result.add(builder.build());
+			result.add(builder.setLrValue(lrValue).build());
 		}
 
 		return result;

@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 
-public class RValue extends LRValue {
+public final class RValue extends LRValue {
 
 	private final Expression mValue;
 
