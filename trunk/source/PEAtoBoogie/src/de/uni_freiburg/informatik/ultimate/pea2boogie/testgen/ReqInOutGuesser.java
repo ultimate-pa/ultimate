@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -49,7 +49,7 @@ public class ReqInOutGuesser {
 		if (isInputOnlyPattern(oldInitPatterns)) {
 			// TODO: What about overwrite existing assignment?
 			mLogger.warn("No input/output assignment was chosen! We will make a very conservative guess.");
-			mNewInitPatterns = generateNewInitializationPattern(mVar2InitPattern.values(), reqPatterns);
+			mNewInitPatterns = generateNewInitializationPattern(mVar2InitPattern.values(), reqPatterns, logger);
 			mNewInitPatterns.addAll(constInitPatterns);
 		} else {
 			mNewInitPatterns = oldInitPatterns;
@@ -68,10 +68,11 @@ public class ReqInOutGuesser {
 	}
 
 	private List<DeclarationPattern> generateNewInitializationPattern(
-			final Collection<DeclarationPattern> oldInitPatterns, final List<PatternType<?>> reqPatterns) {
+			final Collection<DeclarationPattern> oldInitPatterns, final List<PatternType<?>> reqPatterns,
+			final ILogger logger) {
 		final Set<String> allVars = getAllVariables(oldInitPatterns);
-		final Set<String> effectVars = getEffectVariables(reqPatterns);
-		final Set<String> precondVars = getPreconditionVars(reqPatterns);
+		final Set<String> effectVars = getEffectVariables(reqPatterns, logger);
+		final Set<String> precondVars = getPreconditionVars(reqPatterns, logger);
 		// every variable, that is never influenced by a requirement has to be an input var
 		final Set<String> inputVars = new HashSet<>(allVars);
 		inputVars.removeAll(effectVars);
@@ -99,32 +100,34 @@ public class ReqInOutGuesser {
 		return newInitPattern;
 	}
 
-	private Set<String> getEffectVariables(final List<PatternType<?>> oldPatterns) {
+	private Set<String> getEffectVariables(final List<PatternType<?>> oldPatterns, final ILogger logger) {
 		final Set<String> effectVars = new HashSet<>();
 		for (final PatternType<?> pattern : oldPatterns) {
-			effectVars.addAll(reportTransformationErrorWrapper(Req2CauseTrackingCDD::getEffectVariables, pattern));
+			effectVars.addAll(
+					reportTransformationErrorWrapper(Req2CauseTrackingCDD::getEffectVariables, pattern, logger));
 		}
 		return effectVars;
 	}
 
-	private Set<String> getPreconditionVars(final List<PatternType<?>> oldPatterns) {
+	private Set<String> getPreconditionVars(final List<PatternType<?>> oldPatterns, final ILogger logger) {
 		final Set<String> precondVars = new HashSet<>();
 		for (final PatternType<?> pattern : oldPatterns) {
-			final Set<String> vars = reportTransformationErrorWrapper(Req2CauseTrackingCDD::getAllVariables, pattern);
-			vars.removeAll(reportTransformationErrorWrapper(Req2CauseTrackingCDD::getEffectVariables, pattern));
+			final Set<String> vars =
+					reportTransformationErrorWrapper(Req2CauseTrackingCDD::getAllVariables, pattern, logger);
+			vars.removeAll(reportTransformationErrorWrapper(Req2CauseTrackingCDD::getEffectVariables, pattern, logger));
 			precondVars.addAll(vars);
 		}
 		return precondVars;
 	}
 
-	private Set<String> reportTransformationErrorWrapper(final Function<PatternType<?>, Set<String>> fun,
-			final PatternType<?> pattern) {
+	private Set<String> reportTransformationErrorWrapper(final BiFunction<PatternType<?>, ILogger, Set<String>> fun,
+			final PatternType<?> pattern, final ILogger logger) {
 		if (mRequirementsWithTransformationErrors.contains(pattern)) {
 			// already broken
 			return Collections.emptySet();
 		}
 		try {
-			return fun.apply(pattern);
+			return fun.apply(pattern, logger);
 		} catch (final Exception ex) {
 			final String reason = ex.getMessage() == null ? ex.getClass().toString() : ex.getMessage();
 			mResultUtil.transformationError(pattern, reason);
