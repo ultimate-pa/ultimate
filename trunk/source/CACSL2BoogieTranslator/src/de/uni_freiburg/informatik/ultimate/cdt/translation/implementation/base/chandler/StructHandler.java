@@ -175,14 +175,14 @@ public class StructHandler {
 			}
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
-			if (fieldOwner instanceof LocalLValue) {
-				final StructLHS havocSlhs = ExpressionFactory.constructStructAccessLhs(loc,
-						((LocalLValue) fieldOwner).getLhs(), neighbourField);
-				builder.setLrValue(new LocalLValue(havocSlhs, foType.getFieldType(neighbourField), null));
-			} else {
-				assert fieldOwner instanceof HeapLValue;
-
-				final Expression unionAddress = ((HeapLValue) fieldOwner).getAddress();
+			final LRValue lrValue = switch (fieldOwner) {
+			case final LocalLValue localLValue -> {
+				final StructLHS havocSlhs =
+						ExpressionFactory.constructStructAccessLhs(loc, localLValue.getLhs(), neighbourField);
+				yield new LocalLValue(havocSlhs, foType.getFieldType(neighbourField), null);
+			}
+			case final HeapLValue heapLValue -> {
+				final Expression unionAddress = heapLValue.getAddress();
 
 				final Offset fieldOffset =
 						mTypeSizeAndOffsetComputer.constructOffsetForField(loc, foType, neighbourField);
@@ -190,12 +190,13 @@ public class StructHandler {
 				final Expression neighbourFieldAddress = mMemoryHandler.constructAddressForStructField(loc,
 						unionAddress, fieldOffset, mExpressionTranslation.getCTypeOfPointerComponents());
 
-				builder.setLrValue(LRValueFactory.constructHeapLValue(mTypeHandler, neighbourFieldAddress,
-						foType.getFieldType(neighbourField), null));
-
+				yield LRValueFactory.constructHeapLValue(mTypeHandler, neighbourFieldAddress,
+						foType.getFieldType(neighbourField), null);
 			}
+			case final RValue rValue -> throw new AssertionError("Union field owner must be an lvalue");
+			};
 
-			result.add(builder.build());
+			result.add(builder.setLrValue(lrValue).build());
 		}
 
 		return result;
