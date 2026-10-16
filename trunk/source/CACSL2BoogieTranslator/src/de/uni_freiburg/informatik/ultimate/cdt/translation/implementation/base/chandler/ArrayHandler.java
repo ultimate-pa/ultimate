@@ -42,14 +42,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
@@ -81,19 +79,16 @@ public class ArrayHandler {
 	private final TranslationSettings mSettings;
 	private final ExpressionResultTransformer mExprResultTransformer;
 	private final MemoryHandler mMemoryHandler;
-	private final LocationFactory mLocationFactory;
 
 	public ArrayHandler(final TranslationSettings settings, final ExpressionTranslation expressionTranslation,
 			final ITypeHandler typeHandler, final TypeSizes typeSizes,
-			final ExpressionResultTransformer expressionResultTransformer, final MemoryHandler memoryHandler,
-			final LocationFactory locationFactory) {
+			final ExpressionResultTransformer expressionResultTransformer, final MemoryHandler memoryHandler) {
 		mSettings = settings;
 		mExpressionTranslation = expressionTranslation;
 		mTypeHandler = typeHandler;
 		mTypeSizes = typeSizes;
 		mExprResultTransformer = expressionResultTransformer;
 		mMemoryHandler = memoryHandler;
-		mLocationFactory = locationFactory;
 	}
 
 	/**
@@ -110,9 +105,8 @@ public class ArrayHandler {
 	 * <li>a[i_1]...[i_n-1] is a pointer (so it might not have that array subscript form), then we need to do pointer
 	 * arithmetic, similar to the on-heap case
 	 */
-	public ExpressionResult handleArraySubscriptExpression(final ExpressionResult array,
+	public ExpressionResult handleArraySubscriptExpression(final ILocation loc, final ExpressionResult array,
 			final ExpressionResult subscript, final IASTNode hook) {
-		final ILocation loc = mLocationFactory.createCLocation(hook);
 		assert subscript.getLrValue().getCType().isIntegerType();
 
 		final LRValue leftlrValue = array.getLrValue();
@@ -153,7 +147,8 @@ public class ArrayHandler {
 
 		final ICType resultCType = lhsArrayType.getValueType();
 
-		if (leftlrValue instanceof HeapLValue) {
+		switch (leftlrValue) {
+		case final HeapLValue heapLValue: {
 			// If the left hand side is an array represented as HeapLValue
 			// we use pointer arithmetic to compute the result.
 			// E.g., a[23] becomes addressOf(a) + 23 * sizeof(valueType)
@@ -167,7 +162,7 @@ public class ArrayHandler {
 			// the "remaining" array as pointsToType, i.e., we compute
 			// addressOf(a) + 2 * sizeof(resultCType)
 
-			final Expression oldAddress = ((HeapLValue) leftlrValue).getAddress();
+			final Expression oldAddress = heapLValue.getAddress();
 			final ExpressionResult newAddress = mMemoryHandler.doPointerArithmeticWithConversion(
 					IASTBinaryExpression.op_plus, loc, oldAddress, (RValue) subscript.getLrValue(), resultCType);
 			final HeapLValue lValue = LRValueFactory.constructHeapLValue(mTypeHandler,
@@ -176,11 +171,11 @@ public class ArrayHandler {
 			result.setLrValue(lValue);
 			return result.build();
 		}
-		if (leftlrValue instanceof LocalLValue) {
+		case final LocalLValue localLValue: {
 			// If the left hand side is an array represented as LocalLValue
 			// we return a copy of this LocalLValue where we added the
 			// current index.
-			final LeftHandSide oldInnerArrayLHS = ((LocalLValue) leftlrValue).getLhs();
+			final LeftHandSide oldInnerArrayLHS = localLValue.getLhs();
 
 			final Expression bound = lhsArrayType.getBound();
 			final CPrimitive boundType = lhsArrayType.getBoundType();
@@ -211,18 +206,15 @@ public class ArrayHandler {
 			addArrayBoundsCheckForCurrentIndex(loc, index, bound, boundType, result);
 			return result.build();
 		}
-		if (leftlrValue instanceof RValue) {
-			final ExpressionResult newAddress =
-					mMemoryHandler.doPointerArithmeticWithConversion(IASTBinaryExpression.op_plus, loc,
-							leftlrValue.getValue(), (RValue) subscript.getLrValue(), resultCType);
+		case final RValue rValue:
+			final ExpressionResult newAddress = mMemoryHandler.doPointerArithmeticWithConversion(
+					IASTBinaryExpression.op_plus, loc, rValue.getValue(), (RValue) subscript.getLrValue(), resultCType);
 			result.addAllExceptLrValue(array, subscript, newAddress);
 			final HeapLValue lValue = LRValueFactory.constructHeapLValue(mTypeHandler,
 					newAddress.getLrValue().getValue(), resultCType, false, null);
 			result.setLrValue(lValue);
 			return result.build();
 		}
-		throw new UnsupportedSyntaxException(loc,
-				leftlrValue.getClass().getSimpleName() + " cannot be handled as array subscript.");
 	}
 
 	/**

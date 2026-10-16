@@ -71,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -829,30 +828,14 @@ public class ACSLHandler implements IACSLHandler {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final ExpressionResult array = (ExpressionResult) main.dispatch(node.getArray(), main.getAcslHook());
 		final ExpressionResult index = dispatchSwitch(main, node.getIndex(), loc);
-		return mCHandler.handleArraySubscriptExpression(array, index, main.getAcslHook());
+		return mCHandler.handleArraySubscriptExpression(loc, array, index, main.getAcslHook());
 	}
 
 	@Override
 	public Result visit(final IDispatcher main, final FieldAccessExpression node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		final ExpressionResult r = dispatchSwitch(main, node.getStruct(), loc);
-		assert r.getClass() == ExpressionResult.class;
-		final String field = node.getField();
-
-		resultBuilder.addAllExceptLrValue(r);
-
-		// Because of anonymous members, resolving the field access may result in a path of members.
-		// Therefore, we iterate over this path here.
-		final CStructOrUnion structType = (CStructOrUnion) r.getLrValue().getCType().getUnderlyingType();
-		Expression resultExpr = r.getLrValue().getValue();
-		for (final String currentField : structType.getFieldPath(field)) {
-			resultExpr = ExpressionFactory.constructStructAccessExpression(loc, resultExpr, currentField);
-		}
-
-		final RValue rval = new RValue(resultExpr, structType.getFieldType(field));
-		resultBuilder.setLrValue(rval);
-		return resultBuilder.build();
+		final ExpressionResult struct = (ExpressionResult) main.dispatch(node.getStruct(), main.getAcslHook());
+		return mCHandler.handleFieldReference(loc, struct, node.getField(), main.getAcslHook());
 	}
 
 	@Override

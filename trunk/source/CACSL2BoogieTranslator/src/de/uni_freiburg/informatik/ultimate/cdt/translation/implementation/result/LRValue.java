@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
  * @author Alexander Nutz, Matthias Heizmann
  *
  */
-public abstract class LRValue {
+public abstract sealed class LRValue permits RValue, LocalLValue, HeapLValue {
 
 	private final ICType mCType;
 
@@ -82,17 +82,6 @@ public abstract class LRValue {
 		return mIsIntFromPointer;
 	}
 
-	@Override
-	public final String toString() {
-		if (this instanceof HeapLValue) {
-			return "address: " + ((HeapLValue) this).getAddress();
-		} else if (this instanceof LocalLValue) {
-			return "lhs: " + ((LocalLValue) this).getLhs();
-		} else {
-			return "value: " + getValue();
-		}
-	}
-
 	/**
 	 * Returns true iff this LRValue is a null pointer constant according to the definition 6.3.2.3.3 in the C11
 	 * standard.
@@ -106,12 +95,7 @@ public abstract class LRValue {
 			return false;
 		}
 
-		final Expression value;
-		if (this instanceof HeapLValue) {
-			value = ((HeapLValue) this).getAddress();
-			throw new AssertionError("unexpected: double check this case");
-		}
-		value = getValue();
+		final Expression value = getValue();
 
 		final BigInteger integerValue = CTranslationUtil.extractIntegerValue(value);
 		if (BigInteger.ZERO.equals(integerValue)) {

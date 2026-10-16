@@ -1000,7 +1000,7 @@ public class InitializationHandler {
 				initInfo == null ? BigDecimal.ZERO : BigDecimal.valueOf(initInfo.getNumberOfValues());
 		final BigDecimal threshold = new BigDecimal(numberOfCells)
 				.multiply(BigDecimal.valueOf(MAXIMAL_EXPLICIT_TO_OVERALL_RATIO_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT));
-		return numberOfInitializerValues.compareTo(threshold) > 0;
+		return numberOfInitializerValues.compareTo(threshold) <= 0;
 	}
 
 	private BigInteger countNumberOfPrimitiveElementInType(final ICType cTypeRaw, final IASTNode hook) {
