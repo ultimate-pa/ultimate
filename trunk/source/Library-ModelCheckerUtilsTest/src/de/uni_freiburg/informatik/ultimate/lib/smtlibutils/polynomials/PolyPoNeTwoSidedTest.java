@@ -1,0 +1,852 @@
+/*
+ * Copyright (C) 2026 University of Freiburg
+ *
+ * This file is part of the ULTIMATE ModelCheckerUtilsTest Library.
+ *
+ * The ULTIMATE ModelCheckerUtilsTest Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE ModelCheckerUtilsTest Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE ModelCheckerUtilsTest Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE ModelCheckerUtilsTest Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtilsTest Library grant you additional permission
+ * to convey the resulting work.
+ */
+package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.core.IsEqual;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Junction;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.FunDecl;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.QuantifierEliminationTest;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
+import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
+
+/**
+ * Unit tests for {@link PolyPoNe}'s handling of {@link BitvectorInequalityRelation}: dropping looser bounds, empty
+ * ranges, fusion, cross-checks with equalities and "x != c", comparison with the alternative representation, the
+ * context path, and end-to-end tests that check with the solver that the meaning of the input never changes. Lives
+ * in the same package as {@link PolyPoNe} deliberately - {@link PolyPoNe#addPolyRel} is protected and its
+ * constructor is package-visible, neither reachable from a test in a different package.
+ * <p>
+ * Many tests call {@link PolyPoNe#addPolyRel} directly with a relation built by {@link BitvectorInequalityRelation};
+ * the tests that use {@link PolyPoNeUtils} go through the same path as the simplifier ({@link PolyPoNe#add}).
+ *
+ * @author Roman Vintonyak
+ */
+public class PolyPoNeTwoSidedTest {
+
+	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
+	private static final String SOLVER_COMMAND = "cvc4 --incremental --lang smt";
+	private static final long TEST_TIMEOUT_MILLISECONDS = 20_000;
+
+	private IUltimateServiceProvider mServices;
+	private Script mScript;
+
+	@Before
+	public void setUp() throws IOException {
+		mServices = UltimateMocks.createUltimateServiceProviderMock(LOG_LEVEL);
+		mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + TEST_TIMEOUT_MILLISECONDS);
+		mScript = new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL));
+		mScript.setLogic(Logics.ALL);
+	}
+
+	@After
+	public void tearDown() {
+		mScript.exit();
+	}
+
+	private void declare(final FunDecl[] funDecls) {
+		for (final FunDecl funDecl : funDecls) {
+			funDecl.declareFuns(mScript);
+		}
+	}
+
+	private Term parse(final String formulaAsString) {
+		return TermParseUtils.parseTerm(mScript, formulaAsString);
+	}
+
+	private BitvectorInequalityRelation twoSided(final String formulaAsString) {
+		return BitvectorInequalityRelation.of(mScript, parse(formulaAsString));
+	}
+
+	private static void assertNoGreaterSymbol(final Term term) {
+		final String termAsString = term.toString();
+		for (final String symbol : new String[] { "bvugt", "bvuge", "bvsgt", "bvsge" }) {
+			Assert.assertFalse(symbol + " survived in " + termAsString, termAsString.contains(symbol));
+		}
+	}
+
+	@Test
+	public void tighterUpperBoundDropsLooserOne() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv5 8))"), true);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv3 8))"), true);
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(bvule x (_ bv3 8))")));
+	}
+
+	@Test
+	public void tighterUpperBoundDropsLooserOneRegardlessOfOrder() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv3 8))"), true);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv5 8))"), true);
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(bvule x (_ bv3 8))")));
+	}
+
+	@Test
+	public void crossStrictnessLooserBoundGetsDropped() {
+		// x <=u 7 implies x <u 9 (Heizmann's example) - the looser, strict one should be dropped
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv7 8))"), true);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv9 8))"), true);
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(bvule x (_ bv7 8))")));
+	}
+
+	@Test
+	public void crossStrictnessTighterBoundReplacesLooserRegardlessOfOrder() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv9 8))"), true);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv7 8))"), true);
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(bvule x (_ bv7 8))")));
+	}
+
+	@Test
+	public void crossStrictnessEquivalentBoundsCollapseToOne() {
+		// x <=u 7 and x <u 8 describe exactly the same set - the second one is redundant
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv7 8))"), true);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv8 8))"), true);
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(bvule x (_ bv7 8))")));
+	}
+
+	@Test
+	public void crossStrictnessAtUnderflowBoundaryDoesNotCrash() {
+		// x <u 0 can't be normalized to a non-strict boundary (0 - 1 would underflow) - must decline, not crash
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv0 8))"), true);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv5 8))"), true);
+		final Term result = polyPoNe.and();
+		final Term expected = parse("(and (bvult x (_ bv0 8)) (bvule x (_ bv5 8)))");
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
+	}
+
+	@Test
+	public void knownEqualityMakesSatisfyingInequalityRedundant() {
+		// x = 5, then x <u 9 arrives - 5 <u 9 holds, so the inequality is redundant
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, IPolynomialRelation.of(mScript, parse("(= x (_ bv5 8))")), true);
+		final boolean inconsistent = polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv9 8))"), true);
+		Assert.assertFalse(inconsistent);
+		// toTerm() rebuilds "=" from the internal representation, which canonically orders it constant-first -
+		// same pattern observed for upperAndLowerBoundWithSameConstantFuseIntoEquality below
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(= (_ bv5 8) x)")));
+	}
+
+	@Test
+	public void knownEqualityViolatingInequalityIsInconsistent() {
+		// x = 42, then x <s 7 arrives - 42 is not <s 7, so this is a contradiction
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, IPolynomialRelation.of(mScript, parse("(= x (_ bv42 8))")), true);
+		final boolean inconsistent = polyPoNe.addPolyRel(mScript, twoSided("(bvslt x (_ bv7 8))"), true);
+		Assert.assertTrue(inconsistent);
+	}
+
+	@Test
+	public void equalityAddedAfterInequalityDropsTheNowRedundantInequality() {
+		// x <u 9 arrives first, then x = 5 arrives - 5 <u 9 holds, so the inequality is now redundant and gets
+		// dropped, leaving just the equality. Mirror direction of knownEqualityMakesSatisfyingInequalityRedundant
+		// (which has the equality arrive first) - both orders must behave the same.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv9 8))"), true);
+		final boolean inconsistent =
+				polyPoNe.addPolyRel(mScript, IPolynomialRelation.of(mScript, parse("(= x (_ bv5 8))")), true);
+		Assert.assertFalse(inconsistent);
+		// toTerm() rebuilds "=" from the internal representation, which canonically orders it constant-first
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(= (_ bv5 8) x)")));
+	}
+
+	@Test
+	public void equalityAddedAfterViolatingInequalityIsInconsistent() {
+		// x <s 7 arrives first, then x = 42 arrives - 42 is not <s 7, so this is a contradiction. Mirror direction
+		// of knownEqualityViolatingInequalityIsInconsistent (which has the equality arrive first).
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvslt x (_ bv7 8))"), true);
+		final boolean inconsistent =
+				polyPoNe.addPolyRel(mScript, IPolynomialRelation.of(mScript, parse("(= x (_ bv42 8))")), true);
+		Assert.assertTrue(inconsistent);
+	}
+
+	@Test
+	public void upperAndLowerBoundWithSameConstantFuseIntoEquality() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv5 8))"), true);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvuge x (_ bv5 8))"), true);
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(= (_ bv5 8) x)")));
+	}
+
+	@Test
+	public void compoundRelationIsKeptAsIsWithoutCrashing() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		final Term compound = parse("(bvult (bvadd x y) (_ bv5 8))");
+		polyPoNe.addPolyRel(mScript, BitvectorInequalityRelation.of(mScript, compound), true);
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(compound));
+	}
+
+	@Test
+	public void numericFusionStillWorksUnaffectedByTwoSidedBranch() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x") };
+		declare(funDecls);
+		final List<Term> params = List.of(parse("(<= x 5)"), parse("(>= x 5)"));
+		final Term result = new PolyPoNe(mScript, Junction.AND).and(params);
+		MatcherAssert.assertThat(result, IsEqual.equalTo(parse("(= 5 x)")));
+	}
+
+	// --- public entry point (PolyPoNeUtils) - the one live, wired-up path, see BitvectorInequalityRelation#of ---
+
+	@Test
+	public void publicEntryPointDropsRedundantBoundForBitvectors() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final List<Term> params = List.of(parse("(bvule x (_ bv5 8))"), parse("(bvule x (_ bv3 8))"));
+		final Term result = PolyPoNeUtils.and(mScript, params);
+		MatcherAssert.assertThat(result, IsEqual.equalTo(parse("(bvule x (_ bv3 8))")));
+	}
+
+	@Test
+	public void publicEntryPointFusesIntoEqualityForBitvectors() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final List<Term> params = List.of(parse("(bvule x (_ bv5 8))"), parse("(bvuge x (_ bv5 8))"));
+		final Term result = PolyPoNeUtils.and(mScript, params);
+		MatcherAssert.assertThat(result, IsEqual.equalTo(parse("(= (_ bv5 8) x)")));
+	}
+
+	@Test
+	public void publicEntryPointMirrorsGreaterSymbolsInConjunction() {
+		// The 4 "greater" symbols are mirrored to their "less" counterpart by BitvectorInequalityRelation, and PolyPoNe
+		// rebuilds every atom it keeps from that canonical form. x, y, z give relations without a constant, which are
+		// kept as they are and never compared, so every atom survives and must come out mirrored.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y", "z") };
+		declare(funDecls);
+		final List<Term> params =
+				List.of(parse("(bvugt x y)"), parse("(bvuge y z)"), parse("(bvsgt x z)"), parse("(bvsge z y)"));
+		final Term result = PolyPoNeUtils.and(mScript, params);
+		assertNoGreaterSymbol(result);
+		final Term expected = mScript.term("and", params.toArray(new Term[0]));
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
+	}
+
+	@Test
+	public void publicEntryPointMirrorsGreaterSymbolsInDisjunction() {
+		// Same as the conjunction case, but through the negating path of PolyPoNe#or: the atoms are negated before they
+		// are stored and negated again when the disjunction is rebuilt.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y", "z") };
+		declare(funDecls);
+		final List<Term> params =
+				List.of(parse("(bvugt x y)"), parse("(bvuge y z)"), parse("(bvsgt x z)"), parse("(bvsge z y)"));
+		final Term result = PolyPoNeUtils.or(mScript, params);
+		assertNoGreaterSymbol(result);
+		final Term expected = mScript.term("or", params.toArray(new Term[0]));
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
+	}
+
+	@Test
+	public void publicEntryPointMirrorsGreaterBoundsAgainstConstants() {
+		// 1 <u x and x <u 5 describe a non-empty range that is not adjacent to a single point, so both bounds stay.
+		// The "greater" bound must come out mirrored, as "1 <u x".
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final List<Term> params = List.of(parse("(bvugt x (_ bv1 8))"), parse("(bvult x (_ bv5 8))"));
+		final Term result = PolyPoNeUtils.and(mScript, params);
+		assertNoGreaterSymbol(result);
+		final Term expected = mScript.term("and", params.toArray(new Term[0]));
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
+	}
+
+	@Test
+	public void publicEntryPointMirrorsSignedGreaterBoundsAgainstConstants() {
+		// Signed counterpart: 1 <s x and x <=s 5 keep both bounds, the "greater" one comes out mirrored.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final List<Term> params = List.of(parse("(bvsgt x (_ bv1 8))"), parse("(bvsle x (_ bv5 8))"));
+		final Term result = PolyPoNeUtils.and(mScript, params);
+		assertNoGreaterSymbol(result);
+		final Term expected = mScript.term("and", params.toArray(new Term[0]));
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
+	}
+
+	@Test
+	public void publicEntryPointStillHandlesNonRelationalAtomsSafely() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x"),
+				new FunDecl(SmtSortUtils::getBoolSort, "p") };
+		declare(funDecls);
+		// "p" is not a binary relation at all - must not trip BitvectorInequalityRelation.of
+		final List<Term> params = List.of(parse("(bvule x (_ bv5 8))"), parse("p"));
+		final Term result = PolyPoNeUtils.and(mScript, params);
+		// "and" is commutative and may reorder its arguments, so compare by equivalence rather than exact term
+		final Term expected = parse("(and (bvule x (_ bv5 8)) p)");
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
+	}
+
+	@Test
+	public void publicEntryPointRecognizesNotWrappedInequalityAsSameRelation() {
+		// (not (bvule x 5)) must be recognized as the very same relation as its canonical negation (bvult 5 x) -
+		// not stored as a separate opaque atom via the addNonPolynomial/unzipNot path (that path is only for
+		// atoms BitvectorInequalityRelation.of can't parse at all). Proof: "or"-ing the not-wrapped term together
+		// with its already-canonical equivalent must collapse to ONE relation, not a literal "(or A B)" - an
+		// opaque atom would never be recognized as equal to a differently-shaped term, so it would survive as a
+		// genuine two-way "or" instead.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final List<Term> params = List.of(parse("(not (bvule x (_ bv5 8)))"), parse("(bvult (_ bv5 8) x)"));
+		final Term result = PolyPoNeUtils.or(mScript, params);
+		final boolean stayedAsOr =
+				result instanceof ApplicationTerm && ((ApplicationTerm) result).getFunction().getName().equals("or");
+		Assert.assertFalse("not-wrapped inequality was not recognized - stayed as an opaque disjunct", stayedAsOr);
+		final Term expected = parse("(bvult (_ bv5 8) x)");
+		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
+	}
+
+	// --- context path (PolyPoNeWithContext, used by the simplifier and quantifier elimination) ---
+
+	@Test
+	public void contextBoundMakesLooserBoundRedundant() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final Term context = parse("(bvule x (_ bv3 8))");
+		final Term result = PolyPoNeUtils.and(mScript, context, List.of(parse("(bvule x (_ bv5 8))")));
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("true")));
+	}
+
+	@Test
+	public void contextEqualityContradictingBoundGivesFalse() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final Term context = parse("(= x (_ bv5 8))");
+		final Term result = PolyPoNeUtils.and(mScript, context, List.of(parse("(bvult x (_ bv3 8))")));
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("false")));
+	}
+
+	@Test
+	public void contextEqualityMakesDisjunctionTrue() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final Term context = parse("(= x (_ bv5 8))");
+		final Term result = PolyPoNeUtils.or(mScript, context, List.of(parse("(bvule x (_ bv7 8))")));
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("true")));
+	}
+
+	@Test
+	public void contextPathStillComparesWithinParams() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x"),
+				new FunDecl(SmtSortUtils::getBoolSort, "p") };
+		declare(funDecls);
+		final Term context = parse("p");
+		final List<Term> params = List.of(parse("(bvule x (_ bv5 8))"), parse("(bvule x (_ bv3 8))"));
+		final Term result = PolyPoNeUtils.and(mScript, context, params);
+		MatcherAssert.assertThat(result, IsEqual.equalTo(parse("(bvule x (_ bv3 8))")));
+	}
+
+	// --- constant-first equalities: "(= 5 x)" is stored with coefficient -1 for x, unlike "(= x 5)" ---
+
+	@Test
+	public void constantFirstEqualityMakesSatisfyingInequalityRedundant() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, IPolynomialRelation.of(mScript, parse("(= (_ bv5 8) x)")), true);
+		final boolean inconsistent = polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv9 8))"), true);
+		Assert.assertFalse(inconsistent);
+		final Term result = polyPoNe.and();
+		Assert.assertFalse("redundant bound was kept: " + result, result.toString().contains("bvult"));
+	}
+
+	@Test
+	public void constantFirstEqualityViolatingInequalityIsInconsistent() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, IPolynomialRelation.of(mScript, parse("(= (_ bv42 8) x)")), true);
+		final boolean inconsistent = polyPoNe.addPolyRel(mScript, twoSided("(bvslt x (_ bv7 8))"), true);
+		Assert.assertTrue(inconsistent);
+	}
+
+	@Test
+	public void constantFirstContextEqualityContradictingBoundGivesFalse() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final Term context = parse("(= (_ bv5 8) x)");
+		final Term result = PolyPoNeUtils.and(mScript, context, List.of(parse("(bvult x (_ bv3 8))")));
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("false")));
+	}
+
+	// --- opposite bounds: a lower bound above an upper bound describes an empty range ---
+
+	@Test
+	public void lowerBoundAboveUpperBoundIsInconsistent() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvuge x (_ bv10 8))"), true);
+		Assert.assertTrue(polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv5 8))"), true));
+	}
+
+	@Test
+	public void upperBoundBelowLowerBoundIsInconsistent() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv5 8))"), true);
+		Assert.assertTrue(polyPoNe.addPolyRel(mScript, twoSided("(bvuge x (_ bv10 8))"), true));
+	}
+
+	@Test
+	public void emptyRangeIsDetectedWithSignedComparison() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		// 5 <=s x <=s -3 (bv253) is empty; read unsigned it would be the non-empty 5 <=u x <=u 253
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvsle (_ bv5 8) x)"), true);
+		Assert.assertTrue(polyPoNe.addPolyRel(mScript, twoSided("(bvsle x (_ bv253 8))"), true));
+	}
+
+	@Test
+	public void emptyRangeIsDetectedForStrictBounds() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		// 5 <u x means x >= 6, and x <u 6 means x <= 5
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvult (_ bv5 8) x)"), true);
+		Assert.assertTrue(polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv6 8))"), true));
+	}
+
+	@Test
+	public void nonEmptyRangeIsNotInconsistent() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvuge x (_ bv5 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv10 8))"), true));
+	}
+
+	@Test
+	public void disjunctionCoveringAllValuesIsTrue() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final List<Term> params = List.of(parse("(bvule x (_ bv10 8))"), parse("(bvuge x (_ bv5 8))"));
+		MatcherAssert.assertThat(PolyPoNeUtils.or(mScript, params), IsEqual.equalTo(mScript.term("true")));
+	}
+
+	@Test
+	public void contextLowerBoundAboveNewUpperBoundGivesFalse() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final Term context = parse("(bvule (_ bv10 8) x)");
+		final Term result = PolyPoNeUtils.and(mScript, context, List.of(parse("(bvule x (_ bv5 8))")));
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("false")));
+	}
+
+	// --- "x != c" next to a bound with boundary c: "x != 3 and x <= 3" is "x < 3" (in OR mode: x = 3 or x >= 4) ---
+
+	private IPolynomialRelation distinctRelation(final String formulaAsString) {
+		return IPolynomialRelation.of(mScript, parse(formulaAsString));
+	}
+
+	@Test
+	public void distinctThenAdjacentUpperBoundBecomesStrict() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, distinctRelation("(distinct x (_ bv3 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv3 8))"), true));
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(bvult x (_ bv3 8))")));
+	}
+
+	@Test
+	public void adjacentUpperBoundThenDistinctBecomesStrict() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv3 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, distinctRelation("(distinct x (_ bv3 8))"), true));
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(bvult x (_ bv3 8))")));
+	}
+
+	@Test
+	public void distinctThenAdjacentLowerBoundBecomesStrict() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, distinctRelation("(distinct x (_ bv3 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvuge x (_ bv3 8))"), true));
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(bvult (_ bv3 8) x)")));
+	}
+
+	@Test
+	public void distinctThenStrictBoundBecomesStrictAtTheDistinctValue() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		// x <u 4 means x <= 3
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, distinctRelation("(distinct x (_ bv3 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvult x (_ bv4 8))"), true));
+		MatcherAssert.assertThat(polyPoNe.and(), IsEqual.equalTo(parse("(bvult x (_ bv3 8))")));
+	}
+
+	@Test
+	public void distinctAtTheOnlyAllowedValueIsInconsistent() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe unsignedMin = new PolyPoNe(mScript, Junction.AND);
+		unsignedMin.addPolyRel(mScript, distinctRelation("(distinct x (_ bv0 8))"), true);
+		Assert.assertTrue(unsignedMin.addPolyRel(mScript, twoSided("(bvule x (_ bv0 8))"), true));
+		final PolyPoNe unsignedMax = new PolyPoNe(mScript, Junction.AND);
+		unsignedMax.addPolyRel(mScript, distinctRelation("(distinct x (_ bv255 8))"), true);
+		Assert.assertTrue(unsignedMax.addPolyRel(mScript, twoSided("(bvuge x (_ bv255 8))"), true));
+		// bv128 is -128, the signed minimum
+		final PolyPoNe signedMin = new PolyPoNe(mScript, Junction.AND);
+		signedMin.addPolyRel(mScript, distinctRelation("(distinct x (_ bv128 8))"), true);
+		Assert.assertTrue(signedMin.addPolyRel(mScript, twoSided("(bvsle x (_ bv128 8))"), true));
+	}
+
+	@Test
+	public void distinctAwayFromTheBoundStaysUnfused() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, distinctRelation("(distinct x (_ bv3 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvule x (_ bv5 8))"), true));
+		final String result = polyPoNe.and().toString();
+		Assert.assertTrue(result, result.contains("bvule") && !result.contains("bvult"));
+	}
+
+	@Test
+	public void equalityOrAdjacentLowerBoundBecomesNonStrictLowerBound() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		// x = 3 or x >= 4  is  x >= 3, in both orders
+		final Term expected = parse("(bvuge x (_ bv3 8))");
+		for (final List<Term> params : List.of(List.of(parse("(= x (_ bv3 8))"), parse("(bvuge x (_ bv4 8))")),
+				List.of(parse("(bvuge x (_ bv4 8))"), parse("(= x (_ bv3 8))")))) {
+			final Term result = PolyPoNeUtils.or(mScript, params);
+			final boolean stayedAsOr =
+					result instanceof ApplicationTerm && ((ApplicationTerm) result).getFunction().getName().equals("or");
+			Assert.assertFalse("not fused: " + result, stayedAsOr);
+			Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
+		}
+	}
+
+	// --- end to end: whatever PolyPoNe simplifies, the meaning of the input must stay the same ---
+
+	private static final String[] MEANING_TEST_ATOMS = { "(bvule x (_ bv3 8))", "(bvule x (_ bv5 8))",
+			"(bvult x (_ bv4 8))", "(bvuge x (_ bv4 8))", "(bvuge x (_ bv10 8))", "(bvugt x (_ bv3 8))",
+			"(= x (_ bv3 8))", "(distinct x (_ bv3 8))", "(bvsle x (_ bv253 8))", "(bvsge x (_ bv5 8))",
+			"(bvslt x (_ bv128 8))", "(bvule x (_ bv0 8))", "(= (_ bv5 8) x)", "(distinct (_ bv0 8) x)",
+			"(bvuge x (_ bv255 8))" };
+
+	private void assertSameMeaning(final String message, final Term expected, final Term actual) {
+		Assert.assertEquals(message, LBool.UNSAT, SmtUtils.checkEquivalence(actual, expected, mScript));
+	}
+
+	@Test
+	public void andAndOrKeepTheMeaningForAnyTwoAtoms() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		for (int i = 0; i < MEANING_TEST_ATOMS.length; i++) {
+			for (int j = i + 1; j < MEANING_TEST_ATOMS.length; j++) {
+				final List<Term> params = List.of(parse(MEANING_TEST_ATOMS[i]), parse(MEANING_TEST_ATOMS[j]));
+				assertSameMeaning("and " + params, SmtUtils.and(mScript, params), PolyPoNeUtils.and(mScript, params));
+				assertSameMeaning("or " + params, SmtUtils.or(mScript, params), PolyPoNeUtils.or(mScript, params));
+			}
+		}
+	}
+
+	@Test
+	public void andAndOrKeepTheMeaningForSomeTriples() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final String[][] triples = { { "(distinct x (_ bv3 8))", "(bvule x (_ bv3 8))", "(distinct x (_ bv2 8))" },
+				{ "(bvuge x (_ bv4 8))", "(= x (_ bv3 8))", "(bvsle x (_ bv100 8))" },
+				{ "(bvule x (_ bv5 8))", "(bvuge x (_ bv2 8))", "(distinct x (_ bv2 8))" },
+				{ "(distinct x (_ bv0 8))", "(distinct x (_ bv1 8))", "(bvule x (_ bv1 8))" } };
+		for (final String[] triple : triples) {
+			final List<Term> params = List.of(parse(triple[0]), parse(triple[1]), parse(triple[2]));
+			assertSameMeaning("and " + params, SmtUtils.and(mScript, params), PolyPoNeUtils.and(mScript, params));
+			assertSameMeaning("or " + params, SmtUtils.or(mScript, params), PolyPoNeUtils.or(mScript, params));
+		}
+	}
+
+	@Test
+	public void contextSimplificationKeepsTheMeaning() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
+		declare(funDecls);
+		final String[] contexts = { "(bvule x (_ bv3 8))", "(= x (_ bv5 8))", "(bvuge x (_ bv10 8))" };
+		final int atomCount = 8;
+		for (final String contextString : contexts) {
+			final Term context = parse(contextString);
+			for (int i = 0; i < atomCount; i++) {
+				for (int j = i; j < atomCount; j++) {
+					final List<Term> params = i == j ? List.of(parse(MEANING_TEST_ATOMS[i]))
+							: List.of(parse(MEANING_TEST_ATOMS[i]), parse(MEANING_TEST_ATOMS[j]));
+					// the simplified result only has to agree with the input under the assumption of the context
+					final Term andResult = PolyPoNeUtils.and(mScript, context, params);
+					assertSameMeaning("and " + params + " under " + contextString,
+							SmtUtils.and(mScript, context, SmtUtils.and(mScript, params)),
+							SmtUtils.and(mScript, context, andResult));
+					final Term orResult = PolyPoNeUtils.or(mScript, context, params);
+					assertSameMeaning("or " + params + " under " + contextString,
+							SmtUtils.and(mScript, context, SmtUtils.or(mScript, params)),
+							SmtUtils.and(mScript, context, orResult));
+				}
+			}
+		}
+	}
+
+	// --- expression vs. number: the same expression (here x + y) is compared like a bare variable ---
+
+	private void declareXyz() {
+		declare(new FunDecl[] { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y", "z") });
+	}
+
+	@Test
+	public void polynomialVsConstantShapeIsRecognized() {
+		declareXyz();
+		Assert.assertTrue(twoSided("(bvule (bvadd x y) (_ bv5 8))").isPolynomialVsConstant());
+		Assert.assertTrue(twoSided("(bvuge (bvadd x y) (_ bv5 8))").isPolynomialVsConstant());
+		Assert.assertTrue(twoSided("(bvule x (_ bv5 8))").isPolynomialVsConstant());
+		Assert.assertFalse(twoSided("(bvule x y)").isPolynomialVsConstant());
+		Assert.assertFalse(twoSided("(bvule (_ bv3 8) (_ bv5 8))").isPolynomialVsConstant());
+	}
+
+	@Test
+	public void tighterBoundOnTheSameExpressionDropsTheLooserOne() {
+		declareXyz();
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule (bvadd x y) (_ bv5 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvule (bvadd x y) (_ bv3 8))"), true));
+		final Term result = polyPoNe.and();
+		assertSameMeaning("tighter bound", parse("(bvule (bvadd x y) (_ bv3 8))"), result);
+		Assert.assertFalse("looser bound was kept: " + result, result.toString().contains("bv5"));
+	}
+
+	@Test
+	public void oppositeBoundsOnTheSameExpressionAreInconsistent() {
+		declareXyz();
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvuge (bvadd x y) (_ bv10 8))"), true);
+		Assert.assertTrue(polyPoNe.addPolyRel(mScript, twoSided("(bvule (bvadd x y) (_ bv5 8))"), true));
+	}
+
+	@Test
+	public void lowerAndUpperBoundOnTheSameExpressionFuseIntoEquality() {
+		declareXyz();
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule (bvadd x y) (_ bv5 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvuge (bvadd x y) (_ bv5 8))"), true));
+		final Term result = polyPoNe.and();
+		assertSameMeaning("fusion", parse("(= (bvadd x y) (_ bv5 8))"), result);
+		Assert.assertFalse("not fused: " + result, result.toString().contains("bvule"));
+	}
+
+	@Test
+	public void differentExpressionsAndDifferentOffsetsAreNotCompared() {
+		declareXyz();
+		final String[][] pairs = { { "(bvule (bvadd x y) (_ bv5 8))", "(bvule (bvadd x z) (_ bv3 8))" },
+				{ "(bvule (bvadd x (_ bv1 8)) (_ bv5 8))", "(bvule x (_ bv3 8))" } };
+		for (final String[] pair : pairs) {
+			final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+			polyPoNe.addPolyRel(mScript, twoSided(pair[0]), true);
+			Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided(pair[1]), true));
+			final String result = polyPoNe.and().toString();
+			Assert.assertTrue("both must stay: " + result, result.contains("bv5") && result.contains("bv3"));
+		}
+	}
+
+	@Test
+	public void contextBoundOnTheSameExpressionMakesLooserBoundRedundant() {
+		declareXyz();
+		final Term context = parse("(bvule (bvadd x y) (_ bv3 8))");
+		final Term result = PolyPoNeUtils.and(mScript, context, List.of(parse("(bvule (bvadd x y) (_ bv5 8))")));
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("true")));
+	}
+
+	@Test
+	public void expressionAtomsKeepTheMeaningForAnyTwoAtoms() {
+		declareXyz();
+		final String[] atoms = { "(bvule (bvadd x y) (_ bv5 8))", "(bvule (bvadd x y) (_ bv3 8))",
+				"(bvuge (bvadd x y) (_ bv10 8))", "(bvult (bvadd x y) (_ bv6 8))", "(bvsle (bvadd x y) (_ bv253 8))",
+				"(bvsge (bvadd x y) (_ bv5 8))", "(bvule (bvadd x (_ bv1 8)) (_ bv5 8))", "(bvule x (_ bv3 8))",
+				"(bvuge (bvadd x y) (_ bv5 8))", "(= (bvadd x y) (_ bv5 8))", "(distinct (bvadd x y) (_ bv5 8))" };
+		for (int i = 0; i < atoms.length; i++) {
+			for (int j = i + 1; j < atoms.length; j++) {
+				final List<Term> params = List.of(parse(atoms[i]), parse(atoms[j]));
+				assertSameMeaning("and " + params, SmtUtils.and(mScript, params), PolyPoNeUtils.and(mScript, params));
+				assertSameMeaning("or " + params, SmtUtils.or(mScript, params), PolyPoNeUtils.or(mScript, params));
+			}
+		}
+	}
+
+	// --- bvneg and bvnot are understood as arithmetic: -x and -x-1 ---
+
+	@Test
+	public void bvnotAndBvnegAreConvertedToPolynomialsOverTheirArgument() {
+		declareXyz();
+		for (final String formula : new String[] { "(bvnot x)", "(bvneg x)" }) {
+			final Term term = parse(formula);
+			final AbstractGeneralizedAffineTerm<?> polynomial =
+					(AbstractGeneralizedAffineTerm<?>) PolynomialTermTransformer.convert(mScript, term);
+			// before the conversion the whole term "(bvnot x)" was one opaque unknown
+			final Map<Term, Rational> variables = polynomial.getAbstractVariableAsTerm2Coefficient(mScript);
+			Assert.assertTrue(formula, variables.size() == 1 && variables.containsKey(parse("x")));
+			assertSameMeaning(formula, term, polynomial.toTerm(mScript));
+		}
+	}
+
+	@Test
+	public void boundOnBvnotIsAnExpressionBoundNotABareVariable() {
+		declareXyz();
+		final BitvectorInequalityRelation relation = twoSided("(bvule (bvnot x) (_ bv100 8))");
+		Assert.assertTrue(relation.isPolynomialVsConstant());
+		Assert.assertFalse(relation.isBareVariableVsBareConstant());
+	}
+
+	@Test
+	public void bvnotAndBvnegAtomsKeepTheMeaningForAnyTwoAtoms() {
+		declareXyz();
+		final String[] atoms = { "(bvule (bvnot x) (_ bv100 8))", "(bvule x (_ bv5 8))",
+				"(bvuge (bvnot x) (_ bv200 8))", "(bvule (bvneg x) (_ bv5 8))", "(bvsle (bvnot x) (_ bv3 8))",
+				"(= (bvneg x) (_ bv251 8))", "(distinct (bvnot x) (_ bv7 8))", "(bvult (bvneg x) (_ bv100 8))",
+				"(bvuge x (_ bv155 8))", "(bvsge (bvneg x) (_ bv2 8))" };
+		for (int i = 0; i < atoms.length; i++) {
+			for (int j = i + 1; j < atoms.length; j++) {
+				final List<Term> params = List.of(parse(atoms[i]), parse(atoms[j]));
+				assertSameMeaning("and " + params, SmtUtils.and(mScript, params), PolyPoNeUtils.and(mScript, params));
+				assertSameMeaning("or " + params, SmtUtils.or(mScript, params), PolyPoNeUtils.or(mScript, params));
+			}
+		}
+	}
+
+	// --- twins: a stored fact and the same fact written the other way round meet each other ---
+
+	@Test
+	public void factAndItsOtherSpellingContradict() {
+		declareXyz();
+		// (bvnot x) <=u 100 means x >=u 155, which contradicts x <=u 5, in both orders
+		final PolyPoNe first = new PolyPoNe(mScript, Junction.AND);
+		first.addPolyRel(mScript, twoSided("(bvule x (_ bv5 8))"), true);
+		Assert.assertTrue(first.addPolyRel(mScript, twoSided("(bvule (bvnot x) (_ bv100 8))"), true));
+		final PolyPoNe second = new PolyPoNe(mScript, Junction.AND);
+		second.addPolyRel(mScript, twoSided("(bvule (bvnot x) (_ bv100 8))"), true);
+		Assert.assertTrue(second.addPolyRel(mScript, twoSided("(bvule x (_ bv5 8))"), true));
+	}
+
+	@Test
+	public void strongerFactInOtherSpellingDropsTheWeakerOne() {
+		declareXyz();
+		// (bvnot x) <=u 100 means x >=u 155, and x >=u 200 is stronger
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule (bvnot x) (_ bv100 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvuge x (_ bv200 8))"), true));
+		final Term result = polyPoNe.and();
+		assertSameMeaning("stronger fact", parse("(bvuge x (_ bv200 8))"), result);
+		Assert.assertFalse("weaker fact was kept: " + result, result.toString().contains("bv100"));
+	}
+
+	@Test
+	public void weakerFactInOtherSpellingIsRedundant() {
+		declareXyz();
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvuge x (_ bv200 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvule (bvnot x) (_ bv100 8))"), true));
+		final Term result = polyPoNe.and();
+		assertSameMeaning("stronger fact", parse("(bvuge x (_ bv200 8))"), result);
+		Assert.assertFalse("weaker fact was kept: " + result, result.toString().contains("bv100"));
+	}
+
+	@Test
+	public void signedFactAndItsOtherSpellingContradict() {
+		declareXyz();
+		// (bvnot x) >=s 0 means x <=s -1, which contradicts x >=s 5
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvsle (_ bv5 8) x)"), true);
+		Assert.assertTrue(polyPoNe.addPolyRel(mScript, twoSided("(bvsle (_ bv0 8) (bvnot x))"), true));
+	}
+
+	@Test
+	public void contextFactAndOtherSpellingContradict() {
+		declareXyz();
+		final Term context = parse("(bvule x (_ bv5 8))");
+		final Term result = PolyPoNeUtils.and(mScript, context, List.of(parse("(bvule (bvnot x) (_ bv100 8))")));
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("false")));
+	}
+
+	@Test
+	public void twinsKeepTheMeaningForSomeTriples() {
+		declareXyz();
+		final String[][] triples = {
+				{ "(bvuge x (_ bv200 8))", "(bvule (bvnot x) (_ bv100 8))", "(bvule x (_ bv250 8))" },
+				{ "(bvule (bvnot x) (_ bv100 8))", "(bvule x (_ bv5 8))", "(bvuge x (_ bv1 8))" },
+				{ "(bvsle (_ bv5 8) x)", "(bvsle (_ bv0 8) (bvnot x))", "(distinct x (_ bv3 8))" },
+				{ "(bvule (bvnot x) (_ bv100 8))", "(bvule (bvnot x) (_ bv200 8))", "(bvuge x (_ bv155 8))" } };
+		for (final String[] triple : triples) {
+			final List<Term> params = List.of(parse(triple[0]), parse(triple[1]), parse(triple[2]));
+			assertSameMeaning("and " + params, SmtUtils.and(mScript, params), PolyPoNeUtils.and(mScript, params));
+			assertSameMeaning("or " + params, SmtUtils.or(mScript, params), PolyPoNeUtils.or(mScript, params));
+		}
+	}
+}
