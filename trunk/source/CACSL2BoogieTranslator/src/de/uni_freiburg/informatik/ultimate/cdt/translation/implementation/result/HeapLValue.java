@@ -84,4 +84,9 @@ public final class HeapLValue extends LRValue {
 	public LRValue getAddressAsPointerRValue(final ITypeHandler typeHandler) {
 		return getAddressAsPointerRValue(typeHandler.getBoogiePointerType());
 	}
+
+	@Override
+	public String toString() {
+		return "address: " + mAddress;
+	}
 }

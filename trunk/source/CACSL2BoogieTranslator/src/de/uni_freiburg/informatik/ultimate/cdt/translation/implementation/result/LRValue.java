@@ -82,15 +82,6 @@ public abstract sealed class LRValue permits RValue, LocalLValue, HeapLValue {
 		return mIsIntFromPointer;
 	}
 
-	@Override
-	public final String toString() {
-		return switch (this) {
-		case HeapLValue heapLValue -> "address: " + heapLValue.getAddress();
-		case LocalLValue localLValue -> "lhs: " + localLValue.getLhs();
-		case RValue rValue -> "value: " + rValue.getValue();
-		};
-	}
-
 	/**
 	 * Returns true iff this LRValue is a null pointer constant according to the definition 6.3.2.3.3 in the C11
 	 * standard.

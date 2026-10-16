@@ -104,4 +104,9 @@ public final class RValue extends LRValue {
 
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return "value: " + mValue;
+	}
 }
