@@ -868,7 +868,7 @@ public class InitializationHandler {
 	}
 
 	/**
-	 * Default-initializes the given array with a havoc followed by a single assume statement of the form
+	 * Default-initializes the given array with a single assume statement of the form
 	 * <code>assume (forall i_1, ..., i_n :: a[i_1]...[i_n] == defaultValue)</code>.
 	 */
 	private ExpressionResult makeForallOffHeapDefaultInitializationForArray(final ILocation loc,

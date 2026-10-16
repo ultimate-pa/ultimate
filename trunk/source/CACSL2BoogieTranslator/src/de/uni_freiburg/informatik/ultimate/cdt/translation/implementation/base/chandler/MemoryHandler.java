@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2013-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -2331,12 +2331,7 @@ public class MemoryHandler {
 
 	/**
 	 * Constructs, for each relevant heap array, a single assume statement of the form
-	 * <code>assume (forall k :: 0 <= k && k < sizeof(cType) ==> heap[baseAddress + k] == defaultValue)</code>. This
-	 * does not use constant arrays and does not havoc the heap; it relies on the memory at the given address being
-	 * freshly allocated (as the "select" initialization strategy does).
-	 *
-	 * @param defaultValueProvider
-	 *            maps a non-aggregate C type to its default (zero) value
+	 * <code>assume (forall k :: 0 <= k && k < sizeof(cType) ==> heap[baseAddress + k] == defaultValue)</code>.
 	 */
 	public List<Statement> getQuantifierInitializationForOnHeapVariableOfAggregateOrUnionType(final ILocation loc,
 			final HeapLValue baseAddress, final ICType cType, final Function<ICType, Expression> defaultValueProvider) {
