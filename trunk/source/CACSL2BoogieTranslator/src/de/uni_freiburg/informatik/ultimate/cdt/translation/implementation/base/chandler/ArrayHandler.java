@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -80,19 +79,16 @@ public class ArrayHandler {
 	private final TranslationSettings mSettings;
 	private final ExpressionResultTransformer mExprResultTransformer;
 	private final MemoryHandler mMemoryHandler;
-	private final LocationFactory mLocationFactory;
 
 	public ArrayHandler(final TranslationSettings settings, final ExpressionTranslation expressionTranslation,
 			final ITypeHandler typeHandler, final TypeSizes typeSizes,
-			final ExpressionResultTransformer expressionResultTransformer, final MemoryHandler memoryHandler,
-			final LocationFactory locationFactory) {
+			final ExpressionResultTransformer expressionResultTransformer, final MemoryHandler memoryHandler) {
 		mSettings = settings;
 		mExpressionTranslation = expressionTranslation;
 		mTypeHandler = typeHandler;
 		mTypeSizes = typeSizes;
 		mExprResultTransformer = expressionResultTransformer;
 		mMemoryHandler = memoryHandler;
-		mLocationFactory = locationFactory;
 	}
 
 	/**

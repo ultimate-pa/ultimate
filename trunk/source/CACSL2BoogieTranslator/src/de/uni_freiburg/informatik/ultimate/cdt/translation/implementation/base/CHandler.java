@@ -481,7 +481,7 @@ public class CHandler {
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
 				mExprResultTransformer, mVariablesOnHeap, mMemoryPointer);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
-				mExprResultTransformer, mMemoryHandler, mLocationFactory);
+				mExprResultTransformer, mMemoryHandler);
 		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mTypeHandler,
 				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer, mMemoryPointer);
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
@@ -574,7 +574,7 @@ public class CHandler {
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
 				mExprResultTransformer, mVariablesOnHeap, mMemoryPointer);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
-				mExprResultTransformer, mMemoryHandler, mLocationFactory);
+				mExprResultTransformer, mMemoryHandler);
 		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mTypeHandler,
 				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer, mMemoryPointer);
 
