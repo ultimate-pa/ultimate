@@ -260,11 +260,8 @@ public class InitializationHandler {
 
 		final boolean usingOnHeapInitializationViaConstArray =
 				onHeap && useConstArrayInitialization(targetCTypeRaw, initializerInfo, hook);
-		final boolean usingOnHeapInitializationViaForall = onHeap && !usingOnHeapInitializationViaConstArray
-				&& useForallInitialization(targetCTypeRaw, initializerInfo, lhs, true, hook);
-		// in both "sophisticated" cases all cells are default-initialized up front
-		final boolean usingOnHeapDefaultInitializationBefore =
-				usingOnHeapInitializationViaConstArray || usingOnHeapInitializationViaForall;
+		final boolean usingOnHeapInitializationViaForall =
+				onHeap && useForallInitialization(targetCTypeRaw, initializerInfo, lhs, true, hook);
 		if (usingOnHeapInitializationViaConstArray) {
 			// in the "sophisticated" case: make a default initialization of all array cells first
 			init.addStatements(mMemoryHandler.getConstArrayInitializationForOnHeapVariableOfAggregateOrUnionType(loc,
@@ -275,8 +272,9 @@ public class InitializationHandler {
 		}
 
 		{
+			// in both "sophisticated" cases all cells are default-initialized up front
 			final ExpressionResult mainInitCode = initRec(loc, targetCTypeRaw, initializerInfo, onHeap,
-					usingOnHeapDefaultInitializationBefore, lhs, true, hook);
+					usingOnHeapInitializationViaConstArray || usingOnHeapInitializationViaForall, lhs, true, hook);
 			init.addAllExceptLrValue(mainInitCode);
 			if (mainInitCode.hasLRValue()) {
 				init.setLrValue(mainInitCode.getLrValue());
@@ -311,16 +309,17 @@ public class InitializationHandler {
 	 * @return
 	 */
 	private ExpressionResult initRec(final ILocation loc, final ICType targetCTypeRaw,
-			final InitializerInfo initInfoIfAny, final boolean onHeap, final boolean usingOnHeapInitializationBefore,
-			final LRValue lhsIfAny, final boolean outermostNestedArray, final IASTNode hook) {
-		assert !usingOnHeapInitializationBefore || onHeap;
+			final InitializerInfo initInfoIfAny, final boolean onHeap,
+			final boolean useSophisticatedOnHeapInitialization, final LRValue lhsIfAny,
+			final boolean outermostNestedArray, final IASTNode hook) {
+		assert !useSophisticatedOnHeapInitialization || onHeap;
 		assert lhsIfAny == null || lhsIfAny.getCType().getUnderlyingType().equals(targetCTypeRaw.getUnderlyingType());
 		assert !onHeap || lhsIfAny != null : "we need a start address for on-heap initialization";
 
 		final ICType targetCType = targetCTypeRaw.getUnderlyingType();
 
 		if (initInfoIfAny == null) {
-			if (onHeap && usingOnHeapInitializationBefore) {
+			if (onHeap && useSophisticatedOnHeapInitialization) {
 				// no initializer we already did initialization before
 				return new ExpressionResultBuilder().build();
 			}
@@ -336,14 +335,14 @@ public class InitializationHandler {
 			/*
 			 * We are dealing with an initialization of a value with non-aggregate type.
 			 */
-			return initExpressionWithExpression(loc, lhsIfAny, onHeap, !usingOnHeapInitializationBefore, targetCType,
-					initInfoIfAny, hook);
+			return initExpressionWithExpression(loc, lhsIfAny, onHeap, !useSophisticatedOnHeapInitialization,
+					targetCType, initInfoIfAny, hook);
 		} else if (targetCType instanceof CStructOrUnion) {
 			// unions are handled along with structs here
 			return initCStruct(loc, lhsIfAny, (CStructOrUnion) targetCType, initInfoIfAny, onHeap,
-					usingOnHeapInitializationBefore, hook);
+					useSophisticatedOnHeapInitialization, hook);
 		} else if (targetCType instanceof final CArray array) {
-			return initCArray(loc, lhsIfAny, array, initInfoIfAny, onHeap, usingOnHeapInitializationBefore,
+			return initCArray(loc, lhsIfAny, array, initInfoIfAny, onHeap, useSophisticatedOnHeapInitialization,
 					outermostNestedArray, hook);
 		} else {
 			throw new UnsupportedOperationException("missing case for CType");
@@ -397,14 +396,14 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult initCStruct(final ILocation loc, final LRValue lhsIfAny, final CStructOrUnion cStructType,
-			final InitializerInfo initInfo, final boolean onHeap, final boolean usingOnHeapInitializationBefore,
+			final InitializerInfo initInfo, final boolean onHeap, final boolean useSophisticatedOnHeapInitialization,
 			final IASTNode hook) {
 		assert !initInfo.isMakeNondeterministicInitialization() : "catch nondeterministic case outside";
 
 		if (initInfo.hasExpressionResult()) {
 			// we are initializing through a struct-typed expression, not an initializer list
-			return initExpressionWithExpression(loc, lhsIfAny, onHeap, !usingOnHeapInitializationBefore, cStructType,
-					initInfo, hook);
+			return initExpressionWithExpression(loc, lhsIfAny, onHeap, !useSophisticatedOnHeapInitialization,
+					cStructType, initInfo, hook);
 		}
 		// we have an initializer list
 
@@ -452,7 +451,7 @@ public class InitializationHandler {
 					// normal case intitalize recursively with or without intitializer..
 					currentFieldInitialization =
 							initRec(loc, currentFieldUnderlyingType, currentFieldInitializerRawIfAny, onHeap,
-									usingOnHeapInitializationBefore, currentFieldLhs, true, hook);
+									useSophisticatedOnHeapInitialization, currentFieldLhs, true, hook);
 				}
 			}
 			// add the initialization code
@@ -508,9 +507,9 @@ public class InitializationHandler {
 	 * @return
 	 */
 	private ExpressionResult initCArray(final ILocation loc, final LRValue lhsIfAny, final CArray cArrayType,
-			final InitializerInfo initInfo, final boolean onHeap, final boolean usingOnHeapInitializationBefore,
+			final InitializerInfo initInfo, final boolean onHeap, final boolean useSophisticatedOnHeapInitialization,
 			final boolean outermostInNestedArray, final IASTNode hook) {
-		assert !usingOnHeapInitializationBefore || onHeap;
+		assert !useSophisticatedOnHeapInitialization || onHeap;
 		assert !initInfo.isMakeNondeterministicInitialization() : "catch nondeterministic case outside";
 
 		/*
@@ -535,10 +534,10 @@ public class InitializationHandler {
 		 * note that the off-heap case is decided locally for each array inside the variable's type while the on-heap
 		 * case this is decided once per variable (passed via field usingConstOnHeapArrayInitialization)
 		 */
-		final boolean useConstOffHeapArrayInitialization =
+		final boolean useSophisticatedOffHeapArrayInitialization =
 				!onHeap && outermostInNestedArray && (useConstArrayInitialization(cArrayType, initInfo, hook)
 						|| useForallInitialization(cArrayType, initInfo, arrayLhsToInitialize, false, hook));
-		if (useConstOffHeapArrayInitialization) {
+		if (useSophisticatedOffHeapArrayInitialization) {
 			// in the "sophisticated" off heap case: make a default initialization of all array cells first
 			final ExpressionResult defaultInit =
 					makeDefaultOrNondetInitialization(loc, arrayLhsToInitialize, cArrayType, onHeap, false, hook);
@@ -560,7 +559,8 @@ public class InitializationHandler {
 				arrayIndexInitInfo = null;
 			}
 
-			if ((useConstOffHeapArrayInitialization || usingOnHeapInitializationBefore) && arrayIndexInitInfo == null) {
+			if ((useSophisticatedOffHeapArrayInitialization || useSophisticatedOnHeapInitialization)
+					&& arrayIndexInitInfo == null) {
 				// in the "sophisticated" case we have default-initialized all cells up front --> nothing to do here
 				continue;
 			}
@@ -593,7 +593,7 @@ public class InitializationHandler {
 			final ExpressionResult arrayIndexInitialization;
 
 			arrayIndexInitialization = initRec(loc, cellType, arrayIndexInitInfo, onHeap,
-					usingOnHeapInitializationBefore, arrayCellLhs, false, hook);
+					useSophisticatedOnHeapInitialization, arrayCellLhs, false, hook);
 
 			initialization.addAllExceptLrValue(arrayIndexInitialization);
 
@@ -905,7 +905,7 @@ public class InitializationHandler {
 	 */
 	private boolean useForallInitialization(final ICType cType, final InitializerInfo initInfo, final LRValue lhs,
 			final boolean onHeap, final IASTNode hook) {
-		if (!mUseQuantifierArrayInit || mUseConstantArrays) {
+		if (!mUseQuantifierArrayInit) {
 			return false;
 		}
 		if (initInfo != null && initInfo.isMakeNondeterministicInitialization()) {
