@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -26,6 +27,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class EGraph {
+	/**
+	 * This option allows us to toggle whether we detect congruence relations.
+	 */
+	private static final boolean PROCESS_CONGRUENCE = true;
+	private static final boolean ADD_ALL_TERMS = false;
+	private static final boolean PROPOGATE_DISTINCTS_BY_UNION = true;
+
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
 
@@ -66,6 +74,20 @@ public class EGraph {
 		mMgdScript = mgdScript;
 		mServices = services;
 
+		mMgdScript.lock(this);
+		final Term trueTerm = mMgdScript.term(this, "true");
+		final Term falseTerm = mMgdScript.term(this, "false");
+		mMgdScript.unlock(this);
+
+		mUnionFind.findAndConstructEquivalenceClassIfNeeded(trueTerm);
+		mUnionFind.findAndConstructEquivalenceClassIfNeeded(falseTerm);
+		final HashSet<Term> trueSet = new HashSet<>();
+		trueSet.add(trueTerm);
+		final HashSet<Term> falseSet = new HashSet<>();
+		falseSet.add(falseTerm);
+
+		mDistinctSets.put(mUnionFind.getContainingSet(trueTerm), falseSet);
+		mDistinctSets.put(mUnionFind.getContainingSet(falseTerm), trueSet);
 	}
 
 	/**
@@ -84,16 +106,14 @@ public class EGraph {
 		 * Helper method that ranks {@link Term}s of size one, using the order literal < constant symbol < variable.
 		 **/
 		private static int rankTermOfSizeOne(final Term term) {
-			if (SmtUtils.isFalseLiteral(term)) {
+			if (SmtUtils.isFalseLiteral(term) || SmtUtils.isTrueLiteral(term)) {
 				return 0;
-			} else if (SmtUtils.isTrueLiteral(term)) {
-				return 1;
 			} else if (term instanceof ConstantTerm) {
-				return 2;
+				return 1;
 			} else if (SmtUtils.isConstant(term)) {
-				return 3;
+				return 2;
 			} else if (term instanceof TermVariable) {
-				return 4;
+				return 3;
 			} else {
 				throw new AssertionError("Unexpected term of size one");
 			}
@@ -118,12 +138,16 @@ public class EGraph {
 			if (term1.equals(term2)) {
 				return 0;
 			}
-			if (mDagSize.treesize(term1) < mDagSize.treesize(term2)) {
+			final long term1Size = mDagSize.treesize(term1);
+			mDagSize.reset();
+			final long term2Size = mDagSize.treesize(term2);
+			mDagSize.reset();
+			if (term1Size < term2Size) {
 				return -1;
-			} else if (mDagSize.treesize(term1) > mDagSize.treesize(term2)) {
+			} else if (term1Size > term2Size) {
 				return 1;
 			} else { // tiebreaking
-				if (mDagSize.treesize(term1) == 1) {
+				if (term1Size == 1) {
 					return compareTermsOfSizeOne(term1, term2);
 				} else {
 					return CommuhashUtils.HASH_BASED_COMPERATOR.compare(term1, term2);
@@ -140,8 +164,12 @@ public class EGraph {
 	private void addSelectTerm(final ApplicationTerm selectTerm) {
 		assert selectTerm.getFunction().getName().equals("select");
 		assert selectTerm.getParameters().length == 2;
+		addTerm(selectTerm);
 		final Term array = selectTerm.getParameters()[0];
 		final Term index = selectTerm.getParameters()[1];
+
+		addTerm(array);
+		addTerm(index);
 
 		ImmutableSet<Term> arrayESet = mUnionFind.getContainingSet(array);
 		ImmutableSet<Term> indexESet = mUnionFind.getContainingSet(index);
@@ -178,28 +206,99 @@ public class EGraph {
 	 * Adds terms to the datastructure.
 	 **/
 	private void addTerm(final Term term) {
-		if ((term instanceof ConstantTerm)) {
-			mUnionFind.findAndConstructEquivalenceClassIfNeeded(term); // we add terms that do not appear on either side
-																		// of an equality/disequality relation so that
-																		// we do not need to check for deep equality
-																		// later on
+		if ((term instanceof ConstantTerm || term instanceof TermVariable)) {
+			// we add terms that do not appear on either side of an equality/disequality relation so that we do not need
+			// to check for deep equality later on
+			mUnionFind.findAndConstructEquivalenceClassIfNeeded(term);
 		} else if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 
 			final Term representative = mUnionFind.find(appTerm);
 			if (representative == null) {
 				mUnionFind.makeEquivalenceClass(appTerm);
-				for (final Term arg : appTerm.getParameters()) {
-					addTerm(arg);
+				if (ADD_ALL_TERMS) {
+					for (final Term arg : appTerm.getParameters()) {
+						addTerm(arg);
+					}
 				}
 			}
-			if (appTerm.getFunction().getName().equals("select")) {
-				addSelectTerm(appTerm);
-			}
 		} else {
-			throw new UnsupportedOperationException("Unsupported term type");
+			mUnionFind.findAndConstructEquivalenceClassIfNeeded(term);
+			// throw new UnsupportedOperationException("Unsupported term type");
 		}
 
+	}
+
+	private void processBinaryEqualityRelation(final Term term) {
+		final BinaryEqualityRelation binaryEqRelation = BinaryEqualityRelation.convert(term);
+		if (binaryEqRelation != null) {
+			final Term lhs = binaryEqRelation.getLhs();
+			final Term rhs = binaryEqRelation.getRhs();
+
+			addTerm(lhs);
+			addTerm(rhs);
+
+			if (binaryEqRelation.getRelationSymbol() == RelationSymbol.DISTINCT) {
+				final ImmutableSet<Term> leftEset = mUnionFind.getContainingSet(lhs);
+				final ImmutableSet<Term> rightEset = mUnionFind.getContainingSet(rhs);
+				if (!(mDistinctSets.containsKey(leftEset))) {
+					mDistinctSets.put(leftEset, new HashSet<>(rightEset));
+
+				} else {
+					mDistinctSets.get(leftEset).addAll(rightEset);
+				}
+				if (!(mDistinctSets.containsKey(rightEset))) {
+					mDistinctSets.put(rightEset, new HashSet<>(leftEset));
+
+				} else {
+					mDistinctSets.get(rightEset).addAll(leftEset);
+				}
+
+			} else if (binaryEqRelation.getRelationSymbol() == RelationSymbol.EQ) {
+				unionWithImplied(binaryEqRelation.getLhs(), binaryEqRelation.getRhs());
+			} else {
+				throw new AssertionError("unexpected relation symbol " + binaryEqRelation.getRelationSymbol());
+			}
+		}
+	}
+
+	private void processBinaryNumericRelation(final Term term) {
+		final BinaryNumericRelation binaryNumRelation = BinaryNumericRelation.convert(term);
+		if (binaryNumRelation != null) {
+			final RelationSymbol relationSymbol = binaryNumRelation.getRelationSymbol();
+			switch (relationSymbol) {
+			case RelationSymbol.LESS:
+			case RelationSymbol.GREATER:
+			case RelationSymbol.BVULT:
+			case RelationSymbol.BVUGT:
+			case RelationSymbol.BVSLT:
+			case RelationSymbol.BVSGT:
+				final Term lhs = binaryNumRelation.getLhs();
+				final Term rhs = binaryNumRelation.getRhs();
+
+				addTerm(lhs);
+				addTerm(rhs);
+
+				final ImmutableSet<Term> leftEset = mUnionFind.getContainingSet(lhs);
+				final ImmutableSet<Term> rightEset = mUnionFind.getContainingSet(rhs);
+				if (!(mDistinctSets.containsKey(leftEset))) {
+					mDistinctSets.put(leftEset, new HashSet<>(rightEset));
+
+				} else {
+					mDistinctSets.get(leftEset).addAll(rightEset);
+				}
+				if (!(mDistinctSets.containsKey(rightEset))) {
+					mDistinctSets.put(rightEset, new HashSet<>(leftEset));
+
+				} else {
+					mDistinctSets.get(rightEset).addAll(leftEset);
+				}
+				break;
+			default:
+				break;
+			}
+
+		}
 	}
 
 	/**
@@ -207,39 +306,28 @@ public class EGraph {
 	 **/
 	public void addFormula(final Term formula) {
 		final Term[] conjuncts = SmtUtils.getConjuncts(formula);
-
+		mMgdScript.lock(this);
+		final Term trueTerm = mMgdScript.term(this, "true");
+		final Term falseTerm = mMgdScript.term(this, "false");
+		mMgdScript.unlock(this);
 		for (final Term term : conjuncts) {
-			final BinaryEqualityRelation binaryEqRelation = BinaryEqualityRelation.convert(term);
-			if (binaryEqRelation == null) {
-				addTerm(term); //
-			} else {
-				final Term lhs = binaryEqRelation.getLhs();
-				final Term rhs = binaryEqRelation.getRhs();
+			addTerm(term);
+			union(term, trueTerm);
+			if (term instanceof ApplicationTerm) {
+				final ApplicationTerm appTerm = (ApplicationTerm) term;
 
-				addTerm(lhs);
-				addTerm(rhs);
-
-				if (binaryEqRelation.getRelationSymbol() == RelationSymbol.DISTINCT) {
-					final ImmutableSet<Term> leftEset = mUnionFind.getContainingSet(lhs);
-					final ImmutableSet<Term> rightEset = mUnionFind.getContainingSet(rhs);
-					if (!(mDistinctSets.containsKey(leftEset))) {
-						mDistinctSets.put(leftEset, new HashSet<>(rightEset));
-
-					} else {
-						mDistinctSets.get(leftEset).addAll(rightEset);
-					}
-					if (!(mDistinctSets.containsKey(rightEset))) {
-						mDistinctSets.put(rightEset, new HashSet<>(leftEset));
-
-					} else {
-						mDistinctSets.get(rightEset).addAll(leftEset);
-					}
-
-				} else if (binaryEqRelation.getRelationSymbol() == RelationSymbol.EQ) {
-					unionWithImplied(binaryEqRelation.getLhs(), binaryEqRelation.getRhs());
-				} else {
-					throw new AssertionError("unexpected relation symbol " + binaryEqRelation.getRelationSymbol());
+				if (appTerm.getFunction().getName().equals("not")) {
+					addTerm(appTerm.getParameters()[0]);
+					union(appTerm.getParameters()[0], falseTerm);
 				}
+			}
+			processBinaryEqualityRelation(term);
+			processBinaryNumericRelation(term);
+		}
+		if (PROCESS_CONGRUENCE) {
+			final Set<ApplicationTerm> selectTerms = SmtUtils.extractApplicationTerms("select", formula, false);
+			for (final ApplicationTerm selectTerm : selectTerms) {
+				addSelectTerm(selectTerm);
 			}
 		}
 	}
@@ -247,17 +335,7 @@ public class EGraph {
 	/**
 	 * Triple representing a union operation where E is the union of A and B.
 	 **/
-	// custom triple as there are no triples in java
-	private static class UnionOperation {
-		public ImmutableSet<Term> mA;
-		public ImmutableSet<Term> mB;
-		public ImmutableSet<Term> mE;
-
-		public UnionOperation(final ImmutableSet<Term> A, final ImmutableSet<Term> B, final ImmutableSet<Term> E) {
-			mA = A;
-			mB = B;
-			mE = E;
-		}
+	private static record UnionOperation(ImmutableSet<Term> A, ImmutableSet<Term> B, ImmutableSet<Term> E) {
 	}
 
 	/**
@@ -299,7 +377,7 @@ public class EGraph {
 		}
 
 		for (final UnionOperation unionOp : unions) {
-			findImpliedSelectUnions(unionOp.mA, unionOp.mB, unionOp.mE);
+			findImpliedSelectUnions(unionOp.A, unionOp.B, unionOp.E);
 		}
 	}
 
@@ -326,8 +404,15 @@ public class EGraph {
 	 **/
 	private void unionDistinctTerms(final ImmutableSet<Term> A, final ImmutableSet<Term> B,
 			final ImmutableSet<Term> E) {
-		final HashSet<Term> newDistinct = mDistinctSets.getOrDefault(A, new HashSet<>());
+		HashSet<Term> newDistinct = mDistinctSets.getOrDefault(A, new HashSet<>());
 		newDistinct.addAll(mDistinctSets.getOrDefault(B, new HashSet<>()));
+		if (PROPOGATE_DISTINCTS_BY_UNION) {
+			Set<Term> newDistinctUnioned = new HashSet<>();
+			for (final Term term : newDistinct) {
+				newDistinctUnioned = DataStructureUtils.union(newDistinctUnioned, mUnionFind.getContainingSet(term));
+			}
+			newDistinct = new HashSet<>(newDistinctUnioned);
+		}
 		mDistinctSets.remove(A);
 		mDistinctSets.remove(B);
 		mDistinctSets.put(E, newDistinct);
@@ -432,6 +517,18 @@ public class EGraph {
 		} else {
 			return EquivalenceState.UNKNOWN;
 		}
+	}
+
+	/**
+	 * Returns a map from each term to its representative.
+	 **/
+	public HashMap<Term, Term> getRepresentativeMap() {
+		final HashMap<Term, Term> representativeMap = new HashMap();
+		for (final Term term : mUnionFind.getAllElements()) {
+			assert mUnionFind.find(term) != null;
+			representativeMap.put(term, mUnionFind.find(term));
+		}
+		return representativeMap;
 	}
 
 }
