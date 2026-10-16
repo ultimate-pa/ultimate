@@ -141,8 +141,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final String DESC_USE_CONSTANT_ARRAYS =
 			"Use SMT constant arrays for default initialization of variables.";
 	public static final String LABEL_USE_STORE_CHAINS = "Use store chains";
-	public static final String LABEL_USE_FORALL_ARRAY_INITIALIZATION = "Use forall quantifier for array initialization";
-	private static final String DESC_USE_FORALL_ARRAY_INITIALIZATION =
+	public static final String LABEL_USE_QUANTIFIER_ARRAY_INITIALIZATION = "Use quantifier for array initialization";
+	private static final String DESC_USE_QUANTIFIER_ARRAY_INITIALIZATION =
 			"Initialize large arrays to their default value using a single assume statement with a forall "
 					+ "quantifier instead of one assignment per cell. "
 					+ "This setting is only applied, if 'Use constant arrays' is disabled.";
@@ -384,8 +384,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_SMT_BOOL_ARRAYS_WORKAROUND, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_USE_CONSTANT_ARRAYS, false, DESC_USE_CONSTANT_ARRAYS,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_USE_FORALL_ARRAY_INITIALIZATION, true,
-						DESC_USE_FORALL_ARRAY_INITIALIZATION, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_USE_QUANTIFIER_ARRAY_INITIALIZATION, true,
+						DESC_USE_QUANTIFIER_ARRAY_INITIALIZATION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_USE_STORE_CHAINS, false, "Only for benchmarking -- do not use",
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ENFORCE_IF_FOR_CONDITIONAL, false, DESC_ENFORCE_IF_FOR_CONDITIONAL,

@@ -160,7 +160,7 @@ public class InitializationHandler {
 
 	private final boolean mUseConstantArrays;
 
-	private final boolean mUseForallArrayInit;
+	private final boolean mUseQuantifierArrayInit;
 
 	private final IMemoryPointer mMemoryPointer;
 
@@ -178,7 +178,7 @@ public class InitializationHandler {
 		mCHandler = chandler;
 		mExprResultTransformer = exprResultTransformer;
 		mUseConstantArrays = settings.useConstantArrays();
-		mUseForallArrayInit = settings.useForallArrayInitialization();
+		mUseQuantifierArrayInit = settings.useQuantifierArrayInitialization();
 		mUseSelectForArrayCellInitIfPossible = !settings.useStoreChains();
 		mMemoryPointer = memoryPointer;
 	}
@@ -261,7 +261,7 @@ public class InitializationHandler {
 		final boolean usingOnHeapInitializationViaConstArray =
 				onHeap && useConstArrayInitialization(targetCTypeRaw, initializerInfo, hook);
 		final boolean usingOnHeapInitializationViaForall = onHeap && !usingOnHeapInitializationViaConstArray
-				&& useForallDefaultInitialization(targetCTypeRaw, initializerInfo, lhs, true, hook);
+				&& useForallInitialization(targetCTypeRaw, initializerInfo, lhs, true, hook);
 		// in both "sophisticated" cases all cells are default-initialized up front
 		final boolean usingOnHeapDefaultInitializationBefore =
 				usingOnHeapInitializationViaConstArray || usingOnHeapInitializationViaForall;
@@ -537,7 +537,7 @@ public class InitializationHandler {
 		 */
 		final boolean useConstOffHeapArrayInitialization =
 				!onHeap && outermostInNestedArray && (useConstArrayInitialization(cArrayType, initInfo, hook)
-						|| useForallDefaultInitialization(cArrayType, initInfo, arrayLhsToInitialize, false, hook));
+						|| useForallInitialization(cArrayType, initInfo, arrayLhsToInitialize, false, hook));
 		if (useConstOffHeapArrayInitialization) {
 			// in the "sophisticated" off heap case: make a default initialization of all array cells first
 			final ExpressionResult defaultInit =
@@ -776,10 +776,10 @@ public class InitializationHandler {
 			 */
 			if (!nondet && !(CTranslationUtil.getValueTypeOfNestedArray(cArray) instanceof CStructOrUnion)) {
 				if (useConstArrayInitialization(cType, null, hook)) {
-					return makeSophisticatedOffHeapDefaultInitializationForArray(loc, cArray, lhsToInitIfAny);
+					return makeConstArrayOffHeapDefaultInitializationForArray(loc, cArray, lhsToInitIfAny);
 				}
-				if (useForallDefaultInitialization(cType, null, lhsToInitIfAny, false, hook)) {
-					return makeForallOffHeapDefaultInitializationForArray(loc, cArray,
+				if (useForallInitialization(cType, null, lhsToInitIfAny, false, hook)) {
+					return makeQuantifierOffHeapDefaultInitializationForArray(loc, cArray,
 							(VariableLHS) lhsToInitIfAny.getLhs());
 				}
 			}
@@ -849,7 +849,7 @@ public class InitializationHandler {
 		return initialization.build();
 	}
 
-	private ExpressionResult makeSophisticatedOffHeapDefaultInitializationForArray(final ILocation loc,
+	private ExpressionResult makeConstArrayOffHeapDefaultInitializationForArray(final ILocation loc,
 			final CArray cArrayType, final LocalLValue lhsToInit) {
 		assert mUseConstantArrays;
 
@@ -871,7 +871,7 @@ public class InitializationHandler {
 	 * Default-initializes the given array with a single assume statement of the form
 	 * <code>assume (forall i_1, ..., i_n :: a[i_1]...[i_n] == defaultValue)</code>.
 	 */
-	private ExpressionResult makeForallOffHeapDefaultInitializationForArray(final ILocation loc,
+	private ExpressionResult makeQuantifierOffHeapDefaultInitializationForArray(final ILocation loc,
 			final CArray cArrayType, final VariableLHS arrayLhs) {
 		final List<VarList> quantifiedVars = new ArrayList<>();
 		final List<Expression> indices = new ArrayList<>();
@@ -903,9 +903,9 @@ public class InitializationHandler {
 	 * Decides whether an on-heap aggregate or off-heap array should be default-initialized with quantified assumes.
 	 * Uses the same thresholds as constant arrays; constant arrays take precedence.
 	 */
-	private boolean useForallDefaultInitialization(final ICType cType, final InitializerInfo initInfo,
-			final LRValue lhs, final boolean onHeap, final IASTNode hook) {
-		if (!mUseForallArrayInit || mUseConstantArrays) {
+	private boolean useForallInitialization(final ICType cType, final InitializerInfo initInfo, final LRValue lhs,
+			final boolean onHeap, final IASTNode hook) {
+		if (!mUseQuantifierArrayInit || mUseConstantArrays) {
 			return false;
 		}
 		if (initInfo != null && initInfo.isMakeNondeterministicInitialization()) {
