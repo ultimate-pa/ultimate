@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -53,9 +53,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.Call;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.Return;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.Summary;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -96,11 +98,11 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	private final CfgSmtToolkit mWorkerCsToolkit;
 	private final ProgramVariableTransferrer mVarTransfer;
 
-	enum Mode {
+	public enum TransferMode {
 		NONE, MAIN2WORKER, WORKER2MAIN
 	}
 
-	private Mode mMode = Mode.NONE;
+	private TransferMode mMode = TransferMode.NONE;
 
 	/**
 	 * A class used to transfer runs / cex and automata between worker and main scripts. Also used to create the worker
@@ -114,16 +116,22 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	 * @param main
 	 * @param worker
 	 * @param mainCfgToolKit
+	 * @param freshVarPrefix
+	 *            carried by every variable the worker {@link ManagedScript} mints, so that its names cannot clash
+	 *            with the main script's, whose whole declaration history is replayed onto the worker script; see
+	 *            {@link CfgSmtToolkit#createFreshManagedScript(IUltimateServiceProvider, SolverSettings, String, String)}.
+	 *            Pass {@code ""} to keep the names a worker produced before this existed.
 	 *
 	 * @author Max Barth (max.barth@lmu.de)
 	 */
 	public TransferBetweenMainAndWorker(final AutomataLibraryServices services, final ILogger logger,
 			final ManagedScript main, final IUltimateServiceProvider solverServices,
-			final SolverSettings solverSettings, final CfgSmtToolkit mainCfgToolKit) {
+			final SolverSettings solverSettings, final CfgSmtToolkit mainCfgToolKit, final String freshVarPrefix) {
 		mLogger = logger;
 		mIUltiamteServices = solverServices;
 		mMainScript = main;
-		mWorkerScript = mainCfgToolKit.createFreshManagedScript(solverServices, solverSettings);
+		mWorkerScript = mainCfgToolKit.createFreshManagedScript(solverServices, solverSettings,
+				solverSettings.getBaseNameOfDumpedScript(), freshVarPrefix);
 
 		mServices = services;
 		mMainCsToolkit = mainCfgToolKit;
@@ -139,7 +147,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	 * Gets a run / counterexample with Letters whose transformula comes from one script. Returns a new run with new
 	 * letters, whose transformula comes from target script. The semantics of both runs are equal.
 	 */
-	public IRun<LETTER, ?> transferRun(final NestedRun<LETTER, ?> counterexample, final Mode mode) {
+	public IRun<LETTER, ?> transferRun(final NestedRun<LETTER, ?> counterexample, final TransferMode mode) {
 		final NestedRun<LETTER, ?> oldCounterexample = counterexample;
 		mMode = mode;
 		NestedWord<LETTER> currentWord = new NestedWord<>();
@@ -151,6 +159,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 			case final Return re -> nestingOperation = NestedWord.MINUS_INFINITY;
 			case final StatementSequence stmt -> nestingOperation = NestedWord.INTERNAL_POSITION;
 			case final SequentialComposition seqComp -> nestingOperation = NestedWord.INTERNAL_POSITION;
+			case final Summary sum -> nestingOperation = NestedWord.INTERNAL_POSITION;
 			default -> new AssertionError("Unexpected letter type: " + letter.getClass());
 			}
 			final NestedWord<LETTER> singleWord = new NestedWord<>(transferEdge(letter), nestingOperation);
@@ -174,10 +183,25 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 			case final Return re -> transferredLetter = (LETTER) getTransferReturn(re);
 			case final StatementSequence stmt -> transferredLetter = (LETTER) getTransferStmtSequence(stmt);
 			case final SequentialComposition seqComp -> transferredLetter = (LETTER) getTransferSeqComp(seqComp);
-			default -> new AssertionError("Unexpected letter type: " + letter.getClass());
+			case final Summary sum -> transferredLetter = (LETTER) getTransferSummary(sum);
+			case final GotoEdge gotoEdge -> transferredLetter = (LETTER) getTransferGoto(gotoEdge);
+			default -> throw new UnsupportedOperationException("Cannot transfer the letter " + letter + ", which is a "
+					+ letter.getClass().getSimpleName() + "; this transferrer knows Call, Return, StatementSequence, "
+					+ "SequentialComposition, Summary and GotoEdge");
+			}
+			if (transferredLetter != null) {
+				// The copy learns its procedures from its source and target, which the inner CodeBlocks of a
+				// composition no longer have. Without them the program execution of a worker counterexample cannot be
+				// backtranslated.
+				((CodeBlock) transferredLetter).copyProceduresFrom((CodeBlock) letter);
 			}
 		}
-		assert transferredLetter != null;
+		if (transferredLetter == null) {
+			// Never a mere assertion: a null letter is accepted by the automaton being built and only surfaces much
+			// later, as a NullPointerException in whoever first asks that transition for its transition formula.
+			throw new AssertionError("Transferring the " + letter.getClass().getSimpleName() + " " + letter
+					+ " produced no letter");
+		}
 		mEdgeCache.put(letter, transferredLetter);
 		mEdgeCache.put(transferredLetter, letter);
 		return transferredLetter;
@@ -206,6 +230,8 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 				(BoogieIcfgLocation) call.getTarget(), call.getCallStatement(), mLogger);
 		newCall.setTransitionFormula(transferTransFormulaWithMode(call.getTransformula()));
 		newCall.setPayload(call.getPayload()); // Payload is needed for for example Overapproximation Annotations
+		// Also reached directly as the corresponding call of a return, i.e. not through transferEdge.
+		newCall.copyProceduresFrom(call);
 		return newCall;
 	}
 
@@ -226,6 +252,28 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 		newReturn.setPayload(re.getPayload());
 		return newReturn;
 
+	}
+
+	/**
+	 * A {@link GotoEdge} carries no statements, but it does carry a transition formula and it does survive into the
+	 * ICFG: removing goto edges is off by default (see {@code IcfgPreferenceInitializer#LABEL_REMOVE_GOTO_EDGES}),
+	 * and a goto that cannot be merged away is kept as an ordinary internal edge.
+	 */
+	private GotoEdge getTransferGoto(final GotoEdge gotoEdge) {
+		final GotoEdge newGoto = new GotoEdge(gotoEdge.getSerialNumber(), (BoogieIcfgLocation) gotoEdge.getSource(),
+				(BoogieIcfgLocation) gotoEdge.getTarget(), mLogger);
+		newGoto.setTransitionFormula(transferTransFormulaWithMode(gotoEdge.getTransformula()));
+		newGoto.setPayload(gotoEdge.getPayload());
+		return newGoto;
+	}
+
+	private Summary getTransferSummary(final Summary sum) {
+		final Summary newSum = new Summary(sum.getSerialNumber(), (BoogieIcfgLocation) sum.getSource(),
+				(BoogieIcfgLocation) sum.getTarget(), sum.getCallStatement(), sum.calledProcedureHasImplementation(),
+				mLogger);
+		newSum.setTransitionFormula(transferTransFormulaWithMode(sum.getTransformula()));
+		newSum.setPayload(sum.getPayload());
+		return newSum;
 	}
 
 	private UnmodifiableTransFormula transferTransFormulaWithMode(final UnmodifiableTransFormula inTF) {
@@ -274,7 +322,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 		for (final Entry<IProgramVar, TermVariable> entry : map.entrySet()) {
 			IProgramVar transferredProgramVar;
 			if (!mProgramVarBackTranslationCache.containsKey(entry.getKey())) {
-				assert mMode.equals(Mode.MAIN2WORKER);
+				assert mMode.equals(TransferMode.MAIN2WORKER);
 				switch (entry.getKey()) {
 				case final ProgramNonOldVar var -> {
 					transferredProgramVar = mVarTransfer.translateProgramVar(var);
@@ -314,7 +362,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	 */
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> transferAutomaton(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton,
-			final IEmptyStackStateFactory<STATE> emptyStateFactory, final Mode mode) {
+			final IEmptyStackStateFactory<STATE> emptyStateFactory, final TransferMode mode) {
 		final long setuptime = System.nanoTime() / 1000000000;
 		VpAlphabet<LETTER> alphabet;
 		Set<LETTER> internalAlphabet;

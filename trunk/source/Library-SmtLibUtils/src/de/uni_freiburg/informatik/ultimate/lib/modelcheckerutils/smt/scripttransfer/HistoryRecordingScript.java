@@ -57,6 +57,13 @@ public class HistoryRecordingScript extends WrapperScript {
 	private final Map<String, ISmtDeclarable> mSymbolTable;
 	private int mCurrentStackLevel;
 
+	/**
+	 * @return the script this one records for
+	 */
+	public Script getWrappedScript() {
+		return mScript;
+	}
+
 	public HistoryRecordingScript(final Script script) {
 		super(script);
 		mHistory = new ArrayDeque<>();

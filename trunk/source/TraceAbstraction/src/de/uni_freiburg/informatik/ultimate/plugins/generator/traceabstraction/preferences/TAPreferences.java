@@ -103,8 +103,16 @@ public final class TAPreferences {
 	private final IndependenceSettings mLbeIndependenceSettings;
 
 	// Parallel Trace Abstraction Settings
-	private final int mThreadLimit;
 	private final boolean mParallelCegarLoop;
+	private final int mThreadLimit;
+	private final int mNumKInductionWorkers;
+	private final int mKInductionSolverTimeout;
+	private final int mKInductionMemoryBudget;
+	private final boolean mInvariantProbation;
+	private final int mProbationFactor;
+	private final int mProbationMinimum;
+	private final boolean mKInductionSolverRestart;
+	private final boolean mInterpolantInvariants;
 	private final boolean mConsiderOnlyActiveCounterexamplesInIsEmptyParallel;
 	private final boolean mMinimizeAbstractionPerWorker;
 	private final int mSearchLoopBound;
@@ -224,6 +232,18 @@ public final class TAPreferences {
 
 		mParallelCegarLoop = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLEL_CEGAR_LOOP);
 		mThreadLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_THREADLIMIT);
+		mNumKInductionWorkers = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_NUM_KINDUCTION_WORKERS);
+		mKInductionSolverTimeout =
+				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_SOLVER_TIMEOUT);
+		mKInductionMemoryBudget =
+				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_MEMORY_BUDGET);
+		mInvariantProbation = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INVARIANT_PROBATION);
+		mProbationFactor = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_PROBATION_FACTOR);
+		mProbationMinimum = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_PROBATION_MINIMUM);
+		mKInductionSolverRestart =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_SOLVER_RESTART);
+		mInterpolantInvariants =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_INVARIANTS);
 		mConsiderOnlyActiveCounterexamplesInIsEmptyParallel =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY);
 		mMinimizeAbstractionPerWorker =
@@ -654,12 +674,70 @@ public final class TAPreferences {
 		return new HoareProofSettings(getHoareAnnotationPositions(), getSimplificationTechnique());
 	}
 
+	public boolean isParallelCegarLoop() {
+		return mParallelCegarLoop;
+	}
+
+	/**
+	 * @return the number of trace abstraction workers, or 0 for one per available core except the main thread's
+	 */
 	public int getThreadLimit() {
 		return mThreadLimit;
 	}
 
-	public boolean isParallelCegarLoop() {
-		return mParallelCegarLoop;
+	public int getNumKInductionWorkers() {
+		return mNumKInductionWorkers;
+	}
+
+	/**
+	 * @return the per-check timeout in ms that the k-induction worker passes to its SMT solver, or -1 to inherit the
+	 *         timeout of the configured external solver command.
+	 */
+	public int getKInductionSolverTimeout() {
+		return mKInductionSolverTimeout;
+	}
+
+	/**
+	 * @return how many percent of the JVM's maximum heap may be live while the k-induction worker runs
+	 */
+	public int getKInductionMemoryBudget() {
+		return mKInductionMemoryBudget;
+	}
+
+	/**
+	 * @return whether the invariant supplier may interrupt a query of k-induction that an invariant made slow
+	 */
+	public boolean useInvariantProbation() {
+		return mInvariantProbation;
+	}
+
+	/**
+	 * @return how many times longer than the previous query of its kind a query of k-induction may run before it is
+	 *         on probation
+	 */
+	public int getProbationFactor() {
+		return mProbationFactor;
+	}
+
+	/**
+	 * @return how long (s) a query of k-induction runs at least before it is on probation
+	 */
+	public int getProbationMinimum() {
+		return mProbationMinimum;
+	}
+
+	/**
+	 * @return whether k-induction restarts its solver if an interrupt of the invariant supplier killed it
+	 */
+	public boolean restartKInductionSolverAfterInterrupt() {
+		return mKInductionSolverRestart;
+	}
+
+	/**
+	 * @return whether TA workers hand their interpolants to the invariant supplier
+	 */
+	public boolean submitInterpolantInvariants() {
+		return mInterpolantInvariants;
 	}
 
 	public boolean minimizeAbstractionPerWorker() {
