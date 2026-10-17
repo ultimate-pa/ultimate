@@ -65,6 +65,13 @@ public class DiffWrapperScript extends WrapperScript {
 		super(script);
 	}
 
+	/**
+	 * @return the script this one adds the diff function to
+	 */
+	public Script getWrappedScript() {
+		return mScript;
+	}
+
 	@Override
 	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException {
 		setLogic(Logics.valueOf(logic));

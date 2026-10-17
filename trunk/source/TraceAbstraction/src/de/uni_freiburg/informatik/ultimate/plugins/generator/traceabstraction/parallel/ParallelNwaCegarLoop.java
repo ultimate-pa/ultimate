@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,13 +33,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -51,7 +55,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
@@ -72,20 +78,33 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TransferBetweenMainAndWorker.TransferMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadResult.WorkerType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.IInvariantSink;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantSupplier;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.kinduction.KInductionWorkerThread;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IsEmptyParallel;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 
 public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		extends NwaCegarLoop<L> {
@@ -93,13 +112,44 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	boolean mComputeHoareAnnotation;
 	final String mDestroyEverything = "destroyEverything";
 
+	/** z3's value of :timeout for no timeout at all. */
+	private static final long Z3_NO_TIMEOUT = 4294967295L;
+
+	/**
+	 * Stack size of the worker threads. The JVM default is far too small for the recursive parts of the workers, e.g.
+	 * k-induction's counterexample reconstruction on a long run through recursive procedures, or its path expression
+	 * visitor on a deeply nested regex.
+	 */
+	private static final long WORKER_STACK_SIZE_BYTES = 256L * 1024 * 1024;
+
+	/**
+	 * The per-check timeout option of the external solvers we can configure, by the name of their executable: the
+	 * pattern matches the option as it may already appear in the configured command, the format string writes a new
+	 * one. Mirrors {@link SolverBuilder.ExternalSolver}, which spells the same options for its built-in commands.
+	 */
+	private static final Map<String, Entry<Pattern, String>> SOLVER_TIMEOUT_OPTION = Map.of(
+			"z3", Map.entry(Pattern.compile("\\s*-t:\\d+"), " -t:%d"),
+			"cvc4", Map.entry(Pattern.compile("\\s*--tlimit-per=\\d+"), " --tlimit-per=%d"),
+			"cvc5", Map.entry(Pattern.compile("\\s*--tlimit-per=\\d+"), " --tlimit-per=%d"));
+
 	// Parallel Setup
 	private final ExecutorService mExec;
-	private int mThreadLimit;
+	private final int mThreadLimit;
+	private final int mNumTaWorkers;
+	private final int mNumKInductionWorkers;
 	private int mRunningThreads = 0;
+	// Workers that finished without a verdict. They are gone from the pool and will produce nothing more.
+	private int mRetiredWorkers = 0;
+	// Collects invariants from the TA workers for the k-induction workers. Null unless there is a
+	// k-induction worker and someone to feed it; runs on mInvariantExec, outside the worker pool, since it never
+	// decides the program.
+	private InvariantSupplier<L, A> mInvariantSupplier;
+	private ExecutorService mInvariantExec;
+	// Set before the workers are shut down and their solvers destroyed: a query failing from then on is no crash.
+	private volatile boolean mShuttingDown;
 
 	// private final CompletionService<WorkerThreadResult<L, A>> mECS;
-	BlockingQueue<IRun<L, ?>> mWorkerTaskQueue = new LinkedBlockingQueue<>();
+	BlockingQueue<WorkerThreadTask<L>> mWorkerTaskQueue = new LinkedBlockingQueue<>();
 	BlockingQueue<WorkerThreadResult<L, A>> mWorkerResultQueue = new LinkedBlockingQueue<>();
 
 	// need global program cache, but worker need to get copy otherwise we
@@ -111,7 +161,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	private final Set<Integer> mCounterexamplesToBeRemovedFromActiveCexMap = new HashSet<>();
 	protected InterpolationTechnique mInterpolationTechnique;
 
-	protected Class<L> mTransitionClazz;
+	public Class<L> mTransitionClazz;
 
 	// Addtional Statistiks for Evaluation
 	private Integer mCounterexamplesChecked = 0;
@@ -130,12 +180,12 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	private final int mExceptionInWorker = 0;
 
 	private long mRefinementTime = 0;
+	private long mIdleTime = 0;
 
 	/**
 	 * Based on the @NwaCegarLoop. Given a ThreadLimit, creates a ExecutionerService that will manage the worker
 	 * threads. Executes each tracecheck in a new thread called worker. This loop, only searches for counterexamples and
 	 * updates the abstraction. The feasiblity check and generalization of interpolant automata is done by the workers.
-	 *
 	 * TODO option to save memory, measure heap, then dont spawn worker / kill a worker
 	 *
 	 * @author Max Barth (max.barth@lmu.de)
@@ -150,59 +200,26 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, proofProducer,
 				services, transitionClazz, stateFactoryForRefinement);
 		// Start thread pool
-		mThreadLimit = mPref.getThreadLimit();
-		if (mThreadLimit == 0) { // maximum of available cores
-			mThreadLimit = Runtime.getRuntime().availableProcessors();
-			mThreadLimit -= 1; // one for main thread
+		if (mPref.getThreadLimit() == 0) { // maximum of available cores
+			mNumTaWorkers = Runtime.getRuntime().availableProcessors() - 1; // one for main thread
+		} else {
+			mNumTaWorkers = mPref.getThreadLimit();
+		}
+		mNumKInductionWorkers = mPref.getNumKInductionWorkers();
+		mThreadLimit = mNumTaWorkers + mNumKInductionWorkers;
+		if (mThreadLimit == 0) {
+			throw new AssertionError("At least one parallel CEGAR worker thread must be configured");
 		}
 
-		mExec = Executors.newFixedThreadPool(mThreadLimit);
+		mExec = Executors.newFixedThreadPool(mThreadLimit, workerThreadFactory("Cegar Worker"));
 		Thread.currentThread().setName("Main Cegar Thread");
 		getServices().getStorage().pushMarker(mDestroyEverything);
 	}
 
-	/*
-	 * Sets up a worker with that communicates via blocking queues and stays alive after one counterexample check. Every
-	 * transfer between controller and worker goes via @TransferBetweenMainAndWorker.
-	 *
-	 */
-	private ICegarNwaWorkerThread<L, A> setUpContinuesWorker(final IUltimateServiceProvider iterationServices,
-			final int id) throws InterruptedException {
-
-		final TransferBetweenMainAndWorker<L, IPredicate> transferUtils = new TransferBetweenMainAndWorker<>(
-				new AutomataLibraryServices(mServices), mLogger, mCsToolkit.getManagedScript(), iterationServices,
-				getSolverSettings(iterationServices,
-						getIteration() + mRunningThreads + mCounterexample.getWord().asList().hashCode() + "parallel"),
-				mCsToolkit);
-
-		final CfgSmtToolkit freshToolKit = transferUtils.getWorkerCfgSmtToolKit();
-
-		// Create predicateFactory with worker script
-		final PredicateFactory predicateFactory =
-				new PredicateFactory(mServices, freshToolKit.getManagedScript(), freshToolKit.getSymbolTable());
-
-		// Create PredicateFactoryForInterpolantAutomata with worker script
-		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata =
-				new PredicateFactoryForInterpolantAutomata(freshToolKit.getManagedScript(), predicateFactory,
-						mComputeHoareAnnotation);
-
-		final Set<IcfgLocation> hoareAnnotationLocs = Collections.emptySet();
-		if (mComputeHoareAnnotation) {
-			// TODO need different hoareAnnotationLocs
-			throw new AssertionError("Hoare Annotations not yet supported in Parallel cegar loop");
-		}
-		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(mServices,
-				freshToolKit.getManagedScript(), predicateFactory, mComputeHoareAnnotation, hoareAnnotationLocs);
-
-		// make sure that mPref.getCfgSmtToolkit returns the worker toolkit
-		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
-				new TaCheckAndRefinementPreferences<>(getServices(), mPref, mInterpolationTechnique,
-						mSimplificationTechnique, freshToolKit, predicateFactory, mIcfg);
-		// initialize worker
-		return new CegarNwaWorkerThread<>(mLogger, mPref, id, mResultBuilder, iterationServices, freshToolKit,
-				predicateFactory, taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata,
-				stateFactoryForRefinement, mComputeHoareAnnotation, this, mWorkerResultQueue, mWorkerTaskQueue,
-				transferUtils);
+	private static ThreadFactory workerThreadFactory(final String name) {
+		final AtomicInteger counter = new AtomicInteger();
+		return runnable -> new Thread(null, runnable, name + " " + counter.incrementAndGet(),
+				WORKER_STACK_SIZE_BYTES);
 	}
 
 	/*
@@ -215,18 +232,28 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 */
 	@Override
 	protected void iterate() throws AutomataLibraryException {
-		// TODO manage time and timeout
-		boolean didntFindCexLastIteration = false;
-		final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
-		final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
-		for (int i = 0; i < mThreadLimit; i++) {
-			try {
-				mExec.submit(setUpContinuesWorker(iterationServices, i));
-			} catch (final InterruptedException e) {
-				throw new AssertionError("Interrupted during worker setup " + e);
+		try {
+			iterateWithWorkers();
+		} finally {
+			// Not every way out of the loop shuts the pool down, but the supplier would wait for messages forever.
+			mShuttingDown = true;
+			if (mInvariantExec != null) {
+				mInvariantExec.shutdownNow();
 			}
 		}
+	}
 
+	/**
+	 * @return whether the loop is done, so that a worker whose solver is destroyed under a query stops quietly
+	 */
+	public boolean isShuttingDown() {
+		return mShuttingDown;
+	}
+
+	private void iterateWithWorkers() throws AutomataLibraryException {
+		// TODO manage time and timeout
+		boolean didntFindCexLastIteration = false;
+		setUpWorkerThreads();
 		// start worker for initial cex:
 		startWorker();
 
@@ -235,65 +262,19 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			boolean abstractionWasRefined = false;
 			mLogger.info(String.format("=== Iteration %s ===", getIteration()));
 
-			try {
-				// we sleep if not: thread or counterexample is available
-				WorkerThreadResult<L, A> workerResult = getWorkerResult(didntFindCexLastIteration);
-
-				// go through all done workerResult
-				while (workerResult != null) {
-					final long time = System.nanoTime() / 1000000000;
-					try {
-						mLogger.info("Main: A Thread is Done");
-						if (workerResult.workerCrashed()) {
-							mLogger.error("Main: Worker Crashed! exiting CEGAR loop.");
-							// TODO we can try to recover, and restart the worker.
-							// It might be that just this counterexample crashes our worker and we can still prove the
-							// program correct
-							shutDownAndDestroy(mDestroyEverything);
-							throw new AssertionError("Worker Crashed!, Exiting CEGAR loop!");
-						}
-						// If Error automaton terminate immediately
-						if (mPref.stopAfterFirstViolation()
-								&& workerResult.getAutomatonType().equals(AutomatonType.ERROR)) {
-							shutDownAndDestroy(mDestroyEverything);
-							updateAndPrintStatistics(true);
-							return;
-						}
-
-						mLogger.info("Worker Automaton Type: " + workerResult.getAutomatonType());
-						mLogger.info("Refining Abstraction");
-						refinement(workerResult);
-						mRefinementsDone += 1;
-						abstractionWasRefined = true;
-						// Not sure if necessary
-						workerResult.garbageCollect();
-						// If new abstraction is empty terminate immediately
-						if (isSafeThenTerminate()) {
-							updateAndPrintStatistics(true);
-							return;
-						}
-
-					} catch (final CancellationException e) {
-						mLogger.warn("Worker was cancelled! " + e);
-					} catch (final Exception e) {
-						mLogger.warn("Worker Failed! " + e);
-						throw e;
-					} finally {
-
-					}
-					workerResult = mWorkerResultQueue.poll();
-					mRefinementTime += ((System.nanoTime() / 1000000000) - time);
+			// we sleep if not: thread or counterexample is available
+			final WorkerThreadResult<L, A> workerResult = getWorkerResult(didntFindCexLastIteration);
+			if (workerResult != null) {
+				final int refinementsBefore = mRefinementsDone;
+				final boolean terminate = handleWorkerResults(workerResult);
+				if (terminate) {
+					return;
 				}
-				mLogger.info("No more worker results to process");
-				assert workerResult == null;
-
-			} catch (final ToolchainCanceledException e) {
-				mLogger.warn("Worker Failed! " + e);
-				throw e;
-			} catch (final InterruptedException ie) {
-				ie.printStackTrace();
-				mLogger.warn("Worker was interrupted! " + ie);
+				// Results without a verdict retire their worker but leave the abstraction as it is, which may still be
+				// the initial one: minimization rejects that for interprocedural programs (not an IDoubleDecker).
+				abstractionWasRefined = mRefinementsDone > refinementsBefore;
 			}
+
 			if (abstractionWasRefined && !mPref.minimizeAbstractionPerWorker()) {
 				// uses NWA CEGAR loop
 				// When do we minimize how often?
@@ -327,6 +308,235 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 	}
 
+	/*
+	 * returns true, if CEGAR should terminate.
+	 */
+	private boolean handleWorkerResults(final WorkerThreadResult<L, A> firstWorkerResult)
+			throws AutomataOperationCanceledException, AutomataLibraryException {
+		WorkerThreadResult<L, A> workerResult = firstWorkerResult;
+		// go through all done workerResult
+		while (workerResult != null) {
+			final long time = System.nanoTime() / 1000000000;
+
+			mLogger.info("Main: A Thread is Done");
+			if (workerResult.workerCrashed()) {
+				mLogger.error("Main: Worker Crashed! exiting CEGAR loop.");
+				// TODO we can try to recover, and restart the worker.
+				// It might be that just this counterexample crashes our worker and we can still prove the
+				// program correct
+				shutDownAndDestroy(mDestroyEverything);
+				throw new AssertionError("Worker Crashed!, Exiting CEGAR loop!");
+			}
+			// A worker that ran to completion without deciding the program (the solver answered unknown). It has
+			// nothing to refine with, so the only thing to do is retire it and let the remaining workers finish.
+			// If it was the last one, nobody is left to decide and the honest answer is UNKNOWN - not a crash.
+			if (workerResult.noVerdict()) {
+				mRetiredWorkers += 1;
+				mLogger.warn("Main: %s finished without a verdict (%d of %d worker(s) retired)",
+						workerResult.getWorkerType(), mRetiredWorkers, mThreadLimit);
+				if (mRetiredWorkers >= mThreadLimit) {
+					mLogger.warn("Main: every worker finished without a verdict, reporting UNKNOWN");
+					mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
+					shutDownAndDestroy(mDestroyEverything);
+					updateAndPrintStatistics(true);
+					return true;
+				}
+				workerResult = mWorkerResultQueue.poll();
+				continue;
+			}
+			// A whole-program worker that refuted the program has already registered UNSAFE on mResultBuilder. It
+			// has no subtrahend and no error automaton, so there is nothing to refine with. This must be checked
+			// BEFORE the safe sentinel below, which a refutation would otherwise match (it too has no subtrahend)
+			// and be reported as SAFE.
+			if (workerResult.getAutomatonType() == AutomatonType.ERROR
+					&& workerResult.mWorkerType.equals(WorkerType.KINDUCTION)) {
+				mLogger.info("Main: %s refuted the program", workerResult.mWorkerType);
+				// Fills only the error locations that have no result yet; the refuted one keeps its UNSAFE.
+				mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
+				shutDownAndDestroy(mDestroyEverything);
+				updateAndPrintStatistics(true);
+				return true;
+			}
+			// K-induction proves the whole program safe at once, it has no subtrahend to
+			// refine with. The null automaton type is what distinguishes that sentinel from the refutation above.
+			if (workerResult.mWorkerType.equals(WorkerType.KINDUCTION)
+					&& (workerResult.getSubtrahend() == null) && (workerResult.getAutomatonType() == null)) {
+				mAbstraction = new NestedWordAutomaton(new AutomataLibraryServices(getServices()),
+						mAbstraction.getVpAlphabet(), mPredicateFactoryInterpolantAutomata);
+				mResultBuilder.addResultForAllRemaining(Result.SAFE);
+				updateAndPrintStatistics(true);
+				return true;
+			}
+			// If Error automaton terminate immediately
+			if (mPref.stopAfterFirstViolation() && workerResult.getAutomatonType() == AutomatonType.ERROR) {
+				shutDownAndDestroy(mDestroyEverything);
+				updateAndPrintStatistics(true);
+				return true;
+			}
+
+			mLogger.info("Worker Automaton Type: " + workerResult.getAutomatonType());
+			mLogger.info("Refining Abstraction");
+			refinement(workerResult);
+			mRefinementsDone += 1;
+
+			// Not sure if necessary
+			workerResult.garbageCollect();
+			// If new abstraction is empty terminate immediately
+			if (isSafeThenTerminate()) {
+				updateAndPrintStatistics(true);
+				return true;
+			}
+			workerResult = mWorkerResultQueue.poll();
+			mRefinementTime += ((System.nanoTime() / 1000000000) - time);
+		}
+		mLogger.info("No more worker results to process");
+		assert workerResult == null;
+		return false;
+	}
+
+	private void setUpWorkerThreads() {
+		final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
+		final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
+		int id = 0;
+		try {
+			// The supplier's channels must exist before any worker that feeds or reads them.
+			final TransferBetweenMainAndWorker<L, IPredicate> invariantTransfer;
+			if (needsInvariantSupplier()) {
+				invariantTransfer = new TransferBetweenMainAndWorker<>(new AutomataLibraryServices(mServices), mLogger,
+						mCsToolkit.getManagedScript(), iterationServices,
+						getSolverSettings(WorkerType.INVARIANT, "InvariantSupplier"), mCsToolkit,
+						freshVarPrefix(WorkerType.INVARIANT, id));
+				mInvariantSupplier = new InvariantSupplier<>(mLogger, iterationServices,
+						invariantTransfer.getWorkerCfgSmtToolKit(), mWorkerResultQueue, this::isShuttingDown,
+						probationSettings());
+			} else {
+				invariantTransfer = null;
+			}
+			if (mInvariantSupplier != null) {
+				mInvariantSupplier.setAbstraction(transferForInvariantSupplier(invariantTransfer));
+				mInvariantExec = Executors.newSingleThreadExecutor(workerThreadFactory("Invariant Supplier"));
+				mInvariantExec.submit(mInvariantSupplier);
+			}
+			for (int i = 0; i < mNumTaWorkers; i++) {
+				mExec.submit(setUpWorkerThread(iterationServices, id, WorkerType.TA));
+				id++;
+			}
+			for (int i = 0; i < mNumKInductionWorkers; i++) {
+				mExec.submit(setUpWorkerThread(iterationServices, id, WorkerType.KINDUCTION));
+				id++;
+			}
+		} catch (final InterruptedException e) {
+			throw new AssertionError("Interrupted during worker setup " + e);
+		}
+	}
+
+	/**
+	 * The prefix the worker's {@link ManagedScript} puts into every variable it mints.
+	 * <p>
+	 * {@code CfgSmtToolkit#createFreshManagedScript} replays the main script's whole declaration history onto the
+	 * worker script, including the constants the main thread declared for its own auxiliary variables, while the
+	 * worker's {@link ManagedScript} starts its per-basename counter at zero. The k-induction worker composes tens of
+	 * thousands of transition formulas while it builds its loop tree, so its counter reliably reaches an index the
+	 * main thread already used and the aux-var constant is rejected as "already defined". A prefix that is unique per
+	 * worker keeps the two name spaces apart.
+	 * <p>
+	 * Only k-induction gets one: the other worker types never came close to the collision, and an empty prefix keeps
+	 * their variable names exactly as they were.
+	 */
+	private static String freshVarPrefix(final WorkerType workerType, final int id) {
+		switch (workerType) {
+		case KINDUCTION:
+			return "ki" + id + "_";
+		case INVARIANT:
+			// Builds the same loop tree as k-induction, so it is exposed to the same collision.
+			return "inv_";
+		default:
+			return "";
+		}
+	}
+
+	/**
+	 * Only k-induction consumes invariants, the TA workers produce them.
+	 */
+	private boolean needsInvariantSupplier() {
+		return mNumKInductionWorkers > 0 && interpolantsFeedInvariantSupplier();
+	}
+
+	private boolean interpolantsFeedInvariantSupplier() {
+		return mNumTaWorkers > 0 && mPref.submitInterpolantInvariants();
+	}
+
+	private IInvariantSink invariantSink(final boolean enabled) {
+		return mInvariantSupplier == null || !enabled ? IInvariantSink.none() : mInvariantSupplier.sink();
+	}
+
+	/**
+	 * The initial abstraction, as an automaton of the invariant supplier's script.
+	 */
+	private INestedWordAutomaton<L, IPredicate>
+			transferForInvariantSupplier(final TransferBetweenMainAndWorker<L, IPredicate> transfer) {
+		final CfgSmtToolkit toolkit = transfer.getWorkerCfgSmtToolKit();
+		final PredicateFactory predicateFactory =
+				new PredicateFactory(mServices, toolkit.getManagedScript(), toolkit.getSymbolTable());
+		final PredicateFactoryForInterpolantAutomata emptyStackFactory =
+				new PredicateFactoryForInterpolantAutomata(toolkit.getManagedScript(), predicateFactory, false);
+		return (INestedWordAutomaton<L, IPredicate>) transfer.transferAutomaton(mAbstraction, emptyStackFactory,
+				TransferMode.MAIN2WORKER);
+	}
+
+	/*
+	 * Sets up a worker that communicates via blocking queues and stays alive after one counterexample check. Every
+	 * transfer between controller and worker goes via @TransferBetweenMainAndWorker.
+	 */
+	private ICegarNwaWorkerThread<L, A> setUpWorkerThread(final IUltimateServiceProvider iterationServices,
+			final int id, final WorkerType workerType) throws InterruptedException {
+		final TransferBetweenMainAndWorker<L, IPredicate> transferUtils = new TransferBetweenMainAndWorker<>(
+				new AutomataLibraryServices(mServices), mLogger, mCsToolkit.getManagedScript(), iterationServices,
+				getSolverSettings(workerType,
+						getIteration() + mRunningThreads + mCounterexample.getWord().asList().hashCode() + "parallel"),
+				mCsToolkit, freshVarPrefix(workerType, id));
+
+		final CfgSmtToolkit freshToolKit = transferUtils.getWorkerCfgSmtToolKit();
+
+		// Create predicateFactory with worker script
+		final PredicateFactory predicateFactory =
+				new PredicateFactory(mServices, freshToolKit.getManagedScript(), freshToolKit.getSymbolTable());
+
+		// Create PredicateFactoryForInterpolantAutomata with worker script
+		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata =
+				new PredicateFactoryForInterpolantAutomata(freshToolKit.getManagedScript(), predicateFactory,
+						mComputeHoareAnnotation);
+
+		final Set<IcfgLocation> hoareAnnotationLocs = Collections.emptySet();
+		if (mComputeHoareAnnotation) {
+			// TODO need different hoareAnnotationLocs
+			throw new AssertionError("Hoare Annotations not yet supported in Parallel cegar loop");
+		}
+		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(mServices,
+				freshToolKit.getManagedScript(), predicateFactory, mComputeHoareAnnotation, hoareAnnotationLocs);
+
+		// make sure that mPref.getCfgSmtToolkit returns the worker toolkit
+		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
+				new TaCheckAndRefinementPreferences<>(getServices(), mPref, mInterpolationTechnique,
+						mSimplificationTechnique, freshToolKit, predicateFactory, mIcfg);
+
+		switch (workerType) {
+		case KINDUCTION:
+			return new KInductionWorkerThread<>(mLogger, mPref, id, mResultBuilder, iterationServices, freshToolKit,
+					predicateFactory, taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata,
+					stateFactoryForRefinement, mComputeHoareAnnotation, this, mWorkerResultQueue, mWorkerTaskQueue,
+					transferUtils, mTaskIdentifier, mInvariantSupplier == null ? IInvariantSupplier.none()
+							: mInvariantSupplier.subscribe(freshToolKit.getManagedScript()));
+		case TA:
+			return new CegarNwaWorkerThread<>(mLogger, mPref, id, mResultBuilder, iterationServices, freshToolKit,
+					predicateFactory, taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata,
+					stateFactoryForRefinement, mComputeHoareAnnotation, this, mWorkerResultQueue, mWorkerTaskQueue,
+					transferUtils, invariantSink(interpolantsFeedInvariantSupplier()));
+		default:
+			throw new AssertionError("Unknown worker type " + workerType);
+		}
+	}
+
 	private void updateAndPrintStatistics(final boolean printStatistics) {
 
 		if (mRunningThreads > maxActiveThreads) {
@@ -355,6 +565,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			mLogger.info("WorkerSetUpTime: " + mWorkerSetUpTime + " s");
 			mLogger.info("ExceptionInWorker: " + mExceptionInWorker);
 			mLogger.info("mRefinementTime: " + mRefinementTime);
+			mLogger.info("IdleTime: " + mIdleTime);
 		}
 	}
 
@@ -377,8 +588,10 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * When we reach this method, we will always start at least one new worker.
 	 */
 	private void startWorker() {
-		mWorkerTaskQueue.add(mCounterexample);
+		final WorkerThreadTask<L> task = new WorkerThreadTask<>(mCounterexample);
 		mProgramCache.addRun(mCounterexample.getWord());
+		task.setPathProgramCount(mProgramCache.getPathProgramCount(mCounterexample.getWord()));
+		mWorkerTaskQueue.add(task);
 		final long time = System.nanoTime() / 1000000000;
 		mLogger.info("Main: Starting Thread");
 		final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
@@ -391,15 +604,20 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mWorkerSetUpTime += ((System.nanoTime() / 1000000000) - time);
 	}
 
-	private WorkerThreadResult<L, A> getWorkerResult(final boolean didntFindCexLastIteration)
-			throws InterruptedException {
+	private WorkerThreadResult<L, A> getWorkerResult(final boolean didntFindCexLastIteration) {
 		WorkerThreadResult<L, A> doneFuture = null;
 
 		if (mRunningThreads >= mThreadLimit || didntFindCexLastIteration) {
 			assert mRunningThreads > 0;
 			mLogger.info("All threads busy, going to sleep.");
 			// No busy waiting via BlockingQueue
-			doneFuture = mWorkerResultQueue.take();
+			final long time = System.nanoTime() / 1000000000;
+			try {
+				doneFuture = mWorkerResultQueue.take();
+			} catch (final InterruptedException e) {
+				throw new AssertionError("Main was Interrupted while waiting for results: " + e);
+			}
+			mIdleTime += ((System.nanoTime() / 1000000000) - time);
 			mLogger.info("Waking up, a worker is done.");
 		} else {
 			doneFuture = mWorkerResultQueue.poll();
@@ -408,7 +626,11 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	private void shutDownAndDestroy(final Object marker) {
+		mShuttingDown = true;
 		mExec.shutdownNow();
+		if (mInvariantExec != null) {
+			mInvariantExec.shutdownNow();
+		}
 		final Set<String> destroyedStorables = getServices().getStorage().destroyMarker(marker);
 		if (!destroyedStorables.isEmpty()) {
 			mLogger.warn("Destroyed unattended storables created during the last iteration: "
@@ -423,13 +645,11 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 		removeCounterexampleFromSet(threadResult.getCounterexample());
 
-		final Set<IcfgLocation> hoareAnnotationLocs;
-		// TODO support for HoareAnnotations
-		hoareAnnotationLocs = Collections.emptySet();
-
-		final PredicateFactoryRefinement stateFactoryForRefinement =
-				new PredicateFactoryRefinement(getServices(), threadResult.getWorkerMgdScript(),
-						threadResult.getPredicateFactory(), mComputeHoareAnnotation, hoareAnnotationLocs);
+		// The states of the main abstraction have to come from the main loop's own factory. Each worker has a fresh
+		// predicate factory whose serial numbers start at 1 again, so states of different workers would share serial
+		// numbers in one automaton, which UnknownState.equals rejects. Hoare annotations are not supported here, so
+		// the factory only constructs don't-care states and never touches a worker's script.
+		final PredicateFactoryRefinement stateFactoryForRefinement = mStateFactoryForRefinement;
 		mLogger.info("Difference in Main");
 		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff =
 				computeAutomataDifference(mAbstraction, threadResult, stateFactoryForRefinement);
@@ -571,6 +791,11 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		try {
 			mLogger.debug("Start constructing difference");
 
+			if (mLogger.isDebugEnabled() && !new Accepts<>(new AutomataLibraryServices(getServices()), minuend,
+					(NestedWord<L>) workerResult.getCounterexample().getWord()).getResult()) {
+				mLogger.debug("Counterexample of worker result is no longer accepted by the abstraction");
+			}
+
 			final PowersetDeterminizer<L, IPredicate> psd = new PowersetDeterminizer<>(workerResult.getSubtrahend(),
 					true, mPredicateFactoryInterpolantAutomata);
 			IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
@@ -580,7 +805,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 							minuend, workerResult.getSubtrahend(), psd, false);
 				} else {
 					diff = new Difference<>(new AutomataLibraryServices(getServices()), stateFactoryForRefinement,
-							minuend, workerResult.getSubtrahend(), psd, workerResult.exploitSigmaStarConcatOfIa());
+							minuend, workerResult.getSubtrahend(), psd,
+							workerResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE));
 				}
 				mCegarLoopBenchmark.reportInterpolantAutomatonStates(workerResult.getSubtrahend().size());
 
@@ -590,11 +816,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				// We never enhance in main thread!
 			}
 
-			if (!workerResult.useErrorAutomaton()) {
-				// TODO needs to get the worker counterexample
-				// checkEnhancement(workerResult.getSubtrahendBeforeEnhancement(),
-				// workerResult.getSubtrahend());
-			}
 			// Future work:
 			assert !mPref.dumpOnlyReuseAutomata();
 			assert mFaultLocalizationMode == RelevanceAnalysisMode.NONE;
@@ -608,44 +829,129 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	/**
-	 * @param services
+	 * The solver settings of one worker script. They come from the TraceAbstraction preference page, not from
+	 * IcfgBuilder's: the workers do trace abstraction, and a user who configures a solver for TraceAbstraction
+	 * expects that solver here. (Reading IcfgBuilder's page instead used to impose its per-query timeout, which for
+	 * a long-running k-induction worker silently turned proofs into {@code unknown}.)
+	 *
+	 * @param workerType
+	 *            the kind of worker this script is for; {@link WorkerType#KINDUCTION} may carry its own per-query
+	 *            timeout, see {@link TraceAbstractionPreferenceInitializer#LABEL_KINDUCTION_SOLVER_TIMEOUT}.
 	 * @param filename
+	 *            base name for a dumped SMT script
 	 */
-	private SolverSettings getSolverSettings(final IUltimateServiceProvider services, final String filename) {
+	private SolverSettings getSolverSettings(final WorkerType workerType, final String filename) {
 
-		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		// Everything that describes the solver comes from the TraceAbstraction page. Only the two benchmark-dump
+		// flags do not exist there, so those keep reading IcfgBuilder's page.
+		final IPreferenceProvider taPrefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		final IPreferenceProvider icfgPrefs = mServices.getPreferenceProvider(
+				de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.Activator.PLUGIN_ID);
 
-		final SolverMode solverMode = prefs.getEnum(IcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
+		final SolverMode solverMode = solverMode(workerType);
 
 		final boolean fakeNonIncrementalScript =
-				prefs.getBoolean(IcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
+				taPrefs.getBoolean(IcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
 
-		final boolean dumpSmtScriptToFile = prefs.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_TO_FILE);
-		final boolean compressSmtScript = prefs.getBoolean(IcfgPreferenceInitializer.LABEL_COMPRESS_SMT_DUMP_FILE);
-		final String pathOfDumpedScript = prefs.getString(IcfgPreferenceInitializer.LABEL_DUMP_PATH);
+		final boolean dumpSmtScriptToFile = mPref.dumpSmtScriptToFile();
+		final boolean compressSmtScript = mPref.compressDumpedSmtScript();
+		final String pathOfDumpedScript = mPref.pathOfDumpedScript();
 
-		final String commandExternalSolver = prefs.getString(IcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND);
+		final String commandExternalSolver = externalSolverCommand(workerType);
 
 		final boolean dumpUnsatCoreTrackBenchmark =
-				prefs.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_UNSAT_CORE_BENCHMARK);
+				icfgPrefs.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_UNSAT_CORE_BENCHMARK);
 
 		final boolean dumpMainTrackBenchmark =
-				prefs.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_MAIN_TRACK_BENCHMARK);
+				icfgPrefs.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_MAIN_TRACK_BENCHMARK);
 
 		final Map<String, String> additionalSmtOptions =
-				prefs.getKeyValueMap(IcfgPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS);
+				taPrefs.getKeyValueMap(IcfgPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS);
 
-		final Logics logicForExternalSolver =
-				Logics.valueOf(prefs.getString(IcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
+		final Logics logicForExternalSolver = mPref.logicForExternalSolver();
 		final SolverSettings solverSettings =
 				SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(fakeNonIncrementalScript)
-						.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, filename, compressSmtScript)
+						// The worker type in the name: workers started in the same iteration would otherwise dump into
+						// the same file and garble each other's script.
+						.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, filename + workerType,
+								compressSmtScript)
 						.setDumpUnsatCoreTrackBenchmark(dumpUnsatCoreTrackBenchmark)
 						.setDumpMainTrackBenchmark(dumpMainTrackBenchmark)
 						.setUseExternalSolver(true, commandExternalSolver, logicForExternalSolver)
 						.setSolverMode(solverMode).setAdditionalOptions(additionalSmtOptions);
 
 		return solverSettings;
+	}
+
+	/**
+	 * The solver mode of a worker's solver. k-induction only asks for satisfiability and models, never for an unsat
+	 * core, so its solver does not produce them: cvc4 1.8 in incremental mode segfaults on the counterexample
+	 * reconstruction's queries when unsat cores are enabled, and without them answers the very same script.
+	 */
+	private SolverMode solverMode(final WorkerType workerType) {
+		final SolverMode configured = mPref.solverMode();
+		if (workerType == WorkerType.KINDUCTION && configured == SolverMode.External_ModelsAndUnsatCoreMode) {
+			return SolverMode.External_ModelsMode;
+		}
+		return configured;
+	}
+
+	/**
+	 * @return the settings of the invariant supplier's probation of k-induction's queries, or {@code null} if it is
+	 *         disabled or there is no k-induction worker
+	 */
+	private InvariantSupplier.Probation probationSettings() {
+		if (!mPref.useInvariantProbation() || mNumKInductionWorkers == 0) {
+			return null;
+		}
+		if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+			mLogger.warn("The probation of invariants needs SIGINT, which Windows does not have; k-induction runs "
+					+ "without probation");
+			return null;
+		}
+		// Interrupting a query needs SIGINT, after which z3 answers unknown and keeps its state; the supplier sets
+		// z3's :timeout option for its probes.
+		final String supplierCommand = externalSolverCommand(WorkerType.INVARIANT);
+		if (!isZ3(externalSolverCommand(WorkerType.KINDUCTION)) || !isZ3(supplierCommand)) {
+			mLogger.warn("The probation of invariants needs z3 as the solver of k-induction and of the invariant "
+					+ "supplier, but the solver command is \"%s\"; k-induction runs without probation",
+					mPref.commandExternalSolver());
+			return null;
+		}
+		final Matcher timeout = Pattern.compile("-t:(\\d+)").matcher(supplierCommand);
+		final long solverTimeout = timeout.find() ? Long.parseLong(timeout.group(1)) : Z3_NO_TIMEOUT;
+		return new InvariantSupplier.Probation(mPref.getProbationFactor(), mPref.getProbationMinimum() * 1000L,
+				solverTimeout);
+	}
+
+	private static boolean isZ3(final String command) {
+		final String executable = command.split("\\s+", 2)[0];
+		return "z3".equals(executable.substring(executable.lastIndexOf('/') + 1));
+	}
+
+	/**
+	 * The external solver command for a worker, with the k-induction per-query timeout applied if one is configured
+	 * and this is a k-induction worker.
+	 */
+	private String externalSolverCommand(final WorkerType workerType) {
+		final String command = mPref.commandExternalSolver().trim();
+		final int timeout = mPref.getKInductionSolverTimeout();
+		if (workerType != WorkerType.KINDUCTION || timeout < 0) {
+			// Inherit whatever the configured command says.
+			return command;
+		}
+		final String executable = command.split("\\s+", 2)[0];
+		final Entry<Pattern, String> option =
+				SOLVER_TIMEOUT_OPTION.get(executable.substring(executable.lastIndexOf('/') + 1));
+		if (option == null) {
+			throw new UnsupportedOperationException("A k-induction SMT timeout of " + timeout
+					+ "ms was configured, but we do not know the per-query timeout option of \"" + executable
+					+ "\". Encode the timeout in the solver command instead, or use one of "
+					+ SOLVER_TIMEOUT_OPTION.keySet() + ".");
+		}
+		// Drop any timeout the command already carries, so the k-induction setting wins rather than silently
+		// losing to it.
+		return option.getKey().matcher(command).replaceAll("").trim() + String.format(option.getValue(), timeout);
 	}
 
 	private void minimizeAbstractionIfEnabled(final PredicateFactoryRefinement stateFactoryForRefinement,
@@ -735,13 +1041,4 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		return mProgramCache;
 	}
 
-	public void reportFailedContinuesWorkerThread() {
-		final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
-		final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
-		try {
-			setUpContinuesWorker(iterationServices, 0);
-		} catch (final InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
 }

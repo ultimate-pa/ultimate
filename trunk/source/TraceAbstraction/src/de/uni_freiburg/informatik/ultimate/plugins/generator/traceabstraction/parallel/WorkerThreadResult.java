@@ -25,64 +25,85 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop.AutomatonType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 
-final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
+public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
 
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mSubtrahend;
 	private AutomatonType mAutomatonType;
-	private final boolean mUseErrorAutomaton;
-	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mSubtrahendBeforeEnhancement;
-	private InterpolantAutomatonEnhancement mEnhanceMode;
-	private final boolean mExploitSigmaStarConcatOfIa;
 	private ManagedScript mMgdScript;
 	private IRun<L, ?> mCounterexample;
 	PredicateFactory mPredicateFactory;
 	private final boolean mWorkerCrashed;
+	private final boolean mNoVerdict;
+	WorkerType mWorkerType;
+
+	public enum WorkerType
+
+	{
+		TA, KINDUCTION, INVARIANT
+	}
 
 	/**
 	 * The object returned by an @ICegarNwaWorkerThread
 	 *
 	 */
-	WorkerThreadResult(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahendBeforeEnhancement,
-			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
-			final InterpolantAutomatonEnhancement enhanceMode, final boolean useErrorAutomaton,
-			final AutomatonType automatonType, final ManagedScript mgdScript, final IRun<L, ?> counterexample,
-			final PredicateFactory predicateFactory, final boolean workerCrashed) {
+	public WorkerThreadResult(final WorkerType workerType,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend, final AutomatonType automatonType,
+			final ManagedScript mgdScript, final IRun<L, ?> counterexample, final PredicateFactory predicateFactory,
+			final boolean workerCrashed) {
+		this(workerType, subtrahend, automatonType, mgdScript, counterexample, predicateFactory, workerCrashed, false);
+	}
+
+	private WorkerThreadResult(final WorkerType workerType,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend, final AutomatonType automatonType,
+			final ManagedScript mgdScript, final IRun<L, ?> counterexample, final PredicateFactory predicateFactory,
+			final boolean workerCrashed, final boolean noVerdict) {
+		mWorkerType = workerType;
 		mSubtrahend = subtrahend;
 		mAutomatonType = automatonType;
-		mUseErrorAutomaton = useErrorAutomaton;
-		mEnhanceMode = enhanceMode;
-		mSubtrahendBeforeEnhancement = subtrahendBeforeEnhancement;
-		mExploitSigmaStarConcatOfIa = explointSigmaStarConcatOfIA;
 		mMgdScript = mgdScript;
 		mCounterexample = counterexample;
 		mPredicateFactory = predicateFactory;
 		mWorkerCrashed = workerCrashed;
+		mNoVerdict = noVerdict;
+	}
+
+	/**
+	 * A worker that ran to completion but neither proved nor refuted the program, for example because the solver
+	 * answered {@code unknown}. It carries nothing to refine with, so the main thread can only retire the worker.
+	 */
+	public static <L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> WorkerThreadResult<L, A>
+			noVerdict(final WorkerType workerType) {
+		return new WorkerThreadResult<>(workerType, null, null, null, null, null, false, true);
+	}
+
+	public WorkerType getWorkerType() {
+		return mWorkerType;
 	}
 
 	public boolean workerCrashed() {
 		return mWorkerCrashed;
 	}
 
-	public PredicateFactory getPredicateFactory() {
-		return mPredicateFactory;
+	/**
+	 * @return true if the worker finished without a verdict, see {@link #noVerdict(WorkerType)}.
+	 */
+	public boolean noVerdict() {
+		return mNoVerdict;
 	}
 
-	public InterpolantAutomatonEnhancement getEnhanceMode() {
-		return mEnhanceMode;
+	public PredicateFactory getPredicateFactory() {
+		return mPredicateFactory;
 	}
 
 	public INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getSubtrahend() {
@@ -91,18 +112,6 @@ final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomato
 
 	public AutomatonType getAutomatonType() {
 		return mAutomatonType;
-	}
-
-	public boolean useErrorAutomaton() {
-		return mUseErrorAutomaton;
-	}
-
-	public INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getSubtrahendBeforeEnhancement() {
-		return mSubtrahendBeforeEnhancement;
-	}
-
-	public boolean exploitSigmaStarConcatOfIa() {
-		return mExploitSigmaStarConcatOfIa;
 	}
 
 	public ManagedScript getWorkerMgdScript() {
@@ -116,8 +125,6 @@ final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomato
 	public void garbageCollect() {
 		mSubtrahend = null;
 		mAutomatonType = null;
-		mEnhanceMode = null;
-		mSubtrahendBeforeEnhancement = null;
 		mMgdScript = null;
 		mCounterexample = null;
 		mPredicateFactory = null;
