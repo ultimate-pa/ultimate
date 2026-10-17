@@ -160,7 +160,9 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 			case final StatementSequence stmt -> nestingOperation = NestedWord.INTERNAL_POSITION;
 			case final SequentialComposition seqComp -> nestingOperation = NestedWord.INTERNAL_POSITION;
 			case final Summary sum -> nestingOperation = NestedWord.INTERNAL_POSITION;
-			default -> new AssertionError("Unexpected letter type: " + letter.getClass());
+			case final GotoEdge gotoEdge -> nestingOperation = NestedWord.INTERNAL_POSITION;
+			default -> throw new UnsupportedOperationException("Cannot transfer the letter " + letter + ", which is a "
+					+ letter.getClass().getSimpleName());
 			}
 			final NestedWord<LETTER> singleWord = new NestedWord<>(transferEdge(letter), nestingOperation);
 			currentWord = currentWord.concatenate(singleWord);

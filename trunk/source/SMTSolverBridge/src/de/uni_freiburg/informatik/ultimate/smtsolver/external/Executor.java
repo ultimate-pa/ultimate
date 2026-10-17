@@ -230,7 +230,7 @@ public class Executor {
 	}
 
 	/**
-	 * Marks the start of a check-sat, the only command {@link #interrupt()} may cancel.
+	 * Marks the start of a check-sat, the only command {@link #interrupt(long)} may cancel.
 	 */
 	void beginQuery() {
 		synchronized (mQueryLock) {
@@ -316,7 +316,7 @@ public class Executor {
 	}
 
 	/**
-	 * @return whether {@link #interrupt()} sent a signal during the last check-sat
+	 * @return whether {@link #interrupt(long)} sent a signal during the last check-sat
 	 */
 	public boolean wasInterrupted() {
 		synchronized (mQueryLock) {
