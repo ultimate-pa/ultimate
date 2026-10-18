@@ -27,10 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -40,8 +40,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -69,10 +68,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
@@ -84,21 +83,18 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TransferBetweenMainAndWorker.TransferMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadResult.WorkerType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.IInvariantSink;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantSupplier;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.kinduction.KInductionWorkerThread;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop;
@@ -109,7 +105,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		extends NwaCegarLoop<L> {
 
-	boolean mComputeHoareAnnotation;
 	final String mDestroyEverything = "destroyEverything";
 
 	/** z3's value of :timeout for no timeout at all. */
@@ -185,6 +180,14 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	private long mRefinementTime = 0;
 	private long mIdleTime = 0;
 
+	// Moves the states of the workers' automata into the main script; null unless we compute a proof.
+	private final WorkerStateTransferrer<L> mStateTransferrer;
+
+	// The ICFG as it was before the workers started, see detachTransferredEdges
+	private final Set<IcfgLocation> mOriginalLocations;
+	private final Set<IcfgEdge> mOriginalEdges;
+	private static final long WORKER_TERMINATION_TIMEOUT_SECONDS = 10;
+
 	/**
 	 * Based on the @NwaCegarLoop. Given a ThreadLimit, creates a ExecutionerService that will manage the worker
 	 * threads. Executes each tracecheck in a new thread called worker. This loop, only searches for counterexamples and
@@ -213,6 +216,20 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		if (mThreadLimit == 0) {
 			throw new AssertionError("At least one parallel CEGAR worker thread must be configured");
 		}
+		if (mProofUpdater != null) {
+			if (mPref.differenceSenwa()) {
+				throw new UnsupportedOperationException(
+						"Computing a Hoare annotation in the parallel CEGAR loop requires the NWA difference, not SENWA");
+			}
+			mStateTransferrer = new WorkerStateTransferrer<>(new AutomataLibraryServices(services),
+					csToolkit.getManagedScript(), predicateFactory);
+		} else {
+			mStateTransferrer = null;
+		}
+		mOriginalLocations = collectLocations(rootNode);
+		// By identity: a transferred copy keeps the serial number, i.e., the hash code, of its original.
+		mOriginalEdges = Collections.newSetFromMap(new IdentityHashMap<>());
+		mOriginalLocations.forEach(loc -> mOriginalEdges.addAll(loc.getOutgoingEdges()));
 
 		mExec = Executors.newFixedThreadPool(mThreadLimit, workerThreadFactory("Cegar Worker"));
 		Thread.currentThread().setName("Main Cegar Thread");
@@ -364,6 +381,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			// refine with. The null automaton type is what distinguishes that sentinel from the refutation above.
 			if (workerResult.mWorkerType.equals(WorkerType.KINDUCTION)
 					&& (workerResult.getSubtrahend() == null) && (workerResult.getAutomatonType() == null)) {
+				if (mProofUpdater != null) {
+					useKInductionProof(workerResult);
+				}
 				mAbstraction = new NestedWordAutomaton(new AutomataLibraryServices(getServices()),
 						mAbstraction.getVpAlphabet(), mPredicateFactoryInterpolantAutomata);
 				mResultBuilder.addResultForAllRemaining(Result.SAFE);
@@ -395,6 +415,55 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mLogger.info("No more worker results to process");
 		assert workerResult == null;
 		return false;
+	}
+
+	/**
+	 * Makes the invariants of a k-induction proof the proof of this loop. Without them, or if they do not fit the ICFG,
+	 * the proof is an annotation without any invariant, i.e. a trivial correctness witness.
+	 * <p>
+	 * It must not be extracted from the abstraction: k-induction proves the program while the abstraction is still
+	 * being refined, so the Hoare annotation fragments of the refinements so far are incomplete, and extracting them
+	 * from the abstraction we replace by an empty one annotates loop heads with {@code false}.
+	 */
+	private void useKInductionProof(final WorkerThreadResult<L, A> workerResult) {
+		final Map<IPredicate, IPredicate> annotation = kInductionAnnotation(workerResult);
+		if (annotation == null) {
+			mProofUpdater.setProof(Collections.emptyMap());
+			return;
+		}
+		mLogger.info("Main: using the invariants of the k-induction proof at %d loop head(s)", annotation.size());
+		mProofUpdater.setProof(annotation);
+	}
+
+	/**
+	 * @return the invariants of a k-induction proof as an annotation of the initial abstraction, or null if there are
+	 *         none or they do not fit the ICFG
+	 */
+	private Map<IPredicate, IPredicate> kInductionAnnotation(final WorkerThreadResult<L, A> workerResult) {
+		final Map<IPredicate, Term> invariants = workerResult.getProofInvariants();
+		if (invariants == null) {
+			mLogger.info("Main: k-induction proof without invariants, the correctness witness has none");
+			return null;
+		}
+		// The witness reports invariants at the ICFG's loop locations; k-induction finds its loop heads itself.
+		final Set<IcfgLocation> loopLocations = new HashSet<>(mIcfg.getLoopLocations());
+		final Map<IPredicate, IPredicate> annotation = new HashMap<>();
+		for (final Map.Entry<IPredicate, Term> entry : invariants.entrySet()) {
+			final IcfgLocation loc = ((ISLPredicate) entry.getKey()).getProgramPoint();
+			if (!loopLocations.remove(loc) || !mProofUpdater.getProgram().getStates().contains(entry.getKey())) {
+				mLogger.warn("Main: k-induction loop head %s is no loop location of the ICFG, the correctness witness "
+						+ "has no invariants", loc);
+				return null;
+			}
+			annotation.put(entry.getKey(), mPredicateFactory.newSPredicate(loc,
+					mStateTransferrer.transferTerm(entry.getValue(), workerResult.getWorkerMgdScript())));
+		}
+		if (!loopLocations.isEmpty()) {
+			mLogger.warn("Main: k-induction has no loop head at the loop location(s) %s, the correctness witness has "
+					+ "no invariants", loopLocations);
+			return null;
+		}
+		return annotation;
 	}
 
 	private void setUpWorkerThreads() {
@@ -505,18 +574,14 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		final PredicateFactory predicateFactory =
 				new PredicateFactory(mServices, freshToolKit.getManagedScript(), freshToolKit.getSymbolTable());
 
-		// Create PredicateFactoryForInterpolantAutomata with worker script
+		// The worker's factories never preserve terms, even if we compute a proof: the states of the abstraction a
+		// worker gets are predicates of the main script, which the worker must not conjoin with its own. The Hoare
+		// annotation is built by the main thread alone, after it moved the worker's states into its script.
+		final boolean computeProof = mProofUpdater != null;
 		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata =
-				new PredicateFactoryForInterpolantAutomata(freshToolKit.getManagedScript(), predicateFactory,
-						mComputeHoareAnnotation);
-
-		final Set<IcfgLocation> hoareAnnotationLocs = Collections.emptySet();
-		if (mComputeHoareAnnotation) {
-			// TODO need different hoareAnnotationLocs
-			throw new AssertionError("Hoare Annotations not yet supported in Parallel cegar loop");
-		}
+				new PredicateFactoryForInterpolantAutomata(freshToolKit.getManagedScript(), predicateFactory, false);
 		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(mServices,
-				freshToolKit.getManagedScript(), predicateFactory, mComputeHoareAnnotation, hoareAnnotationLocs);
+				freshToolKit.getManagedScript(), predicateFactory, false, Collections.emptySet());
 
 		// make sure that mPref.getCfgSmtToolkit returns the worker toolkit
 		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
@@ -527,13 +592,13 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		case KINDUCTION:
 			return new KInductionWorkerThread<>(mLogger, mPref, id, mResultBuilder, iterationServices, freshToolKit,
 					predicateFactory, taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata,
-					stateFactoryForRefinement, mComputeHoareAnnotation, this, mWorkerResultQueue, mWorkerTaskQueue,
+					stateFactoryForRefinement, computeProof, this, mWorkerResultQueue, mWorkerTaskQueue,
 					transferUtils, mTaskIdentifier, mInvariantSupplier == null ? IInvariantSupplier.none()
 							: mInvariantSupplier.subscribe(freshToolKit.getManagedScript()));
 		case TA:
 			return new CegarNwaWorkerThread<>(mLogger, mPref, id, mResultBuilder, iterationServices, freshToolKit,
 					predicateFactory, taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata,
-					stateFactoryForRefinement, mComputeHoareAnnotation, this, mWorkerResultQueue, mWorkerTaskQueue,
+					stateFactoryForRefinement, computeProof, this, mWorkerResultQueue, mWorkerTaskQueue,
 					transferUtils, invariantSink(interpolantsFeedInvariantSupplier()));
 		default:
 			throw new AssertionError("Unknown worker type " + workerType);
@@ -650,18 +715,24 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 		// The states of the main abstraction have to come from the main loop's own factory. Each worker has a fresh
 		// predicate factory whose serial numbers start at 1 again, so states of different workers would share serial
-		// numbers in one automaton, which UnknownState.equals rejects. Hoare annotations are not supported here, so
-		// the factory only constructs don't-care states and never touches a worker's script.
+		// numbers in one automaton, which UnknownState.equals rejects. If we compute a proof, the factory conjoins the
+		// states of the abstraction with those of the subtrahend, so these must be predicates of the main script.
 		final PredicateFactoryRefinement stateFactoryForRefinement = mStateFactoryForRefinement;
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend;
+		if (mStateTransferrer == null) {
+			subtrahend = threadResult.getSubtrahend();
+		} else {
+			subtrahend = mStateTransferrer.transferStates(threadResult.getSubtrahend(),
+					threadResult.getWorkerMgdScript(), mPredicateFactoryInterpolantAutomata);
+		}
 		mLogger.info("Difference in Main");
-		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff =
-				computeAutomataDifference(mAbstraction, threadResult, stateFactoryForRefinement);
+		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff = computeAutomataDifference(mAbstraction, subtrahend,
+				threadResult, stateFactoryForRefinement);
 
 		mAbstraction = diff.getResult();
 
 		if (mPref.minimizeAbstractionPerWorker()) {
-			minimizeAbstractionIfEnabled(stateFactoryForRefinement,
-					new PredicateFactoryResultChecking(mPredicateFactory));
+			minimizeAbstractionIfEnabled();
 		}
 		mRunningThreads -= 1;
 		mLogger.info("Main: Refinement done.");
@@ -788,8 +859,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * be transferred to the master cfg script!
 	 */
 	private IOpWithDelayedDeadEndRemoval<L, IPredicate> computeAutomataDifference(
-			final INestedWordAutomaton<L, IPredicate> minuend, final WorkerThreadResult<L, A> workerResult,
-			final PredicateFactoryRefinement stateFactoryForRefinement)
+			final INestedWordAutomaton<L, IPredicate> minuend,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend,
+			final WorkerThreadResult<L, A> workerResult, final PredicateFactoryRefinement stateFactoryForRefinement)
 			throws AutomataLibraryException, AssertionError {
 		try {
 			mLogger.debug("Start constructing difference");
@@ -799,19 +871,22 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				mLogger.debug("Counterexample of worker result is no longer accepted by the abstraction");
 			}
 
-			final PowersetDeterminizer<L, IPredicate> psd = new PowersetDeterminizer<>(workerResult.getSubtrahend(),
-					true, mPredicateFactoryInterpolantAutomata);
+			final PowersetDeterminizer<L, IPredicate> psd =
+					new PowersetDeterminizer<>(subtrahend, true, mPredicateFactoryInterpolantAutomata);
+			// As in NwaCegarLoop: a proof needs the states that the sigma-star exploitation would skip.
+			final boolean exploitSigmaStarConcatOfIa =
+					workerResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE)
+							&& (mProofUpdater == null || mProofUpdater.exploitSigmaStarConcatOfIa());
 			IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
 			try {
 				if (mPref.differenceSenwa()) {
 					diff = new DifferenceSenwa<>(new AutomataLibraryServices(getServices()), stateFactoryForRefinement,
-							minuend, workerResult.getSubtrahend(), psd, false);
+							minuend, subtrahend, psd, false);
 				} else {
 					diff = new Difference<>(new AutomataLibraryServices(getServices()), stateFactoryForRefinement,
-							minuend, workerResult.getSubtrahend(), psd,
-							workerResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE));
+							minuend, subtrahend, psd, exploitSigmaStarConcatOfIa);
 				}
-				mCegarLoopBenchmark.reportInterpolantAutomatonStates(workerResult.getSubtrahend().size());
+				mCegarLoopBenchmark.reportInterpolantAutomatonStates(subtrahend.size());
 
 			} catch (final AutomataOperationCanceledException | ToolchainCanceledException tce) {
 				throw tce;
@@ -824,7 +899,15 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			assert mFaultLocalizationMode == RelevanceAnalysisMode.NONE;
 
 			if (REMOVE_DEAD_ENDS) {
+				if (mProofUpdater != null) {
+					// SENWA is rejected in the constructor if we compute a proof
+					final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
+					mProofUpdater.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
+				}
 				diff.removeDeadEnds();
+				if (mProofUpdater != null) {
+					mProofUpdater.addDeadEndDoubleDeckers(diff);
+				}
 			}
 			return diff;
 		} finally {
@@ -973,86 +1056,47 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		return option.getKey().matcher(command).replaceAll("").trim() + String.format(option.getValue(), timeout);
 	}
 
-	private void minimizeAbstractionIfEnabled(final PredicateFactoryRefinement stateFactoryForRefinement,
-			final PredicateFactoryResultChecking predicateFactoryResultChecking)
-			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
-		final Minimization minimization = mPref.getMinimization();
-		switch (minimization) {
-		case NONE:
-			// do not apply minimization
-			break;
-		case DFA_HOPCROFT_LISTS:
-		case DFA_HOPCROFT_ARRAYS:
-		case MINIMIZE_SEVPA:
-		case SHRINK_NWA:
-		case NWA_MAX_SAT:
-		case NWA_MAX_SAT2:
-		case RAQ_DIRECT_SIMULATION:
-		case RAQ_DIRECT_SIMULATION_B:
-		case NWA_COMBINATOR_PATTERN:
-		case NWA_COMBINATOR_EVERY_KTH:
-		case NWA_OVERAPPROXIMATION:
-		case NWA_COMBINATOR_MULTI_DEFAULT:
-		case NWA_COMBINATOR_MULTI_SIMULATION:
-			// apply minimization
-			minimizeAbstraction(stateFactoryForRefinement, predicateFactoryResultChecking, minimization);
-			break;
-		default:
-			throw new AssertionError();
+	@Override
+	protected void finish() {
+		// Every way out of the loop shuts the pool down, but a worker may still be busy when we get here.
+		mExec.shutdownNow();
+		try {
+			if (!mExec.awaitTermination(WORKER_TERMINATION_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+				mLogger.warn("Some workers are still running after %ss", WORKER_TERMINATION_TIMEOUT_SECONDS);
+			}
+		} catch (final InterruptedException e) {
+			Thread.currentThread().interrupt();
 		}
+		detachTransferredEdges();
+		super.finish();
 	}
 
 	/**
-	 * Automata theoretic minimization of the automaton stored in mAbstraction. Expects that mAbstraction does not have
-	 * dead ends.
-	 *
-	 * @param predicateFactoryRefinement
-	 *            PredicateFactory for the construction of the new (minimized) abstraction.
-	 * @param resultCheckPredFac
-	 *            PredicateFactory used for auxiliary automata used for checking correctness of the result (if
-	 *            assertions are enabled).
+	 * Every letter {@link TransferBetweenMainAndWorker} transfers becomes a new {@code CodeBlock}, and the constructor
+	 * of a {@code CodeBlock} connects it to its source and target - which are locations of the main ICFG. So the main
+	 * ICFG ends up with a copy of each transferred edge whose transition formula belongs to a worker's script, and
+	 * whoever walks the ICFG after the loop (e.g. the check of the Hoare annotation) trips over it. Remove all edges
+	 * that were not there before the loop.
 	 */
-	@Override
-	protected void minimizeAbstraction(final PredicateFactoryRefinement predicateFactoryRefinement,
-			final PredicateFactoryResultChecking resultCheckPredFac, final Minimization minimization)
-			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
-
-		final Function<IPredicate, Set<IcfgLocation>> lcsProvider =
-				x -> (x instanceof ISLPredicate ? Collections.singleton(((ISLPredicate) x).getProgramPoint())
-						: new HashSet<>(Arrays.asList(((IMLPredicate) x).getProgramPoints())));
-		AutomataMinimization<Set<IcfgLocation>, IPredicate, L> am;
-		try {
-			am = new AutomataMinimization<>(getServices(), mAbstraction, minimization, mComputeHoareAnnotation,
-					getIteration(), predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION,
-					mStoredRawInterpolantAutomata, mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac,
-					lcsProvider, true);
-		} catch (final AutomataMinimizationTimeout e) {
-			mCegarLoopBenchmark.addAutomataMinimizationData(e.getStatistics());
-			throw e.getAutomataOperationCanceledException();
+	private void detachTransferredEdges() {
+		int removed = 0;
+		for (final IcfgLocation loc : mOriginalLocations) {
+			final List<IcfgEdge> outgoing = loc.getOutgoingEdges().stream()
+					.filter(e -> !mOriginalEdges.contains(e)).collect(Collectors.toList());
+			final List<IcfgEdge> incoming = loc.getIncomingEdges().stream()
+					.filter(e -> !mOriginalEdges.contains(e)).collect(Collectors.toList());
+			loc.removeAllOutgoing(outgoing);
+			loc.removeAllIncoming(incoming);
+			removed += outgoing.size();
 		}
-		mCegarLoopBenchmark.addAutomataMinimizationData(am.getStatistics());
-		final boolean newAutomatonWasBuilt = am.newAutomatonWasBuilt();
-
-		if (newAutomatonWasBuilt) {
-			// postprocessing after minimization
-			final IDoubleDeckerAutomaton<L, IPredicate> newAbstraction = am.getMinimizedAutomaton();
-
-			// extract Hoare annotation
-			if (mComputeHoareAnnotation) {
-				final Map<IPredicate, IPredicate> oldState2newState = am.getOldState2newStateMapping();
-				if (oldState2newState == null) {
-					throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
-				}
-			}
-
-			// statistics
-			final int oldSize = mAbstraction.size();
-			final int newSize = newAbstraction.size();
-			assert oldSize == 0 || oldSize >= newSize : "Minimization increased state space";
-
-			// use result
-			mAbstraction = newAbstraction;
+		if (removed > 0) {
+			mLogger.info("Detached %s transferred edges from the ICFG", removed);
 		}
+	}
+
+	private static Set<IcfgLocation> collectLocations(final IIcfg<?> icfg) {
+		return icfg.getProgramPoints().values().stream().flatMap(m -> m.values().stream())
+				.collect(Collectors.toSet());
 	}
 
 	// worker use this method to access the programcache shared across all workers + main

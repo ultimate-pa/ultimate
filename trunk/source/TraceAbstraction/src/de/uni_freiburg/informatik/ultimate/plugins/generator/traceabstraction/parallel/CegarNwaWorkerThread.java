@@ -117,6 +117,8 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	private IRun<L, ?> mCounterexample = null;
 	private final TaCheckAndRefinementPreferences<L> mTaCheckAndRefinementPrefs;
 	private final PredicateFactoryRefinement mStateFactoryForRefinement;
+	// Whether the main thread computes a proof. The worker never builds Hoare states itself, but its difference
+	// decides which transitions of the subtrahend get computed, so it must explore what the main thread explores.
 	private final boolean mComputeHoareAnnotation;
 	private IcfgLocation mCurrentErrorLoc;
 	private final SimplificationTechnique mSimplificationTechnique;
@@ -172,9 +174,6 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 		mPredicateFactory = predicateFactory;
 		mPredicateFactoryInterpolantAutomata = predicateFactoryInterpolantAutomata;
 		mStateFactoryForRefinement = stateFactoryForRefinement;
-		if (computeHoareAnnotation) {
-			throw new AssertionError("unsupported");
-		}
 		mComputeHoareAnnotation = computeHoareAnnotation;
 		mSimplificationTechnique = pref.getSimplificationTechnique();
 		mMainThread = mainThread;
@@ -523,9 +522,6 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 			}
 
 			if (REMOVE_DEAD_ENDS) {
-				if (mComputeHoareAnnotation) {
-					// TODO missing stuff
-				}
 				diff.removeDeadEnds();
 			}
 			return diff;

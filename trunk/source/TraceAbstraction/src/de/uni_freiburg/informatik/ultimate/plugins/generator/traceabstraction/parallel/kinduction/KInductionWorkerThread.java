@@ -28,8 +28,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.kinduction;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 
@@ -48,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
@@ -57,7 +61,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopResultBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop.AutomatonType;
@@ -123,6 +130,10 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	// mKInductionServices, whose progress monitor asks this timer, so every poll of continueProcessing() checks it.
 	private final HeapBudgetTimer mHeapTimer;
 	private final IUltimateServiceProvider mKInductionServices;
+	// The invariants of a proof for the main thread's correctness witness, see computeWitnessInvariants
+	private Map<IPredicate, Term> mWitnessInvariants;
+	// How long computing them may delay the verdict
+	private static final long WITNESS_TIMEOUT_MILLIS = 10_000;
 
 	public KInductionWorkerThread(final ILogger logger, final TAPreferences pref, final int id,
 			final CegarLoopResultBuilder resultBuilder, final IUltimateServiceProvider services,
@@ -166,8 +177,8 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 			mIteration = 1;
 			switch (runKInduction()) {
 			case SAFE:
-				mBlockingQueueForResults
-						.put(new WorkerThreadResult<>(WorkerType.KINDUCTION, null, null, null, null, null, false));
+				mBlockingQueueForResults.put(WorkerThreadResult.kInductionSafe(mWitnessInvariants,
+						mCfgSmtToolkit.getManagedScript()));
 				break;
 			case UNSAFE:
 				// The violation is already registered on the shared result builder. AutomatonType.ERROR is what
@@ -280,12 +291,80 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 			return Verdict.NO_VERDICT;
 		}
 		if (kInduction.isSafe()) {
+			if (mComputeHoareAnnotation) {
+				mWitnessInvariants = computeWitnessInvariants(kInduction);
+			}
 			return Verdict.SAFE;
 		}
 		// No transfer: the run is built over the worker's own abstraction with worker-script letters, and the
 		// refinement engine below runs on the worker toolkit, exactly as in CegarNwaWorkerThread.
 		reportCounterexample(kInduction.getCounterexample());
 		return Verdict.UNSAFE;
+	}
+
+	/**
+	 * The invariants of the proof for a correctness witness, by loop head. A loop head is a state of
+	 * {@link #mAbstraction}, which shares its states with the main thread's initial abstraction, see
+	 * {@link TransferBetweenMainAndWorker#transferAutomaton}.
+	 *
+	 * @return the invariants, worker-script terms, or null if there are none; never throws, since the proof stands
+	 *         without a witness
+	 */
+	private Map<IPredicate, Term> computeWitnessInvariants(final KInduction<L, IPredicate> kInduction) {
+		// The verdict waits for this, so a slow quantifier elimination must not hold it back for long.
+		final IProgressMonitorService progressMonitor = mKInductionServices.getProgressMonitorService();
+		final IUltimateServiceProvider witnessServices = progressMonitor.registerChildTimer(mKInductionServices,
+				progressMonitor.getChildTimer(WITNESS_TIMEOUT_MILLIS));
+		try {
+			final Optional<Map<CallNode<IPredicate>, Term>> invariants =
+					kInduction.computeWitnessInvariants(witnessServices, mPref.getSimplificationTechnique());
+			if (invariants.isEmpty()) {
+				return null;
+			}
+			final Map<IPredicate, Term> result = new LinkedHashMap<>();
+			for (final Map.Entry<CallNode<IPredicate>, Term> entry : invariants.get().entrySet()) {
+				final IPredicate state = entry.getKey().getState();
+				final IcfgLocation loc = ((ISLPredicate) state).getProgramPoint();
+				// A callee unfolded at several call sites has a loop head per call site, but a location only one
+				// invariant.
+				if (result.put(state, entry.getValue()) != null) {
+					mLogger.warn("KInduction: no correctness witness invariants, %s is a loop head at several call "
+							+ "sites", loc);
+					return null;
+				}
+				final IProgramVar outOfScope = findOutOfScopeVariable(entry.getValue(), loc.getProcedure());
+				if (outOfScope != null) {
+					mLogger.warn("KInduction: no correctness witness invariants, the invariant of %s mentions %s, "
+							+ "which is not in scope there", loc, outOfScope);
+					return null;
+				}
+			}
+			return result;
+		} catch (final ToolchainCanceledException | SMTLIBException e) {
+			mLogger.warn("KInduction: no correctness witness invariants, computing them failed: " + e);
+			return null;
+		} catch (final RuntimeException | AssertionError e) {
+			// A bug in the witness computation must not cost the verdict, but it should be visible.
+			mLogger.error("KInduction: no correctness witness invariants, computing them crashed: " + e);
+			for (final StackTraceElement element : e.getStackTrace()) {
+				mLogger.error("\tat " + element);
+			}
+			return null;
+		}
+	}
+
+	/**
+	 * @return a variable of {@code invariant} that is neither global nor a local of {@code procedure}, or null. The
+	 *         transition system is flat, so the invariant of a loop head in a callee may speak about its callers.
+	 */
+	private IProgramVar findOutOfScopeVariable(final Term invariant, final String procedure) {
+		for (final TermVariable tv : invariant.getFreeVars()) {
+			final IProgramVar pv = mCfgSmtToolkit.getSymbolTable().getProgramVar(tv);
+			if (pv == null || !pv.isGlobal() && !procedure.equals(pv.getProcedure())) {
+				return pv;
+			}
+		}
+		return null;
 	}
 
 	/**

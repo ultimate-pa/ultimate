@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -34,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop.AutomatonType;
 
 public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
@@ -45,6 +48,7 @@ public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IA
 	PredicateFactory mPredicateFactory;
 	private final boolean mWorkerCrashed;
 	private final boolean mNoVerdict;
+	private Map<IPredicate, Term> mProofInvariants;
 	WorkerType mWorkerType;
 
 	public enum WorkerType
@@ -85,6 +89,30 @@ public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IA
 	public static <L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> WorkerThreadResult<L, A>
 			noVerdict(final WorkerType workerType) {
 		return new WorkerThreadResult<>(workerType, null, null, null, null, null, false, true);
+	}
+
+	/**
+	 * k-induction proved the whole program safe. Like every SAFE sentinel it has neither a subtrahend nor an automaton
+	 * type.
+	 *
+	 * @param proofInvariants
+	 *            for every loop head, a state of the initial abstraction, its invariant for a correctness witness,
+	 *            terms of {@code mgdScript}; null if there are none
+	 */
+	public static <L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> WorkerThreadResult<L, A>
+			kInductionSafe(final Map<IPredicate, Term> proofInvariants, final ManagedScript mgdScript) {
+		final WorkerThreadResult<L, A> result =
+				new WorkerThreadResult<>(WorkerType.KINDUCTION, null, null, mgdScript, null, null, false, false);
+		result.mProofInvariants = proofInvariants;
+		return result;
+	}
+
+	/**
+	 * @return for a k-induction proof the invariants for a correctness witness, see {@link #kInductionSafe}; null if
+	 *         there are none
+	 */
+	public Map<IPredicate, Term> getProofInvariants() {
+		return mProofInvariants;
 	}
 
 	public WorkerType getWorkerType() {

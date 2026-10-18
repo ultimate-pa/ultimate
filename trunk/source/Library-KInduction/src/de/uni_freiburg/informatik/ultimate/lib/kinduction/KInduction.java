@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.kinduction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -46,8 +47,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.ExternalSolverInterrupter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.ExternalSolverRestarter;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -159,6 +166,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 	private KInductionQuery<CallNode<STATE>> mQuery;
 	// pc node of a loop head -> its invariant, over the program variables' term variables
 	private final Map<Integer, Invariant> mInjectedInvariants = new LinkedHashMap<>();
+	// The injected invariants the deciding step case assumed, null unless the program was proven safe
+	private Map<Integer, Invariant> mProofInvariants;
 	// Whether the invariant supplier may interrupt a query, see answer(), and whether a solver that died of such an
 	// interrupt is restarted, see restartSolverAfterInterrupt().
 	private final boolean mProbation;
@@ -268,6 +277,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 			mLogger.info("KInduction: k=%d - step case: %s", k, step);
 			if (step == LBool.UNSAT) {
 				mProvedK = k;
+				// What the deciding step case assumed: a correctness witness has to assume it too.
+				mProofInvariants = new LinkedHashMap<>(mInjectedInvariants);
 				return Verdict.SAFE;
 			}
 			if (step == LBool.UNKNOWN) {
@@ -470,21 +481,189 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * FINAL), over the term variables of the program variables.
 	 */
 	private void learnInvariants() {
-		final Script script = mWorkerMgdScript.getScript();
 		for (final Map.Entry<CallNode<STATE>, Integer> head : mSystem.getHeadNodes().entrySet()) {
-			final FreshVars vars = new FreshVars(head.getValue());
-			final List<Term> conjuncts = new ArrayList<>();
-			for (int j = 0; j < mProvedK; j++) {
-				conjuncts.add(mSystem.step(j, vars, mWorkerMgdScript));
-			}
-			conjuncts.add(SmtUtils.binaryEquality(script, vars.pc(mProvedK),
-					mSystem.pcValue(script, PcTransitionSystem.FINAL)));
-			final Term reachError = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, vars.getFreshVariables(),
-					SmtUtils.and(script, conjuncts));
-			mLearnedInvariants.put(head.getKey(), SmtUtils.not(script, reachError));
+			mLearnedInvariants.put(head.getKey(), noErrorWithinK(head.getValue()));
 		}
 		mLogger.info("KInduction: learned an invariant for %d loop head(s) from k=%d", mLearnedInvariants.size(),
 				mProvedK);
+	}
+
+	/**
+	 * Not (exists a run of {@link #mProvedK} transitions from {@code node} that ends in FINAL), over the term variables
+	 * of the program variables. Since FINAL only has its stutter loop, this says that no error is reachable from
+	 * {@code node} within k steps.
+	 */
+	private Term noErrorWithinK(final int node) {
+		final Script script = mWorkerMgdScript.getScript();
+		final FreshVars vars = new FreshVars(node);
+		final List<Term> conjuncts = new ArrayList<>();
+		for (int j = 0; j < mProvedK; j++) {
+			conjuncts.add(mSystem.step(j, vars, mWorkerMgdScript));
+		}
+		conjuncts.add(SmtUtils.binaryEquality(script, vars.pc(mProvedK),
+				mSystem.pcValue(script, PcTransitionSystem.FINAL)));
+		final Term reachError = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, vars.getFreshVariables(),
+				SmtUtils.and(script, conjuncts));
+		return SmtUtils.not(script, reachError);
+	}
+
+	// ------------------------------------------------------------------------------------------------------------
+	// Correctness witness
+	// ------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Invariants for a correctness witness: for every loop head {@code h}, {@code J_h && noErrorWithinK(h)}, where
+	 * {@code J_h} is the injected invariant the deciding step case assumed.
+	 * <p>
+	 * {@link #getLearnedInvariants()} alone is not inductive if the step case relied on injected invariants. With them
+	 * it is 1-inductive: from a state that satisfies it, a successor and the next k - 1 states cannot be errors, since
+	 * they are within k steps, the injected invariants hold along the way, since they are inductive themselves, and
+	 * then the step case says that the k-th state cannot be an error either. Rather than trusting this argument, the
+	 * invariants are checked: every transition of the system must preserve them, with {@code true} at INIT and
+	 * {@code false} at FINAL. The waypoints get {@code noErrorWithinK} for that check, but no witness invariant.
+	 * <p>
+	 * Must be called after the constructor, i.e. when the script is not locked: quantifier elimination uses it.
+	 *
+	 * @param services
+	 *            for the quantifier elimination, whose timer bounds how long this may take
+	 * The system is flat: the invariant of a loop head of a callee may mention the variables of its callers, and a
+	 * callee that is unfolded at several call sites has one loop head per call site. Whether that fits the program is
+	 * for the caller to decide.
+	 *
+	 * @return for every loop head its invariant, quantifier-free and native to the worker's {@link ManagedScript}, or
+	 *         empty if the program was not proven safe or the invariants cannot be put into a witness: a quantifier
+	 *         that could not be eliminated, an old variable, or a failed check. All or nothing, since a partial
+	 *         annotation is not inductive.
+	 */
+	public Optional<Map<CallNode<STATE>, Term>> computeWitnessInvariants(final IUltimateServiceProvider services,
+			final SimplificationTechnique simplificationTechnique) {
+		if (!mSafe) {
+			return Optional.empty();
+		}
+		final Script script = mWorkerMgdScript.getScript();
+		final Set<Term> oldVarConstants = new LinkedHashSet<>();
+		mSystem.getOldVars().forEach(pv -> oldVarConstants.add(pv.getDefaultConstant()));
+		final SubtermPropertyChecker mentionsOldVar = new SubtermPropertyChecker(oldVarConstants::contains);
+
+		final Map<Integer, Term> invariants = new LinkedHashMap<>();
+		invariants.put(PcTransitionSystem.INIT, script.term("true"));
+		invariants.put(PcTransitionSystem.FINAL, script.term("false"));
+		final Map<Integer, CallNode<STATE>> nodes = new LinkedHashMap<>();
+		mSystem.getHeadNodes().forEach((head, node) -> nodes.put(node, head));
+		mSystem.getWaypointNodes().forEach((waypoint, node) -> nodes.put(node, waypoint));
+		for (final Map.Entry<Integer, CallNode<STATE>> entry : nodes.entrySet()) {
+			final int node = entry.getKey();
+			final Invariant injected = mProofInvariants.get(node);
+			final Term withQuantifiers = injected == null ? noErrorWithinK(node)
+					: SmtUtils.and(script, injected.term(), noErrorWithinK(node));
+			// Quantifier elimination expects its input in commuhash normal form.
+			final Term invariant = PartialQuantifierElimination.eliminate(services, mWorkerMgdScript,
+					CommuhashNormalFormTransformer.apply(script, withQuantifiers), simplificationTechnique);
+			if (!QuantifierUtils.isQuantifierFree(invariant)) {
+				return noWitness("could not eliminate the quantifiers of the invariant of %s", entry.getValue());
+			}
+			if (mentionsOldVar.isSatisfiedBySomeSubterm(invariant)) {
+				return noWitness("the invariant of %s mentions an old variable", entry.getValue());
+			}
+			invariants.put(node, invariant);
+		}
+		if (!isInductive(invariants)) {
+			return Optional.empty();
+		}
+		final Map<CallNode<STATE>, Term> result = new LinkedHashMap<>();
+		mSystem.getHeadNodes().forEach((head, node) -> result.put(head, invariants.get(node)));
+		mLogger.info("KInduction: invariants for a correctness witness at %d loop head(s), from k=%d", result.size(),
+				mProvedK);
+		return Optional.of(result);
+	}
+
+	private <T> Optional<T> noWitness(final String reason, final Object... args) {
+		mLogger.warn("KInduction: no correctness witness invariants, " + reason, args);
+		return Optional.empty();
+	}
+
+	/**
+	 * @return whether every transition of the system leads from a state that satisfies the invariant of its source
+	 *         to one that satisfies the invariant of its target
+	 */
+	private boolean isInductive(final Map<Integer, Term> invariants) {
+		final Script script = mWorkerMgdScript.getScript();
+		final Set<List<Integer>> checked = new LinkedHashSet<>();
+		mWorkerMgdScript.lock(mKILock);
+		try {
+			for (int id = 0; id < mSystem.getNumTransitions(); id++) {
+				final PcTransitionSystem.Transition<CallNode<STATE>> t = mSystem.getTransition(id);
+				// step() takes every transition between the two nodes at once
+				if (t.isStutter() || !checked.add(List.of(t.getFromNode(), t.getToNode()))) {
+					continue;
+				}
+				if (!invariants.containsKey(t.getFromNode()) || !invariants.containsKey(t.getToNode())) {
+					mLogger.warn("KInduction: no correctness witness invariants, %s has a node without one", t);
+					return false;
+				}
+				final ConsecutionVars vars = new ConsecutionVars(t.getFromNode(), t.getToNode());
+				final Map<Term, Term> toSuccessor = new HashMap<>();
+				for (final IProgramVar pv : mSystem.getVars()) {
+					toSuccessor.put(pv.getTermVariable(), vars.var(pv, 1));
+				}
+				final Term post = PureSubstitution.apply(mWorkerMgdScript, toSuccessor,
+						invariants.get(t.getToNode()));
+				final Term violation = SmtUtils.and(script, invariants.get(t.getFromNode()),
+						mSystem.step(0, vars, mWorkerMgdScript), SmtUtils.not(script, post));
+				mWorkerMgdScript.push(mKILock, 1);
+				final LBool result;
+				try {
+					mWorkerMgdScript.assertTerm(mKILock, SmtUtils.quantifier(script, QuantifiedFormula.EXISTS,
+							Arrays.asList(violation.getFreeVars()), violation));
+					result = mWorkerMgdScript.checkSat(mKILock);
+				} finally {
+					mWorkerMgdScript.pop(mKILock, 1);
+				}
+				if (result != LBool.UNSAT) {
+					mLogger.warn("KInduction: no correctness witness invariants, the transition from node %d to %d "
+							+ "does not preserve them (%s)", t.getFromNode(), t.getToNode(), result);
+					return false;
+				}
+			}
+		} finally {
+			mWorkerMgdScript.unlock(mKILock);
+		}
+		return true;
+	}
+
+	/**
+	 * One step from the node {@code from} to the node {@code to}: step 0 has the program variables' own term
+	 * variables, step 1 and the auxiliary variables are fresh.
+	 */
+	private final class ConsecutionVars implements StepVars {
+		private final int mFrom;
+		private final int mTo;
+		private final Map<String, TermVariable> mFresh = new LinkedHashMap<>();
+
+		ConsecutionVars(final int from, final int to) {
+			mFrom = from;
+			mTo = to;
+		}
+
+		private TermVariable fresh(final String key, final Sort sort) {
+			return mFresh.computeIfAbsent(key, k -> mWorkerMgdScript.constructFreshTermVariable("kiw", sort));
+		}
+
+		@Override
+		public Term var(final IProgramVar pv, final int idx) {
+			return idx == 0 ? pv.getTermVariable()
+					: fresh("v_" + pv.getGloballyUniqueId(), pv.getTermVariable().getSort());
+		}
+
+		@Override
+		public Term pc(final int idx) {
+			return mSystem.pcValue(mWorkerMgdScript.getScript(), idx == 0 ? mFrom : mTo);
+		}
+
+		@Override
+		public Term aux(final int transitionId, final TermVariable auxVar, final int idx) {
+			return fresh("aux_" + transitionId + "_" + auxVar.getName(), auxVar.getSort());
+		}
 	}
 
 	/**
