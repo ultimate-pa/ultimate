@@ -30,6 +30,10 @@
          version="0.0.0"/>
 
    <plugin
+         id="de.uni_freiburg.informatik.ultimate.ecaparser"
+         version="0.0.0"/>
+
+   <plugin
          id="edu.uci.ics.jung"
          download-size="0"
          install-size="0"

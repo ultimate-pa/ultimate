@@ -86,7 +86,6 @@ action code {:
 
 /* Keep terminal order aligned with the existing temporary EcaSymbols.java. */
 terminal VAR, TYPE_INTEGER, TYPE_BOOL, ON, IF, DO, INTERN, EXTERN, ONETIME;
-terminal String REPEAT_COUNT;
 terminal REPEAT, EVERY, UNTIL, AFTER, FOR, PAR, ROR;
 terminal String TIME_UNIT;
 terminal TRUE, FALSE, AND, OR, NOT, IMPLIES, EQ, NEQ, LE, GE, LT, GT;
@@ -207,11 +206,6 @@ action ::= ONETIME:o actionId:id
          natural(n), d); :}
     | REPEAT:r actionId:id EVERY duration:d UNTIL untilEvent:e
     {: RESULT = new RecurringUntilAction(at(rleft, eright), id, d, e); :}
-    | REPEAT_COUNT:n actionId:id
-    {: RESULT = new RepeatAction(at(nleft, idright), id, natural(n)); :}
-    | REPEAT_COUNT:n actionId:id EVERY duration:d
-    {: RESULT = new RecurringCountAction(at(nleft, dright), id,
-         natural(n), d); :}
     | actionId:id UNTIL untilEvent:e
     {: RESULT = new ContinuousUntilAction(at(idleft, eright), id, e); :}
     | actionId:id FOR duration:d

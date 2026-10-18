@@ -37,7 +37,6 @@ BlockComment = "/*" ~"*/"
 
 Identifier = [A-Za-z_][A-Za-z_0-9]*
 NaturalNumber = 0|[1-9][0-9]*
-CountedRepeat = "repeat_"{NaturalNumber}
 
 %%
 
@@ -54,8 +53,6 @@ CountedRepeat = "repeat_"{NaturalNumber}
     "intern"              { return symbol(EcaSymbols.INTERN); }
     "extern"              { return symbol(EcaSymbols.EXTERN); }
     "onetime"             { return symbol(EcaSymbols.ONETIME); }
-    {CountedRepeat}       { return symbol(EcaSymbols.REPEAT_COUNT,
-                                   yytext().substring("repeat_".length())); }
     "repeat"              { return symbol(EcaSymbols.REPEAT); }
     "every"               { return symbol(EcaSymbols.EVERY); }
     "until"               { return symbol(EcaSymbols.UNTIL); }
