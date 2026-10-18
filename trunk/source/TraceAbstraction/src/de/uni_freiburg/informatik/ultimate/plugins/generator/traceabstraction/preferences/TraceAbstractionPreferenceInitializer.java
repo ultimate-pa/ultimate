@@ -580,7 +580,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			"Per-check timeout the k-induction worker passes to its SMT solver, one hour by default. This is "
 					+ "deliberately generous: k-induction runs many increasingly large queries, and a short timeout "
 					+ "makes it give up at a low k and report no verdict. Use -1 to inherit whatever the configured "
-					+ "external solver command says instead. Supported for z3, cvc4 and cvc5.";
+					+ "external solver command says instead. Supported for z3, cvc4, cvc5 and bitwuzla.";
 	private static final Integer DEF_KINDUCTION_SOLVER_TIMEOUT = 60 * 60 * 1000;
 
 	public static final String LABEL_KINDUCTION_MEMORY_BUDGET =

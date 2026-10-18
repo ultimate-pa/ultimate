@@ -130,7 +130,10 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	private static final Map<String, Entry<Pattern, String>> SOLVER_TIMEOUT_OPTION = Map.of(
 			"z3", Map.entry(Pattern.compile("\\s*-t:\\d+"), " -t:%d"),
 			"cvc4", Map.entry(Pattern.compile("\\s*--tlimit-per=\\d+"), " --tlimit-per=%d"),
-			"cvc5", Map.entry(Pattern.compile("\\s*--tlimit-per=\\d+"), " --tlimit-per=%d"));
+			"cvc5", Map.entry(Pattern.compile("\\s*--tlimit-per=\\d+"), " --tlimit-per=%d"),
+			// -t and --time-limit are bitwuzla's limit for the whole run, not per check, so they stay.
+			"bitwuzla", Map.entry(Pattern.compile("\\s*(?:-T\\s*|--time-limit-per[=\\s]+)\\d+"),
+					" --time-limit-per=%d"));
 
 	// Parallel Setup
 	private final ExecutorService mExec;
