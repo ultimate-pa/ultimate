@@ -30,7 +30,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -68,17 +67,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * <b>Bitvector inequalities.</b> Bitvector inequalities ({@code bvult}, {@code bvule}, {@code bvslt}, {@code bvsle}
  * and their "greater" counterparts) cannot be a {@link PolynomialRelation}, see {@link BitvectorInequalityRelation}.
  * {@link #add} therefore first asks the shared factory {@code IPolynomialRelation.of} and, if that returns
- * {@code null}, builds a {@link BitvectorInequalityRelation} itself. These relations are kept in their own indexes
- * next to {@code mPolyRels}:
- * <ul>
- * <li>{@code mBvInequalityRels}: relations with a constant on exactly one side, keyed by the other side. The key is
- * the bare variable or, for example for {@code x + y <=u 5}, the whole expression including its offset. Only relations
- * with the same key are compared.
- * <li>{@code mBvTwins}: the alternative spellings of the stored relations (see below). Used for comparison only and
- * never part of the result.
- * <li>{@code mCompoundBvInequalityRels}: all other relations, for example {@code x <=u y}. They are kept as they are
- * and never compared, to avoid an expensive scan.
- * </ul>
+ * {@code null}, builds a {@link BitvectorInequalityRelation} itself. Relations with a constant on exactly one side
+ * are kept in {@code mBvInequalityRels}, next to {@code mPolyRels}, keyed by the other side. The key is the bare
+ * variable or, for example for {@code x + y <=u 5}, the whole expression including its offset. Only relations with
+ * the same key are compared. All other relations, for example {@code x <=u y}, are never compared. They are handled
+ * like every other parameter that is not a polynomial relation and become positive parameters.
+ * <p>
  * A new relation is compared with the stored relations under the same key. Both are first brought to an "effective
  * inclusive boundary" ({@code x <u 9} behaves like {@code x <=u 8}). Relations with different signedness, or whose
  * boundary would overflow or underflow, are not compared. Two bounds in the same direction: the tighter one wins, the
@@ -101,9 +95,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * The same fact can be written as a bound on an expression or as a bound on its bitwise complement. The
  * {@link PolynomialTermTransformer} reads {@code bvneg x} as {@code -x} and {@code bvnot x} as {@code -x-1}, so such
  * relations get the expression as key. To let a new relation meet a stored fact that is written the other way round,
- * the alternative spelling (the "twin", see {@link BitvectorInequalityRelation#constructAlternativeRepresentation}) of
- * every stored relation is indexed as well. Example: {@code (bvnot x) <=u 100} means {@code x >=u 155}, which
- * contradicts a stored {@code x <=u 5}.
+ * the new relation is also compared in its alternative spelling (see
+ * {@link BitvectorInequalityRelation#constructAlternativeRepresentation}), which has a different key. This is
+ * analogous to {@link #checkPolyRel}, which compares a new relation and its multiple with {@code -1}. Example:
+ * {@code (bvnot x) <=u 100} means {@code x >=u 155}, which contradicts a stored {@code x <=u 5}.
  * <p>
  * Disjunctions use these rules on the negated relations: {@code x <=u 10 or x >=u 5} is {@code true}, because
  * {@code x >u 10 and x <u 5} leaves no value. {@link PolyPoNeWithContext} compares a new relation with the relations
@@ -129,22 +124,6 @@ public class PolyPoNe {
 	 * Relations with the same key are compared by their constants. See {@link BitvectorInequalityRelation}.
 	 */
 	private final HashRelation<Term, BitvectorInequalityRelation> mBvInequalityRels = new HashRelation<>();
-	/**
-	 * Index of the alternative spellings ("twins", see
-	 * {@link BitvectorInequalityRelation#constructAlternativeRepresentation}) of the relations in
-	 * {@link #mBvInequalityRels}, keyed by the expression the twin is about. Only used to compare a new relation with
-	 * stored ones that are written the other way round, never part of the result.
-	 */
-	private final HashRelation<Term, BitvectorInequalityRelation> mBvTwins = new HashRelation<>();
-	private final Map<BitvectorInequalityRelation, BitvectorInequalityRelation> mTwinToOriginal =
-			new IdentityHashMap<>();
-	private final Map<BitvectorInequalityRelation, BitvectorInequalityRelation> mOriginalToTwin =
-			new IdentityHashMap<>();
-	/**
-	 * {@link BitvectorInequalityRelation}s without a constant on exactly one side (for example {@code x <=u y}) - no
-	 * cheap key available, so these are just kept as-is and never compared against anything.
-	 */
-	private final Set<BitvectorInequalityRelation> mCompoundBvInequalityRels = new HashSet<>();
 	private boolean mInconsistent = false;
 
 	PolyPoNe(final Script script, final Junction junction) {
@@ -237,18 +216,9 @@ public class PolyPoNe {
 		if (knownValue != null) {
 			return satisfiesBound(knownValue, polyRel) ? Check.REDUNDANT : Check.INCONSISTENT;
 		}
-		// Compare with the stored relations that have the same key, i.e. that are about the same expression.
-		for (final BitvectorInequalityRelation existing : mBvInequalityRels.getImage(shape.getKey())) {
-			final ComparisonResult comp = compareBvInequalities(existing, polyRel);
-			if (comp == ComparisonResult.IMPLIES || comp == ComparisonResult.EQUIVALENT) {
-				// A stored relation already implies the new one.
-				return Check.REDUNDANT;
-			}
-			if (comp == ComparisonResult.INCONSISTENT) {
-				return Check.INCONSISTENT;
-			}
-		}
-		return compareWithTwins(polyRel, shape.getKey(), null);
+		// Compare with the stored relations that have the same key, i.e. that are about the same expression, and
+		// with those under the key of the alternative spelling.
+		return compareWithStoredAndAlternative(polyRel, shape.getKey(), null);
 	}
 
 	private Check compareToExistingRepresentations(final IPolynomialRelation newPolyRel,
@@ -377,7 +347,7 @@ public class PolyPoNe {
 				return true;
 			}
 			// The bound holds for c, so it adds nothing now that the exact value is known.
-			removeBvRel(variable, existing);
+			mBvInequalityRels.removePair(variable, existing);
 		}
 		return false;
 	}
@@ -385,9 +355,9 @@ public class PolyPoNe {
 	/**
 	 * Bitvector-inequality analogue of {@link #addPolyRel} for relations with a constant on one side (see
 	 * {@link BitvectorInequalityRelation#isPolynomialVsConstant()}). The new relation is compared with the stored
-	 * relations under the same key, with the twins stored under that key, and (bare variables only) with known
-	 * equalities and "x != c" facts, and is then stored. Relations without a constant on exactly one side are stored
-	 * in {@link #mCompoundBvInequalityRels} and never compared, to avoid an expensive scan.
+	 * relations under the same key, with the stored relations under the key of its alternative spelling, and (bare
+	 * variables only) with known equalities and "x != c" facts, and is then stored. Relations without a constant on
+	 * exactly one side are not compared, they become positive parameters.
 	 * <p>
 	 * The <i>key</i> is the side of the relation that is not the constant: the variable {@code x} for
 	 * {@code x <=u 5}, or the whole expression for {@code x + y <=u 5}. Two relations with the same key talk about
@@ -401,9 +371,8 @@ public class PolyPoNe {
 				polyRel.asPolynomialVsConstant(mScript);
 		if (shape == null) {
 			// No constant on exactly one side (e.g. x <=u y), so there is no key to look the relation up by.
-			// Comparing it would mean scanning all stored relations, so we only store it as it is.
-			mCompoundBvInequalityRels.add(polyRel);
-			return false;
+			// Comparing it would mean scanning all stored relations, so we treat it as an opaque parameter.
+			return addNonPolynomial(polyRel.toTerm(mScript));
 		}
 		final Term variable = shape.getKey();
 		// Check the equalities first: if the exact value is already known, this relation is either redundant or
@@ -419,49 +388,22 @@ public class PolyPoNe {
 		// Compare with all stored relations that have the same key. Stored relations that become redundant are only
 		// collected here and removed after the loop, because we iterate over the stored relations.
 		final List<BitvectorInequalityRelation> explied = new ArrayList<>();
-		for (final BitvectorInequalityRelation existing : mBvInequalityRels.getImage(variable)) {
-			final ComparisonResult comp = compareBvInequalities(existing, polyRel);
-			if (comp == null) {
-				// No verdict (e.g. unsigned vs. signed), the two relations do not affect each other.
-				continue;
-			}
-			switch (comp) {
-			case IMPLIES:
-			case EQUIVALENT:
-				// The stored relation already says at least as much, the new one is redundant.
-				return false;
-			case EXPLIES:
-				// The new relation says more than the stored one, the stored one is redundant. Drop it later.
-				explied.add(existing);
-				break;
-			case INCONSISTENT:
-				return true;
-			default:
-				throw new AssertionError("unknown value " + comp);
-			}
-		}
-		// The twins are the alternative spellings of the stored relations, compare with them too.
-		final List<BitvectorInequalityRelation> twinExplied = new ArrayList<>();
-		final Check twinCheck = compareWithTwins(polyRel, variable, twinExplied);
-		if (twinCheck == Check.REDUNDANT) {
-			// A stored relation, written the other way round, already says at least as much.
+		final Check check = compareWithStoredAndAlternative(polyRel, variable, explied);
+		if (check == Check.REDUNDANT) {
 			return false;
 		}
-		if (twinCheck == Check.INCONSISTENT) {
+		if (check == Check.INCONSISTENT) {
 			return true;
 		}
 		// Now we know the new relation is kept, so the stored relations that it makes redundant can be removed.
-		for (final BitvectorInequalityRelation original : twinExplied) {
-			removeBvRel(original.asPolynomialVsConstant(mScript).getKey(), original);
-		}
 		for (final BitvectorInequalityRelation existing : explied) {
-			removeBvRel(variable, existing);
+			mBvInequalityRels.removePair(existing.asPolynomialVsConstant(mScript).getKey(), existing);
 		}
 		// An upper and a lower bound with the same constant (x <=u 5 and x >=u 5) are the equality x = 5.
 		final BitvectorInequalityRelation fusionPartner = findFusibleBvInequality(variable, polyRel);
 		if (fusionPartner != null) {
 			// Insert the equality via the existing path for single-term relations.
-			removeBvRel(variable, fusionPartner);
+			mBvInequalityRels.removePair(variable, fusionPartner);
 			final IPolynomialRelation fusion = PolynomialRelation.of(mScript, RelationSymbol.EQ, variable,
 					shape.getConstantTerm());
 			return addPolyRel(mScript, fusion, true);
@@ -478,7 +420,7 @@ public class PolyPoNe {
 			return strict == null || addBvInequalityRel(strict);
 		}
 		// Nothing special applies, just remember the relation.
-		storeBvRel(variable, polyRel);
+		mBvInequalityRels.addPair(variable, polyRel);
 		return false;
 	}
 
@@ -668,7 +610,7 @@ public class PolyPoNe {
 		// We iterate over a copy because the matching bound is removed inside the loop.
 		for (final BitvectorInequalityRelation bound : new ArrayList<>(mBvInequalityRels.getImage(variable))) {
 			if (value.equals(effectiveInclusiveBoundary(bound))) {
-				removeBvRel(variable, bound);
+				mBvInequalityRels.removePair(variable, bound);
 				mPolyRels.removePair(distinct.getPolynomialTerm().getAbstractVariable2Coefficient(), distinct);
 				final BitvectorInequalityRelation strict = strictBoundAt(bound, value);
 				// No strict bound means that no value is left: contradiction.
@@ -679,56 +621,56 @@ public class PolyPoNe {
 	}
 
 	/**
-	 * Stores {@code rel} under {@code key} and also indexes its twin (its alternative representation), so that a
-	 * relation that is written the other way round can find it later. Always use this and {@link #removeBvRel}
-	 * instead of changing {@link #mBvInequalityRels} directly, otherwise the twin index gets out of sync.
+	 * Compares {@code polyRel} with the stored relations under {@code key}. If the new relation is stronger, the
+	 * stored relations it makes redundant are added to {@code explied} (may be {@code null} for a read-only check).
 	 */
-	private void storeBvRel(final Term key, final BitvectorInequalityRelation rel) {
-		mBvInequalityRels.addPair(key, rel);
-		final BitvectorInequalityRelation twin = rel.constructAlternativeRepresentation();
-		final BitvectorInequalityRelation.PolynomialAndConstant twinShape = twin.asPolynomialVsConstant(mScript);
-		if (twinShape == null) {
-			// The twin has no constant on exactly one side, so there would be no key to find it by.
-			return;
-		}
-		mBvTwins.addPair(twinShape.getKey(), twin);
-		mTwinToOriginal.put(twin, rel);
-		mOriginalToTwin.put(rel, twin);
-	}
-
-	/** Removes {@code rel} and its twin, see {@link #storeBvRel}. */
-	private void removeBvRel(final Term key, final BitvectorInequalityRelation rel) {
-		mBvInequalityRels.removePair(key, rel);
-		final BitvectorInequalityRelation twin = mOriginalToTwin.remove(rel);
-		if (twin != null) {
-			mTwinToOriginal.remove(twin);
-			mBvTwins.removePair(twin.asPolynomialVsConstant(mScript).getKey(), twin);
-		}
-	}
-
-	/**
-	 * Compares {@code polyRel} with the twins stored under {@code key}. A twin means the same as the stored relation
-	 * it belongs to, so a verdict about the twin is a verdict about that stored relation. If the new relation is
-	 * stronger, the stored originals it makes redundant are added to {@code originalsToDrop} (may be {@code null}
-	 * for a read-only check).
-	 */
-	private Check compareWithTwins(final BitvectorInequalityRelation polyRel, final Term key,
-			final List<BitvectorInequalityRelation> originalsToDrop) {
-		for (final BitvectorInequalityRelation twin : mBvTwins.getImage(key)) {
-			final ComparisonResult comp = compareBvInequalities(twin, polyRel);
-			if (comp == ComparisonResult.IMPLIES || comp == ComparisonResult.EQUIVALENT) {
-				// The stored original already says at least as much.
+	private Check compareWithStored(final BitvectorInequalityRelation polyRel, final Term key,
+			final List<BitvectorInequalityRelation> explied) {
+		for (final BitvectorInequalityRelation existing : mBvInequalityRels.getImage(key)) {
+			final ComparisonResult comp = compareBvInequalities(existing, polyRel);
+			if (comp == null) {
+				// No verdict (e.g. unsigned vs. signed), the two relations do not affect each other.
+				continue;
+			}
+			switch (comp) {
+			case IMPLIES:
+			case EQUIVALENT:
+				// The stored relation already says at least as much.
 				return Check.REDUNDANT;
-			}
-			if (comp == ComparisonResult.INCONSISTENT) {
+			case EXPLIES:
+				// The new relation says more than the stored one. The stored one can be dropped.
+				if (explied != null) {
+					explied.add(existing);
+				}
+				break;
+			case INCONSISTENT:
 				return Check.INCONSISTENT;
-			}
-			if (comp == ComparisonResult.EXPLIES && originalsToDrop != null) {
-				// The new relation says more than the stored original, which can be dropped.
-				originalsToDrop.add(mTwinToOriginal.get(twin));
+			default:
+				throw new AssertionError("unknown value " + comp);
 			}
 		}
 		return Check.MAYBE_USEFUL;
+	}
+
+	/**
+	 * Compares {@code polyRel} with the stored relations, first as it is and then in its alternative spelling (see
+	 * {@link BitvectorInequalityRelation#constructAlternativeRepresentation}), which has a different key. Analogous to
+	 * {@link #checkPolyRel}.
+	 */
+	private Check compareWithStoredAndAlternative(final BitvectorInequalityRelation polyRel, final Term key,
+			final List<BitvectorInequalityRelation> explied) {
+		final Check check = compareWithStored(polyRel, key, explied);
+		if (check != Check.MAYBE_USEFUL) {
+			return check;
+		}
+		final BitvectorInequalityRelation alternative = polyRel.constructAlternativeRepresentation();
+		final BitvectorInequalityRelation.PolynomialAndConstant alternativeShape =
+				alternative.asPolynomialVsConstant(mScript);
+		if (alternativeShape == null) {
+			// No constant on exactly one side, so there is no key to look the alternative spelling up by.
+			return Check.MAYBE_USEFUL;
+		}
+		return compareWithStored(alternative, alternativeShape.getKey(), explied);
 	}
 
 	/** Does the concrete value {@code value} satisfy {@code rel}'s bound? */
@@ -869,9 +811,6 @@ public class PolyPoNe {
 		for (final Entry<Term, BitvectorInequalityRelation> pair : mBvInequalityRels.getSetOfPairs()) {
 			params.add(pair.getValue().toTerm(mScript));
 		}
-		for (final BitvectorInequalityRelation rel : mCompoundBvInequalityRels) {
-			params.add(rel.toTerm(mScript));
-		}
 		params.addAll(mPositive);
 		for (final Term term : mNegative) {
 			params.add(SmtUtils.not(mScript, term));
@@ -889,9 +828,6 @@ public class PolyPoNe {
 		}
 		for (final Entry<Term, BitvectorInequalityRelation> pair : mBvInequalityRels.getSetOfPairs()) {
 			params.add(pair.getValue().negate().toTerm(mScript));
-		}
-		for (final BitvectorInequalityRelation rel : mCompoundBvInequalityRels) {
-			params.add(rel.negate().toTerm(mScript));
 		}
 		for (final Term term : mPositive) {
 			params.add(SmtUtils.not(mScript, term));
