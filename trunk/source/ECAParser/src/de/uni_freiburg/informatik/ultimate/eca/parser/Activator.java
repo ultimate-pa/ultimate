@@ -5,6 +5,6 @@ public final class Activator {
 	public static final String PLUGIN_NAME = "ECAParser";
 
 	private Activator() {
-		// Constants only; this bundle does not need an OSGi lifecycle activator.
+		// Constants only
 	}
 }

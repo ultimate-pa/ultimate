@@ -131,10 +131,10 @@ declaration ::= VAR:v ID:name COLON TYPE_INTEGER optionalIntInterval:i
     {: RESULT = new IntegerDeclaration(at(vleft, iright), name, i); :}
     | VAR:v ID:name COLON TYPE_BOOL:b
     {: RESULT = new BooleanDeclaration(at(vleft, bright), name); :}
-    | EVENT:e INTERN:i ID:name
-    {: RESULT = new InternalEventDeclaration(at(eleft, nameright), name); :}
-    | EVENT:e EXTERN:x ID:name
-    {: RESULT = new ExternalEventDeclaration(at(eleft, nameright), name); :}
+    | EVENT:e ID:name COLON INTERN:i
+    {: RESULT = new InternalEventDeclaration(at(eleft, iright), name); :}
+    | EVENT:e ID:name COLON EXTERN:x
+    {: RESULT = new ExternalEventDeclaration(at(eleft, xright), name); :}
     ;
 
 optionalIntInterval ::= /* empty */ {: RESULT = null; :}
