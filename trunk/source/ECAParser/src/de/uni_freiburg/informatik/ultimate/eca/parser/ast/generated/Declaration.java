@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 /**
  * Represents a declaration which is a special form of a eca ast node.
  */
-public abstract sealed class Declaration extends EcaAstNode permits VariableDeclaration {
+public abstract sealed class Declaration extends EcaAstNode permits VariableDeclaration, EventDeclaration {
     /**
      * The constructor taking initial values.
      * @param location the location of this eca ast node.

@@ -85,7 +85,7 @@ action code {:
 :}
 
 /* Keep terminal order aligned with the existing temporary EcaSymbols.java. */
-terminal VAR, TYPE_INTEGER, TYPE_BOOL, ON, IF, DO, INTERN, EXTERN, ONETIME;
+terminal VAR, EVENT, TYPE_INTEGER, TYPE_BOOL, ON, IF, DO, INTERN, EXTERN, ONETIME;
 terminal REPEAT, EVERY, UNTIL, AFTER, FOR, PAR, ROR;
 terminal String TIME_UNIT;
 terminal TRUE, FALSE, AND, OR, NOT, IMPLIES, EQ, NEQ, LE, GE, LT, GT;
@@ -131,6 +131,10 @@ declaration ::= VAR:v ID:name COLON TYPE_INTEGER optionalIntInterval:i
     {: RESULT = new IntegerDeclaration(at(vleft, iright), name, i); :}
     | VAR:v ID:name COLON TYPE_BOOL:b
     {: RESULT = new BooleanDeclaration(at(vleft, bright), name); :}
+    | EVENT:e INTERN:i ID:name
+    {: RESULT = new InternalEventDeclaration(at(eleft, nameright), name); :}
+    | EVENT:e EXTERN:x ID:name
+    {: RESULT = new ExternalEventDeclaration(at(eleft, nameright), name); :}
     ;
 
 optionalIntInterval ::= /* empty */ {: RESULT = null; :}

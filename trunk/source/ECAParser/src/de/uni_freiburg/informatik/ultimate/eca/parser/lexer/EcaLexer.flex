@@ -41,8 +41,9 @@ NaturalNumber = 0|[1-9][0-9]*
 %%
 
 <YYINITIAL> {
-    /* Declarations, e.g. var age : integer [0:120]. */
+    /* Declarations, e.g. var age : integer [0:120] or event extern alarm. */
     "var"                 { return symbol(EcaSymbols.VAR); }
+    "event"               { return symbol(EcaSymbols.EVENT); }
     "integer"             { return symbol(EcaSymbols.TYPE_INTEGER); }
     "bool"                { return symbol(EcaSymbols.TYPE_BOOL); }
 

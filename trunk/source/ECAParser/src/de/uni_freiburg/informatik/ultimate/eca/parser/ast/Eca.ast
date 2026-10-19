@@ -20,7 +20,7 @@ EcaAstNode ::= location : ILocation
     declarations : List<Declaration>
     rules        : List<EcaRule>
 
-| /* A variable declaration from the VC set. Its subtype determines its type. */
+| /* Variable and named-event declarations in the file prefix. */
   {Declaration}
   (
     {VariableDeclaration}
@@ -29,6 +29,12 @@ EcaAstNode ::= location : ILocation
       {IntegerDeclaration}
         allowedValues : ?IntInterval
     | {BooleanDeclaration}
+    )
+  | {EventDeclaration}
+      name : String
+    (
+      {InternalEventDeclaration}
+    | {ExternalEventDeclaration}
     )
   )
 
