@@ -832,10 +832,18 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	/**
-	 * The solver settings of one worker script. They come from the TraceAbstraction preference page, not from
-	 * IcfgBuilder's: the workers do trace abstraction, and a user who configures a solver for TraceAbstraction
-	 * expects that solver here. (Reading IcfgBuilder's page instead used to impose its per-query timeout, which for
-	 * a long-running k-induction worker silently turned proofs into {@code unknown}.)
+	 * The solver settings of one worker script. Which preference page describes the solver depends on the worker:
+	 * <ul>
+	 * <li>A TA worker's script plays the part of the main thread's CFG script: weakest preconditions, quantifier
+	 * elimination, the predicate unifier and the Hoare triple checks run on it, while its trace checks get their own
+	 * solver from the TraceAbstraction page via {@link TaCheckAndRefinementPreferences}. So it reads IcfgBuilder's page,
+	 * like the CFG script of the sequential loop. (With the TraceAbstraction page, the SV-COMP bitvector settings ran
+	 * all of that on bitwuzla without a per-query timeout, and computing backward predicates took about 20 times as
+	 * long as in the sequential loop.)</li>
+	 * <li>k-induction and the invariant supplier ask every query on their script, so they read the TraceAbstraction
+	 * page: a user who configures a solver for TraceAbstraction expects that solver there. (IcfgBuilder's per-query
+	 * timeout used to silently turn the proofs of a long-running k-induction worker into {@code unknown}.)</li>
+	 * </ul>
 	 *
 	 * @param workerType
 	 *            the kind of worker this script is for; {@link WorkerType#KINDUCTION} may carry its own per-query
@@ -845,22 +853,32 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 */
 	private SolverSettings getSolverSettings(final WorkerType workerType, final String filename) {
 
-		// Everything that describes the solver comes from the TraceAbstraction page. Only the two benchmark-dump
-		// flags do not exist there, so those keep reading IcfgBuilder's page.
+		// The two benchmark-dump flags exist only on IcfgBuilder's page, so every worker reads them there.
 		final IPreferenceProvider taPrefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final IPreferenceProvider icfgPrefs = mServices.getPreferenceProvider(
 				de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.Activator.PLUGIN_ID);
+		final IPreferenceProvider solverPrefs = workerType == WorkerType.TA ? icfgPrefs : taPrefs;
 
-		final SolverMode solverMode = solverMode(workerType);
+		final SolverMode solverMode;
+		final String commandExternalSolver;
+		final Logics logicForExternalSolver;
+		if (workerType == WorkerType.TA) {
+			solverMode = icfgPrefs.getEnum(IcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
+			commandExternalSolver = icfgPrefs.getString(IcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND);
+			logicForExternalSolver =
+					Logics.valueOf(icfgPrefs.getString(IcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
+		} else {
+			solverMode = solverMode(workerType);
+			commandExternalSolver = externalSolverCommand(workerType);
+			logicForExternalSolver = mPref.logicForExternalSolver();
+		}
 
 		final boolean fakeNonIncrementalScript =
-				taPrefs.getBoolean(IcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
+				solverPrefs.getBoolean(IcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
 
 		final boolean dumpSmtScriptToFile = mPref.dumpSmtScriptToFile();
 		final boolean compressSmtScript = mPref.compressDumpedSmtScript();
 		final String pathOfDumpedScript = mPref.pathOfDumpedScript();
-
-		final String commandExternalSolver = externalSolverCommand(workerType);
 
 		final boolean dumpUnsatCoreTrackBenchmark =
 				icfgPrefs.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_UNSAT_CORE_BENCHMARK);
@@ -869,9 +887,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				icfgPrefs.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_MAIN_TRACK_BENCHMARK);
 
 		final Map<String, String> additionalSmtOptions =
-				taPrefs.getKeyValueMap(IcfgPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS);
-
-		final Logics logicForExternalSolver = mPref.logicForExternalSolver();
+				solverPrefs.getKeyValueMap(IcfgPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS);
 		final SolverSettings solverSettings =
 				SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(fakeNonIncrementalScript)
 						// The worker type in the name: workers started in the same iteration would otherwise dump into
