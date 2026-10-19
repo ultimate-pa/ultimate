@@ -211,7 +211,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 
 	public ProcedureSummaries(final IUltimateServiceProvider services, final ILogger logger,
 			final CfgSmtToolkit csToolkit, final ManagedScript mgdScript,
-			final INestedWordAutomaton<LETTER, STATE> abstraction) {
+			final INestedWordAutomaton<LETTER, STATE> abstraction, final CounterSort counterSort) {
 		mServices = services;
 		mLogger = logger;
 		mCsToolkit = csToolkit;
@@ -245,7 +245,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		}
 		stackUnfoldingsThatDoNotFit(order, entryProcedures);
 		if (!mStacked.isEmpty()) {
-			mCallStack = new CallStack(mMgdScript, localsOf(mStacked));
+			mCallStack = new CallStack(mMgdScript, localsOf(mStacked), counterSort);
 		}
 		rejectOldVarReadsAcrossStackFreeCalls(entryProcedures, callGraph);
 		unfold(entryProcedures);

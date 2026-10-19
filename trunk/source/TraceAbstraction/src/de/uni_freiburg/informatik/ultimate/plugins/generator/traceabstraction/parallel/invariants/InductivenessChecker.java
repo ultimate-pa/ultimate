@@ -114,7 +114,7 @@ final class InductivenessChecker {
 		for (final IProgramVar pv : system.getVars()) {
 			mVarOfTermVariable.put(pv.getTermVariable(), pv);
 		}
-		mConstants = new IndexedConstantVars(mgdScript.getScript(), mConstantCache, "inv");
+		mConstants = new IndexedConstantVars(mgdScript.getScript(), mConstantCache, "inv", system.getCounterSort());
 	}
 
 	/** @return the transition system of the initial abstraction, over the supplier's script */
@@ -127,7 +127,7 @@ final class InductivenessChecker {
 	 *         checker: the constant of a program variable has no prefix, so a cache of its own would declare it twice.
 	 */
 	IndexedConstantVars constants(final String prefix) {
-		return new IndexedConstantVars(mMgdScript.getScript(), mConstantCache, prefix);
+		return new IndexedConstantVars(mMgdScript.getScript(), mConstantCache, prefix, mSystem.getCounterSort());
 	}
 
 	/** @return true if {@code location} has a pc node, i.e. a candidate there can be checked */
@@ -213,12 +213,12 @@ final class InductivenessChecker {
 			for (final Term candidate : candidates) {
 				assumed.add(instantiate(candidate, 0));
 			}
-			final Term isNode0 = SmtUtils.binaryEquality(script, pc0, PcTransitionSystem.pcValue(script, node.getKey()));
+			final Term isNode0 = SmtUtils.binaryEquality(script, pc0, mSystem.pcValue(script, node.getKey()));
 			if (!assumed.isEmpty()) {
 				pre.add(SmtUtils.implies(script, isNode0, SmtUtils.and(script, assumed)));
 			}
 			reachedAt1.computeIfAbsent(location, x -> new ArrayList<>())
-					.add(SmtUtils.binaryEquality(script, pc1, PcTransitionSystem.pcValue(script, node.getKey())));
+					.add(SmtUtils.binaryEquality(script, pc1, mSystem.pcValue(script, node.getKey())));
 		}
 		final List<Flag> flags = new ArrayList<>();
 		final List<Term> flagDefinitions = new ArrayList<>();

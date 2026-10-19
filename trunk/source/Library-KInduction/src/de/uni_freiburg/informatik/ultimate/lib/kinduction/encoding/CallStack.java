@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -72,10 +71,11 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * outvars of the edge formulas it is given ({@code collectVars}) and frames whatever an edge does not assign, so
  * these variables behave like any other program variable of the analysed program.
  * <p>
- * The arrays are indexed by {@code Int} and are never constrained to be empty or non-negative at the start. They do
- * not have to be: a path can only reach a callee's exit node by going through the call edge that pushed, so every
- * {@code select} on a path is preceded by the matching {@code store}, and only the difference of the indices
- * matters, not where they start.
+ * The arrays are indexed by the {@link CounterSort} of the program and are never constrained to be empty or
+ * non-negative at the start. They do not have to be: a path can only reach a callee's exit node by going through the
+ * call edge that pushed, so every {@code select} on a path is preceded by the matching {@code store}, and only the
+ * difference of the indices matters, not where they start. For a bitvector index that difference wraps around, which
+ * changes nothing either: no unrolling comes close to 2^32 activations.
  *
  * @author Max Barth (max.barth@lmu.de)
  */
@@ -87,6 +87,7 @@ public final class CallStack {
 
 	private final ManagedScript mMgdScript;
 	private final Script mScript;
+	private final CounterSort mCounterSort;
 	private final Sort mIndexSort;
 	private final IProgramNonOldVar mStackPointer;
 	private final IProgramNonOldVar mReturnSites;
@@ -98,11 +99,15 @@ public final class CallStack {
 	 *            every local variable of every stack-encoded procedure. Minting the variables takes the script's
 	 *            lock, so this has to happen while the loop tree is being built - before {@code KInduction.run} takes
 	 *            it for the solver queries.
+	 * @param counterSort
+	 *            the sort of the stack pointer and of the array indices
 	 */
-	public CallStack(final ManagedScript mgdScript, final Collection<? extends IProgramVar> locals) {
+	public CallStack(final ManagedScript mgdScript, final Collection<? extends IProgramVar> locals,
+			final CounterSort counterSort) {
 		mMgdScript = mgdScript;
 		mScript = mgdScript.getScript();
-		mIndexSort = SmtSortUtils.getIntSort(mScript);
+		mCounterSort = counterSort;
+		mIndexSort = counterSort.getSort();
 		// Minting a program variable declares its default and primed constant, which the ManagedScript only lets
 		// its lock owner do. Unlike ProgramVarUtils#constructConstantForAuxVar, constructGlobalProgramVarPair does
 		// not take the lock itself.
@@ -238,6 +243,6 @@ public final class CallStack {
 	}
 
 	private Term index(final int value) {
-		return SmtUtils.constructIntValue(mScript, BigInteger.valueOf(value));
+		return mCounterSort.value(mScript, value);
 	}
 }

@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -69,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormu
  * <p>
  * {@link #step} builds the relation between step {@code idx} and step {@code idx + 1}. Variables a transition does
  * not assign are explicitly kept equal (frame), and auxiliary variables are instantiated separately for every
- * transition and step.
+ * transition and step. The pc and the transition ids are of the {@link CounterSort} of the program.
  *
  * @param <STATE>
  *            state type of the automaton
@@ -86,6 +85,7 @@ public class PcTransitionSystem<STATE> {
 	private final Set<IProgramVar> mOldVars = new LinkedHashSet<>();
 	private int mNumNodes = 2;
 	private int mStutterTransitionId = -1;
+	private final CounterSort mCounterSort;
 
 	/**
 	 * Supplies the terms for one unrolling of the system, either constants (for a solver query) or term variables
@@ -200,7 +200,8 @@ public class PcTransitionSystem<STATE> {
 		}
 	}
 
-	public PcTransitionSystem(final LoopTree<STATE> tree) {
+	public PcTransitionSystem(final LoopTree<STATE> tree, final CounterSort counterSort) {
+		mCounterSort = counterSort;
 		final List<Scope<STATE>> scopes = new ArrayList<>();
 		scopes.add(tree.getRoot());
 		for (final Scope<STATE> loop : tree.getLoops()) {
@@ -318,14 +319,19 @@ public class PcTransitionSystem<STATE> {
 		return mNumNodes;
 	}
 
+	/** The sort of the pc and of the transition ids. */
+	public CounterSort getCounterSort() {
+		return mCounterSort;
+	}
+
 	/** The term for the pc value {@code node}. */
-	public static Term pcValue(final Script script, final int node) {
-		return SmtUtils.constructIntValue(script, BigInteger.valueOf(node));
+	public Term pcValue(final Script script, final int node) {
+		return mCounterSort.value(script, node);
 	}
 
 	/** The term that names transition {@code id} in a step selector, see {@link StepVars#sel(int)}. */
-	public static Term transitionIdValue(final Script script, final int id) {
-		return SmtUtils.constructIntValue(script, BigInteger.valueOf(id));
+	public Term transitionIdValue(final Script script, final int id) {
+		return mCounterSort.value(script, id);
 	}
 
 	/**

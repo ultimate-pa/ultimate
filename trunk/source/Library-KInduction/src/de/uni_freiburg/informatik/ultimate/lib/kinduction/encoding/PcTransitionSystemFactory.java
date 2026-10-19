@@ -71,10 +71,13 @@ public final class PcTransitionSystemFactory {
 	 * a virtual call edge if the callee can be summarized, into an unfolded copy of the callee if it contains a loop -
 	 * and the tree is built for the resulting graph, which has no call and no return transition left. A call that
 	 * stayed in it would be unsound, see {@link LoopTreeFormulaBuilder}.
+	 *
+	 * @param counterSort
+	 *            the sort of the pc, the transition ids and the call stack index
 	 */
 	public static <LETTER extends IAction, STATE> Result<LETTER, STATE> build(final IUltimateServiceProvider services,
 			final ILogger logger, final CfgSmtToolkit csToolkit, final ManagedScript mgdScript,
-			final INestedWordAutomaton<LETTER, STATE> abstraction) {
+			final INestedWordAutomaton<LETTER, STATE> abstraction, final CounterSort counterSort) {
 		final LoopTree<CallNode<STATE>> tree;
 		final ProcedureSummaries<LETTER, STATE> summaries;
 		if (!hasCallTransitions(abstraction)) {
@@ -83,12 +86,12 @@ public final class PcTransitionSystemFactory {
 					roots(abstraction.getStates()), roots(abstraction.getInitialStates()),
 					roots(abstraction.getFinalStates()), Collections.emptyMap(), Collections.emptySet()).build();
 		} else {
-			summaries = new ProcedureSummaries<>(services, logger, csToolkit, mgdScript, abstraction);
+			summaries = new ProcedureSummaries<>(services, logger, csToolkit, mgdScript, abstraction, counterSort);
 			tree = new LoopTreeFormulaBuilder<>(services, logger, mgdScript, summaries.getGraph(),
 					summaries.getScopeStates(), summaries.getInitStates(), summaries.getFinalStates(),
 					summaries.getVirtualCallEdges(), summaries.getSealedStates()).build();
 		}
-		return new Result<>(new PcTransitionSystem<>(tree), summaries);
+		return new Result<>(new PcTransitionSystem<>(tree, counterSort), summaries);
 	}
 
 	/** The given states as nodes with no pending call, for a program in which nothing is ever called. */

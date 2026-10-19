@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantMessage.TrustedInvariants;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantSubscription.RunningQuery;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInduction;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CounterSort;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystemFactory;
 
 /**
@@ -594,7 +595,8 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 	private InductivenessChecker getChecker() {
 		if (mChecker == null) {
 			final PcTransitionSystemFactory.Result<L, IPredicate> encoding =
-					PcTransitionSystemFactory.build(mServices, mLogger, mCsToolkit, mScript, mAbstraction);
+					PcTransitionSystemFactory.build(mServices, mLogger, mCsToolkit, mScript, mAbstraction,
+						CounterSort.forProgram(mScript.getScript(), mCsToolkit));
 			mChecker = new InductivenessChecker(mLogger, mScript, encoding.system());
 			mLogger.info("InvariantSupplier: transition system with %d pc value(s), %d loop head(s), %d waypoint(s)",
 					encoding.system().getNumNodes(), encoding.system().getHeadNodes().size(),

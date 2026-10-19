@@ -141,7 +141,7 @@ public final class KInductionQuery<STATE> {
 				}
 				final Term instantiated = PureSubstitution.apply(mMgdScript, substitution, entry.getValue().term());
 				final Term atHead = SmtUtils.binaryEquality(script, mConstants.pc(j),
-						PcTransitionSystem.pcValue(script, entry.getKey()));
+						mSystem.pcValue(script, entry.getKey()));
 				result.add(SmtUtils.implies(script, atHead, instantiated));
 			}
 		}
@@ -157,8 +157,8 @@ public final class KInductionQuery<STATE> {
 	 */
 	public void assertQuery(final Kind kind, final int k, final List<Term> invariantAssertions) {
 		final Script script = mMgdScript.getScript();
-		final Term init = PcTransitionSystem.pcValue(script, PcTransitionSystem.INIT);
-		final Term fin = PcTransitionSystem.pcValue(script, PcTransitionSystem.FINAL);
+		final Term init = mSystem.pcValue(script, PcTransitionSystem.INIT);
+		final Term fin = mSystem.pcValue(script, PcTransitionSystem.FINAL);
 		if (kind == Kind.BASE) {
 			mMgdScript.assertTerm(mLock, SmtUtils.binaryEquality(script, mConstants.pc(0), init));
 		} else {

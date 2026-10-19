@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.ExternalSolverInterrupter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.ExternalSolverRestarter;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -64,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionS
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.ProcedureSummaries;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystemFactory;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CounterSort;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.IndexedConstantVars;
 
@@ -200,18 +200,20 @@ public class KInduction<LETTER extends IAction, STATE> {
 		// Building the loop tree composes transition formulas, which declares constants for their aux vars and thus
 		// locks the script itself. So the tree has to be complete before we take the lock for the solver queries.
 		final PcTransitionSystemFactory.Result<LETTER, STATE> encoding =
-				PcTransitionSystemFactory.build(mServices, mLogger, mCsToolkit, mWorkerMgdScript, mAbstraction);
+				PcTransitionSystemFactory.build(mServices, mLogger, mCsToolkit, mWorkerMgdScript, mAbstraction,
+						CounterSort.forProgram(mWorkerMgdScript.getScript(), mCsToolkit));
 		mSystem = encoding.system();
 		mSummaries = encoding.summaries();
 		mLogger.info(
-				"KInduction: transition system with %d pc value(s), %d transition(s), %d variable(s), %d loop head(s)",
+				"KInduction: transition system with %d pc value(s), %d transition(s), %d variable(s), %d loop head(s), "
+						+ "counters of sort %s",
 				mSystem.getNumNodes(), mSystem.getNumTransitions(), mSystem.getVars().size(),
-				mSystem.getHeadNodes().size());
+				mSystem.getHeadNodes().size(), mSystem.getCounterSort());
 
 		mWorkerMgdScript.lock(mKILock);
 		try {
 			mConstants = new IndexedConstantVars(mWorkerMgdScript.getScript(), mIndexedConstantsWorkerScript,
-					"ki");
+					"ki", mSystem.getCounterSort());
 			mQuery = new KInductionQuery<>(mSystem, mWorkerMgdScript, mKILock, mConstants);
 			if (mProbation) {
 				final Script script = mWorkerMgdScript.getScript();
@@ -405,34 +407,25 @@ public class KInduction<LETTER extends IAction, STATE> {
 
 		final int[] pcValues = new int[k + 1];
 		for (int j = 0; j <= k; j++) {
-			pcValues[j] = intValue(model, mConstants.pc(j), "pc_" + j);
+			pcValues[j] = counterValue(model, mConstants.pc(j), "pc_" + j);
 		}
 		final int[] transitionIds = new int[k];
 		for (int j = 0; j < k; j++) {
-			transitionIds[j] = intValue(model, mConstants.sel(j), "selector_" + j);
+			transitionIds[j] = counterValue(model, mConstants.sel(j), "selector_" + j);
 		}
 		int[] stackPointers = null;
 		if (stackPointer != null) {
 			stackPointers = new int[k + 1];
 			for (int j = 0; j <= k; j++) {
-				stackPointers[j] = intValue(model, mConstants.var(stackPointer, j), stackPointer + "_" + j);
+				stackPointers[j] = counterValue(model, mConstants.var(stackPointer, j), stackPointer + "_" + j);
 			}
 		}
 		return new KInductionWitness(k, pcValues, transitionIds, stackPointers);
 	}
 
-	/**
-	 * The pc and the transition selector are integers by construction, so anything else here means the model does not
-	 * fit the encoding, which is a bug rather than an unsupported case.
-	 */
-	private static int intValue(final Map<Term, Term> model, final Term term, final String description) {
-		final Term value = model.get(term);
-		final Rational rational = value == null ? null : SmtUtils.tryToConvertToLiteral(value);
-		if (rational == null || !rational.isIntegral()) {
-			throw new AssertionError("the k-induction model gives " + value + " for " + description
-					+ ", which is not an integer literal");
-		}
-		return rational.numerator().intValueExact();
+	/** The value the model gives a pc, selector or stack pointer constant, see {@link CounterSort#toInt}. */
+	private int counterValue(final Map<Term, Term> model, final Term term, final String description) {
+		return mSystem.getCounterSort().toInt(model.get(term), description);
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -485,7 +478,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 				conjuncts.add(mSystem.step(j, vars, mWorkerMgdScript));
 			}
 			conjuncts.add(SmtUtils.binaryEquality(script, vars.pc(mProvedK),
-					PcTransitionSystem.pcValue(script, PcTransitionSystem.FINAL)));
+					mSystem.pcValue(script, PcTransitionSystem.FINAL)));
 			final Term reachError = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, vars.getFreshVariables(),
 					SmtUtils.and(script, conjuncts));
 			mLearnedInvariants.put(head.getKey(), SmtUtils.not(script, reachError));
@@ -532,9 +525,9 @@ public class KInduction<LETTER extends IAction, STATE> {
 		public Term pc(final int idx) {
 			final Script script = mWorkerMgdScript.getScript();
 			if (idx == 0) {
-				return PcTransitionSystem.pcValue(script, mNode);
+				return mSystem.pcValue(script, mNode);
 			}
-			return fresh("pc_" + idx, PcTransitionSystem.pcValue(script, 0).getSort());
+			return fresh("pc_" + idx, mSystem.getCounterSort().getSort());
 		}
 
 		@Override

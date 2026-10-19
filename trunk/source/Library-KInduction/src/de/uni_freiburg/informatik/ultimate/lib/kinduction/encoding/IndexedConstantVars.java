@@ -57,12 +57,15 @@ public final class IndexedConstantVars implements StepVars {
 	 *            the declared constants, shared by every query on {@code script}
 	 * @param prefix
 	 *            put in front of the names of the pc, selector and auxiliary constants
+	 * @param counterSort
+	 *            the sort of the pc and selector constants
 	 */
-	public IndexedConstantVars(final Script script, final Map<String, Term> cache, final String prefix) {
+	public IndexedConstantVars(final Script script, final Map<String, Term> cache, final String prefix,
+			final CounterSort counterSort) {
 		mScript = script;
 		mCache = cache;
 		mPrefix = prefix;
-		mPcSort = PcTransitionSystem.pcValue(script, 0).getSort();
+		mPcSort = counterSort.getSort();
 	}
 
 	@Override
