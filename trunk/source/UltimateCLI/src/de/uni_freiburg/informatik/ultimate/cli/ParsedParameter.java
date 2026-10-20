@@ -159,14 +159,20 @@ public class ParsedParameter {
 		return mCli.hasOption(CommandLineOptions.OPTION_LONG_NAME_EXPERIMENTAL);
 	}
 
-	public String getSettingsFile() throws ParseException, InvalidFileArgumentException {
-		final File file = getParsedOption(CommandLineOptions.OPTION_NAME_SETTINGS);
-		checkFileReadable(file, CommandLineOptions.OPTION_LONG_NAME_SETTINGS);
-		return file.getAbsolutePath();
-	}
+	public List<String> getSettingsFiles() throws ParseException, InvalidFileArgumentException {
+		final Object[] files = getParsedOptions(CommandLineOptions.OPTION_NAME_SETTINGS);
+		if (files == null || files.length == 0) {
+			return new ArrayList<>();
+		}
 
-	public boolean hasSettings() {
-		return mCli.hasOption(CommandLineOptions.OPTION_NAME_SETTINGS);
+		final List<String> result = new ArrayList<>(files.length);
+		for (final Object obj : files) {
+			final File file = File.class.cast(obj);
+			checkFileReadable(file, CommandLineOptions.OPTION_LONG_NAME_SETTINGS);
+			result.add(file.getAbsolutePath());
+		}
+
+		return result;
 	}
 
 	public boolean hasToolchain() {
@@ -240,8 +246,8 @@ public class ParsedParameter {
 		}
 
 		final List<File> files = new ArrayList<>(Arrays.asList(getInputFiles()));
-		if (hasSettings()) {
-			files.add(new File(getSettingsFile()));
+		for (final String settingsFile : getSettingsFiles()) {
+			files.add(new File(settingsFile));
 		}
 		files.add(getToolchainFile());
 		final String joinednames = files.stream().map(File::getName).collect(Collectors.joining("_"));
