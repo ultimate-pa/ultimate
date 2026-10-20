@@ -863,6 +863,7 @@ public class MemoryHandler {
 	}
 
 	public IdentifierExpression getPthreadForkCount(final ILocation loc) {
+		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_FORK_COUNT);
 		final BoogieType counterType = mTypeHandler.getBoogieTypeForCType(mTypeHandler.getThreadIdType());
 		return ExpressionFactory.constructIdentifierExpression(loc, counterType, SFO.ULTIMATE_FORK_COUNT,
 				DeclarationInformation.DECLARATIONINFO_GLOBAL);
