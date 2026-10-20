@@ -35,6 +35,7 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
@@ -43,7 +44,10 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
@@ -83,8 +87,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
- * Model of functions and types from pthread.h (https://pubs.opengroup.org/onlinepubs/7908799/xsh/pthread.h.html) to use
- * concurrency in C
+ * Model of functions and types from pthread.h (https://pubs.opengroup.org/onlinepubs/009696899/basedefs/pthread.h.html)
+ * to use concurrency in C
  */
 public class PthreadLibraryModel implements ILibraryModel {
 	private final FunctionModelHelper mHelper;
@@ -98,6 +102,11 @@ public class PthreadLibraryModel implements ILibraryModel {
 	private final ProcedureManager mProcedureManager;
 	private final ThreadIdManager mThreadIdManager;
 	private final IMemoryPointer mMemoryPointer;
+
+	// The constant PTHREAD_BARRIER_SERIAL_THREAD is defined in <pthread.h> and its value shall be distinct from any
+	// other value returned by pthread_barrier_wait()
+	// (see https://aws.github.io/amazon-freertos/202007.00/html2/POSIX/pthread_8h.html
+	private static final int PTHREAD_BARRIER_SERIAL_THREAD = -2;
 
 	public PthreadLibraryModel(final FunctionModelHelper helper, final FlatSymbolTable symboltable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionResultTransformer exprResultTransformer,
@@ -123,6 +132,8 @@ public class PthreadLibraryModel implements ILibraryModel {
 		return List.of(new FunctionModel("pthread_create", this::handlePthread_create),
 				new FunctionModel("pthread_join", this::handlePthread_join),
 				new FunctionModel("pthread_mutex_init", this::handlePthread_mutex_init),
+				new FunctionModel("pthread_barrier_init", this::handlePthread_barrier_init),
+				new FunctionModel("pthread_barrier_wait", this::handlePthread_barrier_wait),
 				new FunctionModel("pthread_mutex_lock", this::handlePthread_mutex_lock),
 				new FunctionModel("pthread_mutex_trylock", this::handlePthread_mutex_trylock),
 				new FunctionModel("pthread_mutex_unlock", this::handlePthread_mutex_unlock),
@@ -489,6 +500,117 @@ public class PthreadLibraryModel implements ILibraryModel {
 		return erb.build();
 	}
 
+	private Result handlePthread_barrier_init(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, 3, name, arguments);
+
+		final ExpressionResult barrier =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		final ExpressionResult attributes =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
+		final ExpressionResult capacity = mExprResultTransformer.performImplicitConversion(
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[2]),
+				new CPrimitive(CPrimitives.UINT), loc);
+		if (!mMemoryHandler.isNullPointerLiteral(attributes.getLrValue().getValue())) {
+			throw new UnsupportedSyntaxException(loc, "Only default attributes are supported for pthread_barrier_init");
+		}
+
+		// We model a pthread_barrier using a 3-valued struct:
+		// - the number of threads necessary to pass the barrier ("capacity"), initialized with the last parameter
+		// - the number of threads that arrived at the barrier, initialized with 0
+		// - the number of threads that exited the barrier, initialized with 0
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addAllExceptLrValue(barrier, attributes, capacity);
+		final Expression zero =
+				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.UINT), BigInteger.ZERO);
+		final Expression barrierInit = ExpressionFactory.constructStructConstructor(loc,
+				new String[] { SFO.PTHREAD_BARRIER_CAPACITY, SFO.PTHREAD_BARRIER_ARRIVALS, SFO.PTHREAD_BARRIER_EXITED },
+				new Expression[] { capacity.getLrValue().getValue(), zero, zero });
+		builder.addStatement(
+				mMemoryHandler.constructPthreadBarrierAssignment(loc, barrier.getLrValue().getValue(), barrierInit));
+		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
+		return builder.setLrValue(
+				new RValue(mTypeSizes.constructLiteralForIntegerType(loc, returnType, BigInteger.ZERO), returnType))
+				.build();
+	}
+
+	private Result handlePthread_barrier_wait(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, 1, name, arguments);
+
+		final ExpressionResult barrier =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		final Expression index = barrier.getLrValue().getValue();
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addAllExceptLrValue(barrier);
+
+		final CPrimitive counterType = new CPrimitive(CPrimitives.UINT);
+		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
+		final Expression countAtBarrier =
+				mMemoryHandler.constructPthreadBarrierFieldAccess(loc, index, SFO.PTHREAD_BARRIER_CAPACITY);
+		final Expression arrivalsAtBarrier =
+				mMemoryHandler.constructPthreadBarrierFieldAccess(loc, index, SFO.PTHREAD_BARRIER_ARRIVALS);
+		final Expression exitedAtBarrier =
+				mMemoryHandler.constructPthreadBarrierFieldAccess(loc, index, SFO.PTHREAD_BARRIER_EXITED);
+		final Expression one = mTypeSizes.constructLiteralForIntegerType(loc, counterType, BigInteger.ONE);
+		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc, counterType, BigInteger.ZERO);
+		final Expression arrivalsBelowCapacity = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessThan, arrivalsAtBarrier, counterType, countAtBarrier, counterType);
+		final Expression nextArrivalCount = mExpressionTranslation.constructArithmeticExpression(loc,
+				IASTBinaryExpression.op_plus, arrivalsAtBarrier, counterType, one, counterType);
+
+		// Check whether the barrier is already full and otherwise indicate that the thread has arrived
+		// atomic { assume arrivals < capacity; arrivals := arrivals + 1; }
+		builder.addStatement(StatementFactory.constructAtomicStatement(loc,
+				List.of(new AssumeStatement(loc, arrivalsBelowCapacity),
+						mMemoryHandler.constructPthreadBarrierFieldAssignment(loc, index, SFO.PTHREAD_BARRIER_ARRIVALS,
+								nextArrivalCount))));
+
+		// Wait until all threads have arrived
+		// assume arrivals == capacity;
+		final Expression allArrived = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_equals, arrivalsAtBarrier, counterType, countAtBarrier, counterType);
+		builder.addStatement(new AssumeStatement(loc, allArrived));
+
+		final Expression nextExitedCount = mExpressionTranslation.constructArithmeticExpression(loc,
+				IASTBinaryExpression.op_plus, exitedAtBarrier, counterType, one, counterType);
+		final Expression isLastDeparture = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_equals, nextExitedCount, counterType, countAtBarrier, counterType);
+		final Expression nextArrivalState =
+				ExpressionFactory.constructIfThenElseExpression(loc, isLastDeparture, zero, arrivalsAtBarrier);
+		final Expression nextExitedState =
+				ExpressionFactory.constructIfThenElseExpression(loc, isLastDeparture, zero, nextExitedCount);
+		final AuxVarInfo returnValue = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, SFO.AUXVAR.RETURNED);
+		builder.addAuxVarWithDeclaration(returnValue);
+
+		// Record this thread's exit, the last exit resets the counters for the next round.
+		// atomic {
+		// newExited := exited + 1;
+		// isLast := newExited == capacity;
+		// arrivals[b] := if isLast then 0 else arrivals;
+		// return := if isLast then PTHREAD_BARRIER_SERIAL_THREAD else 0;
+		// exited[b] := if isLast then 0 else newExited;
+		// }
+		// We use conditional expressions here, since we cannot handle if-statements in atomic blocks and we inline the
+		// auxiliary variables to avoid unnecessary declarations.
+
+		final Expression returnExpression = ExpressionFactory.constructIfThenElseExpression(loc, isLastDeparture,
+				mTypeSizes.constructLiteralForIntegerType(loc, returnType,
+						BigInteger.valueOf(PTHREAD_BARRIER_SERIAL_THREAD)),
+				zero);
+		// The exit is assigned last, so the conditions above still observe its old value
+		builder.addStatement(StatementFactory.constructAtomicStatement(loc, List.of(
+				mMemoryHandler.constructPthreadBarrierFieldAssignment(loc, index, SFO.PTHREAD_BARRIER_ARRIVALS,
+						nextArrivalState),
+				StatementFactory.constructSingleAssignmentStatement(loc, returnValue.getLhs(), returnExpression),
+				mMemoryHandler.constructPthreadBarrierFieldAssignment(loc, index, SFO.PTHREAD_BARRIER_EXITED,
+						nextExitedState))));
+
+		return builder.setLrValue(new RValue(returnValue.getExp(), returnType)).build();
+	}
+
 	@Override
 	public Collection<TypeModel> getTypeModels() {
 		// TODO: Handle more types here that are declared in pthread.h
@@ -496,6 +618,7 @@ public class PthreadLibraryModel implements ILibraryModel {
 				new TypeModel("__pthread_list_t", CPointer.voidPointer()),
 				// TODO: We may want to use a specific type to simplify the mutex/lock handling
 				new TypeModel("pthread_mutex_t", new CPrimitive(CPrimitives.INT)),
+				new TypeModel("pthread_barrier_t", new CPrimitive(CPrimitives.INT)),
 				new TypeModel("pthread_rwlock_t", new CPrimitive(CPrimitives.INT)),
 				new TypeModel("pthread_cond_t", new CPrimitive(CPrimitives.INT)));
 	}
@@ -507,6 +630,9 @@ public class PthreadLibraryModel implements ILibraryModel {
 		return List.of(
 				new ConstantModel("PTHREAD_MUTEX_INITIALIZER",
 						loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ZERO, new CPrimitive(CPrimitives.INT))),
+				new ConstantModel("PTHREAD_BARRIER_SERIAL_THREAD",
+						loc -> mHelper.constructIntegerLiteral(loc, BigInteger.valueOf(PTHREAD_BARRIER_SERIAL_THREAD),
+								new CPrimitive(CPrimitives.INT))),
 				new ConstantModel("PTHREAD_RWLOCK_INITIALIZER",
 						loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ZERO, new CPrimitive(CPrimitives.INT))),
 				new ConstantModel("PTHREAD_COND_INITIALIZER",

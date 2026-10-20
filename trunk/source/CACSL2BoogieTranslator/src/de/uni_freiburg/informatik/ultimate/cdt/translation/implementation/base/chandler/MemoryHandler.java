@@ -391,6 +391,11 @@ public class MemoryHandler {
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
+				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER)) {
+			declarations.add(declarePthreadBarrierArray(tuLoc));
+		}
+
+		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
 				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK)) {
 			declarations.addAll(declarePthreadMutexLock(main, mTypeHandler, tuLoc));
 		}
@@ -886,6 +891,52 @@ public class MemoryHandler {
 				new VariableLHS(loc, boogieType, SFO.ULTIMATE_PTHREADS_MUTEX,
 						new DeclarationInformation(StorageClass.GLOBAL, null)),
 				getBooleanArrayHelper().constructFromValue(mutexLocked));
+	}
+
+	private Expression constructPthreadBarrierArrayIdentifierExpression(final ILocation loc) {
+		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER);
+		final BoogieArrayType boogieType =
+				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
+						mMemoryModelDeclarationsHandler.getPthreadBarrierStructType());
+		return ExpressionFactory.constructIdentifierExpression(loc, boogieType,
+				MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER.getName(),
+				new DeclarationInformation(StorageClass.GLOBAL, null));
+	}
+
+	public Expression constructPthreadBarrierFieldAccess(final ILocation loc, final Expression barrier,
+			final String field) {
+		return ExpressionFactory
+				.constructStructAccessExpression(loc,
+						ExpressionFactory.constructNestedArrayAccessExpression(loc,
+								constructPthreadBarrierArrayIdentifierExpression(loc), new Expression[] { barrier }),
+						field);
+	}
+
+	public AssignmentStatement constructPthreadBarrierAssignment(final ILocation loc, final Expression barrier,
+			final Expression value) {
+		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER);
+		final BoogieArrayType boogieType =
+				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
+						mMemoryModelDeclarationsHandler.getPthreadBarrierStructType());
+		return MemoryHandler.constructOneDimensionalArrayUpdate(loc, barrier,
+				new VariableLHS(loc, boogieType, MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER.getName(),
+						DeclarationInformation.DECLARATIONINFO_GLOBAL),
+				value);
+	}
+
+	public AssignmentStatement constructPthreadBarrierFieldAssignment(final ILocation loc, final Expression barrier,
+			final String field, final Expression value) {
+		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER);
+		final BoogieArrayType boogieType =
+				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
+						mMemoryModelDeclarationsHandler.getPthreadBarrierStructType());
+		final VariableLHS arrayLhs =
+				new VariableLHS(loc, boogieType, MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER.getName(),
+						DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		final LeftHandSide barrierLhs =
+				ExpressionFactory.constructNestedArrayLHS(loc, arrayLhs, new Expression[] { barrier });
+		return StatementFactory.constructSingleAssignmentStatement(loc,
+				ExpressionFactory.constructStructAccessLhs(loc, barrierLhs, field), value);
 	}
 
 	public Expression constructRwLockArrayIdentifierExpression(final ILocation loc) {
@@ -1458,6 +1509,12 @@ public class MemoryHandler {
 	private VariableDeclaration declarePThreadsMutexArray(final ILocation loc) {
 		final String arrayName = SFO.ULTIMATE_PTHREADS_MUTEX;
 		return constructDeclOfPointerIndexedArray(loc, mBooleanArrayHelper.constructBoolReplacementType(), arrayName);
+	}
+
+	private VariableDeclaration declarePthreadBarrierArray(final ILocation loc) {
+		return constructDeclOfPointerIndexedArray(loc,
+				mMemoryModelDeclarationsHandler.getPthreadBarrierStructType().toASTType(loc),
+				MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER.getName());
 	}
 
 	private static CPrimitive getRwLockCounterType() {
