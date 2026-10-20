@@ -893,23 +893,18 @@ public class MemoryHandler {
 				getBooleanArrayHelper().constructFromValue(mutexLocked));
 	}
 
-	private Expression constructPthreadBarrierArrayIdentifierExpression(final ILocation loc) {
+	public Expression constructPthreadBarrierFieldAccess(final ILocation loc, final Expression barrier,
+			final String field) {
 		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER);
 		final BoogieArrayType boogieType =
 				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
 						mMemoryModelDeclarationsHandler.getPthreadBarrierStructType());
-		return ExpressionFactory.constructIdentifierExpression(loc, boogieType,
+		final Expression barrierArray = ExpressionFactory.constructIdentifierExpression(loc, boogieType,
 				MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER.getName(),
-				new DeclarationInformation(StorageClass.GLOBAL, null));
-	}
-
-	public Expression constructPthreadBarrierFieldAccess(final ILocation loc, final Expression barrier,
-			final String field) {
-		return ExpressionFactory
-				.constructStructAccessExpression(loc,
-						ExpressionFactory.constructNestedArrayAccessExpression(loc,
-								constructPthreadBarrierArrayIdentifierExpression(loc), new Expression[] { barrier }),
-						field);
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		return ExpressionFactory.constructStructAccessExpression(loc,
+				ExpressionFactory.constructNestedArrayAccessExpression(loc, barrierArray, new Expression[] { barrier }),
+				field);
 	}
 
 	public AssignmentStatement constructPthreadBarrierAssignment(final ILocation loc, final Expression barrier,
