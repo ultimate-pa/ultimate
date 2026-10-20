@@ -879,6 +879,7 @@ public class MemoryHandler {
 
 	public AssignmentStatement constructMutexArrayAssignment(final ILocation loc, final Expression index,
 			final boolean mutexLocked) {
+		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
 		final BoogieArrayType boogieType =
 				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
 						(BoogieType) getBooleanArrayHelper().constructBoolReplacementType().getBoogieType());
