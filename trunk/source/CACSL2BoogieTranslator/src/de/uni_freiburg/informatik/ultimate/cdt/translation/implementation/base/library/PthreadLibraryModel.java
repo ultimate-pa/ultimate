@@ -589,9 +589,9 @@ public class PthreadLibraryModel implements ILibraryModel {
 		// atomic {
 		// newExited := exited + 1;
 		// isLast := newExited == capacity;
-		// arrivals[b] := if isLast then 0 else arrivals;
-		// return := if isLast then PTHREAD_BARRIER_SERIAL_THREAD else 0;
-		// exited[b] := if isLast then 0 else newExited;
+		// arrivals := if isLast then 0 else arrivals;
+		// result := if isLast then PTHREAD_BARRIER_SERIAL_THREAD else 0;
+		// exited := if isLast then 0 else newExited;
 		// }
 		// We use conditional expressions here, since we cannot handle if-statements in atomic blocks and we inline the
 		// auxiliary variables to avoid unnecessary declarations.
