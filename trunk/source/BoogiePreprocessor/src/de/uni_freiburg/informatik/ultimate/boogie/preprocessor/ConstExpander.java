@@ -323,8 +323,7 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 		assert nodeMap.size() == identifiers.size();
 
 		for (int i = 0; i < identifiers.size(); i++) {
-			final DeclarationInformation declInfo =
-					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null);
+			final DeclarationInformation declInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 			final String ident1 = identifiers.get(i);
 			final IdentifierExpression id1 = new IdentifierExpression(null, type, ident1, declInfo);
 			for (int j = i + 1; j < identifiers.size(); j++) {

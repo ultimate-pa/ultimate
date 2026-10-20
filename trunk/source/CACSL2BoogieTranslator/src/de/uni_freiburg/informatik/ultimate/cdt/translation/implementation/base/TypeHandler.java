@@ -52,7 +52,6 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
@@ -734,9 +733,8 @@ public class TypeHandler implements ITypeHandler {
 		final VarList vl = new VarList(loc, new String[] { boogieId }, enumAstType);
 		final ConstDeclaration cd = new ConstDeclaration(loc, new Attribute[0], false, vl, null, false);
 
-		final Expression identifier =
-				ExpressionFactory.constructIdentifierExpression(loc, getBoogieTypeForBoogieASTType(enumAstType),
-						boogieId, new DeclarationInformation(StorageClass.GLOBAL, null));
+		final Expression identifier = ExpressionFactory.constructIdentifierExpression(loc,
+				getBoogieTypeForBoogieASTType(enumAstType), boogieId, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		mSymboltable.storeCSymbol(node, enumConstId,
 				new SymbolTableValue(boogieId, cd, enumAstType,
 						new CDeclaration(typeOfEnumIdentifiers, enumConstId,
