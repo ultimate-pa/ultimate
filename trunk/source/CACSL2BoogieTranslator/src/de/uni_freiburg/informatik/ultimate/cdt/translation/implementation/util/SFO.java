@@ -223,7 +223,6 @@ public final class SFO {
 
 	public static final String ULTIMATE_PTHREADS_MUTEX = "#pthreadsMutex";
 
-	public static final String ULTIMATE_PTHREADS_BARRIER = "#pthreadsBarrier";
 	public static final String PTHREAD_BARRIER_CAPACITY = "capacity";
 	public static final String PTHREAD_BARRIER_ARRIVALS = "arrivals";
 	public static final String PTHREAD_BARRIER_EXITED = "exited";
