@@ -704,6 +704,75 @@ public class PolyPoNeTwoSidedTest {
 	}
 
 	@Test
+	public void knownEqualityOnExpressionViolatingBoundIsInconsistent() {
+		// x + y = 7, then x + y <=u 5 arrives - 7 is not <=u 5
+		declareXyz();
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, IPolynomialRelation.of(mScript, parse("(= (bvadd x y) (_ bv7 8))")), true);
+		Assert.assertTrue(polyPoNe.addPolyRel(mScript, twoSided("(bvule (bvadd x y) (_ bv5 8))"), true));
+	}
+
+	@Test
+	public void knownEqualityOnExpressionMakesSatisfyingBoundRedundant() {
+		// x + y = 7, then x + y <=u 9 arrives - 7 is <=u 9, so the bound is redundant
+		declareXyz();
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, IPolynomialRelation.of(mScript, parse("(= (bvadd x y) (_ bv7 8))")), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript, twoSided("(bvule (bvadd x y) (_ bv9 8))"), true));
+		assertSameMeaning("only the equality remains", parse("(= (bvadd x y) (_ bv7 8))"), polyPoNe.and());
+		Assert.assertFalse(polyPoNe.and().toString().contains("bvule"));
+	}
+
+	@Test
+	public void knownEqualityOnExpressionWithOffsetUsesTheOffset() {
+		// x + y = 7, so (x + y) + 2 = 9 - which is not <=u 5, but is <=u 9
+		declareXyz();
+		final PolyPoNe violated = new PolyPoNe(mScript, Junction.AND);
+		violated.addPolyRel(mScript, IPolynomialRelation.of(mScript, parse("(= (bvadd x y) (_ bv7 8))")), true);
+		Assert.assertTrue(violated.addPolyRel(mScript, twoSided("(bvule (bvadd (bvadd x y) (_ bv2 8)) (_ bv5 8))"),
+				true));
+		final PolyPoNe satisfied = new PolyPoNe(mScript, Junction.AND);
+		satisfied.addPolyRel(mScript, IPolynomialRelation.of(mScript, parse("(= (bvadd x y) (_ bv7 8))")), true);
+		Assert.assertFalse(satisfied.addPolyRel(mScript, twoSided("(bvule (bvadd (bvadd x y) (_ bv2 8)) (_ bv9 8))"),
+				true));
+	}
+
+	@Test
+	public void equalityOnExpressionAddedAfterViolatedBoundIsInconsistent() {
+		// x + y <=u 5 arrives first, then x + y = 7 - 7 is not <=u 5
+		declareXyz();
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule (bvadd x y) (_ bv5 8))"), true);
+		Assert.assertTrue(polyPoNe.addPolyRel(mScript,
+				IPolynomialRelation.of(mScript, parse("(= (bvadd x y) (_ bv7 8))")), true));
+	}
+
+	@Test
+	public void equalityOnExpressionAddedAfterSatisfiedBoundDropsTheBound() {
+		declareXyz();
+		final PolyPoNe polyPoNe = new PolyPoNe(mScript, Junction.AND);
+		polyPoNe.addPolyRel(mScript, twoSided("(bvule (bvadd x y) (_ bv9 8))"), true);
+		Assert.assertFalse(polyPoNe.addPolyRel(mScript,
+				IPolynomialRelation.of(mScript, parse("(= (bvadd x y) (_ bv7 8))")), true));
+		assertSameMeaning("only the equality remains", parse("(= (bvadd x y) (_ bv7 8))"), polyPoNe.and());
+		Assert.assertFalse(polyPoNe.and().toString().contains("bvule"));
+	}
+
+	@Test
+	public void distinctOnExpressionTightensAdjacentBoundToStrict() {
+		// x + y != 5 together with x + y <=u 5 is x + y <u 5, in both orders
+		declareXyz();
+		final PolyPoNe boundFirst = new PolyPoNe(mScript, Junction.AND);
+		boundFirst.addPolyRel(mScript, twoSided("(bvule (bvadd x y) (_ bv5 8))"), true);
+		Assert.assertFalse(boundFirst.addPolyRel(mScript, distinctRelation("(distinct (bvadd x y) (_ bv5 8))"), true));
+		assertSameMeaning("bound first", parse("(bvult (bvadd x y) (_ bv5 8))"), boundFirst.and());
+		final PolyPoNe distinctFirst = new PolyPoNe(mScript, Junction.AND);
+		distinctFirst.addPolyRel(mScript, distinctRelation("(distinct (bvadd x y) (_ bv5 8))"), true);
+		Assert.assertFalse(distinctFirst.addPolyRel(mScript, twoSided("(bvule (bvadd x y) (_ bv5 8))"), true));
+		assertSameMeaning("distinct first", parse("(bvult (bvadd x y) (_ bv5 8))"), distinctFirst.and());
+	}
+
+	@Test
 	public void differentExpressionsAndDifferentOffsetsAreNotCompared() {
 		declareXyz();
 		final String[][] pairs = { { "(bvule (bvadd x y) (_ bv5 8))", "(bvule (bvadd x z) (_ bv3 8))" },
