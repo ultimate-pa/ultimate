@@ -267,7 +267,7 @@ public class InitializationHandler {
 					(HeapLValue) lhs, targetCTypeRaw));
 		} else if (usingOnHeapInitializationViaQuantifier) {
 			init.addStatements(mMemoryHandler.getQuantifierInitializationForOnHeapVariableOfAggregateOrUnionType(loc,
-					(HeapLValue) lhs, targetCTypeRaw.getUnderlyingType(), t -> getDefaultValueForSimpleType(loc, t)));
+					(HeapLValue) lhs, targetCTypeRaw.getUnderlyingType()));
 		}
 
 		{

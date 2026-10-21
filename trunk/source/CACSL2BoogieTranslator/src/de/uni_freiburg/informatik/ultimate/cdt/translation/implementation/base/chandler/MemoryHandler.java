@@ -37,13 +37,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -85,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.StructExpanderUtil;
@@ -2336,23 +2335,14 @@ public class MemoryHandler {
 	 * <code>assume (forall k :: 0 <= k && k < sizeof(cType) ==> heap[baseAddress + k] == defaultValue)</code>.
 	 */
 	public List<Statement> getQuantifierInitializationForOnHeapVariableOfAggregateOrUnionType(final ILocation loc,
-			final HeapLValue baseAddress, final ICType cType, final Function<ICType, Expression> defaultValueProvider) {
+			final HeapLValue baseAddress, final ICType cType) {
 		assert CTranslationUtil.isAggregateOrUnionType(cType) : "Argument is not aggregate or union but " + cType;
-
-		// map each relevant heap array to the default value of its content
-		final Map<HeapDataArray, Expression> heapArrays = new LinkedHashMap<>();
-		for (final ICType baseType : CTranslationUtil.extractNonAggregateNonUnionTypes(cType)) {
-			assert !(baseType instanceof CNamed);
-			final HeapDataArray hda = getHeapDataArrayForType(baseType, false);
-			heapArrays.putIfAbsent(hda, defaultValueProvider.apply(baseType));
-		}
 
 		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();
 		final Expression size = mTypeSizeAndOffsetComputer.constructBytesizeExpression(loc, cType);
 		final String kName = "#heapInitOffset";
-		final Expression k =
-				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogieTypeForCType(sizeT), kName,
-						new DeclarationInformation(StorageClass.QUANTIFIED, null));
+		final Expression k = ExpressionFactory.constructIdentifierExpression(loc,
+				mTypeHandler.getBoogieTypeForCType(sizeT), kName, DeclarationInformation.DECLARATIONINFO_QUANTIFIED);
 		final List<VarList> quantifiedVars =
 				List.of(new VarList(loc, new String[] { kName }, mTypeHandler.cType2AstType(loc, sizeT)));
 
@@ -2365,11 +2355,12 @@ public class MemoryHandler {
 		final Expression address = mMemoryModel.addExpressionToPointer(loc, baseAddress.getAddress(), k);
 
 		final List<Statement> result = new ArrayList<>();
-		for (final Map.Entry<HeapDataArray, Expression> entry : heapArrays.entrySet()) {
+		for (final HeapDataArray hda : getRelevantHeapArrays(
+				CTranslationUtil.extractNonAggregateNonUnionTypes(cType))) {
 			final Expression cell = MemoryModelExpressionHelper.constructOneDimensionalArrayAccess(loc,
-					entry.getKey().getIdentifierExpression(), address);
-			final Expression hasDefault =
-					ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, cell, entry.getValue());
+					hda.getIdentifierExpression(), address);
+			final Expression hasDefault = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, cell,
+					constructZeroForBoogieType(loc, (BoogieType) cell.getType()));
 			final Expression body =
 					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICIMPLIES, inRange, hasDefault);
 			result.add(new AssumeStatement(loc, ExpressionFactory.quantifier(loc, true, quantifiedVars, body)));
@@ -2377,44 +2368,54 @@ public class MemoryHandler {
 		return result;
 	}
 
+	private static Expression constructZeroForBoogieType(final ILocation loc, final BoogieType type) {
+		if (!(type instanceof final BoogiePrimitiveType primitiveType)) {
+			throw new AssertionError("cannot construct a zero for heap content type " + type);
+		}
+		final int typeCode = primitiveType.getTypeCode();
+		if (typeCode >= 0) {
+			return ExpressionFactory.createBitvecLiteral(loc, BigInteger.ZERO, typeCode);
+		}
+		return switch (typeCode) {
+		case BoogiePrimitiveType.BOOL -> ExpressionFactory.createBooleanLiteral(loc, false);
+		case BoogiePrimitiveType.INT -> ExpressionFactory.createIntegerLiteral(loc, "0");
+		case BoogiePrimitiveType.REAL -> ExpressionFactory.createRealLiteral(loc, "0.0");
+		default -> throw new AssertionError("cannot construct a zero for heap content type " + type);
+		};
+	}
+
 	private List<Statement> getInitializationForHeapAtPointer(final ILocation loc, final HeapLValue baseAddress,
 			final Set<ICType> relevantBaseTypes) throws AssertionError {
-		// first collect the concerned heap arrays (in a set, to avoid duplicates)
+		for (final ICType baseType : relevantBaseTypes) {
+			if (baseType instanceof CPointer) {
+				mRequiredMemoryModelFeatures.reportPointerOnHeapInitFunctionRequired();
+			} else if (CEnum.replaceEnumWithInt(baseType) instanceof final CPrimitive primitive) {
+				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(primitive.getType());
+			}
+		}
+		return getRelevantHeapArrays(relevantBaseTypes).stream()
+				.map(x -> getInitializationForHeapArrayAtAddress(loc, x, baseAddress)).toList();
+	}
+
+	private Set<HeapDataArray> getRelevantHeapArrays(final Set<ICType> relevantBaseTypes) {
 		final Set<HeapDataArray> relevantHeapArrays = new LinkedHashSet<>();
 		for (final ICType baseType : relevantBaseTypes) {
 			assert !(baseType instanceof CNamed);
-			relevantHeapArrays.add(getHeapDataArrayForType(baseType, true));
+			relevantHeapArrays.add(getHeapDataArrayForType(baseType));
 		}
-
-		final List<Statement> result = new ArrayList<>();
-		// second construct the respective initialization call for each relevant heap array
-		for (final HeapDataArray relevantHeapArray : relevantHeapArrays) {
-			result.add(getInitializationForHeapArrayAtAddress(loc, relevantHeapArray, baseAddress));
-		}
-		return result;
+		return relevantHeapArrays;
 	}
 
-	private HeapDataArray getHeapDataArrayForType(final ICType baseType, final boolean requireInitializationFunction) {
+	private HeapDataArray getHeapDataArrayForType(final ICType baseType) {
 		if (baseType instanceof CPointer) {
 			mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-			if (requireInitializationFunction) {
-				mRequiredMemoryModelFeatures.reportPointerOnHeapInitFunctionRequired();
-			}
 			return mMemoryModel.getPointerHeapArray();
 		}
-		final CPrimitives primitive;
-		if (baseType instanceof final CPrimitive cPrimitive) {
-			primitive = cPrimitive.getType();
-		} else if (baseType instanceof CEnum) {
-			primitive = CPrimitives.INT;
-		} else {
-			throw new AssertionError("unforseen case");
+		if (CEnum.replaceEnumWithInt(baseType) instanceof final CPrimitive primitive) {
+			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitive.getType());
+			return mMemoryModel.getDataHeapArray(primitive.getType());
 		}
-		mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitive);
-		if (requireInitializationFunction) {
-			mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(primitive);
-		}
-		return mMemoryModel.getDataHeapArray(primitive);
+		throw new AssertionError("unforseen case");
 	}
 
 	private Statement getInitializationForHeapArrayAtAddress(final ILocation loc, final HeapDataArray relevantHeapArray,
