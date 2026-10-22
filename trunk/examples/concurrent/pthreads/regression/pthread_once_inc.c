@@ -11,18 +11,21 @@
 int x;
 pthread_once_t once = PTHREAD_ONCE_INIT;
 
-void init() {
-  x++;
+void init()
+{
+    x++;
 }
 
-void *thread(void *n) {
-  pthread_once(&once, init);
-  return NULL;
+void *thread(void *n)
+{
+    pthread_once(&once, init);
+    return NULL;
 }
 
-int main() {
-  pthread_t t;
-  pthread_create(&t, NULL, thread, NULL);
-  pthread_once(&once, init);
-  //@ assert x == 1;
+int main()
+{
+    pthread_t t;
+    pthread_create(&t, NULL, thread, NULL);
+    pthread_once(&once, init);
+    //@ assert x == 1;
 }
