@@ -593,8 +593,6 @@ public class PthreadLibraryModel implements ILibraryModel {
 		// result := if isLast then PTHREAD_BARRIER_SERIAL_THREAD else 0;
 		// exited := if isLast then 0 else newExited;
 		// }
-		// We use conditional expressions here, since we cannot handle if-statements in atomic blocks and we inline the
-		// auxiliary variables to avoid unnecessary declarations.
 
 		final Expression returnExpression = ExpressionFactory.constructIfThenElseExpression(loc, isLastDeparture,
 				mTypeSizes.constructLiteralForIntegerType(loc, returnType,
