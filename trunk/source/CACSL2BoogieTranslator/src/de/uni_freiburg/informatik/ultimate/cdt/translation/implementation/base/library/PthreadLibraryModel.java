@@ -200,47 +200,43 @@ public class PthreadLibraryModel implements ILibraryModel {
 
 	private String getForkedProcedure(final IASTFunctionCallExpression node, final IASTInitializerClause argument,
 			final ExpressionResult argStartRoutine) {
-		final String methodName;
-		{
-			// We hope that the function is not given by a function pointer that is stored
-			// in a variable but directly by the function name
-			final String rawProcName;
-			if (argument instanceof CASTIdExpression) {
-				final CASTIdExpression castIdExpr = (CASTIdExpression) argument;
-				rawProcName = castIdExpr.getName().toString();
-			} else if (argument instanceof CASTUnaryExpression) {
-				final CASTUnaryExpression castUnaryExpr = (CASTUnaryExpression) argument;
-				if (castUnaryExpr.getOperator() != IASTUnaryExpression.op_amper) {
-					throw new UnsupportedOperationException(
-							"Third argument of pthread_create is: " + argument.getClass().getSimpleName());
-				}
-				// function foo is probably given as a function pointer of the form & foo
-				if (!(castUnaryExpr.getOperand() instanceof CASTIdExpression)) {
-					throw new UnsupportedOperationException("Third argument of pthread_create is: "
-							+ castUnaryExpr.getOperand().getClass().getSimpleName());
-				}
-				final CASTIdExpression castIdExpr = (CASTIdExpression) castUnaryExpr.getOperand();
-				rawProcName = castIdExpr.getName().toString();
-			} else {
+		// We hope that the function is not given by a function pointer that is stored in a variable but directly by the
+		// function name
+		final String rawProcName;
+		if (argument instanceof CASTIdExpression) {
+			final CASTIdExpression castIdExpr = (CASTIdExpression) argument;
+			rawProcName = castIdExpr.getName().toString();
+		} else if (argument instanceof CASTUnaryExpression) {
+			final CASTUnaryExpression castUnaryExpr = (CASTUnaryExpression) argument;
+			if (castUnaryExpr.getOperator() != IASTUnaryExpression.op_amper) {
 				throw new UnsupportedOperationException(
-						"Third argument of pthread_create is " + argument.getClass().getSimpleName());
+						"Third argument of pthread_create is: " + argument.getClass().getSimpleName());
 			}
-
-			final String multiParseProcedureName =
-					mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), rawProcName);
-			if (!mProcedureManager.hasProcedure(multiParseProcedureName)) {
-				throw new UnsupportedOperationException("cannot find function " + multiParseProcedureName
-						+ " Ultimate does not support pthread_create in combination with function pointers");
+			// function foo is probably given as a function pointer of the form & foo
+			if (!(castUnaryExpr.getOperand() instanceof CASTIdExpression)) {
+				throw new UnsupportedOperationException("Third argument of pthread_create is: "
+						+ castUnaryExpr.getOperand().getClass().getSimpleName());
 			}
-
-			final IdentifierExpression idExpr = (IdentifierExpression) argStartRoutine.getLrValue().getValue();
-			final String prefix = idExpr.getIdentifier().substring(0, 9);
-			if (!prefix.equals(SFO.FUNCTION_ADDRESS)) {
-				throw new UnsupportedOperationException("unable to decode " + idExpr.getIdentifier());
-			}
-			methodName = idExpr.getIdentifier().substring(9);
+			final CASTIdExpression castIdExpr = (CASTIdExpression) castUnaryExpr.getOperand();
+			rawProcName = castIdExpr.getName().toString();
+		} else {
+			throw new UnsupportedOperationException(
+					"Third argument of pthread_create is " + argument.getClass().getSimpleName());
 		}
-		return methodName;
+
+		final String multiParseProcedureName =
+				mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), rawProcName);
+		if (!mProcedureManager.hasProcedure(multiParseProcedureName)) {
+			throw new UnsupportedOperationException("cannot find function " + multiParseProcedureName
+					+ " Ultimate does not support pthread_create in combination with function pointers");
+		}
+
+		final IdentifierExpression idExpr = (IdentifierExpression) argStartRoutine.getLrValue().getValue();
+		final String prefix = idExpr.getIdentifier().substring(0, 9);
+		if (!prefix.equals(SFO.FUNCTION_ADDRESS)) {
+			throw new UnsupportedOperationException("unable to decode " + idExpr.getIdentifier());
+		}
+		return idExpr.getIdentifier().substring(9);
 	}
 
 	// We assume success and return 0 without any additional checks.
