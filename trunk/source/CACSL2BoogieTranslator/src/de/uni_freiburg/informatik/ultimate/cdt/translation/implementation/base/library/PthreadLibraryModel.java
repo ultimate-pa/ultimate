@@ -32,9 +32,11 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
@@ -43,15 +45,21 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
@@ -120,6 +128,7 @@ public class PthreadLibraryModel implements ILibraryModel {
 	@Override
 	public Collection<FunctionModel> getFunctionModels() {
 		return List.of(new FunctionModel("pthread_create", this::handlePthread_create),
+				new FunctionModel("pthread_once", this::handlePthread_once),
 				new FunctionModel("pthread_join", this::handlePthread_join),
 				new FunctionModel("pthread_mutex_init", this::handlePthread_mutex_init),
 				new FunctionModel("pthread_mutex_lock", this::handlePthread_mutex_lock),
@@ -163,7 +172,7 @@ public class PthreadLibraryModel implements ILibraryModel {
 		}
 		builder.addAllExceptLrValue(argThreadAttributes, argStartRoutine, startRoutineArguments);
 
-		final String methodName = getForkedProcedure(node, arguments[2], argStartRoutine);
+		final String methodName = getFunctionParameterName(node, arguments[2], argStartRoutine, name);
 		final CFunction function = mProcedureManager.getCFunctionType(methodName);
 		final int params = function.getParameterTypes().length;
 		final Expression[] forkArguments;
@@ -198,8 +207,8 @@ public class PthreadLibraryModel implements ILibraryModel {
 		return builder.build();
 	}
 
-	private String getForkedProcedure(final IASTFunctionCallExpression node, final IASTInitializerClause argument,
-			final ExpressionResult argStartRoutine) {
+	private String getFunctionParameterName(final IASTFunctionCallExpression node, final IASTInitializerClause argument,
+			final ExpressionResult argStartRoutine, final String functionName) {
 		// We hope that the function is not given by a function pointer that is stored in a variable but directly by the
 		// function name
 		final String rawProcName;
@@ -210,25 +219,25 @@ public class PthreadLibraryModel implements ILibraryModel {
 			final CASTUnaryExpression castUnaryExpr = (CASTUnaryExpression) argument;
 			if (castUnaryExpr.getOperator() != IASTUnaryExpression.op_amper) {
 				throw new UnsupportedOperationException(
-						"Third argument of pthread_create is: " + argument.getClass().getSimpleName());
+						"Function parameter of " + functionName + " is: " + argument.getClass().getSimpleName());
 			}
 			// function foo is probably given as a function pointer of the form & foo
 			if (!(castUnaryExpr.getOperand() instanceof CASTIdExpression)) {
-				throw new UnsupportedOperationException("Third argument of pthread_create is: "
+				throw new UnsupportedOperationException("Argument of " + functionName + " is: "
 						+ castUnaryExpr.getOperand().getClass().getSimpleName());
 			}
 			final CASTIdExpression castIdExpr = (CASTIdExpression) castUnaryExpr.getOperand();
 			rawProcName = castIdExpr.getName().toString();
 		} else {
 			throw new UnsupportedOperationException(
-					"Third argument of pthread_create is " + argument.getClass().getSimpleName());
+					"Function parameter of " + functionName + " is " + argument.getClass().getSimpleName());
 		}
 
 		final String multiParseProcedureName =
 				mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), rawProcName);
 		if (!mProcedureManager.hasProcedure(multiParseProcedureName)) {
-			throw new UnsupportedOperationException("cannot find function " + multiParseProcedureName
-					+ " Ultimate does not support pthread_create in combination with function pointers");
+			throw new UnsupportedOperationException("Cannot find function " + multiParseProcedureName + ". "
+					+ functionName + " in combination with function pointers is not supported.");
 		}
 
 		final String id = ((IdentifierExpression) argStartRoutine.getLrValue().getValue()).getIdentifier();
@@ -236,6 +245,66 @@ public class PthreadLibraryModel implements ILibraryModel {
 			throw new UnsupportedOperationException("unable to decode " + id);
 		}
 		return id.substring(SFO.FUNCTION_ADDRESS.length());
+	}
+
+	private Result handlePthread_once(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, 2, name, arguments);
+
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult once = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
+		final ExpressionResult initRoutine =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(once, initRoutine);
+
+		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
+		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc, intType, BigInteger.ZERO);
+		final Expression one = mTypeSizes.constructLiteralForIntegerType(loc, intType, BigInteger.ONE);
+		final Expression two = mTypeSizes.constructLiteralForIntegerType(loc, intType, BigInteger.TWO);
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
+				new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL), SFO.AUXVAR.NONDET);
+		builder.addAuxVarWithDeclaration(auxVar);
+
+		// If once is zero, set it to 1 and set the aux-var to true, indicating that the function should be called.
+		// Otherwise set the aux-var to false, indicating that the function call should be skipped.
+		final ExpressionResult readBeforeEnter = mExprResultTransformer.readPointerValue(loc, once.getLrValue());
+		builder.addAllExceptLrValueAndStatements(readBeforeEnter);
+		final ExpressionResult setInProgress =
+				mExprResultTransformer.makePointerAssignment(loc, once.getLrValue(), one);
+		builder.addAllExceptLrValueAndStatements(setInProgress);
+		final List<Statement> claimInitStatements = new ArrayList<>(setInProgress.getStatements());
+		claimInitStatements.add(StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(),
+				ExpressionFactory.createBooleanLiteral(loc, true)));
+		final Statement skipInit = StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(),
+				ExpressionFactory.createBooleanLiteral(loc, false));
+		final Expression isUninitialized = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_equals, readBeforeEnter.getLrValue().getValue(), intType, zero, intType);
+		final List<Statement> claimStatements = new ArrayList<>(readBeforeEnter.getStatements());
+		claimStatements.add(
+				StatementFactory.constructIfStatement(loc, isUninitialized, claimInitStatements, List.of(skipInit)));
+		builder.addStatement(StatementFactory.constructAtomicStatement(loc, claimStatements));
+
+		// If the value of the aux-var is true, call the function and assign once to 2, indicating that the call was
+		// executed
+		final CallStatement call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[0],
+				getFunctionParameterName(node, arguments[1], initRoutine, name), new Expression[0]);
+		final ExpressionResult setComplete = mExprResultTransformer.makePointerAssignment(loc, once.getLrValue(), two);
+		builder.addAllExceptLrValueAndStatements(setComplete);
+		builder.addStatement(StatementFactory.constructIfStatement(loc, auxVar.getExp(),
+				List.of(call, StatementFactory.constructAtomicStatement(loc, setComplete.getStatements()))));
+
+		// assume once == 2 (to wait for another thread to execute the call)
+		final ExpressionResult readAfterComplete = mExprResultTransformer.readPointerValue(loc, once.getLrValue());
+		builder.addAllExceptLrValueAndStatements(readAfterComplete);
+		final Expression isInitComplete = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_equals, readAfterComplete.getLrValue().getValue(), intType, two, intType);
+		final List<Statement> waitStatements = new ArrayList<>(readAfterComplete.getStatements());
+		waitStatements.add(new AssumeStatement(loc, isInitComplete));
+		builder.addStatement(StatementFactory.constructAtomicStatement(loc, waitStatements));
+
+		// Return 0 to indicate success
+		return builder.setLrValue(new RValue(zero, intType)).build();
 	}
 
 	// We assume success and return 0 without any additional checks.
@@ -483,6 +552,7 @@ public class PthreadLibraryModel implements ILibraryModel {
 	public Collection<TypeModel> getTypeModels() {
 		// TODO: Handle more types here that are declared in pthread.h
 		return List.of(new TypeModel("pthread_t", mTypeHandler.getThreadIdType()),
+				new TypeModel("pthread_once_t", new CPrimitive(CPrimitives.INT)),
 				new TypeModel("__pthread_list_t", CPointer.voidPointer()),
 				// TODO: We may want to use a specific type to simplify the mutex/lock handling
 				new TypeModel("pthread_mutex_t", new CPrimitive(CPrimitives.INT)),
@@ -495,6 +565,8 @@ public class PthreadLibraryModel implements ILibraryModel {
 		// TODO: Add more constants?
 		// TODO: Model initializers properly?
 		return List.of(
+				new ConstantModel("PTHREAD_ONCE_INIT",
+						loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ZERO, new CPrimitive(CPrimitives.INT))),
 				new ConstantModel("PTHREAD_MUTEX_INITIALIZER",
 						loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ZERO, new CPrimitive(CPrimitives.INT))),
 				new ConstantModel("PTHREAD_RWLOCK_INITIALIZER",
