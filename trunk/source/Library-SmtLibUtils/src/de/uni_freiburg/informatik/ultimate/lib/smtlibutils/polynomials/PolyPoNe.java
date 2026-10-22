@@ -362,8 +362,12 @@ public class PolyPoNe {
 				polyRel.asPolynomialVsConstant(mScript);
 		if (shape == null) {
 			// No constant on exactly one side (e.g. x <=u y), so there is no key to look the relation up by.
-			// Comparing it would mean scanning all stored relations, so we treat it as an opaque parameter.
-			return addNonPolynomial(polyRel.toTerm(mScript));
+			// Comparing it would mean scanning all stored relations, so we treat it as an opaque parameter. A strict
+			// relation is stored as the negation of its non-strict dual (y <u x as not (x <=u y)), so that a relation
+			// and its negation end up as the same atom in the positive and the negative parameters.
+			return isStrict(polyRel.getRelationSymbol())
+					? addNonPolynomial(SmtUtils.not(mScript, polyRel.negate().toTerm(mScript)))
+					: addNonPolynomial(polyRel.toTerm(mScript));
 		}
 		final Term variable = shape.getKey();
 		// Compare with all stored facts about the same key (bounds and known equalities). Stored relations that become
