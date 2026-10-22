@@ -9,11 +9,14 @@
 
 #include <pthread.h>
 
-int main() {
-  pthread_barrier_t barrier;
-  int capacity = __VERIFIER_nondet_int();
-  if (capacity < 2) return -1;
-  pthread_barrier_init(&barrier, NULL, capacity);
-  pthread_barrier_wait(&barrier);
-  reach_error();
+int main()
+{
+    pthread_barrier_t barrier;
+    int capacity = __VERIFIER_nondet_int();
+    if (capacity < 2) {
+        return -1;
+    }
+    pthread_barrier_init(&barrier, NULL, capacity);
+    pthread_barrier_wait(&barrier);
+    reach_error();
 }

@@ -10,9 +10,12 @@
 
 #include <pthread.h>
 
-int main() {
-  pthread_barrier_t barrier;
-  pthread_barrier_init(&barrier, NULL, 1);
-  int ret = pthread_barrier_wait(&barrier);
-  if (ret == PTHREAD_BARRIER_SERIAL_THREAD) reach_error();
+int main()
+{
+    pthread_barrier_t barrier;
+    pthread_barrier_init(&barrier, NULL, 1);
+    int ret = pthread_barrier_wait(&barrier);
+    if (ret == PTHREAD_BARRIER_SERIAL_THREAD) {
+        reach_error();
+    }
 }
