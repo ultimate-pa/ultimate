@@ -231,12 +231,11 @@ public class PthreadLibraryModel implements ILibraryModel {
 					+ " Ultimate does not support pthread_create in combination with function pointers");
 		}
 
-		final IdentifierExpression idExpr = (IdentifierExpression) argStartRoutine.getLrValue().getValue();
-		final String prefix = idExpr.getIdentifier().substring(0, 9);
-		if (!prefix.equals(SFO.FUNCTION_ADDRESS)) {
-			throw new UnsupportedOperationException("unable to decode " + idExpr.getIdentifier());
+		final String id = ((IdentifierExpression) argStartRoutine.getLrValue().getValue()).getIdentifier();
+		if (!id.startsWith(SFO.FUNCTION_ADDRESS)) {
+			throw new UnsupportedOperationException("unable to decode " + id);
 		}
-		return idExpr.getIdentifier().substring(9);
+		return id.substring(SFO.FUNCTION_ADDRESS.length());
 	}
 
 	// We assume success and return 0 without any additional checks.
