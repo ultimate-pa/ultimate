@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.afa;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -108,14 +108,14 @@ public class AFAReductionAutomaton<L, S> /* extends AlternatingFiniteAutomaton<L
 			Bdd<AfaState> bddConjunction = mBddManager.getTrue();
 			for (final L letter2 : mAlphabet) {
 				Bdd<AfaState> bddDisjunction = mBddManager.getFalse();
-				if (mOrder.getOrder(underlyingState).compare(letter, letter2) < 0) {
+				if (mOrder.getOrder(underlyingState).compare(letter2, letter) < 0) {
 					for (final OutgoingInternalTransition<L, S> t : underylingTransitions) {
 						// TODO: what if the order is positional? Positional w.r.t which state? TODO: OrderAutomaton
 						succ = getOrConstructState(StateType.SLEEP, letter2, t.getSucc());
 						bddDisjunction = bddDisjunction.or(mBddManager.variable(succ));
 					}
 					// TODO: what about the extra symbol <ab>?
-					final Optional<L> specialSymbol = mUnderlying.getSpecialSymbol(letter, sleepLetter);
+					final Optional<L> specialSymbol = mUnderlying.getSpecialSymbol(letter, letter2);
 					if (specialSymbol.isPresent()) {
 						final L symbol = specialSymbol.get();
 						for (final OutgoingInternalTransition<L, S> t : mUnderlying.internalSuccessors(underlyingState,
@@ -124,7 +124,7 @@ public class AFAReductionAutomaton<L, S> /* extends AlternatingFiniteAutomaton<L
 							bddDisjunction = bddDisjunction.or(mBddManager.variable(succ));
 						}
 					} else {
-						// idk
+						// TODO: idk, we have to decide how to handle a missing special symbol
 					}
 					bddConjunction = bddConjunction.and(bddDisjunction);
 				}
@@ -132,9 +132,8 @@ public class AFAReductionAutomaton<L, S> /* extends AlternatingFiniteAutomaton<L
 			bddResult = bddResult.and(bddConjunction);
 			break;
 		case SLEEP:
-			if (sleepLetter == letter) {
-				succ = getOrConstructState(StateType.FALSE, null, null);
-				bddResult = mBddManager.variable(succ);
+			if (Objects.equals(sleepLetter, letter)) {
+				bddResult = mBddManager.getFalse();
 			} else {
 				for (final OutgoingInternalTransition<L, S> t : underylingTransitions) {
 					succ = getOrConstructState(StateType.SLEEP, sleepLetter, t.getSucc());
@@ -150,12 +149,12 @@ public class AFAReductionAutomaton<L, S> /* extends AlternatingFiniteAutomaton<L
 						bddResult = bddResult.or(mBddManager.variable(succ));
 					}
 				} else {
-					// idk
+					// TODO: idk, we have to decide how to handle a missing special symbol
 				}
 			}
 			break;
 		case WAIT:
-			if (sleepLetter == letter) {
+			if (Objects.equals(sleepLetter, letter)) {
 				succ = getOrConstructState(StateType.CHECK, null, underlyingState);
 				bddResult = mBddManager.variable(succ);
 			} else {
@@ -171,79 +170,36 @@ public class AFAReductionAutomaton<L, S> /* extends AlternatingFiniteAutomaton<L
 				bddResult = bddResult.or(mBddManager.variable(succ));
 			}
 			break;
-		case FALSE:
-			// is FALSE actually a state or does it mean "no successors"?
-			// If the latter we may use mBddManager.getFalse() instead?
-			succ = getOrConstructState(StateType.FALSE, null, null);
-			bddResult = mBddManager.variable(succ);
 		}
 		return bddResult;
 	}
 
-	// mUnderlying non-deterministic? yes, disjunctions
-	// Can it really be an iterable? How does the DFS know the formula? No, return a BDD.
-	public Iterable<AfaTransition<L>> getSuccessors2(final AfaState state, final L letter) {
-		// TODO complete
-		final L sleepLetter = state.mSleepletter;
-		final S underlyingState = state.mState;
-		final Iterable<OutgoingInternalTransition<L, S>> underylingTransitions =
-				mUnderlying.internalSuccessors(underlyingState, letter);
-		final Set<AfaTransition<L>> transitions = new HashSet<>();
-		AfaState succ;
-
-		switch (state.mType) {
-		case TRACK:
-			for (final OutgoingInternalTransition<L, S> t : underylingTransitions) {
-				succ = getOrConstructState(StateType.TRACK, null, t.getSucc());
-				transitions.add(new AfaTransition<>(letter, succ));
-			}
-			for (final L letter2 : mAlphabet) {
-				if (mOrder.getOrder(underlyingState).compare(letter, letter2) < 0) {
-				for (final OutgoingInternalTransition<L, S> t : underylingTransitions) {
-					// TODO: what if the order is positional? Positional w.r.t which state? OrderAutomaton
-					if (mOrder.getOrder(underlyingState).compare(letter, letter2) < 0) {
-						succ = getOrConstructState(StateType.SLEEP, letter2, t.getSucc());
-						transitions.add(new AfaTransition<>(letter, succ));
-						// TODO: what about the extra symbol <ab>?
-					}
-				}
-			}
-			break;
-		case SLEEP:
-			if (sleepLetter == letter) {
-				succ = getOrConstructState(StateType.FALSE, null, null);
-				transitions.add(new AfaTransition<>(letter, succ));
-			} else {
-				for (final OutgoingInternalTransition<L, S> t : underylingTransitions) {
-					succ = getOrConstructState(StateType.SLEEP, sleepLetter, t.getSucc());
-					transitions.add(new AfaTransition<>(letter, succ));
-				}
-				// TODO: what about the extra symbol <ab>?
-			}
-			break;
-		case WAIT:
-			if (sleepLetter == letter) {
-				succ = getOrConstructState(StateType.CHECK, null, underlyingState);
-				transitions.add(new AfaTransition<>(letter, succ));
-			} else {
-				for (final OutgoingInternalTransition<L, S> t : underylingTransitions) {
-					succ = getOrConstructState(StateType.WAIT, sleepLetter, t.getSucc());
-					transitions.add(new AfaTransition<>(letter, succ));
-				}
-			}
-			break;
-		case CHECK:
-			for (final OutgoingInternalTransition<L, S> t : underylingTransitions) {
-				succ = getOrConstructState(StateType.CHECK, null, t.getSucc());
-				transitions.add(new AfaTransition<>(letter, succ));
-			}
-			break;
-		case FALSE:
-			transitions.add(new AfaTransition<>(letter, state));
-		}
-		return transitions;
-	}
-
+	/*
+	 * // mUnderlying non-deterministic? yes, disjunctions // Can it really be an iterable? How does the DFS know the
+	 * formula? No, return a BDD. public Iterable<AfaTransition<L>> getSuccessors2(final AfaState state, final L letter)
+	 * { // TODO complete final L sleepLetter = state.mSleepletter; final S underlyingState = state.mState; final
+	 * Iterable<OutgoingInternalTransition<L, S>> underylingTransitions =
+	 * mUnderlying.internalSuccessors(underlyingState, letter); final Set<AfaTransition<L>> transitions = new
+	 * HashSet<>(); AfaState succ;
+	 *
+	 * switch (state.mType) { case TRACK: for (final OutgoingInternalTransition<L, S> t : underylingTransitions) { succ
+	 * = getOrConstructState(StateType.TRACK, null, t.getSucc()); transitions.add(new AfaTransition<>(letter, succ)); }
+	 * for (final L letter2 : mAlphabet) { if (mOrder.getOrder(underlyingState).compare(letter, letter2) < 0) { for
+	 * (final OutgoingInternalTransition<L, S> t : underylingTransitions) { // TODO: what if the order is positional?
+	 * Positional w.r.t which state? OrderAutomaton if (mOrder.getOrder(underlyingState).compare(letter, letter2) < 0) {
+	 * succ = getOrConstructState(StateType.SLEEP, letter2, t.getSucc()); transitions.add(new AfaTransition<>(letter,
+	 * succ)); // TODO: what about the extra symbol <ab>? } } } break; case SLEEP: if (sleepLetter == letter) { succ =
+	 * getOrConstructState(StateType.FALSE, null, null); transitions.add(new AfaTransition<>(letter, succ)); } else {
+	 * for (final OutgoingInternalTransition<L, S> t : underylingTransitions) { succ =
+	 * getOrConstructState(StateType.SLEEP, sleepLetter, t.getSucc()); transitions.add(new AfaTransition<>(letter,
+	 * succ)); } // TODO: what about the extra symbol <ab>? } break; case WAIT: if (sleepLetter == letter) { succ =
+	 * getOrConstructState(StateType.CHECK, null, underlyingState); transitions.add(new AfaTransition<>(letter, succ));
+	 * } else { for (final OutgoingInternalTransition<L, S> t : underylingTransitions) { succ =
+	 * getOrConstructState(StateType.WAIT, sleepLetter, t.getSucc()); transitions.add(new AfaTransition<>(letter,
+	 * succ)); } } break; case CHECK: for (final OutgoingInternalTransition<L, S> t : underylingTransitions) { succ =
+	 * getOrConstructState(StateType.CHECK, null, t.getSucc()); transitions.add(new AfaTransition<>(letter, succ)); }
+	 * break; case FALSE: transitions.add(new AfaTransition<>(letter, state)); } return transitions; }
+	 */
 	public AfaState getOrConstructState(final StateType type, final L sleepletter, final S state) {
 
 		final StateKey<L, S> key = new StateKey<>(type, sleepletter, state);
@@ -259,7 +215,7 @@ public class AFAReductionAutomaton<L, S> /* extends AlternatingFiniteAutomaton<L
 		S mState;
 
 		enum StateType {
-			TRACK, SLEEP, WAIT, CHECK, FALSE
+			TRACK, SLEEP, WAIT, CHECK
 		}
 
 		AfaState(final StateType type, final L sleepletter, final S state) {
