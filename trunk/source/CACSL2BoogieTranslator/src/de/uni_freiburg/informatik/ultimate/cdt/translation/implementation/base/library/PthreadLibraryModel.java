@@ -105,7 +105,7 @@ public class PthreadLibraryModel implements ILibraryModel {
 
 	// The constant PTHREAD_BARRIER_SERIAL_THREAD is defined in <pthread.h> and its value shall be distinct from any
 	// other value returned by pthread_barrier_wait()
-	// (see https://aws.github.io/amazon-freertos/202007.00/html2/POSIX/pthread_8h.html
+	// (see https://aws.github.io/amazon-freertos/202007.00/html2/POSIX/pthread_8h.html)
 	private static final int PTHREAD_BARRIER_SERIAL_THREAD = -2;
 
 	public PthreadLibraryModel(final FunctionModelHelper helper, final FlatSymbolTable symboltable,
