@@ -47,8 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	private static final String MAINPROC_DESC =
-			"Specify the entry function of the program. " + "Use an empty string for library mode "
-					+ "(i.e., assume all globals are non-deterministic and verify each function in isolation).";
+			"If set to a non-empty string (e.g., main), only executions starting from the specified entry function are considered. Global variables are initialized according to their declared initializers. If set to the empty string, executions starting from any function are considered. In this case, global variables are initialized nondeterministically.";
 	public static final String LABEL_ERROR = "Check unreachability of reach_error function";
 	private static final String DESC_ERROR =
 			"Check if every call to reach_error is unreachable. This is used for the ReachSafety category of SV-COMP. "
