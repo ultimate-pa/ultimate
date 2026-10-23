@@ -27,6 +27,7 @@ hs_err_pid*
 /releaseScripts/default/UTaipan-linux/*
 /releaseScripts/default/UTaipan-win32/*
 /releaseScripts/default/UTaipan-win32/
+/releaseScripts/default/*.tar.gz
 /releaseScripts/default/*.zip
 /releaseScripts/default/UWebBackend-linux/*
 /releaseScripts/default/UWebBackend-win32/*
