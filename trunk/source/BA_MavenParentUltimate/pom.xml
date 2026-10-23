@@ -298,6 +298,7 @@
 		<module>../Library-Icfg</module>
 		<module>../Library-IcfgTransformer</module>
 		<module>../Library-Jung</module>
+		<module>../Library-KInduction</module>
 		<module>../Library-LassoRanker</module>
 		<module>../Library-MCR</module>
 		<module>../Library-ModelCheckerUtils</module>
