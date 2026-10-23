@@ -21,7 +21,7 @@ from functools import lru_cache
 version = '4f54f8f5'
 toolname = 'Automizer'
 memory_heap_size_init = '2M'
-memory_heap_size_max = '4G'
+memory_heap_size_max = '15G'
 memory_stack_size_max = '1M'
 # fmt: on
 

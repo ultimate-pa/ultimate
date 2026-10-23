@@ -20,7 +20,7 @@ PRODUCTS=()
 # Default initial heap memory size for Ultimate products
 MEM_HEAP_SIZE_INIT="2M"
 # Default maximum heap memory size for Ultimate products
-MEM_HEAP_SIZE_MAX="4G"
+MEM_HEAP_SIZE_MAX="15G"
 # Default maximum stack memory size for Ultimate products
 MEM_STACK_SIZE_MAX="1M"
 
