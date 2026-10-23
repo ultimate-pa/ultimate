@@ -138,14 +138,30 @@ package_product() {
 
   # Additional files for all products
   local ADDS=(
-    "adds/licenses/"*
+    "adds/licenses/LICENSE"
+    "adds/licenses/LICENSE.GPL"
+    "adds/licenses/LICENSE.GPL.LESSER"
     "adds/README"
   )
 
-  # Architecture-specific solvers for all products
-  ADDS+=(
-    "adds/solvers/${OS}/${ARCH}/"*
-  )
+  # Architecture-specific solvers with licenses for all products
+  for SOLVER_FILE in $(find "adds/solvers/${OS}/${ARCH}" -maxdepth 1 -type f -executable ! -name '*.so' ! -name '*.so.*' ! -name '*.dll'); do
+    # Filename without path or extension
+    SOLVER_FILENAME="${SOLVER_FILE##*/}"
+    SOLVER_NAME="${SOLVER_FILENAME%.*}"
+
+    # Solver binaries
+    ADDS+=("${SOLVER_FILE}")
+
+    # Corresponding license
+    LICENSE_FILE="adds/licenses/${SOLVER_NAME}-LICENSE"
+    if [[ -f "${LICENSE_FILE}" ]]; then
+      ADDS+=("${LICENSE_FILE}")
+    else
+      echo "License for solver ${SOLVER_NAME} missing" >&2
+      exit 1
+    fi
+  done
 
   # Launcher-specific scripts for products
   if [ "${LAUNCHER}" == "Ultimate" ]; then
