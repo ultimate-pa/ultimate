@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Solved
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Case;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.SolveForSubjectUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.SupportingTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * ∀x. x≠t ∨ φ(x)   ⟿⟿⟿      φ[x-->t]
  * </pre>
  *
- * If relations do not have the form x=t (resp. x≠t) we use our {@link PolynomialRelation}s and
+ * If relations do not have the form x=t (resp. x≠t) we use our {@link IPolynomialRelation}s and
  * {@link SolvedBinaryRelation}s and try to bring them into this form.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -367,7 +367,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 					return sfs;
 				}
 			}
-			final PolynomialRelation pr = PolynomialRelation.of(mgdScript.getScript(), term);
+			final IPolynomialRelation pr = IPolynomialRelation.of(mgdScript.getScript(), term);
 			if (pr == null) {
 				return null;
 			}
@@ -406,7 +406,7 @@ public class DualJunctionDer extends DualJunctionQuantifierElimination {
 		@Override
 		public MultiCaseSolvedBinaryRelation solveForSubject(final ManagedScript mgdScript, final int quantifier,
 				final TermVariable eliminatee, final Term term, final Set<TermVariable> bannedForDivCapture) {
-			final PolynomialRelation pr = PolynomialRelation.of(mgdScript.getScript(), term);
+			final IPolynomialRelation pr = IPolynomialRelation.of(mgdScript.getScript(), term);
 			if (pr == null) {
 				return null;
 			}
