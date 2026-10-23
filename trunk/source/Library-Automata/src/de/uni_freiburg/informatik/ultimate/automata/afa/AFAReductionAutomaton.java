@@ -94,14 +94,14 @@ public class AFAReductionAutomaton<L, S> /* extends AlternatingFiniteAutomaton<L
 
 		final L sleepLetter = state.mSleepletter;
 		final S underlyingState = state.mState;
-		final Iterable<OutgoingInternalTransition<L, S>> underylingTransitions =
+		final Iterable<OutgoingInternalTransition<L, S>> underlyingTransitions =
 				mUnderlying.internalSuccessors(underlyingState, letter);
 		Bdd<AfaState> bddResult = mBddManager.getFalse();
 		AfaState succ;
 
 		switch (state.mType) {
 		case TRACK:
-			for (final OutgoingInternalTransition<L, S> t : underylingTransitions) {
+			for (final OutgoingInternalTransition<L, S> t : underlyingTransitions) {
 				succ = getOrConstructState(StateType.TRACK, null, t.getSucc());
 				bddResult = bddResult.or(mBddManager.variable(succ));
 			}
@@ -109,7 +109,7 @@ public class AFAReductionAutomaton<L, S> /* extends AlternatingFiniteAutomaton<L
 			for (final L letter2 : mAlphabet) {
 				Bdd<AfaState> bddDisjunction = mBddManager.getFalse();
 				if (mOrder.getOrder(underlyingState).compare(letter2, letter) < 0) {
-					for (final OutgoingInternalTransition<L, S> t : underylingTransitions) {
+					for (final OutgoingInternalTransition<L, S> t : underlyingTransitions) {
 						// TODO: what if the order is positional? Positional w.r.t which state? TODO: OrderAutomaton
 						succ = getOrConstructState(StateType.SLEEP, letter2, t.getSucc());
 						bddDisjunction = bddDisjunction.or(mBddManager.variable(succ));
@@ -135,7 +135,7 @@ public class AFAReductionAutomaton<L, S> /* extends AlternatingFiniteAutomaton<L
 			if (Objects.equals(sleepLetter, letter)) {
 				bddResult = mBddManager.getFalse();
 			} else {
-				for (final OutgoingInternalTransition<L, S> t : underylingTransitions) {
+				for (final OutgoingInternalTransition<L, S> t : underlyingTransitions) {
 					succ = getOrConstructState(StateType.SLEEP, sleepLetter, t.getSucc());
 					bddResult = bddResult.or(mBddManager.variable(succ));
 				}
@@ -158,14 +158,14 @@ public class AFAReductionAutomaton<L, S> /* extends AlternatingFiniteAutomaton<L
 				succ = getOrConstructState(StateType.CHECK, null, underlyingState);
 				bddResult = mBddManager.variable(succ);
 			} else {
-				for (final OutgoingInternalTransition<L, S> t : underylingTransitions) {
+				for (final OutgoingInternalTransition<L, S> t : underlyingTransitions) {
 					succ = getOrConstructState(StateType.WAIT, sleepLetter, t.getSucc());
 					bddResult = bddResult.or(mBddManager.variable(succ));
 				}
 			}
 			break;
 		case CHECK:
-			for (final OutgoingInternalTransition<L, S> t : underylingTransitions) {
+			for (final OutgoingInternalTransition<L, S> t : underlyingTransitions) {
 				succ = getOrConstructState(StateType.CHECK, null, t.getSucc());
 				bddResult = bddResult.or(mBddManager.variable(succ));
 			}
