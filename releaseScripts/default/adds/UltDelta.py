@@ -67,7 +67,7 @@ def get_binary():
         "java",
         "-Dosgi.configuration.area=" + os.path.join(datadir, "config"),
         "-Xms2M",
-        "-Xmx4G",
+        "-Xmx15G",
         "-Xms1M",
     ]
 
