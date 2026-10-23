@@ -153,7 +153,7 @@ package_product() {
     ADDS+=("adds/Ultimate.py")
     # Basic system test script
     ADDS+=("adds/examples")
-    ADDS+=("adds/scripts/${OS}/smoketest.*")
+    ADDS+=("adds/scripts/${OS}/"smoketest.*)
   fi
 
   # Set version
