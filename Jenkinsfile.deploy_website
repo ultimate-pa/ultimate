@@ -9,11 +9,10 @@ pipeline {
     timestamps()
   }
   environment {
-    PATH = "${env.WORKSPACE}/releaseScripts/default/adds:${env.PATH}"
+    PATH = "${env.WORKSPACE}/releaseScripts/default/adds/solvers/linux/x86_64:${env.PATH}"
   }
   tools {
     jdk 'JDK21'
-    maven 'Maven 3.9.11'
     maven 'Maven 3.9.11'
   }
   stages {

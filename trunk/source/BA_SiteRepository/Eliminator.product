@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="ReqAnalyzer" uid="ReqAnalyzer" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.3.2" type="features" includeLaunchers="true" autoIncludeRequirements="true">
+<product name="Ultimate-Eliminator" uid="Eliminator" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.3.2" type="bundles" includeLaunchers="true" autoIncludeRequirements="true">
 
    <aboutInfo>
-      <image path="icons/about.gif"/>
       <text>
          Ultimate is a tool for model checking and static program analysis. It provides multiple toolchains which check properties or transform input files.
       </text>
@@ -22,14 +21,14 @@
       </programArgsMac>
       <programArgsWin>-data @user.home\ultimate-data
       </programArgsWin>
-      <vmArgs>-Xmx4g -Xms4M -Dequinox.resolver.revision.batch.size=1
+      <vmArgs>-Xms2M -Xmx15G -Xss1M -Dequinox.resolver.revision.batch.size=1
       </vmArgs>
    </launcherArgs>
 
    <windowImages/>
 
 
-   <launcher name="ReqAnalyzer">
+   <launcher name="Ultimate">
       <linux icon="/CoreRCP/icons/icon.xpm"/>
       <macosx icon="/CoreRCP/icons/icon.icns"/>
       <win useIco="true">
@@ -42,18 +41,11 @@
    <vm>
       <linux include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21</linux>
       <macos include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21</macos>
-      <solaris include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21</solaris>
       <windows include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21</windows>
    </vm>
 
-
-   <plugins>
-   </plugins>
-
    <features>
       <feature id="BA_FeatureUltimateCommandLine"/>
-      <feature id="BA_FeatureUltimateCommon"/>
-      <feature id="BA_FeatureDependenciesCommon"/>
    </features>
 
    <configurations>
