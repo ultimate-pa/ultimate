@@ -5,16 +5,16 @@ set "ARCH=32bit"
 
 rem Test verification
 echo ---- Verification ----
-for %%PROGRAM in ("%DIR%examples\*.c") do (
-  for %%SPEC in ("%DIR%examples\*.prp") do (
-    "%DIR%Ultimate.py" --file "%%~fPROGRAM" --spec "%%~fSPEC" --architecture "%ARCH%"
+for %%P in ("%DIR%examples\*.c") do (
+  for %%S in ("%DIR%examples\*.prp") do (
+    python "%DIR%Ultimate.py" --file "%%~fP" --spec "%%~fS" --architecture "%ARCH%"
   )
 )
 
 rem Test validation (for YAML correctness witness)
 echo ---- Validation ----
-for %%WITNESS in ("%DIR%examples\*.yml") do (
-  for %%SPEC in ("%DIR%examples\*.prp") do (
-    "%DIR%Ultimate.py" --file "%%~dpnWITNESS.c" --witness-type correctness_witness --validate "%%~fWITNESS" --spec "%%~fSPEC" --architecture "%ARCH%"
+for %%W in ("%DIR%examples\*.yml") do (
+  for %%S in ("%DIR%examples\*.prp") do (
+    python "%DIR%Ultimate.py" --file "%%~dpnW.c" --witness-type correctness_witness --validate "%%~fW" --spec "%%~fS" --architecture "%ARCH%"
   )
 )
