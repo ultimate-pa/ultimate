@@ -57,12 +57,18 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -70,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -100,11 +107,14 @@ public class SvcompLibraryModel implements ILibraryModel {
 	private final ExpressionResultTransformer mExprResultTransformer;
 	private final MemoryHandler mMemoryHandler;
 	private final CHandler mCHandler;
+	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
+	private final TypeSizes mTypeSizes;
 
 	public SvcompLibraryModel(final FunctionModelHelper helper, final AuxVarInfoBuilder auxVarInfoBuilder,
 			final ExpressionTranslation expressionTranslation, final INameHandler nameHandler,
 			final boolean checkErrorFunction, final ExpressionResultTransformer exprResultTransformer,
-			final MemoryHandler memoryHandler, final CHandler cHandler) {
+			final MemoryHandler memoryHandler, final CHandler cHandler,
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final TypeSizes typeSizes) {
 		mHelper = helper;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mExpressionTranslation = expressionTranslation;
@@ -113,6 +123,8 @@ public class SvcompLibraryModel implements ILibraryModel {
 		mExprResultTransformer = exprResultTransformer;
 		mMemoryHandler = memoryHandler;
 		mCHandler = cHandler;
+		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
+		mTypeSizes = typeSizes;
 	}
 
 	@Override
@@ -200,9 +212,14 @@ public class SvcompLibraryModel implements ILibraryModel {
 	 */
 	private Result handleVerifierNondetMemory(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
+		final ExpressionResult optimizedResult = tryOptimizedNondetMemory(main, node, loc, name);
+		if (optimizedResult != null) {
+			return optimizedResult;
+		}
+
 		// Since we bytewise writes, we need to adapt the memory model to use a 1-byte resolution
 		// (otherwise this translation is potentially unsound)
-		mCHandler.adaptMemoryModelIfNecessary(loc, "Found a call to " + name, 1);
+		mCHandler.adaptMemoryModelIfNecessary(loc, "Found a call to " + name + " (using bytewise writes)", 1);
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, 2, name, arguments);
@@ -249,6 +266,95 @@ public class SvcompLibraryModel implements ILibraryModel {
 
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, builder.getDeclarations(), builder.getAuxVars());
 		return builder.build();
+	}
+
+	private ExpressionResult tryOptimizedNondetMemory(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, 2, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+
+		final ExpressionResult ptr = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
+		if (!(ptr.getCType() instanceof final CPointer ptrType)) {
+			return null;
+		}
+		builder.addAllExceptLrValue(ptr);
+		final CPrimitive counterType = new CPrimitive(CPrimitives.ULONG);
+		final ExpressionResult size = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
+				arguments[1], counterType);
+		builder.addAllExceptLrValue(size);
+		final BigInteger initSize = mTypeSizes.extractIntegerValue(size.getLrValue().getValue(), counterType);
+		final BigInteger typeSize = mTypeSizes.extractIntegerValue(
+				mTypeSizeAndOffsetComputer.constructBytesizeExpression(loc, ptrType.getPointsToType()), counterType);
+		if (typeSize == null || initSize == null) {
+			return null;
+		}
+		if (initSize.signum() == 0) {
+			// Nothing to initialize
+			return builder.build();
+		}
+		if (!initSize.equals(typeSize)) {
+			// For now, we only apply to optimization, if exactly one object of the base type should be completely
+			// initialized. But we could also handle more cases here:
+			// - multiple objects are initialized (via loop or fixed number of unrollings)
+			// - some fields of a struct are initialized
+			// - a combination of those two
+			return null;
+		}
+		if (initializeType(loc, ptrType.getPointsToType(), ptr.getLrValue(), builder)) {
+			return builder.build();
+		}
+		return null;
+	}
+
+	private boolean initializeType(final ILocation loc, final ICType type, final LRValue lhs,
+			final ExpressionResultBuilder builder) {
+		final ICType underlyingType = CEnum.replaceEnumWithInt(type.getUnderlyingType());
+		if (underlyingType instanceof CPrimitive || underlyingType instanceof CPointer) {
+			if (underlyingType.isVoidType()) {
+				return false;
+			}
+			final ExpressionResult nondet = handleVerifierNonDet(null, loc, underlyingType);
+			builder.addAllExceptLrValue(nondet).addAllExceptLrValue(
+					mExprResultTransformer.makePointerAssignment(loc, lhs, nondet.getLrValue().getValue()));
+			return true;
+		}
+		if (underlyingType instanceof final CStructOrUnion struct) {
+			if (struct.isStructOrUnion() == StructOrUnion.UNION || struct.isIncomplete()) {
+				return false;
+			}
+			final LocalLValue localStruct =
+					lhs instanceof final LocalLValue local ? new LocalLValue(local.getLhs(), struct, null) : null;
+			for (int i = 0; i < struct.getFieldCount(); i++) {
+				final ICType fieldType = struct.getFieldTypes()[i];
+				if (fieldType instanceof CArray && fieldType.isIncomplete()) {
+					continue;
+				}
+				if (struct.getBitfieldWidth(struct.getFieldIds()[i]) >= 0) {
+					return false;
+				}
+				final LRValue fieldLhs;
+				if (localStruct != null) {
+					fieldLhs = CTranslationUtil.constructOffHeapStructAccessLhs(loc, localStruct, i);
+				} else if (lhs instanceof final HeapLValue heap) {
+					final TypeSizeAndOffsetComputer.Offset offset =
+							mTypeSizeAndOffsetComputer.constructOffsetForField(loc, struct, i);
+					if (offset.isBitfieldOffset()) {
+						return false;
+					}
+					final Expression fieldAddress = mMemoryHandler.constructAddressForStructField(loc,
+							heap.getAddress(), offset, mTypeSizeAndOffsetComputer.getSizeT());
+					fieldLhs = new HeapLValue(fieldAddress, new CPointer(fieldType), null);
+				} else {
+					return false;
+				}
+				if (!initializeType(loc, fieldType, fieldLhs, builder)) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
 	}
 
 	private ExpressionResult handleVerifierNondetBool(final IDispatcher main, final ILocation loc) {
