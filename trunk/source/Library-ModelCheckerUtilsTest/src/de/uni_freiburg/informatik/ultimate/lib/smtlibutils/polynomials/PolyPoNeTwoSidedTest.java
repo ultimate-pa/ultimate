@@ -362,6 +362,49 @@ public class PolyPoNeTwoSidedTest {
 		Assert.assertEquals(LBool.UNSAT, SmtUtils.checkEquivalence(result, expected, mScript));
 	}
 
+	// --- comparisons without a constant on either side: treated as opaque atoms, but a comparison and its negation must still meet ---
+
+	@Test
+	public void conjunctionOfOpaqueComparisonAndItsNegationIsFalse() {
+		// x <=u y has no constant side, so it is not compared with other bounds. It must still be recognized as the
+		// complement of (not (bvule x y)): "A and not A" is false.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
+		declare(funDecls);
+		final List<Term> params = List.of(parse("(bvule x y)"), parse("(not (bvule x y))"));
+		final Term result = PolyPoNeUtils.and(mScript, params);
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("false")));
+	}
+
+	@Test
+	public void disjunctionOfOpaqueComparisonAndItsNegationIsTrue() {
+		// "A or not A" is true.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
+		declare(funDecls);
+		final List<Term> params = List.of(parse("(bvule x y)"), parse("(not (bvule x y))"));
+		final Term result = PolyPoNeUtils.or(mScript, params);
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("true")));
+	}
+
+	@Test
+	public void conjunctionOfOpaqueStrictComparisonAndItsNegationIsFalse() {
+		// A strict comparison is stored as the negation of its non-strict dual. Its negation (bvuge x y) is mirrored to
+		// (bvule y x), so both must end up as the same atom in opposite polarities.
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
+		declare(funDecls);
+		final List<Term> params = List.of(parse("(bvult x y)"), parse("(bvuge x y)"));
+		final Term result = PolyPoNeUtils.and(mScript, params);
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("false")));
+	}
+
+	@Test
+	public void disjunctionOfOpaqueStrictComparisonAndItsNegationIsTrue() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x", "y") };
+		declare(funDecls);
+		final List<Term> params = List.of(parse("(bvult x y)"), parse("(bvuge x y)"));
+		final Term result = PolyPoNeUtils.or(mScript, params);
+		MatcherAssert.assertThat(result, IsEqual.equalTo(mScript.term("true")));
+	}
+
 	// --- context path (PolyPoNeWithContext, used by the simplifier and quantifier elimination) ---
 
 	@Test
