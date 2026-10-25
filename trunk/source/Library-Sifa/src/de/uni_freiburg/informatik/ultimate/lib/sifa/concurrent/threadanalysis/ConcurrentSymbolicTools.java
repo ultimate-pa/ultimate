@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.ghostvariables.GhostLocationStateUpdater;
@@ -163,7 +164,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		if (activeThreadIds.isEmpty()) {
 			return state;
 		}
-		final Set<String> observerLockset =
+		final Set<IProgramVar> observerLockset =
 				mSettings.locksetAwareInterference() ? mLocksetInfo.mustLocksetAt(location) : Set.of();
 		return mThreadContext.interference().applyUntilFixpoint(state, mThreadContext.threadId(), activeThreadIds,
 				observerLockset, mThreadContext.domain(), mSettings.innerWideningThreshold(), mStats);

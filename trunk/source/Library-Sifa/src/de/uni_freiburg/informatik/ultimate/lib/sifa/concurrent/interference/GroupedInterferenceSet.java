@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats.Key;
@@ -74,7 +75,7 @@ public abstract class GroupedInterferenceSet<I> implements IInterferenceSet {
 	}
 
 	protected final List<GroupedInterference<I>> selectApplicableInterference(final String observerThreadId,
-			final Set<String> activeThreadIds, final Set<String> observerLockset, final SifaStats stats) {
+			final Set<String> activeThreadIds, final Set<IProgramVar> observerLockset, final SifaStats stats) {
 		final List<GroupedInterference<I>> applicable = new ArrayList<>();
 		for (final GroupedInterference<I> group : mGroupedInterferences.values()) {
 			final InterferenceContext context = group.context();
@@ -103,7 +104,8 @@ public abstract class GroupedInterferenceSet<I> implements IInterferenceSet {
 		return !sourceLocations.isEmpty() && sourcesBeforeFork.containsAll(sourceLocations);
 	}
 
-	private static boolean haveCommonLock(final Set<String> writerLockset, final Set<String> observerLockset) {
+	private static boolean haveCommonLock(final Set<IProgramVar> writerLockset,
+			final Set<IProgramVar> observerLockset) {
 		if (observerLockset.isEmpty()) {
 			return false;
 		}

@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterference;
@@ -82,7 +83,7 @@ public final class GuardedUpdateInterference
 
 	@Override
 	public IPredicate applyUntilFixpoint(final IPredicate state, final String observerThreadId,
-			final Set<String> activeThreadIds, final Set<String> observerLockset, final IDomain domain,
+			final Set<String> activeThreadIds, final Set<IProgramVar> observerLockset, final IDomain domain,
 			final int wideningThreshold, final SifaStats stats) {
 		if (isEmpty() || SmtUtils.isTrueLiteral(state.getFormula()) || SmtUtils.isFalseLiteral(state.getFormula())) {
 			return state;

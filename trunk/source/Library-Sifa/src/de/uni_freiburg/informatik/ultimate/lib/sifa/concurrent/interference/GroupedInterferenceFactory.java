@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocksetAnalysis;
@@ -93,16 +94,16 @@ public abstract class GroupedInterferenceFactory<G> {
 				mustHeldLocksAroundEdge(edge), edge.forkedThreadId());
 	}
 
-	protected final Set<String> mustHeldLocksAroundEdge(final TranslatedEdgeInterference edge) {
-		final Set<String> sourceLockset = mLocksetInfo.mustLocksetAt(edge.source());
-		final Set<String> targetLockset = mLocksetInfo.mustLocksetAt(edge.target());
+	protected final Set<IProgramVar> mustHeldLocksAroundEdge(final TranslatedEdgeInterference edge) {
+		final Set<IProgramVar> sourceLockset = mLocksetInfo.mustLocksetAt(edge.source());
+		final Set<IProgramVar> targetLockset = mLocksetInfo.mustLocksetAt(edge.target());
 		if (sourceLockset.isEmpty()) {
 			return targetLockset;
 		}
 		if (targetLockset.isEmpty()) {
 			return sourceLockset;
 		}
-		final Set<String> union = new LinkedHashSet<>(sourceLockset);
+		final Set<IProgramVar> union = new LinkedHashSet<>(sourceLockset);
 		union.addAll(targetLockset);
 		return Set.copyOf(union);
 	}

@@ -27,9 +27,10 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceGrouping.AbstractLocationPair;
 
-public record InterferenceContext(String threadId, AbstractLocationPair abstractLocations, Set<String> lockset,
+public record InterferenceContext(String threadId, AbstractLocationPair abstractLocations, Set<IProgramVar> lockset,
 		String forkedThreadId) {
 	public InterferenceContext {
 		lockset = Set.copyOf(lockset);

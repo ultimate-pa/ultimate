@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterference;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.GroupedInterferenceSet;
@@ -47,7 +48,7 @@ public final class PostStateInterference extends GroupedInterferenceSet<IPredica
 
 	@Override
 	public IPredicate applyUntilFixpoint(final IPredicate state, final String observerThreadId,
-			final Set<String> activeThreadIds, final Set<String> observerLockset, final IDomain domain,
+			final Set<String> activeThreadIds, final Set<IProgramVar> observerLockset, final IDomain domain,
 			final int wideningThreshold, final SifaStats stats) {
 		final List<GroupedInterference<IPredicate>> applicable =
 				selectApplicableInterference(observerThreadId, activeThreadIds, observerLockset, stats);

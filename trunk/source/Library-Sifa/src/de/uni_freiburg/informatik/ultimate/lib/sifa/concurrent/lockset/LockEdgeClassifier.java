@@ -25,90 +25,141 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-/** Recognizes the integer-valued mutex encoding produced by the current frontends. */
-public final class LockEdgeClassifier {
+/**
+ * This class checks whether a statement locks or unlocks a mutex. The mutex can be stored in a variable or an array
+ * element, including an element of a nested array.
+ */
+final class LockEdgeClassifier {
+
+	enum Operation {
+		ACQUIRE, RELEASE
+	}
+
+	record Update(List<Term> indices, Operation operation) {
+	}
 
 	private LockEdgeClassifier() {
 	}
 
-	public static boolean isAcquire(final TransFormula tf, final IProgramVar var) {
-		return Rational.ONE.equals(literalAssignedToOutVar(tf, var)) && assumesInVarZero(tf, var);
-	}
-
-	public static boolean isRelease(final TransFormula tf, final IProgramVar var) {
-		return Rational.ZERO.equals(literalAssignedToOutVar(tf, var));
-	}
-
-	public static IProgramVar acquiredLockVarFromTf(final TransFormula tf, final Set<IProgramVar> lockVars) {
-		for (final IProgramVar lockVar : lockVars) {
-			if (isAcquire(tf, lockVar)) {
-				return lockVar;
-			}
+	static Update classify(final TransFormula transitionFormula, final IProgramVar variable,
+			final Set<IProgramVar> stableIndexVars, final ManagedScript script) {
+		final Term previousValue = transitionFormula.getInVars().get(variable);
+		final Term assignedValue = findAssignedValue(SmtUtils.getConjuncts(transitionFormula.getFormula()),
+				transitionFormula.getOutVars().get(variable));
+		if (variable.getTermVariable().getSort().isArraySort()) {
+			return classifyArrayWrite(transitionFormula, previousValue, assignedValue, stableIndexVars, script);
 		}
-		return null;
+		return classifyWrite(transitionFormula, List.of(), previousValue, assignedValue);
 	}
 
-	public static IProgramVar releasedLockVarFromTf(final TransFormula tf, final Set<IProgramVar> lockVars) {
-		for (final IProgramVar lockVar : lockVars) {
-			if (isRelease(tf, lockVar)) {
-				return lockVar;
-			}
-		}
-		return null;
-	}
-
-	private static boolean assumesInVarZero(final TransFormula tf, final IProgramVar var) {
-		final TermVariable inVar = tf.getInVars().get(var);
-		if (inVar == null) {
-			return false;
-		}
-		final var literal = literalBoundTo(tf.getFormula(), inVar);
-		return literal != null && literal.equals(Rational.ZERO);
-	}
-
-	static Rational literalAssignedToOutVar(final TransFormula tf, final IProgramVar lockVar) {
-		if (tf == null) {
+	private static Update classifyArrayWrite(final TransFormula transitionFormula, final Term previousValue,
+			final Term assignedValue, final Set<IProgramVar> stableIndexVars, final ManagedScript script) {
+		final MultiDimensionalStore store = MultiDimensionalStore.of(assignedValue);
+		if (store == null || !store.getArray().equals(previousValue) || store.getValue().getSort().isArraySort()) {
 			return null;
 		}
-		final TermVariable outVar = tf.getOutVars().get(lockVar);
-		if (outVar == null || outVar.equals(tf.getInVars().get(lockVar))) {
+		final List<Term> indices = normalizeIndices(store.getIndex(), transitionFormula, stableIndexVars, script);
+		if (indices == null) {
 			return null;
 		}
-		final Rational literal = literalBoundTo(tf.getFormula(), outVar);
-		return Rational.ZERO.equals(literal) || Rational.ONE.equals(literal) ? literal : null;
+		final Term previousElement =
+				SmtUtils.multiDimensionalSelect(script.getScript(), previousValue, store.getIndex());
+		return classifyWrite(transitionFormula, indices, previousElement, store.getValue());
 	}
 
-	private static Rational literalBoundTo(final Term formula, final TermVariable target) {
-		for (final Term conjunct : SmtUtils.getConjuncts(formula)) {
-			final ApplicationTerm app = SmtUtils.getFunctionApplication(conjunct, "=");
-			if (app == null || app.getParameters().length != 2) {
-				continue;
+	/**
+	 * The lock and unlock statements must refer to the same array element, such as {@code locks[i]}. We use the program
+	 * variables to compare the indices from different statements. If an index can change while other threads run, we do
+	 * not track that mutex.
+	 */
+	private static List<Term> normalizeIndices(final ArrayIndex indices, final TransFormula transitionFormula,
+			final Set<IProgramVar> stableIndexVars, final ManagedScript script) {
+		final Map<TermVariable, TermVariable> substitution =
+				TransFormulaUtils.constructInvarsToDefaultvarsMap(transitionFormula);
+		final Set<TermVariable> stableIndexTerms =
+				stableIndexVars.stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+		for (final Term index : indices) {
+			for (final TermVariable variable : index.getFreeVars()) {
+				if (!stableIndexTerms.contains(substitution.get(variable))) {
+					return null;
+				}
 			}
-			final Term left = app.getParameters()[0];
-			final Term right = app.getParameters()[1];
-			final Term other;
-			if (target.equals(left)) {
-				other = right;
-			} else if (target.equals(right)) {
-				other = left;
-			} else {
-				continue;
+		}
+		return List.copyOf(indices.applySubstitution(script, substitution));
+	}
+
+	private static Update classifyWrite(final TransFormula transitionFormula, final List<Term> indices,
+			final Term previousValue, final Term assignedValue) {
+		if (isUnlocked(assignedValue)) {
+			return new Update(indices, Operation.RELEASE);
+		}
+		if (isLocked(assignedValue)
+				&& assumesUnlocked(SmtUtils.getConjuncts(transitionFormula.getFormula()), previousValue)) {
+			return new Update(indices, Operation.ACQUIRE);
+		}
+		return null;
+	}
+
+	private static boolean assumesUnlocked(final Term[] conjuncts, final Term previousValue) {
+		for (final Term conjunct : conjuncts) {
+			if (isUnlocked(otherSideOfEquality(conjunct, previousValue))) {
+				return true;
 			}
-			final Rational literal = SmtUtils.tryToConvertToLiteral(other);
-			if (literal != null) {
-				return literal;
+			final ApplicationTerm negation = SmtUtils.getFunctionApplication(conjunct, "not");
+			if (negation != null && negation.getParameters()[0].equals(previousValue)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean isUnlocked(final Term term) {
+		return term != null
+				&& (SmtUtils.isFalseLiteral(term) || Rational.ZERO.equals(SmtUtils.tryToConvertToLiteral(term)));
+	}
+
+	private static boolean isLocked(final Term term) {
+		return term != null
+				&& (SmtUtils.isTrueLiteral(term) || Rational.ONE.equals(SmtUtils.tryToConvertToLiteral(term)));
+	}
+
+	private static Term findAssignedValue(final Term[] conjuncts, final Term assignedVariable) {
+		for (final Term conjunct : conjuncts) {
+			final Term other = otherSideOfEquality(conjunct, assignedVariable);
+			if (isUnlocked(other) || isLocked(other) || SmtUtils.getFunctionApplication(other, "store") != null) {
+				return other;
 			}
 		}
 		return null;
+	}
+
+	private static Term otherSideOfEquality(final Term formula, final Term knownSide) {
+		final ApplicationTerm equality = SmtUtils.getFunctionApplication(formula, "=");
+		if (equality == null || equality.getParameters().length != 2) {
+			return null;
+		}
+		final Term left = equality.getParameters()[0];
+		final Term right = equality.getParameters()[1];
+		if (left.equals(knownSide)) {
+			return right;
+		}
+		return right.equals(knownSide) ? left : null;
 	}
 }

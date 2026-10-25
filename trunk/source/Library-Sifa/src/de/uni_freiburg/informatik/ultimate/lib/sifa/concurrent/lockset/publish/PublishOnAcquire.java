@@ -53,10 +53,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * This class uses mutexes to improve what the analysis knows about shared variables. We only do this for variables that
- * all threads protect with the same mutex. After the normal analysis finishes, we collect the possible values before
- * threads start and after each unlock. These are the values a thread can see when it locks that mutex. We analyze the
- * threads once more using these results. The collected results stay the same during this last run.
+ * Computes which values global variables protected by a mutex can have when a thread acquires that mutex. We use state
+ * invariants from the completed interference fixpoint at thread creation and after unlocks to compute one invariant per
+ * mutex. A final analysis of each thread uses this invariant to rule out impossible values at lock acquisitions. The
+ * following statements are then analyzed with these more precise states.
  */
 public final class PublishOnAcquire {
 
@@ -96,8 +96,7 @@ public final class PublishOnAcquire {
 		final Set<IProgramVar> protectedGlobals = new LinkedHashSet<>(globals);
 		for (final IcfgEdge edge : edges) {
 			final IcfgLocation source = edge.getSource();
-			if (activity.hasOtherActiveThreadsAt(source)
-					&& !mLocks.mustLocksetAt(source).contains(lock.getGloballyUniqueId())) {
+			if (activity.hasOtherActiveThreadsAt(source) && !mLocks.mustLocksetAt(source).contains(lock)) {
 				protectedGlobals.removeAll(InterferenceUtils.getChangedGlobals(edge.getTransformula(),
 						InterferenceUtils.getAdditionalChangedGlobals(edge)));
 			}
@@ -111,10 +110,10 @@ public final class PublishOnAcquire {
 		for (final IcfgEdge edge : edges) {
 			final boolean startsThread = !activity.hasOtherActiveThreadsAt(edge.getSource())
 					&& edge instanceof IIcfgForkTransitionThreadCurrent<?>;
-			final boolean heldBefore = mLocks.mustLocksetAt(edge.getSource()).contains(lock.getGloballyUniqueId());
-			final boolean heldAfter = mLocks.mustLocksetAt(edge.getTarget()).contains(lock.getGloballyUniqueId());
-			// A thread might lock the mutex before any other thread has unlocked it.
-			// We include the initial values because the thread could see them in that case.
+			final boolean heldBefore = mLocks.mustLocksetAt(edge.getSource()).contains(lock);
+			final boolean heldAfter = mLocks.mustLocksetAt(edge.getTarget()).contains(lock);
+			// An initially unlocked mutex can be acquired before any thread has unlocked it.
+			// We therefore include the global variable values when the only running thread creates another thread.
 			if (startsThread || heldBefore && !heldAfter) {
 				publishEdges.add(edge);
 			}
@@ -129,8 +128,8 @@ public final class PublishOnAcquire {
 	}
 
 	/**
-	 * We use results from the completed analysis to collect the values a thread may see when it locks a mutex. If a
-	 * result is missing, we assume that the shared variables may have any value.
+	 * Computes the invariants for mutex acquisitions from the state invariants of the completed interference fixpoint.
+	 * If a required state invariant is missing, we cannot rule out any values for the protected global variables.
 	 */
 	public boolean collectPublishedStates(final Map<IcfgLocation, IPredicate> invariants, final IDomain domain) {
 		for (final var entry : mPublications.entrySet()) {
@@ -153,8 +152,8 @@ public final class PublishOnAcquire {
 		IPredicate result = state;
 		for (final var entry : mPublishedStates.entrySet()) {
 			final IProgramVar lock = entry.getKey();
-			if (mLocks.mustLocksetAt(transition.getTarget()).contains(lock.getGloballyUniqueId())
-					&& !mLocks.mustLocksetAt(transition.getSource()).contains(lock.getGloballyUniqueId())) {
+			if (mLocks.mustLocksetAt(transition.getTarget()).contains(lock)
+					&& !mLocks.mustLocksetAt(transition.getSource()).contains(lock)) {
 				result = mTools.and(result, entry.getValue());
 			}
 		}

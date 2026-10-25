@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocks
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class LocationAbstraction {
-	private record LocationKey(int groupId, Set<String> lockset) {
+	private record LocationKey(int groupId, Set<IProgramVar> lockset) {
 	}
 
 	private final Map<String, Integer> mNextLocationIdByThread = new HashMap<>();
@@ -57,16 +57,17 @@ public class LocationAbstraction {
 			final Map<IcfgLocation, Integer> groupIds = groupLocations(icfg, locksetInfo.getLockVars());
 			yield assignLocationIds(l -> getLocationId(l, groupIds, locksetInfo), icfg);
 		}
-		case SPLIT_AT_EVERY_LOCATION -> assignLocationIds(
-				l -> mLocationIds.computeIfAbsent(l, __ -> nextLocationId(l.getProcedure())), icfg);
+		case SPLIT_AT_EVERY_LOCATION ->
+				assignLocationIds(l -> mLocationIds.computeIfAbsent(l, __ -> nextLocationId(l.getProcedure())), icfg);
 		};
 	}
 
 	/**
-	 * We put some program locations in the same group to reduce the number of locations the analysis has to track.
-	 * The points before and after a statement share a group when the statement only uses local variables or mutexes.
-	 * For example, incrementing a local counter does not need a separate location.
-	 * We do not combine groups for statements that start another thread or access other shared variables.
+	 * We put some program locations in the same group to reduce the number of locations the analysis has to track. The
+	 * locations before and after a statement share a group when the statement only uses local variables or mutexes. For
+	 * example, incrementing a local counter does not need a separate location. We do not combine groups for statements
+	 * that are affected, or affect, the global state of the program, like forking a thread or accessing shared global
+	 * variables.
 	 */
 	private static Map<IcfgLocation, Integer> groupLocations(final IIcfg<IcfgLocation> icfg,
 			final Set<IProgramVar> lockVars) {
