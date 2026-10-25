@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  */
 // These tests are are used for benchmarking and should not run as regression tests.
 @Category(NoRegression.class)
-public class RVDEBenchmark {
+public class RandomBitvectorSimplificationBenchmark {
 
 	/**
 	 * Warning: each test will overwrite the SMT script of the preceding test.
@@ -78,7 +78,7 @@ public class RVDEBenchmark {
 
 	@BeforeClass
 	public static void beforeAllTests() {
-		mCsvWriter = new QuantifierEliminationTestCsvWriter(RVDEBenchmark.class.getSimpleName());
+		mCsvWriter = new QuantifierEliminationTestCsvWriter(RandomBitvectorSimplificationBenchmark.class.getSimpleName());
 	}
 
 	@AfterClass
