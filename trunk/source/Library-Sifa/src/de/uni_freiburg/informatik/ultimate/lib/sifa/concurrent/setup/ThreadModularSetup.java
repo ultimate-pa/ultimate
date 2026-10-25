@@ -87,7 +87,8 @@ public final class ThreadModularSetup {
 		final boolean needsLocksetAnalysis = settings.locksetAwareInterference() || settings.publishOnAcquire();
 		mLocksetInfo = needsLocksetAnalysis ? MustLocksetAnalysis.create(icfg, mActivityPreanalysis)
 				: MustLocksetAnalysis.disabled();
-		mAbstractLocationIds = Map.copyOf(computeLocationIds(settings, services, icfg, interferenceLocksetInfo()));
+		mAbstractLocationIds = Map.copyOf(new LocationAbstraction().computeLocationAbstraction(
+				settings.locationAbstractionType(), icfg, interferenceLocksetInfo()));
 		mPreForkSourcesByThread =
 				mForkGraph.computePreForkSourcesByThread(icfg, mActivityPreanalysis.getMultiForkedThreads());
 		mGhostVariables = GhostVariableManager.create(toolkit.getManagedScript(), mAbstractLocationIds,
@@ -139,13 +140,6 @@ public final class ThreadModularSetup {
 
 	private MustLocksetAnalysis interferenceLocksetInfo() {
 		return mSettings.locksetAwareInterference() ? mLocksetInfo : MustLocksetAnalysis.disabled();
-	}
-
-	private static Map<IcfgLocation, Integer> computeLocationIds(final ThreadModularSifaSettings settings,
-			final IUltimateServiceProvider services, final IIcfg<IcfgLocation> icfg,
-			final MustLocksetAnalysis locksetInfo) {
-		return new LocationAbstraction().computeLocationAbstraction(settings.locationAbstractionType(), services, icfg,
-				locksetInfo);
 	}
 
 	private static GroupedInterferenceFactory<?> createInterferenceFactory(
