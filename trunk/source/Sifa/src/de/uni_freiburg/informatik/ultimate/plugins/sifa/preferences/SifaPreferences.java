@@ -151,7 +151,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_PUBLISH_ON_ACQUIRE = "Publish On Acquire";
 	private static final String TOOLTIP_PUBLISH_ON_ACQUIRE =
-			"Re-establish invariants for globals protected by a recognized mutex when it is acquired";
+			"Refine once with fixed mutex publication summaries after convergence (requires lockset-aware interference)";
 	private static final boolean DEFAULT_PUBLISH_ON_ACQUIRE = false;
 
 	public static final String LABEL_RESULT_PRINT = "Result Print";

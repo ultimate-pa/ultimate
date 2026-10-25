@@ -128,6 +128,19 @@ public final class ThreadAnalyzer {
 		}
 	}
 
+	/**
+	 * We analyze the threads once more using the shared values found in the first analysis. When a thread locks a
+	 * mutex, we use the values from initialization and earlier unlocks to work out what it can read.
+	 */
+	public void refineWithPublishedStates(final IInterferenceSet interference,
+			final Map<IcfgLocation, IPredicate> locationInvariants) {
+		if (mConcurrentTools.collectPublishedStates(locationInvariants, mDomain)) {
+			for (final String threadId : getThreadIds()) {
+				analyzeThread(threadId, interference, locationInvariants);
+			}
+		}
+	}
+
 	private static void updateLocationInvariants(final Map<IcfgLocation, IPredicate> locationInvariants,
 			final Map<IcfgLocation, IPredicate> threadResult, final Map<IcfgLocation, IPredicate> observed) {
 		locationInvariants.putAll(threadResult);
@@ -146,6 +159,7 @@ public final class ThreadAnalyzer {
 			final Collection<IcfgLocation> baseLois =
 					LoiExpansion.getLocationsOfInterestForThread(threadId, threadIcfg, mRequestedLocationsOfInterest);
 			final Set<IcfgLocation> expandedLois = new LinkedHashSet<>(baseLois);
+			expandedLois.addAll(mConcurrentTools.getPublishSources(threadId));
 			expandedLois.addAll(mForkGraph.getForkSources(threadId));
 			if (mJoinedThreads.contains(threadId)) {
 				final IcfgLocation exit = threadIcfg.getProcedureExitNodes().get(threadId);

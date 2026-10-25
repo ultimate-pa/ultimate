@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.meth
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.poststate.PostStateInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.methods.strongestpostcondition.StrongestPostconditionInterferenceFactory;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocksetAnalysis;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.publish.PublishOnAcquire;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicatePostcondition;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.TransFormulaToInterferencePredicate;
@@ -84,11 +83,10 @@ public final class ThreadModularSetup {
 			logger.info("Join precision enabled, joined threads: %s", mJoinedThreads);
 		}
 		mActivityPreanalysis = ThreadActivityPreanalysis.compute(icfg, mForkGraph, settings.joinPrecision());
-		final boolean needsLocksetAnalysis = settings.locksetAwareInterference() || settings.publishOnAcquire();
-		mLocksetInfo = needsLocksetAnalysis ? MustLocksetAnalysis.create(icfg, mActivityPreanalysis)
+		mLocksetInfo = settings.locksetAwareInterference() ? MustLocksetAnalysis.create(icfg, mActivityPreanalysis)
 				: MustLocksetAnalysis.disabled();
-		mAbstractLocationIds = Map.copyOf(new LocationAbstraction().computeLocationAbstraction(
-				settings.locationAbstractionType(), icfg, interferenceLocksetInfo()));
+		mAbstractLocationIds = Map.copyOf(new LocationAbstraction()
+				.computeLocationAbstraction(settings.locationAbstractionType(), icfg, mLocksetInfo));
 		mPreForkSourcesByThread =
 				mForkGraph.computePreForkSourcesByThread(icfg, mActivityPreanalysis.getMultiForkedThreads());
 		mGhostVariables = GhostVariableManager.create(toolkit.getManagedScript(), mAbstractLocationIds,
@@ -105,13 +103,6 @@ public final class ThreadModularSetup {
 		final var factory = tools.getFactory();
 		final ManagedScript script = tools.getManagedScript();
 		final ILogger logger = mServices.getLoggingService().getLogger(ThreadModularSetup.class);
-		final PublishOnAcquire mutexInvariants = mSettings.publishOnAcquire()
-				? PublishOnAcquire.discover(mIcfg, mLocksetInfo, ThreadForkGraph.MAIN_THREAD, mActivityPreanalysis,
-						mServices, script, factory)
-				: PublishOnAcquire.disabled();
-		if (mSettings.publishOnAcquire()) {
-			logger.info("Publish-on-acquire enabled (protected globals discovered: %s)", !mutexInvariants.isEmpty());
-		}
 		final AbstractLocationPartitionedDomain partitionedDomain =
 				mSettings.useBuckets()
 						? AbstractLocationPartitionedDomain.create(baseDomain, tools,
@@ -129,17 +120,13 @@ public final class ThreadModularSetup {
 		final InterferenceEdgeCollector edgeTraverser = new InterferenceEdgeCollector(mIcfg, translator);
 		final GroupedInterferenceFactory<?> interferenceFactory =
 				createInterferenceFactory(mSettings.interferenceApplicatorType(), edgeTraverser, translator,
-						postcondition, domain, factory, script, interferenceLocksetInfo(), mPreForkSourcesByThread);
+						postcondition, domain, factory, script, mLocksetInfo, mPreForkSourcesByThread);
 		logger.info("Interference method: %s (%s)", mSettings.interferenceApplicatorType(),
 				interferenceFactory.getClass().getSimpleName());
 		logger.info("Interference grouping: abstract-location pairs via %s", mSettings.locationAbstractionType());
 
 		return new SetupResult(mForkGraph, domain, interferenceFactory, postcondition, mJoinedThreads,
-				mAbstractLocationIds, mutexInvariants);
-	}
-
-	private MustLocksetAnalysis interferenceLocksetInfo() {
-		return mSettings.locksetAwareInterference() ? mLocksetInfo : MustLocksetAnalysis.disabled();
+				mAbstractLocationIds);
 	}
 
 	private static GroupedInterferenceFactory<?> createInterferenceFactory(
@@ -159,7 +146,6 @@ public final class ThreadModularSetup {
 
 	public static record SetupResult(ThreadForkGraph forkGraph, IDomain domain,
 			GroupedInterferenceFactory<?> interferenceFactory, RelationalPredicatePostcondition postcondition,
-			Set<String> joinedThreads, Map<IcfgLocation, Integer> abstractLocationIds,
-			PublishOnAcquire mutexInvariants) {
+			Set<String> joinedThreads, Map<IcfgLocation, Integer> abstractLocationIds) {
 	}
 }

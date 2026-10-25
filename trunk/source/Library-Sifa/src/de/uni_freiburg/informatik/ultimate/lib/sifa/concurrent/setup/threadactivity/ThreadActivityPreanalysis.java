@@ -71,6 +71,12 @@ public final class ThreadActivityPreanalysis {
 		return result != null ? result : Set.of();
 	}
 
+	public boolean hasOtherActiveThreadsAt(final IcfgLocation location) {
+		final String ownThread = location.getProcedure();
+		return mMultiForkedThreads.contains(ownThread)
+				|| getActiveThreadsAt(location).stream().anyMatch(thread -> !thread.equals(ownThread));
+	}
+
 	public boolean mayBeActiveAt(final IcfgLocation location, final String threadId) {
 		if (location == null) {
 			return true;

@@ -63,7 +63,7 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 	private final JoinHandler mJoinHandler;
 	private final GhostVariableManager mGhostVariables;
 	private final MustLocksetAnalysis mLocksetInfo;
-	private PublishOnAcquire mMutexInvariants = PublishOnAcquire.disabled();
+	private final PublishOnAcquire mPublishOnAcquire;
 	private final ThreadActivityPreanalysis mThreadActivityPreanalysis;
 	private final GhostLocationStateUpdater mLocationStateUpdater;
 	private ThreadAnalysisContext mThreadContext;
@@ -86,6 +86,8 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 				new InitialStateFactory(this, services, forkGraph, ghostVariables, mLocationStateUpdater);
 		mJoinHandler =
 				new JoinHandler(this, services, icfg, ghostVariables, mLocationStateUpdater, activityPreanalysis);
+		mPublishOnAcquire = new PublishOnAcquire(services, icfg,
+				settings.publishOnAcquire() ? locksetInfo : MustLocksetAnalysis.disabled(), activityPreanalysis, this);
 	}
 
 	public ThreadModularSifaSettings getSettings() {
@@ -104,10 +106,6 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		return mThreadContext.observedStateRecorder().getObservedStates();
 	}
 
-	public void setMutexInvariants(final PublishOnAcquire mutexInvariants) {
-		mMutexInvariants = mutexInvariants;
-	}
-
 	public void configureForThread(final String threadId, final IInterferenceSet interference,
 			final Map<IcfgLocation, IPredicate> locationPredicates, final IDomain domain) {
 		mThreadContext = new ThreadAnalysisContext(threadId, interference, domain, locationPredicates, mGhostVariables,
@@ -123,11 +121,20 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		mThreadContext.observedStateRecorder().recordTransitionInputState(transition, input);
 		final IPredicate spResult = super.post(input, transition);
 		final IPredicate joinProjected = mJoinHandler.projectJoinAssignedVars(spResult, transition);
-		return updateGhostvarsAndApplyInterferences(joinProjected, transition);
+		final IPredicate acquired = mPublishOnAcquire.applyAtAcquire(joinProjected, transition);
+		return updateGhostvarsAndApplyInterferences(acquired, transition);
 	}
 
 	public IPredicate postWithoutInterference(final IPredicate input, final IIcfgTransition<IcfgLocation> transition) {
 		return super.post(input, transition);
+	}
+
+	public boolean collectPublishedStates(final Map<IcfgLocation, IPredicate> invariants, final IDomain domain) {
+		return mPublishOnAcquire.collectPublishedStates(invariants, domain);
+	}
+
+	public Set<IcfgLocation> getPublishSources(final String threadId) {
+		return mPublishOnAcquire.getPublishSources(threadId);
 	}
 
 	@Override
@@ -156,13 +163,10 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		if (activeThreadIds.isEmpty()) {
 			return state;
 		}
-		final Set<String> observerLockset = mLocksetInfo.mustLocksetAt(location);
-		final Set<String> interferenceObserverLockset =
-				mSettings.locksetAwareInterference() ? observerLockset : Set.of();
-		final IPredicate afterInterference = mThreadContext.interference().applyUntilFixpoint(state,
-				mThreadContext.threadId(), activeThreadIds, interferenceObserverLockset, mThreadContext.domain(),
-				mSettings.innerWideningThreshold(), mStats);
-		return mMutexInvariants.restoreProtectedVariables(state, afterInterference, observerLockset);
+		final Set<String> observerLockset =
+				mSettings.locksetAwareInterference() ? mLocksetInfo.mustLocksetAt(location) : Set.of();
+		return mThreadContext.interference().applyUntilFixpoint(state, mThreadContext.threadId(), activeThreadIds,
+				observerLockset, mThreadContext.domain(), mSettings.innerWideningThreshold(), mStats);
 	}
 
 	private boolean interferenceCannotChangeState(final IPredicate state) {
@@ -183,7 +187,6 @@ public class ConcurrentSymbolicTools extends SymbolicTools {
 		if (isThreadLocalTransition(transition)) {
 			return updated;
 		}
-		updated = mMutexInvariants.applyAtAcquire(updated, transition);
 		return applyInterferences(updated, transition.getTarget());
 	}
 
