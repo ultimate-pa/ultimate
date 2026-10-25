@@ -84,7 +84,7 @@ public final class InitialStateFactory {
 	}
 
 	/*
-	 * For a non-main thread, start from every place where some other thread can fork it and join those states.
+	 * Collects the possible initial states of a thread from the fork transitions that can create it.
 	 */
 	private Set<IPredicate> collectForkStates(final String threadId,
 			final Map<IcfgLocation, IPredicate> locationPredicates) {
@@ -100,9 +100,9 @@ public final class InitialStateFactory {
 	}
 
 	/*
-	 * The new thread should start right after the fork. We cannot just use the post-state at the fork target, because
-	 * that may already contain interferences (even from itself). So we use the fork source state and only apply the
-	 * fork-local location updates.
+	 * The state at the target location of the fork transition may already include interference from the new thread. We
+	 * use the state at the source location instead and update the ghost variables that store the locations of the
+	 * parent and the new thread.
 	 */
 	private IPredicate applyForkEffects(final IPredicate forkState,
 			final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork) {

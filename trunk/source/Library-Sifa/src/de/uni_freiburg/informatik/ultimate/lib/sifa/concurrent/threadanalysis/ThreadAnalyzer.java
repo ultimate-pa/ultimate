@@ -129,8 +129,7 @@ public final class ThreadAnalyzer {
 	}
 
 	/**
-	 * We analyze the threads once more using the shared values found in the first analysis. When a thread locks a
-	 * mutex, we use the values from initialization and earlier unlocks to work out what it can read.
+	 * Runs the final analysis with the interference set and the state invariants for mutex acquisitions kept fixed.
 	 */
 	public void refineWithPublishedStates(final IInterferenceSet interference,
 			final Map<IcfgLocation, IPredicate> locationInvariants) {
