@@ -151,7 +151,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 
 		private void addVarsOrConsts(final VarList varList) {
 			final List<String> ids = new ArrayList<>();
-			final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
+			final DeclarationInformation declInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 			for (final String id : varList.getIdentifiers()) {
 				final VarMapKey key = new VarMapKey(id, declInfo);
 				final VarMapValue value = new VarMapValue(id, declInfo);
@@ -1219,7 +1219,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			// because they don't have to be defined as local variables
 
 			final VarList[] newParams =
-					applyMappingToVarList(params, new DeclarationInformation(StorageClass.QUANTIFIED, null));
+					applyMappingToVarList(params, DeclarationInformation.DECLARATIONINFO_QUANTIFIED);
 			final Attribute[] newAttrs = processAttributes(attrs);
 			final Expression newFormula = processExpression(formula);
 			newExpr = new QuantifierExpression(location, type, quantExpr.isUniversal(), quantExpr.getTypeParams(),

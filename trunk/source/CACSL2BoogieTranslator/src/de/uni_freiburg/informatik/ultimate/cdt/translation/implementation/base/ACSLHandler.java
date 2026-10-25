@@ -653,7 +653,7 @@ public class ACSLHandler implements IACSLHandler {
 			if (!(cType instanceof CPrimitive)) {
 				throw new UnsupportedSyntaxException(loc, "Only quantified variables of primitive type are supported.");
 			}
-			final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.QUANTIFIED, null);
+			final DeclarationInformation declInfo = DeclarationInformation.DECLARATIONINFO_QUANTIFIED;
 			final BoogieType boogieType = mTypeHandler.getBoogieTypeForCType(cType);
 			final String name = decl.getName();
 			mBoundVariables.put(name, new LocalLValue(new VariableLHS(loc, boogieType, name, declInfo), cType, false));
@@ -853,7 +853,7 @@ public class ACSLHandler implements IACSLHandler {
 
 		final Expression arr = ExpressionFactory.constructIdentifierExpression(loc,
 				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT), SFO.VALID,
-				new DeclarationInformation(StorageClass.GLOBAL, null));
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
 		final Expression e = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
 		// TODO: CType/range type of valid array -- depends on a preference???
@@ -876,7 +876,7 @@ public class ACSLHandler implements IACSLHandler {
 		final Expression[] idc = { idx };
 		final Expression arr = ExpressionFactory.constructIdentifierExpression(loc,
 				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT), SFO.VALID,
-				new DeclarationInformation(StorageClass.GLOBAL, null));
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		final Expression valid = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
 		final Expression e = ExpressionFactory.constructUnaryExpression(loc,
 				de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.LOGICNEG, valid);
@@ -902,7 +902,7 @@ public class ACSLHandler implements IACSLHandler {
 		final Expression[] idc = { idx };
 		final Expression arr = ExpressionFactory.constructIdentifierExpression(loc,
 				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT), SFO.VALID,
-				new DeclarationInformation(StorageClass.GLOBAL, null));
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		final Expression e = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
 
 		// TODO: CType

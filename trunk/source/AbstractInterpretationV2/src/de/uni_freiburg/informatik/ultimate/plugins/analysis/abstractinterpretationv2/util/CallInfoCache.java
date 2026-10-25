@@ -182,7 +182,7 @@ public final class CallInfoCache {
 		final ILocation loc = callStatement.getLocation();
 		final Map<IProgramVarOrConst, Pair<VariableLHS, IdentifierExpression>> oldVarAssign = new HashMap<>();
 		for (final IProgramNonOldVar global : globals) {
-			final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
+			final DeclarationInformation declInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 			final IBoogieType bType =
 					mSymbolTable.getTypeForVariableSymbol(global.getGloballyUniqueId(), StorageClass.GLOBAL, null);
 
