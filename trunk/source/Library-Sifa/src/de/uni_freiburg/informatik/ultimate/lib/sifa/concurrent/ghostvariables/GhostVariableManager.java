@@ -37,6 +37,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.PrimedDefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
@@ -55,7 +57,7 @@ public class GhostVariableManager {
 	private final Map<IcfgLocation, Integer> mLocationIds;
 	private final Map<String, IcfgLocation> mEntryLocations;
 	private final Set<String> mImpreciseLocationThreads;
-	private final Map<String, GhostProgramVar> mLocationVars = new HashMap<>();
+	private final Map<String, IProgramVar> mLocationVars = new HashMap<>();
 	private Set<TermVariable> mCachedLocationTermVariables;
 
 	private GhostVariableManager(final ManagedScript managedScript, final Map<IcfgLocation, Integer> locationIds,
@@ -86,14 +88,15 @@ public class GhostVariableManager {
 		final Sort intSort = SmtSortUtils.getIntSort(mManagedScript.getScript());
 		for (final String threadId : threadIds) {
 			final String name = LOCATION_VAR_PREFIX + threadId;
-			final GhostProgramVar locVar = GhostProgramVar.construct(name, intSort, mManagedScript, this);
+			final IProgramVar locVar =
+					ProgramVarUtils.constructGlobalProgramVarPair(name, intSort, mManagedScript, this);
 			mLocationVars.put(threadId, locVar);
 			symbolTable.registerGhostVariable(locVar);
 		}
 	}
 
 	public TermVariable getLocationTermVar(final String threadId) {
-		final GhostProgramVar var = mLocationVars.get(threadId);
+		final IProgramVar var = mLocationVars.get(threadId);
 		return var != null ? var.getTermVariable() : null;
 	}
 
@@ -139,7 +142,7 @@ public class GhostVariableManager {
 	public Term createInitialLocationState(final String mainThreadId) {
 		final Script script = mManagedScript.getScript();
 		final List<Term> conjuncts = new ArrayList<>();
-		for (final Entry<String, GhostProgramVar> entry : mLocationVars.entrySet()) {
+		for (final Entry<String, IProgramVar> entry : mLocationVars.entrySet()) {
 			if (!tracksLocationPrecisely(entry.getKey())) {
 				continue;
 			}

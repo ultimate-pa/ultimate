@@ -36,10 +36,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbol
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class PrimedDefaultIcfgSymbolTable extends DefaultIcfgSymbolTable {
@@ -148,14 +148,14 @@ public class PrimedDefaultIcfgSymbolTable extends DefaultIcfgSymbolTable {
 		mConstants.add(primedConst);
 	}
 
-	private static final class PrimedProgramVar implements IProgramVar {
+	private static final class PrimedProgramVar extends ProgramVar {
 		private static final long serialVersionUID = 1L;
 		private final IProgramVar mBase;
-		private final TermVariable mPrimedTermVariable;
 
 		private PrimedProgramVar(final IProgramVar base, final TermVariable primedTermVariable) {
+			super(base.getGloballyUniqueId() + "_primed", primedTermVariable, base.getPrimedConstant(),
+					base.getPrimedConstant());
 			mBase = base;
-			mPrimedTermVariable = primedTermVariable;
 		}
 
 		@Override
@@ -174,28 +174,8 @@ public class PrimedDefaultIcfgSymbolTable extends DefaultIcfgSymbolTable {
 		}
 
 		@Override
-		public TermVariable getTermVariable() {
-			return mPrimedTermVariable;
-		}
-
-		@Override
 		public String getProcedure() {
 			return mBase.getProcedure();
-		}
-
-		@Override
-		public ApplicationTerm getPrimedConstant() {
-			return mBase.getPrimedConstant();
-		}
-
-		@Override
-		public ApplicationTerm getDefaultConstant() {
-			return mBase.getPrimedConstant();
-		}
-
-		@Override
-		public Term getTerm() {
-			return mPrimedTermVariable;
 		}
 
 		@Override
