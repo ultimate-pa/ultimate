@@ -260,22 +260,9 @@ public class TransFormulaToInterferencePredicate {
 	}
 
 	public IPredicate projectPreStateToSharedState(final IPredicate preState) {
-		final Set<TermVariable> toProject = new HashSet<>();
-		preState.getVars().stream().filter(var -> !var.isGlobal()).map(IProgramVar::getTermVariable)
-				.forEach(toProject::add);
-		if (mGhostVariables != null) {
-			final Set<TermVariable> ghostLocVars = mGhostVariables.getLocationTermVariables();
-			for (final TermVariable fv : preState.getFormula().getFreeVars()) {
-				if (ghostLocVars.contains(fv)) {
-					toProject.add(fv);
-				}
-			}
-		}
-		if (toProject.isEmpty()) {
-			return preState;
-		}
-		final Term projected = RelationalPredicateUtils.existentiallyProject(preState.getFormula(), toProject,
-				mServices, mManagedScript);
-		return mPredicateFactory.newPredicate(projected);
+		final Set<TermVariable> ghostVarsToProject = mGhostVariables == null ? Set.of()
+				: SmtUtils.projectToFreeVars(mGhostVariables.getLocationTermVariables(), preState.getFormula());
+		return InterferenceUtils.projectToGlobalState(preState, ghostVarsToProject, mServices, mManagedScript,
+				mPredicateFactory::newPredicate);
 	}
 }

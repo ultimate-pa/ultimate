@@ -29,8 +29,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -60,19 +58,7 @@ public final class InterferenceUtils {
 	}
 
 	public static Set<IProgramVar> getChangedVars(final TransFormula tf) {
-		if (tf == null) {
-			return Set.of();
-		}
-		final Set<IProgramVar> changed = new LinkedHashSet<>(tf.getAssignedVars());
-		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-			final IProgramVar variable = entry.getKey();
-			final TermVariable outVar = entry.getValue();
-			final TermVariable inVar = tf.getInVars().get(variable);
-			if (!Objects.equals(outVar, inVar)) {
-				changed.add(variable);
-			}
-		}
-		return changed.isEmpty() ? Set.of() : Set.copyOf(changed);
+		return tf == null ? Set.of() : tf.getAssignedVars();
 	}
 
 	public static Set<IProgramVar> getChangedGlobals(final TransFormula tf) {
@@ -97,12 +83,7 @@ public final class InterferenceUtils {
 	}
 
 	public static Set<IProgramVar> getReferencedGlobals(final TransFormula tf) {
-		if (tf == null) {
-			return Set.of();
-		}
-		final Set<IProgramVar> referenced = new LinkedHashSet<>(tf.getInVars().keySet());
-		referenced.addAll(tf.getOutVars().keySet());
-		return filterGlobals(referenced);
+		return tf == null ? Set.of() : filterGlobals(TransFormula.collectAllProgramVars(tf));
 	}
 
 	public static boolean referencesGlobals(final TransFormula tf) {

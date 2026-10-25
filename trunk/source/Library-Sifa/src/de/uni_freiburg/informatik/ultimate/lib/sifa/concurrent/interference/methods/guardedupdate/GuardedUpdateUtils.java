@@ -31,10 +31,10 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.RelationalPredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public final class GuardedUpdateUtils {
 
@@ -47,14 +47,7 @@ public final class GuardedUpdateUtils {
 		final Term[] conjuncts = SmtUtils.getConjuncts(fullRelation.getFormula());
 		final List<Term> preOnly = new ArrayList<>();
 		for (final Term conjunct : conjuncts) {
-			boolean hasPrimed = false;
-			for (final TermVariable freeVar : conjunct.getFreeVars()) {
-				if (primedVars.contains(freeVar)) {
-					hasPrimed = true;
-					break;
-				}
-			}
-			if (!hasPrimed) {
+			if (!RelationalPredicateUtils.hasFreeVarIn(conjunct, primedVars)) {
 				preOnly.add(conjunct);
 			}
 		}

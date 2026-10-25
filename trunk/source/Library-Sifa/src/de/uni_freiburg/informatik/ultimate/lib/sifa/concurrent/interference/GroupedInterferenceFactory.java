@@ -25,7 +25,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference;
 
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.relations.TransFo
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public abstract class GroupedInterferenceFactory<G> {
 
@@ -90,22 +90,10 @@ public abstract class GroupedInterferenceFactory<G> {
 	public abstract IInterferenceSet buildInterferenceSet(G groupedInterferences);
 
 	protected final InterferenceContext contextFor(final TranslatedEdgeInterference edge) {
-		return new InterferenceContext(edge.source().getProcedure(), edge.abstractLocationPair(),
-				mustHeldLocksAroundEdge(edge), edge.forkedThreadId());
-	}
-
-	protected final Set<IProgramVar> mustHeldLocksAroundEdge(final TranslatedEdgeInterference edge) {
-		final Set<IProgramVar> sourceLockset = mLocksetInfo.mustLocksetAt(edge.source());
-		final Set<IProgramVar> targetLockset = mLocksetInfo.mustLocksetAt(edge.target());
-		if (sourceLockset.isEmpty()) {
-			return targetLockset;
-		}
-		if (targetLockset.isEmpty()) {
-			return sourceLockset;
-		}
-		final Set<IProgramVar> union = new LinkedHashSet<>(sourceLockset);
-		union.addAll(targetLockset);
-		return Set.copyOf(union);
+		final Set<IProgramVar> heldLocks = DataStructureUtils.union(mLocksetInfo.mustLocksetAt(edge.source()),
+				mLocksetInfo.mustLocksetAt(edge.target()));
+		return new InterferenceContext(edge.source().getProcedure(), edge.abstractLocationPair(), heldLocks,
+				edge.forkedThreadId());
 	}
 
 	protected final IPredicate relationalInterferenceOf(final TranslatedEdgeInterference edge,

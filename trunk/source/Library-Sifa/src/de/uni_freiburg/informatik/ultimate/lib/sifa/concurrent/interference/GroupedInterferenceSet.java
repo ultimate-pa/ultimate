@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats.Key;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public abstract class GroupedInterferenceSet<I> implements IInterferenceSet {
 
@@ -88,7 +89,7 @@ public abstract class GroupedInterferenceSet<I> implements IInterferenceSet {
 			if (allSourcesPrecedeObserverFork(observerThreadId, group.sourceLocations())) {
 				continue;
 			}
-			if (haveCommonLock(context.lockset(), observerLockset)) {
+			if (DataStructureUtils.haveNonEmptyIntersection(context.lockset(), observerLockset)) {
 				stats.increment(Key.INTERFERENCE_LOCKSET_FILTERED);
 				continue;
 			}
@@ -102,14 +103,6 @@ public abstract class GroupedInterferenceSet<I> implements IInterferenceSet {
 			final Set<IcfgLocation> sourceLocations) {
 		final Set<IcfgLocation> sourcesBeforeFork = mSourcesBeforeForkByThread.getOrDefault(observerThreadId, Set.of());
 		return !sourceLocations.isEmpty() && sourcesBeforeFork.containsAll(sourceLocations);
-	}
-
-	private static boolean haveCommonLock(final Set<IProgramVar> writerLockset,
-			final Set<IProgramVar> observerLockset) {
-		if (observerLockset.isEmpty()) {
-			return false;
-		}
-		return !writerLockset.isEmpty() && !Collections.disjoint(writerLockset, observerLockset);
 	}
 
 	@Override
