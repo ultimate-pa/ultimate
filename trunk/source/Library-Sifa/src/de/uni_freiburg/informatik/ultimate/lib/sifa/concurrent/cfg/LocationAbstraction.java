@@ -39,13 +39,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.interference.InterferenceUtils;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.concurrent.lockset.MustLocksetAnalysis;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.MultiElementCounter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class LocationAbstraction {
 	private record LocationKey(int groupId, Set<IProgramVar> lockset) {
 	}
 
-	private final Map<String, Integer> mNextLocationIdByThread = new HashMap<>();
+	private final MultiElementCounter<String> mLocationIdCounter = new MultiElementCounter<>();
 	private final Map<String, Map<LocationKey, Integer>> mLocationIdsByThread = new HashMap<>();
 	private final Map<IcfgLocation, Integer> mLocationIds = new HashMap<>();
 
@@ -57,8 +58,8 @@ public class LocationAbstraction {
 			final Map<IcfgLocation, Integer> groupIds = groupLocations(icfg, locksetInfo.getLockVars());
 			yield assignLocationIds(l -> getLocationId(l, groupIds, locksetInfo), icfg);
 		}
-		case SPLIT_AT_EVERY_LOCATION ->
-				assignLocationIds(l -> mLocationIds.computeIfAbsent(l, __ -> nextLocationId(l.getProcedure())), icfg);
+		case SPLIT_AT_EVERY_LOCATION -> assignLocationIds(
+				l -> mLocationIds.computeIfAbsent(l, __ -> mLocationIdCounter.increment(l.getProcedure())), icfg);
 		};
 	}
 
@@ -115,12 +116,6 @@ public class LocationAbstraction {
 		final LocationKey key = new LocationKey(groupIds.get(location), locksetInfo.mustLocksetAt(location));
 		final Map<LocationKey, Integer> ids =
 				mLocationIdsByThread.computeIfAbsent(location.getProcedure(), ignored -> new HashMap<>());
-		return ids.computeIfAbsent(key, ignored -> nextLocationId(location.getProcedure()));
-	}
-
-	private int nextLocationId(final String thread) {
-		final int counter = mNextLocationIdByThread.getOrDefault(thread, 1);
-		mNextLocationIdByThread.put(thread, counter + 1);
-		return counter;
+		return ids.computeIfAbsent(key, ignored -> mLocationIdCounter.increment(location.getProcedure()));
 	}
 }
