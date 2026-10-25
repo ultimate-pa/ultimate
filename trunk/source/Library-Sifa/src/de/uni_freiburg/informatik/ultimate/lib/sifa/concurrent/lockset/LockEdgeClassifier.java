@@ -85,9 +85,7 @@ final class LockEdgeClassifier {
 	}
 
 	/**
-	 * The lock and unlock statements must refer to the same array element, such as {@code locks[i]}. We use the program
-	 * variables to compare the indices from different statements. If an index can change while other threads run, we do
-	 * not track that mutex.
+	 * We compare array indices from different statements using their program variables.
 	 */
 	private static List<Term> normalizeIndices(final ArrayIndex indices, final TransFormula transitionFormula,
 			final Set<IProgramVar> stableIndexVars, final ManagedScript script) {

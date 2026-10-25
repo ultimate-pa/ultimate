@@ -53,10 +53,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  * This analysis tracks which mutexes a thread holds at each location. We record a mutex as held only when the thread
  * holds it on every path to that location.
  *
- * A mutex can be stored in a global variable or in an array element such as {@code locks[0][1]}. We only track one
- * mutex per array. Every write to that array must lock or unlock the same element. If the program writes to other
- * elements, we do not track mutexes in that array. We also do not track a mutex if its array index can change while
- * other threads are running.
+ * We identify an array mutex by the array variable, without recording its indices. All writes to that array must lock
+ * or unlock the same element. The indices must stay unchanged while threads can run concurrently.
  */
 public final class MustLocksetAnalysis {
 
@@ -191,9 +189,8 @@ public final class MustLocksetAnalysis {
 				if (target == null) {
 					continue;
 				}
-				// An index such as i in locks[i] may change while only this thread is running.
-				// We clear the recorded locks because locks[i] could then refer to a mutex that this thread has not
-				// locked.
+				// Before the first fork, for example, the index in locks[i] may still change.
+				// We clear the recorded mutexes because locks[i] could then refer to a different mutex.
 				final Set<IProgramVar> locksAfterEdge = noOtherThreadsRunning(source, activity) ? Set.of()
 						: updateHeldLocks(heldLocksByLocation.get(source), edge.getTransformula(), mutexes);
 				if (mergeHeldLocksAt(target, locksAfterEdge, heldLocksByLocation)) {

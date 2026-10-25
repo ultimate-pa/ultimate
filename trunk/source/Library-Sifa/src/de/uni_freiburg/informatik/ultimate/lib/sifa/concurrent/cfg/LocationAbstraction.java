@@ -64,7 +64,7 @@ public class LocationAbstraction {
 	}
 
 	/**
-	 * We put some program locations in the same group to reduce the number of locations the analysis has to track. The
+	 * We put program locations in the same group to reduce the number of locations the analysis has to track. The
 	 * locations before and after a statement share a group when the statement only uses local variables or mutexes. For
 	 * example, incrementing a local counter does not need a separate location. We do not combine groups for statements
 	 * that are affected, or affect, the global state of the program, like forking a thread or accessing shared global
