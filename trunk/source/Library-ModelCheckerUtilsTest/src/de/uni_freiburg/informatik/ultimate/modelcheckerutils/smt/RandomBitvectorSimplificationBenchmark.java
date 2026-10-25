@@ -4512,17 +4512,6 @@ public class RandomBitvectorSimplificationBenchmark {
 	}
 
 	@Test
-	public void SimplificationOpportunity_9f2f9dbd_bd190a1f_Treesizes_92_88() {
-		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32,
-				"ULTIMATE.start_main_~q~0#1", "ULTIMATE.start_main_~r~0#1", "ULTIMATE.start_main_~p~0#1",
-				"ULTIMATE.start_main_~B~0#1", "ULTIMATE.start_main_~d~0#1", "ULTIMATE.start_main_~A~0#1"), };
-		final String formulaAsString =
-				"(and (or (bvuge |ULTIMATE.start_main_~r~0#1| (bvmul |ULTIMATE.start_main_~B~0#1| (bvmul |ULTIMATE.start_main_~p~0#1| (_ bv2 32)))) (not (bvuge |ULTIMATE.start_main_~r~0#1| |ULTIMATE.start_main_~d~0#1|)) (not (= (bvmul (_ bv2 32) (bvmul |ULTIMATE.start_main_~p~0#1| |ULTIMATE.start_main_~B~0#1|)) (bvmul |ULTIMATE.start_main_~d~0#1| (_ bv2 32)))) (= |ULTIMATE.start_main_~A~0#1| (bvadd (bvmul |ULTIMATE.start_main_~q~0#1| |ULTIMATE.start_main_~B~0#1|) |ULTIMATE.start_main_~r~0#1| (bvneg (bvudiv (bvmul |ULTIMATE.start_main_~B~0#1| (bvmul |ULTIMATE.start_main_~p~0#1| (_ bv2 32))) (_ bv2 32))) (bvmul |ULTIMATE.start_main_~B~0#1| (bvudiv (bvmul |ULTIMATE.start_main_~p~0#1| (_ bv2 32)) (_ bv2 32)))))) (or (not (bvuge |ULTIMATE.start_main_~r~0#1| |ULTIMATE.start_main_~d~0#1|)) (= |ULTIMATE.start_main_~A~0#1| (bvadd (bvmul |ULTIMATE.start_main_~q~0#1| |ULTIMATE.start_main_~B~0#1|) |ULTIMATE.start_main_~r~0#1| (bvmul |ULTIMATE.start_main_~p~0#1| |ULTIMATE.start_main_~B~0#1|) (bvneg |ULTIMATE.start_main_~d~0#1|)))) (or (not (bvuge |ULTIMATE.start_main_~r~0#1| (bvudiv |ULTIMATE.start_main_~d~0#1| (_ bv2 32)))) (= (bvadd (bvmul |ULTIMATE.start_main_~B~0#1| (bvudiv |ULTIMATE.start_main_~p~0#1| (_ bv2 32))) (bvmul |ULTIMATE.start_main_~q~0#1| |ULTIMATE.start_main_~B~0#1|) |ULTIMATE.start_main_~r~0#1| (bvneg (bvudiv |ULTIMATE.start_main_~d~0#1| (_ bv2 32)))) |ULTIMATE.start_main_~A~0#1|)) (= (bvadd (bvmul |ULTIMATE.start_main_~q~0#1| |ULTIMATE.start_main_~B~0#1|) |ULTIMATE.start_main_~r~0#1|) |ULTIMATE.start_main_~A~0#1|))";
-		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
-				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
 	public void SimplificationOpportunity_9f94b7f5_bc518ea8_Treesizes_4_4() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "~var_1_26~0"), };
 		final String formulaAsString = "(not (= (_ bv0 8) ~var_1_26~0))";
@@ -6027,18 +6016,6 @@ public class RandomBitvectorSimplificationBenchmark {
 	}
 
 	@Test
-	public void SimplificationOpportunity_1263d8f3_3e6cb6ce_Treesizes_44_32() {
-		final FunDecl[] funDecls = {
-				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~var_1_5_Pointer~0.base",
-						"~var_1_3_Pointer~0.base", "~var_1_11_Pointer~0.base", "~var_1_1_Pointer~0.base"),
-				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#memory_int"), };
-		final String formulaAsString =
-				"(forall ((v_ArrVal_65 (_ BitVec 32)) (v_ArrVal_69 (_ BitVec 32))) (= ((_ zero_extend 24) ((_ extract 7 0) (select (store (store (store |#memory_int| ~var_1_11_Pointer~0.base v_ArrVal_65) ~var_1_1_Pointer~0.base ((_ sign_extend 24) ((_ extract 7 0) (select (store |#memory_int| ~var_1_11_Pointer~0.base v_ArrVal_65) ~var_1_3_Pointer~0.base)))) ~var_1_5_Pointer~0.base v_ArrVal_69) ~var_1_1_Pointer~0.base))) ((_ zero_extend 24) ((_ extract 7 0) (select (store (store (store |#memory_int| ~var_1_11_Pointer~0.base v_ArrVal_65) ~var_1_1_Pointer~0.base ((_ sign_extend 24) ((_ extract 7 0) (select (store |#memory_int| ~var_1_11_Pointer~0.base v_ArrVal_65) ~var_1_3_Pointer~0.base)))) ~var_1_5_Pointer~0.base v_ArrVal_69) ~var_1_3_Pointer~0.base)))))";
-		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
-				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
 	public void SimplificationOpportunity_127ccd51_74f6c80e_Treesizes_9_7() {
 		final FunDecl[] funDecls =
 				{ new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "~var_1_19~0", "~var_1_32~0"), };
@@ -6080,19 +6057,6 @@ public class RandomBitvectorSimplificationBenchmark {
 						new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#memory_$Pointer$.base"), };
 		final String formulaAsString =
 				"(and (exists ((|v_ULTIMATE.start_main_~p~0#1.base_68| (_ BitVec 32))) (and (= |ULTIMATE.start_main_~p~0#1.base| (select |#memory_$Pointer$.base| (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~p~0#1.base_68|))) (bvugt (bvadd (_ bv8 32) |v_ULTIMATE.start_main_~p~0#1.base_68|) (_ bv21 32)) (= (bvadd (_ bv8 32) |v_ULTIMATE.start_main_~p~0#1.base_68|) (select |#memory_$Pointer$.base| (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~p~0#1.base_68|))) (= (_ bv0 32) (select |#memory_$Pointer$.base| (bvadd (_ bv12 32) |v_ULTIMATE.start_main_~p~0#1.base_68|))))) (not (= (_ bv0 32) |ULTIMATE.start_main_~p~0#1.base|)))";
-		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
-				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
-	public void SimplificationOpportunity_142db8a8_4645c526_Treesizes_44_44() {
-		final FunDecl[] funDecls = {
-				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~WrapperStruct00_var_1_16_Pointer~0.base",
-						"~WrapperStruct00_var_1_15_Pointer~0.base", "~WrapperStruct00_var_1_14_Pointer~0.base",
-						"~WrapperStruct00_var_1_4_Pointer~0.base"),
-				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#memory_int"), };
-		final String formulaAsString =
-				"(forall ((v_ArrVal_339 (_ BitVec 32)) (v_ArrVal_323 (_ BitVec 32))) (= ((_ sign_extend 24) ((_ extract 7 0) (select (store (store (store |#memory_int| ~WrapperStruct00_var_1_14_Pointer~0.base v_ArrVal_339) ~WrapperStruct00_var_1_15_Pointer~0.base ((_ sign_extend 24) ((_ extract 7 0) (select (store |#memory_int| ~WrapperStruct00_var_1_14_Pointer~0.base v_ArrVal_339) ~WrapperStruct00_var_1_16_Pointer~0.base)))) ~WrapperStruct00_var_1_4_Pointer~0.base v_ArrVal_323) ~WrapperStruct00_var_1_15_Pointer~0.base))) ((_ sign_extend 24) ((_ extract 7 0) (select (store (store (store |#memory_int| ~WrapperStruct00_var_1_14_Pointer~0.base v_ArrVal_339) ~WrapperStruct00_var_1_15_Pointer~0.base ((_ sign_extend 24) ((_ extract 7 0) (select (store |#memory_int| ~WrapperStruct00_var_1_14_Pointer~0.base v_ArrVal_339) ~WrapperStruct00_var_1_16_Pointer~0.base)))) ~WrapperStruct00_var_1_4_Pointer~0.base v_ArrVal_323) ~WrapperStruct00_var_1_16_Pointer~0.base)))))";
 		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
 				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -6153,19 +6117,6 @@ public class RandomBitvectorSimplificationBenchmark {
 				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#memory_int"), };
 		final String formulaAsString =
 				"(forall ((v_ArrVal_218 (_ BitVec 32)) (v_ArrVal_233 (_ BitVec 32))) (not (bvsge (bvadd ((_ zero_extend 24) ((_ extract 7 0) (select (store (store |#memory_int| ~BOOL_unsigned_char_Array_0_arrayBOOL_unsigned_char_Array_0Var0_Pointer~0.base v_ArrVal_233) ~signed_char_Array_0_arraysigned_char_Array_0Var1_Pointer~0.base v_ArrVal_218) ~unsigned_char_Array_0_arrayunsigned_char_Array_0Var0_Pointer~0.base))) (_ bv4294967291 32)) (select (store (store |#memory_int| ~BOOL_unsigned_char_Array_0_arrayBOOL_unsigned_char_Array_0Var0_Pointer~0.base v_ArrVal_233) ~signed_char_Array_0_arraysigned_char_Array_0Var1_Pointer~0.base v_ArrVal_218) ~signed_long_int_Array_0_arraysigned_long_int_Array_0Var0_Pointer~0.base))))";
-		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
-				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
-	public void SimplificationOpportunity_190efad_237c5a8b_Treesizes_112_112() {
-		final FunDecl[] funDecls = {
-				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~var_1_9_Pointer~0.base",
-						"~var_1_10_Pointer~0.base", "~var_1_5_Pointer~0.base", "~var_1_8_Pointer~0.base",
-						"~var_1_11_Pointer~0.base"),
-				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#memory_int"), };
-		final String formulaAsString =
-				"(forall ((v_ArrVal_92 (_ BitVec 32)) (v_ArrVal_79 (_ BitVec 32))) (= ((_ sign_extend 16) ((_ extract 15 0) (bvadd (bvneg ((_ sign_extend 16) ((_ extract 15 0) (select (store (store (store |#memory_int| ~var_1_11_Pointer~0.base v_ArrVal_92) ~var_1_5_Pointer~0.base v_ArrVal_79) ~var_1_8_Pointer~0.base ((_ sign_extend 16) ((_ extract 15 0) (bvadd (bvneg ((_ sign_extend 16) ((_ extract 15 0) (select (store (store |#memory_int| ~var_1_11_Pointer~0.base v_ArrVal_92) ~var_1_5_Pointer~0.base v_ArrVal_79) ~var_1_10_Pointer~0.base)))) ((_ sign_extend 16) ((_ extract 15 0) (select (store (store |#memory_int| ~var_1_11_Pointer~0.base v_ArrVal_92) ~var_1_5_Pointer~0.base v_ArrVal_79) ~var_1_9_Pointer~0.base))))))) ~var_1_10_Pointer~0.base)))) ((_ sign_extend 16) ((_ extract 15 0) (select (store (store (store |#memory_int| ~var_1_11_Pointer~0.base v_ArrVal_92) ~var_1_5_Pointer~0.base v_ArrVal_79) ~var_1_8_Pointer~0.base ((_ sign_extend 16) ((_ extract 15 0) (bvadd (bvneg ((_ sign_extend 16) ((_ extract 15 0) (select (store (store |#memory_int| ~var_1_11_Pointer~0.base v_ArrVal_92) ~var_1_5_Pointer~0.base v_ArrVal_79) ~var_1_10_Pointer~0.base)))) ((_ sign_extend 16) ((_ extract 15 0) (select (store (store |#memory_int| ~var_1_11_Pointer~0.base v_ArrVal_92) ~var_1_5_Pointer~0.base v_ArrVal_79) ~var_1_9_Pointer~0.base))))))) ~var_1_9_Pointer~0.base)))))) ((_ sign_extend 16) ((_ extract 15 0) ((_ sign_extend 16) ((_ extract 15 0) (bvadd (bvneg ((_ sign_extend 16) ((_ extract 15 0) (select (store (store |#memory_int| ~var_1_11_Pointer~0.base v_ArrVal_92) ~var_1_5_Pointer~0.base v_ArrVal_79) ~var_1_10_Pointer~0.base)))) ((_ sign_extend 16) ((_ extract 15 0) (select (store (store |#memory_int| ~var_1_11_Pointer~0.base v_ArrVal_92) ~var_1_5_Pointer~0.base v_ArrVal_79) ~var_1_9_Pointer~0.base))))))))))";
 		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
 				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -6391,20 +6342,6 @@ public class RandomBitvectorSimplificationBenchmark {
 				"ULTIMATE.start_main_~node4__m4~4#1"), };
 		final String formulaAsString =
 				"(and (exists ((~id1~0 (_ BitVec 8)) (~id2~0 (_ BitVec 8)) (~send4~0 (_ BitVec 8)) (~id3~0 (_ BitVec 8)) (~send1~0 (_ BitVec 8)) (~send2~0 (_ BitVec 8)) (~send3~0 (_ BitVec 8))) (and (= ((_ sign_extend 24) ~send2~0) ((_ sign_extend 24) ~id2~0)) (bvsge ((_ sign_extend 24) ~id3~0) (_ bv0 32)) (bvsgt ((_ sign_extend 24) ((_ extract 7 0) ((_ sign_extend 24) ~send2~0))) ((_ sign_extend 24) ~id3~0)) (= ((_ sign_extend 24) ~id4~0) ((_ sign_extend 24) ~send4~0)) (= ((_ sign_extend 24) ~id2~0) ((_ sign_extend 24) ((_ extract 7 0) ((_ sign_extend 24) ~send1~0)))) (= ((_ sign_extend 24) ~id1~0) ((_ sign_extend 24) ~send1~0)) (= ((_ sign_extend 24) ~id3~0) ((_ sign_extend 24) ~send3~0)) (bvsgt ((_ sign_extend 24) ((_ extract 7 0) ((_ sign_extend 24) ~send4~0))) ((_ sign_extend 24) ~id1~0)) (= |ULTIMATE.start_main_~node4__m4~4#1| ((_ extract 7 0) ((_ sign_extend 24) ~send3~0))))) (not (bvsgt ((_ sign_extend 24) |ULTIMATE.start_main_~node4__m4~4#1|) ((_ sign_extend 24) ~id4~0))))";
-		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
-				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
-	public void SimplificationOpportunity_21befa7f_33a84731_Treesizes_36_36() {
-		final FunDecl[] funDecls = {
-				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~WrapperStruct00_var_1_8_Pointer~0.base",
-						"~WrapperStruct00_var_1_16_Pointer~0.base", "~WrapperStruct00_var_1_17_Pointer~0.base",
-						"~WrapperStruct00_var_1_1_Pointer~0.base", "~WrapperStruct00_var_1_11_Pointer~0.base",
-						"~WrapperStruct00_var_1_4_Pointer~0.base"),
-				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#memory_int"), };
-		final String formulaAsString =
-				"(forall ((v_ArrVal_124 (_ BitVec 32)) (v_ArrVal_123 (_ BitVec 32)) (v_ArrVal_122 (_ BitVec 32)) (v_ArrVal_153 (_ BitVec 32))) (= ((_ zero_extend 24) ((_ extract 7 0) (select (store (store (store (store |#memory_int| ~WrapperStruct00_var_1_8_Pointer~0.base v_ArrVal_153) ~WrapperStruct00_var_1_11_Pointer~0.base v_ArrVal_122) ~WrapperStruct00_var_1_16_Pointer~0.base v_ArrVal_123) ~WrapperStruct00_var_1_17_Pointer~0.base v_ArrVal_124) ~WrapperStruct00_var_1_1_Pointer~0.base))) ((_ zero_extend 24) ((_ extract 7 0) (select (store (store (store (store |#memory_int| ~WrapperStruct00_var_1_8_Pointer~0.base v_ArrVal_153) ~WrapperStruct00_var_1_11_Pointer~0.base v_ArrVal_122) ~WrapperStruct00_var_1_16_Pointer~0.base v_ArrVal_123) ~WrapperStruct00_var_1_17_Pointer~0.base v_ArrVal_124) ~WrapperStruct00_var_1_4_Pointer~0.base)))))";
 		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
 				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -7176,16 +7113,6 @@ public class RandomBitvectorSimplificationBenchmark {
 				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#memory_int"), };
 		final String formulaAsString =
 				"(forall ((v_ArrVal_86 (_ BitVec 32)) (v_ArrVal_104 (_ BitVec 32))) (= ((_ zero_extend 16) ((_ extract 15 0) (select (store (store |#memory_int| ~unsigned_short_int_Array_0_arrayunsigned_short_int_Array_0Var2_Pointer~0.base v_ArrVal_104) ~signed_char_Array_0_arraysigned_char_Array_0Var1_Pointer~0.base v_ArrVal_86) ~unsigned_short_int_Array_0_arrayunsigned_short_int_Array_0Var6_Pointer~0.base))) ((_ zero_extend 16) ((_ extract 15 0) (bvadd ((_ zero_extend 16) ((_ extract 15 0) (select (store (store |#memory_int| ~unsigned_short_int_Array_0_arrayunsigned_short_int_Array_0Var2_Pointer~0.base v_ArrVal_104) ~signed_char_Array_0_arraysigned_char_Array_0Var1_Pointer~0.base v_ArrVal_86) ~unsigned_short_int_Array_0_arrayunsigned_short_int_Array_0Var3_Pointer~0.base))) (_ bv4294967274 32))))))";
-		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
-				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
-	public void SimplificationOpportunity_496f89a9_413f04db_Treesizes_38_38() {
-		final FunDecl[] funDecls =
-				{ new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#memory_$Pointer$.base"), };
-		final String formulaAsString =
-				"(and (exists ((|v_ULTIMATE.start_aws_linked_list_push_back_~node#1.base_BEFORE_CALL_5| (_ BitVec 32))) (= |v_ULTIMATE.start_aws_linked_list_push_back_~node#1.base_BEFORE_CALL_5| (bvadd (_ bv16 32) (select |#memory_$Pointer$.base| (bvadd |v_ULTIMATE.start_aws_linked_list_push_back_~node#1.base_BEFORE_CALL_5| (_ bv4294967292 32)))))) (exists ((|v_ULTIMATE.start_aws_linked_list_push_back_~node#1.base_BEFORE_CALL_7| (_ BitVec 32))) (and (= |v_ULTIMATE.start_aws_linked_list_push_back_~node#1.base_BEFORE_CALL_7| (bvadd (select |#memory_$Pointer$.base| (bvadd |v_ULTIMATE.start_aws_linked_list_push_back_~node#1.base_BEFORE_CALL_7| (_ bv4294967280 32))) (_ bv8 32))) (= |v_ULTIMATE.start_aws_linked_list_push_back_~node#1.base_BEFORE_CALL_7| (bvadd (_ bv16 32) (select |#memory_$Pointer$.base| (bvadd |v_ULTIMATE.start_aws_linked_list_push_back_~node#1.base_BEFORE_CALL_7| (_ bv4294967292 32))))) (= (_ bv0 32) (select |#memory_$Pointer$.base| (bvadd |v_ULTIMATE.start_aws_linked_list_push_back_~node#1.base_BEFORE_CALL_7| (_ bv4294967288 32)))))))";
 		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
 				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -8153,19 +8080,6 @@ public class RandomBitvectorSimplificationBenchmark {
 	}
 
 	@Test
-	public void SimplificationOpportunity_7eecf7_5cc018cd_Treesizes_30_30() {
-		final FunDecl[] funDecls = {
-				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~WrapperStruct00_var_1_8_Pointer~0.base",
-						"~WrapperStruct00_var_1_15_Pointer~0.base", "~WrapperStruct00_var_1_9_Pointer~0.base",
-						"~WrapperStruct00_var_1_7_Pointer~0.base", "~WrapperStruct00_var_1_1_Pointer~0.base"),
-				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#memory_int"), };
-		final String formulaAsString =
-				"(forall ((v_ArrVal_139 (_ BitVec 32)) (v_ArrVal_169 (_ BitVec 32))) (= (select (store (store |#memory_int| ~WrapperStruct00_var_1_1_Pointer~0.base v_ArrVal_169) ~WrapperStruct00_var_1_15_Pointer~0.base v_ArrVal_139) ~WrapperStruct00_var_1_7_Pointer~0.base) (bvadd (select (store (store |#memory_int| ~WrapperStruct00_var_1_1_Pointer~0.base v_ArrVal_169) ~WrapperStruct00_var_1_15_Pointer~0.base v_ArrVal_139) ~WrapperStruct00_var_1_8_Pointer~0.base) (select (store (store |#memory_int| ~WrapperStruct00_var_1_1_Pointer~0.base v_ArrVal_169) ~WrapperStruct00_var_1_15_Pointer~0.base v_ArrVal_139) ~WrapperStruct00_var_1_9_Pointer~0.base))))";
-		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
-				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
 	public void SimplificationOpportunity_7f59c4dc_4c5369dc_Treesizes_15_12() {
 		final FunDecl[] funDecls =
 				{ new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "ULTIMATE.start_main_~b~0#1.base"),
@@ -9094,19 +9008,6 @@ public class RandomBitvectorSimplificationBenchmark {
 	}
 
 	@Test
-	public void SimplificationOpportunity_b4189a2e_b3b7a27_Treesizes_203_176() {
-		final FunDecl[] funDecls = {
-				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~#double_Array_0~0.base",
-						"~#signed_long_int_Array_0~0.base", "~#signed_short_int_Array_0~0.base",
-						"~#unsigned_char_Array_0~0.base"),
-				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#memory_int"), };
-		final String formulaAsString =
-				"(forall ((v_ArrVal_136 (_ BitVec 32)) (v_ArrVal_134 (_ BitVec 32)) (v_ArrVal_133 (_ BitVec 32)) (v_ArrVal_132 (_ BitVec 32))) (= ((_ sign_extend 16) ((_ extract 15 0) (select (store (store (store (store (store |#memory_int| |~#signed_long_int_Array_0~0.base| v_ArrVal_132) |~#double_Array_0~0.base| v_ArrVal_134) (bvadd (_ bv4 32) |~#double_Array_0~0.base|) v_ArrVal_133) (bvadd (_ bv8 32) |~#signed_short_int_Array_0~0.base|) ((_ sign_extend 16) ((_ extract 15 0) (bvadd ((_ sign_extend 16) ((_ extract 15 0) (select (store (store (store |#memory_int| |~#signed_long_int_Array_0~0.base| v_ArrVal_132) |~#double_Array_0~0.base| v_ArrVal_134) (bvadd (_ bv4 32) |~#double_Array_0~0.base|) v_ArrVal_133) (bvadd (_ bv4 32) |~#signed_short_int_Array_0~0.base|)))) ((_ sign_extend 16) ((_ extract 15 0) (select (store (store (store |#memory_int| |~#signed_long_int_Array_0~0.base| v_ArrVal_132) |~#double_Array_0~0.base| v_ArrVal_134) (bvadd (_ bv4 32) |~#double_Array_0~0.base|) v_ArrVal_133) (bvadd (_ bv6 32) |~#signed_short_int_Array_0~0.base|)))))))) (bvadd (_ bv3 32) |~#unsigned_char_Array_0~0.base|) v_ArrVal_136) (bvadd (_ bv8 32) |~#signed_short_int_Array_0~0.base|)))) ((_ sign_extend 16) ((_ extract 15 0) (bvadd ((_ sign_extend 16) ((_ extract 15 0) (select (store (store (store (store (store |#memory_int| |~#signed_long_int_Array_0~0.base| v_ArrVal_132) |~#double_Array_0~0.base| v_ArrVal_134) (bvadd (_ bv4 32) |~#double_Array_0~0.base|) v_ArrVal_133) (bvadd (_ bv8 32) |~#signed_short_int_Array_0~0.base|) ((_ sign_extend 16) ((_ extract 15 0) (bvadd ((_ sign_extend 16) ((_ extract 15 0) (select (store (store (store |#memory_int| |~#signed_long_int_Array_0~0.base| v_ArrVal_132) |~#double_Array_0~0.base| v_ArrVal_134) (bvadd (_ bv4 32) |~#double_Array_0~0.base|) v_ArrVal_133) (bvadd (_ bv4 32) |~#signed_short_int_Array_0~0.base|)))) ((_ sign_extend 16) ((_ extract 15 0) (select (store (store (store |#memory_int| |~#signed_long_int_Array_0~0.base| v_ArrVal_132) |~#double_Array_0~0.base| v_ArrVal_134) (bvadd (_ bv4 32) |~#double_Array_0~0.base|) v_ArrVal_133) (bvadd (_ bv6 32) |~#signed_short_int_Array_0~0.base|)))))))) (bvadd (_ bv3 32) |~#unsigned_char_Array_0~0.base|) v_ArrVal_136) (bvadd (_ bv4 32) |~#signed_short_int_Array_0~0.base|)))) ((_ sign_extend 16) ((_ extract 15 0) (select (store (store (store (store (store |#memory_int| |~#signed_long_int_Array_0~0.base| v_ArrVal_132) |~#double_Array_0~0.base| v_ArrVal_134) (bvadd (_ bv4 32) |~#double_Array_0~0.base|) v_ArrVal_133) (bvadd (_ bv8 32) |~#signed_short_int_Array_0~0.base|) ((_ sign_extend 16) ((_ extract 15 0) (bvadd ((_ sign_extend 16) ((_ extract 15 0) (select (store (store (store |#memory_int| |~#signed_long_int_Array_0~0.base| v_ArrVal_132) |~#double_Array_0~0.base| v_ArrVal_134) (bvadd (_ bv4 32) |~#double_Array_0~0.base|) v_ArrVal_133) (bvadd (_ bv4 32) |~#signed_short_int_Array_0~0.base|)))) ((_ sign_extend 16) ((_ extract 15 0) (select (store (store (store |#memory_int| |~#signed_long_int_Array_0~0.base| v_ArrVal_132) |~#double_Array_0~0.base| v_ArrVal_134) (bvadd (_ bv4 32) |~#double_Array_0~0.base|) v_ArrVal_133) (bvadd (_ bv6 32) |~#signed_short_int_Array_0~0.base|)))))))) (bvadd (_ bv3 32) |~#unsigned_char_Array_0~0.base|) v_ArrVal_136) (bvadd (_ bv6 32) |~#signed_short_int_Array_0~0.base|)))))))))";
-		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
-				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
 	public void SimplificationOpportunity_b45341f3_acd6aa4b_Treesizes_32_26() {
 		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~#signed_char_Array_0~0.base",
@@ -9285,17 +9186,6 @@ public class RandomBitvectorSimplificationBenchmark {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "fibo2_#in~n"), };
 		final String formulaAsString =
 				"(and (not (= (_ bv5 32) |fibo2_#in~n|)) (bvslt (bvadd |fibo2_#in~n| (_ bv4294967290 32)) (_ bv1 32)) (not (bvslt (bvadd |fibo2_#in~n| (_ bv4294967292 32)) (_ bv1 32))))";
-		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
-				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
-	public void SimplificationOpportunity_ba0041cc_940de965_Treesizes_436_4() {
-		final FunDecl[] funDecls =
-				{ new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "assume_abort_if_not_#in~cond"),
-						new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#memory_int"), };
-		final String formulaAsString =
-				"(or (not (= (_ bv0 32) |assume_abort_if_not_#in~cond|)) (forall ((|v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| (_ BitVec 32)) (|v_ULTIMATE.start_main_~#z~0#1.base_BEFORE_CALL_5| (_ BitVec 32)) (|v_ULTIMATE.start_main_~#y~0#1.base_BEFORE_CALL_5| (_ BitVec 32)) (|v_ULTIMATE.start_main_~#c~0#1.base_BEFORE_CALL_4| (_ BitVec 32))) (= (_ bv0 64) (bvadd (_ bv1 64) (bvneg (concat (select (store (store (store (store (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#y~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) ((_ sign_extend 32) (select (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#z~0#1.base_BEFORE_CALL_5|)))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#y~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) ((_ sign_extend 32) (select (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#z~0#1.base_BEFORE_CALL_5|)))) |v_ULTIMATE.start_main_~#c~0#1.base_BEFORE_CALL_4| ((_ extract 31 0) (_ bv1 64))) (bvadd |v_ULTIMATE.start_main_~#c~0#1.base_BEFORE_CALL_4| (_ bv4 32)) ((_ extract 63 32) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|)) (select (store (store (store (store (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#y~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) ((_ sign_extend 32) (select (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#z~0#1.base_BEFORE_CALL_5|)))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#y~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) ((_ sign_extend 32) (select (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#z~0#1.base_BEFORE_CALL_5|)))) |v_ULTIMATE.start_main_~#c~0#1.base_BEFORE_CALL_4| ((_ extract 31 0) (_ bv1 64))) (bvadd |v_ULTIMATE.start_main_~#c~0#1.base_BEFORE_CALL_4| (_ bv4 32)) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|))) (bvneg (concat (select (store (store (store (store (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#y~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) ((_ sign_extend 32) (select (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#z~0#1.base_BEFORE_CALL_5|)))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#y~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) ((_ sign_extend 32) (select (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#z~0#1.base_BEFORE_CALL_5|)))) |v_ULTIMATE.start_main_~#c~0#1.base_BEFORE_CALL_4| ((_ extract 31 0) (_ bv1 64))) (bvadd |v_ULTIMATE.start_main_~#c~0#1.base_BEFORE_CALL_4| (_ bv4 32)) ((_ extract 63 32) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#y~0#1.base_BEFORE_CALL_5|)) (select (store (store (store (store (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#y~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) ((_ sign_extend 32) (select (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#z~0#1.base_BEFORE_CALL_5|)))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#y~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) ((_ sign_extend 32) (select (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#z~0#1.base_BEFORE_CALL_5|)))) |v_ULTIMATE.start_main_~#c~0#1.base_BEFORE_CALL_4| ((_ extract 31 0) (_ bv1 64))) (bvadd |v_ULTIMATE.start_main_~#c~0#1.base_BEFORE_CALL_4| (_ bv4 32)) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#y~0#1.base_BEFORE_CALL_5|))) (bvmul ((_ sign_extend 32) (select (store (store (store (store (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#y~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) ((_ sign_extend 32) (select (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#z~0#1.base_BEFORE_CALL_5|)))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#y~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) ((_ sign_extend 32) (select (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#z~0#1.base_BEFORE_CALL_5|)))) |v_ULTIMATE.start_main_~#c~0#1.base_BEFORE_CALL_4| ((_ extract 31 0) (_ bv1 64))) (bvadd |v_ULTIMATE.start_main_~#c~0#1.base_BEFORE_CALL_4| (_ bv4 32)) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#z~0#1.base_BEFORE_CALL_5|)) (concat (select (store (store (store (store (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#y~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) ((_ sign_extend 32) (select (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#z~0#1.base_BEFORE_CALL_5|)))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#y~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) ((_ sign_extend 32) (select (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#z~0#1.base_BEFORE_CALL_5|)))) |v_ULTIMATE.start_main_~#c~0#1.base_BEFORE_CALL_4| ((_ extract 31 0) (_ bv1 64))) (bvadd |v_ULTIMATE.start_main_~#c~0#1.base_BEFORE_CALL_4| (_ bv4 32)) ((_ extract 63 32) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|)) (select (store (store (store (store (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#y~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) ((_ sign_extend 32) (select (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#z~0#1.base_BEFORE_CALL_5|)))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#y~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) ((_ sign_extend 32) (select (store (store |#memory_int| |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5| ((_ extract 31 0) (_ bv1 64))) (bvadd (_ bv4 32) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#z~0#1.base_BEFORE_CALL_5|)))) |v_ULTIMATE.start_main_~#c~0#1.base_BEFORE_CALL_4| ((_ extract 31 0) (_ bv1 64))) (bvadd |v_ULTIMATE.start_main_~#c~0#1.base_BEFORE_CALL_4| (_ bv4 32)) ((_ extract 63 32) (_ bv1 64))) |v_ULTIMATE.start_main_~#x~0#1.base_BEFORE_CALL_5|)))))))";
 		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
 				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -9510,19 +9400,6 @@ public class RandomBitvectorSimplificationBenchmark {
 	}
 
 	@Test
-	public void SimplificationOpportunity_c67568e_f32bc7e9_Treesizes_150_150() {
-		final FunDecl[] funDecls = {
-				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~var_1_9_Pointer~0.base",
-						"~var_1_10_Pointer~0.base", "~var_1_15_Pointer~0.base", "~var_1_8_Pointer~0.base",
-						"~var_1_1_Pointer~0.base", "~var_1_12_Pointer~0.base"),
-				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#memory_int"), };
-		final String formulaAsString =
-				"(forall ((v_ArrVal_64 (_ BitVec 32)) (v_ArrVal_65 (_ BitVec 32)) (|v_skolemized_q#valueAsBitvector_21| (_ BitVec 32)) (v_ArrVal_84 (_ BitVec 32)) (v_ArrVal_63 (_ BitVec 32))) (or (not (= (fp ((_ extract 31 31) (select (store |#memory_int| ~var_1_1_Pointer~0.base v_ArrVal_84) ~var_1_9_Pointer~0.base)) ((_ extract 30 23) (select (store |#memory_int| ~var_1_1_Pointer~0.base v_ArrVal_84) ~var_1_9_Pointer~0.base)) ((_ extract 22 0) (select (store |#memory_int| ~var_1_1_Pointer~0.base v_ArrVal_84) ~var_1_9_Pointer~0.base))) (fp ((_ extract 31 31) |v_skolemized_q#valueAsBitvector_21|) ((_ extract 30 23) |v_skolemized_q#valueAsBitvector_21|) ((_ extract 22 0) |v_skolemized_q#valueAsBitvector_21|)))) (fp.eq (fp ((_ extract 31 31) (select (store (store (store (store (store |#memory_int| ~var_1_1_Pointer~0.base v_ArrVal_84) ~var_1_8_Pointer~0.base |v_skolemized_q#valueAsBitvector_21|) ~var_1_10_Pointer~0.base v_ArrVal_63) ~var_1_12_Pointer~0.base v_ArrVal_64) ~var_1_15_Pointer~0.base v_ArrVal_65) ~var_1_8_Pointer~0.base)) ((_ extract 30 23) (select (store (store (store (store (store |#memory_int| ~var_1_1_Pointer~0.base v_ArrVal_84) ~var_1_8_Pointer~0.base |v_skolemized_q#valueAsBitvector_21|) ~var_1_10_Pointer~0.base v_ArrVal_63) ~var_1_12_Pointer~0.base v_ArrVal_64) ~var_1_15_Pointer~0.base v_ArrVal_65) ~var_1_8_Pointer~0.base)) ((_ extract 22 0) (select (store (store (store (store (store |#memory_int| ~var_1_1_Pointer~0.base v_ArrVal_84) ~var_1_8_Pointer~0.base |v_skolemized_q#valueAsBitvector_21|) ~var_1_10_Pointer~0.base v_ArrVal_63) ~var_1_12_Pointer~0.base v_ArrVal_64) ~var_1_15_Pointer~0.base v_ArrVal_65) ~var_1_8_Pointer~0.base))) (fp ((_ extract 31 31) (select (store (store (store (store (store |#memory_int| ~var_1_1_Pointer~0.base v_ArrVal_84) ~var_1_8_Pointer~0.base |v_skolemized_q#valueAsBitvector_21|) ~var_1_10_Pointer~0.base v_ArrVal_63) ~var_1_12_Pointer~0.base v_ArrVal_64) ~var_1_15_Pointer~0.base v_ArrVal_65) ~var_1_9_Pointer~0.base)) ((_ extract 30 23) (select (store (store (store (store (store |#memory_int| ~var_1_1_Pointer~0.base v_ArrVal_84) ~var_1_8_Pointer~0.base |v_skolemized_q#valueAsBitvector_21|) ~var_1_10_Pointer~0.base v_ArrVal_63) ~var_1_12_Pointer~0.base v_ArrVal_64) ~var_1_15_Pointer~0.base v_ArrVal_65) ~var_1_9_Pointer~0.base)) ((_ extract 22 0) (select (store (store (store (store (store |#memory_int| ~var_1_1_Pointer~0.base v_ArrVal_84) ~var_1_8_Pointer~0.base |v_skolemized_q#valueAsBitvector_21|) ~var_1_10_Pointer~0.base v_ArrVal_63) ~var_1_12_Pointer~0.base v_ArrVal_64) ~var_1_15_Pointer~0.base v_ArrVal_65) ~var_1_9_Pointer~0.base))))))";
-		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
-				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
 	public void SimplificationOpportunity_c79de4de_dbc07200_Treesizes_30_30() {
 		final FunDecl[] funDecls = {
 				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~var_1_4_Pointer~0.base",
@@ -9698,18 +9575,6 @@ public class RandomBitvectorSimplificationBenchmark {
 				{ new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "ULTIMATE.start_step_#t~mem12#1"), };
 		final String formulaAsString =
 				"(exists ((v_arrayElimCell_19 (_ BitVec 32))) (and (not (= (_ bv0 8) ((_ extract 7 0) v_arrayElimCell_19))) (= ((_ extract 7 0) v_arrayElimCell_19) |ULTIMATE.start_step_#t~mem12#1|)))";
-		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
-				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
-	public void SimplificationOpportunity_cfc10e35_b8fc0ed9_Treesizes_42_30() {
-		final FunDecl[] funDecls = {
-				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "~var_1_9_Pointer~0.base",
-						"~var_1_10_Pointer~0.base", "~var_1_11_Pointer~0.base", "~var_1_1_Pointer~0.base"),
-				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#memory_int"), };
-		final String formulaAsString =
-				"(forall ((v_ArrVal_154 (_ BitVec 32)) (v_ArrVal_152 (_ BitVec 32))) (= ((_ zero_extend 24) ((_ extract 7 0) (select (store (store (store |#memory_int| ~var_1_1_Pointer~0.base v_ArrVal_152) ~var_1_10_Pointer~0.base ((_ zero_extend 24) ((_ extract 7 0) (select (store |#memory_int| ~var_1_1_Pointer~0.base v_ArrVal_152) ~var_1_9_Pointer~0.base)))) ~var_1_11_Pointer~0.base v_ArrVal_154) ~var_1_9_Pointer~0.base))) (select (store (store (store |#memory_int| ~var_1_1_Pointer~0.base v_ArrVal_152) ~var_1_10_Pointer~0.base ((_ zero_extend 24) ((_ extract 7 0) (select (store |#memory_int| ~var_1_1_Pointer~0.base v_ArrVal_152) ~var_1_9_Pointer~0.base)))) ~var_1_11_Pointer~0.base v_ArrVal_154) ~var_1_10_Pointer~0.base)))";
 		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
 				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
@@ -10457,19 +10322,6 @@ public class RandomBitvectorSimplificationBenchmark {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#memory_int"), };
 		final String formulaAsString =
 				"(exists ((|v_ULTIMATE.start_aws_byte_cursor_read_u8_harness_~#cur~0#1.base_BEFORE_CALL_37| (_ BitVec 32))) (not (= (_ bv0 32) (select |#memory_int| |v_ULTIMATE.start_aws_byte_cursor_read_u8_harness_~#cur~0#1.base_BEFORE_CALL_37|))))";
-		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
-				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
-	}
-
-	@Test
-	public void SimplificationOpportunity_fa698655_bccc36a4_Treesizes_134_68() {
-		final FunDecl[] funDecls = {
-				new FunDecl(QuantifierEliminationTest::getBitvectorSort32,
-						"ULTIMATE.start_aws_byte_cursor_eq_~a#1.base", "ULTIMATE.start_aws_byte_cursor_eq_~b#1.base"),
-				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv32Sort, "#memory_$Pointer$.base"),
-				new FunDecl(QuantifierEliminationTest::getArrayBv32Bv8Sort, "#memory_int"), };
-		final String formulaAsString =
-				"(and (exists ((|v_ULTIMATE.start_aws_byte_cursor_eq_~b#1.base_BEFORE_CALL_4| (_ BitVec 32))) (and (= (_ bv0 32) (concat (concat (concat (select |#memory_int| (bvadd |v_ULTIMATE.start_aws_byte_cursor_eq_~b#1.base_BEFORE_CALL_4| (_ bv4294967291 32))) (select |#memory_int| (bvadd |v_ULTIMATE.start_aws_byte_cursor_eq_~b#1.base_BEFORE_CALL_4| (_ bv4294967290 32)))) (select |#memory_int| (bvadd |v_ULTIMATE.start_aws_byte_cursor_eq_~b#1.base_BEFORE_CALL_4| (_ bv4294967289 32)))) (select |#memory_int| (bvadd |v_ULTIMATE.start_aws_byte_cursor_eq_~b#1.base_BEFORE_CALL_4| (_ bv4294967288 32))))) (= (_ bv0 8) (select |#memory_int| (bvadd (_ bv2 32) |v_ULTIMATE.start_aws_byte_cursor_eq_~b#1.base_BEFORE_CALL_4|))) (bvugt |v_ULTIMATE.start_aws_byte_cursor_eq_~b#1.base_BEFORE_CALL_4| (_ bv8677 32)) (= (_ bv0 8) (select |#memory_int| (bvadd (_ bv1 32) |v_ULTIMATE.start_aws_byte_cursor_eq_~b#1.base_BEFORE_CALL_4|))) (= (_ bv0 8) (select |#memory_int| (bvadd (_ bv3 32) |v_ULTIMATE.start_aws_byte_cursor_eq_~b#1.base_BEFORE_CALL_4|))) (= (_ bv0 32) (select |#memory_$Pointer$.base| (bvadd (_ bv4 32) |v_ULTIMATE.start_aws_byte_cursor_eq_~b#1.base_BEFORE_CALL_4|))) (bvult (bvadd (_ bv18 32) |v_ULTIMATE.start_aws_byte_cursor_eq_~b#1.base_BEFORE_CALL_4|) (_ bv2147483647 32)) (bvult |v_ULTIMATE.start_aws_byte_cursor_eq_~b#1.base_BEFORE_CALL_4| (_ bv2147483647 32)))) (= (_ bv0 8) (select |#memory_int| (bvadd (_ bv3 32) |ULTIMATE.start_aws_byte_cursor_eq_~b#1.base|))) (= (_ bv0 32) (concat (concat (concat (select |#memory_int| (bvadd (_ bv3 32) |ULTIMATE.start_aws_byte_cursor_eq_~a#1.base|)) (select |#memory_int| (bvadd (_ bv2 32) |ULTIMATE.start_aws_byte_cursor_eq_~a#1.base|))) (select |#memory_int| (bvadd (_ bv1 32) |ULTIMATE.start_aws_byte_cursor_eq_~a#1.base|))) (select |#memory_int| |ULTIMATE.start_aws_byte_cursor_eq_~a#1.base|))) (bvugt |ULTIMATE.start_aws_byte_cursor_eq_~b#1.base| (_ bv8677 32)) (= (_ bv0 8) (select |#memory_int| (bvadd (_ bv1 32) |ULTIMATE.start_aws_byte_cursor_eq_~b#1.base|))) (= (bvadd (_ bv8 32) |ULTIMATE.start_aws_byte_cursor_eq_~a#1.base|) |ULTIMATE.start_aws_byte_cursor_eq_~b#1.base|) (= (_ bv0 32) (select |#memory_$Pointer$.base| (bvadd (_ bv4 32) |ULTIMATE.start_aws_byte_cursor_eq_~b#1.base|))) (bvult (bvadd (_ bv18 32) |ULTIMATE.start_aws_byte_cursor_eq_~b#1.base|) (_ bv2147483647 32)) (= (_ bv0 8) (select |#memory_int| (bvadd (_ bv2 32) |ULTIMATE.start_aws_byte_cursor_eq_~b#1.base|))) (bvult |ULTIMATE.start_aws_byte_cursor_eq_~b#1.base| (_ bv2147483647 32)))";
 		SimplificationTest.runSimplificationTest(funDecls, formulaAsString, null,
 				SIMPLIFICATION_TECHNIQUE, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
