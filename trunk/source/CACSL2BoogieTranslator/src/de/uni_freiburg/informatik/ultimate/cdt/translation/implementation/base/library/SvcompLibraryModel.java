@@ -284,14 +284,17 @@ public class SvcompLibraryModel implements ILibraryModel {
 				arguments[1], counterType);
 		builder.addAllExceptLrValue(size);
 		final BigInteger initSize = mTypeSizes.extractIntegerValue(size.getLrValue().getValue(), counterType);
-		final BigInteger typeSize = mTypeSizes.extractIntegerValue(
-				mTypeSizeAndOffsetComputer.constructBytesizeExpression(loc, ptrType.getPointsToType()), counterType);
-		if (typeSize == null || initSize == null) {
+		if (initSize == null) {
 			return null;
 		}
 		if (initSize.signum() == 0) {
 			// Nothing to initialize
 			return builder.build();
+		}
+		final BigInteger typeSize = mTypeSizes.extractIntegerValue(
+				mTypeSizeAndOffsetComputer.constructBytesizeExpression(loc, ptrType.getPointsToType()), counterType);
+		if (typeSize == null) {
+			return null;
 		}
 		if (!initSize.equals(typeSize)) {
 			// For now, we only apply to optimization, if exactly one object of the base type should be completely
@@ -315,7 +318,7 @@ public class SvcompLibraryModel implements ILibraryModel {
 				return false;
 			}
 			final BigInteger bound = mTypeSizes.extractIntegerValue(array.getBound(), array.getBoundType());
-			if (bound == null || bound.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
+			if (bound == null) {
 				return false;
 			}
 			final LocalLValue localArray =
