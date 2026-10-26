@@ -209,7 +209,7 @@ file_export_version=3.0
 #Fri Oct 06 15:09:12 CEST 2017
 \!/instance/de.uni_freiburg.informatik.ultimate.witnessprinter=
 /instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Command\ to\ execute\ witness\ verifier=
-/instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Delete\ the\ .graphml\ file\ after\ verification=false
+/instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Delete\ the\ witness\ file\ after\ verification=false
 /instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Do\ not\ use\ ACSL=true
 /instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Generate\ witnesses=true
 /instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Graph\ data\ architecture=UNUSED
