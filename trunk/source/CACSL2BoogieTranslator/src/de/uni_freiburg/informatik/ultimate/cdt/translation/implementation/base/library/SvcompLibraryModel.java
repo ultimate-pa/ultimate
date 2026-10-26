@@ -310,6 +310,38 @@ public class SvcompLibraryModel implements ILibraryModel {
 	private boolean initializeType(final ILocation loc, final ICType type, final LRValue lhs,
 			final ExpressionResultBuilder builder) {
 		final ICType underlyingType = CEnum.replaceEnumWithInt(type.getUnderlyingType());
+		if (underlyingType instanceof final CArray array) {
+			if (array.isIncomplete()) {
+				return false;
+			}
+			final BigInteger bound = mTypeSizes.extractIntegerValue(array.getBound(), array.getBoundType());
+			if (bound == null || bound.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
+				return false;
+			}
+			final LocalLValue localArray =
+					lhs instanceof final LocalLValue local ? new LocalLValue(local.getLhs(), array, null) : null;
+			if (localArray == null && !(lhs instanceof HeapLValue)) {
+				return false;
+			}
+			for (int i = 0; i < bound.intValue(); i++) {
+				final LRValue elementLhs;
+				if (localArray != null) {
+					elementLhs = CTranslationUtil.constructArrayAccessLhs(loc, localArray, i, mTypeSizes);
+				} else {
+					final HeapLValue heapArray = (HeapLValue) lhs;
+					final CPrimitive indexType = mExpressionTranslation.getCTypeOfPointerComponents();
+					final Expression index =
+							mTypeSizes.constructLiteralForIntegerType(loc, indexType, BigInteger.valueOf(i));
+					final Expression address = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, loc,
+							heapArray.getAddress(), new RValue(index, indexType), array.getValueType(), indexType);
+					elementLhs = new HeapLValue(address, new CPointer(array.getValueType()), null);
+				}
+				if (!initializeType(loc, array.getValueType(), elementLhs, builder)) {
+					return false;
+				}
+			}
+			return true;
+		}
 		if (underlyingType instanceof CPrimitive || underlyingType instanceof CPointer) {
 			if (underlyingType.isVoidType()) {
 				return false;
