@@ -56,7 +56,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String UNUSED_GRAPH_DATA = "UNUSED";
 
 	public static final String LABEL_GENERATE_GRAPHML_WITNESS = "Generate GraphML witnesses";
-	private static final boolean VALUE_GENERATE_GRAPHML_WITNESS = true;
+	private static final boolean VALUE_GENERATE_GRAPHML_WITNESS = false;
 
 	public static final String LABEL_GENERATE_YAML_WITNESS = "Generate YAML witnesses";
 	private static final boolean VALUE_GENERATE_YAML_WITNESS = true;
