@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2013-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2025-2026 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2026 University of Freiburg
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
  *
@@ -87,9 +88,6 @@ public class StructHandler {
 						: fieldOwner.getLrValue().getUnderlyingType());
 
 		final CStructOrUnion cStructType = (CStructOrUnion) foType.getUnderlyingType();
-		final ICType cFieldType = cStructType.getFieldType(field);
-		final int bitfieldWidth = cStructType.getBitfieldWidth(field);
-
 		if (isPointerDereference) {
 			final ExpressionResult rFieldOwnerRex = transformer.switchToRValue(fieldOwner, loc, hook);
 			final Expression address = rFieldOwnerRex.getLrValue().getValue();
@@ -99,40 +97,58 @@ public class StructHandler {
 					rFieldOwnerRex.getDeclarations(), rFieldOwnerRex.getAuxVars(), rFieldOwnerRex.getOverapprs());
 		}
 
-		final LRValue newValue = switch (fieldOwner.getLrValue()) {
-		case final HeapLValue fieldOwnerHlv -> {
-			final Offset fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, cStructType, field);
+		// Because of anonymous members, resolving the field access may result in a path of members.
+		// Therefore, we iterate over this path here.
+		final List<String> path = cStructType.getFieldPath(field);
+		LRValue current = fieldOwner.getLrValue();
+		CStructOrUnion currentStruct = cStructType;
+		for (int i = 0; i < path.size(); i++) {
+			final String currentField = path.get(i);
+			final boolean isLast = i == path.size() - 1;
+			final ICType cFieldType = currentStruct.getFieldType(currentField);
+			final int bitfieldWidth = isLast ? currentStruct.getBitfieldWidth(currentField) : -1;
 
-			// TODO: different calculations for unions
-			final Expression startAddress = fieldOwnerHlv.getAddress();
+			current = switch (current) {
+			case final HeapLValue fieldOwnerHlv -> {
+				final Offset fieldOffset =
+						mTypeSizeAndOffsetComputer.constructOffsetForField(loc, currentStruct, currentField);
 
-			final Expression newPointer = mMemoryHandler.constructAddressForStructField(loc, startAddress, fieldOffset,
-					mExpressionTranslation.getCTypeOfPointerComponents());
+				// TODO: different calculations for unions
+				final Expression startAddress = fieldOwnerHlv.getAddress();
 
-			if (cStructType.isStructOrUnion() == StructOrUnion.UNION) {
-				unionFieldToCType.addAll(
-						computeNeighbourFieldsOfUnionField(loc, field, unionFieldToCType, cStructType, fieldOwnerHlv));
+				final Expression newPointer = mMemoryHandler.constructAddressForStructField(loc, startAddress,
+						fieldOffset, mExpressionTranslation.getCTypeOfPointerComponents());
+
+				if (currentStruct.isStructOrUnion() == StructOrUnion.UNION) {
+					unionFieldToCType.addAll(computeNeighbourFieldsOfUnionField(loc, currentField, unionFieldToCType,
+							currentStruct, current));
+				}
+
+				final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
+				yield LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cFieldType, bi);
 			}
 
-			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
-			yield LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cFieldType, bi);
-		}
-		case final RValue rVal -> {
-			final Expression sexpr = ExpressionFactory.constructStructAccessExpression(loc, rVal.getValue(), field);
-			yield new RValue(sexpr, cFieldType);
-		}
-		case final LocalLValue lVal -> {
-			if (cStructType.isStructOrUnion() == StructOrUnion.UNION) {
-				unionFieldToCType
-						.addAll(computeNeighbourFieldsOfUnionField(loc, field, unionFieldToCType, cStructType, lVal));
+			case final RValue rVal -> {
+				final Expression sexpr =
+						ExpressionFactory.constructStructAccessExpression(loc, rVal.getValue(), currentField);
+				yield new RValue(sexpr, cFieldType);
 			}
-			final StructLHS slhs = ExpressionFactory.constructStructAccessLhs(loc, lVal.getLhs(), field);
-			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
-			yield new LocalLValue(slhs, cFieldType, bi);
+			case final LocalLValue lVal -> {
+				if (currentStruct.isStructOrUnion() == StructOrUnion.UNION) {
+					unionFieldToCType.addAll(computeNeighbourFieldsOfUnionField(loc, currentField, unionFieldToCType,
+							currentStruct, lVal));
+				}
+				final StructLHS slhs = ExpressionFactory.constructStructAccessLhs(loc, lVal.getLhs(), currentField);
+				final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
+				yield new LocalLValue(slhs, cFieldType, bi);
+			}
+			};
+			if (!isLast) {
+				currentStruct = (CStructOrUnion) cFieldType.getUnderlyingType();
+			}
 		}
-		};
 
-		return new ExpressionResult(fieldOwner.getStatements(), newValue, fieldOwner.getDeclarations(),
+		return new ExpressionResult(fieldOwner.getStatements(), current, fieldOwner.getDeclarations(),
 				fieldOwner.getAuxVars(), fieldOwner.getOverapprs(), unionFieldToCType);
 	}
 
