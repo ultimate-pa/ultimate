@@ -53,6 +53,24 @@ action code {:
         return new BigInteger(digits);
     }
 
+    private BigInteger positiveRepeatCount(final String digits) {
+        final BigInteger count = natural(digits);
+        if (count.signum() == 0) {
+            throw new IllegalArgumentException("repeat count must be greater than zero");
+        }
+        return count;
+    }
+
+    private Duration positiveEveryPeriod(final Duration duration) {
+        final DurationValue value = duration.getValue();
+        final BigInteger lower = value instanceof ExactDurationValue exact
+            ? exact.getAmount() : ((IntervalDurationValue) value).getLower();
+        if (lower.signum() == 0) {
+            throw new IllegalArgumentException("every period must be greater than zero");
+        }
+        return duration;
+    }
+
     private BigInteger checkedUpper(final BigInteger lower,
             final BigInteger upper) {
         if (lower.compareTo(upper) > 0) {
@@ -204,12 +222,12 @@ actionId ::= ID:name
 action ::= ONETIME:o actionId:id
     {: RESULT = new OnetimeAction(at(oleft, idright), id); :}
     | REPEAT:r NATURAL_NUMBER:n actionId:id
-    {: RESULT = new RepeatAction(at(rleft, idright), id, natural(n)); :}
+    {: RESULT = new RepeatAction(at(rleft, idright), id, positiveRepeatCount(n)); :}
     | REPEAT:r NATURAL_NUMBER:n actionId:id EVERY duration:d
     {: RESULT = new RecurringCountAction(at(rleft, dright), id,
-         natural(n), d); :}
+         positiveRepeatCount(n), positiveEveryPeriod(d)); :}
     | REPEAT:r actionId:id EVERY duration:d UNTIL untilEvent:e
-    {: RESULT = new RecurringUntilAction(at(rleft, eright), id, d, e); :}
+    {: RESULT = new RecurringUntilAction(at(rleft, eright), id, positiveEveryPeriod(d), e); :}
     | actionId:id UNTIL untilEvent:e
     {: RESULT = new ContinuousUntilAction(at(idleft, eright), id, e); :}
     | actionId:id FOR duration:d
@@ -232,7 +250,7 @@ duration ::= NATURAL_NUMBER:n TIME_UNIT:u
 expression ::= ID:name
     {: RESULT = new IdentifierExpression(at(nameleft, nameright), name); :}
     | NATURAL_NUMBER:n
-    {: RESULT = new IntegerLiteral(at(nleft, nright), n); :}
+    {: RESULT = new IntegerLiteral(at(nleft, nright), n); :} %prec PLUS
     | TRUE:t
     {: RESULT = new BooleanLiteral(at(tleft, tright), true); :}
     | FALSE:f
@@ -278,4 +296,8 @@ expression ::= ID:name
     {: RESULT = new BinaryExpression(at(lleft, nright),
          BinaryExpression.Operator.ARITHMUL, l,
          new IntegerLiteral(at(nleft, nright), n)); :} %prec TIMES
+    | NATURAL_NUMBER:n TIMES expression:r
+    {: RESULT = new BinaryExpression(at(nleft, rright),
+         BinaryExpression.Operator.ARITHMUL,
+         new IntegerLiteral(at(nleft, nright), n), r); :} %prec TIMES
     ;
