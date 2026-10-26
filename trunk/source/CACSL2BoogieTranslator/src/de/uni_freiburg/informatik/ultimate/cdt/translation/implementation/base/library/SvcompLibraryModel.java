@@ -98,6 +98,7 @@ public class SvcompLibraryModel implements ILibraryModel {
 	 * backward-live to the havoc, otherwise it would be backward-live until the beginning of the procedure.
 	 */
 	private static final boolean HAVOC_NONDET_AUXVARS_ALSO_BEFORE = true;
+	private static final int MAX_ARRAY_UNROLLING = 50;
 
 	private final FunctionModelHelper mHelper;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
@@ -325,6 +326,43 @@ public class SvcompLibraryModel implements ILibraryModel {
 					lhs instanceof final LocalLValue local ? new LocalLValue(local.getLhs(), array, null) : null;
 			if (localArray == null && !(lhs instanceof HeapLValue)) {
 				return false;
+			}
+			if (bound.compareTo(BigInteger.valueOf(MAX_ARRAY_UNROLLING)) > 0) {
+				final CPrimitive indexType = localArray != null ? array.getBoundType()
+						: mExpressionTranslation.getCTypeOfPointerComponents();
+				final AuxVarInfo index = mAuxVarInfoBuilder.constructAuxVarInfo(loc, indexType, SFO.AUXVAR.LOOPCTR);
+				builder.addAuxVarWithDeclaration(index);
+				final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc, indexType, BigInteger.ZERO);
+				final Expression one = mTypeSizes.constructLiteralForIntegerType(loc, indexType, BigInteger.ONE);
+				final Expression arrayBound = mTypeSizes.constructLiteralForIntegerType(loc, indexType, bound);
+				builder.addStatement(StatementFactory.constructSingleAssignmentStatement(loc, index.getLhs(), zero));
+
+				final LRValue elementLhs;
+				if (localArray != null) {
+					elementLhs = new LocalLValue(ExpressionFactory.constructNestedArrayLHS(loc, localArray.getLhs(),
+							new Expression[] { index.getExp() }), array.getValueType(), null);
+				} else {
+					final HeapLValue heapArray = (HeapLValue) lhs;
+					final Expression address = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, loc,
+							heapArray.getAddress(), new RValue(index.getExp(), indexType), array.getValueType(),
+							indexType);
+					elementLhs = new HeapLValue(address, new CPointer(array.getValueType()), null);
+				}
+				final ExpressionResultBuilder loopBody = new ExpressionResultBuilder();
+				if (!initializeType(loc, array.getValueType(), elementLhs, loopBody)) {
+					return false;
+				}
+				builder.addAllExceptLrValueAndStatements(loopBody.build());
+				final List<Statement> body = new ArrayList<>(loopBody.getStatements());
+				body.add(StatementFactory.constructSingleAssignmentStatement(loc, index.getLhs(),
+						mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_plus,
+								index.getExp(), indexType, one, indexType)));
+				final ILocation ignoreLoc = LocationFactory.createIgnoreLocation(loc);
+				final Expression condition = mExpressionTranslation.constructBinaryComparisonExpression(ignoreLoc,
+						IASTBinaryExpression.op_lessThan, index.getExp(), indexType, arrayBound, indexType);
+				builder.addStatement(new WhileStatement(ignoreLoc, condition, new LoopInvariantSpecification[0],
+						body.toArray(Statement[]::new)));
+				return true;
 			}
 			for (int i = 0; i < bound.intValue(); i++) {
 				final LRValue elementLhs;
