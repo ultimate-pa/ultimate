@@ -10,16 +10,20 @@ description: "Checking validity of given invariants."
 
 # Supported languages to be displayed in the frontend.
 languages: [
-  { "language": "Boogie", "worker": "boogieReferee" },
-  { "language": "C",      "worker": "cReferee" }
+{ "language": "Boogie", "worker": "boogieReferee", display: "Boogie" },
+{ "language": "C",      "worker": "cReferee",      display: "C" }
 ]
 ---
 
 <h1>Referee</h1>
 
-<p>Referee is a deductive verifier.This means that we check for a program annotated with invariants, if the invariants are sufficient for an inductive proof. For example, for a loop invariant we check if it holds at the beginning of the loop, if it is preserved by the loop body and if it is strong enough the prove the remaining program after the loop correct.
-These annotated invariants can be extracted from correctness witnesses, therefore Referee can be used as a validator for these.</p>
+<p>Referee is a deductive verifier. This means that we check whether a program annotated with invariants has invariants sufficient for an inductive proof.
+  For example, for a loop invariant we check if it holds at the beginning of the loop, if it is preserved by the loop body and if it is strong enough to prove the remaining program after the loop is correct.
+  These annotated invariants can be extracted from correctness witnesses, after which Referee can be used as a validator for these.
+</p>
 
 <h2>Web Interface</h2>
-<p><span style="font-variant:small-caps">Referee</span> is available via a <a href="{{ 'webinterface/?tool=referee' | relative_url }}">web interface</a>.</p>
+<p>
+  <span style="font-variant:small-caps">Referee</span> is available via a <a href="{{ 'webinterface/?tool=referee' | relative_url }}">web interface</a>.
+</p>
 
