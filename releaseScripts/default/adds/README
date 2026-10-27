@@ -17,9 +17,9 @@ Marcel Ebbinghaus (<ebbima@informatik.uni-freiburg.de>)
 This archive also contains binaries for the following theorem provers.
 * Z3 (<https://github.com/Z3Prover/z3>)
   * Linux (z3)
-    Z3 version 4.15.4 - 64 bit build from master 745087e23 (2025-10-29)
+    Z3 version 5.3.3 - 64 bit build from master 02f6a7e14 (2026-10-27)
   * Windows (z3.exe)
-    Z3 version 4.15.4 - 64 bit build from master 745087e23 (2025-10-29)
+    Z3 version 5.3.3 - 64 bit build from master 02f6a7e14 (2026-10-27)
 
 * Bitwuzla (<https://github.com/bitwuzla/bitwuzla>)
   * Linux (bitwuzla)
