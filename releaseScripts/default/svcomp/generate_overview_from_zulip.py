@@ -603,8 +603,8 @@ def parse_args():
     parser.add_argument(
         "--tools",
         nargs="+",
-        default=["uautomizer", "ukojak", "utaipan", "ugemcutter"],
-        help="List of tool names (space-separated). Default: uautomizer ukojak utaipan ugemcutter",
+        default=["uautomizer", "ukojak", "utaipan", "ugemcutter", "uparalizer"],
+        help="List of tool names (space-separated). Default: uautomizer ukojak utaipan ugemcutter uparalizer",
     )
 
     parser.add_argument(
