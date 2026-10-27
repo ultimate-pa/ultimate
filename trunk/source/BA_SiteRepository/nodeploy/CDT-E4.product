@@ -16,7 +16,7 @@
    <launcherArgs>
       <programArgs>-consoleLog -nosplash
       </programArgs>
-      <vmArgs>-Xms256m -Xmx1024m
+      <vmArgs>-Xms2M -Xmx15G -Xss1M -Dequinox.resolver.revision.batch.size=1
       </vmArgs>
    </launcherArgs>
 

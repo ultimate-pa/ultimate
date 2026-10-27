@@ -4,7 +4,6 @@
 readme_files=(
   "adds/README"
   "adds/gemcutter/README.md"
-  "adds/reqchecker/README"
 )
 
 ## Mathsat
@@ -12,21 +11,23 @@ update_mathsat(){
   TMP_DIR="mathsat"
   while IFS='' read -r l ; do
     mkdir "$TMP_DIR"
-    filename=$(echo "$l" | grep -oP "mathsat.*")
+    filename="$(echo "$l" | grep -oP "mathsat.*")"
     echo "Updating $filename"
     curl -sL -o "$filename" "https://mathsat.fbk.eu/$l"
     if [[ "$filename" == *tar.gz ]]; then
-      tar xzf "$filename" -C "$TMP_DIR"
-      find "$TMP_DIR" -type f -name mathsat -exec cp "{}" adds/ \;
-      chmod a+x adds/mathsat
-      version=$(adds/mathsat -version)
       platform="Linux"
+      os="linux"
+      tar xzf "$filename" -C "$TMP_DIR"
+      find "$TMP_DIR" -type f -name mathsat -exec cp "{}" "adds/solvers/$os/x86_64/" \;
+      chmod a+x "adds/solvers/$os/x86_64/mathsat"
+      version="$(adds/solvers/$os/x86_64/mathsat -version)"
     elif [[ "$filename" == *zip ]]; then
-      unzip -q -o -d "$TMP_DIR" "$filename"
-      find "$TMP_DIR" \( -type f -name mathsat.exe -or -wholename '*/bin/*.dll' \) -exec cp "{}" adds/ \;
-      chmod a+x adds/mathsat.exe
-      version=$(echo "$filename" | grep -oP "\d+\.\d+\.\d+")
       platform="Windows"
+      os="win32"
+      unzip -q -o -d "$TMP_DIR" "$filename"
+      find "$TMP_DIR" \( -type f -name mathsat.exe -or -wholename '*/bin/*.dll' \) -exec cp "{}" "adds/solvers/$os/x86_64/" \;
+      chmod a+x "adds/solvers/$os/x86_64/mathsat.exe"
+      version="$(echo "$filename" | grep -oP "\d+\.\d+\.\d+")"
     else
       echo "Don't know what to do with $filename"
       continue
@@ -56,15 +57,17 @@ update_cvc5(){
     unzip -q -o -d "$TMP_DIR" "$TMP_ZIP"
     if [[ "$platform" == "Linux" ]]; then
       target="cvc5"
+      os="linux"
     else
       target="cvc5.exe"
+      os="win32"
     fi
-    find "$TMP_DIR" -type f -name $target -exec cp "{}" adds/ \;
-    chmod a+x "adds/$target"
+    find "$TMP_DIR" -type f -name $target -exec cp "{}" "adds/solvers/$os/x86_64/" \;
+    chmod a+x "adds/solvers/$os/x86_64/$target"
     rm -r "$TMP_DIR"
   done
-  curl -sL -o adds/cvc5-LICENSE https://raw.githubusercontent.com/cvc5/cvc5/main/COPYING
-  echo $(adds/cvc5 -V | head -n1)
+  curl -sL -o adds/licenses/cvc5-LICENSE https://raw.githubusercontent.com/cvc5/cvc5/main/COPYING
+  echo "$(adds/solvers/linux/x86_64/cvc5 -V | head -n1)"
 }
 
 ## bitwuzla
@@ -80,16 +83,18 @@ update_bitwuzla(){
     unzip -q -o -d "$TMP_DIR" "$TMP_ZIP"
     if [[ "$platform" == "Linux" ]]; then
       target="bitwuzla"
+      os="linux"
     else
       target="bitwuzla.exe"
+      os="win32"
     fi
-    find "$TMP_DIR" -type f -name $target -exec cp "{}" adds/ \;
-    chmod a+x "adds/$target"
+    find "$TMP_DIR" -type f -name $target -exec cp "{}" "adds/solvers/$os/x86_64/" \;
+    chmod a+x "adds/solvers/$os/x86_64/$target"
     rm -r "$TMP_DIR"
   done
-  curl -sL -o adds/bitwuzla-LICENSE https://raw.githubusercontent.com/bitwuzla/bitwuzla/main/COPYING
-  echo "$(adds/bitwuzla -V)"
+  curl -sL -o adds/licenses/bitwuzla-LICENSE https://raw.githubusercontent.com/bitwuzla/bitwuzla/main/COPYING
+  echo "$(adds/solvers/linux/x86_64/bitwuzla -V)"
 }
-update_mathsat
+update_cvc5
 
 # TODO: continue when the rate limit allows us again (its 50 per h for unauthenticated users)

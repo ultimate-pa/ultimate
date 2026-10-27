@@ -81,15 +81,15 @@ def parse_xml(filename):
 
 def process_url_file(url_file, target_dir):
     with open(url_file) as fp:
-        print("Downloading to folder {}".format(target_dir))
+        print("Downloading to folder {}".format(target_dir), file=sys.stderr)
         for cnt, line in enumerate(fp):
-            print("Downloading {}: {}".format(cnt, line).rstrip())
+            print("Downloading {}: {}".format(cnt, line).rstrip(), file=sys.stderr)
             download_xml(target_dir, line)
 
     for file in os.listdir(target_dir):
         if not file.endswith(".xml") and not file.endswith("urls"):
             absolute_path = os.path.join(target_dir, file)
-            print("Extracting {}".format(absolute_path))
+            print("Extracting {}".format(absolute_path), file=sys.stderr)
             extract_xml(absolute_path)
 
 
@@ -104,23 +104,24 @@ def main():
     for file in os.listdir(args.directory[0]):
         if file.endswith(".xml"):
             absolute_path = os.path.join(args.directory[0], file)
-            print("Parsing {}".format(absolute_path))
+            print("Parsing {}".format(absolute_path), file=sys.stderr)
             unsound = parse_xml(absolute_path)
             if len(unsound) > 0:
-                print("  Found {} unsound results".format(sum([len(v) for k,v in unsound.items()])))
+                print("  Found {} unsound results".format(sum([len(v) for k,v in unsound.items()])), file=sys.stderr)
                 unsounds = merge_unsound(unsounds,unsound)
             i=i+1
 
+    # only the unsound results go to stdout, everything else to stderr
     if i != 0:
-        print("Unsound results:")
-        for key, value in unsounds.items():
-            for elem in value:
+        print("Unsound results:", file=sys.stderr)
+        for key, value in sorted(unsounds.items()):
+            for elem in sorted(value):
                 print("{}: {}".format(key,elem))
     else:
-        print("No .xml files in {}".format(args.directory))
+        print("No .xml files in {}".format(args.directory), file=sys.stderr)
     
     if args.output is not None and len(unsounds) > 0:
-        print("Writing results to files with prefix {}".format(args.output[0]))
+        print("Writing results to files with prefix {}".format(args.output[0]), file=sys.stderr)
         write_set_file(args.output[0], unsounds)
 
 def signal_handler(sig, frame):
