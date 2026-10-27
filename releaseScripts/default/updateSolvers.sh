@@ -95,6 +95,6 @@ update_bitwuzla(){
   curl -sL -o adds/licenses/bitwuzla-LICENSE https://raw.githubusercontent.com/bitwuzla/bitwuzla/main/COPYING
   echo "$(adds/solvers/linux/x86_64/bitwuzla -V)"
 }
-update_mathsat
+update_cvc5
 
 # TODO: continue when the rate limit allows us again (its 50 per h for unauthenticated users)
