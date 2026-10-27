@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # SVCOMP overview generation script for Ultimate tools.
 # * Check Zulip messages for new results for Ultimate tools.
-#   If there are new results, download XMLs from
-#   https://sv-comp.sosy-lab.org/{args.year}/results/results-verified/results-per-tool.php
+#   If there are new results, download XMLs and logfiles linked from
+#   https://sv-comp.sosy-lab.org/{args.year}/results/results-verified/
 # * Use ultimate/releaseScripts/benchmark-processing/get-benchexec-overview.py
 #   to generate an overview file per tool from new results.
-# *  Move the overview file into the appropriate SVCOMP directory.
+# *  Move the overview file into the appropriate SVCOMP directory. Of the logfiles,
+#    only the .zip is kept.
 # *  Generate a list of all unsound files per tool and merge that list with the
 #    existing unsound files stored in the current SVCOMP overview directory.
 
@@ -218,14 +219,15 @@ class SVCOMPResultDownloader:
     async def get_all_verifier_runs(self) -> List[ToolRun]:
         if self._verifier_runs_cache is not None:
             return self._verifier_runs_cache
-        async with self._session.get(
-            f"{self.base_url}/results-verified/results-per-tool.php"
-        ) as response:
+        # The results table links each (tool, category) cell to
+        # <tool>.<date>.results.<run_definition>.<task_set>.xml.bz2.fixed.xml.bz2.table.html;
+        # the link text is only the score, so we parse the href.
+        async with self._session.get(f"{self.base_url}/results-verified/") as response:
             response.raise_for_status()
             tree = lxml.html.fromstring(await response.text())
             ret = []
-            for a_elem in tree.xpath("//a"):
-                m = self.get_verifier_runs_re.fullmatch(a_elem.text)
+            for href in dict.fromkeys(tree.xpath("//a/@href")):
+                m = self.get_verifier_runs_re.fullmatch(href)
                 if m:
                     tool = m.group(1)
                     date = m.group(2)
@@ -327,20 +329,23 @@ async def download_new_results(
         desc=f"Downloading result XMLs and logfiles for {topic_name}",
     ) as pbar:
         first_valid_run = None
+        # each date is a separate benchexec execution with its own logfiles .zip
+        run_dates = []
         for run in runs:
             if not is_run_in_range(run):
                 continue
             logging.debug(f"Downloading {run.tool} run from {run.date}")
             if not first_valid_run:
                 first_valid_run = run
+            if run.date not in run_dates:
+                run_dates.append(run.date)
             download_tasks.append(downloader.download_tool_run_xml(run, pbar))
         if download_tasks:
             is_verifier = not first_valid_run.validator
-            download_tasks.append(
-                downloader.download_tool_run_logs(
-                    first_valid_run.tool, first_valid_run.date, pbar
+            for date in run_dates:
+                download_tasks.append(
+                    downloader.download_tool_run_logs(first_valid_run.tool, date, pbar)
                 )
-            )
             await asyncio.gather(*download_tasks)
     return is_verifier, len(download_tasks) != 0
 
@@ -378,12 +383,14 @@ def process_new_results(
     # TODO: acumulate unsound files and merge with existing unsound files in SV-COMP overview directory
     # "${get_unsounds}" -f "${xmls}" -o "${unsounds}" -d . >> "${script_log}"
 
+    # the overview needs the extracted logfiles, but afterwards we only keep the .zip
     logging.info("Extracting logfiles")
-    subprocess.run(
-        f"unzip -q {tool_download_dir.as_posix()}/*zip -d {tool_download_dir.as_posix()}",
-        shell=True,
-        check=False,
-    )
+    entries_before_unzip = set(tool_download_dir.iterdir())
+    for logfiles_zip in sorted(tool_download_dir.glob("*.logfiles.zip")):
+        subprocess.run(
+            ["unzip", "-q", logfiles_zip.as_posix(), "-d", tool_download_dir.as_posix()],
+            check=False,
+        )
 
     logging.info("Computing overview")
     subprocess.run(
@@ -391,6 +398,14 @@ def process_new_results(
         shell=True,
         check=False,
     )
+
+    # removes the extracted logfiles and the (empty) *.logfiles-dump directories
+    # created by get-benchexec-overview.py
+    logging.info("Removing extracted logfiles")
+    for entry in set(tool_download_dir.iterdir()) - entries_before_unzip:
+        if entry.is_dir():
+            shutil.rmtree(entry)
+
     message_ts_str = datetime.fromtimestamp(message_ts).strftime("%Y%m%d-%H%M%S")
     output_dir = (
         output_base_dir
@@ -497,6 +512,9 @@ async def main(args: argparse.Namespace):
                         message_ts,
                     )
                     new_links.append(new_link)
+                # a run listed on the results page is attributed to the first message
+                # after it; later messages must not process it again
+                last_processed_ts = message_ts
 
     monitor.save_state()
     if args.tmp_dir.exists():
@@ -523,15 +541,15 @@ def parse_args():
         description=textwrap.dedent("""
             SVCOMP overview generation script for Ultimate tools.
             * Checks Zulip messages for new results for Ultimate tools.
-              If there are new results, downloads XMLs from
-              https://sv-comp.sosy-lab.org/{args.year}/results/results-verified/results-per-tool.php
+              If there are new results, downloads XMLs and logfiles linked from
+              https://sv-comp.sosy-lab.org/{args.year}/results/results-verified/
               Preserves the current state in a local file to avoid re-processing messages.
             * Uses ultimate/releaseScripts/benchmark-processing/get-benchexec-overview.py
               to generate an overview file per tool from new results.
             * Generates a list of all unsound files per tool and merge that list with the
               existing unsound files stored in the current SVCOMP overview directory.
-            * Moves the overview and unsound files, the logfiles, and the XML files into an
-              output directory.
+            * Moves the overview and unsound files, the logfiles .zip, and the XML files into
+              an output directory.
 """),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
