@@ -31,7 +31,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
@@ -53,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService.Lasso;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgContainer;
@@ -201,8 +206,23 @@ public class WitnessPrinter implements IOutput {
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
 			if (createYaml) {
+				final Set<Integer> targetIndices;
+				if (cex instanceof final DataRaceFoundResult<?, ?, ?> dataRace) {
+					final Map<Integer, Integer> lastStepByThread = new HashMap<>();
+					for (int i = 0; i < backtransPe.getLength(); i++) {
+						final AtomicTraceElement<?> ate = backtransPe.getTraceElement(i);
+						if (ate.hasThreadId() && dataRace.isThreadInvolved(ate.getThreadId())) {
+							lastStepByThread.put(ate.getThreadId(), i);
+						}
+					}
+					targetIndices = new HashSet<>(lastStepByThread.values());
+				} else {
+					targetIndices = Set.of(backtransPe.getLength() - 1);
+				}
+
 				final String witness =
-						new YamlViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeYamlString();
+						new YamlViolationWitnessGenerator<>(backtransPe, mLogger, mServices, targetIndices)
+								.makeYamlString();
 				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
 			}
 		}
@@ -228,9 +248,8 @@ public class WitnessPrinter implements IOutput {
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
 			if (createYaml) {
-				final String witness =
-						new YamlViolationWitnessGenerator<>(lasso.stem(), lasso.loop(), mLogger, mServices)
-								.makeYamlString();
+				final String witness = new YamlViolationWitnessGenerator<>(lasso.stem(), lasso.loop(), mLogger,
+						mServices, Set.of(lasso.loop().getLength() - 1)).makeYamlString();
 				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
 			}
 		}

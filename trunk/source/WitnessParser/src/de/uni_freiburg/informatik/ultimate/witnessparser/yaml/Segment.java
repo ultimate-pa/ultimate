@@ -58,6 +58,10 @@ public class Segment {
 		this(List.of(), List.of(followOrCycleWaypoint), type);
 	}
 
+	public Segment(final List<Waypoint> followOrCycleWaypoints, final SegmentType type) {
+		this(List.of(), followOrCycleWaypoints, type);
+	}
+
 	public Segment(final List<Waypoint> avoidWaypoints, final List<Waypoint> followOrCycleWaypoints,
 			final SegmentType type) {
 		mAvoidWaypoints = avoidWaypoints;
