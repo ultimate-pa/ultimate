@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DataRaceFoundResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.LassoShapedNonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.BacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -150,6 +151,9 @@ public class WitnessPrinter implements IOutput {
 		} else if (results.stream().anyMatch(a -> a instanceof AllSpecificationsHoldResult)) {
 			mLogger.info("Generating witness for correct program");
 			witnesses = generateProofWitness(results, createGraphML, createYaml);
+		} else if (results.stream().anyMatch(a -> a instanceof TerminationAnalysisResult)) {
+			mLogger.info("Generating witness for terminating program");
+			witnesses = generateTerminationWitness(results, createGraphML, createYaml);
 		} else {
 			mLogger.info("No result that supports witness generation found");
 			witnesses = List.of();
@@ -159,6 +163,13 @@ public class WitnessPrinter implements IOutput {
 		} catch (IOException | InterruptedException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private List<ResultWitness> generateTerminationWitness(final List<IResult> results, final boolean createGraphML,
+			final boolean createYaml) {
+		// TODO: This is a just a quick workaround to generate an empty witness without any invariants
+		// Replace this with some actual computation of a termination witness
+		return generateProofWitness(results, createGraphML, createYaml);
 	}
 
 	private List<ResultWitness> generateProofWitness(final List<IResult> results, final boolean createGraphML,
