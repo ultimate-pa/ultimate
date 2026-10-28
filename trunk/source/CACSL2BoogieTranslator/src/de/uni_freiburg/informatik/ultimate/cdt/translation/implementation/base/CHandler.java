@@ -644,7 +644,7 @@ public class CHandler {
 				new StringLibraryModel(helper, mExprResultTransformer, mAuxVarInfoBuilder, mMemoryHandler,
 						mProcedureManager, mExpressionTranslation, mTypeSizeComputer, mMemoryPointer),
 				new SvcompLibraryModel(helper, mAuxVarInfoBuilder, mExpressionTranslation, mNameHandler,
-						mSettings.checkErrorFunction(), mExprResultTransformer),
+						mSettings.checkErrorFunction(), mExprResultTransformer, mMemoryHandler, this),
 				new TimeLibraryModel(helper, mExpressionTranslation, mAuxVarInfoBuilder),
 				new VariadicLibraryModel(helper, mMemoryHandler, mProcedureManager, mTypeHandler,
 						mExprResultTransformer, mAuxVarInfoBuilder),
@@ -1203,34 +1203,33 @@ public class CHandler {
 			// type sizes are already compatible
 			return;
 		}
-		final BigInteger requiredByteSize = castTargetByteSize.min(operandTypeByteSize);
+		adaptMemoryModelIfNecessary(loc, "Found a cast between two array/pointer types of different sizes",
+				castTargetByteSize.min(operandTypeByteSize).intValueExact());
+	}
 
-		final String msg;
-		if (mSettings.getMemoryStructurePreference() == MemoryStructure.HoenickeLindenmann_Original) {
-			// memory model has no resolution and the operand is
-			// cast to a type of a different size
-			msg = "Found a cast between two array/pointer types of different sizes while using memory model "
-					+ MemoryStructure.HoenickeLindenmann_Original;
-		} else if (BigInteger.valueOf(mSettings.getMemoryStructurePreference().getByteSize())
-				.compareTo(requiredByteSize) > 0) {
-			// memory model resolution is strictly bigger than the minimum of the size of
-			// the operand and the target
-			msg = "Found a cast between two array/pointer types of different sizes where the minimum of "
-					+ "both sizes is smaller than the resolution of our memory model";
-		} else {
-			// no need to change memory model
+	public void adaptMemoryModelIfNecessary(final ILocation loc, final String msg, final int requiredByteSize) {
+		if (!mIsPrerun) {
 			return;
 		}
-
+		final String resultMsg;
+		if (mSettings.getMemoryStructurePreference() == MemoryStructure.HoenickeLindenmann_Original) {
+			// Memory model has no resolution
+			resultMsg = msg + " while using memory model " + MemoryStructure.HoenickeLindenmann_Original;
+		} else if (Integer.compare(mSettings.getMemoryStructurePreference().getByteSize(), requiredByteSize) > 0) {
+			// Memory model resolution is strictly bigger than the required byte size
+			resultMsg = msg + " required byte size is smaller than the resolution of our memory model";
+		} else {
+			// No need to change memory model
+			return;
+		}
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(msg);
+			mLogger.debug(resultMsg);
 			mLogger.debug(" at location: " + loc);
 			mLogger.debug(" current memory model: " + mSettings.getMemoryStructurePreference());
 		}
-		// signal a restart of the translation with a memory model precise
-		// enough for the operands
-		signalTranslationRestartWithDifferentSettings(new TranslationSettings.SettingsChange(loc, msg,
-				MemoryStructure.getPreciseEnoughMemoryStructureFor(requiredByteSize.intValueExact())));
+		// Signal a restart of the translation with a memory model precise enough for the operands
+		signalTranslationRestartWithDifferentSettings(new TranslationSettings.SettingsChange(loc, resultMsg,
+				MemoryStructure.getPreciseEnoughMemoryStructureFor(requiredByteSize)));
 	}
 
 	public Result visit(final IDispatcher main, final IASTCompoundStatement node) {
