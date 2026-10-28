@@ -534,7 +534,7 @@ def create_cli_settings(prop, validate_witness, witness_type, architecture, inpu
         if witness_type == "violation_witness" and any(i.endswith(".yml") for i in input_files):
             ret.append("--procedureinliner.inline.calls.to.implemented.procedures")
             ret.append("ONLY_FOR_CONCURRENT_PROGRAMS")
-            ret.append("--only.consider.context.switches.at.boundaries.of.atomic.blocks")
+            ret.append("--icfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks")
             ret.append("false")
     elif not validate_witness:
         # we are not in validation mode, so we should generate a witness and need
