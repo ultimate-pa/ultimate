@@ -10,7 +10,7 @@ public final class BooleanDeclaration extends VariableDeclaration {
     /**
      * The constructor taking initial values.
      * @param location the location of this eca ast node.
-     * @param name the name of this variable declaration.
+     * @param name the name of this declaration.
      */
     public BooleanDeclaration(ILocation location, String name) {
         super(location, name);

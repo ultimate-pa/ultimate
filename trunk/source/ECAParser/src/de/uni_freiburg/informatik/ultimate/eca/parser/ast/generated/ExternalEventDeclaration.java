@@ -10,7 +10,7 @@ public final class ExternalEventDeclaration extends EventDeclaration {
     /**
      * The constructor taking initial values.
      * @param location the location of this eca ast node.
-     * @param name the name of this event declaration.
+     * @param name the name of this declaration.
      */
     public ExternalEventDeclaration(ILocation location, String name) {
         super(location, name);

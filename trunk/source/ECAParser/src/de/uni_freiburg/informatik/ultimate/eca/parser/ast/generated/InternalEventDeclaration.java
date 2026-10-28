@@ -10,7 +10,7 @@ public final class InternalEventDeclaration extends EventDeclaration {
     /**
      * The constructor taking initial values.
      * @param location the location of this eca ast node.
-     * @param name the name of this event declaration.
+     * @param name the name of this declaration.
      */
     public InternalEventDeclaration(ILocation location, String name) {
         super(location, name);

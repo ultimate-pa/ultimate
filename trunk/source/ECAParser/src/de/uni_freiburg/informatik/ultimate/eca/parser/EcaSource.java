@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ObjectContainer;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -21,9 +22,11 @@ import de.uni_freiburg.informatik.ultimate.eca.parser.cup.generated.EcaParser;
 public class EcaSource implements ISource {
 	private final List<String> mFileNames = new ArrayList<>();
 	private ILogger mLogger;
+	private IUltimateServiceProvider mServices;
 
 	@Override
 	public void setServices(final IUltimateServiceProvider services) {
+		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getPluginID());
 	}
 
@@ -71,6 +74,27 @@ public class EcaSource implements ISource {
 		final EcaFile ast;
 		try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
 			ast = new EcaParser(reader, fileName).parseFile();
+		}
+		final List<EcaTypeChecker.Diagnostic> diagnostics = new EcaTypeChecker().check(ast);
+		if (!diagnostics.isEmpty()) {
+			for (final EcaTypeChecker.Diagnostic diagnostic : diagnostics) {
+				if (mLogger != null) {
+					mLogger.error(diagnostic.toString());
+				}
+				if (mServices != null) {
+					final ObjectContainer<EcaFile> errorElement = new ObjectContainer<>(ast);
+					if (diagnostic.location() != null) {
+						diagnostic.location().annotate(errorElement);
+					}
+					mServices.getResultService().reportResult(getPluginID(), new TypeErrorResult<>(errorElement,
+							getPluginID(), mServices.getBacktranslationService(), diagnostic.message()));
+				}
+			}
+
+			if (mServices != null) {
+				mServices.getProgressMonitorService().cancelToolchain();
+			}
+			throw new IllegalArgumentException("ECA type checking failed: " + diagnostics.get(0));
 		}
 		mFileNames.add(fileName);
 		return new ObjectContainer<>(ast);

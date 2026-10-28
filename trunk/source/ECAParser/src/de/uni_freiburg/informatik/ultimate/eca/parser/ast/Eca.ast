@@ -22,16 +22,15 @@ EcaAstNode ::= location : ILocation
 
 | /* Variable and named-event declarations in the file prefix. */
   {Declaration}
+  	name : String
   (
     {VariableDeclaration}
-      name : String
     (
       {IntegerDeclaration}
         allowedValues : ?IntInterval
     | {BooleanDeclaration}
     )
   | {EventDeclaration}
-      name : String
     (
       {InternalEventDeclaration}
     | {ExternalEventDeclaration}

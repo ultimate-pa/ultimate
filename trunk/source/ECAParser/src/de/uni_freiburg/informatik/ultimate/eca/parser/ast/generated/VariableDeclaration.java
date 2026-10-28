@@ -8,35 +8,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public abstract sealed class VariableDeclaration extends Declaration permits BooleanDeclaration, IntegerDeclaration {
     /**
-     * The name of this variable declaration.
-     */
-    String name;
-
-    /**
      * The constructor taking initial values.
      * @param location the location of this eca ast node.
-     * @param name the name of this variable declaration.
+     * @param name the name of this declaration.
      */
     public VariableDeclaration(ILocation location, String name) {
-        super(location);
-        this.name = name;
+        super(location, name);
     }
 
     /**
      * Returns a textual description of this object.
      */
     public String toString() {
-        StringBuffer sb = new StringBuffer();
-        sb.append("VariableDeclaration").append('[');
-        sb.append(name);
-        return sb.append(']').toString();
-    }
-
-    /**
-     * Gets the name of this variable declaration.
-     * @return the name of this variable declaration.
-     */
-    public String getName() {
-        return name;
+        return "VariableDeclaration";
     }
 }

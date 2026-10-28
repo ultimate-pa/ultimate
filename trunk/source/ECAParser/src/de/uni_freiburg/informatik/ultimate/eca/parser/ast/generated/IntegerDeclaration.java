@@ -15,7 +15,7 @@ public final class IntegerDeclaration extends VariableDeclaration {
     /**
      * The constructor taking initial values.
      * @param location the location of this eca ast node.
-     * @param name the name of this variable declaration.
+     * @param name the name of this declaration.
      */
     public IntegerDeclaration(ILocation location, String name) {
         super(location, name);
@@ -24,7 +24,7 @@ public final class IntegerDeclaration extends VariableDeclaration {
     /**
      * The constructor taking initial values.
      * @param location the location of this eca ast node.
-     * @param name the name of this variable declaration.
+     * @param name the name of this declaration.
      * @param allowedValues the allowed values of this integer declaration.
      */
     public IntegerDeclaration(ILocation location, String name, IntInterval allowedValues) {

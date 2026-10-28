@@ -8,35 +8,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public abstract sealed class EventDeclaration extends Declaration permits InternalEventDeclaration, ExternalEventDeclaration {
     /**
-     * The name of this event declaration.
-     */
-    String name;
-
-    /**
      * The constructor taking initial values.
      * @param location the location of this eca ast node.
-     * @param name the name of this event declaration.
+     * @param name the name of this declaration.
      */
     public EventDeclaration(ILocation location, String name) {
-        super(location);
-        this.name = name;
+        super(location, name);
     }
 
     /**
      * Returns a textual description of this object.
      */
     public String toString() {
-        StringBuffer sb = new StringBuffer();
-        sb.append("EventDeclaration").append('[');
-        sb.append(name);
-        return sb.append(']').toString();
-    }
-
-    /**
-     * Gets the name of this event declaration.
-     * @return the name of this event declaration.
-     */
-    public String getName() {
-        return name;
+        return "EventDeclaration";
     }
 }

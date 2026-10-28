@@ -8,17 +8,35 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public abstract sealed class Declaration extends EcaAstNode permits VariableDeclaration, EventDeclaration {
     /**
+     * The name of this declaration.
+     */
+    String name;
+
+    /**
      * The constructor taking initial values.
      * @param location the location of this eca ast node.
+     * @param name the name of this declaration.
      */
-    public Declaration(ILocation location) {
+    public Declaration(ILocation location, String name) {
         super(location);
+        this.name = name;
     }
 
     /**
      * Returns a textual description of this object.
      */
     public String toString() {
-        return "Declaration";
+        StringBuffer sb = new StringBuffer();
+        sb.append("Declaration").append('[');
+        sb.append(name);
+        return sb.append(']').toString();
+    }
+
+    /**
+     * Gets the name of this declaration.
+     * @return the name of this declaration.
+     */
+    public String getName() {
+        return name;
     }
 }
