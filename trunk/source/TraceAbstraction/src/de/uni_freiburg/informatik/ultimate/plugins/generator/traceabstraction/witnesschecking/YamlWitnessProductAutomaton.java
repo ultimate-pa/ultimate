@@ -129,7 +129,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		final ViolationSequence violationSequence =
 				(ViolationSequence) mWitness.getEntries().get(productState.getViolationSequenceCounter());
 		final Segment previousSegment = violationSequence.getSegments().get(productState.getSegmentCounter() - 1);
-		return previousSegment.getFollowOrCycleWaypoint() instanceof WaypointTarget
+		return previousSegment.getFollowOrCycleWaypoints().stream().allMatch(WaypointTarget.class::isInstance)
 				&& mAbstraction.isFinal(productState.getUnderlying())
 				&& productState.getSegmentCounter() == violationSequence.getSegments().size();
 	}
@@ -199,7 +199,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 			if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesWaypoint(letter, x))) {
 				return -1;
 			}
-			final Waypoint currentFollowWaypoint = currentSegment.getFollowOrCycleWaypoint();
+			final Waypoint currentFollowWaypoint = currentSegment.getFollowOrCycleWaypoints().getFirst();
 			// check follow assumption waypoints separately because they can match simultaneously with other waypoints
 			if (currentFollowWaypoint instanceof WaypointAssumption
 					&& (!CHECK_ASSUMPTION_LOCATIONS || matchesStartLocation(letter, currentFollowWaypoint))) {
@@ -287,7 +287,8 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 
 	public List<Waypoint> getUnmatchedFollowWaypoints() {
 		return mWitness.getEntries().stream()
-				.flatMap(x -> ((ViolationSequence) x).getSegments().stream().map(Segment::getFollowOrCycleWaypoint))
+				.flatMap(x -> ((ViolationSequence) x).getSegments().stream()
+						.flatMap(y -> y.getFollowOrCycleWaypoints().stream()))
 				.filter(x -> !mMatchedFollowWaypoints.contains(x)).toList();
 	}
 

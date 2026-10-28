@@ -108,40 +108,40 @@ public class YamlViolationWitnessGenerator<TE, E> {
 				final String previousState = mProgramStatePrinter.stateAsExpression(
 						i == 0 ? null : execution.getProgramState(i - 1), ProgramStatePrinter::isValidCVariable);
 				if (previousState != null) {
-					segments.add(new Segment(List.of(), new WaypointAssumption(previousState,
-							getLocation(currentATE, false), getThreadId(currentATE)), segmentType));
+					segments.add(new Segment(new WaypointAssumption(previousState, getLocation(currentATE, false),
+							getThreadId(currentATE)), segmentType));
 				}
 			}
 
 			if (addTargetWaypoint && i == execution.getLength() - 1) {
-				segments.add(new Segment(List.of(),
-						new WaypointTarget(getLocation(currentATE, true), getThreadId(currentATE)), segmentType));
+				segments.add(new Segment(new WaypointTarget(getLocation(currentATE, true), getThreadId(currentATE)),
+						segmentType));
 			}
 			if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
-				segments.add(new Segment(List.of(),
+				segments.add(new Segment(
 						new WaypointBranching("false", getLocation(currentATE, false), getThreadId(currentATE)),
 						segmentType));
 			}
 			if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE)) {
-				segments.add(new Segment(List.of(),
+				segments.add(new Segment(
 						new WaypointBranching("true", getLocation(currentATE, false), getThreadId(currentATE)),
 						segmentType));
 			}
 			if (currentATE.hasStepInfo(StepInfo.PROC_CALL)) {
-				segments.add(new Segment(List.of(),
-						new WaypointFunctionEnter(getLocation(currentATE, false), getThreadId(currentATE)),
-						segmentType));
+				segments.add(
+						new Segment(new WaypointFunctionEnter(getLocation(currentATE, false), getThreadId(currentATE)),
+								segmentType));
 			}
 			if (currentATE.hasStepInfo(StepInfo.PROC_RETURN)) {
-				segments.add(new Segment(List.of(),
+				segments.add(new Segment(
 						new WaypointFunctionReturn(mProgramStatePrinter.stateAsExpression(execution.getProgramState(i),
 								"\\result"::equals), getLocation(currentATE, false), getThreadId(currentATE)),
 						segmentType));
 			}
 			if (currentATE.hasAnyStepInfo(StepInfo.FORK)) {
-				segments.add(new Segment(List.of(),
-						new WaypointFunctionEnter(getLocation(currentATE, false), getThreadId(currentATE)),
-						segmentType));
+				segments.add(
+						new Segment(new WaypointFunctionEnter(getLocation(currentATE, false), getThreadId(currentATE)),
+								segmentType));
 			}
 		}
 		return segments;
