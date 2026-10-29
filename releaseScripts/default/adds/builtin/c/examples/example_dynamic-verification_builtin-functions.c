@@ -26,7 +26,7 @@
  * The example program can be compiled with a C compiler (e.g. GNU C compiler) and can then be executed.
  * 
  * \author Manuel Bentele
- * \version 0.2.4
+ * \version 0.3.2
  */
 
 /**

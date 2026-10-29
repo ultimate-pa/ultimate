@@ -26,7 +26,7 @@
  * The example program can be verified with any Ultimate tool supporting C programs as input (like Ultimate Automizer).
  * 
  * \author Manuel Bentele
- * \version 0.2.4
+ * \version 0.3.2
  */
 
 /**

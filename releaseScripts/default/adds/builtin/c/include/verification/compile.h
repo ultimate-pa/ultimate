@@ -24,7 +24,7 @@
  * Verification functions and data types for dynamic program analysis (runtime verification).
  * 
  * \author Manuel Bentele
- * \version 0.3.0
+ * \version 0.3.2
  */
 
 #ifndef __COMPILE_H

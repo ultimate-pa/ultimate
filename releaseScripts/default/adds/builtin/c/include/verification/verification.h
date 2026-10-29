@@ -30,7 +30,7 @@
  *  - DYNAMIC_VERIFICATION to select functions and data types for dynamic program analysis (runtime verification).
  * 
  * \author Manuel Bentele
- * \version 0.3.0
+ * \version 0.3.2
  */
 
 #ifndef __VERIFICATION_H
