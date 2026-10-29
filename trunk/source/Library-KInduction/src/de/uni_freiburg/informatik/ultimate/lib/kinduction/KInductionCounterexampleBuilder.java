@@ -423,7 +423,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 			}
 			// Built before the push on purpose: it declares constants, and a declaration made inside a scope is
 			// forgotten when that scope is popped while the cache would happily hand the stale term out again.
-			candidate.mSsa = ssaOfTransFormula(out.getLetter().getTransformula(), candidate.mUpdates);
+			candidate.mSsa = ssaOfTransFormula(out.getLetter().getTransformula(), candidate.mUpdates, true);
 			takeFreshReads(candidate);
 			candidate.mNesting = NestedWord.INTERNAL_POSITION;
 			if (tryLetter(step, candidate, length)) {
@@ -454,7 +454,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 				final Map<IProgramVar, Term> assignedByReturn = new LinkedHashMap<>();
 				candidate.mSsa =
 						ssaOfTransFormula(asReturnAction(ret.getLetter()).getAssignmentOfReturn(),
-								assignedByReturn);
+								assignedByReturn, false);
 				takeFreshReads(candidate);
 				// The callee's variables go out of scope with the return, after its outparams were read above.
 				// What the return itself assigns belongs to the caller and has to survive that: in a recursive
@@ -676,11 +676,20 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	 * @param updates
 	 *            filled with the new constant of every variable the formula assigns. Not applied here - the
 	 *            formula reads the old values, and the caller applies the updates once it has the term.
+	 * @param inOnlyIsHavoc
+	 *            whether a variable that is only an inVar is havoced, as in an internal formula. Not so for the
+	 *            formulas of a call or a return, whose inVars and outVars belong to different procedures: there
+	 *            such a variable is only read.
 	 */
-	private Term ssaOfTransFormula(final UnmodifiableTransFormula tf, final Map<IProgramVar, Term> updates) {
+	private Term ssaOfTransFormula(final UnmodifiableTransFormula tf, final Map<IProgramVar, Term> updates,
+			final boolean inOnlyIsHavoc) {
 		final Map<Term, Term> substitution = new HashMap<>();
 		for (final Map.Entry<IProgramVar, TermVariable> in : tf.getInVars().entrySet()) {
-			substitution.put(in.getValue(), current(in.getKey()));
+			final IProgramVar pv = in.getKey();
+			substitution.put(in.getValue(), current(pv));
+			if (inOnlyIsHavoc && !pv.isOldvar() && !tf.getOutVars().containsKey(pv)) {
+				updates.put(pv, nextConstant(pv));
+			}
 		}
 		for (final Map.Entry<IProgramVar, TermVariable> out : tf.getOutVars().entrySet()) {
 			final IProgramVar pv = out.getKey();
@@ -717,7 +726,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	private Term ssaOfCall(final ICallAction callAction, final String callee,
 			final Map<IProgramVar, Term> updates) {
 		final UnmodifiableTransFormula localVarsAssignment = callAction.getLocalVarsAssignment();
-		final Term result = ssaOfTransFormula(localVarsAssignment, updates);
+		final Term result = ssaOfTransFormula(localVarsAssignment, updates, false);
 		final UnmodifiableTransFormula oldVarsAssignment =
 				mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(callee);
 		for (final IProgramVar assigned : oldVarsAssignment.getAssignedVars()) {

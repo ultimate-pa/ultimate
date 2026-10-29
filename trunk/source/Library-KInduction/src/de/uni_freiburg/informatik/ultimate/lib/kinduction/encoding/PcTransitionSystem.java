@@ -67,8 +67,9 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormu
  * turns a transition back into letters.
  * <p>
  * {@link #step} builds the relation between step {@code idx} and step {@code idx + 1}. Variables a transition does
- * not assign are explicitly kept equal (frame), and auxiliary variables are instantiated separately for every
- * transition and step. The pc and the transition ids are of the {@link CounterSort} of the program.
+ * not assign are explicitly kept equal (frame); one that is only an inVar is havoced, so it is not framed. Auxiliary
+ * variables are instantiated separately for every transition and step. The pc and the transition ids are of the
+ * {@link CounterSort} of the program.
  *
  * @param <STATE>
  *            state type of the automaton
@@ -372,6 +373,13 @@ public class PcTransitionSystem<STATE> {
 		for (final Map.Entry<IProgramVar, TermVariable> in : tf.getInVars().entrySet()) {
 			final IProgramVar pv = in.getKey();
 			substitution.put(in.getValue(), pv.isOldvar() ? pv.getDefaultConstant() : sv.var(pv, idx));
+			if (!tf.getOutVars().containsKey(pv)) {
+				// Read, then havoced: a variable that is only an inVar may have any value afterwards (see
+				// TransFormulaUtils#computeAssignedVars). TransFormulaBuilder drops the outVar of an assigned
+				// variable whose new value the formula does not constrain, so a composed loop body has such
+				// variables. Framing them would keep their value and lose every run in which it changes.
+				assigned.add(pv);
+			}
 		}
 		for (final Map.Entry<IProgramVar, TermVariable> out : tf.getOutVars().entrySet()) {
 			final IProgramVar pv = out.getKey();
