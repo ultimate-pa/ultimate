@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class IndependencyAutomaton<L, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 
+	// TODO: add an interface, use the interface in the Reduction
 	Map<Pair<L, L>, L> mSpecialSymbols;
 
 	public IndependencyAutomaton() {
