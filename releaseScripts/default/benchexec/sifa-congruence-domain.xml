@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="120" hardtimelimit="130" cpuCores="2">
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="300" hardtimelimit="320" cpuCores="2">
   <resultfiles></resultfiles>
   <option name="--force-no-wrapper" />
   <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/taipan/svcomp-Reach-32bit-Taipan_Default.epf</option>
@@ -44,6 +44,18 @@
     <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
 	<option name="--sifa.abstract.domain">"CompoundDomain"</option>
 	<option name="--sifa.compounddomain.intern.domains">"CongruenceDomain;IntervalDomain"</option>
+  </rundefinition>
+
+  <rundefinition name="Taipan-EXP+INT">
+    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+	<option name="--sifa.abstract.domain">"CompoundDomain"</option>
+	<option name="--sifa.compounddomain.intern.domains">"ExplicitValueDomain;IntervalDomain"</option>
+  </rundefinition>
+
+  <rundefinition name="Taipan-EXP+CON+INT">
+    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+	<option name="--sifa.abstract.domain">"CompoundDomain"</option>
+	<option name="--sifa.compounddomain.intern.domains">"ExplicitValueDomain;CongruenceDomain;IntervalDomain"</option>
   </rundefinition>
 
   <tasks name="ReachSafety">
