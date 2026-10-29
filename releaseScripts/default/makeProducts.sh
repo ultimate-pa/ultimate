@@ -31,16 +31,17 @@ product_exists() {
 }
 
 # Package the given Ultimate product for the given operating system ('linux',
-# 'macosx' or 'win32') in a local folder U<toolname>-<os>.
+# 'macosx' or 'win32') and the given architecture ('x86_64' or 'aarch64') in a
+# local folder U<toolname>-<os>-<arch>.
 package_product() {
   local TOOLNAME="${1}"
   local OS="${2}"
+  local ARCH="${3}"
 
   local LC_TOOLNAME="$(echo "${TOOLNAME}" | tr '[A-Z]' '[a-z]')"
   echo "Using ${TOOLNAME} (${LC_TOOLNAME}) as toolname"
 
   # Architecture-specific variables
-  local ARCH="x86_64"
   local WS
   if [ "${OS}" == "linux" ]; then
     WS="gtk"
@@ -52,6 +53,15 @@ package_product() {
     echo "Wrong argument: ""${OS}"" -- use 'linux', 'macosx' or 'win32'" >&2
     exit 1
   fi
+
+  # Check whether the architecture is supported for the operating system
+  case "${OS}:${ARCH}" in
+    linux:x86_64|linux:aarch64|macosx:x86_64|macosx:aarch64|win32:x86_64) ;;
+    *)
+      echo "Wrong argument: ""${ARCH}"" -- architecture is not supported for ${OS}" >&2
+      exit 1
+      ;;
+  esac
 
   # Specification of the product to package
   local LAUNCHER PRODUCT_DIR TOOLCHAINS
@@ -181,7 +191,7 @@ package_product() {
   local TARGET_SRC_DIR="../../trunk/source/BA_SiteRepository/target"
   local TOOLCHAINS_SRC_DIR="../../trunk/examples/toolchains"
   local SETTINGS_SRC_DIR="../../trunk/examples/settings/default/${LC_TOOLNAME}/*${TOOLNAME}*"
-  local TARGET_DST_DIR="U${TOOLNAME}-${OS}"
+  local TARGET_DST_DIR="U${TOOLNAME}-${OS}-${ARCH}"
   local CONFIG_DST_DIR="${TARGET_DST_DIR}/config"
   local DATA_DST_DIR="${TARGET_DST_DIR}/data"
 
