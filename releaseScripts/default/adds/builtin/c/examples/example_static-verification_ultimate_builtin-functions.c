@@ -1,19 +1,19 @@
 /*
  * Copyright (C) 2024 Manuel Bentele
- * 
+ *
  * This file is part of the ULTIMATE program analysis framework.
- * 
+ *
  * The ULTIMATE program analysis framework is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The ULTIMATE program analysis framework is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
  * Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License along with the ULTIMATE program analysis
  * framework. If not, see http://www.gnu.org/licenses/.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7: If you modify the ULTIMATE program analysis framework, or
  * any covered work, by linking or combining it with Eclipse RCP (or a modified version of Eclipse RCP), containing
  * parts covered by the terms of the Eclipse Public License, the licensors of the ULTIMATE program analysis framework
@@ -22,16 +22,16 @@
 
 /**
  * Example program to show use of Ultimate's built-in verification functions for static program analysis.
- * 
+ *
  * The example program can be verified with any Ultimate tool supporting C programs as input (like Ultimate Automizer).
- * 
+ *
  * \author Manuel Bentele
  * \version 0.3.2
  */
 
 /**
  * Select functions and data types built into Ultimate for static analysis.
- * 
+ *
  * \note This macro must be defined before including the <verification/verification.h> header file.
  */
 #define STATIC_VERIFICATION_ULTIMATE
@@ -41,9 +41,9 @@
 
 /**
  * Entry point of the example program using Ultimate's built-in verification functions for static program analysis.
- * 
+ *
  * \return Returns the status code value 17 which is used as the argument to the implicit call to exit().
- * 
+ *
  * \note The example program does not terminate successfully because a call to __VERIFIER_error() occurs shortly before
  *       the end of execution. Thus the program contains an error and is not correct.
  */
@@ -79,15 +79,15 @@ int main(void)
     printf("__VERIFIER_nondet_ulonglong: %llu\n", __VERIFIER_nondet_ulonglong());
 #endif
 #if defined(__GNUC__) && defined(__SIZEOF_INT128__)
-# if defined(__STDC_VERSION__) && 202311L <= __STDC_VERSION__
+#if defined(__STDC_VERSION__) && 202311L <= __STDC_VERSION__
     /* Format specifier for printing 128-bit decimal values is available since C23 and later. */
     printf("__VERIFIER_nondet_int128: %w128d\n", __VERIFIER_nondet_int128());
     printf("__VERIFIER_nondet_uint128: %w128u\n", __VERIFIER_nondet_uint128());
-# else
+#else
     /* Use largest legacy format specifier for printing part of the 128-bit decimal value. */
-    printf("__VERIFIER_nondet_int128: %lld\n", (long long) __VERIFIER_nondet_int128());
-    printf("__VERIFIER_nondet_uint128: %llu\n", (unsigned long long) __VERIFIER_nondet_uint128());
-# endif
+    printf("__VERIFIER_nondet_int128: %lld\n", (long long)__VERIFIER_nondet_int128());
+    printf("__VERIFIER_nondet_uint128: %llu\n", (unsigned long long)__VERIFIER_nondet_uint128());
+#endif
 #endif
     printf("__VERIFIER_nondet_float: %f\n", __VERIFIER_nondet_float());
     printf("__VERIFIER_nondet_double: %lf\n", __VERIFIER_nondet_double());

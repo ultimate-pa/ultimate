@@ -1,19 +1,19 @@
 /*
  * Copyright (C) 2024 Manuel Bentele
- * 
+ *
  * This file is part of the ULTIMATE program analysis framework.
- * 
+ *
  * The ULTIMATE program analysis framework is free software: you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3
  * of the License, or (at your option) any later version.
- * 
+ *
  * The ULTIMATE program analysis framework is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
  * Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License along with the ULTIMATE program analysis
  * framework. If not, see http://www.gnu.org/licenses/.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7: If you modify the ULTIMATE program analysis framework, or
  * any covered work, by linking or combining it with Eclipse RCP (or a modified version of Eclipse RCP), containing
  * parts covered by the terms of the Eclipse Public License, the licensors of the ULTIMATE program analysis framework
@@ -22,7 +22,7 @@
 
 /**
  * Verification functions and data types for dynamic program analysis (runtime verification).
- * 
+ *
  * \author Manuel Bentele
  * \version 0.3.2
  */
@@ -35,25 +35,27 @@ extern "C" {
 #endif
 
 #include <assert.h>
-#include <limits.h>
 #include <float.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #if defined(_GNU_SOURCE)
-# include <sys/types.h>
+#include <sys/types.h>
 #endif
 
 #if defined(__RDRND__)
 
-# include <immintrin.h>
+#include <immintrin.h>
 
 /**
  * Initializes the hardware accelerated random number generator.
- * 
+ *
  * \note The function is automatically executed before the main function of the program to be verified.
  */
-void __attribute__ ((constructor)) setup_rdrand(void) {}
+void __attribute__((constructor)) setup_rdrand(void)
+{
+}
 
 /**
  * Generates a random 1-bit unsigned value using hardware acceleration.
@@ -61,7 +63,8 @@ void __attribute__ ((constructor)) setup_rdrand(void) {}
 bool rdrand1(void)
 {
     unsigned short value = 0;
-    do {} while(!_rdrand16_step(&value));
+    do {
+    } while (!_rdrand16_step(&value));
     return value % 2;
 }
 
@@ -71,7 +74,8 @@ bool rdrand1(void)
 uint8_t rdrand8(void)
 {
     unsigned short value = 0;
-    do {} while(!_rdrand16_step(&value));
+    do {
+    } while (!_rdrand16_step(&value));
     return value % 256;
 }
 
@@ -81,7 +85,8 @@ uint8_t rdrand8(void)
 uint16_t rdrand16(void)
 {
     unsigned short value = 0;
-    do {} while(!_rdrand16_step(&value));
+    do {
+    } while (!_rdrand16_step(&value));
     return value;
 }
 
@@ -91,7 +96,8 @@ uint16_t rdrand16(void)
 uint32_t rdrand32(void)
 {
     unsigned int value = 0;
-    do {} while(!_rdrand32_step(&value));
+    do {
+    } while (!_rdrand32_step(&value));
     return value;
 }
 
@@ -101,11 +107,12 @@ uint32_t rdrand32(void)
 uint64_t rdrand64(void)
 {
     unsigned long long value = 0;
-    do {} while(!_rdrand64_step(&value));
+    do {
+    } while (!_rdrand64_step(&value));
     return value;
 }
 
-# if defined(__GNUC__) && defined(__SIZEOF_INT128__)
+#if defined(__GNUC__) && defined(__SIZEOF_INT128__)
 /**
  * Generates a random 128-bit unsigned value using hardware acceleration.
  */
@@ -113,28 +120,28 @@ unsigned __int128 rdrand128(void)
 {
     return ((unsigned __int128)rdrand64() << 64) | rdrand64();
 }
-# endif
+#endif
 
-# define  RANDOM1   rdrand1()
-# define  RANDOM8   rdrand8()
-# define  RANDOM16  rdrand16()
-# define  RANDOM32  rdrand32()
-# define  RANDOM64  rdrand64()
-# if defined(__GNUC__) && defined(__SIZEOF_INT128__)
-#  define RANDOM128 rdrand128()
-# endif
+#define RANDOM1 rdrand1()
+#define RANDOM8 rdrand8()
+#define RANDOM16 rdrand16()
+#define RANDOM32 rdrand32()
+#define RANDOM64 rdrand64()
+#if defined(__GNUC__) && defined(__SIZEOF_INT128__)
+#define RANDOM128 rdrand128()
+#endif
 
 #else
 
-# include <stdlib.h>
-# include <time.h>
+#include <stdlib.h>
+#include <time.h>
 
 /**
  * Initializes the random number generator.
- * 
+ *
  * \note The function is automatically executed before the main function of the program to be verified.
  */
-void __attribute__ ((constructor)) setup_rand(void)
+void __attribute__((constructor)) setup_rand(void)
 {
     time_t t;
     srand((unsigned)time(&t));
@@ -180,7 +187,7 @@ uint64_t rand64(void)
     return ((uint64_t)rand32() << 32) | rand32();
 }
 
-# if defined(__GNUC__) && defined(__SIZEOF_INT128__)
+#if defined(__GNUC__) && defined(__SIZEOF_INT128__)
 /**
  * Generates a random 128-bit unsigned value.
  */
@@ -188,20 +195,20 @@ unsigned __int128 rand128(void)
 {
     return ((unsigned __int128)rand64() << 64) | rand64();
 }
-# endif
-
-# define  RANDOM1   rand1()
-# define  RANDOM8   rand8()
-# define  RANDOM16  rand16()
-# define  RANDOM32  rand32()
-# define  RANDOM64  rand64()
-# if defined(__GNUC__) && defined(__SIZEOF_INT128__)
-#  define RANDOM128 rand128()
-# endif
 #endif
 
-#define CONCAT(x,y) (x ## y)
-#define JOIN(x,y)  CONCAT(x,y)
+#define RANDOM1 rand1()
+#define RANDOM8 rand8()
+#define RANDOM16 rand16()
+#define RANDOM32 rand32()
+#define RANDOM64 rand64()
+#if defined(__GNUC__) && defined(__SIZEOF_INT128__)
+#define RANDOM128 rand128()
+#endif
+#endif
+
+#define CONCAT(x, y) (x##y)
+#define JOIN(x, y) CONCAT(x, y)
 
 /**
  * Generates a random unsigned value between zero and the positiv upper bound of a type with specified bit WIDTH.
@@ -244,18 +251,20 @@ unsigned __int128 rand128(void)
 
 /**
  * Provides assumptions about the program's state or behavior.
- * 
+ *
  * When this function is called with a specific assumption, it will be ignored.
- * 
+ *
  * \param assumption Expression that is used as assumption for an analysis.
- * 
+ *
  * \note The function is not implemented for runtime verification.
  */
-void __VERIFIER_assume(int assumption) {}
+void __VERIFIER_assume(int assumption)
+{
+}
 
 /**
  * Indicates an error condition.
- * 
+ *
  * When this function is called, it will abort the program execution.
  */
 void __VERIFIER_error(void)
@@ -265,36 +274,40 @@ void __VERIFIER_error(void)
 
 /**
  * Marks the beginning of a critical section in the program.
- * 
+ *
  * This function helps to ensure that certain operations are executed atomically, without interruption or interference
  * from other threads or processes, thereby preventing race conditions and ensuring the correctness of the program's
  * behavior.
- * 
+ *
  * \note The function is not implemented for runtime verification.
  */
-void __VERIFIER_atomic_begin(void) {}
+void __VERIFIER_atomic_begin(void)
+{
+}
 
 /**
  * Marks the end of a critical section in the program.
- * 
+ *
  * This function helps to ensure that the operations within the critical section are executed atomically, without
  * interruption or interference from other threads or processes, maintaining the integrity of the program's execution
  * and preventing race conditions.
- * 
+ *
  * \note The function is not implemented for runtime verification.
  */
-void __VERIFIER_atomic_end(void) {}
+void __VERIFIER_atomic_end(void)
+{
+}
 
 #ifndef BOOL_WIDTH
 /**
  * Bit width of boolean types bool and _Bool.
  */
-# define BOOL_WIDTH 1
+#define BOOL_WIDTH 1
 #endif
 
 /**
  * Returns a boolean value non-deterministically.
- * 
+ *
  * \return Random boolean value.
  */
 bool __VERIFIER_nondet_bool(void)
@@ -305,9 +318,9 @@ bool __VERIFIER_nondet_bool(void)
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && __STDC_VERSION__ <= 201710L
 /**
  * Returns a boolean value non-deterministically.
- * 
+ *
  * \return Random boolean value.
- * 
+ *
  * \note The function is available for the boolean type _Bool, which is only defined from C99 to C20.
  */
 _Bool __VERIFIER_nondet__Bool(void)
@@ -318,7 +331,7 @@ _Bool __VERIFIER_nondet__Bool(void)
 
 /**
  * Returns a signed character value non-deterministically.
- * 
+ *
  * \return Random signed character value.
  */
 char __VERIFIER_nondet_char(void)
@@ -328,7 +341,7 @@ char __VERIFIER_nondet_char(void)
 
 /**
  * Returns an unigned character value non-deterministically.
- * 
+ *
  * \return Non-deterministic unsigned character value.
  */
 unsigned char __VERIFIER_nondet_uchar(void)
@@ -338,20 +351,20 @@ unsigned char __VERIFIER_nondet_uchar(void)
 
 /**
  * Returns a character pointer value non-deterministically.
- * 
+ *
  * \return  Non-deterministic character pointer value.
- * 
+ *
  * \note The function returns an arbitrary pointer value. This pointer can point to any memory area and not just to
  *       free areas. Thus, the function does not return a fresh pointer value.
  */
-char* __VERIFIER_nondet_pchar(void)
+char *__VERIFIER_nondet_pchar(void)
 {
-    return RANDOM_PTR_VALUE(char*);
+    return RANDOM_PTR_VALUE(char *);
 }
 
 /**
  * Returns a signed integer value non-deterministically.
- * 
+ *
  * \return Non-deterministic signed integer value.
  */
 short __VERIFIER_nondet_short(void)
@@ -361,7 +374,7 @@ short __VERIFIER_nondet_short(void)
 
 /**
  * Returns an unsigned integer value non-deterministically.
- * 
+ *
  * \return Non-deterministic unsigned integer value.
  */
 unsigned short __VERIFIER_nondet_ushort(void)
@@ -371,7 +384,7 @@ unsigned short __VERIFIER_nondet_ushort(void)
 
 /**
  * Returns a unsigned integer value non-deterministically.
- * 
+ *
  * \return Non-deterministic unsigned integer value.
  */
 unsigned __VERIFIER_nondet_unsigned(void)
@@ -381,7 +394,7 @@ unsigned __VERIFIER_nondet_unsigned(void)
 
 /**
  * Returns a signed integer value non-deterministically.
- * 
+ *
  * \return Non-deterministic signed integer value.
  */
 int __VERIFIER_nondet_int(void)
@@ -391,7 +404,7 @@ int __VERIFIER_nondet_int(void)
 
 /**
  * Returns a unsigned integer value non-deterministically.
- * 
+ *
  * \return Non-deterministic unsigned integer value.
  */
 unsigned int __VERIFIER_nondet_uint(void)
@@ -401,7 +414,7 @@ unsigned int __VERIFIER_nondet_uint(void)
 
 /**
  * Returns an unsigned integer value for sizes non-deterministically.
- * 
+ *
  * \return Non-deterministic unsigned integer value for sizes.
  */
 size_t __VERIFIER_nondet_size_t(void)
@@ -412,7 +425,7 @@ size_t __VERIFIER_nondet_size_t(void)
 #if defined(_GNU_SOURCE)
 /**
  * Returns a signed integer value for file sizes and offsets non-deterministically.
- * 
+ *
  * \return Non-deterministic signed integer value for file sizes and offsets.
  */
 loff_t __VERIFIER_nondet_loff_t(void)
@@ -423,7 +436,7 @@ loff_t __VERIFIER_nondet_loff_t(void)
 
 /**
  * Returns a signed integer value non-deterministically.
- * 
+ *
  * \return Non-deterministic signed integer value.
  */
 long __VERIFIER_nondet_long(void)
@@ -433,7 +446,7 @@ long __VERIFIER_nondet_long(void)
 
 /**
  * Returns a unsigned integer value non-deterministically.
- * 
+ *
  * \return Non-deterministic unsigned integer value.
  */
 unsigned long __VERIFIER_nondet_ulong(void)
@@ -456,9 +469,9 @@ long long __VERIFIER_nondet_longlong(void)
 
 /**
  * Returns an unsigned integer value non-deterministically.
- * 
+ *
  * \return Non-deterministic unsigned integer value.
- * 
+ *
  * \note The function is available for the type unsigned long long, which has been defined since C99.
  */
 unsigned long long __VERIFIER_nondet_ulonglong(void)
@@ -468,38 +481,38 @@ unsigned long long __VERIFIER_nondet_ulonglong(void)
 #endif
 
 #if defined(__GNUC__) && defined(__SIZEOF_INT128__)
-# ifndef INT128_MIN
+#ifndef INT128_MIN
 /**
  * Minimum value of the __int128 scalar type.
  */
-#  define INT128_MIN (-INT128_MAX - 1)
-# endif
-# ifndef INT128_MAX
+#define INT128_MIN (-INT128_MAX - 1)
+#endif
+#ifndef INT128_MAX
 /**
  * Maximum value of the __int128 scalar type.
  */
-#  define INT128_MAX (__int128) (((unsigned __int128) 1 << ((__SIZEOF_INT128__ * __CHAR_BIT__) - 1)) - 1)
-# endif
+#define INT128_MAX (__int128)(((unsigned __int128)1 << ((__SIZEOF_INT128__ * __CHAR_BIT__) - 1)) - 1)
+#endif
 
-# ifndef INT128_WIDTH
+#ifndef INT128_WIDTH
 /**
  * Bit width of the __int128 signed scalar type.
  */
-#  define INT128_WIDTH 128
-# endif
+#define INT128_WIDTH 128
+#endif
 
-# ifndef UINT128_WIDTH
+#ifndef UINT128_WIDTH
 /**
  * Bit width of the __int128 unsigned scalar type.
  */
-#  define UINT128_WIDTH 128
+#define UINT128_WIDTH 128
 #endif
 
 /**
  * Returns a signed integer value non-deterministically.
- * 
+ *
  * \return Non-deterministic signed integer value.
- * 
+ *
  * \note The type __int128 is a scalar type for targets which have an integer mode wide enough to hold 128 bits.
  *       This type is an GNU extension and only supported by GNU compilers.
  */
@@ -510,9 +523,9 @@ __int128 __VERIFIER_nondet_int128(void)
 
 /**
  * Returns an unsigned integer value non-deterministically.
- * 
+ *
  * \return Non-deterministic unsigned integer value.
- * 
+ *
  * \note The type unsigned __int128 scalar type for targets which have an integer mode wide enough to hold 128 bits.
  *       This type is an GNU extension and only supported by GNU compilers.
  */
@@ -524,7 +537,7 @@ unsigned __int128 __VERIFIER_nondet_uint128(void)
 
 /**
  * Returns a signed floating point value non-deterministically.
- * 
+ *
  * \return Non-deterministic signed floating point value.
  */
 float __VERIFIER_nondet_float(void)
@@ -534,7 +547,7 @@ float __VERIFIER_nondet_float(void)
 
 /**
  * Returns a signed double-precision floating point value non-deterministically.
- * 
+ *
  * \return Non-deterministic signed double-precision floating point value.
  */
 double __VERIFIER_nondet_double(void)
@@ -544,25 +557,25 @@ double __VERIFIER_nondet_double(void)
 
 /**
  * Returns a pointer value non-deterministically.
- * 
+ *
  * \return  Non-deterministic pointer value.
- * 
+ *
  * \note The function returns an arbitrary pointer value. This pointer can point to any memory area and not just to
  *       free areas. Thus, the function does not return a fresh pointer value.
  */
-void* __VERIFIER_nondet_pointer(void)
+void *__VERIFIER_nondet_pointer(void)
 {
-    return RANDOM_PTR_VALUE(void*);
+    return RANDOM_PTR_VALUE(void *);
 }
 
 /**
  * Initializes the given memory block with arbitrary values.
- * 
+ *
  * The first argument must be a valid pointer to the start of a memory block of the given size. The second argument
  * specifies the size of the memory to initialize and must match the size of the memory block that the first argument
  * points to. The dereference of any pointer value set through this method results in undefined behavior. This means
  * that pointer values must be explicitly set through different means before they can be dereferenced.
- * 
+ *
  * \param mem Pointer to the start of the memory block to initialize.
  * \param size Size of the memory to initialize.
  */
@@ -578,4 +591,4 @@ void __VERIFIER_nondet_memory(void *mem, size_t size)
 }
 #endif
 
-#endif  /* __COMPILE_H */
+#endif /* __COMPILE_H */
