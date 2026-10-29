@@ -13,7 +13,7 @@ source "${DIR}/makeSettings.sh"
 if [ "${#}" -le 1 ]; then
   echo "Not enough arguments supplied -- use arguments in the following order"
   echo "1. the toolname"
-  echo "2. 'linux' or 'win32' for the operating system"
+  echo "2. 'linux', 'macosx' or 'win32' for the operating system"
   exit 1
 fi
 
@@ -29,11 +29,14 @@ echo "Using ${TOOLNAME} (${LCTOOLNAME}) as toolname"
 if [ "${2}" == "linux" ]; then
   echo "Building .zip for linux ..."
   OS="linux"
+elif [ "${2}" == "macosx" ]; then
+  echo "Building .zip for macosx ..."
+  OS="macosx"
 elif [ "${2}" == "win32" ]; then
   echo "Building .zip for win32 ..."
   OS="win32"
 else
-  echo "Wrong argument: ""${2}"" -- use 'linux' or 'win32'"
+  echo "Wrong argument: ""${2}"" -- use 'linux', 'macosx' or 'win32'"
   exit 1
 fi
 
