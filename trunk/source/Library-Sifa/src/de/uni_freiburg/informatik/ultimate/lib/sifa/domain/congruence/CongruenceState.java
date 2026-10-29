@@ -28,10 +28,12 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -96,10 +98,10 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		final List<RationalVector> equalities = new ArrayList<>();
 		final List<RationalVector> congruences = new ArrayList<>();
 		for (final EqualityRelation equalityRelation : equalityRelations) {
-			equalities.add(CongruenceUtil.getVector(equalityRelation, varToIndex));
+			equalities.add(eqRelationToVector(equalityRelation, varToIndex));
 		}
 		for (final ModuloRelation moduloRelation : moduloRelations) {
-			congruences.add(CongruenceUtil.getVector(moduloRelation, varToIndex));
+			congruences.add(modRelationToVector(moduloRelation, varToIndex));
 		}
 
 		final var vectorLength = varToIndex.size() + 1;
@@ -108,6 +110,60 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		congruences.add(RationalVector.getUnitVector(0, vectorLength).negate());
 
 		return new CongruenceState(varToIndex, new ConstraintRepresentation(equalities, congruences, vectorLength));
+	}
+
+	/**
+	 * Performs the modulo operation on a {@link Rational}. Returns rational % mod.
+	 */
+	private static Rational modRational(final Rational rational, final BigInteger mod) {
+		// We bring the mod on the same denominator by multiplying it with rational.denominator
+		final BigInteger bigMod = rational.denominator().multiply(mod);
+		// Then we can simply calculate the mod of the numerators
+		final BigInteger numerator = rational.numerator().mod(bigMod);
+		return Rational.valueOf(numerator, rational.denominator());
+	}
+
+	/**
+	 * Returns the vector representation of an {@link EqualityRelation} given a map of which variable should be mapped
+	 * to which index. Transforms equalities of the form "∑ a_i * x_i = c" into vectors of the form [-c, a_0, ..., a_n],
+	 * where x_i correspond to numerical (ints and reals) variables and a_i and c to constants.
+	 */
+	private static RationalVector eqRelationToVector(final EqualityRelation equalityRelation,
+			final Map<Term, Integer> varToIndex) {
+		final int n = varToIndex.size() + 1;
+		final List<Rational> protoVector = new ArrayList<>(Collections.nCopies(n, Rational.ZERO));
+		final Rational result = equalityRelation.getConstant();
+		protoVector.set(0, result);
+
+		final Map<Term, Rational> varToFactor = equalityRelation.getVarToFactor();
+		for (final Entry<Term, Rational> entry : varToFactor.entrySet()) {
+			final Term variable = entry.getKey();
+			final Rational factor = entry.getValue();
+			final int i = varToIndex.get(variable);
+			protoVector.set(i, factor);
+		}
+
+		return new RationalVector(protoVector);
+	}
+
+	/**
+	 * Returns the vector representation of a {@link ModuloRelation} given a map of which variable should be mapped to
+	 * which index. Transforms congruences of the form "∑ a_i * x_i ≡b c" into vectors of the form [-c/b, a_0/b, ...,
+	 * a_n/b], where x_i correspond to numerical (ints and reals) variables and a_i, b and c to constants.
+	 */
+	private static RationalVector modRelationToVector(final ModuloRelation moduloRelation,
+			final Map<Term, Integer> varToIndex) {
+		final RationalVector equalityVector = eqRelationToVector(moduloRelation.getEqualityRelation(), varToIndex);
+		final List<Rational> protoVector = equalityVector.asList();
+
+		final BigInteger mod = moduloRelation.getMod();
+
+		// Do mod on entries to make numbers smaller
+		final List<Rational> modProtoVector = protoVector.stream().map(rational -> modRational(rational, mod)).toList();
+		final RationalVector modVector = new RationalVector(modProtoVector);
+
+		// Divide every entry through mod
+		return modVector.divide(mod);
 	}
 
 	private ConstraintRepresentation getConstraintRepresentation() {
@@ -365,7 +421,7 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		final List<RationalVector> newEqualities = new ArrayList<>();
 		for (final RationalVector equality : upperConstraints.getEqualities()) {
 			for (final RationalVector lowerVector : lowerVectors) {
-				if (CongruenceUtil.isEqualsInLastNonZero(equality, lowerVector)) {
+				if (isEqualsInLastNonZero(equality, lowerVector)) {
 					newEqualities.add(equality);
 				}
 			}
@@ -374,7 +430,7 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 		final List<RationalVector> newCongruences = new ArrayList<>();
 		for (final RationalVector congruence : upperConstraints.getCongruences()) {
 			for (final RationalVector lowerVector : lowerVectors) {
-				if (CongruenceUtil.isEqualsInLastNonZero(congruence, lowerVector)) {
+				if (isEqualsInLastNonZero(congruence, lowerVector)) {
 					newCongruences.add(congruence);
 				}
 			}
@@ -382,6 +438,25 @@ public class CongruenceState implements IAbstractState<CongruenceState> {
 
 		return new CongruenceState(newVarToIndex,
 				new ConstraintRepresentation(newEqualities, newCongruences, upperConstraints.getVectorLength()));
+	}
+
+	/**
+	 * Returns true if the last non-zero entries of vector1 and vector2 are equal and located at the same index in their
+	 * respective vectors.
+	 */
+	private static boolean isEqualsInLastNonZero(final RationalVector vector1, final RationalVector vector2) {
+		final int k = vector1.lastPivot();
+		if (k == vector2.lastPivot()) {
+			if (k == 0) {
+				return true;
+			}
+			final Rational value1 = vector1.get(k);
+			final Rational value2 = vector2.get(k);
+			if (value1.equals(value2)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
