@@ -77,8 +77,10 @@ public enum PreferenceType {
 	 */
 	Double,
 	/**
-	 * A string representing one or multiple paths to a file or directory on the system. If multiple paths are specified
-	 * by the user, they are separated by a semicolon.
+	 * A string representing one or multiple paths to a file or directory on the system. If multiple paths are
+	 * specified by the user, they are separated by the system-dependent path-separator character (defined by
+	 * {@link java.io.File#pathSeparator}). On UNIX systems, this character is ':'; on Microsoft Windows systems
+	 * it is ';'.
 	 */
 	Path,
 	/**
