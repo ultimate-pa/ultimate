@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -132,6 +133,9 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * {@link #restartSolverAfterInterrupt}. z3 took minutes to notice an interrupt on nonlinear arithmetic.
 	 */
 	private static final long KILL_GRACE_MILLIS = 1000;
+
+	/** How often the watchdog of {@link #checkSatWithin} looks at the timer. */
+	private static final long WATCHDOG_POLL_MILLIS = 100;
 
 	private final INestedWordAutomaton<LETTER, STATE> mAbstraction;
 	private final ManagedScript mWorkerMgdScript;
@@ -525,7 +529,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * Must be called after the constructor, i.e. when the script is not locked: quantifier elimination uses it.
 	 *
 	 * @param services
-	 *            for the quantifier elimination, whose timer bounds how long this may take
+	 *            for the quantifier elimination and the check of the invariants, whose timer bounds how long this may
+	 *            take: once it runs out, a running check-sat is interrupted, which needs an external solver
 	 * The system is flat: the invariant of a loop head of a callee may mention the variables of its callers, and a
 	 * callee that is unfolded at several call sites has one loop head per call site. Whether that fits the program is
 	 * for the caller to decide.
@@ -541,6 +546,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 			return Optional.empty();
 		}
 		final Script script = mWorkerMgdScript.getScript();
+		// Throws unless the solver is an external process, the only kind whose check-sat isInductive can interrupt.
+		ExternalSolverInterrupter.findScriptor(script);
 		final Set<Term> oldVarConstants = new LinkedHashSet<>();
 		mSystem.getOldVars().forEach(pv -> oldVarConstants.add(pv.getDefaultConstant()));
 		final SubtermPropertyChecker mentionsOldVar = new SubtermPropertyChecker(oldVarConstants::contains);
@@ -567,7 +574,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 			}
 			invariants.put(node, invariant);
 		}
-		if (!isInductive(invariants)) {
+		if (!isInductive(services, invariants)) {
 			return Optional.empty();
 		}
 		final Map<CallNode<STATE>, Term> result = new LinkedHashMap<>();
@@ -586,7 +593,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * @return whether every transition of the system leads from a state that satisfies the invariant of its source
 	 *         to one that satisfies the invariant of its target
 	 */
-	private boolean isInductive(final Map<Integer, Term> invariants) {
+	private boolean isInductive(final IUltimateServiceProvider services, final Map<Integer, Term> invariants) {
 		final Script script = mWorkerMgdScript.getScript();
 		final Set<List<Integer>> checked = new LinkedHashSet<>();
 		mWorkerMgdScript.lock(mKILock);
@@ -615,7 +622,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 				try {
 					mWorkerMgdScript.assertTerm(mKILock, SmtUtils.quantifier(script, QuantifiedFormula.EXISTS,
 							Arrays.asList(violation.getFreeVars()), violation));
-					result = mWorkerMgdScript.checkSat(mKILock);
+					result = checkSatWithin(services, "checking that the witness invariants are inductive");
 				} finally {
 					mWorkerMgdScript.pop(mKILock, 1);
 				}
@@ -629,6 +636,72 @@ public class KInduction<LETTER extends IAction, STATE> {
 			mWorkerMgdScript.unlock(mKILock);
 		}
 		return true;
+	}
+
+	/**
+	 * A check-sat that ends with the timer of {@code services}. The solver's own per-query timeout is that of
+	 * k-induction, up to an hour, and a running check-sat never looks at the timer, so a watchdog thread interrupts
+	 * it once the timer runs out. Must be called with the lock held.
+	 *
+	 * @param task
+	 *            what the check is for, reported if the timer ran out
+	 * @throws ToolchainCanceledException
+	 *             if the timer ran out before or during the check
+	 */
+	private LBool checkSatWithin(final IUltimateServiceProvider services, final String task) {
+		final IProgressMonitorService monitor = services.getProgressMonitorService();
+		if (!monitor.continueProcessing()) {
+			throw new ToolchainCanceledException(getClass(), task);
+		}
+		final Script script = mWorkerMgdScript.getScript();
+		final Thread watchdog = new Thread(() -> {
+			try {
+				while (monitor.continueProcessing()) {
+					Thread.sleep(WATCHDOG_POLL_MILLIS);
+				}
+				ExternalSolverInterrupter.interrupt(script, KILL_GRACE_MILLIS);
+			} catch (final InterruptedException e) {
+				// The check-sat ended first.
+			}
+		}, "KInduction check-sat watchdog");
+		watchdog.setDaemon(true);
+		watchdog.start();
+		final LBool result;
+		try {
+			result = mWorkerMgdScript.checkSat(mKILock);
+		} catch (final SMTLIBException e) {
+			// The interrupt killed the solver because it did not answer within the grace period.
+			if (!monitor.continueProcessing()) {
+				throw new ToolchainCanceledException(getClass(), task + " (" + e.getMessage() + ")");
+			}
+			throw e;
+		} finally {
+			watchdog.interrupt();
+			joinWatchdog(watchdog);
+		}
+		// An interrupted check-sat answers unknown; that is the timer, not the solver giving up.
+		if (!monitor.continueProcessing()) {
+			throw new ToolchainCanceledException(getClass(), task);
+		}
+		return result;
+	}
+
+	/**
+	 * Waits until the watchdog is gone, so that an interrupt it is just sending cannot hit a later query.
+	 */
+	private static void joinWatchdog(final Thread watchdog) {
+		boolean interrupted = false;
+		while (true) {
+			try {
+				watchdog.join();
+				break;
+			} catch (final InterruptedException e) {
+				interrupted = true;
+			}
+		}
+		if (interrupted) {
+			Thread.currentThread().interrupt();
+		}
 	}
 
 	/**
