@@ -30,8 +30,8 @@ product_exists() {
   return 1
 }
 
-# Package the given Ultimate product for the given operating system ('linux' or
-# 'win32') in a local folder U<toolname>-<os>.
+# Package the given Ultimate product for the given operating system ('linux',
+# 'macosx' or 'win32') in a local folder U<toolname>-<os>.
 package_product() {
   local TOOLNAME="${1}"
   local OS="${2}"
@@ -44,10 +44,12 @@ package_product() {
   local WS
   if [ "${OS}" == "linux" ]; then
     WS="gtk"
+  elif [ "${OS}" == "macosx" ]; then
+    WS="cocoa"
   elif [ "${OS}" == "win32" ]; then
     WS="win32"
   else
-    echo "Wrong argument: ""${OS}"" -- use 'linux' or 'win32'" >&2
+    echo "Wrong argument: ""${OS}"" -- use 'linux', 'macosx' or 'win32'" >&2
     exit 1
   fi
 
