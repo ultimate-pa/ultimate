@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
@@ -55,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -66,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 
 /**
  * Implements a specific memory addressing scheme for a two-dimensional memory layout.
@@ -80,15 +79,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 public class MemoryAddressing2D extends MemoryAdressingBase<MemoryPointer2D> {
 	public MemoryAddressing2D(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final PointerIntegerConversion pointerIntegerMode, final FunctionDeclarations functionDeclarations,
-			final MemoryPointer2D pointer) {
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final TranslationSettings settings,
+			final FunctionDeclarations functionDeclarations, final MemoryPointer2D pointer) {
 		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer, pointer,
-				pointerIntegerMode, functionDeclarations,
+				settings.getPointerIntegerCastMode(), functionDeclarations,
 				new MemoryMetadataDefault2D(typeHandler, exprTranslation, booleanArrayHelper));
 
 		mMemoryManagementStrategy = new NonDetStrategy2D<>(typeSizes, exprTranslation, typeHandler,
-				typeSizeAndOffsetComputer, booleanArrayHelper, this);
+				typeSizeAndOffsetComputer, booleanArrayHelper, this, settings.assumeHeapAllocationAlwaysSucceeds());
 	}
 
 	@Override

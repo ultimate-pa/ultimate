@@ -9,6 +9,7 @@
 
 int main() {
   int* x = malloc(sizeof(int));
+  if (x == NULL) return;
   *x = 0;
   //@ assert *x == 0;
 }

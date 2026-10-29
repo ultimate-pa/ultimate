@@ -16,6 +16,7 @@ from requests import JSONDecodeError
 from zenodo_client import Creator, Metadata, Zenodo
 from zenodo_client.api import Data, Paths
 import pystow
+from tqdm import tqdm
 
 from ruamel.yaml import YAML
 
@@ -34,6 +35,8 @@ def token_string_or_file(arg):
 
 
 ACCESS_TOKEN = None
+# seconds to wait for Zenodo to answer; it can take minutes, especially when publishing
+TIMEOUT = 300
 logging.basicConfig(format="%(message)s", stream=sys.stdout)
 logger = logging.getLogger(__package__)
 
@@ -55,7 +58,6 @@ def parse_args():
         "--sandbox",
         action=argparse.BooleanOptionalAction,
         default=True,
-        type=bool,
         help="Should we use Zenodo's sandbox instead of the real Zenodo? Default: Yes",
     )
     parser.add_argument(
@@ -122,21 +124,26 @@ def update(
 ) -> requests.Response:
     """Create a new version of the given record with the given files."""
 
-    def get_current(id):
-        current = requests.get(
-            f"{self.depositions_base}/{id}",
-            params={"access_token": self.access_token},
-        )
-        current.raise_for_status()
-        return current
-
-    current = retry_request(lambda: get_current(deposition_id), "Get Current")
+    current = retry_request(lambda: get_deposition(self, deposition_id), "Get Current")
     if not current:
         logger.fatal(f"Could not get deposition {deposition_id}, giving up")
         return None
 
     current_data = current.json()
     logger.debug(f"get_current({deposition_id}) GET response: {pformat(current_data)}")
+
+    # The saved ID is outdated if an earlier run published a new version but failed
+    # before saving its ID, e.g., because Zenodo answered too slowly. Creating a new
+    # version from the outdated one would duplicate the published one.
+    latest_id = get_latest_version_id(self, current_data)
+    if latest_id is None:
+        logger.fatal(f"Could not get latest version of {deposition_id}, giving up")
+        return None
+    if latest_id != str(deposition_id):
+        logger.warning(
+            f"Deposition {deposition_id} is outdated, continuing with its latest version {latest_id}"
+        )
+        return update(self, latest_id, data, paths)
 
     if current_data["conceptrecid"] != deposition_id:
         logger.warning(
@@ -161,21 +168,37 @@ def update(
             f"{self.depositions_base}/{deposition_id}/actions/newversion",
             params={"access_token": self.access_token},
             json=new_metadata,
+            timeout=TIMEOUT,
         )
         newversion_res.raise_for_status()
         return newversion_res
 
-    newversion_res = retry_request(create_new_version, "Create new version")
-    if not newversion_res:
-        logger.fatal(
-            f"Failed to create new version for deposition {deposition_id}, giving up"
+    draft = find_unpublished_draft(self, current_data["conceptrecid"])
+    if draft:
+        # An earlier run failed after creating the new version, and Zenodo refuses
+        # to create another one while this draft exists ("Please remove all files
+        # first"), so we finish this one instead
+        logger.warning(
+            f"Reusing unpublished draft {draft['id']} left over from an earlier run"
         )
-        return None
+        new_deposition_url = f"{self.depositions_base}/{draft['id']}"
+        new_deposition_id = draft["id"]
+        bucket = draft["links"]["bucket"]
+    else:
+        newversion_res = retry_request(create_new_version, "Create new version")
+        if not newversion_res:
+            logger.fatal(
+                f"Failed to create new version for deposition {deposition_id}, giving up"
+            )
+            return None
 
-    newversion_data = newversion_res.json()
-    logger.debug(f"create_new_version() POST response: {pformat(newversion_data)}")
-    new_deposition_url = newversion_data["links"]["latest_draft"]
-    new_deposition_id = newversion_data["record_id"]
+        newversion_data = newversion_res.json()
+        logger.debug(
+            f"create_new_version() POST response: {pformat(newversion_data)}"
+        )
+        new_deposition_url = newversion_data["links"]["latest_draft"]
+        new_deposition_id = newversion_data["record_id"]
+        bucket = newversion_data["links"]["bucket"]
     new_metadata["metadata"]["publication_date"] = datetime.datetime.today().strftime(
         "%Y-%m-%d"
     )
@@ -187,18 +210,143 @@ def update(
             new_deposition_url,
             json=new_metadata,
             params={"access_token": self.access_token},
+            timeout=TIMEOUT,
         )
         update_res.raise_for_status()
         return update_res
 
     update_res = retry_request(populate_new_version, "Populate new version")
+    if not update_res:
+        logger.fatal(f"Could not set metadata of draft {new_deposition_id}, giving up")
+        return None
     logger.debug(f"populate_new_version PUT response: {pformat(update_res.json())}")
 
     # Upload new files. If no files have changed, there will be no update
-    self._upload_files(bucket=newversion_data["links"]["bucket"], paths=paths)
+    upload_files(self, bucket=bucket, paths=paths)
 
     # Send the publish command
-    return retry_request(lambda: self.publish(new_deposition_id), "Publishing")
+    return publish(self, new_deposition_id)
+
+
+def get_deposition(self: Zenodo, deposition_id) -> requests.Response:
+    res = requests.get(
+        f"{self.depositions_base}/{deposition_id}",
+        params={"access_token": self.access_token},
+        timeout=TIMEOUT,
+    )
+    res.raise_for_status()
+    return res
+
+
+def get_latest_version_id(self: Zenodo, deposition: dict):
+    """Return the ID of the newest published version of the deposition's record."""
+    url = deposition["links"].get("latest")
+    if url is None:
+        return str(deposition["id"])
+
+    def get_latest():
+        res = requests.get(
+            url, params={"access_token": self.access_token}, timeout=TIMEOUT
+        )
+        res.raise_for_status()
+        return res
+
+    res = retry_request(get_latest, "Get latest version")
+    return str(res.json()["id"]) if res else None
+
+
+def publish(self: Zenodo, deposition_id) -> requests.Response:
+    """Like Zenodo.publish, but waits longer than 15s for Zenodo to answer and checks
+    whether a request that failed published the deposition anyway."""
+
+    def post_publish():
+        # like Zenodo.publish, wait a bit in case of race conditions
+        time.sleep(1)
+        res = requests.post(
+            f"{self.depositions_base}/{deposition_id}/actions/publish",
+            params={"access_token": self.access_token},
+            timeout=TIMEOUT,
+        )
+        res.raise_for_status()
+        return res
+
+    res = retry_request(post_publish, "Publishing")
+    if res:
+        return res
+    state = retry_request(
+        lambda: get_deposition(self, deposition_id), "Check if published"
+    )
+    if state and state.json().get("state") == "done":
+        logger.warning(f"Publishing: Deposition {deposition_id} was published anyway")
+        return state
+    return res
+
+
+def find_unpublished_draft(self: Zenodo, conceptrecid: str):
+    """Return the unpublished new-version draft of the given concept record, if any."""
+
+    def get_drafts():
+        res = requests.get(
+            self.depositions_base,
+            params={
+                "access_token": self.access_token,
+                "q": f"conceptrecid:{conceptrecid}",
+            },
+            timeout=TIMEOUT,
+        )
+        res.raise_for_status()
+        return res
+
+    res = retry_request(get_drafts, "Find unpublished draft")
+    if not res:
+        return None
+    drafts = [
+        d
+        for d in res.json()
+        if str(d.get("conceptrecid")) == str(conceptrecid) and not d["submitted"]
+    ]
+    if not drafts:
+        return None
+    if len(drafts) > 1:
+        logger.warning(
+            f"Found {len(drafts)} unpublished drafts for {conceptrecid}: {[d['id'] for d in drafts]}"
+        )
+
+    # search results lack the bucket link, so fetch the full deposition
+    res = retry_request(
+        lambda: get_deposition(self, drafts[0]["id"]), "Get unpublished draft"
+    )
+    return res.json() if res else None
+
+
+def upload_files(self: Zenodo, bucket: str, paths: Paths) -> None:
+    """Like Zenodo._upload_files, but with retries and a progress bar."""
+    for path in paths:
+        name = os.path.basename(path)
+
+        def put_file():
+            with open(path, "rb") as file, tqdm.wrapattr(
+                file,
+                "read",
+                total=os.path.getsize(path),
+                desc=name,
+                unit="B",
+                unit_scale=True,
+                unit_divisor=1024,
+            ) as progress:
+                res = requests.put(
+                    f"{bucket}/{name}",
+                    data=progress,
+                    params={"access_token": self.access_token},
+                    timeout=TIMEOUT,
+                )
+            res.raise_for_status()
+            return res
+
+        if not retry_request(put_file, f"Upload {name}"):
+            # the draft still contains the previous version's file and must not be
+            # published
+            raise requests.RequestException(f"Uploading {name} failed")
 
 
 def to_metadata_json(data: Data) -> str:
@@ -233,29 +381,32 @@ def log_request_error(fun, desc: str):
 
 
 def retry_request(fun, desc: str, max_retries=3, init_sleep=5):
+    """Call fun, retrying on 5xx responses, timeouts and dropped connections.
+
+    Returns the last response, or None if no attempt got one."""
     response = None
     sleep = 0
     retries = 0
-    while response is None and retries < max_retries:
+    while retries < max_retries:
         if retries > 0:
             logger.warning(
                 f"{desc}: Retrying up to {max_retries - retries} more times, using {sleep}s back-off"
             )
-        if sleep > 0:
             time.sleep(sleep)
-        response = log_request_error(fun, desc)
-        if response.status_code >= 500:
-            sleep = init_sleep if sleep == 0 else sleep * 2
-            retries = retries + 1
+        try:
+            response = log_request_error(fun, desc)
+        except (requests.ConnectionError, requests.Timeout) as ex:
+            logger.warning(f"{desc}: {ex}")
             response = None
-        elif response.ok:
+        if response is not None and response.status_code < 500:
             break
+        sleep = init_sleep if sleep == 0 else sleep * 2
+        retries = retries + 1
 
-    if response and response.ok and retries > 0:
+    if response and retries > 0:
         logger.warning(
             f"{desc}: Successful after {retries} retries with {response.status_code}"
         )
-    logger.debug(response.status_code)
     return response
 
 
@@ -274,6 +425,7 @@ def create(self: Zenodo, data: Data, paths: Paths) -> requests.Response:
         self.depositions_base,
         json=data,
         params={"access_token": self.access_token},
+        timeout=TIMEOUT,
     )
     res_deposition.raise_for_status()
 
@@ -283,12 +435,12 @@ def create(self: Zenodo, data: Data, paths: Paths) -> requests.Response:
         raise ValueError(f"No bucket in response. Got: {res_deposition_json}")
 
     logger.info("Uploading files to bucket %s", bucket)
-    self._upload_files(bucket=bucket, paths=paths)
+    upload_files(self, bucket=bucket, paths=paths)
 
     deposition_id = res_deposition_json["id"]
     logger.info("Publishing files to deposition %s", deposition_id)
 
-    res_publish = retry_request(lambda: self.publish(deposition_id), "Publishing")
+    res_publish = publish(self, deposition_id)
 
     if res_publish:
         return res_publish
@@ -365,25 +517,33 @@ def upload_tools(args, tools):
 
         new_path = f"u{tool.lower()}.zip"
         os.rename(path, new_path)
-
-        paths = [
-            new_path,
-        ]
-        data = create_metadata(toolname=tool, version=version, svcomp_year=args.year)
-        result = log_request_error(
-            lambda: upload(tool, data, paths, sandbox=args.sandbox), "Upload"
-        )
-        if result and result.ok:
-            data = result.json()
-            if "doi" in data:
-                doi = data["doi"]
-                url = data["links"]["html"]
-                logger.info(
-                    f"Success: DOI for {tool} with version {version} is {doi} at {url}"
+        # rename back even if the upload crashes, otherwise the next run skips this tool
+        try:
+            paths = [
+                new_path,
+            ]
+            data = create_metadata(
+                toolname=tool, version=version, svcomp_year=args.year
+            )
+            try:
+                result = log_request_error(
+                    lambda: upload(tool, data, paths, sandbox=args.sandbox), "Upload"
                 )
-                tool_to_doi[tool] = doi = data["doi"]
-            logger.debug(pformat(data))
-        os.rename(new_path, path)
+            except requests.RequestException as ex:
+                logger.fatal(f"Upload: Giving up on {tool}: {ex}")
+                result = None
+            if result and result.ok:
+                data = result.json()
+                if "doi" in data:
+                    doi = data["doi"]
+                    url = data["links"]["html"]
+                    logger.info(
+                        f"Success: DOI for {tool} with version {version} is {doi} at {url}"
+                    )
+                    tool_to_doi[tool] = doi = data["doi"]
+                logger.debug(pformat(data))
+        finally:
+            os.rename(new_path, path)
         logger.info("--")
     return tool_to_doi
 
@@ -438,56 +598,66 @@ def tool_yaml(tool: str):
     return f"data/u{tool.lower()}.yml"
 
 
-# get_available_licenses()
-args = parse_args()
+def main(args):
+    # get_available_licenses()
+    tool_names = ["Automizer", "Kojak", "Taipan", "GemCutter", "Referee"]
+    tools = {k: tool_zip(k) for k in tool_names}
+    yaml_files = {k: tool_yaml(k) for k in tool_names}
 
-tool_names = ["Automizer", "Kojak", "Taipan", "GemCutter", "Referee"]
-tools = {k: tool_zip(k) for k in tool_names}
-yaml_files = {k: tool_yaml(k) for k in tool_names}
-
-tool_to_doi = upload_tools(args, tools)
-if args.fmtools_path:
-    p = Path(args.fmtools_path)
-    if p.is_dir() and p.exists():
-        for tool, f in yaml_files.items():
-            if tool not in tool_to_doi:
-                logger.error(f"No DOI for {tool}, skipping")
-                continue
-            yaml_file = p / Path(f)
-            if not yaml_file.is_file() or not yaml_file.exists():
-                logger.error(f"{yaml_file} for {tool} does not exist, skipping")
-                continue
-            content = None
-            with open(yaml_file, "r") as file:
-                yaml = YAML()
-                content = yaml.load(file)
-            if content["name"][1:].lower() != tool.lower():
-                logger.error(
-                    f"{yaml_file} for {tool} is actually for {content['name']}, skipping"
-                )
-                continue
-            if "versions" not in content:
-                logger.error(f"{yaml_file} for {tool} does not have 'versions' section")
-                continue
-
-            dump_yaml = False
-
-            def replace_if_matching(version):
-                global dump_yaml
-                target_ver = f"svcomp{args.year[2:]}"
-                if target_ver in version["version"]:
-                    new = version
-                    new["doi"] = tool_to_doi[tool]
-                    logger.info(f"Updated {tool} {version['version']} to {new['doi']}")
-                    dump_yaml = True
-                    return new
-                return version
-
-            content["versions"] = [replace_if_matching(c) for c in content["versions"]]
-
-            if dump_yaml:
-                with open(yaml_file, "w") as f:
+    tool_to_doi = upload_tools(args, tools)
+    if args.fmtools_path:
+        p = Path(args.fmtools_path)
+        target_ver = f"svcomp{args.year[2:]}"
+        if not p.is_dir():
+            logger.error(f"{p} is not a directory, not updating any YAML files")
+        else:
+            for tool, f in yaml_files.items():
+                if tool not in tool_to_doi:
+                    logger.error(f"No DOI for {tool}, skipping")
+                    continue
+                yaml_file = p / Path(f)
+                if not yaml_file.is_file() or not yaml_file.exists():
+                    logger.error(f"{yaml_file} for {tool} does not exist, skipping")
+                    continue
+                content = None
+                with open(yaml_file, "r") as file:
                     yaml = YAML()
-                    yaml.default_flow_style = False
-                    yaml.dump(content, f)
-                    logger.info(f"Updated {yaml_file} for {tool} with new DOI(s)")
+                    content = yaml.load(file)
+                if content["name"][1:].lower() != tool.lower():
+                    logger.error(
+                        f"{yaml_file} for {tool} is actually for {content['name']}, skipping"
+                    )
+                    continue
+                if "versions" not in content:
+                    logger.error(f"{yaml_file} for {tool} does not have 'versions' section")
+                    continue
+
+                dump_yaml = False
+
+                def replace_if_matching(version):
+                    nonlocal dump_yaml
+                    if target_ver in version["version"]:
+                        new = version
+                        new["doi"] = tool_to_doi[tool]
+                        logger.info(f"Updated {tool} {version['version']} to {new['doi']}")
+                        dump_yaml = True
+                        return new
+                    return version
+
+                content["versions"] = [replace_if_matching(c) for c in content["versions"]]
+
+                if dump_yaml:
+                    with open(yaml_file, "w") as f:
+                        yaml = YAML()
+                        yaml.default_flow_style = False
+                        yaml.dump(content, f)
+                        logger.info(f"Updated {yaml_file} for {tool} with new DOI(s)")
+                else:
+                    logger.warning(
+                        f"{yaml_file} has no version containing '{target_ver}', "
+                        "add one (e.g., with 'doi: ...') and run again"
+                    )
+
+
+if __name__ == "__main__":
+    main(parse_args())

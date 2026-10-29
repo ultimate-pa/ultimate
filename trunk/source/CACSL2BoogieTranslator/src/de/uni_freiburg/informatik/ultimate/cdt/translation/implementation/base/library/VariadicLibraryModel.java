@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -84,8 +83,7 @@ public class VariadicLibraryModel implements ILibraryModel {
 
 	public VariadicLibraryModel(final FunctionModelHelper helper, final MemoryHandler memoryHandler,
 			final ProcedureManager procedureManager, final ITypeHandler typeHandler,
-			final ExpressionResultTransformer exprResultTransformer, final ExpressionTranslation expressionTranslation,
-			final AuxVarInfoBuilder auxVarInfoBuilder) {
+			final ExpressionResultTransformer exprResultTransformer, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		mHelper = helper;
 		mMemoryHandler = memoryHandler;
 		mProcedureManager = procedureManager;
@@ -105,15 +103,13 @@ public class VariadicLibraryModel implements ILibraryModel {
 	}
 
 	private List<Statement> makeVarargAssignment(final ILocation loc, final LRValue lhs, final Expression rhs) {
-		if (lhs instanceof LocalLValue) {
-			return List.of(StatementFactory.constructSingleAssignmentStatement(loc, ((LocalLValue) lhs).getLhs(), rhs));
-		} else if (lhs instanceof HeapLValue) {
-			return mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, rhs, lhs.getCType(), false);
-		} else if (lhs instanceof RValue) {
-			final RValue rValue = (RValue) lhs;
+		switch (lhs) {
+		case final LocalLValue localLValue:
+			return List.of(StatementFactory.constructSingleAssignmentStatement(loc, localLValue.getLhs(), rhs));
+		case final HeapLValue heapLValue:
+			return mMemoryHandler.getWriteCall(loc, heapLValue, rhs, lhs.getCType(), false);
+		case final RValue rValue:
 			return makeVarargAssignment(loc, new HeapLValue(rValue.getValue(), rValue.getCType(), null), rhs);
-		} else {
-			throw new UnsupportedOperationException("Unsupported type " + lhs.getClass().getSimpleName());
 		}
 	}
 

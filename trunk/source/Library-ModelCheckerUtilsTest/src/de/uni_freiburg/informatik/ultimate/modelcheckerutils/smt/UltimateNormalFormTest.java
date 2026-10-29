@@ -173,8 +173,9 @@ public class UltimateNormalFormTest {
 
 	// --- N-ary bvand/bvor/bvxor simplification (BitvectorUtils) ---
 
+	// Testing new class allowing multiple elements
 	@Test
-	public void bvaddAbsorption() { // Testing new class allowing multiple elements
+	public void bvaddAbsorption() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
 		final String formulaAsString = "(bvand (_ bv2 8) x (_ bv1 8))";
 		final String simplified = "(_ bv0 8)";

@@ -110,8 +110,6 @@ public class AnnotateAndAsserter<L extends IAction> {
 		mSatisfiable = annotateAndAssert(mSSA.getTrace(), partitions);
 		mLogger.info(String.format("Assert order %s issued %s check-sat command(s) and asserted %s of %s statements.",
 				mAssertCodeBlocksOrder, mCheckSat, mAssertedStatements, mSSA.getCounterexample().length()));
-
-		mLogger.info("Assert order " + mAssertCodeBlocksOrder + " issued " + mCheckSat + " check-sat command(s)");
 		mLogger.info("Conjunction of SSA is " + mSatisfiable);
 	}
 

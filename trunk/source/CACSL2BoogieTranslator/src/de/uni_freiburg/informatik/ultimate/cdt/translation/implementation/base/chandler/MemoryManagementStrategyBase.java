@@ -50,13 +50,16 @@ public abstract class MemoryManagementStrategyBase implements IMemoryManagementS
 	protected final ExpressionTranslation mExpressionTranslation;
 	protected final ITypeHandler mTypeHandler;
 	protected final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
+	protected boolean mAssumeAllocAlwaysSucceeds;
 
 	public MemoryManagementStrategyBase(final TypeSizes typeSizes, final ExpressionTranslation expressionTranslation,
-			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer) {
+			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
+			final boolean assumeAllocAlwaysSucceeds) {
 		mTypeSizes = typeSizes;
 		mExpressionTranslation = expressionTranslation;
 		mTypeHandler = typeHandler;
 		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
+		mAssumeAllocAlwaysSucceeds = assumeAllocAlwaysSucceeds;
 	}
 
 	protected static Expression baseNotEqualZeroExpr(final ILocation tuLoc, final Expression resultExpr,

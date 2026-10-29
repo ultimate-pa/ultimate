@@ -373,9 +373,10 @@ public class MemoryHandler {
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
 				.contains(MemoryModelDeclarations.C_REALLOC)) {
-			final ConstructRealloc cr = new ConstructRealloc(this, mProcedureManager, mTypeHandler,
-					mTypeSizeAndOffsetComputer, mExpressionTranslation, mMemoryPointer, mMemoryModel,
-					mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+			final ConstructRealloc cr =
+					new ConstructRealloc(this, mProcedureManager, mTypeHandler, mTypeSizeAndOffsetComputer,
+							mExpressionTranslation, mMemoryPointer, mMemoryModel, mRequiredMemoryModelFeatures,
+							mMemoryModelDeclarationsHandler, mSettings.assumeHeapAllocationAlwaysSucceeds());
 			declarations.addAll(cr.declareRealloc(main, heapDataArrays));
 		}
 
@@ -862,9 +863,10 @@ public class MemoryHandler {
 	}
 
 	public IdentifierExpression getPthreadForkCount(final ILocation loc) {
+		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_FORK_COUNT);
 		final BoogieType counterType = mTypeHandler.getBoogieTypeForCType(mTypeHandler.getThreadIdType());
 		return ExpressionFactory.constructIdentifierExpression(loc, counterType, SFO.ULTIMATE_FORK_COUNT,
-				new DeclarationInformation(StorageClass.GLOBAL, null));
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 	public Expression constructMutexArrayIdentifierExpression(final ILocation loc) {
@@ -873,17 +875,18 @@ public class MemoryHandler {
 				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
 						(BoogieType) mBooleanArrayHelper.constructBoolReplacementType().getBoogieType());
 		return ExpressionFactory.constructIdentifierExpression(loc, boogieType, SFO.ULTIMATE_PTHREADS_MUTEX,
-				new DeclarationInformation(StorageClass.GLOBAL, null));
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 	public AssignmentStatement constructMutexArrayAssignment(final ILocation loc, final Expression index,
 			final boolean mutexLocked) {
+		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
 		final BoogieArrayType boogieType =
 				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
 						(BoogieType) getBooleanArrayHelper().constructBoolReplacementType().getBoogieType());
 		return MemoryHandler.constructOneDimensionalArrayUpdate(loc, index,
 				new VariableLHS(loc, boogieType, SFO.ULTIMATE_PTHREADS_MUTEX,
-						new DeclarationInformation(StorageClass.GLOBAL, null)),
+						DeclarationInformation.DECLARATIONINFO_GLOBAL),
 				getBooleanArrayHelper().constructFromValue(mutexLocked));
 	}
 
@@ -893,7 +896,7 @@ public class MemoryHandler {
 				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
 						mTypeHandler.getBoogieTypeForCType(getRwLockCounterType()));
 		return ExpressionFactory.constructIdentifierExpression(loc, boogieType, SFO.ULTIMATE_PTHREADS_RWLOCK,
-				new DeclarationInformation(StorageClass.GLOBAL, null));
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 	}
 
 	public void requireMemoryModelFeature(final MemoryModelDeclarations mmDecl) {

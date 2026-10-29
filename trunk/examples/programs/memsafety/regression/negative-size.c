@@ -20,6 +20,7 @@ int main() {
   int size = __VERIFIER_nondet_int();
   assume_abort_if_not(size != 0);
   int *a = malloc(sizeof(int) * size);
+  assume_abort_if_not(a != NULL);
   a[0] = 5;
   int x = a[0];
   free(a);

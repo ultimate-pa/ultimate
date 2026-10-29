@@ -528,7 +528,7 @@ public class BoogieOutput implements AutoCloseable {
 			mWriter.print(" = ");
 			printType(synonym);
 		}
-		mWriter.print(";");
+		mWriter.println(";");
 	}
 
 	public void printFunctionDeclaration(final FunctionDeclaration decl) {

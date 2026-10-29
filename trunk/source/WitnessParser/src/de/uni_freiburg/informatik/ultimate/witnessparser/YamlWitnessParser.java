@@ -144,17 +144,18 @@ public class YamlWitnessParser {
 		final Location location = parseLocation((Map<String, Object>) wp.get("location"));
 		final Map<String, String> constraintMap = (Map<String, String>) wp.get("constraint");
 		final String constraint = constraintMap == null ? null : constraintMap.get("value").toString();
+		final Integer threadId = (Integer) wp.get("thread_id");
 		switch ((String) wp.get("type")) {
 		case "target":
-			return new WaypointTarget(location);
+			return new WaypointTarget(location, threadId);
 		case "branching":
-			return new WaypointBranching(constraint, location);
+			return new WaypointBranching(constraint, location, threadId);
 		case "assumption":
-			return new WaypointAssumption(constraint, location);
+			return new WaypointAssumption(constraint, location, threadId);
 		case "function_enter":
-			return new WaypointFunctionEnter(location);
+			return new WaypointFunctionEnter(location, threadId);
 		case "function_return":
-			return new WaypointFunctionReturn(constraint, location);
+			return new WaypointFunctionReturn(constraint, location, threadId);
 		default:
 			throw new UnsupportedOperationException("Unable to parse waypoint with type " + wp.get("type"));
 		}

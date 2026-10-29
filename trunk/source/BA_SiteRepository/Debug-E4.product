@@ -22,7 +22,7 @@
       </programArgsMac>
       <programArgsWin>-data @user.home\ultimate-data
       </programArgsWin>
-      <vmArgs>-Xmx4g -Xms4M -Dequinox.resolver.revision.batch.size=1
+      <vmArgs>-Xms2M -Xmx15G -Xss1M -Dequinox.resolver.revision.batch.size=1
       </vmArgs>
    </launcherArgs>
 
@@ -58,6 +58,7 @@
       <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.equinox.event" autoStart="true" startLevel="3" />
       <plugin id="org.eclipse.osgi" autoStart="true" startLevel="1" />
+      <property name="cssTheme" value="none" />
    </configurations>
 
    <preferencesInfo>

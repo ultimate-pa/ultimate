@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FindBindingReferences;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -127,8 +126,6 @@ public class ThreadIdManager {
 	 */
 	public Expression[] updateForkedThreadId(final IASTInitializerClause argument, final IDispatcher dispatcher,
 			final ILocation loc, final IASTNode hook, final ExpressionResultBuilder erb) {
-		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_FORK_COUNT);
-
 		final Expression threadId = getOldForkCounterAsTemp(loc, erb);
 		incrementForkCounter(loc, erb);
 		final ExpressionResult pointerLValue =

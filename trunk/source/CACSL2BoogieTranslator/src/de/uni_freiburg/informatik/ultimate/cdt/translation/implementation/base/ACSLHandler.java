@@ -71,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -654,7 +653,7 @@ public class ACSLHandler implements IACSLHandler {
 			if (!(cType instanceof CPrimitive)) {
 				throw new UnsupportedSyntaxException(loc, "Only quantified variables of primitive type are supported.");
 			}
-			final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.QUANTIFIED, null);
+			final DeclarationInformation declInfo = DeclarationInformation.DECLARATIONINFO_QUANTIFIED;
 			final BoogieType boogieType = mTypeHandler.getBoogieTypeForCType(cType);
 			final String name = decl.getName();
 			mBoundVariables.put(name, new LocalLValue(new VariableLHS(loc, boogieType, name, declInfo), cType, false));
@@ -829,27 +828,14 @@ public class ACSLHandler implements IACSLHandler {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final ExpressionResult array = (ExpressionResult) main.dispatch(node.getArray(), main.getAcslHook());
 		final ExpressionResult index = dispatchSwitch(main, node.getIndex(), loc);
-		return mCHandler.handleArraySubscriptExpression(array, index, main.getAcslHook());
+		return mCHandler.handleArraySubscriptExpression(loc, array, index, main.getAcslHook());
 	}
 
 	@Override
 	public Result visit(final IDispatcher main, final FieldAccessExpression node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		final ExpressionResult r = dispatchSwitch(main, node.getStruct(), loc);
-		assert r.getClass() == ExpressionResult.class;
-		final String field = node.getField();
-
-		resultBuilder.addAllExceptLrValue(r);
-
-		// TODO: CType
-		final Expression structAccessExpression =
-				ExpressionFactory.constructStructAccessExpression(loc, r.getLrValue().getValue(), field);
-
-		final RValue rval = new RValue(structAccessExpression,
-				((CStructOrUnion) r.getLrValue().getCType().getUnderlyingType()).getFieldType(field));
-		resultBuilder.setLrValue(rval);
-		return resultBuilder.build();
+		final ExpressionResult struct = (ExpressionResult) main.dispatch(node.getStruct(), main.getAcslHook());
+		return mCHandler.handleFieldReference(loc, struct, node.getField(), main.getAcslHook());
 	}
 
 	@Override
@@ -867,7 +853,7 @@ public class ACSLHandler implements IACSLHandler {
 
 		final Expression arr = ExpressionFactory.constructIdentifierExpression(loc,
 				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT), SFO.VALID,
-				new DeclarationInformation(StorageClass.GLOBAL, null));
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
 		final Expression e = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
 		// TODO: CType/range type of valid array -- depends on a preference???
@@ -890,7 +876,7 @@ public class ACSLHandler implements IACSLHandler {
 		final Expression[] idc = { idx };
 		final Expression arr = ExpressionFactory.constructIdentifierExpression(loc,
 				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT), SFO.VALID,
-				new DeclarationInformation(StorageClass.GLOBAL, null));
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		final Expression valid = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
 		final Expression e = ExpressionFactory.constructUnaryExpression(loc,
 				de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.LOGICNEG, valid);
@@ -916,7 +902,7 @@ public class ACSLHandler implements IACSLHandler {
 		final Expression[] idc = { idx };
 		final Expression arr = ExpressionFactory.constructIdentifierExpression(loc,
 				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT), SFO.VALID,
-				new DeclarationInformation(StorageClass.GLOBAL, null));
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		final Expression e = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
 
 		// TODO: CType

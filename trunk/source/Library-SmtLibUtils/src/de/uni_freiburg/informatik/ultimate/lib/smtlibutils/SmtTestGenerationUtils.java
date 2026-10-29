@@ -210,7 +210,7 @@ public final class SmtTestGenerationUtils {
 		return sb.toString();
 	}
 
-	public static void dumpEliminationOpportunities(final String filenamePrefix, final Term moreQuantifiedTerm,
+	public static void dumpEliminationOpportunity(final String filenamePrefix, final Term moreQuantifiedTerm,
 			final Term lessQuantifiedTerm) {
 		final String name = String.format(filenamePrefix + "_%s_%s_Treesizes_%s_%s",
 				Integer.toHexString(moreQuantifiedTerm.hashCode()), Integer.toHexString(lessQuantifiedTerm.hashCode()),

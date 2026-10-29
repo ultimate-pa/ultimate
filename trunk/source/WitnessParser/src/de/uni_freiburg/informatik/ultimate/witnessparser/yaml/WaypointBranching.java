@@ -34,8 +34,8 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
  */
 public class WaypointBranching extends Waypoint {
 
-	public WaypointBranching(final String constraint, final Location location) {
-		super(constraint, null, location);
+	public WaypointBranching(final String constraint, final Location location, final Integer threadId) {
+		super(constraint, null, location, threadId);
 	}
 
 	@Override

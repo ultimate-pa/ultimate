@@ -86,8 +86,11 @@ public final class CommandLineOptions {
 				.build());
 		rtr.add(Option.builder(OPTION_NAME_INPUTFILES).longOpt(OPTION_LONG_NAME_INPUTFILES).hasArgs()
 				.required(requireInputFile).argName("FILE").build());
-		rtr.add(Option.builder(OPTION_NAME_SETTINGS).longOpt(OPTION_LONG_NAME_SETTINGS).type(File.class).hasArg()
-				.argName("FILE").build());
+		rtr.add(Option.builder(OPTION_NAME_SETTINGS).longOpt(OPTION_LONG_NAME_SETTINGS).type(File.class).hasArgs()
+				.argName("FILE")
+				.desc("Specify one or more paths to Ultimate settings files. Multiple files are applied in the order "
+						+ "they are specified; settings in later files override those in earlier files.")
+				.build());
 		rtr.add(Option.builder().longOpt(OPTION_LONG_NAME_GENERATE_CSV).type(Boolean.class)
 				.desc("Generate .csv files from Statistics results and dump them to a directory (the directory name is "
 						+ "chosen based on the filenames of input, toolchain and settings). The .csv files will also "

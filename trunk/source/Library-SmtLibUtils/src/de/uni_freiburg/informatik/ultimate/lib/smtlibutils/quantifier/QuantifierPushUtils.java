@@ -135,21 +135,19 @@ public class QuantifierPushUtils {
 			if (!isFlattened(et.getQuantifier(), currentDualFiniteJuncts)) {
 				final Term flattened = flattenQuantifiedFormulas(mgdScript, et.getQuantifier(),
 						currentEt.toTerm(mgdScript.getScript()));
-				// some quantifiers could be removed for trivial reasons
-				if (flattened instanceof QuantifiedFormula) {
-					final QuantifiedFormula qf = (QuantifiedFormula) flattened;
-					if (qf.getQuantifier() != currentEt.getQuantifier()) {
-						// some inner quantifier moved to root node due to simplifications
-						return new Pair<>(false, flattened);
-					} else {
-						// update EliminationTask, restart
-						currentEt = new EliminationTask(qf, currentEt.getContext());
-						continue;
-					}
-				} else {
-					// return because not quantified any more
+				if (!(flattened instanceof QuantifiedFormula)) {
+					// outer quantifiers were be removed for trivial reasons, return
 					return new Pair<>(false, flattened);
 				}
+				final QuantifiedFormula qf = (QuantifiedFormula) flattened;
+				if (qf.getQuantifier() != currentEt.getQuantifier()) {
+					// outer quantifiers were be removed for trivial reasons, a dual quantifier reached the top level,
+					// return
+					return new Pair<>(false, flattened);
+				}
+				// update EliminationTask, with flattened formula, restart preprocessing
+				currentEt = new EliminationTask(qf, currentEt.getContext());
+				continue;
 			}
 
 			// Step 3: Partition dualFiniteJuncts according to eliminatees and try to push
@@ -231,6 +229,7 @@ public class QuantifierPushUtils {
 			// return dual finite junction in the desired form
 			return new Pair<>(true, currentEt.toTerm(mgdScript.getScript()));
 		}
+
 	}
 
 	/**
@@ -245,7 +244,13 @@ public class QuantifierPushUtils {
 	}
 
 	/**
-	 * TODO: Review and possibly revise. TODO: return null if not changed, update callers of method
+	 * Flatten QuantifiedFormula (see {@link QuantifierPushUtils#isFlattened}). If term is a quantified dual finite
+	 * junction or a dual finite junction, we look into each dual finite junct and if it is a quantified formula with
+	 * the same quantifier we pull all quantifiers to the root level of the formula. We rename the inner quantified
+	 * variables to fresh variables if need to avoid name clashes with free variables, quantified variables of the outer
+	 * formula or quantified variables of the other inner formulas.
+	 *
+	 * TODO: return null if not changed, update callers of method
 	 */
 	public static Term flattenQuantifiedFormulas(final ManagedScript mgdScript, final int quantifier, final Term term) {
 		final Set<String> freeVarNames =
@@ -271,25 +276,11 @@ public class QuantifierPushUtils {
 				if (innerQuantifiedFormula.getQuantifier() != quantifier) {
 					resultDualJuncts.add(dualJunct);
 				} else {
-					final Map<Term, Term> substitutionMapping = new HashMap<>();
-					for (final TermVariable innerVar : innerQuantifiedFormula.getVariables()) {
-						TermVariable resultVar;
-						if (quantifiedVariables.containsKey(innerVar.getName())
-								|| freeVarNames.contains(innerVar.getName())) {
-							resultVar = mgdScript.constructFreshCopy(innerVar);
-							substitutionMapping.put(innerVar, resultVar);
-						} else {
-							resultVar = innerVar;
-						}
-						quantifiedVariables.put(resultVar.getName(), resultVar);
-					}
-					Term resultSubformula;
-					if (substitutionMapping.isEmpty()) {
-						resultSubformula = innerQuantifiedFormula.getSubformula();
-					} else {
-						resultSubformula = Substitution.apply(mgdScript, substitutionMapping,
-								innerQuantifiedFormula.getSubformula());
-					}
+//					Get the subformula of the inner quantified formula with all quantified variables renamed to
+//					fresh variables if they are already quantified in the outer formula or if they are free variables
+//					in the outer formula.
+					final Term resultSubformula = getPossiblyRenamedSubformula(mgdScript, freeVarNames,
+							quantifiedVariables, innerQuantifiedFormula);
 					resultDualJuncts.add(resultSubformula);
 				}
 			} else {
@@ -302,6 +293,35 @@ public class QuantifierPushUtils {
 				quantifiedVariables.entrySet().stream().map(Entry::getValue).collect(Collectors.toSet()),
 				resultDualJunction);
 		return result;
+	}
+
+	/**
+	 * Return the subformula of the inner quantified formula with all quantified variables renamed to fresh variables if
+	 * they are in the set freeVarNames or if they are in the map quantifiedVariables. Updates the map
+	 * quantifiedVariables with the new variables.
+	 */
+	private static Term getPossiblyRenamedSubformula(final ManagedScript mgdScript, final Set<String> freeVarNames,
+			final LinkedHashMap<String, TermVariable> quantifiedVariables,
+			final QuantifiedFormula innerQuantifiedFormula) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final TermVariable innerVar : innerQuantifiedFormula.getVariables()) {
+			TermVariable resultVar;
+			if (quantifiedVariables.containsKey(innerVar.getName()) || freeVarNames.contains(innerVar.getName())) {
+				resultVar = mgdScript.constructFreshCopy(innerVar);
+				substitutionMapping.put(innerVar, resultVar);
+			} else {
+				resultVar = innerVar;
+			}
+			quantifiedVariables.put(resultVar.getName(), resultVar);
+		}
+		Term resultSubformula;
+		if (substitutionMapping.isEmpty()) {
+			resultSubformula = innerQuantifiedFormula.getSubformula();
+		} else {
+			resultSubformula =
+					Substitution.apply(mgdScript, substitutionMapping, innerQuantifiedFormula.getSubformula());
+		}
+		return resultSubformula;
 	}
 
 	public static Term pushDualQuantifiersInParams(final IUltimateServiceProvider services,

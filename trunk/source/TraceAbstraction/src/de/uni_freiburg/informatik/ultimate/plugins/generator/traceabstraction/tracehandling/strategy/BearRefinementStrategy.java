@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 /**
- * {@link IRefinementStrategy} that first tries either {@code MathSat} for floating points or {@code CVC4} in bitvector
- * mode, and then {@code Z3}. It uses no {@link AssertCodeBlockOrder} for Mathsat, and
+ * {@link IRefinementStrategy} that first tries either {@code MathSat} for floating points or {@code bitwuzla} in
+ * bitvector mode, and then {@code Z3}. It uses no {@link AssertCodeBlockOrder} for Mathsat, and
  * {@link InterpolationTechnique#FPandBPonlyIfFpWasNotPerfect} for all solvers.
  * <p>
  * The class uses a {@link StraightLineInterpolantAutomatonBuilder} for constructing the interpolant automaton.
@@ -68,7 +68,7 @@ public class BearRefinementStrategy<L extends IIcfgTransition<?>> extends BasicR
 			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect,
 					order));
 		}
-		rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+		rtr.add(factory.createIpTcStrategyModuleBitwuzla(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
 		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}

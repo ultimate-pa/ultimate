@@ -7,6 +7,7 @@
 
 int main() {
   int* a = malloc(sizeof(int));
+  if (a == NULL) return;
   a[0] = 7;
   //@ loop invariant a[0] == 7;
   while (__VERIFIER_nondet_int());

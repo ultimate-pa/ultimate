@@ -231,12 +231,12 @@ public class ExpressionResultTransformer {
 		if (lrVal == null) {
 			return expr;
 		}
-		if (lrVal instanceof RValue) {
+		switch (lrVal) {
+		case final RValue rValue:
 			return replaceEnumByInt(replaceCFunctionByCPointer(expr));
-		}
-		if (lrVal instanceof LocalLValue) {
-			final ICType underlyingType = lrVal.getCType().getUnderlyingType();
-			mCHandler.moveArrayAndStructIdsOnHeap(underlyingType, lrVal.getValue(), hook);
+		case final LocalLValue localLValue: {
+			final ICType underlyingType = localLValue.getCType().getUnderlyingType();
+			mCHandler.moveArrayAndStructIdsOnHeap(underlyingType, localLValue.getValue(), hook);
 
 			final ICType resultType;
 			if (underlyingType instanceof final CArray cArray) {
@@ -248,14 +248,14 @@ public class ExpressionResultTransformer {
 			} else {
 				resultType = underlyingType;
 			}
-			final RValue newRVal = new RValue(lrVal.getValue(), resultType, lrVal.isBoogieBool());
+			final RValue newRVal = new RValue(localLValue.getValue(), resultType, localLValue.isBoogieBool());
 			final ExpressionResultBuilder erb = new ExpressionResultBuilder(expr).setOrResetLrValue(newRVal);
 			if (mDataRaceChecker != null) {
 				mDataRaceChecker.checkOnRead(erb, loc, lrVal);
 			}
 			return erb.build();
 		}
-		if (lrVal instanceof final HeapLValue hlv) {
+		case final HeapLValue hlv: {
 			ICType underlyingType = expr.getLrValue().getCType().getUnderlyingType();
 			if (underlyingType instanceof CEnum) {
 				underlyingType = new CPrimitive(CPrimitives.INT);
@@ -291,7 +291,7 @@ public class ExpressionResultTransformer {
 			}
 			return erb.setLrValue(newValue).build();
 		}
-		throw new AssertionError("an LRValue that is not null, and no LocalLValue, RValue or HeapLValue???");
+		}
 	}
 
 	public ExpressionResult switchToRValue(final ExpressionResult expr, final ILocation loc, final IASTNode hook) {

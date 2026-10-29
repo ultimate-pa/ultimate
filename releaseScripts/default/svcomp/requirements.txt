@@ -1,6 +1,7 @@
 pystow
 ruamel.yaml
 zenodo_client
+tqdm
 imap_tools
 zulip
 lxml

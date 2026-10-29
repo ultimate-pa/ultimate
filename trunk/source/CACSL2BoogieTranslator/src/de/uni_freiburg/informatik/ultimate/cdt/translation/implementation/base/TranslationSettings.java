@@ -89,6 +89,7 @@ public final class TranslationSettings {
 	private final boolean mEnforceIfForConditional;
 	private final MemoryAddressing mMemoryAddressing;
 	private final boolean mFixedAddressesForInitialization;
+	private final boolean mAssumeHeapAllocationAlwaysSucceeds;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds =
@@ -149,6 +150,7 @@ public final class TranslationSettings {
 		mMemoryAddressing = ups.getEnum(CACSLPreferenceInitializer.LABEL_MEMORY_ADDRESSING, MemoryAddressing.class);
 		mFixedAddressesForInitialization =
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_FIXED_ADDRESSES_FOR_INITIALIZATION);
+		mAssumeHeapAllocationAlwaysSucceeds = ups.getBoolean(CACSLPreferenceInitializer.LABEL_HEAP_ALLOC_SUCCEEDS);
 	}
 
 	private TranslationSettings(final CheckMode divisionByZeroOfIntegerTypes,
@@ -165,7 +167,8 @@ public final class TranslationSettings {
 			final boolean enableFesetround, final FloatingPointRoundingMode initialRoundingMode,
 			final boolean adaptMemoryStructureResolutionOnPointerCasts, final int stringOverapproximationThreshold,
 			final UndefinedFunctionBehaviour undefinedFunctionBehaviour, final boolean enforceIfForConditional,
-			final MemoryAddressing memoryAddressingPreference, final boolean fixedAddressesForInitialization) {
+			final MemoryAddressing memoryAddressingPreference, final boolean fixedAddressesForInitialization,
+			final boolean assumeHeapAllocationAlwaysSucceeds) {
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
 		mBitvectorTranslation = bitvectorTranslation;
@@ -197,6 +200,7 @@ public final class TranslationSettings {
 		mEnforceIfForConditional = enforceIfForConditional;
 		mMemoryAddressing = memoryAddressingPreference;
 		mFixedAddressesForInitialization = fixedAddressesForInitialization;
+		mAssumeHeapAllocationAlwaysSucceeds = assumeHeapAllocationAlwaysSucceeds;
 	}
 
 	public PointerIntegerConversion getPointerIntegerCastMode() {
@@ -335,6 +339,10 @@ public final class TranslationSettings {
 		return mFixedAddressesForInitialization;
 	}
 
+	public boolean assumeHeapAllocationAlwaysSucceeds() {
+		return mAssumeHeapAllocationAlwaysSucceeds;
+	}
+
 	public TranslationSettings setMemoryStructurePreference(final MemoryStructure memoryStructure) {
 		return new TranslationSettings(mDivisionByZeroOfIntegerTypes, mDivisionByZeroOfFloatingTypes,
 				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mBitpreciseBitfields, mInRange,
@@ -345,7 +353,7 @@ public final class TranslationSettings {
 				mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround, mInitialRoundingMode,
 				mAdaptMemoryStructureResolutionOnPointerCasts, mStringOverapproximationThreshold,
 				mUndefinedFunctionBehaviour, mEnforceIfForConditional, mMemoryAddressing,
-				mFixedAddressesForInitialization);
+				mFixedAddressesForInitialization, mAssumeHeapAllocationAlwaysSucceeds);
 	}
 
 	/**

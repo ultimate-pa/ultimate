@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 2013-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2025-2026 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2026 University of Freiburg
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
  *
@@ -30,13 +31,11 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -69,51 +68,28 @@ public class StructHandler {
 	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 	private final ExpressionTranslation mExpressionTranslation;
 	private final ITypeHandler mTypeHandler;
-	private final LocationFactory mLocationFactory;
 
 	public StructHandler(final MemoryHandler memoryHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
-			final LocationFactory locationFactory) {
+			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler) {
 		mMemoryHandler = memoryHandler;
 		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
 		mExpressionTranslation = expressionTranslation;
 		mTypeHandler = typeHandler;
-		mLocationFactory = locationFactory;
 	}
 
-	/**
-	 * Handle IASTFieldReference.
-	 *
-	 * @param main
-	 *            a reference to the main IDispatcher.
-	 * @param node
-	 *            the node to translate.
-	 * @param mMemoryHandler
-	 * @return the translation results.
-	 */
-	public Result handleFieldReference(final IDispatcher main, final ExpressionResultTransformer transformer,
-			final IASTFieldReference node) {
-		final ILocation loc = mLocationFactory.createCLocation(node);
-		final String field = node.getFieldName().toString();
-
-		ExpressionResult fieldOwner = (ExpressionResult) main.dispatch(node.getFieldOwner());
-
-		LRValue newValue = null;
-
+	public ExpressionResult handleFieldReference(final ILocation loc, final ExpressionResultTransformer transformer,
+			ExpressionResult fieldOwner, final String field, final boolean isPointerDereference, final IASTNode hook) {
 		final List<ExpressionResult> unionFieldToCType =
 				fieldOwner.getNeighbourUnionFields() == null ? new ArrayList<>()
 						: new ArrayList<>(fieldOwner.getNeighbourUnionFields());
 
-		final ICType foType = (node.isPointerDereference()
-				? ((CPointer) fieldOwner.getLrValue().getUnderlyingType()).getPointsToType()
-				: fieldOwner.getLrValue().getUnderlyingType());
+		final ICType foType =
+				(isPointerDereference ? ((CPointer) fieldOwner.getLrValue().getUnderlyingType()).getPointsToType()
+						: fieldOwner.getLrValue().getUnderlyingType());
 
 		final CStructOrUnion cStructType = (CStructOrUnion) foType.getUnderlyingType();
-		final ICType cFieldType = cStructType.getFieldType(field);
-		final int bitfieldWidth = cStructType.getBitfieldWidth(field);
-
-		if (node.isPointerDereference()) {
-			final ExpressionResult rFieldOwnerRex = transformer.switchToRValue(fieldOwner, loc, node);
+		if (isPointerDereference) {
+			final ExpressionResult rFieldOwnerRex = transformer.switchToRValue(fieldOwner, loc, hook);
 			final Expression address = rFieldOwnerRex.getLrValue().getValue();
 			fieldOwner = new ExpressionResult(rFieldOwnerRex.getStatements(),
 					LRValueFactory.constructHeapLValue(mTypeHandler, address, rFieldOwnerRex.getLrValue().getCType(),
@@ -121,41 +97,58 @@ public class StructHandler {
 					rFieldOwnerRex.getDeclarations(), rFieldOwnerRex.getAuxVars(), rFieldOwnerRex.getOverapprs());
 		}
 
-		if (fieldOwner.getLrValue() instanceof HeapLValue) {
-			final HeapLValue fieldOwnerHlv = (HeapLValue) fieldOwner.getLrValue();
+		// Because of anonymous members, resolving the field access may result in a path of members.
+		// Therefore, we iterate over this path here.
+		final List<String> path = cStructType.getFieldPath(field);
+		LRValue current = fieldOwner.getLrValue();
+		CStructOrUnion currentStruct = cStructType;
+		for (int i = 0; i < path.size(); i++) {
+			final String currentField = path.get(i);
+			final boolean isLast = i == path.size() - 1;
+			final ICType cFieldType = currentStruct.getFieldType(currentField);
+			final int bitfieldWidth = isLast ? currentStruct.getBitfieldWidth(currentField) : -1;
 
-			final Offset fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, cStructType, field);
+			current = switch (current) {
+			case final HeapLValue fieldOwnerHlv -> {
+				final Offset fieldOffset =
+						mTypeSizeAndOffsetComputer.constructOffsetForField(loc, currentStruct, currentField);
 
-			// TODO: different calculations for unions
-			final Expression startAddress = fieldOwnerHlv.getAddress();
+				// TODO: different calculations for unions
+				final Expression startAddress = fieldOwnerHlv.getAddress();
 
-			final Expression newPointer = mMemoryHandler.constructAddressForStructField(loc, startAddress, fieldOffset,
-					mExpressionTranslation.getCTypeOfPointerComponents());
+				final Expression newPointer = mMemoryHandler.constructAddressForStructField(loc, startAddress,
+						fieldOffset, mExpressionTranslation.getCTypeOfPointerComponents());
 
-			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
-			newValue = LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cFieldType, bi);
+				if (currentStruct.isStructOrUnion() == StructOrUnion.UNION) {
+					unionFieldToCType.addAll(computeNeighbourFieldsOfUnionField(loc, currentField, unionFieldToCType,
+							currentStruct, current));
+				}
 
-			if (cStructType.isStructOrUnion() == StructOrUnion.UNION) {
-				unionFieldToCType.addAll(
-						computeNeighbourFieldsOfUnionField(loc, field, unionFieldToCType, cStructType, fieldOwnerHlv));
+				final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
+				yield LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cFieldType, bi);
 			}
-		} else if (fieldOwner.getLrValue() instanceof RValue) {
-			final RValue rVal = (RValue) fieldOwner.getLrValue();
-			final Expression sexpr = ExpressionFactory.constructStructAccessExpression(loc, rVal.getValue(), field);
-			newValue = new RValue(sexpr, cFieldType);
-		} else {
-			final LocalLValue lVal = (LocalLValue) fieldOwner.getLrValue();
-			final StructLHS slhs = ExpressionFactory.constructStructAccessLhs(loc, lVal.getLhs(), field);
-			final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
-			newValue = new LocalLValue(slhs, cFieldType, bi);
 
-			if (cStructType.isStructOrUnion() == StructOrUnion.UNION) {
-				unionFieldToCType
-						.addAll(computeNeighbourFieldsOfUnionField(loc, field, unionFieldToCType, cStructType, lVal));
+			case final RValue rVal -> {
+				final Expression sexpr =
+						ExpressionFactory.constructStructAccessExpression(loc, rVal.getValue(), currentField);
+				yield new RValue(sexpr, cFieldType);
+			}
+			case final LocalLValue lVal -> {
+				if (currentStruct.isStructOrUnion() == StructOrUnion.UNION) {
+					unionFieldToCType.addAll(computeNeighbourFieldsOfUnionField(loc, currentField, unionFieldToCType,
+							currentStruct, lVal));
+				}
+				final StructLHS slhs = ExpressionFactory.constructStructAccessLhs(loc, lVal.getLhs(), currentField);
+				final BitfieldInformation bi = constructBitfieldInformation(bitfieldWidth);
+				yield new LocalLValue(slhs, cFieldType, bi);
+			}
+			};
+			if (!isLast) {
+				currentStruct = (CStructOrUnion) cFieldType.getUnderlyingType();
 			}
 		}
 
-		return new ExpressionResult(fieldOwner.getStatements(), newValue, fieldOwner.getDeclarations(),
+		return new ExpressionResult(fieldOwner.getStatements(), current, fieldOwner.getDeclarations(),
 				fieldOwner.getAuxVars(), fieldOwner.getOverapprs(), unionFieldToCType);
 	}
 
@@ -183,14 +176,14 @@ public class StructHandler {
 			}
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
-			if (fieldOwner instanceof LocalLValue) {
-				final StructLHS havocSlhs = ExpressionFactory.constructStructAccessLhs(loc,
-						((LocalLValue) fieldOwner).getLhs(), neighbourField);
-				builder.setLrValue(new LocalLValue(havocSlhs, foType.getFieldType(neighbourField), null));
-			} else {
-				assert fieldOwner instanceof HeapLValue;
-
-				final Expression unionAddress = ((HeapLValue) fieldOwner).getAddress();
+			final LRValue lrValue = switch (fieldOwner) {
+			case final LocalLValue localLValue -> {
+				final StructLHS havocSlhs =
+						ExpressionFactory.constructStructAccessLhs(loc, localLValue.getLhs(), neighbourField);
+				yield new LocalLValue(havocSlhs, foType.getFieldType(neighbourField), null);
+			}
+			case final HeapLValue heapLValue -> {
+				final Expression unionAddress = heapLValue.getAddress();
 
 				final Offset fieldOffset =
 						mTypeSizeAndOffsetComputer.constructOffsetForField(loc, foType, neighbourField);
@@ -198,12 +191,13 @@ public class StructHandler {
 				final Expression neighbourFieldAddress = mMemoryHandler.constructAddressForStructField(loc,
 						unionAddress, fieldOffset, mExpressionTranslation.getCTypeOfPointerComponents());
 
-				builder.setLrValue(LRValueFactory.constructHeapLValue(mTypeHandler, neighbourFieldAddress,
-						foType.getFieldType(neighbourField), null));
-
+				yield LRValueFactory.constructHeapLValue(mTypeHandler, neighbourFieldAddress,
+						foType.getFieldType(neighbourField), null);
 			}
+			case final RValue rValue -> throw new AssertionError("Union field owner must be an lvalue");
+			};
 
-			result.add(builder.build());
+			result.add(builder.setLrValue(lrValue).build());
 		}
 
 		return result;

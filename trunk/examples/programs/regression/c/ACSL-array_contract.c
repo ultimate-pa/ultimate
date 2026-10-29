@@ -14,6 +14,7 @@ void init() {
 
 int main() {
   a = malloc(sizeof(int));
+  if (a == NULL) return;
   init();
   //@ assert *a == 7;
 }
