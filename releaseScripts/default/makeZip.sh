@@ -10,10 +10,11 @@ if [[ ! -d "${DIR}" ]]; then DIR="${PWD}"; fi
 source "${DIR}/makeSettings.sh"
 
 # Start the actual script
-if [ "${#}" -le 1 ]; then
+if [ "${#}" -le 2 ]; then
   echo "Not enough arguments supplied -- use arguments in the following order"
   echo "1. the toolname"
   echo "2. 'linux', 'macosx' or 'win32' for the operating system"
+  echo "3. 'x86_64' or 'aarch64' for the architecture"
   exit 1
 fi
 
@@ -24,6 +25,11 @@ if [ -z "${TOOLNAME}" ]; then
 fi
 LCTOOLNAME="$(echo "${TOOLNAME}" | tr '[A-Z]' '[a-z]')"
 echo "Using ${TOOLNAME} (${LCTOOLNAME}) as toolname"
+
+if [ -z "${3}" ]; then
+  echo "Third argument (architecture) cannot be empty"
+  exit 1
+fi
 
 # Architecture-specific variables
 if [ "${2}" == "linux" ]; then
@@ -40,8 +46,17 @@ else
   exit 1
 fi
 
-TARGETDIR="U${TOOLNAME}-${OS}"
-ZIPFILE="Ultimate${TOOLNAME}-${OS}.zip"
+ARCH="${3}"
+case "${ARCH}" in
+  x86_64|aarch64) ;;
+  *)
+    echo "Wrong argument: ""${3}"" -- use 'x86_64' or 'aarch64' for the architecture"
+    exit 1
+    ;;
+esac
+
+TARGETDIR="U${TOOLNAME}-${OS}-${ARCH}"
+ZIPFILE="Ultimate${TOOLNAME}-${OS}-${ARCH}.zip"
 
 # Removing files and dirs from previous deployments
 if [ -f "${ZIPFILE}" ]; then
