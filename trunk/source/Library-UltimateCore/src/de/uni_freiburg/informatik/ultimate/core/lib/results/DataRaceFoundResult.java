@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithFiniteTrace;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -204,5 +205,23 @@ public class DataRaceFoundResult<ELEM extends IElement, TE extends IElement, E> 
 	@Override
 	public IProgramExecution<TE, E> getProgramExecution() {
 		return mProgramExecution;
+	}
+
+	public boolean isThreadInvolved(final int threadId) {
+		// TODO: What if we are not sure, which statement is involved?
+		final Map.Entry<Race, Race> conflict = mPossibleConflicts.getSetOfPairs().iterator().next();
+		return isThreadInvolved(conflict.getKey(), threadId) || isThreadInvolved(conflict.getValue(), threadId);
+	}
+
+	private boolean isThreadInvolved(final Race race, final int threadId) {
+		for (int i = 0; i < mProgramExecution.getLength(); i++) {
+			final AtomicTraceElement<TE> ate = mProgramExecution.getTraceElement(i);
+			final DataRaceAnnotation annot = DataRaceAnnotation.getAnnotation(ate.getStep());
+			if (annot != null && annot.getRaces().contains(race) && ate.hasThreadId()
+					&& ate.getThreadId() == threadId) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

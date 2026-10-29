@@ -530,10 +530,12 @@ def create_cli_settings(prop, validate_witness, witness_type, architecture, inpu
             "--traceabstraction.positions.where.we.compute.the.hoare.annotation"
         )
         ret.append("None")
-        # For YAML violation witnesses, disable procedure inlining
+        # For YAML violation witnesses, disable procedure inlining and the aggressive block encoding
         if witness_type == "violation_witness" and any(i.endswith(".yml") for i in input_files):
             ret.append("--procedureinliner.inline.calls.to.implemented.procedures")
             ret.append("ONLY_FOR_CONCURRENT_PROGRAMS")
+            ret.append("--icfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks")
+            ret.append("false")
     elif not validate_witness:
         # we are not in validation mode, so we should generate a witness and need
         # to pass some things to the witness printer

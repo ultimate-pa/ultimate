@@ -73,6 +73,14 @@ def parse_args():
         help=f"Which SVCOMP version should be updated in the YAML files. Default: {datetime.datetime.today().year + 1}",
         default=str(datetime.datetime.today().year + 1),
     )
+    parser.add_argument(
+        "--force-overwrite",
+        action="store_true",
+        help="Publish a new Zenodo version with the current .zip even if Zenodo already has "
+        "this version, e.g., to replace a broken .zip. Zenodo cannot replace the files of a "
+        "published version, so this creates a new version with the same version string and a "
+        "new DOI. Default: No",
+    )
 
     args = parser.parse_args()
 
@@ -102,12 +110,16 @@ def creator(
     return Creator(name=name, affiliation=affiliation, orcid=orcid, gnd=gnd)
 
 
-def ensure(self: Zenodo, key: str, data: Data, paths: Paths) -> requests.Response:
+def ensure(
+    self: Zenodo, key: str, data: Data, paths: Paths, force: bool = False
+) -> requests.Response:
     """Create a Zenodo record if it doesn't exist, or update one that does."""
     deposition_id = pystow.get_config(self.module, key)
     if deposition_id is not None:
         logger.info("Mapped local key %s to deposition %s", key, deposition_id)
-        res = update(self, deposition_id=deposition_id, data=data, paths=paths)
+        res = update(
+            self, deposition_id=deposition_id, data=data, paths=paths, force=force
+        )
         if res:
             pystow.write_config(self.module, key, str(res.json()["id"]))
         return res
@@ -120,9 +132,11 @@ def ensure(self: Zenodo, key: str, data: Data, paths: Paths) -> requests.Respons
 
 
 def update(
-    self: Zenodo, deposition_id: str, data: Data, paths: Paths
+    self: Zenodo, deposition_id: str, data: Data, paths: Paths, force: bool = False
 ) -> requests.Response:
-    """Create a new version of the given record with the given files."""
+    """Create a new version of the given record with the given files.
+
+    If force is set, create it even if the record already has data's version."""
 
     current = retry_request(lambda: get_deposition(self, deposition_id), "Get Current")
     if not current:
@@ -143,7 +157,7 @@ def update(
         logger.warning(
             f"Deposition {deposition_id} is outdated, continuing with its latest version {latest_id}"
         )
-        return update(self, latest_id, data, paths)
+        return update(self, latest_id, data, paths, force)
 
     if current_data["conceptrecid"] != deposition_id:
         logger.warning(
@@ -156,8 +170,12 @@ def update(
         f"Zenodo's version for {deposition_id} is {current_version}, local version is {data.version}. Zenodo's 'latest' is at {current_data['links']['latest_html']}"
     )
     if current_version == data.version:
-        logger.info("No update necessary")
-        return current
+        if not force:
+            logger.info("No update necessary")
+            return current
+        logger.warning(
+            f"Forcing a new version with the same version {current_version} and a new DOI"
+        )
 
     new_metadata = to_metadata_json(data)
 
@@ -449,7 +467,11 @@ def create(self: Zenodo, data: Data, paths: Paths) -> requests.Response:
 
 
 def upload(
-    key: str, data: Metadata, paths: list[Union[str, Path]], sandbox=True
+    key: str,
+    data: Metadata,
+    paths: list[Union[str, Path]],
+    sandbox=True,
+    force=False,
 ) -> requests.Response:
     """
     key     A unique key that you chose and that will be stored in
@@ -470,6 +492,7 @@ def upload(
         key=key,
         data=data,
         paths=paths,
+        force=force,
     )
 
 
@@ -527,7 +550,14 @@ def upload_tools(args, tools):
             )
             try:
                 result = log_request_error(
-                    lambda: upload(tool, data, paths, sandbox=args.sandbox), "Upload"
+                    lambda: upload(
+                        tool,
+                        data,
+                        paths,
+                        sandbox=args.sandbox,
+                        force=args.force_overwrite,
+                    ),
+                    "Upload",
                 )
             except requests.RequestException as ex:
                 logger.fatal(f"Upload: Giving up on {tool}: {ex}")

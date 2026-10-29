@@ -368,12 +368,12 @@ public class QuantifierEliminationTest {
 			Assert.assertTrue("Elimination output is quantifier-free ", !resultIsQuantifierFree);
 		}
 		if (expectedResult != null) {
-			checkLogicalEquivalence(mgdScript.getScript(), result, expectedResult);
+			assert checkLogicalEquivalence(mgdScript.getScript(), result, expectedResult);
 		}
 		csvWriter.reportEliminationSuccess(result, testId, (StatisticsScript) mgdScript.getScript());
 	}
 
-	private static void checkLogicalEquivalence(final Script script, final Term result, final Term expectedResult) {
+	private static boolean checkLogicalEquivalence(final Script script, final Term result, final Term expectedResult) {
 		script.echo(new QuotedObject("Start correctness check for quantifier elimination."));
 		final LBool lbool = SmtUtils.checkEquivalence(result, expectedResult, script);
 		script.echo(new QuotedObject("Finished correctness check for quantifier elimination. Result: " + lbool));
@@ -391,7 +391,9 @@ public class QuantifierEliminationTest {
 		default:
 			throw new AssertionError("unknown value " + lbool);
 		}
-		Assert.assertTrue(errorMessage, lbool == LBool.UNSAT);
+		final boolean areEquivalent = (lbool == LBool.UNSAT);
+		Assert.assertTrue(errorMessage, areEquivalent);
+		return areEquivalent;
 	}
 
 	@Test
