@@ -209,7 +209,7 @@ run_python() {
 
 # populate ULT_VERSION
 get_ult_version(){
-  spushd "$(get_git_root)/releaseScripts/default/UAutomizer-linux"
+  spushd "$(get_git_root)/releaseScripts/default/UAutomizer-linux-x86_64"
   ULT_VERSION=$(run_python Ultimate.py --ultversion)
   local rtr_code="$?"
   if ! [[ "$rtr_code" -eq "0" ]] ; then
