@@ -555,6 +555,25 @@ void* __VERIFIER_nondet_pointer(void)
     return RANDOM_PTR_VALUE(void*);
 }
 
+/**
+ * Initializes the given memory block with arbitrary values.
+ * 
+ * The first argument must be a valid pointer to the start of a memory block of the given size. The second argument
+ * specifies the size of the memory to initialize and must match the size of the memory block that the first argument
+ * points to. The dereference of any pointer value set through this method results in undefined behavior. This means
+ * that pointer values must be explicitly set through different means before they can be dereferenced.
+ * 
+ * \param mem Pointer to the start of the memory block to initialize.
+ * \param size Size of the memory to initialize.
+ */
+void __VERIFIER_nondet_memory(void *mem, size_t size)
+{
+    unsigned char *p = mem;
+    for (size_t i = 0; i < size; i++) {
+        p[i] = __VERIFIER_nondet_uchar();
+    }
+}
+
 #ifdef __cplusplus
 }
 #endif

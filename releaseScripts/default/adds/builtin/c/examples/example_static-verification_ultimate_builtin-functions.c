@@ -93,6 +93,14 @@ int main(void)
     printf("__VERIFIER_nondet_double: %lf\n", __VERIFIER_nondet_double());
     printf("__VERIFIER_nondet_pointer: %p\n", __VERIFIER_nondet_pointer());
 
+    unsigned char memory[8];
+    __VERIFIER_nondet_memory(memory, sizeof(memory));
+    printf("__VERIFIER_nondet_memory:");
+    for (size_t i = 0; i < sizeof(memory); i++) {
+        printf(" %02x", memory[i]);
+    }
+    printf("\n");
+
     __VERIFIER_error();
 
     return ret;
