@@ -121,7 +121,7 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	// settings specific to CompoundDomain
 	public static final String LABEL_COMPOUNDDOM_SUBDOM = "CompoundDomain Intern Domains";
 	private static final String DEFAULT_COMPOUNDDOM_SUBDOM =
-			ExplicitValueDomain.class.getSimpleName() + ";" + IntervalDomain.class.getSimpleName();
+			CongruenceDomain.class.getSimpleName() + ";" + IntervalDomain.class.getSimpleName();
 	private static final String[] CHOICES_COMPOUNDDOM_SUBDOM =
 			filter(VALUES_ABSTRACT_DOMAIN, value -> !CompoundDomain.class.getSimpleName().equals(value));
 	private static final String TOOLTIP_COMPOUNDDOM_SUBDOM =
