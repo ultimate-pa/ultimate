@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -137,7 +137,7 @@ public class EqualityInformation {
 				// not even binary equality relation that contains givenTerm
 				continue;
 			}
-			final PolynomialRelation polyRel = PolynomialRelation.of(script, context[i]);
+			final IPolynomialRelation polyRel = IPolynomialRelation.of(script, context[i]);
 			if (polyRel == null) {
 				continue;
 			}
@@ -151,7 +151,7 @@ public class EqualityInformation {
 	}
 
 	public static EqualityInformation getEqinfo(final Script script, final Term givenTerm,
-			final PolynomialRelation polyRel, final Term forbiddenTerm, final int i) {
+			final IPolynomialRelation polyRel, final Term forbiddenTerm, final int i) {
 		if (polyRel.isVariable(givenTerm)) {
 			Term equalTerm;
 			final SolvedBinaryRelation sbr = polyRel.solveForSubject(script, givenTerm);
@@ -189,7 +189,7 @@ public class EqualityInformation {
 		final Set<Term> equivalentTerms = new HashSet<>();
 		final Set<Term> disjointTerms = new HashSet<>();
 		for (int i = 0; i < context.length; i++) {
-			final PolynomialRelation polyRel = PolynomialRelation.of(script, context[i]);
+			final IPolynomialRelation polyRel = IPolynomialRelation.of(script, context[i]);
 			if (polyRel == null) {
 				continue;
 			}

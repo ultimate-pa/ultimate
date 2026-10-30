@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -169,7 +169,7 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 
 	private static SolvedBinaryRelation solve(final ManagedScript mgdScript, final TermVariable tv,
 			final int quantifier, final Term term) {
-		final PolynomialRelation polyRel = PolynomialRelation.of(mgdScript.getScript(), term);
+		final IPolynomialRelation polyRel = IPolynomialRelation.of(mgdScript.getScript(), term);
 		if (polyRel == null) {
 			// unable to eliminate quantifier
 			return null;

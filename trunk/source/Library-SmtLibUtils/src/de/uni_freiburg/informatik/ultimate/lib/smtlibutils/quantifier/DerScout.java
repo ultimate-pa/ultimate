@@ -38,7 +38,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DerScout.DerApplicability;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -98,7 +98,7 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 		final BigInteger withoutVar;
 		if (Arrays.asList(term.getFreeVars()).contains(mEliminatee)) {
 			withoutVar = BigInteger.ZERO;
-			final PolynomialRelation polyRel = PolynomialRelation.of(mScript, term);
+			final IPolynomialRelation polyRel = IPolynomialRelation.of(mScript, term);
 			if (polyRel == null) {
 				withoutDer = BigInteger.ONE;
 			} else {
