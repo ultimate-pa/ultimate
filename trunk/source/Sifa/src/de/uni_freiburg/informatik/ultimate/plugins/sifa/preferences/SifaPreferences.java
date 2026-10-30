@@ -197,8 +197,8 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 		final UltimatePreferenceItemContainer containerCongruenceDom =
 				new UltimatePreferenceItemContainer(CongruenceDomain.class.getSimpleName());
-		containerCongruenceDom.addItem(integer(LABEL_CONGRUENCE_MAX_PARALLEL_STATES, DEFAULT_CONGRUENCE_MAX_PARALLEL_STATES,
-				1, Integer.MAX_VALUE));
+		containerCongruenceDom.addItem(integer(LABEL_CONGRUENCE_MAX_PARALLEL_STATES,
+				DEFAULT_CONGRUENCE_MAX_PARALLEL_STATES, 1, Integer.MAX_VALUE));
 
 		final UltimatePreferenceItemContainer containerCompoundDom =
 				new UltimatePreferenceItemContainer(CompoundDomain.class.getSimpleName());
