@@ -1,0 +1,309 @@
+/*
+ * Copyright (C) 2026 Max Lehr
+ * Copyright (C) 2026 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Library-Sifa plug-in.
+ *
+ * The ULTIMATE Library-Sifa plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Library-Sifa plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Library-Sifa plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Library-Sifa plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Library-Sifa plug-in grant you additional permission
+ * to convey the resulting work.
+ */
+package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+
+/**
+ * Representation that uses base vectors called lines and parameters to model all valid variable assignments. Every
+ * vector [x_0, ..., x_n] such that [1, x_0, ..., x_n] = ∑ λ_i * l_i + ∑ μ_j * p_j, for λ_i ∈ ℝ, μ_j ∈ ℤ, l_i being the
+ * line vectors and p_j being the parameter vectors, represents a valid solution for constraints of the form "∑ a_i *
+ * x_i = c" and "∑ a_i * x_i ≡b c". The leading 1 is needed as the first vector entry models the constant factors.
+ *
+ * @author Max Lehr
+ *
+ */
+public class GeneratorRepresentation {
+	private List<RationalVector> mLines;
+	private List<RationalVector> mParameters;
+
+	private final int mVectorLength;
+
+	private boolean mIsMinimal;
+
+	public GeneratorRepresentation(final List<RationalVector> lines, final List<RationalVector> parameters,
+			final int vectorLength) {
+		this(lines, parameters, vectorLength, false);
+	}
+
+	/**
+	 * WARNING: Only give isMinimal as true if lineMatrix and parameterMatrix are minimal. Alternatively use the
+	 * constructor without isMinimal and call minimize afterwards.
+	 */
+	GeneratorRepresentation(final List<RationalVector> lines, final List<RationalVector> parameters,
+			final int vectorLength, final boolean isMinimal) {
+		mLines = lines;
+		mParameters = parameters;
+		mVectorLength = vectorLength;
+		mIsMinimal = isMinimal;
+	}
+
+	@Override
+	public String toString() {
+		return "GeneratorRepresentation [mLineMatrix=" + getLineMatrix() + ", mParameterMatrix=" + getParameterMatrix()
+				+ ", mIsMinimal=" + isMinimal() + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(mLines, mParameters, mVectorLength, mIsMinimal);
+	}
+
+	@Override
+	public boolean equals(final Object object) {
+		if (!(object instanceof final GeneratorRepresentation other)) {
+			return false;
+		}
+
+		if (!getLineMatrix().equals(other.getLineMatrix())) {
+			return false;
+		}
+		if (!getParameterMatrix().equals(other.getParameterMatrix())) {
+			return false;
+		}
+		return true;
+	}
+
+	public RationalMatrix getLineMatrix() {
+		return RationalMatrix.fromRowVectors(mLines, mVectorLength);
+	}
+
+	public RationalMatrix getParameterMatrix() {
+		return RationalMatrix.fromRowVectors(mParameters, mVectorLength);
+	}
+
+	public List<RationalVector> getLines() {
+		return new ArrayList<>(mLines);
+	}
+
+	public List<RationalVector> getParameters() {
+		return new ArrayList<>(mParameters);
+	}
+
+	public int getVectorLength() {
+		return mVectorLength;
+	}
+
+	public boolean isMinimal() {
+		return mIsMinimal;
+	}
+
+	/**
+	 * Returns if the represented state is unsatisfiable.
+	 */
+	public boolean isUnsat() {
+		minimize();
+		for (final RationalVector line : getLines()) {
+			if (!line.get(0).equals(Rational.ZERO)) {
+				return false;
+			}
+		}
+		for (final RationalVector parameter : getParameters()) {
+			final Rational constantFactor = parameter.get(0);
+			if (!constantFactor.equals(Rational.ZERO)) {
+				final BigInteger absNumerator = constantFactor.numerator().abs();
+
+				if (absNumerator.equals(BigInteger.ONE)) {
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Converts the representation to be in minimal form. In minimal form the index of the first non zero entry of every
+	 * line and parameter vector is unique and the entry is positive.
+	 */
+	public void minimize() {
+		if (isMinimal()) {
+			return;
+		}
+
+		final List<RationalVector> lines = getLines();
+		final List<RationalVector> parameters = getParameters();
+
+		final List<Integer> linesToDelete = new ArrayList<>();
+		final List<Integer> parametersToDelete = new ArrayList<>();
+
+		// Making the line pivots unique
+		for (int i = 0; i < lines.size(); i++) {
+			RationalVector line = lines.get(i);
+			final int pivot = line.firstPivot();
+
+			if (pivot == line.getLength()) {
+				// line is empty, can be deleted
+				linesToDelete.add(i);
+			} else {
+				// Make pivotValue positive
+				final Rational pivotValue = line.get(pivot);
+				if (pivotValue.compareTo(Rational.ZERO) < 0) {
+					line = line.negate();
+					lines.set(i, line);
+				}
+
+				// Eliminate the pivot field from the following lines
+				for (int j = i + 1; j < lines.size(); j++) {
+					final RationalVector other = lines.get(j);
+					lines.set(j, CongruenceUtil.gaussEliminateField(other, line, pivot));
+				}
+				// Eliminate the pivot field from the parameters
+				for (int j = 0; j < parameters.size(); j++) {
+					final RationalVector other = parameters.get(j);
+					parameters.set(j, CongruenceUtil.gaussEliminateField(other, line, pivot));
+				}
+			}
+		}
+
+		// Delete the empty lines
+		for (final int i : linesToDelete.reversed()) {
+			lines.remove(i);
+		}
+
+		// Making the parameter pivots unique
+		for (int index = 0; index < mVectorLength; index++) {
+			// Find a parameter with pivot == index
+			int i;
+			int pivot = mVectorLength;
+			RationalVector parameter = null;
+			for (i = 0; i < parameters.size(); i++) {
+				parameter = parameters.get(i);
+				pivot = parameter.firstPivot();
+
+				if (pivot == index) {
+					break;
+				}
+			}
+
+			// If no such parameter is found i is already so large that there is no rest we
+			// have to look through
+
+			// Eliminate the pivot field from the following parameters
+			for (int j = i + 1; j < parameters.size(); j++) {
+				final RationalVector other = parameters.get(j);
+				final int otherPivot = other.firstPivot();
+
+				if (pivot == otherPivot) {
+					final Pair<RationalVector, RationalVector> pair =
+							CongruenceUtil.hermitEliminateField(other, parameter, pivot);
+					parameters.set(j, pair.getFirst());
+					parameters.set(i, pair.getSecond());
+				}
+			}
+		}
+
+		// Scan for empty parameters
+		for (int i = 0; i < parameters.size(); i++) {
+			final RationalVector parameter = parameters.get(i);
+			final long pivot = parameter.firstPivot();
+
+			if (pivot == parameter.getLength()) {
+				// parameter is empty, can be deleted
+				parametersToDelete.add(i);
+			}
+		}
+
+		// Delete the empty parameters
+		for (final int i : parametersToDelete.reversed()) {
+			parameters.remove(i);
+		}
+
+		// Make pivot values for parameters positive
+		for (int i = 0; i < parameters.size(); i++) {
+			RationalVector parameter = parameters.get(i);
+			final int pivot = parameter.firstPivot();
+			final var pivotValue = parameter.get(pivot);
+			if (pivotValue.compareTo(Rational.ZERO) < 0) {
+				parameter = parameter.negate();
+				parameters.set(i, parameter);
+			}
+		}
+
+		mLines = lines;
+		mParameters = parameters;
+		mIsMinimal = true;
+
+		if (lines.size() + parameters.size() > mVectorLength) {
+			throw new AssertionError(
+					"lines and parameters are too long\n Lines: " + lines + "\n Parameters: " + parameters);
+		}
+
+	}
+
+	/**
+	 * Returns an equivalent {@link ConstraintRepresentation}.
+	 */
+	public ConstraintRepresentation computeConstraintRepresentation() {
+		minimize();
+
+		final List<RationalVector> lines = getLines();
+		final int linesNum = lines.size();
+		final List<RationalVector> parameters = getParameters();
+		final int parametersNum = parameters.size();
+
+		final List<RationalVector> generatorList = new ArrayList<>(lines);
+		generatorList.addAll(parameters);
+
+		final Set<Integer> missingPivots = IntStream.range(0, mVectorLength).boxed().collect(Collectors.toSet());
+		for (final RationalVector vector : generatorList) {
+			missingPivots.remove(vector.firstPivot());
+		}
+
+		final List<RationalVector> fillerList = new ArrayList<>();
+		for (final Integer missingPivot : missingPivots) {
+			fillerList.add(RationalVector.getUnitVector(missingPivot, mVectorLength));
+		}
+		final int fillerNum = fillerList.size();
+
+		final List<RationalVector> vectorList = new ArrayList<>(generatorList);
+		vectorList.addAll(fillerList);
+		final RationalMatrix generatorMatrix = RationalMatrix.fromRowVectors(vectorList, mVectorLength);
+
+		if (!generatorMatrix.isSquare()) {
+			throw new AssertionError("generatorMatrix is not square. generatorMatrix:  \n" + generatorMatrix);
+		}
+
+		final RationalMatrix constraintMatrix = generatorMatrix.invert().transpose();
+		final List<RationalVector> constraintList = constraintMatrix.getRowVectors();
+
+		final List<RationalVector> congruences = constraintList.subList(linesNum, linesNum + parametersNum);
+		final List<RationalVector> equalities =
+				constraintList.subList(linesNum + parametersNum, linesNum + parametersNum + fillerNum);
+
+		return new ConstraintRepresentation(equalities, congruences, mVectorLength, true, false);
+	}
+}

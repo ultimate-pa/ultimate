@@ -1,0 +1,15 @@
+//#Safe
+procedure main() {
+    var i, x : int;
+    i := 0;
+    
+	assume x % 2 == 0;
+
+	while (i <= 10) {
+		i := i + 1;
+        x := x + 1;
+	}
+
+	assert i == 11;
+	assert x % 2 == 1;
+}

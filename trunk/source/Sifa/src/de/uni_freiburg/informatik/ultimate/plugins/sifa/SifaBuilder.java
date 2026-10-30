@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.OctagonDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.StatsWrapperDomain;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.CongruenceDomain;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.AlwaysFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.IFluid;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.fluid.LogSizeWrapperFluid;
@@ -136,6 +137,9 @@ public class SifaBuilder {
 					mPrefs.getInt(SifaPreferences.LABEL_OCTAGONDOM_MAX_PARALLEL_STATES), () -> timer);
 		} else if (EqDomain.class.getSimpleName().equals(domainName)) {
 			domain = new EqDomain(tools, mPrefs.getInt(SifaPreferences.LABEL_EQDOM_MAX_PARALLEL_STATES), mServices,
+					mLogger, () -> timer);
+		} else if (CongruenceDomain.class.getSimpleName().equals(domainName)) {
+			domain = new CongruenceDomain(tools, mPrefs.getInt(SifaPreferences.LABEL_CONGRUENCE_MAX_PARALLEL_STATES),
 					mLogger, () -> timer);
 		} else {
 			throw new IllegalArgumentException("Unknown domain setting: " + domainName);
