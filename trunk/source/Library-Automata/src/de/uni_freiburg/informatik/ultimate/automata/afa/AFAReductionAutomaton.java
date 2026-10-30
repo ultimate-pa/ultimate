@@ -47,9 +47,6 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 	private Set<AfaState<L, S1, S2>> mInitialStates;
 	private Set<AfaState<L, S1, S2>> mFinalStates;
 	final BddManager<AfaState<L, S1, S2>> mBddManager = new BddManager<>();
-	// mIndependencyAutomaton should accept the words rho<ab>sigma s.t. (rho,a,b,sigma) in I
-	// TODO: in contrast to the current version in the paper, we need to flip the accepting states in the AFA reduction
-	// and use a conjunction instead of a disjunction when quantifying over the underlying transitions
 	private final IndependencyAutomaton<L, S1> mIndependencyAutomaton;
 	// TODO: implement order automaton
 	// I assume the order automaton to be total and deterministic!
@@ -102,8 +99,6 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 		return mFinalStates.contains(state);
 	}
 
-	// TODO: add final states
-	// TODO: maybe flip conjunctions/disjunction if the independency automaton's language is complemented
 	@Override
 	public Bdd<AfaState<L, S1, S2>> getSuccessors(final AfaState<L, S1, S2> state, final L letter) {
 
@@ -239,7 +234,6 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 		L mSleepletter;
 		S1 mIndependencyState;
 		S2 mOrderState;
-		// TODO: add another state for the OrderAutomaton
 
 		enum StateType {
 			TRACK, SLEEP, WAIT, CHECK
