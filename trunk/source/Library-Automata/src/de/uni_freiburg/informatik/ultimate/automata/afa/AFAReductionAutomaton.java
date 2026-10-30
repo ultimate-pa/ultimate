@@ -47,7 +47,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 	private Set<AfaState<L, S1, S2>> mInitialStates;
 	private Set<AfaState<L, S1, S2>> mFinalStates;
 	final BddManager<AfaState<L, S1, S2>> mBddManager = new BddManager<>();
-	private final IndependencyAutomaton<L, S1> mIndependencyAutomaton;
+	private final IIndependencyAutomaton<L, S1> mIndependencyAutomaton;
 	// TODO: implement order automaton
 	// I assume the order automaton to be total and deterministic!
 	private final INwaOutgoingLetterAndTransitionProvider<L, S2> mOrderAutomaton;
@@ -55,7 +55,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 
 	// before the search, do an intersection of the current abstraction (transformed to an AFA) with the reduction AFA
 	public AFAReductionAutomaton(final IDfsOrder<L, S2> order, final Set<L> alphabet,
-			final IndependencyAutomaton<L, S1> independencyAutomaton,
+			final IIndependencyAutomaton<L, S1> independencyAutomaton,
 			final INwaOutgoingLetterAndTransitionProvider<L, S2> orderAutomaton) {
 		mOrder = order;
 		mAlphabet = alphabet;

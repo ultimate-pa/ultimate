@@ -26,27 +26,61 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.afa;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.UnionNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class IndependencyAutomaton<L, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
+public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S> {
 
-	// TODO: add an interface, use the interface in the Reduction
 	Map<Pair<L, L>, L> mSpecialSymbols;
+	// map from special symbols to their corresponding interpolant automaton (or union of automata)
+	private final Map<L, INwaOutgoingLetterAndTransitionProvider<L, S>> mIndependenceAutomata;
+	// TODO: we need a factory
+	private IUnionStateFactory<S> mFactory;
 
 	public IndependencyAutomaton() {
-		// TODO needs to be implemented
+		mSpecialSymbols = new HashMap<>();
+		mIndependenceAutomata = new HashMap<>();
 	}
 
+	@Override
 	public Optional<L> getSpecialSymbol(final L letter1, final L letter2) {
 		return Optional.ofNullable(mSpecialSymbols.get(new Pair<>(letter1, letter2)));
+	}
+
+	@Override
+	public void addSpecialSymbol(final L letter1, final L letter2) {
+		final Pair<L, L> pair = new Pair<>(letter1, letter2);
+
+		mSpecialSymbols.computeIfAbsent(pair, p -> createSpecialSymbol(p));
+	}
+
+	private L createSpecialSymbol(final Pair<L, L> pair) {
+		// TODO create a special symbol
+		return null;
+	}
+
+	@Override
+	public void addIndependence(final L specialSymbol, final INwaOutgoingLetterAndTransitionProvider<L, S> automaton)
+			throws AutomataLibraryException {
+
+		if (mIndependenceAutomata.containsKey(specialSymbol)) {
+			mIndependenceAutomata.replace(specialSymbol,
+					new UnionNwa<>(mIndependenceAutomata.get(specialSymbol), automaton, mFactory, false));
+
+		} else {
+			mIndependenceAutomata.put(specialSymbol, automaton);
+		}
 	}
 
 	@Override
