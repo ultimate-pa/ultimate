@@ -470,16 +470,27 @@ public class BitvectorConstant {
 	}
 
 	public static BitvectorConstant bvshl(final BitvectorConstant bv1, final BitvectorConstant bv2) {
-		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.shiftLeft(y.intValueExact()));
+		return similarIndexBvOp_BitvectorResult(bv1, bv2,
+				x -> y -> x.shiftLeft(shiftDistance(y, bv1.getIndex())));
 	}
 
 	public static BitvectorConstant bvlshr(final BitvectorConstant bv1, final BitvectorConstant bv2) {
-		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.shiftRight(y.intValueExact()));
+		return similarIndexBvOp_BitvectorResult(bv1, bv2,
+				x -> y -> x.shiftRight(shiftDistance(y, bv1.getIndex())));
 	}
 
 	public static BitvectorConstant bvashr(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return similarIndexBvOp_BitvectorResult(bv1, bv2,
-				x -> y -> toSignedInt(x, bv1.getIndex()).shiftRight(y.intValueExact()));
+				x -> y -> toSignedInt(x, bv1.getIndex()).shiftRight(shiftDistance(y, bv1.getIndex())));
+	}
+
+	/**
+	 * The shift amount {@code amount} capped at the width {@code index}. Shifting by the width already moves every
+	 * bit out (0 for shl and lshr, all sign bits for ashr), so any larger amount has the same result, and the cap keeps
+	 * an amount of 2^31 or more from overflowing the int that BigInteger's shifts take.
+	 */
+	private static int shiftDistance(final BigInteger amount, final BigInteger index) {
+		return amount.min(index).intValueExact();
 	}
 
 	public static BitvectorConstant bvnot(final BitvectorConstant bv) {

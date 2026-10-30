@@ -83,6 +83,14 @@ public class Executor {
 
 	private static final String EOF_ERROR_MSG = "Received EOF on stdin.";
 
+	// Whether a check-sat is running. An interrupt is only sent then: a solver that waits for input may die of it.
+	private final Object mQueryLock = new Object();
+	private boolean mQueryRunning;
+	private boolean mInterrupted;
+	private boolean mKilled;
+	// Counts the check-sats, so that an interrupt never outlives the query it was meant for.
+	private long mQueryCount;
+
 	/**
 	 *
 	 * @param solverCommand
@@ -219,6 +227,118 @@ public class Executor {
 		} catch (final IOException e) {
 			throw convertIOException(e);
 		}
+	}
+
+	/**
+	 * Marks the start of a check-sat, the only command {@link #interrupt(long)} may cancel.
+	 */
+	void beginQuery() {
+		synchronized (mQueryLock) {
+			mQueryRunning = true;
+			mInterrupted = false;
+			mKilled = false;
+			mQueryCount++;
+		}
+	}
+
+	/**
+	 * Marks the end of a check-sat, however it ended.
+	 */
+	void endQuery() {
+		synchronized (mQueryLock) {
+			mQueryRunning = false;
+			mQueryLock.notifyAll();
+		}
+	}
+
+	/**
+	 * Cancels the running check-sat by sending SIGINT to the solver, which then answers {@code unknown} and keeps its
+	 * state; z3 does. Nothing is sent unless a check-sat is running. A solver that has answered just before the signal
+	 * arrives may die of it, see {@link #isAlive()}.
+	 * <p>
+	 * A solver may take long to notice the signal, z3 did take minutes on nonlinear arithmetic. If the check-sat has not
+	 * ended {@code graceMillis} after the signal, the solver is killed, and the check-sat fails; the caller has to be
+	 * able to restart the solver.
+	 *
+	 * @param graceMillis
+	 *            how long to wait for the check-sat to end before killing the solver, or negative to never kill it
+	 * @return whether the signal was sent
+	 */
+	public boolean interrupt(final long graceMillis) {
+		synchronized (mQueryLock) {
+			if (!mQueryRunning || mProcess == null || !mProcess.isRunning()) {
+				return false;
+			}
+			final long query = mQueryCount;
+			if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+				throw new UnsupportedOperationException(
+						getLogStringPrefix() + " cannot be interrupted: this needs SIGINT, which Windows does not have");
+			}
+			final int exitCode;
+			try {
+				exitCode = new ProcessBuilder("kill", "-INT", Long.toString(mProcess.pid())).redirectErrorStream(true)
+						.start().waitFor();
+			} catch (final IOException e) {
+				throw new IllegalStateException(getLogStringPrefix() + " could not be interrupted", e);
+			} catch (final InterruptedException e) {
+				Thread.currentThread().interrupt();
+				throw new IllegalStateException(getLogStringPrefix() + " was interrupted while interrupting", e);
+			}
+			if (exitCode != 0) {
+				throw new IllegalStateException(
+						getLogStringPrefix() + " could not be interrupted, kill -INT exited with " + exitCode);
+			}
+			mInterrupted = true;
+			if (graceMillis < 0) {
+				return true;
+			}
+			final long deadline = System.nanoTime() + graceMillis * 1_000_000;
+			while (mQueryRunning && mQueryCount == query) {
+				final long remainingMillis = (deadline - System.nanoTime()) / 1_000_000;
+				if (remainingMillis <= 0) {
+					break;
+				}
+				try {
+					mQueryLock.wait(remainingMillis);
+				} catch (final InterruptedException e) {
+					Thread.currentThread().interrupt();
+					break;
+				}
+			}
+			if (mQueryRunning && mQueryCount == query) {
+				mLogger.warn(getLogStringPrefix() + " did not answer within " + graceMillis
+						+ " ms of the interrupt, killing it");
+				mProcess.forceShutdown();
+				mKilled = true;
+			}
+			return true;
+		}
+	}
+
+	/**
+	 * @return whether {@link #interrupt(long)} sent a signal during the last check-sat
+	 */
+	public boolean wasInterrupted() {
+		synchronized (mQueryLock) {
+			return mInterrupted;
+		}
+	}
+
+	/**
+	 * @return whether {@link #interrupt(long)} killed the solver during the last check-sat; it may still have answered
+	 *         the interrupt before
+	 */
+	public boolean wasKilled() {
+		synchronized (mQueryLock) {
+			return mKilled;
+		}
+	}
+
+	/**
+	 * @return whether the solver process is still running
+	 */
+	public boolean isAlive() {
+		return mProcess != null && mProcess.isRunning();
 	}
 
 	public void reset() throws IOException {

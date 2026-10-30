@@ -29,6 +29,8 @@
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -56,6 +58,8 @@ public class Scriptor extends NoopScript {
 
 	protected Executor mExecutor;
 	private LBool mStatus = LBool.UNKNOWN;
+	// Logic, options and infos as sent, so that a restarted solver can be set up the same way; see restartAndReplay.
+	private final List<String> mSetupCommands = new ArrayList<>();
 
 	/**
 	 * Create a script connecting to an external SMT solver.
@@ -78,22 +82,25 @@ public class Scriptor extends NoopScript {
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
 		super.setLogic(logic);
-		mExecutor.input(SmtCommandUtils.SetLogicCommand.buildString(logic.name()));
-		mExecutor.parseSuccess();
+		sendSetupCommand(SmtCommandUtils.SetLogicCommand.buildString(logic.name()));
 	}
 
 	@Override
 	public void setOption(final String opt, final Object value) throws UnsupportedOperationException, SMTLIBException {
 		if (!opt.equals(":print-success")) {
-			mExecutor.input(SmtCommandUtils.SetOptionCommand.buildString(opt, value));
-			mExecutor.parseSuccess();
+			sendSetupCommand(SmtCommandUtils.SetOptionCommand.buildString(opt, value));
 		}
 	}
 
 	@Override
 	public void setInfo(final String info, final Object value) {
-		mExecutor.input(SmtCommandUtils.SetInfoCommand.buildString(info, value));
+		sendSetupCommand(SmtCommandUtils.SetInfoCommand.buildString(info, value));
+	}
+
+	private void sendSetupCommand(final String command) {
+		mExecutor.input(command);
 		mExecutor.parseSuccess();
+		mSetupCommands.add(command);
 	}
 
 	@Override
@@ -151,9 +158,76 @@ public class Scriptor extends NoopScript {
 
 	@Override
 	public LBool checkSat() throws SMTLIBException {
-		mExecutor.input(SmtCommandUtils.CheckSatCommand.buildString());
-		mStatus = mExecutor.parseCheckSatResult();
+		mExecutor.beginQuery();
+		try {
+			mExecutor.input(SmtCommandUtils.CheckSatCommand.buildString());
+			mStatus = mExecutor.parseCheckSatResult();
+		} finally {
+			mExecutor.endQuery();
+		}
 		return mStatus;
+	}
+
+	/**
+	 * Cancels a running {@link #checkSat()}, which then returns {@code unknown}, or fails if the solver had to be
+	 * killed; see {@link Executor#interrupt(long)}. May be called from any thread.
+	 *
+	 * @param graceMillis
+	 *            how long to wait for the check-sat to end before killing the solver, or negative to never kill it
+	 * @return whether a check-sat was running and got the signal
+	 */
+	public boolean interrupt(final long graceMillis) {
+		return mExecutor.interrupt(graceMillis);
+	}
+
+	/**
+	 * @return whether the last {@link #checkSat()} was interrupted
+	 */
+	public boolean wasInterrupted() {
+		return mExecutor.wasInterrupted();
+	}
+
+	/**
+	 * @return whether the solver was killed during the last {@link #checkSat()}, see {@link #interrupt(long)}
+	 */
+	public boolean wasKilled() {
+		return mExecutor.wasKilled();
+	}
+
+	/**
+	 * @return whether the solver process is still running
+	 */
+	public boolean isSolverAlive() {
+		return mExecutor.isAlive();
+	}
+
+	// ----------------------------------------------------------------------------------------------------------------
+	// Restart, for a solver that died of an interrupt that arrived after its answer. Self-contained: removing it
+	// leaves only mSetupCommands without a reader.
+	// ----------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Starts the solver process anew, sets it up as the old one was, and sends {@code declarations}, which have to
+	 * bring it back to the declarations and the stack of this script. Assertions are not restored.
+	 *
+	 * @param declarations
+	 *            SMT-LIB commands (declarations, definitions, push), in order
+	 */
+	public void restartAndReplay(final List<String> declarations) {
+		try {
+			mExecutor.reset();
+		} catch (final IOException e) {
+			throw new SMTLIBException("could not restart the solver", e);
+		}
+		for (final String command : mSetupCommands) {
+			mExecutor.input(command);
+			mExecutor.parseSuccess();
+		}
+		for (final String command : declarations) {
+			mExecutor.input(command);
+			mExecutor.parseSuccess();
+		}
+		mStatus = LBool.UNKNOWN;
 	}
 
 	@Override

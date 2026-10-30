@@ -571,6 +571,64 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_THREADLIMIT = "Threadlimit for Parallel CEGAR";
 	private static final Integer DEF_THREADLIMIT = 1;
 
+	public static final String LABEL_NUM_KINDUCTION_WORKERS =
+			"Number of K-Induction workers in Parallel Trace Abstraction";
+	private static final Integer DEF_NUM_KINDUCTION_WORKERS = 0;
+
+	public static final String LABEL_KINDUCTION_SOLVER_TIMEOUT = "Timeout in ms for each k-induction SMT query";
+	private static final String DESC_KINDUCTION_SOLVER_TIMEOUT =
+			"Per-check timeout the k-induction worker passes to its SMT solver, one hour by default. This is "
+					+ "deliberately generous: k-induction runs many increasingly large queries, and a short timeout "
+					+ "makes it give up at a low k and report no verdict. Use -1 to inherit whatever the configured "
+					+ "external solver command says instead. Supported for z3, cvc4, cvc5 and bitwuzla.";
+	private static final Integer DEF_KINDUCTION_SOLVER_TIMEOUT = 60 * 60 * 1000;
+
+	public static final String LABEL_KINDUCTION_MEMORY_BUDGET =
+			"Memory budget of the k-induction worker (% of max heap)";
+	private static final String DESC_KINDUCTION_MEMORY_BUDGET =
+			"How much of the JVM's maximum heap may be live while the k-induction worker runs. The heap of the whole "
+					+ "JVM counts, including that of the other workers, but only what is still in use after a garbage "
+					+ "collection. A k-induction worker that exceeds it stops and retires without a verdict, so that "
+					+ "the other workers keep the memory.";
+	private static final int DEF_KINDUCTION_MEMORY_BUDGET = 60;
+
+	public static final String LABEL_INVARIANT_PROBATION = "Probation of invariants for k-induction";
+	private static final String DESC_INVARIANT_PROBATION =
+			"The invariant supplier watches the queries of k-induction. If one runs much longer than the one of the "
+					+ "same kind before, the supplier asks it itself with earlier, weaker invariants. If one of them "
+					+ "answers within the limit, the supplier publishes it and interrupts k-induction, which takes "
+					+ "the supplier's answer (a violation is asked again, for its witness). Needs z3 as the solver "
+					+ "of k-induction and of the supplier, and SIGINT (not on Windows); otherwise k-induction runs "
+					+ "without probation.";
+	private static final boolean DEF_INVARIANT_PROBATION = true;
+
+	public static final String LABEL_PROBATION_FACTOR = "Probation limit of invariants: slowdown factor";
+	private static final String DESC_PROBATION_FACTOR =
+			"A query of k-induction is on probation once it runs longer than this many times the previous query of "
+					+ "the same kind (base or step), and at least the probation minimum.";
+	private static final int DEF_PROBATION_FACTOR = 2;
+
+	public static final String LABEL_PROBATION_MINIMUM = "Probation limit of invariants: minimum (s)";
+	private static final String DESC_PROBATION_MINIMUM =
+			"A query of k-induction is never on probation before it ran this long.";
+	private static final int DEF_PROBATION_MINIMUM = 10;
+
+	public static final String LABEL_KINDUCTION_SOLVER_RESTART =
+			"Restart the k-induction solver if an interrupt kills it";
+	private static final String DESC_KINDUCTION_SOLVER_RESTART =
+			"An interrupt of the invariant supplier that arrives just after the solver answered kills the solver. "
+					+ "If set, k-induction restarts it with its declarations and asks the query again; otherwise "
+					+ "k-induction crashes.";
+	private static final boolean DEF_KINDUCTION_SOLVER_RESTART = true;
+
+	public static final String LABEL_INTERPOLANT_INVARIANTS =
+			"Check interpolants of TA workers for invariants for k-induction";
+	private static final String DESC_INTERPOLANT_INVARIANTS =
+			"If there is a k-induction worker, every TA worker hands the interpolants of each infeasible counterexample "
+					+ "to the invariant supplier. It checks which of them are inductive invariants of the program and "
+					+ "gives those to the k-induction workers while they run.";
+	private static final boolean DEF_INTERPOLANT_INVARIANTS = true;
+
 	public static final String LABEL_MINIMIZE_ABSTRACTION_PER_WORKER =
 			"Minimize Abstraction every time a worker is done";
 	private static final boolean DEF_MINIMIZE_ABSTRACTION_PER_WORKER = true;
@@ -895,6 +953,24 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_THREADLIMIT, DEF_THREADLIMIT, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_NUM_KINDUCTION_WORKERS, DEF_NUM_KINDUCTION_WORKERS,
+						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_KINDUCTION_SOLVER_TIMEOUT, DEF_KINDUCTION_SOLVER_TIMEOUT,
+						DESC_KINDUCTION_SOLVER_TIMEOUT, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_KINDUCTION_MEMORY_BUDGET, DEF_KINDUCTION_MEMORY_BUDGET,
+						DESC_KINDUCTION_MEMORY_BUDGET, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(1, 100)),
+				new UltimatePreferenceItem<>(LABEL_INVARIANT_PROBATION, DEF_INVARIANT_PROBATION,
+						DESC_INVARIANT_PROBATION, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_PROBATION_FACTOR, DEF_PROBATION_FACTOR, DESC_PROBATION_FACTOR,
+						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 1000)),
+				new UltimatePreferenceItem<>(LABEL_PROBATION_MINIMUM, DEF_PROBATION_MINIMUM, DESC_PROBATION_MINIMUM,
+						PreferenceType.Integer, IUltimatePreferenceItemValidator.ONLY_POSITIVE),
+				new UltimatePreferenceItem<>(LABEL_KINDUCTION_SOLVER_RESTART, DEF_KINDUCTION_SOLVER_RESTART,
+						DESC_KINDUCTION_SOLVER_RESTART, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_INVARIANTS, DEF_INTERPOLANT_INVARIANTS,
+						DESC_INTERPOLANT_INVARIANTS, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SEARCH_LOOP_BOUND, DEF_SEARCH_LOOP_BOUND, DESC_SEARCH_LOOP_BOUND,
 						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
 				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY, DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY,
