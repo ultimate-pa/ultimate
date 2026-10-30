@@ -31,6 +31,8 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 
 public class MemoryModelDeclarationsHandler {
@@ -83,6 +85,9 @@ public class MemoryModelDeclarationsHandler {
 			return new MemoryModelDeclarationInfo(mmd, BoogieType.createArrayType(0,
 					new BoogieType[] { mTypeHandler.getBoogiePointerType() },
 					mTypeHandler.getBoogieTypeForBoogieASTType(mBooleanArrayHelper.constructBoolReplacementType())));
+		case ULTIMATE_PTHREADS_BARRIER:
+			return new MemoryModelDeclarationInfo(mmd, BoogieType.createArrayType(0,
+					new BoogieType[] { mTypeHandler.getBoogiePointerType() }, getPthreadBarrierStructType()));
 		case ULTIMATE_PTHREADS_RWLOCK:
 			return new MemoryModelDeclarationInfo(mmd,
 					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
@@ -98,5 +103,12 @@ public class MemoryModelDeclarationsHandler {
 		default:
 			return new MemoryModelDeclarationInfo(mmd);
 		}
+	}
+
+	public BoogieType getPthreadBarrierStructType() {
+		final BoogieType type = mTypeHandler.getBoogieTypeForCType(new CPrimitive(CPrimitives.UINT));
+		return BoogieType.createStructType(
+				new String[] { SFO.PTHREAD_BARRIER_CAPACITY, SFO.PTHREAD_BARRIER_ARRIVALS, SFO.PTHREAD_BARRIER_EXITED },
+				new BoogieType[] { type, type, type });
 	}
 }
