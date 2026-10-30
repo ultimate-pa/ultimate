@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -213,5 +214,83 @@ public class SmtUtilsTest {
 		final Set<List<Quantifier>> expected = Set.of(List.of(Quantifier.EXISTS), List.of(Quantifier.FORALL));
 		Assert.assertEquals("QuantifierClassifier should detect EXISTS and FORALL singleton sequences", expected,
 				qc.getLongestQuantSeqs());
+	}
+
+	@Test
+	public void testPullCommonDisjuncts01() {
+		final Sort boolSort = SmtSortUtils.getBoolSort(mScript);
+		declareVar("A1", boolSort);
+		declareVar("B1", boolSort);
+		declareVar("C1", boolSort);
+		final Term input = TermParseUtils.parseTerm(mScript, "(and (or A1 B1) (or A1 C1))");
+		final Term result =
+				SmtUtils.andWithExtendedLocalSimplification(mScript, Arrays.asList(SmtUtils.getConjuncts(input)));
+		final Term expected = TermParseUtils.parseTerm(mScript, "(or (and C1 B1) A1)");
+		Assert.assertEquals(expected, result);
+	}
+
+	@Test
+	public void testPullCommonDisjuncts02() {
+		final Sort boolSort = SmtSortUtils.getBoolSort(mScript);
+		declareVar("A2", boolSort);
+		declareVar("B2", boolSort);
+		final Term input = TermParseUtils.parseTerm(mScript, "(and A2 (or A2 B2))");
+		final Term result =
+				SmtUtils.andWithExtendedLocalSimplification(mScript, Arrays.asList(SmtUtils.getConjuncts(input)));
+		final Term expected = TermParseUtils.parseTerm(mScript, "A2");
+		Assert.assertEquals(expected, result);
+	}
+
+	@Test
+	public void testPullCommonDisjuncts03() {
+		final Sort boolSort = SmtSortUtils.getBoolSort(mScript);
+		declareVar("A3", boolSort);
+		declareVar("B3", boolSort);
+		declareVar("C3", boolSort);
+		declareVar("D3", boolSort);
+		final Term input = TermParseUtils.parseTerm(mScript, "(and (or A3 B3) (or C3 D3))");
+		final Term result =
+				SmtUtils.andWithExtendedLocalSimplification(mScript, Arrays.asList(SmtUtils.getConjuncts(input)));
+		final Term expected = TermParseUtils.parseTerm(mScript, "(and (or C3 D3) (or A3 B3))");
+		Assert.assertEquals(expected, result);
+	}
+
+	@Test
+	public void testPullCommonConjuncts01() {
+		final Sort boolSort = SmtSortUtils.getBoolSort(mScript);
+		declareVar("A1", boolSort);
+		declareVar("B1", boolSort);
+		declareVar("C1", boolSort);
+		final Term input = TermParseUtils.parseTerm(mScript, "(or (and A1 B1) (and A1 C1))");
+		final Term result =
+				SmtUtils.orWithExtendedLocalSimplification(mScript, Arrays.asList(SmtUtils.getDisjuncts(input)));
+		final Term expected = TermParseUtils.parseTerm(mScript, "(and (or C1 B1) A1)");
+		Assert.assertEquals(expected, result);
+	}
+
+	@Test
+	public void testPullCommonConjuncts02() {
+		final Sort boolSort = SmtSortUtils.getBoolSort(mScript);
+		declareVar("A2", boolSort);
+		declareVar("B2", boolSort);
+		final Term input = TermParseUtils.parseTerm(mScript, "(or A2 (and A2 B2))");
+		final Term result =
+				SmtUtils.orWithExtendedLocalSimplification(mScript, Arrays.asList(SmtUtils.getDisjuncts(input)));
+		final Term expected = TermParseUtils.parseTerm(mScript, "A2");
+		Assert.assertEquals(expected, result);
+	}
+
+	@Test
+	public void testPullCommonConjuncts03() {
+		final Sort boolSort = SmtSortUtils.getBoolSort(mScript);
+		declareVar("A3", boolSort);
+		declareVar("B3", boolSort);
+		declareVar("C3", boolSort);
+		declareVar("D3", boolSort);
+		final Term input = TermParseUtils.parseTerm(mScript, "(or (and A3 B3) (and C3 D3))");
+		final Term result =
+				SmtUtils.orWithExtendedLocalSimplification(mScript, Arrays.asList(SmtUtils.getDisjuncts(input)));
+		final Term expected = TermParseUtils.parseTerm(mScript, "(or (and C3 D3) (and A3 B3))");
+		Assert.assertEquals(expected, result);
 	}
 }
