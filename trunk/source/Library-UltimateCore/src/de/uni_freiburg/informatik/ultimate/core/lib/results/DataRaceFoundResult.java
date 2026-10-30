@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation.Race;
@@ -42,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -207,24 +210,18 @@ public class DataRaceFoundResult<ELEM extends IElement, TE extends IElement, E> 
 		return mProgramExecution;
 	}
 
-	public boolean isThreadInvolved(final int threadId) {
-		for (final var conflict : mPossibleConflicts.getSetOfPairs()) {
-			if (isThreadInvolved(conflict.getKey(), threadId) || isThreadInvolved(conflict.getValue(), threadId)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private boolean isThreadInvolved(final Race race, final int threadId) {
+	public Set<Integer> getInvolvedThreadIds() {
+		final Set<Race> races = mPossibleConflicts.getSetOfPairs().stream()
+				.flatMap(x -> Stream.of(x.getKey(), x.getValue())).collect(Collectors.toSet());
+		final Set<Integer> result = new HashSet<>();
 		for (int i = 0; i < mProgramExecution.getLength(); i++) {
 			final AtomicTraceElement<TE> ate = mProgramExecution.getTraceElement(i);
 			final DataRaceAnnotation annot = DataRaceAnnotation.getAnnotation(ate.getStep());
-			if (annot != null && annot.getRaces().contains(race) && ate.hasThreadId()
-					&& ate.getThreadId() == threadId) {
-				return true;
+			if (annot != null && DataStructureUtils.haveNonEmptyIntersection(annot.getRaces(), races)
+					&& ate.hasThreadId()) {
+				result.add(ate.getThreadId());
 			}
 		}
-		return false;
+		return result;
 	}
 }

@@ -217,12 +217,13 @@ public class WitnessPrinter implements IOutput {
 			if (createYaml) {
 				final Set<Integer> targetIndices;
 				if (cex instanceof final DataRaceFoundResult<?, ?, ?> dataRace) {
+					final Set<Integer> involvedThreadIds = dataRace.getInvolvedThreadIds();
 					// Extract the last two indices, where a data race can occur
 					// TODO: What if we are unsure about the statements that occur in a data race?
 					final Set<Integer> raceIndices = new HashSet<>();
 					for (int i = backtransPe.getLength() - 1; i >= 0 && raceIndices.size() < 2; i--) {
 						final AtomicTraceElement<?> ate = backtransPe.getTraceElement(i);
-						if (ate.hasThreadId() && dataRace.isThreadInvolved(ate.getThreadId())) {
+						if (ate.hasThreadId() && involvedThreadIds.contains(ate.getThreadId())) {
 							raceIndices.add(i);
 						}
 					}
