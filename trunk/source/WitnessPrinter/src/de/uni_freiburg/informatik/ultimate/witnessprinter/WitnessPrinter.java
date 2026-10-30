@@ -31,10 +31,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -219,14 +217,16 @@ public class WitnessPrinter implements IOutput {
 			if (createYaml) {
 				final Set<Integer> targetIndices;
 				if (cex instanceof final DataRaceFoundResult<?, ?, ?> dataRace) {
-					final Map<Integer, Integer> lastStepByThread = new HashMap<>();
-					for (int i = 0; i < backtransPe.getLength(); i++) {
+					// Extract the last two indices, where a data race can occur
+					// TODO: What if we are unsure about the statements that occur in a data race?
+					final Set<Integer> raceIndices = new HashSet<>();
+					for (int i = backtransPe.getLength() - 1; i >= 0 && raceIndices.size() < 2; i--) {
 						final AtomicTraceElement<?> ate = backtransPe.getTraceElement(i);
 						if (ate.hasThreadId() && dataRace.isThreadInvolved(ate.getThreadId())) {
-							lastStepByThread.put(ate.getThreadId(), i);
+							raceIndices.add(i);
 						}
 					}
-					targetIndices = new HashSet<>(lastStepByThread.values());
+					targetIndices = raceIndices;
 				} else {
 					targetIndices = Set.of(backtransPe.getLength() - 1);
 				}

@@ -208,9 +208,12 @@ public class DataRaceFoundResult<ELEM extends IElement, TE extends IElement, E> 
 	}
 
 	public boolean isThreadInvolved(final int threadId) {
-		// TODO: What if we are not sure, which statement is involved?
-		final Map.Entry<Race, Race> conflict = mPossibleConflicts.getSetOfPairs().iterator().next();
-		return isThreadInvolved(conflict.getKey(), threadId) || isThreadInvolved(conflict.getValue(), threadId);
+		for (final var conflict : mPossibleConflicts.getSetOfPairs()) {
+			if (isThreadInvolved(conflict.getKey(), threadId) || isThreadInvolved(conflict.getValue(), threadId)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private boolean isThreadInvolved(final Race race, final int threadId) {
