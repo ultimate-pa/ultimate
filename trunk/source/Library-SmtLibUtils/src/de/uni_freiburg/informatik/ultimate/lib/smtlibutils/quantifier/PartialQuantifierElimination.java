@@ -83,7 +83,7 @@ public class PartialQuantifierElimination {
 		// Check input for CommuhashNormalForm. Inputs from Ultimate are already in this form, but e.g., formulas that
 		// are directly obtained from a parser may violate this form.
 		assert CommuhashUtils.isInCommuhashNormalForm(term) : "Not in CommuhashNormalForm";
-		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
+		final Term withoutIte = new IteRemover(services, mgdScript).transform(term);
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
 		final Term result = QuantifierPushTermWalker.eliminate(services, mgdScript, false, PqeTechniques.LIGHT,
 				SimplificationTechnique.NONE, nnf);

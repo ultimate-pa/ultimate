@@ -301,7 +301,7 @@ public class DualJunctionDml extends DualJunctionQuantifierElimination {
 	}
 
 	private Term dissolveIte(final Term termWithIte) {
-		final Term iteRemoved = new IteRemover(mMgdScript).transform(termWithIte);
+		final Term iteRemoved = new IteRemover(mServices, mMgdScript).transform(termWithIte);
 		return new NnfTransformer(mMgdScript, mServices, QuantifierHandling.KEEP).transform(iteRemoved);
 	}
 
