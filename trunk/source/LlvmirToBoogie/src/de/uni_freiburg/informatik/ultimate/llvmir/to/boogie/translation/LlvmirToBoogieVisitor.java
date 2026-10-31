@@ -26,6 +26,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation;
 
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.CDIV_IDENTIFIER;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.REM_IDENTIFIER;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.bitLengthPairExists;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructBitLengthPairTypeDeclaration;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructCDivFunction;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructInitialProcedure;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructSpecFromIdentifier;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructVarDecFromString;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructVarDecFromTypeContext;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.contructRemainderFunction;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.getProcedureFromDeclarations;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.procedureAlreadyPresent;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.LABEL_IDENTIFIER;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.UNDEF_IDENTIFIER;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructBitLengthLiteral;
@@ -44,7 +56,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -62,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
@@ -81,8 +91,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -105,8 +113,6 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	private Unit mResult;
 	private final String mFilename;
 	private LlvmirLocation mLocation;
-	private final static String mCDivIdentifier = "aux#cdiv";
-	private final static String mRemIdentifier = "aux#rem";
 
 	private final ArrayList<Declaration> mDeclarations = new ArrayList<>();
 	private final HashMap<String, Pair<Declaration, Statement>> mGlobalVars = new HashMap<>();
@@ -142,49 +148,6 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	private LlvmirLocation constructLocation(final ParserRuleContext ctx) {
 		return new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
-	}
-
-	/**
-	 * Constructs a specification from a given identifier and location.
-	 *
-	 * This method constructs a ModifiesSpecification that indicates the specified variable is modified in the Boogie
-	 * AST.
-	 *
-	 * @param identifier
-	 *            The identifier of the variable to be modified.
-	 * @param location
-	 *            The location in the source code where this specification is defined.
-	 * @return A ModifiesSpecification object representing the modifies specification for the given identifier.
-	 */
-	private static ModifiesSpecification constructSpecFromIdentifier(final String identifier,
-			final LlvmirLocation location) {
-		final VariableLHS varLhs = new VariableLHS(location, identifier);
-		return new ModifiesSpecification(location, false, new VariableLHS[] { varLhs });
-	}
-
-	/**
-	 * Constructs an initial procedure with the given parameters.
-	 *
-	 * This method constructs a Procedure object representing the initial procedure in the Boogie AST, including its
-	 * body, variable declarations, statements, and specifications.
-	 *
-	 * @param location
-	 *            The location in the source code where this procedure is defined.
-	 * @param identifier
-	 *            The identifier for the procedure.
-	 * @param varDecls
-	 *            The variable declarations for the procedure.
-	 * @param stmts
-	 *            The statements in the body of the procedure.
-	 * @param specs
-	 *            The specifications for the procedure.
-	 * @return A Procedure object representing the initial procedure.
-	 */
-	private static Procedure constructInitialProcedure(final LlvmirLocation location, final String identifier,
-			final VariableDeclaration[] varDecls, final Statement[] stmts, final Specification[] specs) {
-		final Body body = new Body(location, varDecls, stmts);
-		return new Procedure(location, new Attribute[] {}, identifier, new String[] {}, new VarList[] {},
-				new VarList[] {}, specs, body);
 	}
 
 	/**
@@ -256,67 +219,6 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	}
 
 	/**
-	 * Constructs a variable declaration from a type and identifier.
-	 *
-	 * This method constructs a VariableDeclaration object with the specified type and identifier, using the provided
-	 * location for the declaration.
-	 *
-	 * @param type
-	 *            The type of the variable (e.g., "int", "bool").
-	 * @param identifier
-	 *            The identifier for the variable.
-	 * @param location
-	 *            The location in the source code where this variable is declared.
-	 * @return A VariableDeclaration object representing the variable declaration.
-	 */
-	private static VariableDeclaration constructVarDecFromString(final String type, final String identifier,
-			final LlvmirLocation location) {
-		final PrimitiveType primType = new PrimitiveType(location, type);
-		final VarList varList = new VarList(location, new String[] { unifyIdentifier(identifier) }, primType);
-		return new VariableDeclaration(location, new Attribute[] {}, new VarList[] { varList });
-	}
-
-	/**
-	 * Constructs a variable declaration from a type context, identifier, and location.
-	 *
-	 * This method constructs a VariableDeclaration object based on the provided type context and identifier.
-	 *
-	 * @param typeContext
-	 *            The type context from which to extract the type information.
-	 * @param identifier
-	 *            The identifier for the variable.
-	 * @param location
-	 *            The location in the source code where this variable is declared.
-	 * @return A VariableDeclaration object representing the variable declaration.
-	 * @throws AssertionError
-	 *             if the type context is not supported or does not contain an intType.
-	 */
-	private static VariableDeclaration constructVarDecFromTypeContext(final ParserRuleContext typeContext,
-			final String identifier, final LlvmirLocation location) throws AssertionError {
-		final LLVMIRParser.IntTypeContext intType;
-
-		if (typeContext instanceof LLVMIRParser.ConcreteTypeContext) {
-			intType = ((LLVMIRParser.ConcreteTypeContext) typeContext).intType();
-		} else if (typeContext instanceof LLVMIRParser.TypeContext) {
-			intType = ((LLVMIRParser.TypeContext) typeContext).intType();
-		} else {
-			throw new AssertionError("Unsupported type context for variable declaration:");
-		}
-
-		if (intType == null) {
-			throw new AssertionError("Type context does not contain an intType:");
-		}
-
-		final String typeString = intType.getText();
-		final String typeIdentifier = typeString.equals("i1") ? "bool" : "int";
-
-		final PrimitiveType type = new PrimitiveType(location, typeIdentifier);
-		final VarList varList = new VarList(location, new String[] { unifyIdentifier(identifier) }, type);
-		return new VariableDeclaration(location, new Attribute[] {}, new VarList[] { varList });
-
-	}
-
-	/**
 	 * Constructs a havoc statement for arithmetic or logic instructions.
 	 *
 	 * This method generates a havoc statement for arithmetic or logic instructions based on the type of the
@@ -342,212 +244,6 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		final Overapprox overapprox = new Overapprox(reason, location);
 		overapprox.annotate(havocStmt);
 		result.addFuncBlock(havocStmt);
-	}
-
-	/**
-	 * Retrieves a Procedure object from the list of declarations based on the given identifier.
-	 *
-	 * @param identifier
-	 *            The identifier of the procedure to retrieve.
-	 * @param declarations
-	 *            The list of declarations to search.
-	 * @return The Procedure object corresponding to the identifier.
-	 * @throws AssertionError
-	 *             if no procedure with the given identifier is found.
-	 */
-	private static Procedure getProcedureFromDeclarations(final String identifier,
-			final ArrayList<Declaration> declarations) throws AssertionError {
-		return declarations.stream().filter(dec -> dec instanceof Procedure).map(dec -> (Procedure) dec)
-				.filter(proc -> proc.getIdentifier().equals(identifier)).findFirst()
-				.orElseThrow(() -> new AssertionError("Procedure with identifier '" + identifier + "' not found."));
-	}
-
-	/**
-	 * Constructs the aux#cdiv function for signed and unsigned integer division.
-	 *
-	 * This method creates a FunctionDeclaration for the aux#cdiv function, which performs division while handling
-	 * signedness and absolute values. It takes into account various cases of operand signs to ensure correct division
-	 * results.
-	 *
-	 * @param location
-	 *            The location in the source code where this function is defined.
-	 * @return A FunctionDeclaration representing the aux#cdiv function.
-	 */
-	private static FunctionDeclaration constructCDivFunction(final LlvmirLocation location) {
-		final String xIdentifier = "aux#x";
-		final String yIdentifier = "aux#y";
-		final String maxFromBitLengthIdentifier = "aux#maxFromBitLength";
-		final String isSignedIdentifier = "aux#isSigned";
-
-		final Expression xExpr = new IdentifierExpression(location, xIdentifier);
-		final Expression yExpr = new IdentifierExpression(location, yIdentifier);
-		final Expression maxFromBitLengthExpr = new IdentifierExpression(location, maxFromBitLengthIdentifier);
-		final Expression isSignedExpr = new IdentifierExpression(location, isSignedIdentifier);
-		final Expression zeroExpr = new IntegerLiteral(location, "0");
-
-		final Expression signedPlusOneExpr =
-				new BinaryExpression(location, Operator.ARITHPLUS, isSignedExpr, new IntegerLiteral(location, "1"));
-		final Expression signedMaxFromBitLengthExpr =
-				new BinaryExpression(location, Operator.ARITHDIV, maxFromBitLengthExpr, signedPlusOneExpr);
-
-		final Expression xNonNeg = new BinaryExpression(location, Operator.COMPLT, xExpr, signedMaxFromBitLengthExpr);
-		final Expression yNonNeg = new BinaryExpression(location, Operator.COMPLT, yExpr, signedMaxFromBitLengthExpr);
-		final Expression xIsNeg = new BinaryExpression(location, Operator.COMPGEQ, xExpr, signedMaxFromBitLengthExpr);
-		final Expression yIsNeg = new BinaryExpression(location, Operator.COMPGEQ, yExpr, signedMaxFromBitLengthExpr);
-
-		final BinaryExpression xAbs = new BinaryExpression(location, Operator.ARITHMINUS, maxFromBitLengthExpr, xExpr);
-		final BinaryExpression yAbs = new BinaryExpression(location, Operator.ARITHMINUS, maxFromBitLengthExpr, yExpr);
-
-		final Expression noneAbsdivExpr = new BinaryExpression(location, Operator.ARITHDIV, xExpr, yExpr);
-		final Expression bothAbsDivExpr = new BinaryExpression(location, Operator.ARITHDIV, xAbs, yAbs);
-		final Expression xAbsDivExpr = new BinaryExpression(location, Operator.ARITHDIV, xAbs, yExpr);
-		final Expression yAbsDivExpr = new BinaryExpression(location, Operator.ARITHDIV, xExpr, yAbs);
-
-		final Expression bothNonNeg = new BinaryExpression(location, Operator.LOGICAND, xNonNeg, yNonNeg);
-		final Expression bothNeg = new BinaryExpression(location, Operator.LOGICAND, xIsNeg, yIsNeg);
-
-		final Expression resultIsNeg = new IfThenElseExpression(location, xIsNeg, xAbsDivExpr, yAbsDivExpr);
-		final Expression negatedResult = new BinaryExpression(location, Operator.ARITHMINUS, zeroExpr, resultIsNeg);
-
-		final Expression resultIsPosBothNeg =
-				new IfThenElseExpression(location, bothNeg, bothAbsDivExpr, negatedResult);
-
-		final Expression resultIsPosNoneNeg =
-				new IfThenElseExpression(location, bothNonNeg, noneAbsdivExpr, resultIsPosBothNeg);
-
-		final ArrayList<VarList> inParams = new ArrayList<>();
-		final PrimitiveType intTypePrim = new PrimitiveType(location, "int");
-		final VarList varListX = new VarList(location, new String[] { xIdentifier }, intTypePrim);
-		inParams.add(varListX);
-		final VarList varListY = new VarList(location, new String[] { yIdentifier }, intTypePrim);
-		inParams.add(varListY);
-		final VarList varListBitLength =
-				new VarList(location, new String[] { maxFromBitLengthIdentifier }, intTypePrim);
-		inParams.add(varListBitLength);
-		// isSigned is 1 if signed, 0 if unsigned
-		final VarList varListIsSigned = new VarList(location, new String[] { isSignedIdentifier }, intTypePrim);
-		inParams.add(varListIsSigned);
-
-		final VarList outParam = new VarList(location, new String[] {}, intTypePrim);
-
-		return new FunctionDeclaration(location, new Attribute[] {}, mCDivIdentifier, new String[] {},
-				inParams.toArray(VarList[]::new), outParam, resultIsPosNoneNeg);
-	}
-
-	/**
-	 * Constructs the aux#rem function for signed and unsigned integer remainder.
-	 *
-	 * This method creates a FunctionDeclaration for the aux#rem function, which computes the remainder while handling
-	 * signedness and absolute values. It takes into account various cases of operand signs to ensure correct remainder
-	 * results.
-	 *
-	 * @param location
-	 *            The location in the source code where this function is defined.
-	 * @return A FunctionDeclaration representing the aux#rem function.
-	 */
-	private static FunctionDeclaration contructRemainderFunction(final LlvmirLocation location) {
-		final String xIdentifier = "aux#x";
-		final String yIdentifier = "aux#y";
-		final String maxFromBitLengthIdentifier = "aux#maxFromBitLength";
-		final String isSignedIdentifier = "aux#isSigned";
-
-		final Expression xExpr = new IdentifierExpression(location, xIdentifier);
-		final Expression yExpr = new IdentifierExpression(location, yIdentifier);
-		final Expression maxFromBitLengthExpr = new IdentifierExpression(location, maxFromBitLengthIdentifier);
-		final Expression isSignedExpr = new IdentifierExpression(location, isSignedIdentifier);
-		final Expression zeroExpr = new IntegerLiteral(location, "0");
-
-		final Expression signedPlusOneExpr =
-				new BinaryExpression(location, Operator.ARITHPLUS, isSignedExpr, new IntegerLiteral(location, "1"));
-		final Expression signedMaxFromBitLengthExpr =
-				new BinaryExpression(location, Operator.ARITHDIV, maxFromBitLengthExpr, signedPlusOneExpr);
-
-		final FunctionApplication cdivCall = new FunctionApplication(location, mCDivIdentifier,
-				new Expression[] { xExpr, yExpr, maxFromBitLengthExpr, isSignedExpr });
-
-		final Expression xNonNeg = new BinaryExpression(location, Operator.COMPLT, xExpr, signedMaxFromBitLengthExpr);
-		final Expression yNonNeg = new BinaryExpression(location, Operator.COMPLT, yExpr, signedMaxFromBitLengthExpr);
-		final Expression xIsNeg = new BinaryExpression(location, Operator.COMPGEQ, xExpr, signedMaxFromBitLengthExpr);
-		final Expression yIsNeg = new BinaryExpression(location, Operator.COMPGEQ, yExpr, signedMaxFromBitLengthExpr);
-
-		final BinaryExpression xAbs = new BinaryExpression(location, Operator.ARITHMINUS, maxFromBitLengthExpr, xExpr);
-		final BinaryExpression yAbs = new BinaryExpression(location, Operator.ARITHMINUS, maxFromBitLengthExpr, yExpr);
-		final BinaryExpression xValue =
-				new BinaryExpression(location, Operator.ARITHMINUS, xExpr, maxFromBitLengthExpr);
-		final BinaryExpression yValue =
-				new BinaryExpression(location, Operator.ARITHMINUS, yExpr, maxFromBitLengthExpr);
-
-		final BinaryExpression yMulCdiv = new BinaryExpression(location, Operator.ARITHMUL, yExpr, cdivCall);
-		final BinaryExpression yAbsMulCdiv = new BinaryExpression(location, Operator.ARITHMUL, yAbs, cdivCall);
-		final BinaryExpression yValueMulCdiv = new BinaryExpression(location, Operator.ARITHMUL, yValue, cdivCall);
-
-		final BinaryExpression xMinusYMulCdiv = new BinaryExpression(location, Operator.ARITHMINUS, xExpr, yMulCdiv);
-		final BinaryExpression xAbsMinusYAbsMulCdiv =
-				new BinaryExpression(location, Operator.ARITHMINUS, xAbs, yAbsMulCdiv);
-		final BinaryExpression negatedXAbsMinusYAbsMulCdiv =
-				new BinaryExpression(location, Operator.ARITHMINUS, zeroExpr, xAbsMinusYAbsMulCdiv);
-		final BinaryExpression xValueMinusYMulCdiv =
-				new BinaryExpression(location, Operator.ARITHMINUS, xValue, yMulCdiv);
-		final BinaryExpression xMinusYValueMulCdiv =
-				new BinaryExpression(location, Operator.ARITHMINUS, xExpr, yValueMulCdiv);
-
-		final Expression bothNonNeg = new BinaryExpression(location, Operator.LOGICAND, xNonNeg, yNonNeg);
-		final Expression bothNeg = new BinaryExpression(location, Operator.LOGICAND, xIsNeg, yIsNeg);
-
-		final Expression resultOneNeg =
-				new IfThenElseExpression(location, xIsNeg, xValueMinusYMulCdiv, xMinusYValueMulCdiv);
-		final Expression resultBothNeg =
-				new IfThenElseExpression(location, bothNeg, negatedXAbsMinusYAbsMulCdiv, resultOneNeg);
-		final Expression resultNoneNeg = new IfThenElseExpression(location, bothNonNeg, xMinusYMulCdiv, resultBothNeg);
-
-		final ArrayList<VarList> inParams = new ArrayList<>();
-		final PrimitiveType intTypePrim = new PrimitiveType(location, "int");
-		final VarList varListX = new VarList(location, new String[] { xIdentifier }, intTypePrim);
-		inParams.add(varListX);
-		final VarList varListY = new VarList(location, new String[] { yIdentifier }, intTypePrim);
-		inParams.add(varListY);
-		final VarList varListBitLength =
-				new VarList(location, new String[] { maxFromBitLengthIdentifier }, intTypePrim);
-		inParams.add(varListBitLength);
-		// isSigned is 1 if signed, 0 if unsigned
-		final VarList varListIsSigned = new VarList(location, new String[] { isSignedIdentifier }, intTypePrim);
-		inParams.add(varListIsSigned);
-
-		final VarList outParam = new VarList(location, new String[] {}, intTypePrim);
-
-		return new FunctionDeclaration(location, new Attribute[] {}, mRemIdentifier, new String[] {},
-				inParams.toArray(VarList[]::new), outParam, resultNoneNeg);
-	}
-
-	/**
-	 * This method searches the list of declarations for a TypeDeclaration with an identifier matching the format
-	 * "i{bitLength}Pair".
-	 *
-	 * @param bitLength
-	 *            The bit length to check for.
-	 * @param declarations
-	 *            The list of declarations to search.
-	 * @return true if a matching TypeDeclaration exists, false otherwise.
-	 */
-	public static boolean bitLengthPairExists(final int bitLength, final ArrayList<Declaration> declarations) {
-		final Optional<TypeDeclaration> typeDec =
-				declarations.stream().filter(dec -> dec instanceof TypeDeclaration).map(dec -> (TypeDeclaration) dec)
-						.filter(typeDecl -> typeDecl.getIdentifier().equals("i" + bitLength + "Pair")).findFirst();
-		return typeDec.isPresent();
-	}
-
-	public static TypeDeclaration constructBitLengthPairTypeDeclaration(final int bitLength,
-			final LlvmirLocation location) {
-		final ArrayList<VarList> varLists = new ArrayList<>();
-		final PrimitiveType intType = new PrimitiveType(location, "int");
-		final VarList varList1 = new VarList(location, new String[] { "e0" }, intType);
-		varLists.add(varList1);
-		final PrimitiveType boolType = new PrimitiveType(location, "bool");
-		final VarList varList2 = new VarList(location, new String[] { "e1" }, boolType);
-		varLists.add(varList2);
-		final StructType structType = new StructType(location, varLists.toArray(VarList[]::new));
-		return new TypeDeclaration(location, new Attribute[] {}, true, "i" + bitLength + "Pair", new String[] {},
-				structType);
 	}
 
 	/**
@@ -602,54 +298,6 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 				new Expression[] { structConstructor });
 
 		return new Pair<>(varDec, assignmentStmt);
-	}
-
-	/**
-	 * Checks if a procedure with the same signature already exists in the list of declarations.
-	 *
-	 * This method compares the identifier, input parameters, and output parameters of the given procedure with those in
-	 * the list of declarations to determine if an identical procedure is already present.
-	 *
-	 * @param procedure
-	 *            The procedure to check for duplicates.
-	 * @param declarations
-	 *            The list of declarations to search.
-	 * @return true if an identical procedure is found, false otherwise.
-	 */
-	private static boolean procedureAlreadyPresent(final Procedure procedure,
-			final ArrayList<Declaration> declarations) {
-		return declarations.stream().filter(dec -> dec instanceof Procedure).map(dec -> (Procedure) dec)
-				.anyMatch(proc -> {
-					if (!proc.getIdentifier().equals(procedure.getIdentifier())) {
-						return false;
-					}
-					if (proc.getInParams().length != procedure.getInParams().length) {
-						return false;
-					}
-					for (int i = 0; i < proc.getInParams().length; i++) {
-						for (int j = 0; j < proc.getInParams()[i].getIdentifiers().length; j++) {
-							if (!proc.getInParams()[i].getIdentifiers()[j]
-									.equals(procedure.getInParams()[i].getIdentifiers()[j])) {
-								return false;
-							}
-							if (!proc.getInParams()[i].getType().equals(procedure.getInParams()[i].getType())) {
-								return false;
-							}
-						}
-					}
-					for (int i = 0; i < proc.getOutParams().length; i++) {
-						for (int j = 0; j < proc.getOutParams()[i].getIdentifiers().length; j++) {
-							if (!proc.getOutParams()[i].getIdentifiers()[j]
-									.equals(procedure.getOutParams()[i].getIdentifiers()[j])) {
-								return false;
-							}
-							if (!proc.getOutParams()[i].getType().equals(procedure.getOutParams()[i].getType())) {
-								return false;
-							}
-						}
-					}
-					return true;
-				});
 	}
 
 	/**
@@ -1093,7 +741,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			final Expression maxFromBitLengthExpr = constructBitLengthLiteral(location, bitLength, false);
 			final Expression isSignedExpr = new IntegerLiteral(location, "1");
 
-			final FunctionApplication funcApp = new FunctionApplication(location, mCDivIdentifier,
+			final FunctionApplication funcApp = new FunctionApplication(location, CDIV_IDENTIFIER,
 					new Expression[] { leftExpr, rightExpr, maxFromBitLengthExpr, isSignedExpr });
 
 			final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength, false);
@@ -1149,7 +797,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			final Expression maxFromBitLengthExpr = constructBitLengthLiteral(location, bitLength, false);
 			final Expression isSignedExpr = new IntegerLiteral(location, "1");
 
-			final FunctionApplication remCall = new FunctionApplication(mLocation, mRemIdentifier,
+			final FunctionApplication remCall = new FunctionApplication(mLocation, REM_IDENTIFIER,
 					new Expression[] { leftExpr, rightExpr, maxFromBitLengthExpr, isSignedExpr });
 
 			final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength, false);
