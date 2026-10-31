@@ -526,6 +526,9 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * invariants are checked: every transition of the system must preserve them, with {@code true} at INIT and
 	 * {@code false} at FINAL. The waypoints get {@code noErrorWithinK} for that check, but no witness invariant.
 	 * <p>
+	 * For k = 1, {@code noErrorWithinK(h)} follows from {@code J_h} by the step case, so the invariant is just
+	 * {@code J_h}, or {@code true}, and needs no quantifier elimination.
+	 * <p>
 	 * Must be called after the constructor, i.e. when the script is not locked: quantifier elimination uses it.
 	 *
 	 * @param services
@@ -561,13 +564,22 @@ public class KInduction<LETTER extends IAction, STATE> {
 		for (final Map.Entry<Integer, CallNode<STATE>> entry : nodes.entrySet()) {
 			final int node = entry.getKey();
 			final Invariant injected = mProofInvariants.get(node);
-			final Term withQuantifiers = injected == null ? noErrorWithinK(node)
-					: SmtUtils.and(script, injected.term(), noErrorWithinK(node));
-			// Quantifier elimination expects its input in commuhash normal form.
-			final Term invariant = PartialQuantifierElimination.eliminate(services, mWorkerMgdScript,
-					CommuhashNormalFormTransformer.apply(script, withQuantifiers), simplificationTechnique);
-			if (!QuantifierUtils.isQuantifierFree(invariant)) {
-				return noWitness("could not eliminate the quantifiers of the invariant of %s", entry.getValue());
+			final Term invariant;
+			if (mProvedK == 1) {
+				// The step case of k = 1 says that no transition leads from a state that is neither INIT nor FINAL and
+				// satisfies the injected invariants to FINAL, so noErrorWithinK(node) follows from J_node, or holds
+				// outright. Eliminating its quantifiers - the whole loop body, whose ite removal ran for minutes - would
+				// only give back an equivalent of J_node.
+				invariant = injected == null ? script.term("true") : injected.term();
+			} else {
+				final Term withQuantifiers = injected == null ? noErrorWithinK(node)
+						: SmtUtils.and(script, injected.term(), noErrorWithinK(node));
+				// Quantifier elimination expects its input in commuhash normal form.
+				invariant = PartialQuantifierElimination.eliminate(services, mWorkerMgdScript,
+						CommuhashNormalFormTransformer.apply(script, withQuantifiers), simplificationTechnique);
+				if (!QuantifierUtils.isQuantifierFree(invariant)) {
+					return noWitness("could not eliminate the quantifiers of the invariant of %s", entry.getValue());
+				}
 			}
 			if (mentionsOldVar.isSatisfiedBySomeSubterm(invariant)) {
 				return noWitness("the invariant of %s mentions an old variable", entry.getValue());

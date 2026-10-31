@@ -34,6 +34,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -135,6 +139,10 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	private Map<IPredicate, Term> mWitnessInvariants;
 	// How long computing them may delay the verdict
 	private static final long WITNESS_TIMEOUT_MILLIS = 10_000;
+	// How much longer the verdict waits for a computation that has not noticed its timer yet
+	private static final long WITNESS_GRACE_MILLIS = 2_000;
+	// Set when the verdict went without the computation, which may still be running
+	private volatile boolean mWitnessAbandoned;
 
 	public KInductionWorkerThread(final ILogger logger, final TAPreferences pref, final int id,
 			final CegarLoopResultBuilder resultBuilder, final IUltimateServiceProvider services,
@@ -340,11 +348,36 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	 * {@link #mAbstraction}, which shares its states with the main thread's initial abstraction, see
 	 * {@link TransferBetweenMainAndWorker#transferAutomaton}.
 	 *
-	 * @return the invariants, worker-script terms, or null if there are none; never throws, since the proof stands
-	 *         without a witness
+	 * @return the invariants, worker-script terms, or null if there are none; throws only when interrupted, since the
+	 *         proof stands without a witness
 	 */
-	private Map<IPredicate, Term> computeWitnessInvariants(final KInduction<L, IPredicate> kInduction) {
-		// The verdict waits for this, so a slow quantifier elimination must not hold it back for long.
+	private Map<IPredicate, Term> computeWitnessInvariants(final KInduction<L, IPredicate> kInduction)
+			throws InterruptedException {
+		// The timer of computeWitnessInvariantsWithin only ends the computation where it looks at it, and the ite
+		// removal of the quantifier elimination does not: it ran for minutes and the verdict never came. So the verdict
+		// waits for the computation only until the timer has run out, and an unfinished one is left behind. It only
+		// uses this worker's own script, which nobody needs once there is a verdict without invariants.
+		final FutureTask<Map<IPredicate, Term>> task =
+				new FutureTask<>(() -> computeWitnessInvariantsWithin(kInduction));
+		final Thread thread = new Thread(task, "KInduction witness");
+		thread.setDaemon(true);
+		thread.start();
+		try {
+			return task.get(WITNESS_TIMEOUT_MILLIS + WITNESS_GRACE_MILLIS, TimeUnit.MILLISECONDS);
+		} catch (final TimeoutException e) {
+			mWitnessAbandoned = true;
+			thread.interrupt();
+			mLogger.warn("KInduction: no correctness witness invariants, computing them did not end within %d ms",
+					WITNESS_TIMEOUT_MILLIS + WITNESS_GRACE_MILLIS);
+			return null;
+		} catch (final ExecutionException e) {
+			// computeWitnessInvariantsWithin catches everything but errors such as running out of memory
+			mLogger.error("KInduction: no correctness witness invariants, computing them failed: " + e.getCause());
+			return null;
+		}
+	}
+
+	private Map<IPredicate, Term> computeWitnessInvariantsWithin(final KInduction<L, IPredicate> kInduction) {
 		final IProgressMonitorService progressMonitor = mKInductionServices.getProgressMonitorService();
 		final IUltimateServiceProvider witnessServices = progressMonitor.registerChildTimer(mKInductionServices,
 				progressMonitor.getChildTimer(WITNESS_TIMEOUT_MILLIS));
@@ -374,9 +407,15 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 			}
 			return result;
 		} catch (final ToolchainCanceledException | SMTLIBException e) {
-			mLogger.warn("KInduction: no correctness witness invariants, computing them failed: " + e);
+			if (!mWitnessAbandoned) {
+				mLogger.warn("KInduction: no correctness witness invariants, computing them failed: " + e);
+			}
 			return null;
 		} catch (final RuntimeException | AssertionError e) {
+			if (mWitnessAbandoned || mMainThread.isShuttingDown()) {
+				// Left behind, the main thread may have destroyed the solver under it.
+				return null;
+			}
 			// A bug in the witness computation must not cost the verdict, but it should be visible.
 			mLogger.error("KInduction: no correctness witness invariants, computing them crashed: " + e);
 			for (final StackTraceElement element : e.getStackTrace()) {
