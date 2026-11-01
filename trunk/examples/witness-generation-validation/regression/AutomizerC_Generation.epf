@@ -85,3 +85,8 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Maximize\ final\ states=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Use\ SBE=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Minimize\ states\ even\ if\ more\ edges\ are\ added\ than\ removed.=false
+
+\!/instance/de.uni_freiburg.informatik.ultimate.witnessprinter=
+/instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Generate\ GraphML\ witnesses=true
+@de.uni_freiburg.informatik.ultimate.witnessprinter=0.3.2
+file_export_version=3.0

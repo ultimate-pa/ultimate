@@ -9,7 +9,7 @@ pipeline {
     timestamps()
   }
   environment {
-    PATH = "${env.WORKSPACE}/releaseScripts/default/adds:${env.PATH}"
+    PATH = "${env.WORKSPACE}/releaseScripts/default/adds/solvers/linux/x86_64:${env.PATH}"
   }
   tools {
     jdk 'JDK21'
@@ -32,7 +32,7 @@ pipeline {
     stage('Build and run basic tests') {
       steps {
         withMaven(mavenOpts: '-Xmx4g -Xss4m -ea', options: [artifactsPublisher(disabled: true)]) {
-          sh 'cd trunk/source/BA_MavenParentUltimate && mvn -T 1C clean install'
+          sh 'cd releaseScripts/default && ./makeBuild.sh'
         }
       }
     }
@@ -47,6 +47,10 @@ pipeline {
       script { string mmMessage = mattermost.create_mattermost_message(scmVars) }
       emailext(body: '$DEFAULT_CONTENT', mimeType: 'text/plain', recipientProviders: [culprits(), developers(), requestor()], replyTo: 'dietsch@informatik.uni-freiburg.de', subject: '$DEFAULT_SUBJECT')
       mattermostSend(color: "${env.mm_color}", message: "${mmMessage}", text: '', channel: '#ultimate', icon: "https://jenkins.sopranium.de/static/0e41ff2a/images/jenkins-header-logo-v2.svg")
+    }
+    cleanup {
+      // Keep the clone, drop the build output: the agents' disks are small and the next build starts with git clean anyway
+      sh(label: 'drop build output', script: 'git clean -f -x -d -q', returnStatus: true)
     }
   }
 }

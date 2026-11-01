@@ -938,10 +938,10 @@ public class InitializationHandler {
 			}
 			return mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, initializationValue, cType, true);
 		}
-		final AssignmentStatement assignment =
+		final List<Statement> assignments =
 				mCHandler.constructAssignmentWithoutFlexibleArray(loc, (LocalLValue) lhs, initializationValue);
-		addOverApprToStatementAnnots(overAppr, assignment);
-		return Collections.singletonList(assignment);
+		assignments.forEach(s -> addOverApprToStatementAnnots(overAppr, s));
+		return assignments;
 	}
 
 	private Expression getDefaultValueForSimpleType(final ILocation loc, final ICType cTypeRaw) {

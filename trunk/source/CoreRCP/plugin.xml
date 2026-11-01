@@ -37,11 +37,11 @@
       </product>
    </extension>
    
-   <extension point="org.eclipse.core.runtime.products" id="UltimateEliminator">
-      <product application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" name="UltimateEliminator">
-         <property name="appName" value="UltimateEliminator" />
+   <extension point="org.eclipse.core.runtime.products" id="Eliminator">
+      <product application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" name="Ultimate-Eliminator">
+         <property name="appName" value="Ultimate-Eliminator" />
          <property name="aboutText"
-               value="UltimateEliminator is a wrapper for SMT solvers. It tries to eliminate quantifiers before passing formulas to the Solver." />
+               value="Ultimate Eliminator is a wrapper for SMT solvers. It tries to eliminate quantifiers before passing formulas to the Solver." />
       </product>
    </extension>
    
