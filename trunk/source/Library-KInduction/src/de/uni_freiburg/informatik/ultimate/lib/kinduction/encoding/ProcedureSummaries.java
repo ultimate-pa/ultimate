@@ -115,7 +115,7 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormu
  * state at all.
  * <p>
  * Recursion and an unfolding too big to build are <b>not</b> in this list any more. A procedure on a call cycle,
- * and any procedure whose unfolding would not fit into {@link #MAX_UNFOLDED_NODES}, is given an activation record
+ * and any procedure whose unfolding would not fit into {@link #UNFOLDING_BUDGET}, is given an activation record
  * instead - see {@link CallStack} - so its states occur exactly once in the graph and its recursive call is an
  * ordinary loop of it.
  *
@@ -129,12 +129,14 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormu
 public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 
 	/**
-	 * How many nodes the unfolded graph may have. Unfolding is exponential in the depth of the call graph times
-	 * the number of call sites per procedure, so a program can ask for arbitrarily many nodes; past this many the
-	 * analysis is refused instead of being silently cut short. Like {@code KInduction.MAX_K} this is a constant
-	 * rather than a preference so far.
+	 * How many nodes unfolding may cost before procedures get an activation record instead, see
+	 * {@link #stackUnfoldingsThatDoNotFit}. Unfolding is exponential in the depth of the call graph times the number
+	 * of call sites per procedure, so a program can ask for arbitrarily many nodes. This is a budget for that choice,
+	 * not a limit on the graph: a graph that is bigger anyway, because the procedures themselves are big or because
+	 * the estimate was low, is built all the same. Like {@code KInduction.MAX_K} this is a constant rather than a
+	 * preference so far.
 	 */
-	public static final int MAX_UNFOLDED_NODES = 50_000;
+	public static final int UNFOLDING_BUDGET = 50_000;
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -149,7 +151,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	/**
 	 * The procedures whose activations are told apart by {@link CallStack} rather than by copies of their states:
 	 * every procedure on a call cycle, plus any procedure whose unfolding would not fit into
-	 * {@link #MAX_UNFOLDED_NODES}. Their states occur exactly once in the graph.
+	 * {@link #UNFOLDING_BUDGET}. Their states occur exactly once in the graph.
 	 */
 	private final Set<String> mStacked = new LinkedHashSet<>();
 	/** Null exactly if {@link #mStacked} is empty, i.e. if no call needs an activation record. */
@@ -473,12 +475,6 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 
 	private void enqueue(final Deque<CallNode<STATE>> worklist, final CallNode<STATE> node) {
 		if (mRootScopeStates.add(node)) {
-			if (mRootScopeStates.size() > MAX_UNFOLDED_NODES) {
-				// stackUnfoldingsThatDoNotFit() counted the copies of every procedure before any of this was built
-				// and gave an activation record to whatever did not fit, so reaching this means that count was wrong.
-				throw new AssertionError("the unfolded graph passed " + MAX_UNFOLDED_NODES + " nodes although the "
-						+ "estimate said it would fit; unfolded " + mUnfolded + ", stacked " + mStacked);
-			}
 			worklist.add(node);
 		}
 	}
@@ -588,7 +584,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * Moves unfolded procedures to {@link #mStacked} until the unfolding fits into {@link #MAX_UNFOLDED_NODES}.
+	 * Moves unfolded procedures to {@link #mStacked} until the unfolding fits into {@link #UNFOLDING_BUDGET}, or
+	 * until no unfolded procedure is left to move.
 	 * <p>
 	 * Unfolding is exponential in the depth of the call graph times the number of call sites per procedure, so a
 	 * program can ask for arbitrarily many nodes. How many it asks for does not have to be found out by unfolding
@@ -610,15 +607,16 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 					worstNodes = nodes;
 				}
 			}
-			if (total <= MAX_UNFOLDED_NODES) {
+			if (total <= UNFOLDING_BUDGET) {
 				return;
 			}
 			if (worst == null) {
 				// Nothing left to stack: the graph is this big because the procedures themselves are, not because
-				// they are copied. Unfolding would not shrink it and neither would an activation record.
-				throw new UnsupportedOperationException("the checkpoint graph of this program has about " + total
-						+ " nodes, past the " + MAX_UNFOLDED_NODES + " k-induction is willing to build, and none of "
-						+ "that is unfolding that could be replaced by an activation record");
+				// they are copied. An activation record would not shrink it, so it is built as it is.
+				mLogger.info("KInduction: the checkpoint graph has about %d node(s), past the unfolding budget of %d, "
+						+ "but none of that is unfolding that an activation record could replace", total,
+						UNFOLDING_BUDGET);
+				return;
 			}
 			mLogger.info("KInduction: unfolding %s would take about %d node(s) of an estimated %d; giving it an "
 					+ "activation record instead", worst, worstNodes, total);

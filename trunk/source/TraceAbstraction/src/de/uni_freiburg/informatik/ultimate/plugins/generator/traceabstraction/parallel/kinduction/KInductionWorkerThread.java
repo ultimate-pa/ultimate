@@ -229,8 +229,8 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 
 	/**
 	 * @return whether k-induction stopped at a limit rather than at a bug: its solver failed (out of memory,
-	 *         crashed, or rejected the query), it could not express a violation as a run, or the program exceeds what
-	 *         k-induction is willing to build. A crash still only retires the worker; this decides how it is logged.
+	 *         crashed, or rejected the query), it could not express a violation as a run, or the program uses something
+	 *         k-induction does not support. A crash still only retires the worker; this decides how it is logged.
 	 */
 	private static boolean isLimit(final Throwable t) {
 		if (t instanceof UnsupportedOperationException) {
