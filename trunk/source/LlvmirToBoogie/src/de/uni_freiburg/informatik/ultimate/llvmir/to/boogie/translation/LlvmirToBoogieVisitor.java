@@ -26,18 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation;
 
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.bitLengthPairExists;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructBitLengthPairTypeDeclaration;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructCDivFunction;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructInitialProcedure;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructSpecFromIdentifier;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructVarDecFromString;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructVarDecFromTypeContext;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.contructRemainderFunction;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.getProcedureFromDeclarations;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.procedureAlreadyPresent;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.constructHavocStatementFromTypeValue;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.constructLlvmOperationWithOverflow;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleAddInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleICmpInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleMulInst;
@@ -46,22 +42,20 @@ import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.i
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleSubInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleUDivInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleURemInst;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.CallInstructionHandler.handleCallInstWithResult;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.CallInstructionHandler.handleCallInstWithoutResult;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ConversionInstructionHandler.handleSExtInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ConversionInstructionHandler.handleTruncInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ConversionInstructionHandler.handleZExtInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.LABEL_IDENTIFIER;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.UNDEF_IDENTIFIER;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructBitLengthLiteral;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructExpressionFromConstant;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructExpressionFromValue;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructLabelAssignment;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructSignedExpression;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.getBitLengthFromType;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.getEnclosingBasicBlock;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.getLabelIndexFromFuncBody;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.unifyIdentifier;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -70,14 +64,11 @@ import java.util.List;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -85,11 +76,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
@@ -102,8 +91,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRBaseVisitor;
@@ -567,200 +554,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			final LLVMIRParser.TypeContext typeContext = instructionType.allocaInst().type();
 			result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, location));
 		} else if (instructionType.callInst() != null) {
-			LLVMIRParser.TypeContext typeContext;
-			if (instructionType.callInst().type().type() != null) {
-				typeContext = instructionType.callInst().type().type();
-			} else if (instructionType.callInst().type() != null) {
-				typeContext = instructionType.callInst().type();
-			} else {
-				throw new AssertionError("The support for call instructions without a type is not implemented yet.");
-			}
-			result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, location));
-			final String callIdentifier = instructionType.callInst().value().constant().getText();
-			if (callIdentifier.equals("@printf")) {
-				final VariableLHS varLhs = new VariableLHS(location, identifier);
-				final HavocStatement havocStmt = new HavocStatement(location, new VariableLHS[] { varLhs });
-				result.addFuncBlock(havocStmt);
-			} else if (callIdentifier.equals("@__VERIFIER_nondet_int")
-					|| callIdentifier.equals("@__VERIFIER_nondet_short")
-					|| callIdentifier.equals("@__VERIFIER_nondet_ushort")
-					|| callIdentifier.equals("@__VERIFIER_nondet_bool")
-					|| callIdentifier.equals("@__VERIFIER_nondet_ulong")
-					|| callIdentifier.equals("@__VERIFIER_nondet_uint128")
-					|| callIdentifier.equals("@__VERIFIER_nondet_uint")
-					|| callIdentifier.equals("@__VERIFIER_nondet_ulonglong")
-					|| callIdentifier.equals("@__VERIFIER_nondet_char")
-					|| callIdentifier.equals("@__VERIFIER_nondet_uchar")) {
-				final VariableLHS varLhs = new VariableLHS(location, identifier);
-				final HavocStatement havocStmt = new HavocStatement(location, new VariableLHS[] { varLhs });
-				result.addFuncBlock(havocStmt);
-
-				final int bitLength = getBitLengthFromType(typeContext);
-
-				final IntegerLiteral maxValueLiteral = new IntegerLiteral(location,
-						BigInteger.ONE.shiftLeft(bitLength).subtract(BigInteger.ONE).toString());
-				final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.COMPLEQ,
-						new IdentifierExpression(location, identifier), maxValueLiteral);
-				final AssumeStatement assumeStmt = new AssumeStatement(location, new NamedAttribute[] {}, binaryExpr);
-				result.addFuncBlock(assumeStmt);
-
-				final IntegerLiteral minValueLiteral = new IntegerLiteral(location, "0");
-				final BinaryExpression binaryExpr2 = new BinaryExpression(location, Operator.COMPGEQ,
-						new IdentifierExpression(location, identifier), minValueLiteral);
-				final AssumeStatement assumeStmt2 = new AssumeStatement(location, new NamedAttribute[] {}, binaryExpr2);
-				result.addFuncBlock(assumeStmt2);
-			} else if (callIdentifier.equals("@llvm.abs.i32")) {
-				final LLVMIRParser.ArgContext arg = instructionType.callInst().args().arg(0);
-				final LLVMIRParser.ConcreteTypeContext argType = arg.concreteType();
-				final LLVMIRParser.ValueContext argValue = arg.value();
-				final int bitLength = getBitLengthFromType(argType);
-				final IntegerLiteral intLiteral0 = new IntegerLiteral(location, "0");
-				final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.COMPLT,
-						constructSignedExpression(constructExpressionFromValue(argValue, argType, location, false),
-								bitLength, location),
-						intLiteral0);
-				final IntegerLiteral zeroLiteral = new IntegerLiteral(location, "0");
-				final BinaryExpression nagationExpr =
-						new BinaryExpression(location, Operator.ARITHMINUS, zeroLiteral, constructSignedExpression(
-								constructExpressionFromValue(argValue, argType, location, false), bitLength, location));
-				final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength, false);
-				final BinaryExpression thenExpr =
-						new BinaryExpression(location, Operator.ARITHMOD, nagationExpr, bitLengthLiteral);
-				final Expression elseExpr = constructExpressionFromValue(argValue, argType, location, false);
-				final IfThenElseExpression ifThenElseExpr =
-						new IfThenElseExpression(location, binaryExpr, thenExpr, elseExpr);
-				final VariableLHS varLhs = new VariableLHS(location, identifier);
-				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-						new Expression[] { ifThenElseExpr });
-				result.addFuncBlock(assignment);
-			} else if (callIdentifier.startsWith("@llvm.sadd.with.overflow")) {
-				final LLVMIRParser.ArgContext arg0 = instructionType.callInst().args().arg(0);
-				final LLVMIRParser.ArgContext arg1 = instructionType.callInst().args().arg(1);
-				final LLVMIRParser.ConcreteTypeContext arg0Type = arg0.concreteType();
-				final LLVMIRParser.ValueContext arg0Value = arg0.value();
-				final LLVMIRParser.ValueContext arg1Value = arg1.value();
-				final int bitLength = getBitLengthFromType(arg0Type);
-				final BinaryExpression expr = new BinaryExpression(location, Operator.ARITHPLUS,
-						constructSignedExpression(constructExpressionFromValue(arg0Value, arg0Type, location, false),
-								bitLength, location),
-						constructSignedExpression(constructExpressionFromValue(arg1Value, arg0Type, location, false),
-								bitLength, location));
-				if (!bitLengthPairExists(bitLength, mDeclarations)) {
-					mDeclarations.add(constructBitLengthPairTypeDeclaration(bitLength, location));
-				}
-				final Pair<VariableDeclaration, AssignmentStatement> operationWithOverflowPair =
-						constructLlvmOperationWithOverflow(expr, bitLength, true, identifier, location);
-				result.addFuncLocalVar(operationWithOverflowPair.getFirst());
-				result.addFuncBlock(operationWithOverflowPair.getSecond());
-			} else if (callIdentifier.startsWith("@llvm.uadd.with.overflow")) {
-				final LLVMIRParser.ArgContext arg0 = instructionType.callInst().args().arg(0);
-				final LLVMIRParser.ArgContext arg1 = instructionType.callInst().args().arg(1);
-				final LLVMIRParser.ConcreteTypeContext arg0Type = arg0.concreteType();
-				final LLVMIRParser.ValueContext arg0Value = arg0.value();
-				final LLVMIRParser.ValueContext arg1Value = arg1.value();
-				final int bitLength = getBitLengthFromType(arg0Type);
-				final BinaryExpression expr = new BinaryExpression(location, Operator.ARITHPLUS,
-						constructExpressionFromValue(arg0Value, arg0Type, location, false),
-						constructExpressionFromValue(arg1Value, arg0Type, location, false));
-				if (!bitLengthPairExists(bitLength, mDeclarations)) {
-					mDeclarations.add(constructBitLengthPairTypeDeclaration(bitLength, location));
-				}
-				final Pair<VariableDeclaration, AssignmentStatement> operationWithOverflowPair =
-						constructLlvmOperationWithOverflow(expr, bitLength, false, identifier, location);
-				result.addFuncLocalVar(operationWithOverflowPair.getFirst());
-				result.addFuncBlock(operationWithOverflowPair.getSecond());
-			} else if (callIdentifier.startsWith("@llvm.ssub.with.overflow")) {
-				final LLVMIRParser.ArgContext arg0 = instructionType.callInst().args().arg(0);
-				final LLVMIRParser.ArgContext arg1 = instructionType.callInst().args().arg(1);
-				final LLVMIRParser.ConcreteTypeContext arg0Type = arg0.concreteType();
-				final LLVMIRParser.ValueContext arg0Value = arg0.value();
-				final LLVMIRParser.ValueContext arg1Value = arg1.value();
-				final int bitLength = getBitLengthFromType(arg0Type);
-				final BinaryExpression expr = new BinaryExpression(location, Operator.ARITHMINUS,
-						constructSignedExpression(constructExpressionFromValue(arg0Value, arg0Type, location, false),
-								bitLength, location),
-						constructSignedExpression(constructExpressionFromValue(arg1Value, arg0Type, location, false),
-								bitLength, location));
-				if (!bitLengthPairExists(bitLength, mDeclarations)) {
-					mDeclarations.add(constructBitLengthPairTypeDeclaration(bitLength, location));
-				}
-				final Pair<VariableDeclaration, AssignmentStatement> operationWithOverflowPair =
-						constructLlvmOperationWithOverflow(expr, bitLength, true, identifier, location);
-				result.addFuncLocalVar(operationWithOverflowPair.getFirst());
-				result.addFuncBlock(operationWithOverflowPair.getSecond());
-			} else if (callIdentifier.startsWith("@llvm.usub.with.overflow")) {
-				final LLVMIRParser.ArgContext arg0 = instructionType.callInst().args().arg(0);
-				final LLVMIRParser.ArgContext arg1 = instructionType.callInst().args().arg(1);
-				final LLVMIRParser.ConcreteTypeContext arg0Type = arg0.concreteType();
-				final LLVMIRParser.ValueContext arg0Value = arg0.value();
-				final LLVMIRParser.ValueContext arg1Value = arg1.value();
-				final int bitLength = getBitLengthFromType(arg0Type);
-				final BinaryExpression expr = new BinaryExpression(location, Operator.ARITHMINUS,
-						constructExpressionFromValue(arg0Value, arg0Type, location, false),
-						constructExpressionFromValue(arg1Value, arg0Type, location, false));
-				if (!bitLengthPairExists(bitLength, mDeclarations)) {
-					mDeclarations.add(constructBitLengthPairTypeDeclaration(bitLength, location));
-				}
-				final Pair<VariableDeclaration, AssignmentStatement> operationWithOverflowPair =
-						constructLlvmOperationWithOverflow(expr, bitLength, false, identifier, location);
-				result.addFuncLocalVar(operationWithOverflowPair.getFirst());
-				result.addFuncBlock(operationWithOverflowPair.getSecond());
-			} else if (callIdentifier.startsWith("@llvm.smul.with.overflow")) {
-				final LLVMIRParser.ArgContext arg0 = instructionType.callInst().args().arg(0);
-				final LLVMIRParser.ArgContext arg1 = instructionType.callInst().args().arg(1);
-				final LLVMIRParser.ConcreteTypeContext arg0Type = arg0.concreteType();
-				final LLVMIRParser.ValueContext arg0Value = arg0.value();
-				final LLVMIRParser.ValueContext arg1Value = arg1.value();
-				final int bitLength = getBitLengthFromType(arg0Type);
-				final BinaryExpression expr = new BinaryExpression(location, Operator.ARITHMUL,
-						constructSignedExpression(constructExpressionFromValue(arg0Value, arg0Type, location, false),
-								bitLength, location),
-						constructSignedExpression(constructExpressionFromValue(arg1Value, arg0Type, location, false),
-								bitLength, location));
-				if (!bitLengthPairExists(bitLength, mDeclarations)) {
-					mDeclarations.add(constructBitLengthPairTypeDeclaration(bitLength, location));
-				}
-				final Pair<VariableDeclaration, AssignmentStatement> operationWithOverflowPair =
-						constructLlvmOperationWithOverflow(expr, bitLength, true, identifier, location);
-				result.addFuncLocalVar(operationWithOverflowPair.getFirst());
-				result.addFuncBlock(operationWithOverflowPair.getSecond());
-			} else if (callIdentifier.startsWith("@llvm.umul.with.overflow")) {
-				final LLVMIRParser.ArgContext arg0 = instructionType.callInst().args().arg(0);
-				final LLVMIRParser.ArgContext arg1 = instructionType.callInst().args().arg(1);
-				final LLVMIRParser.ConcreteTypeContext arg0Type = arg0.concreteType();
-				final LLVMIRParser.ValueContext arg0Value = arg0.value();
-				final LLVMIRParser.ValueContext arg1Value = arg1.value();
-				final int bitLength = getBitLengthFromType(arg0Type);
-				final BinaryExpression expr = new BinaryExpression(location, Operator.ARITHMUL,
-						constructExpressionFromValue(arg0Value, arg0Type, location, false),
-						constructExpressionFromValue(arg1Value, arg0Type, location, false));
-				if (!bitLengthPairExists(bitLength, mDeclarations)) {
-					mDeclarations.add(constructBitLengthPairTypeDeclaration(bitLength, location));
-				}
-				final Pair<VariableDeclaration, AssignmentStatement> operationWithOverflowPair =
-						constructLlvmOperationWithOverflow(expr, bitLength, false, identifier, location);
-				result.addFuncLocalVar(operationWithOverflowPair.getFirst());
-				result.addFuncBlock(operationWithOverflowPair.getSecond());
-			} else {
-				final Procedure proc = getProcedureFromDeclarations(unifyIdentifier(callIdentifier), mDeclarations);
-				for (final Specification spec : proc.getSpecification()) {
-					if (!(spec instanceof ModifiesSpecification)) {
-						continue;
-					}
-					for (final VariableLHS varLhs : ((ModifiesSpecification) spec).getIdentifiers()) {
-						final String varIdentifier = varLhs.getIdentifier();
-						result.addFuncModifiedGlobalVar(constructSpecFromIdentifier(varIdentifier, location));
-					}
-				}
-				final ArrayList<Expression> args = new ArrayList<>();
-				for (final LLVMIRParser.ArgContext arg : instructionType.callInst().args().arg()) {
-					args.add(constructExpressionFromValue(arg.value(), typeContext, location, false));
-				}
-				final VariableLHS varLhs = new VariableLHS(location, identifier);
-				final CallStatement callStmt = new CallStatement(location, false, new VariableLHS[] { varLhs },
-						unifyIdentifier(callIdentifier), args.toArray(Expression[]::new));
-				result.addFuncBlock(callStmt);
-			}
+			handleCallInstWithResult(result, instructionType, identifier, location, mDeclarations);
 		} else if (instructionType.selectInst() != null) {
 			final LLVMIRParser.ConcreteTypeContext typeContext0 =
 					instructionType.selectInst().typeValue(0).firstClassType().concreteType();
@@ -922,39 +716,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 */
 	@Override
 	public Result visitCallInst(final LLVMIRParser.CallInstContext ctx) {
-		final Result result = new Result();
-		final LlvmirLocation location = constructLocation(ctx);
-
-		final String callIdentifier = ctx.value().constant().getText();
-		if (callIdentifier.equals("@__assert_fail") || callIdentifier.equals("@__VERIFIER_error")) {
-			final BooleanLiteral boolLit = new BooleanLiteral(location, false);
-			final AssertStatement assertStmt = new AssertStatement(location, new NamedAttribute[] {}, boolLit);
-			final Check chk = new Check(Spec.ASSERT);
-			chk.annotate(assertStmt);
-			result.addFuncBlock(assertStmt);
-		} else if (callIdentifier.equals("@printf")) {
-			// This call can be ignored as it is not relevant for the Boogie translation
-		} else {
-			final Procedure proc = getProcedureFromDeclarations(unifyIdentifier(callIdentifier), mDeclarations);
-			for (final Specification spec : proc.getSpecification()) {
-				if (!(spec instanceof ModifiesSpecification)) {
-					continue;
-				}
-				for (final VariableLHS varLhs : ((ModifiesSpecification) spec).getIdentifiers()) {
-					final String varIdentifier = varLhs.getIdentifier();
-
-					result.addFuncModifiedGlobalVar(constructSpecFromIdentifier(varIdentifier, location));
-				}
-			}
-			final ArrayList<Expression> args = new ArrayList<>();
-			for (final LLVMIRParser.ArgContext arg : ctx.args().arg()) {
-				args.add(constructExpressionFromValue(arg.value(), arg.concreteType(), location, false));
-			}
-			final CallStatement callStmt = new CallStatement(location, false, new VariableLHS[] {},
-					unifyIdentifier(callIdentifier), args.toArray(Expression[]::new));
-			result.addFuncBlock(callStmt);
-		}
-		return result;
+		return handleCallInstWithoutResult(ctx, constructLocation(ctx), mDeclarations);
 	}
 
 	/**
