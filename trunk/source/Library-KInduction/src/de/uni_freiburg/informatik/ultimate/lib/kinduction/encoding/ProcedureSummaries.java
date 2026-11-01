@@ -92,6 +92,12 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormu
  * Summarizing is kept for the procedures it fits because it is much cheaper: one formula instead of a copy of the
  * callee's whole graph, and no extra {@code pc} value per loop head per call site.
  *
+ * <h2>Dead states</h2>
+ *
+ * Only the states that can reach an error or return are encoded, see {@link LiveStates}; a call into any other state
+ * is a dead end. An infinite loop that only cuts off a path, like {@code ldv_stop}, therefore makes no procedure
+ * unsummarizable.
+ *
  * <h2>Cut points</h2>
  *
  * The procedures whose states are nodes of the root graph - the entry procedures and every unfolded or stacked
@@ -152,6 +158,9 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	private final ManagedScript mMgdScript;
 	private final INestedWordAutomaton<LETTER, STATE> mAbstraction;
 
+	/** The states that can reach an error or return, see {@link LiveStates}; no other state is encoded. */
+	private final Set<STATE> mLive;
+	/** The live states of each procedure that has one. */
 	private final Map<String, Set<STATE>> mStatesByProcedure;
 	private final Map<String, ScopeData> mScopeData = new LinkedHashMap<>();
 	/** The procedures that are unfolded at their call sites rather than summarized, see the class javadoc. */
@@ -252,10 +261,15 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		mCsToolkit = csToolkit;
 		mMgdScript = mgdScript;
 		mAbstraction = abstraction;
-		mStatesByProcedure = ProcedureCallGraph.groupStatesByProcedure(abstraction.getStates());
+		mLive = LiveStates.compute(abstraction);
+		mStatesByProcedure = ProcedureCallGraph.groupStatesByProcedure(mLive);
+		mLogger.info("KInduction: %d of %d state(s) can reach an error or return, the other %d are left out",
+				mLive.size(), abstraction.size(), abstraction.size() - mLive.size());
 		collectEntryStates();
 
-		final ProcedureCallGraph callGraph = new ProcedureCallGraph(logger, abstraction);
+		// Only the live part: a procedure without a live state is never entered on a path that matters, and a call
+		// into one is a dead end.
+		final ProcedureCallGraph callGraph = new ProcedureCallGraph(logger, abstraction, mLive);
 		final Set<String> entryProcedures = callGraph.getEntryProcedures();
 		// Only what an entry procedure can reach: a call cycle among procedures that are never called says nothing
 		// about this program, and encoding it would spend a stack on activations that never happen.
@@ -632,7 +646,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		final Map<STATE, Map<STATE, List<UnmodifiableTransFormula>>> summaries = new LinkedHashMap<>();
 		boolean hasCall = false;
 		boolean foldable = true;
-		for (final OutgoingCallTransition<LETTER, STATE> call : mAbstraction.callSuccessors(callSite)) {
+		for (final OutgoingCallTransition<LETTER, STATE> call : liveCalls(callSite)) {
 			hasCall = true;
 			final String callee = call.getLetter().getSucceedingProcedure();
 			if (!mScopeData.containsKey(callee)) {
@@ -740,7 +754,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 				// Its calls are all summarized, and their summary edges are among the edges above.
 				continue;
 			}
-			for (final OutgoingCallTransition<LETTER, STATE> call : mAbstraction.callSuccessors(state)) {
+			for (final OutgoingCallTransition<LETTER, STATE> call : liveCalls(state)) {
 				final String callee = call.getLetter().getSucceedingProcedure();
 				if (mStacked.contains(callee)) {
 					stackCallee(worklist, alternatives, node, call);
@@ -778,7 +792,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		int returns = 0;
 		for (final STATE exit : ProcedureCallGraph.computeExitStates(mAbstraction, ownStates(callee),
 				Collections.singleton(callSite.getState()))) {
-			for (final OutgoingReturnTransition<LETTER, STATE> ret : mAbstraction.returnSuccessorsGivenHier(exit,
+			for (final OutgoingReturnTransition<LETTER, STATE> ret : liveReturns(exit,
 					callSite.getState())) {
 				final CallNode<STATE> afterReturn = callSite.sibling(ret.getSucc());
 				addAlternative(alternatives, callSite.enter(exit), afterReturn,
@@ -832,7 +846,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		int returns = 0;
 		for (final STATE exit : ProcedureCallGraph.computeExitStates(mAbstraction, ownStates(callee),
 				Collections.singleton(callSite.getState()))) {
-			for (final OutgoingReturnTransition<LETTER, STATE> ret : mAbstraction.returnSuccessorsGivenHier(exit,
+			for (final OutgoingReturnTransition<LETTER, STATE> ret : liveReturns(exit,
 					callSite.getState())) {
 				final UnmodifiableTransFormula returnTf = asReturnAction(ret.getLetter()).getAssignmentOfReturn();
 				// The return assignment carries the result out of the activation that is being left, so it has to
@@ -929,7 +943,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 				continue;
 			}
 			for (final STATE state : ownStates(procedure)) {
-				for (final OutgoingCallTransition<LETTER, STATE> call : mAbstraction.callSuccessors(state)) {
+				for (final OutgoingCallTransition<LETTER, STATE> call : liveCalls(state)) {
 					final String callee = call.getLetter().getSucceedingProcedure();
 					if (mUnfolded.contains(callee)) {
 						copies.merge(callee, own, Long::sum);
@@ -1017,9 +1031,32 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		return ProcedureCallGraph.intersect(mAbstraction.getInitialStates(), ownStates(procedure));
 	}
 
+	/** The call transitions of {@code state} into a live state; a call into a dead one is a dead end. */
+	private List<OutgoingCallTransition<LETTER, STATE>> liveCalls(final STATE state) {
+		final List<OutgoingCallTransition<LETTER, STATE>> result = new ArrayList<>();
+		for (final OutgoingCallTransition<LETTER, STATE> call : mAbstraction.callSuccessors(state)) {
+			if (mLive.contains(call.getSucc())) {
+				result.add(call);
+			}
+		}
+		return result;
+	}
+
+	/** The return transitions from {@code exit} to {@code callSite} into a live state. */
+	private List<OutgoingReturnTransition<LETTER, STATE>> liveReturns(final STATE exit, final STATE callSite) {
+		final List<OutgoingReturnTransition<LETTER, STATE>> result = new ArrayList<>();
+		for (final OutgoingReturnTransition<LETTER, STATE> ret : mAbstraction.returnSuccessorsGivenHier(exit,
+				callSite)) {
+			if (mLive.contains(ret.getSucc())) {
+				result.add(ret);
+			}
+		}
+		return result;
+	}
+
 	private void collectEntryStates() {
-		for (final STATE state : mAbstraction.getStates()) {
-			for (final OutgoingCallTransition<LETTER, STATE> call : mAbstraction.callSuccessors(state)) {
+		for (final STATE state : mLive) {
+			for (final OutgoingCallTransition<LETTER, STATE> call : liveCalls(state)) {
 				mEntryStates.computeIfAbsent(call.getLetter().getSucceedingProcedure(), k -> new LinkedHashSet<>())
 						.add(call.getSucc());
 			}
@@ -1037,7 +1074,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		final Map<STATE, Map<STATE, List<UnmodifiableTransFormula>>> alternatives = new LinkedHashMap<>();
 		final INodeSpace<STATE, STATE> identity = identitySpace();
 		for (final STATE callSite : ownStates(caller)) {
-			for (final OutgoingCallTransition<LETTER, STATE> call : mAbstraction.callSuccessors(callSite)) {
+			for (final OutgoingCallTransition<LETTER, STATE> call : liveCalls(callSite)) {
 				resolveBySummary(caller, callSite, call, identity, alternatives, imported);
 			}
 		}
@@ -1071,7 +1108,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			if (summary == null) {
 				continue;
 			}
-			for (final OutgoingReturnTransition<LETTER, STATE> ret : mAbstraction.returnSuccessorsGivenHier(exit,
+			for (final OutgoingReturnTransition<LETTER, STATE> ret : liveReturns(exit,
 					callSite)) {
 				final UnmodifiableTransFormula edge = ProcedureCallGraph.computeVirtualEdge(mServices, mLogger,
 						mCsToolkit, mMgdScript, callAction, callee, summary,

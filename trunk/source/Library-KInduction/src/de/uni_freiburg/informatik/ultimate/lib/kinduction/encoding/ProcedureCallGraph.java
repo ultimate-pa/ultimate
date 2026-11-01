@@ -80,16 +80,29 @@ public final class ProcedureCallGraph {
 
 	public <LETTER extends IAction, STATE> ProcedureCallGraph(final ILogger logger,
 			final INestedWordAutomaton<LETTER, STATE> abstraction) {
+		this(logger, abstraction, abstraction.getStates());
+	}
+
+	/**
+	 * The call graph of the part of {@code abstraction} made of {@code states}: their procedures, and the calls
+	 * from one of them into another. A procedure with no state there is not in it, and neither is a call into one.
+	 */
+	public <LETTER extends IAction, STATE> ProcedureCallGraph(final ILogger logger,
+			final INestedWordAutomaton<LETTER, STATE> abstraction, final Set<STATE> states) {
 		mLogger = logger;
-		for (final STATE state : abstraction.getStates()) {
+		for (final STATE state : states) {
 			mProcedures.add(procedureOf(state));
 		}
 		for (final STATE init : abstraction.getInitialStates()) {
-			mEntryProcedures.add(procedureOf(init));
+			if (states.contains(init)) {
+				mEntryProcedures.add(procedureOf(init));
+			}
 		}
-		for (final STATE state : abstraction.getStates()) {
+		for (final STATE state : states) {
 			for (final OutgoingCallTransition<LETTER, STATE> t : abstraction.callSuccessors(state)) {
-				mCalls.addPair(t.getLetter().getPrecedingProcedure(), t.getLetter().getSucceedingProcedure());
+				if (states.contains(t.getSucc())) {
+					mCalls.addPair(t.getLetter().getPrecedingProcedure(), t.getLetter().getSucceedingProcedure());
+				}
 			}
 		}
 	}
