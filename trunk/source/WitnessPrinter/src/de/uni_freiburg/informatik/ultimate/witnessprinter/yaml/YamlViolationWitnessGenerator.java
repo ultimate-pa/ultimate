@@ -118,6 +118,11 @@ public class YamlViolationWitnessGenerator<TE, E> {
 				}
 			}
 
+			if (currentATE.hasAnyStepInfo(StepInfo.FORK) && currentATE.getForkedThreadId() == -1) {
+				// Omit auxiliary forks from the witness
+				continue;
+			}
+
 			if (targetIndices.contains(i)) {
 				targetWaypoints.add(new WaypointTarget(getLocation(currentATE, true), getThreadId(currentATE)));
 			}

@@ -1,0 +1,234 @@
+/*
+ * Copyright (C) 2026 Max Lehr
+ * Copyright (C) 2026 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Library-Sifa plug-in.
+ *
+ * The ULTIMATE Library-Sifa plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Library-Sifa plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Library-Sifa plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Library-Sifa plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Library-Sifa plug-in grant you additional permission
+ * to convey the resulting work.
+ */
+package de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import org.apache.commons.math3.fraction.BigFraction;
+import org.apache.commons.math3.fraction.BigFractionField;
+import org.apache.commons.math3.linear.FieldLUDecomposition;
+import org.apache.commons.math3.linear.FieldMatrix;
+import org.apache.commons.math3.linear.SparseFieldMatrix;
+
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
+
+/**
+ * Class that represents a matrix with entries of type {@link Rational}. This is archived by wrapping
+ * {@link FieldMatrix}<{@link BigFraction}>. {@link BigFraction} like {@link Rational} utilizes {@link BigInteger} for
+ * its denominator and numerator so no precision is lost. Further the sparse version
+ * {@link SparseFieldMatrix}<{@link BigFraction}> is used, so only the non-zero entries are stored.
+ *
+ * @author Max Lehr
+ *
+ */
+public class RationalMatrix {
+
+	private final FieldMatrix<BigFraction> mMatrix;
+	private final boolean mIsEmpty;
+
+	private RationalMatrix(final FieldMatrix<BigFraction> matrix) {
+		mMatrix = matrix;
+		mIsEmpty = false;
+	}
+
+	private RationalMatrix() {
+		mMatrix = null;
+		mIsEmpty = true;
+	}
+
+	/**
+	 * Returns a matrix containing only zeros.
+	 */
+	public static RationalMatrix getZeroMatrix(final int rowCount, final int columnCount) {
+		if (rowCount == 0 || columnCount == 0) {
+			return new RationalMatrix();
+		}
+		return new RationalMatrix(new SparseFieldMatrix<>(BigFractionField.getInstance(), rowCount, columnCount));
+	}
+
+	/**
+	 * Returns a matrix containing the given vectors as rows.
+	 */
+	public static RationalMatrix fromRowVectors(final List<RationalVector> rowVectors, final int columnCount) {
+		if (rowVectors.size() == 0 || columnCount == 0) {
+			return new RationalMatrix();
+		}
+
+		final SparseFieldMatrix<BigFraction> matrix =
+				new SparseFieldMatrix<>(BigFractionField.getInstance(), rowVectors.size(), columnCount);
+
+		for (int i = 0; i < rowVectors.size(); i++) {
+			matrix.setRowVector(i, rowVectors.get(i).getVector());
+		}
+
+		return new RationalMatrix(matrix);
+	}
+
+	/**
+	 * Returns a matrix containing the given vectors as columns.
+	 */
+	public static RationalMatrix fromColumnVectors(final List<RationalVector> columnVectors, final int rowCount) {
+		if (rowCount == 0 || columnVectors.size() == 0) {
+			return new RationalMatrix();
+		}
+
+		final SparseFieldMatrix<BigFraction> matrix =
+				new SparseFieldMatrix<>(BigFractionField.getInstance(), rowCount, columnVectors.size());
+
+		for (int i = 0; i < columnVectors.size(); i++) {
+			matrix.setColumnVector(i, columnVectors.get(i).getVector());
+		}
+
+		return new RationalMatrix(matrix);
+	}
+
+	public static RationalMatrix fromIntList(final List<Integer> integerList, final int rowCount,
+			final int columnCount) {
+		final List<Rational> rationalList = new ArrayList<>();
+		for (final Integer integer : integerList) {
+			rationalList.add(Rational.valueOf(integer.longValue(), 1));
+		}
+		return fromRationalList(rationalList, rowCount, columnCount);
+	}
+
+	public static RationalMatrix fromRationalList(final List<Rational> rationalList, final int rowCount,
+			final int columnCount) {
+		final List<RationalVector> rationalVectorList = new ArrayList<>();
+		for (int i = 0; i < rowCount; i++) {
+			final int index = i * columnCount;
+			rationalVectorList.add(new RationalVector(rationalList.subList(index, index + columnCount)));
+		}
+		return fromRowVectors(rationalVectorList, columnCount);
+	}
+
+	public List<RationalVector> getRowVectors() {
+		final List<RationalVector> rowVectors = new ArrayList<>();
+		for (int i = 0; i < getRowCount(); i++) {
+			final RationalVector rowVector = new RationalVector(mMatrix.getRowVector(i));
+			rowVectors.add(rowVector);
+		}
+		return rowVectors;
+	}
+
+	public List<RationalVector> getColumnVectors() {
+		final List<RationalVector> columnVectors = new ArrayList<>();
+		for (int i = 0; i < getColumnCount(); i++) {
+			final RationalVector columnVector = new RationalVector(mMatrix.getColumnVector(i));
+			columnVectors.add(columnVector);
+		}
+		return columnVectors;
+	}
+
+	public int getColumnCount() {
+		if (isEmpty()) {
+			return 0;
+		}
+		return mMatrix.getColumnDimension();
+	}
+
+	public int getRowCount() {
+		if (isEmpty()) {
+			return 0;
+		}
+		return mMatrix.getRowDimension();
+	}
+
+	public boolean isSquare() {
+		return getColumnCount() == getRowCount();
+	}
+
+	public boolean isEmpty() {
+		return mIsEmpty;
+	}
+
+	public Rational get(final int row, final int column) {
+		if ((0 <= row && row < getRowCount()) && (0 <= column && column < getColumnCount())) {
+			final BigFraction entry = mMatrix.getEntry(row, column);
+			return RationalVector.getRationalFromBigFraction(entry);
+		}
+		throw new ArrayIndexOutOfBoundsException(null);
+
+	}
+
+	public RationalMatrix transpose() {
+		if (isEmpty()) {
+			return this;
+		}
+		return new RationalMatrix(mMatrix.transpose());
+	}
+
+	public RationalMatrix invert() {
+		if (isEmpty()) {
+			return this;
+		}
+		final FieldLUDecomposition<BigFraction> lu = new FieldLUDecomposition<>(mMatrix);
+		return new RationalMatrix(lu.getSolver().getInverse());
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(mIsEmpty, mMatrix);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final RationalMatrix other = (RationalMatrix) obj;
+		return mIsEmpty == other.mIsEmpty && Objects.equals(mMatrix, other.mMatrix);
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder out = new StringBuilder("\n[ ");
+
+		for (int i = 0; i < getRowCount(); i++) {
+			if (i != 0) {
+				out.append("\n");
+			}
+			for (int j = 0; j < getColumnCount(); j++) {
+				out.append(get(i, j));
+				if (j != getColumnCount() - 1) {
+					out.append(", ");
+				}
+			}
+		}
+		out.append(" ]\n");
+		return out.toString();
+	}
+
+}

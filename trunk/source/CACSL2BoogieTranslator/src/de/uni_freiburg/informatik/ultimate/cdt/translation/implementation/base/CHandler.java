@@ -3022,18 +3022,20 @@ public class CHandler {
 		} else {
 			rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 		}
-		final AssignmentStatement assignStmt =
+		final List<Statement> assignStmt =
 				constructAssignmentWithoutFlexibleArray(loc, lValue, rhsWithBitfieldTreatment);
 
 		if (leftHandSide.getCType().isAtomic()) {
 			// For atomic types, make this assignment into an atomic block
-			builder.addStatement(new AtomicStatement(loc, new Statement[] { assignStmt }));
+			builder.addStatement(new AtomicStatement(loc, assignStmt.toArray(Statement[]::new)));
 		} else {
-			builder.addStatement(assignStmt);
+			builder.addStatements(assignStmt);
 		}
 
-		for (final Overapprox oa : rhsConverted.getOverapprs()) {
-			new OverapproxVariable(oa.getOverapproximatedLocations()).annotate(assignStmt);
+		for (final Statement s : assignStmt) {
+			for (final Overapprox oa : rhsConverted.getOverapprs()) {
+				new OverapproxVariable(oa.getOverapproximatedLocations()).annotate(s);
+			}
 		}
 		// TODO: DD 2020-12-02: havocing neighbours should only happen if the field is
 		// really on the stack -- it
@@ -3055,34 +3057,27 @@ public class CHandler {
 	 * field separately, but skip flexible. Otherwise, construct just a simple assignment (same as
 	 * {@link StatementFactory#constructAssignmentStatement}).
 	 */
-	public AssignmentStatement constructAssignmentWithoutFlexibleArray(final ILocation loc, final LocalLValue lhs,
+	public List<Statement> constructAssignmentWithoutFlexibleArray(final ILocation loc, final LocalLValue lhs,
 			final Expression rhs) {
-		final LeftHandSide[] assignLhs;
-		final Expression[] assignRhs;
 		if (lhs.getCType().getUnderlyingType() instanceof final CStructOrUnion structType
 				&& structType.hasFlexibleArrayMember()) {
 			// If the LHS type is a struct with a flexible array member, assign each field separately, but skip flexible
 			// arrays (see C11 6.7.2.1).
-			final List<LeftHandSide> lhsList = new ArrayList<>();
-			final List<Expression> rhsList = new ArrayList<>();
+			final List<Statement> result = new ArrayList<>();
 			for (final String fieldId : structType.getFieldIds()) {
 				final ICType fieldType = structType.getFieldType(fieldId);
 				if (fieldType.getUnderlyingType() instanceof CArray && fieldType.isIncomplete()) {
 					// Assignment of structs ignores flexible arrays, https://en.cppreference.com/w/c/language/struct
 					continue;
 				}
-				final Expression fieldValue = ExpressionFactory.constructStructAccessExpression(loc, rhs, fieldId);
-				lhsList.add(new StructLHS(loc, fieldValue.getType(), lhs.getLhs(), fieldId));
-				rhsList.add(fieldValue);
+				final Expression fieldRhs = ExpressionFactory.constructStructAccessExpression(loc, rhs, fieldId);
+				final StructLHS fieldLhs = new StructLHS(loc, fieldRhs.getType(), lhs.getLhs(), fieldId);
+				result.add(StatementFactory.constructSingleAssignmentStatement(loc, fieldLhs, fieldRhs));
 			}
-			assignLhs = lhsList.toArray(LeftHandSide[]::new);
-			assignRhs = rhsList.toArray(Expression[]::new);
-		} else {
-			// Otherwise, construct just a simple assignment.
-			assignLhs = new LeftHandSide[] { lhs.getLhs() };
-			assignRhs = new Expression[] { rhs };
+			return result;
 		}
-		return StatementFactory.constructAssignmentStatement(loc, assignLhs, assignRhs);
+		// Otherwise, construct just a simple assignment.
+		return List.of(StatementFactory.constructSingleAssignmentStatement(loc, lhs.getLhs(), rhs));
 	}
 
 	/**

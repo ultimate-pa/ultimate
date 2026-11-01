@@ -577,7 +577,6 @@ def get_settings_path(bitprecise, settings_search_string):
 
     if settings_argument == "" or settings_argument is None:
         print("No suitable settings file found using " + settings_search_string)
-        print("ERROR: UNSUPPORTED PROPERTY")
         raise _AbortButPrint("ERROR: UNSUPPORTED PROPERTY")
     return settings_argument
 
@@ -982,8 +981,8 @@ def main():
     settings_search_string = create_settings_search_string(prop, architecture)
     try:
         settings_file = get_settings_path(False, settings_search_string)
-    except _AbortButPrint:
-        # just abort, there is nothing to print left
+    except _AbortButPrint as e:
+        print(e)
         sys.exit(ExitCode.FAIL_NO_SETTINGS_FILE_FOUND)
 
     # create manual settings that override settings files for witness passthrough (collecting various things)
