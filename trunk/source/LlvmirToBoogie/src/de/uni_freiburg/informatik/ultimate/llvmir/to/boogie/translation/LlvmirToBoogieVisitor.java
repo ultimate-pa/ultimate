@@ -44,6 +44,11 @@ import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.i
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleURemInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.CallInstructionHandler.handleCallInstWithResult;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.CallInstructionHandler.handleCallInstWithoutResult;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ControlFlowInstructionHandler.handleBrTerm;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ControlFlowInstructionHandler.handleCondBrTerm;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ControlFlowInstructionHandler.handlePhiInst;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ControlFlowInstructionHandler.handleRetTerm;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ControlFlowInstructionHandler.handleSwitchTerm;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ConversionInstructionHandler.handleSExtInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ConversionInstructionHandler.handleTruncInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ConversionInstructionHandler.handleZExtInst;
@@ -55,12 +60,9 @@ import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.u
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructExpressionFromConstant;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructExpressionFromValue;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructLabelAssignment;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.getEnclosingBasicBlock;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.getLabelIndexFromFuncBody;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.unifyIdentifier;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -69,27 +71,20 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -417,27 +412,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 */
 	@Override
 	public Result visitRetTerm(final LLVMIRParser.RetTermContext ctx) throws AssertionError {
-		final Result result = new Result();
-		final LlvmirLocation location = constructLocation(ctx);
-
-		if (ctx.value() == null) {
-			// If there is no value, we assume a void return type
-			final ReturnStatement returnStmt = new ReturnStatement(location);
-			result.addFuncBlock(returnStmt);
-		} else {
-			final LLVMIRParser.ConcreteTypeContext returnType = ctx.concreteType();
-			if (returnType.intType() == null) {
-				throw new AssertionError("The support for return types other than integers is not implemented yet.");
-			}
-			final VariableLHS returnVar = new VariableLHS(location, "ret");
-			final AssignmentStatement assignmentStmt = new AssignmentStatement(location,
-					new LeftHandSide[] { returnVar },
-					new Expression[] { constructExpressionFromValue(ctx.value(), returnType, location, false) });
-			final ReturnStatement returnStmt = new ReturnStatement(location);
-			result.addFuncBlocks(Arrays.asList(assignmentStmt, returnStmt));
-		}
-		return result;
-
+		return handleRetTerm(ctx, constructLocation(ctx));
 	}
 
 	/**
@@ -497,22 +472,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		} else if (instructionType.iCmpInst() != null) {
 			handleICmpInst(result, instructionType, identifier, location);
 		} else if (instructionType.phiInst() != null) {
-			final LLVMIRParser.TypeContext typeContext = instructionType.phiInst().type();
-			result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, location));
-			for (final LLVMIRParser.IncContext inc : instructionType.phiInst().inc()) {
-				final String incIdentifier = unifyIdentifier(inc.LocalIdent().getText());
-				final int labelIndex = getLabelIndexFromFuncBody(ctx, incIdentifier);
-				final IdentifierExpression incExpr = new IdentifierExpression(location, LABEL_IDENTIFIER);
-				final IntegerLiteral labelIndexLiteral = new IntegerLiteral(location, Integer.toString(labelIndex));
-				final BinaryExpression binaryExpr =
-						new BinaryExpression(location, Operator.COMPEQ, incExpr, labelIndexLiteral);
-				final VariableLHS varLhs = new VariableLHS(location, identifier);
-				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-						new Expression[] { constructExpressionFromValue(inc.value(), typeContext, location, false) });
-				final IfStatement ifStmt =
-						new IfStatement(location, binaryExpr, new Statement[] { assignment }, new Statement[] {});
-				result.addFuncBlock(ifStmt);
-			}
+			handlePhiInst(result, ctx, identifier, location);
 		} else if (instructionType.zExtInst() != null) {
 			handleZExtInst(result, instructionType, identifier, location);
 		} else if (instructionType.sExtInst() != null) {
@@ -613,13 +573,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 */
 	@Override
 	public Result visitBrTerm(final LLVMIRParser.BrTermContext ctx) {
-		final LlvmirLocation location = constructLocation(ctx);
-		final Result result = new Result();
-		final String labelIdentifier = unifyIdentifier(ctx.label().LocalIdent().getText());
-		final GotoStatement gotoStmt = new GotoStatement(location, new String[] { labelIdentifier });
-		result.addFuncBlock(gotoStmt);
-
-		return result;
+		return handleBrTerm(ctx, constructLocation(ctx));
 	}
 
 	/**
@@ -634,20 +588,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 */
 	@Override
 	public Result visitCondBrTerm(final LLVMIRParser.CondBrTermContext ctx) {
-		final LlvmirLocation location = constructLocation(ctx);
-		final Result result = new Result();
-
-		final String variableIdentifier = unifyIdentifier(ctx.value().LocalIdent().getText());
-		final String thenLabelIdentifier = unifyIdentifier(ctx.label(0).LocalIdent().getText());
-		final String elseLabelIdentifier = unifyIdentifier(ctx.label(1).LocalIdent().getText());
-		final GotoStatement thenGoto = new GotoStatement(location, new String[] { thenLabelIdentifier });
-		final GotoStatement elseGoto = new GotoStatement(location, new String[] { elseLabelIdentifier });
-		final IdentifierExpression variableExpr = new IdentifierExpression(location, variableIdentifier);
-		final IfStatement ifStmt =
-				new IfStatement(location, variableExpr, new Statement[] { thenGoto }, new Statement[] { elseGoto });
-		result.addFuncBlock(ifStmt);
-
-		return result;
+		return handleCondBrTerm(ctx, constructLocation(ctx));
 	}
 
 	/**
@@ -692,49 +633,6 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 */
 	@Override
 	public Result visitSwitchTerm(final LLVMIRParser.SwitchTermContext ctx) {
-		final Result result = new Result();
-		final LlvmirLocation location = constructLocation(ctx);
-
-		final LLVMIRParser.BasicBlockContext basicBlockContext = getEnclosingBasicBlock(ctx);
-		final IntegerLiteral currentLabelLiteral = new IntegerLiteral(location, String
-				.valueOf(getLabelIndexFromFuncBody(ctx, unifyIdentifier(basicBlockContext.LabelIdent().getText()))));
-		final VariableLHS varLhs = new VariableLHS(location, LABEL_IDENTIFIER);
-
-		final AssignmentStatement assignCurrentLabel = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-				new Expression[] { currentLabelLiteral });
-		result.addFuncBlock(assignCurrentLabel);
-
-		final LLVMIRParser.ConcreteTypeContext conditionTypeContext = ctx.typeValue().firstClassType().concreteType();
-		final String typeIdentifier = conditionTypeContext.intType().getText().equals("i1") ? "bool" : "int";
-		final List<LLVMIRParser.CaseContext> caseContexts = ctx.case_();
-		if (typeIdentifier.equals("bool")) {
-			final String case0LabelIdentifier = unifyIdentifier(caseContexts.get(0).label().LocalIdent().getText());
-			final String case1LabelIdentifier = unifyIdentifier(caseContexts.get(1).label().LocalIdent().getText());
-			final GotoStatement thenGoto = new GotoStatement(location, new String[] { case0LabelIdentifier });
-			final GotoStatement elseGoto = new GotoStatement(location, new String[] { case1LabelIdentifier });
-			final IfStatement ifStmt = new IfStatement(location,
-					new UnaryExpression(location, UnaryExpression.Operator.LOGICNEG, constructExpressionFromValue(
-							ctx.typeValue().value(), conditionTypeContext, location, false)),
-					new Statement[] { thenGoto }, new Statement[] { elseGoto });
-			result.addFuncBlock(ifStmt);
-		} else {
-			for (final LLVMIRParser.CaseContext caseContext : caseContexts) {
-				final LLVMIRParser.ConcreteTypeContext caseTypeContext =
-						caseContext.typeConst().firstClassType().concreteType();
-				final BinaryExpression conditionExpr = new BinaryExpression(location, Operator.COMPEQ,
-						constructExpressionFromValue(ctx.typeValue().value(), conditionTypeContext, location, false),
-						constructExpressionFromConstant(caseContext.typeConst().constant(), caseTypeContext, location,
-								false));
-				final String caseLabelIdentifier = unifyIdentifier(caseContext.label().LocalIdent().getText());
-				final GotoStatement thenGoto = new GotoStatement(location, new String[] { caseLabelIdentifier });
-				final IfStatement ifStmt =
-						new IfStatement(location, conditionExpr, new Statement[] { thenGoto }, new Statement[] {});
-				result.addFuncBlock(ifStmt);
-			}
-		}
-		final String defaultLabelIdentifier = unifyIdentifier(ctx.label().LocalIdent().getText());
-		final GotoStatement defaultGoto = new GotoStatement(location, new String[] { defaultLabelIdentifier });
-		result.addFuncBlock(defaultGoto);
-		return result;
+		return handleSwitchTerm(ctx, constructLocation(ctx));
 	}
 }
