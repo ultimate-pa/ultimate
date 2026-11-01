@@ -92,6 +92,14 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormu
  * Summarizing is kept for the procedures it fits because it is much cheaper: one formula instead of a copy of the
  * callee's whole graph, and no extra {@code pc} value per loop head per call site.
  *
+ * <h2>Cut points</h2>
+ *
+ * The procedures whose states are nodes of the root graph - the entry procedures and every unfolded or stacked
+ * one - are first reduced to their cut points, once each (see {@code reduce}): chains of states with one predecessor
+ * and one successor are composed into single edges, and so are the summarized calls on them. Every copy of a
+ * procedure then costs its cut points rather than all of its states, and the root graph has no transition of its
+ * own, only edges.
+ *
  * <h2>Errors inside a callee</h2>
  *
  * An error state of a <b>summarized</b> callee becomes an <b>error edge</b> {@code callSite -> that error state},
@@ -160,6 +168,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	private int mNextReturnSiteId;
 	/** Per procedure, the states a call transition enters it at. Used to look for loops in its body. */
 	private final Map<String, Set<STATE>> mEntryStates = new LinkedHashMap<>();
+	/** Per procedure whose states are nodes of the root graph, its own graph reduced to cut points, see reduce. */
+	private final Map<String, ReducedProcedure> mReduced = new LinkedHashMap<>();
 
 	private final Set<CallNode<STATE>> mRootScopeStates = new LinkedHashSet<>();
 	private final Set<CallNode<STATE>> mRootInitStates = new LinkedHashSet<>();
@@ -186,6 +196,29 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		N sibling(S state);
 
 		N enter(S calleeState);
+	}
+
+	/**
+	 * A procedure's own graph with every state removed that is neither a cut point nor needed otherwise, see
+	 * {@link #reduce}. Its edges are formulas over the procedure's own scope, so one reduction serves every copy.
+	 */
+	private final class ReducedProcedure {
+		/** The states that remain nodes. */
+		private final Set<STATE> mNodes;
+		private final Map<STATE, Map<STATE, UnmodifiableTransFormula>> mEdges;
+		/** The call sites whose calls are all summarized without an error, and are therefore edges of mEdges. */
+		private final Set<STATE> mFoldedCallSites;
+
+		private ReducedProcedure(final Set<STATE> nodes, final Map<STATE, Map<STATE, UnmodifiableTransFormula>> edges,
+				final Set<STATE> foldedCallSites) {
+			mNodes = nodes;
+			mEdges = edges;
+			mFoldedCallSites = foldedCallSites;
+		}
+
+		private Map<STATE, UnmodifiableTransFormula> edgesFrom(final STATE state) {
+			return mEdges.getOrDefault(state, Collections.emptyMap());
+		}
 	}
 
 	/** Everything one procedure's own checkpoint graph is built from, once its callees are done. */
@@ -245,6 +278,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			}
 			classify(callGraph, procedure);
 		}
+		reduceRootProcedures(order, entryProcedures);
 		stackUnfoldingsThatDoNotFit(order, entryProcedures);
 		if (!mStacked.isEmpty()) {
 			mCallStack = new CallStack(mMgdScript, localsOf(mStacked), counterSort);
@@ -272,9 +306,31 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	// Results, to be handed to LoopTreeFormulaBuilder's scoped constructor
 	// ----------------------------------------------------------------------------------------------------------
 
-	/** The flat graph the nodes below live in: the abstraction read through {@link CallNode}s. */
+	/**
+	 * The flat graph the nodes below live in. It has no transition of its own: every edge between two of
+	 * {@link #getScopeStates()} is one of {@link #getVirtualCallEdges()}, since the nodes are only the cut points of
+	 * each procedure, see {@link #reduce}.
+	 */
 	public ICallResolvedGraph<LETTER, CallNode<STATE>> getGraph() {
-		return new UnfoldedGraph<>(mAbstraction);
+		return new ICallResolvedGraph<>() {
+			@Override
+			public Iterable<OutgoingInternalTransition<LETTER, CallNode<STATE>>> internalSuccessors(
+					final CallNode<STATE> node) {
+				return Collections.emptyList();
+			}
+
+			@Override
+			public Iterable<OutgoingCallTransition<LETTER, CallNode<STATE>>> callSuccessors(
+					final CallNode<STATE> node) {
+				return Collections.emptyList();
+			}
+
+			@Override
+			public Iterable<OutgoingReturnTransition<LETTER, CallNode<STATE>>> returnSuccessorsGivenHier(
+					final CallNode<STATE> node, final CallNode<STATE> hier) {
+				return Collections.emptyList();
+			}
+		};
 	}
 
 	/** The entry procedures' nodes, the nodes of every unfolded callee copy, and every imported error node. */
@@ -291,6 +347,11 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		return Collections.unmodifiableSet(mRootFinalStates);
 	}
 
+	/**
+	 * Every edge of the graph: the reduced edges of each procedure copy, which include the summaries of its
+	 * error-free summarized calls, the error edges of the other summarized calls, and the call and return edges of
+	 * unfolded and stacked callees.
+	 */
 	public Map<CallNode<STATE>, Map<CallNode<STATE>, UnmodifiableTransFormula>> getVirtualCallEdges() {
 		return Collections.unmodifiableMap(mRootVirtualCallEdges);
 	}
@@ -416,6 +477,219 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	// ----------------------------------------------------------------------------------------------------------
+	// Reducing the procedures of the root graph to their cut points
+	// ----------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Reduces every procedure whose states become nodes of the root graph: the entry procedures and every unfolded
+	 * or stacked one. A reduction only depends on which callees are summarized, and that is decided by now; whether
+	 * an unsummarized callee is unfolded or stacked later makes no difference to its callers' cut points.
+	 */
+	private void reduceRootProcedures(final List<String> order, final Set<String> entryProcedures) {
+		long states = 0;
+		long nodes = 0;
+		for (final String procedure : order) {
+			if (entryProcedures.contains(procedure) || mUnfolded.contains(procedure)
+					|| mStacked.contains(procedure)) {
+				final ReducedProcedure reduced = reduce(procedure);
+				mReduced.put(procedure, reduced);
+				states += ownStates(procedure).size();
+				nodes += reduced.mNodes.size();
+			}
+		}
+		mLogger.info("KInduction: reduced the %d procedure(s) of the root graph from %d state(s) to %d node(s)",
+				mReduced.size(), states, nodes);
+	}
+
+	/**
+	 * {@code procedure}'s own graph, reduced to the states that have to be nodes of the root graph.
+	 * <p>
+	 * {@link LoopTreeFormulaBuilder} composes everything between two checkpoints anyway, so a state that is no cut
+	 * point only costs: one node per copy of the procedure, and one more step of every composition through it. Large
+	 * block encoding has merged what it could, but it stops at every call, so on a program with many calls nearly
+	 * every state starts or ends one. Once a callee is summarized, its call site and its return site are two states
+	 * joined by a single summary edge, and the chain around it can be composed like any other.
+	 * <p>
+	 * The edges are the internal transitions and the summary edges of the calls whose callees are summarized and
+	 * cannot reach an error. A state is removed if it has exactly one predecessor and one successor, both other than
+	 * itself, and is none of these:
+	 * <ul>
+	 * <li>an initial state, a state a call enters, an error state, or a state a return leaves from;
+	 * <li>a call site that is not entirely folded into the edges - one with a call to an unfolded or stacked callee,
+	 * or to a summarized callee that can reach an error - which {@link #unfold} resolves per copy and therefore needs
+	 * as a node, and every return site of such a call.
+	 * </ul>
+	 * A maximal chain of removable states becomes one edge, the sequential composition of its edges, from the state
+	 * before it to the state after it; edges between the same two states are united. Each formula is composed into
+	 * exactly one other, so none grows beyond the sum of the formulas it is made of. The heads of a loop stay: a head
+	 * is entered from outside the loop and from inside it, so it has two predecessors, unless it is an initial or an
+	 * entry state. A removed state can still lie on a counterexample, since {@link KInductionCounterexampleBuilder}
+	 * searches the letters between two checkpoints in the automaton, not in this graph.
+	 */
+	private ReducedProcedure reduce(final String procedure) {
+		final Set<STATE> own = ownStates(procedure);
+		final Set<STATE> keep = new LinkedHashSet<>();
+		keep.addAll(ProcedureCallGraph.intersect(mAbstraction.getInitialStates(), own));
+		keep.addAll(mEntryStates.getOrDefault(procedure, Collections.emptySet()));
+		keep.addAll(ProcedureCallGraph.intersect(mAbstraction.getFinalStates(), own));
+		final Map<STATE, Map<STATE, List<UnmodifiableTransFormula>>> succ = new LinkedHashMap<>();
+		final Set<STATE> folded = new LinkedHashSet<>();
+		for (final STATE state : own) {
+			if (mAbstraction.returnSuccessors(state).iterator().hasNext()) {
+				keep.add(state);
+			}
+			for (final OutgoingInternalTransition<LETTER, STATE> t : mAbstraction.internalSuccessors(state)) {
+				if (own.contains(t.getSucc())) {
+					addAlternative(succ, state, t.getSucc(), t.getLetter().getTransformula());
+				}
+			}
+			foldCalls(procedure, state, own, succ, keep, folded);
+		}
+
+		final Map<STATE, Set<STATE>> pred = new LinkedHashMap<>();
+		for (final Map.Entry<STATE, Map<STATE, List<UnmodifiableTransFormula>>> from : succ.entrySet()) {
+			for (final STATE to : from.getValue().keySet()) {
+				pred.computeIfAbsent(to, k -> new LinkedHashSet<>()).add(from.getKey());
+			}
+		}
+		final Set<STATE> removed = new LinkedHashSet<>();
+		final Deque<STATE> worklist = new ArrayDeque<>(own);
+		while (!worklist.isEmpty()) {
+			final STATE state = worklist.poll();
+			if (!isRemovable(state, keep, removed, succ, pred)) {
+				continue;
+			}
+			// The maximal chain of removable states through this one, and the states before and after it.
+			final Deque<STATE> chain = new ArrayDeque<>();
+			chain.add(state);
+			STATE before = pred.get(state).iterator().next();
+			while (!chain.contains(before) && isRemovable(before, keep, removed, succ, pred)) {
+				chain.addFirst(before);
+				before = pred.get(before).iterator().next();
+			}
+			STATE after = succ.get(state).keySet().iterator().next();
+			while (!chain.contains(after) && isRemovable(after, keep, removed, succ, pred)) {
+				chain.addLast(after);
+				after = succ.get(after).keySet().iterator().next();
+			}
+			if (chain.contains(before) || chain.contains(after)) {
+				// A cycle of removable states only, which nothing enters from outside: unreachable, left as it is.
+				continue;
+			}
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(ProcedureSummaries.class,
+						String.format("reducing procedure %s to its cut points", procedure));
+			}
+			final List<UnmodifiableTransFormula> sequence = new ArrayList<>();
+			STATE from = before;
+			for (final STATE to : chain) {
+				sequence.add(LoopTreeFormulaBuilder.combineAlternatives(mLogger, mServices, mMgdScript,
+						succ.get(from).get(to)));
+				from = to;
+			}
+			sequence.add(LoopTreeFormulaBuilder.combineAlternatives(mLogger, mServices, mMgdScript,
+					succ.get(from).get(after)));
+			final UnmodifiableTransFormula composed = TransFormulaUtils.sequentialComposition(mLogger, mServices,
+					mMgdScript, false, false, false, SimplificationTechnique.NONE, sequence);
+			succ.get(before).remove(chain.getFirst());
+			pred.get(after).remove(chain.getLast());
+			for (final STATE inner : chain) {
+				succ.remove(inner);
+				pred.remove(inner);
+				removed.add(inner);
+			}
+			addAlternative(succ, before, after, composed);
+			pred.computeIfAbsent(after, k -> new LinkedHashSet<>()).add(before);
+			// Both may have lost a neighbour, if they were already joined directly.
+			worklist.add(before);
+			worklist.add(after);
+		}
+
+		final Set<STATE> nodes = new LinkedHashSet<>(own);
+		nodes.removeAll(removed);
+		return new ReducedProcedure(nodes, combine(succ), folded);
+	}
+
+	private boolean isRemovable(final STATE state, final Set<STATE> keep, final Set<STATE> removed,
+			final Map<STATE, Map<STATE, List<UnmodifiableTransFormula>>> succ, final Map<STATE, Set<STATE>> pred) {
+		if (keep.contains(state) || removed.contains(state)) {
+			return false;
+		}
+		final Set<STATE> before = pred.get(state);
+		final Map<STATE, List<UnmodifiableTransFormula>> after = succ.get(state);
+		return before != null && before.size() == 1 && !before.contains(state) && after != null
+				&& after.size() == 1 && !after.containsKey(state);
+	}
+
+	/**
+	 * Adds the summary edges of the calls at {@code callSite} to {@code succ} if every one of them is summarized and
+	 * cannot reach an error, and marks the call site as folded. Otherwise keeps the call site and its return sites as
+	 * nodes, for {@link #unfold} to resolve the calls per copy.
+	 */
+	private void foldCalls(final String procedure, final STATE callSite, final Set<STATE> own,
+			final Map<STATE, Map<STATE, List<UnmodifiableTransFormula>>> succ, final Set<STATE> keep,
+			final Set<STATE> folded) {
+		final Map<STATE, Map<STATE, List<UnmodifiableTransFormula>>> summaries = new LinkedHashMap<>();
+		boolean hasCall = false;
+		boolean foldable = true;
+		for (final OutgoingCallTransition<LETTER, STATE> call : mAbstraction.callSuccessors(callSite)) {
+			hasCall = true;
+			final String callee = call.getLetter().getSucceedingProcedure();
+			if (!mScopeData.containsKey(callee)) {
+				foldable = false;
+				for (final STATE exit : ProcedureCallGraph.computeExitStates(mAbstraction, ownStates(callee),
+						Collections.singleton(callSite))) {
+					for (final OutgoingReturnTransition<LETTER, STATE> ret : mAbstraction
+							.returnSuccessorsGivenHier(exit, callSite)) {
+						keep.add(ret.getSucc());
+					}
+				}
+				continue;
+			}
+			final Set<STATE> imported = new LinkedHashSet<>();
+			resolveBySummary(procedure, callSite, call, identitySpace(), summaries, imported);
+			if (!imported.isEmpty()) {
+				foldable = false;
+			}
+		}
+		if (!hasCall) {
+			return;
+		}
+		if (foldable) {
+			for (final Map.Entry<STATE, List<UnmodifiableTransFormula>> to : summaries
+					.getOrDefault(callSite, Collections.emptyMap()).entrySet()) {
+				for (final UnmodifiableTransFormula formula : to.getValue()) {
+					addAlternative(succ, callSite, to.getKey(), formula);
+				}
+			}
+			folded.add(callSite);
+			mNumSummarizedCallSites++;
+			return;
+		}
+		keep.add(callSite);
+		for (final STATE target : summaries.getOrDefault(callSite, Collections.emptyMap()).keySet()) {
+			if (own.contains(target)) {
+				keep.add(target);
+			}
+		}
+	}
+
+	/** The node space of a procedure's own scope: plain states, so both operations are the identity. */
+	private INodeSpace<STATE, STATE> identitySpace() {
+		return new INodeSpace<>() {
+			@Override
+			public STATE sibling(final STATE state) {
+				return state;
+			}
+
+			@Override
+			public STATE enter(final STATE calleeState) {
+				return calleeState;
+			}
+		};
+	}
+
+	// ----------------------------------------------------------------------------------------------------------
 	// Building the unfolded root graph
 	// ----------------------------------------------------------------------------------------------------------
 
@@ -456,8 +730,15 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 				// An error imported from a summarized callee: reached only through its error edge, no successors.
 				continue;
 			}
-			for (final OutgoingInternalTransition<LETTER, STATE> t : mAbstraction.internalSuccessors(state)) {
-				enqueue(worklist, node.sibling(t.getSucc()));
+			final ReducedProcedure reduced = mReduced.get(ProcedureCallGraph.procedureOf(state));
+			for (final Map.Entry<STATE, UnmodifiableTransFormula> edge : reduced.edgesFrom(state).entrySet()) {
+				final CallNode<STATE> target = node.sibling(edge.getKey());
+				addAlternative(alternatives, node, target, edge.getValue());
+				enqueue(worklist, target);
+			}
+			if (reduced.mFoldedCallSites.contains(state)) {
+				// Its calls are all summarized, and their summary edges are among the edges above.
+				continue;
 			}
 			for (final OutgoingCallTransition<LETTER, STATE> call : mAbstraction.callSuccessors(state)) {
 				final String callee = call.getLetter().getSucceedingProcedure();
@@ -600,7 +881,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			String worst = null;
 			long worstNodes = -1;
 			for (final Map.Entry<String, Long> entry : copies.entrySet()) {
-				final long nodes = entry.getValue() * ownStates(entry.getKey()).size();
+				final long nodes = entry.getValue() * mReduced.get(entry.getKey()).mNodes.size();
 				total += nodes;
 				if (mUnfolded.contains(entry.getKey()) && nodes > worstNodes) {
 					worst = entry.getKey();
@@ -754,17 +1035,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	private Map<STATE, Map<STATE, UnmodifiableTransFormula>> buildVirtualEdges(final String caller,
 			final Set<STATE> imported) {
 		final Map<STATE, Map<STATE, List<UnmodifiableTransFormula>>> alternatives = new LinkedHashMap<>();
-		final INodeSpace<STATE, STATE> identity = new INodeSpace<>() {
-			@Override
-			public STATE sibling(final STATE state) {
-				return state;
-			}
-
-			@Override
-			public STATE enter(final STATE calleeState) {
-				return calleeState;
-			}
-		};
+		final INodeSpace<STATE, STATE> identity = identitySpace();
 		for (final STATE callSite : ownStates(caller)) {
 			for (final OutgoingCallTransition<LETTER, STATE> call : mAbstraction.callSuccessors(callSite)) {
 				resolveBySummary(caller, callSite, call, identity, alternatives, imported);
