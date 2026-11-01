@@ -47,6 +47,9 @@ import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.i
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ConversionInstructionHandler.handleSExtInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ConversionInstructionHandler.handleTruncInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ConversionInstructionHandler.handleZExtInst;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.MemoryInstructionHandler.handleAllocaInst;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.MemoryInstructionHandler.handleLoadInst;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.MemoryInstructionHandler.handleStoreInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.LABEL_IDENTIFIER;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.UNDEF_IDENTIFIER;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructExpressionFromConstant;
@@ -490,29 +493,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		final LlvmirLocation location = constructLocation(ctx);
 
 		if (instructionType.loadInst() != null) {
-			final LLVMIRParser.TypeContext variableType = instructionType.loadInst().type();
-			if (variableType.intType() == null) {
-				throw new AssertionError(
-						"The support for types other than integers in load instructions is not implemented yet.");
-			}
-			result.addFuncLocalVar(constructVarDecFromTypeContext(variableType, identifier, location));
-			final VariableLHS varLhs = new VariableLHS(location, identifier);
-
-			String loadVarIdentifier = null;
-			if (instructionType.loadInst().typeValue().value().LocalIdent() != null) {
-				loadVarIdentifier =
-						unifyIdentifier(instructionType.loadInst().typeValue().value().LocalIdent().getText());
-			} else if (instructionType.loadInst().typeValue().value().constant() != null) {
-				loadVarIdentifier = instructionType.loadInst().typeValue().value().constant().GlobalIdent().getText();
-			} else {
-				throw new AssertionError("Something went wrong while parsing the load instruction:");
-			}
-
-			final IdentifierExpression loadVarExpr =
-					new IdentifierExpression(location, unifyIdentifier(loadVarIdentifier));
-			final AssignmentStatement assignment =
-					new AssignmentStatement(location, new LeftHandSide[] { varLhs }, new Expression[] { loadVarExpr });
-			result.addFuncBlock(assignment);
+			handleLoadInst(result, instructionType, identifier, location);
 		} else if (instructionType.iCmpInst() != null) {
 			handleICmpInst(result, instructionType, identifier, location);
 		} else if (instructionType.phiInst() != null) {
@@ -551,8 +532,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		} else if (instructionType.mulInst() != null) {
 			handleMulInst(result, instructionType, identifier, location);
 		} else if (instructionType.allocaInst() != null) {
-			final LLVMIRParser.TypeContext typeContext = instructionType.allocaInst().type();
-			result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, location));
+			handleAllocaInst(result, instructionType, identifier, location);
 		} else if (instructionType.callInst() != null) {
 			handleCallInstWithResult(result, instructionType, identifier, location, mDeclarations);
 		} else if (instructionType.selectInst() != null) {
@@ -682,26 +662,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 */
 	@Override
 	public Result visitStoreInst(final LLVMIRParser.StoreInstContext ctx) {
-		final Result result = new Result();
-		final LlvmirLocation location = constructLocation(ctx);
-
-		String identifier = null;
-		final LLVMIRParser.ValueContext valueContext1 = ctx.typeValue(1).value();
-		if (valueContext1.LocalIdent() != null) {
-			identifier = unifyIdentifier(ctx.typeValue(1).value().LocalIdent().getText());
-		} else if (valueContext1.constant() != null) {
-			identifier = unifyIdentifier(valueContext1.constant().GlobalIdent().getText());
-			result.addFuncModifiedGlobalVar(constructSpecFromIdentifier(identifier, location));
-		} else {
-			throw new AssertionError("Something went wrong while parsing the store instruction:");
-		}
-		final VariableLHS varLhs = new VariableLHS(location, identifier);
-		final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-				new Expression[] { constructExpressionFromValue(ctx.typeValue(0).value(),
-						ctx.typeValue(0).firstClassType().concreteType(), location, false) });
-		result.addFuncBlock(assignment);
-
-		return result;
+		return handleStoreInst(ctx, constructLocation(ctx));
 	}
 
 	/**
