@@ -129,10 +129,11 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	private final IUltimateServiceProvider mKInductionServices;
 	// The invariants of a proof for the main thread's correctness witness, see computeWitnessInvariants
 	private Map<IPredicate, Term> mWitnessInvariants;
-	// How long computing them may delay the verdict
-	private static final long WITNESS_TIMEOUT_MILLIS = 10_000;
-	// How much longer the verdict waits for a computation that has not noticed its timer yet
-	private static final long WITNESS_GRACE_MILLIS = 2_000;
+	// How long computing them may delay the verdict. The TA worker and its solver keep running meanwhile: with 10 s,
+	// 723 of 6666 SAFE proofs of an SV-COMP run waited the full time and still got no invariants.
+	private static final long WITNESS_TIMEOUT_MILLIS = 1_500;
+	// How much longer the verdict waits for a computation that has not noticed its timer yet, 2 s in total
+	private static final long WITNESS_GRACE_MILLIS = 500;
 	// Set when the verdict went without the computation, which may still be running
 	private volatile boolean mWitnessAbandoned;
 
