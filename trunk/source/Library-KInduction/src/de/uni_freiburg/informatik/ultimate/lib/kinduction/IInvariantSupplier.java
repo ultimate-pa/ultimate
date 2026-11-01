@@ -32,6 +32,7 @@ import java.util.function.BooleanSupplier;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -84,6 +85,29 @@ public interface IInvariantSupplier<STATE> {
 	 */
 	default void queryFinished(final KInductionQuery.Kind kind, final int k, final long millis) {
 		// nothing to watch
+	}
+
+	/**
+	 * Called by k-induction once its transition system is built, before its first query, so that a supplier that
+	 * checks its candidates on the same encoding can take a copy instead of building it again.
+	 *
+	 * @param system
+	 *            the transition system; its formulas belong to {@code script}, so k-induction keeps using them
+	 * @param script
+	 *            the script of k-induction
+	 */
+	default void systemBuilt(final PcTransitionSystem<STATE> system, final ManagedScript script) {
+		// builds its own, if any
+	}
+
+	/**
+	 * Called by k-induction instead of {@link #systemBuilt} if building the transition system failed.
+	 *
+	 * @param cause
+	 *            why it failed; building it again would fail the same way
+	 */
+	default void systemFailed(final Throwable cause) {
+		// builds its own, if any
 	}
 
 	/**

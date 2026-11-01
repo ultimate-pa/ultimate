@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.BooleanSupplier;
 
@@ -44,6 +45,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery.Kind;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantSupplier.BuiltSystem;
 
 /**
  * The outgoing channel of an {@link InvariantSupplier} for one consumer. The supplier puts the locations whose
@@ -92,20 +95,37 @@ public final class InvariantSubscription implements IInvariantSupplier<CallNode<
 	// term of mSource -> its copy in mTarget, so that an unchanged invariant is always the very same object
 	private final Map<Term, Term> mTransferred = new HashMap<>();
 	private TermTransferrer mTransferrer;
+	// Where the transition system of k-induction goes, shared by every subscription of the supplier: the first one
+	// built is the supplier's, see InvariantSupplier#getChecker.
+	private final CompletableFuture<BuiltSystem> mSystem;
 
 	/**
 	 * @param mayInterrupt
 	 *            whether the supplier puts queries on probation and may interrupt them
+	 * @param system
+	 *            completed with the transition system of k-induction once it is built
 	 */
-	InvariantSubscription(final ManagedScript source, final ManagedScript target, final boolean mayInterrupt) {
+	InvariantSubscription(final ManagedScript source, final ManagedScript target, final boolean mayInterrupt,
+			final CompletableFuture<BuiltSystem> system) {
 		mSource = source;
 		mTarget = target;
 		mMayInterrupt = mayInterrupt;
+		mSystem = system;
 	}
 
 	@Override
 	public boolean mayInterrupt() {
 		return mMayInterrupt;
+	}
+
+	@Override
+	public void systemBuilt(final PcTransitionSystem<CallNode<IPredicate>> system, final ManagedScript script) {
+		mSystem.complete(new BuiltSystem(system, script));
+	}
+
+	@Override
+	public void systemFailed(final Throwable cause) {
+		mSystem.completeExceptionally(cause);
 	}
 
 	/**

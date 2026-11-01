@@ -36,6 +36,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -222,6 +223,39 @@ public class PcTransitionSystem<STATE> {
 		mStutterTransitionId = mTransitions.size();
 		mTransitions.add(new Transition<>(mStutterTransitionId, FINAL, FINAL, null, null, null, null,
 				Collections.emptyList(), Collections.emptyList()));
+	}
+
+	private PcTransitionSystem(final CounterSort counterSort) {
+		mCounterSort = counterSort;
+	}
+
+	/**
+	 * This system for another script, so that whoever reasons about the same program there need not build it again:
+	 * the same pc nodes and transitions, with every formula replaced by its copy. The scopes, checkpoints and states
+	 * of the transitions are this system's, they only serve to reconstruct a counterexample.
+	 *
+	 * @param transferFormula
+	 *            copies a formula of this system to the other script, together with its program variables
+	 * @param counterSort
+	 *            {@link #getCounterSort()} over the other script
+	 */
+	public PcTransitionSystem<STATE> transfer(final UnaryOperator<UnmodifiableTransFormula> transferFormula,
+			final CounterSort counterSort) {
+		final PcTransitionSystem<STATE> result = new PcTransitionSystem<>(counterSort);
+		result.mHeadNodes.putAll(mHeadNodes);
+		result.mWaypointNodes.putAll(mWaypointNodes);
+		result.mNumNodes = mNumNodes;
+		result.mStutterTransitionId = mStutterTransitionId;
+		for (final Transition<STATE> t : mTransitions) {
+			final UnmodifiableTransFormula formula = t.mFormula == null ? null : transferFormula.apply(t.mFormula);
+			result.mTransitions.add(new Transition<>(t.mId, t.mFrom, t.mTo, formula, t.mScope, t.mFromCheckpoint,
+					t.mToCheckpoint, t.mSourceStates, t.mTargetStates));
+			if (formula != null) {
+				result.collectVars(formula.getInVars().keySet());
+				result.collectVars(formula.getOutVars().keySet());
+			}
+		}
+		return result;
 	}
 
 	private void addTransition(final Scope<STATE> scope, final Checkpoint<STATE> from, final Checkpoint<STATE> to,
