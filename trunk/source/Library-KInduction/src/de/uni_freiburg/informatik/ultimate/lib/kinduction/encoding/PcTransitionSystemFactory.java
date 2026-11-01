@@ -82,8 +82,13 @@ public final class PcTransitionSystemFactory {
 		final ProcedureSummaries<LETTER, STATE> summaries;
 		if (!hasCallTransitions(abstraction)) {
 			summaries = null;
+			// Only the states that can reach an error, see LiveStates: a loop no error is reachable from is no loop
+			// k-induction has to unroll.
+			final Set<STATE> live = LiveStates.compute(abstraction);
+			logger.info("KInduction: %d of %d state(s) can reach an error, the other %d are left out", live.size(),
+					abstraction.size(), abstraction.size() - live.size());
 			tree = new LoopTreeFormulaBuilder<>(services, logger, mgdScript, new UnfoldedGraph<>(abstraction),
-					roots(abstraction.getStates()), roots(abstraction.getInitialStates()),
+					roots(live), roots(abstraction.getInitialStates()),
 					roots(abstraction.getFinalStates()), Collections.emptyMap(), Collections.emptySet()).build();
 		} else {
 			summaries = new ProcedureSummaries<>(services, logger, csToolkit, mgdScript, abstraction, counterSort);
