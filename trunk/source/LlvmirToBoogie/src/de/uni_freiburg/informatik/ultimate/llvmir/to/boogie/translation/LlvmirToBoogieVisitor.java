@@ -46,6 +46,9 @@ import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.i
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleSubInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleUDivInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleURemInst;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ConversionInstructionHandler.handleSExtInst;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ConversionInstructionHandler.handleTruncInst;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ConversionInstructionHandler.handleZExtInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.LABEL_IDENTIFIER;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.UNDEF_IDENTIFIER;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructBitLengthLiteral;
@@ -543,65 +546,9 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 				result.addFuncBlock(ifStmt);
 			}
 		} else if (instructionType.zExtInst() != null) {
-			result.addFuncLocalVar(constructVarDecFromString("int", identifier, location));
-			final LLVMIRParser.ConcreteTypeContext typeContext =
-					instructionType.zExtInst().typeValue().firstClassType().concreteType();
-			if (typeContext.intType().getText().equals("i1")) {
-				final IntegerLiteral zeroLiteral = new IntegerLiteral(location, "0");
-				final IntegerLiteral oneLiteral = new IntegerLiteral(location, "1");
-				final VariableLHS zeroVarLhs = new VariableLHS(location, identifier);
-				final VariableLHS oneVarLhs = new VariableLHS(location, identifier);
-				final AssignmentStatement elseAssignment = new AssignmentStatement(location,
-						new LeftHandSide[] { zeroVarLhs }, new Expression[] { zeroLiteral });
-				final AssignmentStatement thenAssignment = new AssignmentStatement(location,
-						new LeftHandSide[] { oneVarLhs }, new Expression[] { oneLiteral });
-				final IfStatement ifStmt = new IfStatement(location,
-						constructExpressionFromValue(instructionType.zExtInst().typeValue().value(), typeContext,
-								location, false),
-						new Statement[] { thenAssignment }, new Statement[] { elseAssignment });
-				result.addFuncBlock(ifStmt);
-			} else {
-				final VariableLHS varLhs = new VariableLHS(location, identifier);
-				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-						new Expression[] { constructExpressionFromValue(instructionType.zExtInst().typeValue().value(),
-								typeContext, location, false) });
-				result.addFuncBlock(assignment);
-			}
+			handleZExtInst(result, instructionType, identifier, location);
 		} else if (instructionType.sExtInst() != null) {
-			final LLVMIRParser.TypeContext newTypeContext = instructionType.sExtInst().type();
-			final LLVMIRParser.ConcreteTypeContext oldTypeContext =
-					instructionType.sExtInst().typeValue().firstClassType().concreteType();
-			final String oldTypeString = oldTypeContext.intType().getText();
-			result.addFuncLocalVar(constructVarDecFromTypeContext(newTypeContext, identifier, location));
-			if (oldTypeContext.intType() != null && oldTypeString.equals("i1")) {
-				final IntegerLiteral zeroLiteral = new IntegerLiteral(location, "0");
-				final IntegerLiteral oneLiteral = new IntegerLiteral(location, "1");
-				final VariableLHS zeroVarLhs = new VariableLHS(location, identifier);
-				final VariableLHS oneVarLhs = new VariableLHS(location, identifier);
-				final AssignmentStatement elseAssignment = new AssignmentStatement(location,
-						new LeftHandSide[] { zeroVarLhs }, new Expression[] { zeroLiteral });
-				final AssignmentStatement thenAssignment = new AssignmentStatement(location,
-						new LeftHandSide[] { oneVarLhs }, new Expression[] { oneLiteral });
-				final IfStatement ifStmt = new IfStatement(location,
-						constructExpressionFromValue(instructionType.sExtInst().typeValue().value(), oldTypeContext,
-								location, false),
-						new Statement[] { thenAssignment }, new Statement[] { elseAssignment });
-				result.addFuncBlock(ifStmt);
-			} else {
-				final VariableLHS varLhs = new VariableLHS(location, identifier);
-				final int oldBitLength = getBitLengthFromType(oldTypeContext);
-				final int newBitLength = getBitLengthFromType(newTypeContext);
-				final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, newBitLength, false);
-				final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHMOD,
-						constructSignedExpression(
-								constructExpressionFromValue(instructionType.sExtInst().typeValue().value(),
-										oldTypeContext, location, false),
-								oldBitLength, location),
-						bitLengthLiteral);
-				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-						new Expression[] { binaryExpr });
-				result.addFuncBlock(assignment);
-			}
+			handleSExtInst(result, instructionType, identifier, location);
 		} else if (instructionType.addInst() != null) {
 			handleAddInst(result, instructionType, identifier, location);
 		} else if (instructionType.sDivInst() != null) {
@@ -837,36 +784,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 					new Statement[] { elseAssignment });
 			result.addFuncBlock(ifStmt);
 		} else if (instructionType.truncInst() != null) {
-			final LLVMIRParser.TypeContext newTypeContext = instructionType.truncInst().type();
-			final LLVMIRParser.ConcreteTypeContext oldTypeContext =
-					instructionType.truncInst().typeValue().firstClassType().concreteType();
-			final int newBitLength = getBitLengthFromType(newTypeContext);
-			final VariableDeclaration varDecl = (constructVarDecFromTypeContext(newTypeContext, identifier, location));
-			result.addFuncLocalVar(varDecl);
-			if (newBitLength == 1) {
-				final IntegerLiteral oneLiteral = new IntegerLiteral(location, "1");
-				final IntegerLiteral twoLiteral = new IntegerLiteral(location, "2");
-				final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHMOD,
-						constructExpressionFromValue(instructionType.truncInst().typeValue().value(), oldTypeContext,
-								location, false),
-						twoLiteral);
-				final BinaryExpression conditionalExpr =
-						new BinaryExpression(location, Operator.COMPEQ, binaryExpr, oneLiteral);
-				final VariableLHS varLhs = new VariableLHS(location, identifier);
-				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-						new Expression[] { conditionalExpr });
-				result.addFuncBlock(assignment);
-			} else {
-				final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, newBitLength, false);
-				final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHMOD,
-						constructExpressionFromValue(instructionType.truncInst().typeValue().value(), oldTypeContext,
-								location, false),
-						bitLengthLiteral);
-				final VariableLHS varLhs = new VariableLHS(location, identifier);
-				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-						new Expression[] { binaryExpr });
-				result.addFuncBlock(assignment);
-			}
+			handleTruncInst(result, instructionType, identifier, location);
 		} else if (instructionType.extractValueInst() != null) {
 			if (instructionType.extractValueInst().typeValue().firstClassType().concreteType().structType() == null) {
 				throw new AssertionError(
