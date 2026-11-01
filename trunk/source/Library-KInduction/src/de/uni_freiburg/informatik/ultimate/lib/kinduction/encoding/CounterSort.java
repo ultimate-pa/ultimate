@@ -103,6 +103,12 @@ public final class CounterSort {
 		return false;
 	}
 
+	/** The same counter sort, over {@code script}. */
+	public CounterSort in(final Script script) {
+		return new CounterSort(isBitvector() ? SmtSortUtils.getBitvectorSort(script, BITVECTOR_WIDTH)
+				: SmtSortUtils.getIntSort(script));
+	}
+
 	public Sort getSort() {
 		return mSort;
 	}

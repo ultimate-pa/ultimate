@@ -212,11 +212,17 @@ public class KInduction<LETTER extends IAction, STATE> {
 		mLogger.info("KInduction: starting k-induction (MAX_K=%d)", MAX_K);
 		// Building the loop tree composes transition formulas, which declares constants for their aux vars and thus
 		// locks the script itself. So the tree has to be complete before we take the lock for the solver queries.
-		final PcTransitionSystemFactory.Result<LETTER, STATE> encoding =
-				PcTransitionSystemFactory.build(mServices, mLogger, mCsToolkit, mWorkerMgdScript, mAbstraction,
-						CounterSort.forProgram(mWorkerMgdScript.getScript(), mCsToolkit));
+		final PcTransitionSystemFactory.Result<LETTER, STATE> encoding;
+		try {
+			encoding = PcTransitionSystemFactory.build(mServices, mLogger, mCsToolkit, mWorkerMgdScript, mAbstraction,
+					CounterSort.forProgram(mWorkerMgdScript.getScript(), mCsToolkit));
+		} catch (final RuntimeException | Error e) {
+			mInvariantSupplier.systemFailed(e);
+			throw e;
+		}
 		mSystem = encoding.system();
 		mSummaries = encoding.summaries();
+		mInvariantSupplier.systemBuilt(mSystem, mWorkerMgdScript);
 		mLogger.info(
 				"KInduction: transition system with %d pc value(s), %d transition(s), %d variable(s), %d loop head(s), "
 						+ "counters of sort %s",

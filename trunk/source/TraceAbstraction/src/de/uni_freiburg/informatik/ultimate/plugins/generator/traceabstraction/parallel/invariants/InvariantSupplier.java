@@ -38,8 +38,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
@@ -52,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -66,8 +70,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantMessage.TrustedInvariants;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantSubscription.RunningQuery;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInduction;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CounterSort;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystemFactory;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 
 /**
  * Collects invariants for the workers of {@link ParallelNwaCegarLoop}, on a thread of its own.
@@ -127,9 +131,14 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 	private record Candidate(IcfgLocation location, Term term) {
 	}
 
+	/**
+	 * The transition system k-induction built, with the script its formulas belong to.
+	 */
+	record BuiltSystem(PcTransitionSystem<CallNode<IPredicate>> system, ManagedScript script) {
+	}
+
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final CfgSmtToolkit mCsToolkit;
 	private final ManagedScript mScript;
 	// Set once, on the main thread, before the supplier runs.
 	private INestedWordAutomaton<L, IPredicate> mAbstraction;
@@ -138,6 +147,8 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 	private final BlockingQueue<WorkerThreadResult<L, A>> mResultQueue;
 
 	private final BlockingQueue<InvariantMessage> mInbox = new LinkedBlockingQueue<>();
+	// Completed by k-induction through a subscription, see getChecker.
+	private final CompletableFuture<BuiltSystem> mBuiltSystem = new CompletableFuture<>();
 	private volatile boolean mStopped;
 	// True once the CEGAR loop is done, before it shuts the supplier down and destroys its solver.
 	private final BooleanSupplier mShuttingDown;
@@ -181,7 +192,6 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 			final BooleanSupplier shuttingDown, final Probation probation) {
 		mLogger = logger;
 		mServices = services;
-		mCsToolkit = csToolkit;
 		mScript = csToolkit.getManagedScript();
 		mResultQueue = resultQueue;
 		mShuttingDown = shuttingDown;
@@ -244,7 +254,8 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 	 * @return a new outgoing channel, which starts with everything published so far
 	 */
 	public InvariantSubscription subscribe(final ManagedScript target) {
-		final InvariantSubscription subscription = new InvariantSubscription(mScript, target, mProbation != null);
+		final InvariantSubscription subscription =
+				new InvariantSubscription(mScript, target, mProbation != null, mBuiltSystem);
 		synchronized (mSubscriptions) {
 			if (!mPublished.isEmpty()) {
 				subscription.offer(mPublishedVersion, Map.copyOf(mPublished));
@@ -592,17 +603,57 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 		publish(changed);
 	}
 
+	/**
+	 * The checker on the transition system of k-induction. The supplier does not build the system itself: it is the
+	 * same encoding of the same initial abstraction, and building it can take minutes and gigabytes on a big program.
+	 * So the first call waits until k-induction has built it, and copies it into the supplier's script. The states are
+	 * the same objects in both, since every transfer of the abstraction keeps its states.
+	 */
 	private InductivenessChecker getChecker() {
 		if (mChecker == null) {
-			final PcTransitionSystemFactory.Result<L, IPredicate> encoding =
-					PcTransitionSystemFactory.build(mServices, mLogger, mCsToolkit, mScript, mAbstraction,
-						CounterSort.forProgram(mScript.getScript(), mCsToolkit));
-			mChecker = new InductivenessChecker(mLogger, mScript, encoding.system());
-			mLogger.info("InvariantSupplier: transition system with %d pc value(s), %d loop head(s), %d waypoint(s)",
-					encoding.system().getNumNodes(), encoding.system().getHeadNodes().size(),
-					encoding.system().getWaypointNodes().size());
+			final BuiltSystem built = awaitBuiltSystem();
+			final TransferrerWithVariableCache transferrer =
+					new TransferrerWithVariableCache(built.script().getScript(), mScript);
+			final PcTransitionSystem<CallNode<IPredicate>> system = built.system().transfer(
+					transferrer::transferTransFormula, built.system().getCounterSort().in(mScript.getScript()));
+			mChecker = new InductivenessChecker(mLogger, mScript, system);
+			mLogger.info("InvariantSupplier: transition system of k-induction with %d pc value(s), %d loop head(s), "
+					+ "%d waypoint(s)", system.getNumNodes(), system.getHeadNodes().size(),
+					system.getWaypointNodes().size());
 		}
 		return mChecker;
+	}
+
+	/**
+	 * @return the transition system once k-induction has built it; throws what building it threw, or a
+	 *         {@link ToolchainCanceledException} if the supplier is stopped first
+	 */
+	private BuiltSystem awaitBuiltSystem() {
+		while (true) {
+			try {
+				return mBuiltSystem.get(WATCH_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
+			} catch (final TimeoutException e) {
+				if (mStopped || mShuttingDown.getAsBoolean()
+						|| !mServices.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(InvariantSupplier.class,
+							"waiting for the transition system of k-induction");
+				}
+			} catch (final InterruptedException e) {
+				Thread.currentThread().interrupt();
+				throw new ToolchainCanceledException(InvariantSupplier.class,
+						"waiting for the transition system of k-induction");
+			} catch (final ExecutionException e) {
+				// Building it again would fail the same way.
+				final Throwable cause = e.getCause();
+				if (cause instanceof final RuntimeException runtime) {
+					throw runtime;
+				}
+				if (cause instanceof final Error error) {
+					throw error;
+				}
+				throw new IllegalStateException("k-induction could not build its transition system", cause);
+			}
+		}
 	}
 
 	private Term transfer(final ManagedScript source, final Term term) {
