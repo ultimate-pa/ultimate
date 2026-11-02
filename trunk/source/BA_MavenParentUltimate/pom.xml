@@ -354,6 +354,7 @@
 		<module>../CoreRCPTest</module>
 		<module>../Library-AutomataTest</module>
 		<module>../Library-IcfgTransformerTest</module>
+		<module>../Library-KInductionTest</module>
 		<module>../Library-ModelCheckerUtilsTest</module>
 		<module>../Library-TraceCheckerUtilsTest</module>
 		<module>../Library-MSODTest</module>

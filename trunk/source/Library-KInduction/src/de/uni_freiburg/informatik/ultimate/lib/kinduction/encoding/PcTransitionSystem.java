@@ -428,6 +428,7 @@ public class PcTransitionSystem<STATE> {
 		for (final TermVariable aux : tf.getAuxVars()) {
 			substitution.put(aux, sv.aux(t.mId, aux, idx));
 		}
-		return PureSubstitution.apply(mgdScript, substitution, tf.getFormula());
+		return PureSubstitution.apply(mgdScript, substitution,
+				IteComparisonEncoder.apply(mgdScript.getScript(), tf.getFormula()));
 	}
 }
