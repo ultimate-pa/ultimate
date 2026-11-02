@@ -72,22 +72,8 @@ public final class BinaryInstructionHandler {
 	 */
 	public static void handleAddInst(final Result result, final LLVMIRParser.ValueInstructionContext instructionType,
 			final String identifier, final LlvmirLocation location) {
-		final LLVMIRParser.ConcreteTypeContext typeContext =
-				instructionType.addInst().typeValue().firstClassType().concreteType();
-		result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, location));
-		final int bitLength = getBitLengthFromType(typeContext);
-		final VariableLHS varLhs = new VariableLHS(location, identifier);
-		final Expression leftExpr = constructExpressionFromValue(instructionType.addInst().typeValue().value(),
-				typeContext, location, false);
-		final Expression rightExpr =
-				constructExpressionFromValue(instructionType.addInst().value(), typeContext, location, false);
-		final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHPLUS, leftExpr, rightExpr);
-		final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength, false);
-		final BinaryExpression signedExpr =
-				new BinaryExpression(location, Operator.ARITHMOD, binaryExpr, bitLengthLiteral);
-		final AssignmentStatement assignment =
-				new AssignmentStatement(location, new LeftHandSide[] { varLhs }, new Expression[] { signedExpr });
-		result.addFuncBlock(assignment);
+		constructBinaryAssignment(result, instructionType.addInst().typeValue(), instructionType.addInst().value(),
+				Operator.ARITHPLUS, identifier, location);
 	}
 
 	/**
@@ -106,22 +92,8 @@ public final class BinaryInstructionHandler {
 	 */
 	public static void handleSubInst(final Result result, final LLVMIRParser.ValueInstructionContext instructionType,
 			final String identifier, final LlvmirLocation location) {
-		final LLVMIRParser.ConcreteTypeContext typeContext =
-				instructionType.subInst().typeValue().firstClassType().concreteType();
-		result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, location));
-		final int bitLength = getBitLengthFromType(typeContext);
-		final VariableLHS varLhs = new VariableLHS(location, identifier);
-		final Expression leftExpr = constructExpressionFromValue(instructionType.subInst().typeValue().value(),
-				typeContext, location, false);
-		final Expression rightExpr =
-				constructExpressionFromValue(instructionType.subInst().value(), typeContext, location, false);
-		final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHMINUS, leftExpr, rightExpr);
-		final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength, false);
-		final BinaryExpression signedExpr =
-				new BinaryExpression(location, Operator.ARITHMOD, binaryExpr, bitLengthLiteral);
-		final AssignmentStatement assignment =
-				new AssignmentStatement(location, new LeftHandSide[] { varLhs }, new Expression[] { signedExpr });
-		result.addFuncBlock(assignment);
+		constructBinaryAssignment(result, instructionType.subInst().typeValue(), instructionType.subInst().value(),
+				Operator.ARITHMINUS, identifier, location);
 	}
 
 	/**
@@ -140,22 +112,8 @@ public final class BinaryInstructionHandler {
 	 */
 	public static void handleMulInst(final Result result, final LLVMIRParser.ValueInstructionContext instructionType,
 			final String identifier, final LlvmirLocation location) {
-		final LLVMIRParser.ConcreteTypeContext typeContext =
-				instructionType.mulInst().typeValue().firstClassType().concreteType();
-		result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, location));
-		final int bitLength = getBitLengthFromType(typeContext);
-		final VariableLHS varLhs = new VariableLHS(location, identifier);
-		final Expression leftExpr = constructExpressionFromValue(instructionType.mulInst().typeValue().value(),
-				typeContext, location, false);
-		final Expression rightExpr =
-				constructExpressionFromValue(instructionType.mulInst().value(), typeContext, location, false);
-		final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHMUL, leftExpr, rightExpr);
-		final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength, false);
-		final BinaryExpression signedExpr =
-				new BinaryExpression(location, Operator.ARITHMOD, binaryExpr, bitLengthLiteral);
-		final AssignmentStatement assignment =
-				new AssignmentStatement(location, new LeftHandSide[] { varLhs }, new Expression[] { signedExpr });
-		result.addFuncBlock(assignment);
+		constructBinaryAssignment(result, instructionType.mulInst().typeValue(), instructionType.mulInst().value(),
+				Operator.ARITHMUL, identifier, location);
 	}
 
 	/**
@@ -214,22 +172,8 @@ public final class BinaryInstructionHandler {
 	 */
 	public static void handleUDivInst(final Result result, final LLVMIRParser.ValueInstructionContext instructionType,
 			final String identifier, final LlvmirLocation location) {
-		final LLVMIRParser.ConcreteTypeContext typeContext =
-				instructionType.uDivInst().typeValue().firstClassType().concreteType();
-		result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, location));
-		final int bitLength = getBitLengthFromType(typeContext);
-		final VariableLHS varLhs = new VariableLHS(location, identifier);
-		final Expression leftExpr = constructExpressionFromValue(instructionType.uDivInst().typeValue().value(),
-				typeContext, location, false);
-		final Expression rightExpr =
-				constructExpressionFromValue(instructionType.uDivInst().value(), typeContext, location, false);
-		final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHDIV, leftExpr, rightExpr);
-		final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength, false);
-		final BinaryExpression signedExpr =
-				new BinaryExpression(location, Operator.ARITHMOD, binaryExpr, bitLengthLiteral);
-		final AssignmentStatement assignment =
-				new AssignmentStatement(location, new LeftHandSide[] { varLhs }, new Expression[] { signedExpr });
-		result.addFuncBlock(assignment);
+		constructBinaryAssignment(result, instructionType.uDivInst().typeValue(), instructionType.uDivInst().value(),
+				Operator.ARITHDIV, identifier, location);
 	}
 
 	/**
@@ -290,16 +234,38 @@ public final class BinaryInstructionHandler {
 	 */
 	public static void handleURemInst(final Result result, final LLVMIRParser.ValueInstructionContext instructionType,
 			final String identifier, final LlvmirLocation location) {
-		final LLVMIRParser.ConcreteTypeContext typeContext =
-				instructionType.uRemInst().typeValue().firstClassType().concreteType();
+		constructBinaryAssignment(result, instructionType.uRemInst().typeValue(), instructionType.uRemInst().value(),
+				Operator.ARITHMOD, identifier, location);
+	}
+
+	/**
+	 * Constructs the local variable and the assignment for a binary operation whose result is taken modulo 2^bitLength.
+	 *
+	 * The type of both operands is the type of the left operand.
+	 *
+	 * @param result
+	 *            The result to which the local variable and the assignment are added.
+	 * @param leftTypeValue
+	 *            The type and the value of the left operand from the LLVM IR parse tree.
+	 * @param rightValue
+	 *            The value of the right operand from the LLVM IR parse tree.
+	 * @param operator
+	 *            The Boogie operator that is applied to the two operands.
+	 * @param identifier
+	 *            The identifier of the local variable that receives the result.
+	 * @param location
+	 *            The location in the source code where this instruction is defined.
+	 */
+	private static void constructBinaryAssignment(final Result result,
+			final LLVMIRParser.TypeValueContext leftTypeValue, final LLVMIRParser.ValueContext rightValue,
+			final Operator operator, final String identifier, final LlvmirLocation location) {
+		final LLVMIRParser.ConcreteTypeContext typeContext = leftTypeValue.firstClassType().concreteType();
 		result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, location));
 		final int bitLength = getBitLengthFromType(typeContext);
 		final VariableLHS varLhs = new VariableLHS(location, identifier);
-		final Expression leftExpr = constructExpressionFromValue(instructionType.uRemInst().typeValue().value(),
-				typeContext, location, false);
-		final Expression rightExpr =
-				constructExpressionFromValue(instructionType.uRemInst().value(), typeContext, location, false);
-		final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHMOD, leftExpr, rightExpr);
+		final Expression leftExpr = constructExpressionFromValue(leftTypeValue.value(), typeContext, location, false);
+		final Expression rightExpr = constructExpressionFromValue(rightValue, typeContext, location, false);
+		final BinaryExpression binaryExpr = new BinaryExpression(location, operator, leftExpr, rightExpr);
 		final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength, false);
 		final BinaryExpression signedExpr =
 				new BinaryExpression(location, Operator.ARITHMOD, binaryExpr, bitLengthLiteral);
