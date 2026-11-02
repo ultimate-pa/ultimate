@@ -441,13 +441,14 @@ public class PcTransitionSystem<STATE> {
 	}
 
 	/**
+	 * @param counterSort
+	 *            the sort of the program's counters; the pc gets it, narrowed to the pc values of this system
 	 * @param alwaysFramed
 	 *            the variables that have to keep their value in every step of a query, even where nothing reads it,
 	 *            because their value is read off a model
 	 */
-	public PcTransitionSystem(final LoopTree<STATE> tree, final CounterSort counterSort,
+	public PcTransitionSystem(final Script script, final LoopTree<STATE> tree, final CounterSort counterSort,
 			final Set<IProgramVar> alwaysFramed) {
-		mCounterSort = counterSort;
 		mAlwaysFramed = alwaysFramed;
 		mDagNodes = new ArrayList<>();
 		mSources = new ArrayList<>();
@@ -464,6 +465,7 @@ public class PcTransitionSystem<STATE> {
 		for (final Scope<STATE> scope : scopes) {
 			addScope(scope);
 		}
+		mCounterSort = counterSort.narrowedTo(script, mNumNodes - 1);
 		for (final Map.Entry<STATE, Integer> waypoint : mWaypointNodes.entrySet()) {
 			// A run that jumps to a waypoint without a way on would silently end there, which proves too much.
 			if (!mSourceStates.containsKey(waypoint.getValue())) {

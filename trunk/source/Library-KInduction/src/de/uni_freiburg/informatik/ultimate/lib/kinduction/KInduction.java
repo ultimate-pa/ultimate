@@ -157,6 +157,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 	private PcTransitionSystem<CallNode<STATE>> mSystem;
 	// See PcTransitionSystemFactory.Result. Nothing else of the encoding is kept beyond the system.
 	private IProgramVar mStackPointer;
+	private CounterSort mStackPointerSort;
 	private Set<CallNode<STATE>> mSealedStates;
 	private StepVars mConstants;
 	private KInductionQuery<CallNode<STATE>> mQuery;
@@ -204,10 +205,11 @@ public class KInduction<LETTER extends IAction, STATE> {
 		mLogger.info("KInduction: starting k-induction");
 		// Building the loop tree composes transition formulas, which declares constants for their aux vars and thus
 		// locks the script itself. So the tree has to be complete before we take the lock for the solver queries.
+		mStackPointerSort = CounterSort.forProgram(mWorkerMgdScript.getScript(), mCsToolkit);
 		final PcTransitionSystemFactory.Result<STATE> encoding;
 		try {
 			encoding = PcTransitionSystemFactory.build(mServices, mLogger, mCsToolkit, mWorkerMgdScript, mAbstraction,
-					CounterSort.forProgram(mWorkerMgdScript.getScript(), mCsToolkit));
+					mStackPointerSort);
 		} catch (final RuntimeException | Error e) {
 			mInvariantSupplier.systemFailed(e);
 			throw e;
@@ -227,7 +229,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 		try {
 			mConstants = new IndexedConstantVars(mWorkerMgdScript.getScript(), mIndexedConstantsWorkerScript,
 					"ki", mSystem.getCounterSort());
-			mQuery = new KInductionQuery<>(mSystem, mWorkerMgdScript, mKILock, mConstants);
+			mQuery = new KInductionQuery<>(mSystem, mWorkerMgdScript, mKILock, mConstants, true);
 			if (mProbation) {
 				final Script script = mWorkerMgdScript.getScript();
 				// Throws unless the solver is an external process, the only kind that can be interrupted.
@@ -370,8 +372,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 	/**
 	 * An interrupt of the invariant supplier kills the solver if it arrives just after the solver answered, or if the
 	 * solver does not notice it within {@link #KILL_GRACE_MILLIS}. Restarts the solver with the declarations and the
-	 * stack it had; k-induction then takes the supplier's answer or asks the query again, which rebuilds its
-	 * assertions. Remove this method, its call and the grace period to drop the restart.
+	 * stack it had, but no assertions; k-induction then takes the supplier's answer or asks the query again, and the
+	 * next query sends all its steps again. Remove this method, its call and the grace period to drop the restart.
 	 *
 	 * @param reason
 	 *            why the solver is to be restarted, for the log
@@ -383,6 +385,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 		}
 		mLogger.warn("KInduction: the solver died of an interrupt (%s), restarting it", reason);
 		ExternalSolverRestarter.restartAndReplay(mWorkerMgdScript.getScript());
+		mQuery.solverRestarted();
 		return true;
 	}
 
@@ -413,21 +416,17 @@ public class KInduction<LETTER extends IAction, STATE> {
 
 		final int[] pcValues = new int[k + 1];
 		for (int j = 0; j <= k; j++) {
-			pcValues[j] = counterValue(model, mConstants.pc(j), "pc_" + j);
+			pcValues[j] = mSystem.getCounterSort().toInt(model.get(mConstants.pc(j)), "pc_" + j);
 		}
 		int[] stackPointers = null;
 		if (mStackPointer != null) {
 			stackPointers = new int[k + 1];
 			for (int j = 0; j <= k; j++) {
-				stackPointers[j] = counterValue(model, mConstants.var(mStackPointer, j), mStackPointer + "_" + j);
+				stackPointers[j] = mStackPointerSort.toInt(model.get(mConstants.var(mStackPointer, j)),
+						mStackPointer + "_" + j);
 			}
 		}
 		return new KInductionWitness(k, pcValues, stackPointers);
-	}
-
-	/** The value the model gives a pc or stack pointer constant, see {@link CounterSort#toInt}. */
-	private int counterValue(final Map<Term, Term> model, final Term term, final String description) {
-		return mSystem.getCounterSort().toInt(model.get(term), description);
 	}
 
 	// ------------------------------------------------------------------------------------------------------------

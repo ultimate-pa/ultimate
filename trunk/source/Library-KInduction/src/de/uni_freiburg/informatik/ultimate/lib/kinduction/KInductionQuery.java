@@ -36,8 +36,10 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem.StepVars;
@@ -50,6 +52,11 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionS
  * <p>
  * Everything that declares a constant happens in {@link #prepare}, which has to be called before the {@code push} of a
  * query: constants declared inside a scope are forgotten by the solver on {@code pop}, but not by the constant cache.
+ * <p>
+ * All steps but the last of a query occur in every query of a larger {@code k}, so they can stay in the solver: with
+ * {@code keepStepsInSolver}, {@link #prepare} asserts them once, outside of any scope, each as an implication from a
+ * guard, and a query asserts just the guards of its steps. The step terms are not kept here then. Whoever else uses the
+ * solver does not assert the guards, so these steps do not constrain it.
  *
  * @param <STATE>
  *            the state type of the transition system's nodes
@@ -83,19 +90,62 @@ public final class KInductionQuery<STATE> {
 	public record Invariant(Term term, Map<IProgramVar, TermVariable> vars) {
 	}
 
+	/** Steps that the same queries use: behind one guard in the solver, or here until a query asserts them. */
+	private final class StepGroup {
+		private final String mGuardName;
+		private final List<StepTerm> mSteps = new ArrayList<>();
+		private Term mGuard;
+
+		private StepGroup(final String guardName) {
+			mGuardName = guardName;
+		}
+
+		private void add(final StepTerm step) {
+			if (!mKeepStepsInSolver) {
+				mSteps.add(step);
+				return;
+			}
+			if (mGuard == null) {
+				mMgdScript.declareFun(mLock, mGuardName, new Sort[0], SmtSortUtils.getBoolSort(mMgdScript));
+				mGuard = mMgdScript.getScript().term(mGuardName);
+			}
+			// Not SmtUtils.implies, which would flatten the DAG of the step.
+			mMgdScript.assertTerm(mLock, mMgdScript.getScript().term("=>", mGuard, step.term()));
+			mAssertedDagSize += step.dagSize();
+		}
+
+		/** Asserts the first {@code count} steps of this group. With the steps in the solver, that means all of them. */
+		private void assertSteps(final int count) {
+			if (mKeepStepsInSolver) {
+				if (mGuard != null) {
+					mMgdScript.assertTerm(mLock, mGuard);
+				}
+				return;
+			}
+			for (final StepTerm step : mSteps.subList(0, count)) {
+				assertStep(step);
+			}
+		}
+	}
+
 	private final PcTransitionSystem<STATE> mSystem;
 	private final ManagedScript mMgdScript;
 	private final Object mLock;
 	private final StepVars mConstants;
-	/**
-	 * Per step, the transitions of a query's run in the middle: neither from INIT nor into FINAL. A query's first step in
-	 * the step case is one of them too, because it starts in a state that is not INIT.
-	 */
-	private final List<StepTerm> mCoreSteps = new ArrayList<>();
-	/** Per step, the transitions of a query's last step, from anywhere but INIT into FINAL. */
-	private final Map<Integer, StepTerm> mLastSteps = new HashMap<>();
-	/** The transitions from INIT into anything but FINAL: the first step of the base case for {@code k > 1}. */
-	private StepTerm mFirstStep;
+	private final boolean mKeepStepsInSolver;
+	/** The first step of the base case for {@code k > 1}: the transitions from INIT into anything but FINAL. */
+	private final StepGroup mBaseCaseStart = new StepGroup("ki_guard_base_start");
+	/** The first step of the step case for {@code k > 1}, which starts in a state that is not INIT. */
+	private final StepGroup mStepCaseStart = new StepGroup("ki_guard_step_start");
+	/** Steps {@code 1, 2, ...} of both queries: the transitions neither from INIT nor into FINAL. */
+	private final StepGroup mMiddle = new StepGroup("ki_guard_middle");
+	/** How many steps from neither INIT nor into FINAL there are, including that of {@link #mStepCaseStart}. */
+	private int mNumMiddleSteps;
+	private boolean mBaseCaseStartBuilt;
+	private long mLastMiddleStepDagSize;
+	/** The transitions of a query's last step, from anywhere but INIT into FINAL, at {@link #mLastStepIndex}. */
+	private StepTerm mLastStep;
+	private int mLastStepIndex = -1;
 	/** The transitions from INIT into FINAL: the base case for {@code k = 1}. */
 	private StepTerm mOnlyStep;
 	private long mAssertedDagSize;
@@ -106,13 +156,17 @@ public final class KInductionQuery<STATE> {
 	 *            the owner of {@code mgdScript}'s lock, held by the caller while it asks queries
 	 * @param constants
 	 *            the constants of the unrolled steps, in {@code mgdScript}
+	 * @param keepStepsInSolver
+	 *            whether steps stay in the solver between queries, see the class javadoc. Then {@code k} must not
+	 *            decrease from one query to the next, and {@link #solverRestarted} has to be called after a restart.
 	 */
 	public KInductionQuery(final PcTransitionSystem<STATE> system, final ManagedScript mgdScript, final Object lock,
-			final StepVars constants) {
+			final StepVars constants, final boolean keepStepsInSolver) {
 		mSystem = system;
 		mMgdScript = mgdScript;
 		mLock = lock;
 		mConstants = constants;
+		mKeepStepsInSolver = keepStepsInSolver;
 		for (final IProgramVar pv : system.getVars()) {
 			mVarOfTermVariable.put(pv.getTermVariable(), pv);
 		}
@@ -122,7 +176,7 @@ public final class KInductionQuery<STATE> {
 	 * @return the DAG size of the last step from the middle of a run built so far, 0 if there is none
 	 */
 	public long getLastStepDagSize() {
-		return mCoreSteps.isEmpty() ? 0 : mCoreSteps.get(mCoreSteps.size() - 1).dagSize();
+		return mLastMiddleStepDagSize;
 	}
 
 	/** @return the DAG sizes of all step terms ever sent to the solver, counted each time one was sent */
@@ -155,15 +209,25 @@ public final class KInductionQuery<STATE> {
 	 * @return the invariant assertions for the states {@code 0..k}
 	 */
 	public List<Term> prepare(final int k, final Map<Integer, Invariant> invariants) {
-		while (mCoreSteps.size() < k - 1) {
-			mCoreSteps.add(stepTerm(mCoreSteps.size(), false, false));
+		while (mNumMiddleSteps < k - 1) {
+			final StepTerm step = stepTerm(mNumMiddleSteps, false, false);
+			mLastMiddleStepDagSize = step.dagSize();
+			(mNumMiddleSteps == 0 ? mStepCaseStart : mMiddle).add(step);
+			mNumMiddleSteps++;
 		}
-		mLastSteps.computeIfAbsent(k - 1, j -> stepTerm(j, false, true));
+		if (mLastStepIndex != k - 1) {
+			mLastStep = stepTerm(k - 1, false, true);
+			mLastStepIndex = k - 1;
+		}
 		if (k == 1 && mOnlyStep == null) {
 			mOnlyStep = stepTerm(0, true, true);
 		}
-		if (k > 1 && mFirstStep == null) {
-			mFirstStep = stepTerm(0, true, false);
+		if (k > 1) {
+			mOnlyStep = null;
+			if (!mBaseCaseStartBuilt) {
+				mBaseCaseStart.add(stepTerm(0, true, false));
+				mBaseCaseStartBuilt = true;
+			}
 		}
 		for (int j = 0; j <= k; j++) {
 			mConstants.pc(j);
@@ -191,6 +255,15 @@ public final class KInductionQuery<STATE> {
 	}
 
 	/**
+	 * The solver was restarted with the declarations and the stack it had but no assertions, so the next
+	 * {@link #prepare} has to send the steps again. The guards were declared and stay.
+	 */
+	public void solverRestarted() {
+		mNumMiddleSteps = 0;
+		mBaseCaseStartBuilt = false;
+	}
+
+	/**
 	 * Asserts the query of {@code kind} for {@code k}. Must be called inside the query's {@code push}, after
 	 * {@link #prepare}.
 	 * <p>
@@ -203,6 +276,7 @@ public final class KInductionQuery<STATE> {
 	 *            what {@link #prepare} returned for {@code k}
 	 */
 	public void assertQuery(final Kind kind, final int k, final List<Term> invariantAssertions) {
+		assert !mKeepStepsInSolver || mNumMiddleSteps == k - 1 : "k must not decrease with the steps in the solver";
 		final Script script = mMgdScript.getScript();
 		final Term init = mSystem.pcValue(script, PcTransitionSystem.INIT);
 		final Term fin = mSystem.pcValue(script, PcTransitionSystem.FINAL);
@@ -212,13 +286,11 @@ public final class KInductionQuery<STATE> {
 		if (kind == Kind.BASE && k == 1) {
 			assertStep(mOnlyStep);
 		} else {
-			if (kind == Kind.BASE) {
-				assertStep(mFirstStep);
+			if (k > 1) {
+				(kind == Kind.BASE ? mBaseCaseStart : mStepCaseStart).assertSteps(1);
+				mMiddle.assertSteps(k - 2);
 			}
-			for (int j = kind == Kind.BASE ? 1 : 0; j < k - 1; j++) {
-				assertStep(mCoreSteps.get(j));
-			}
-			assertStep(mLastSteps.get(k - 1));
+			assertStep(mLastStep);
 		}
 		mMgdScript.assertTerm(mLock, SmtUtils.binaryEquality(script, mConstants.pc(k), fin));
 		for (final Term invariant : invariantAssertions) {

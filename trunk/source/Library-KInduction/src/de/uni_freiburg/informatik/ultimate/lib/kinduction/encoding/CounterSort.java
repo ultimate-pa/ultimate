@@ -56,8 +56,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
  */
 public final class CounterSort {
 	/**
-	 * Covers the pc values of any program we can build, and the stack pointer up to far more
-	 * activations than k-induction unrolls steps.
+	 * Covers the stack pointer up to far more activations than k-induction unrolls steps. The pc gets by with less, see
+	 * {@link #narrowedTo}.
 	 */
 	private static final int BITVECTOR_WIDTH = 32;
 
@@ -105,8 +105,25 @@ public final class CounterSort {
 
 	/** The same counter sort, over {@code script}. */
 	public CounterSort in(final Script script) {
-		return new CounterSort(isBitvector() ? SmtSortUtils.getBitvectorSort(script, BITVECTOR_WIDTH)
+		return new CounterSort(isBitvector() ? SmtSortUtils.getBitvectorSort(script, width())
 				: SmtSortUtils.getIntSort(script));
+	}
+
+	/**
+	 * This counter sort, just wide enough for the values {@code 0..maxValue}, with a spare bit because {@link #toInt}
+	 * reads two's complement. Fewer bits mean fewer gates for a bit-blasting solver. Only for counters that are not
+	 * computed with, like the pc, which is only ever compared to literals.
+	 */
+	public CounterSort narrowedTo(final Script script, final int maxValue) {
+		if (!isBitvector()) {
+			return this;
+		}
+		final int bits = Integer.SIZE - Integer.numberOfLeadingZeros(maxValue) + 1;
+		return new CounterSort(SmtSortUtils.getBitvectorSort(script, bits));
+	}
+
+	private int width() {
+		return SmtSortUtils.getBitvectorLength(mSort);
 	}
 
 	public Sort getSort() {
@@ -121,7 +138,7 @@ public final class CounterSort {
 	public Term value(final Script script, final int value) {
 		if (isBitvector()) {
 			// Two's complement, the inverse of toInt
-			final BigInteger unsigned = BigInteger.valueOf(value).mod(BigInteger.ONE.shiftLeft(BITVECTOR_WIDTH));
+			final BigInteger unsigned = BigInteger.valueOf(value).mod(BigInteger.ONE.shiftLeft(width()));
 			return BitvectorUtils.constructTerm(script, unsigned, mSort);
 		}
 		return SmtUtils.constructIntValue(script, BigInteger.valueOf(value));
@@ -141,8 +158,8 @@ public final class CounterSort {
 				throw notALiteral(literal, description);
 			}
 			BigInteger value = constant.getValue();
-			if (value.testBit(BITVECTOR_WIDTH - 1)) {
-				value = value.subtract(BigInteger.ONE.shiftLeft(BITVECTOR_WIDTH));
+			if (value.testBit(width() - 1)) {
+				value = value.subtract(BigInteger.ONE.shiftLeft(width()));
 			}
 			return value.intValueExact();
 		}

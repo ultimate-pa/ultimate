@@ -167,7 +167,8 @@ final class InvariantProbation {
 		if (mQuery == null || mSystem != checker.getSystem()) {
 			mSystem = checker.getSystem();
 			// The checker's constants: both declare the constants of the program variables on the same script.
-			mQuery = new KInductionQuery<>(mSystem, mScript, mLock, checker.constants("probe"));
+			// Steps do not stay in this solver: the checker's queries would have to carry them along.
+			mQuery = new KInductionQuery<>(mSystem, mScript, mLock, checker.constants("probe"), false);
 		}
 		return mQuery;
 	}

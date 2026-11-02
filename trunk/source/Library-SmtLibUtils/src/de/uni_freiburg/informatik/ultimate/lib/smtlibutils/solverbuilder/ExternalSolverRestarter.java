@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils;
  * after the solver had answered, and brings the new process back to the declarations and the stack of the script.
  * <p>
  * The declarations come from the {@link HistoryRecordingScript} that {@link SolverBuilder} wraps around every script.
- * Assertions are not restored: the caller has to be in a scope whose assertions it rebuilds anyway, like k-induction,
- * which asserts only inside the push of a query and repeats an interrupted query from scratch.
+ * Assertions are not restored: the caller has to send them again, like k-induction, which repeats an interrupted
+ * query from scratch and sends the steps it keeps in the solver again.
  *
  * @author Max Barth (Max.Barth@lmu.de)
  */
