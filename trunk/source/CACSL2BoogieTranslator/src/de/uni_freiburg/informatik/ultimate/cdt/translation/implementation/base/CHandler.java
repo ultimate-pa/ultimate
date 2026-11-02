@@ -184,6 +184,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.AssertLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.AtomicLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ErrnoLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.FenvLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.FunctionModelHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.GccBuiltinLibraryModel;
@@ -648,7 +649,8 @@ public class CHandler {
 				new TimeLibraryModel(helper, mExpressionTranslation, mAuxVarInfoBuilder),
 				new VariadicLibraryModel(helper, mMemoryHandler, mProcedureManager, mTypeHandler,
 						mExprResultTransformer, mAuxVarInfoBuilder),
-				new StdintLibraryModel(), new LimitsLibraryModel(mTypeSizes, helper), new StdboolLibraryModel(helper));
+				new StdintLibraryModel(), new LimitsLibraryModel(mTypeSizes, helper), new StdboolLibraryModel(helper),
+				new ErrnoLibraryModel(helper));
 	}
 
 	/**
