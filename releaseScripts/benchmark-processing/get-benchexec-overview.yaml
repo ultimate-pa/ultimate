@@ -44,10 +44,11 @@ known_exceptions:
   "overapproximation of large string literal":
   "TerminationAnalysisResult: Unable to decide termination":
   "An exception occured during the execution of Ultimate: The toolchain threw an exception":
-  "overapproximation of shiftRight":
-  "overapproximation of overflow check for bitwise shift operation":
-  "overapproximation of bitwiseAnd":
-  "overapproximation of shiftLeft":
+  "overapproximation of bitwise and operator":
+  "overapproximation of bitwise or operator":
+  "overapproximation of bitwise xor operator":
+  "overapproximation of bitwise left shift operator":
+  "overapproximation of bitwise right shift operator":
   "overapproximation of memtrack":
   "overapproximation of sign of NaN":
   "Omit memory slicing because it failed with the following exception:":
