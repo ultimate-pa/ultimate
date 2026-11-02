@@ -74,11 +74,16 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * outvars of the edge formulas it is given ({@code collectVars}) and frames whatever an edge does not assign, so
  * these variables behave like any other program variable of the analysed program.
  * <p>
- * The arrays are indexed by the {@link CounterSort} of the program and are never constrained to be empty or
- * non-negative at the start. They do not have to be: a path can only reach a callee's exit node by going through the
- * call edge that pushed, so every {@code select} on a path is preceded by the matching {@code store}, and only the
- * difference of the indices matters, not where they start. For a bitvector index that difference wraps around, which
- * changes nothing either: no unrolling comes close to 2^32 activations.
+ * The arrays are indexed by the {@link CounterSort} of the program and are never constrained to be empty at the start.
+ * They do not have to be: a call's activation can only reach its exit node after the call edge that pushed, so its
+ * {@code select} is preceded by the matching {@code store}. For a bitvector index the difference of the indices wraps
+ * around, which changes nothing: no unrolling comes close to 2^32 activations.
+ * <p>
+ * The exception is the activation a run starts in. In library mode every procedure is an entry, so a stacked procedure
+ * can also be running with nothing pushed, and its return must then end the run instead of reading a return site
+ * nobody stored. So a run starts at {@code ki_sp = 0}, which the base case asserts, and the pop of an entry procedure
+ * requires {@code ki_sp != 0}. A procedure that is no entry never runs at the bottom of the stack and needs no check,
+ * so with a {@code main} the transitions do not change. The step case starts anywhere, with any {@code ki_sp}.
  *
  * @author Max Barth (max.barth@lmu.de)
  */
@@ -198,9 +203,12 @@ public final class CallStack {
 	 * {@code toRestore} must not contain a variable the return statement itself assigns - that one carries the
 	 * result out of the activation being left, and the composition puts the return assignment before this formula
 	 * for exactly that reason.
+	 *
+	 * @param calleeIsEntry
+	 *            whether {@code callee} is also an entry procedure, so that this could be a return with nothing pushed
 	 */
 	public UnmodifiableTransFormula pop(final String callee, final int returnSiteId,
-			final Collection<IProgramVar> toRestore) {
+			final Collection<IProgramVar> toRestore, final boolean calleeIsEntry) {
 		final Map<IProgramVar, TermVariable> inVars = new LinkedHashMap<>();
 		final Map<IProgramVar, TermVariable> outVars = new LinkedHashMap<>();
 		final List<Term> conjuncts = new ArrayList<>();
@@ -209,6 +217,9 @@ public final class CallStack {
 		final TermVariable spOut = out(outVars, mStackPointer);
 		conjuncts.add(SmtUtils.binaryEquality(mScript, spOut,
 				SmtUtils.minus(mScript, sp, index(1))));
+		if (calleeIsEntry) {
+			conjuncts.add(SmtUtils.not(mScript, SmtUtils.binaryEquality(mScript, sp, index(0))));
+		}
 
 		final IProgramNonOldVar singleReturnSite = mSingleReturnSites.get(callee);
 		if (singleReturnSite != null) {

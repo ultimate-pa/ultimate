@@ -332,6 +332,13 @@ public class KInduction<LETTER extends IAction, STATE> {
 		final List<Term> invariants = mQuery.prepare(k, mInjectedInvariants);
 		mWorkerMgdScript.push(mKILock, 1);
 		mQuery.assertQuery(kind, k, invariants);
+		if (kind == Kind.BASE && mStackPointer != null) {
+			// A run starts with an empty stack, see CallStack. The probation's base case does without: its unsat holds
+			// here as well, and its sat is asked again here.
+			final Script script = mWorkerMgdScript.getScript();
+			mWorkerMgdScript.assertTerm(mKILock, SmtUtils.binaryEquality(script, mConstants.var(mStackPointer, 0),
+					mStackPointerSort.value(script, 0)));
+		}
 		final LBool result = checkSat();
 		if (result == LBool.SAT && kind == Kind.BASE) {
 			// The model dies with this scope, so it has to be read now. The constants themselves were declared by
