@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations;
 
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructSpecFromIdentifier;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructVarDecFromString;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.ProcedureBuilder.constructInitialProcedure;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.VariableDeclarationBuilder.constructVarDecFromString;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.ProcedureDeclerationBuilder.constructInitialProcedure;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.ProcedureDeclerationBuilder.constructSpecFromIdentifier;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.unifyIdentifier;
 
 import java.util.ArrayList;

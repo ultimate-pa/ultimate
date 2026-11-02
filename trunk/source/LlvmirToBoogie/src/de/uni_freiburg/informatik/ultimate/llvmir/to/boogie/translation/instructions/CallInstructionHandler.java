@@ -26,11 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions;
 
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.bitLengthPairExists;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructBitLengthPairTypeDeclaration;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructSpecFromIdentifier;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructVarDecFromTypeContext;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.ProcedureBuilder.getProcedureFromDeclarations;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.ProcedureDeclerationBuilder.constructSpecFromIdentifier;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.ProcedureDeclerationBuilder.getProcedureFromDeclarations;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.TypeDeclarationBuilder.bitLengthPairExists;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.TypeDeclarationBuilder.constructBitLengthPairTypeDeclaration;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.VariableDeclarationBuilder.constructVarDecFromTypeContext;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.constructLlvmOperationWithOverflow;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructBitLengthLiteral;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructExpressionFromValue;

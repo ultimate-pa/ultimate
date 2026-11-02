@@ -26,12 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation;
 
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.AuxFunctionBuilder.constructCDivFunction;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.AuxFunctionBuilder.constructRemainderFunction;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructVarDecFromString;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.AuxFunctionDeclerationBuilder.constructCDivFunction;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.AuxFunctionDeclerationBuilder.constructRemainderFunction;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.VariableDeclarationBuilder.constructVarDecFromString;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.InitialDeclarationBuilder.constructInitialDeclarations;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.ProcedureBuilder.constructProcedureFromFuncDef;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.ProcedureBuilder.procedureAlreadyPresent;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.ProcedureDeclerationBuilder.constructProcedureFromFuncDef;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.ProcedureDeclerationBuilder.procedureAlreadyPresent;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleAddInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleICmpInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleMulInst;
