@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions;
 
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.VariableDeclarationBuilder.constructVarDecFromTypeContext;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.LABEL_IDENTIFIER;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructExpressionFromConstant;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructExpressionFromValue;
@@ -59,46 +58,10 @@ import de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.Result;
  *
  * All methods only work on their parameters and do not access any state of the translation.
  */
-public final class ControlFlowInstructionHandler {
+public final class TerminatorInstructionHandler {
 
-	private ControlFlowInstructionHandler() {
+	private TerminatorInstructionHandler() {
 		// utility class, not meant to be instantiated
-	}
-
-	/**
-	 * Constructs the local variable and the statements for a phi instruction.
-	 *
-	 * For each incoming value the local variable is assigned this value if the last visited label is the one of the
-	 * incoming block.
-	 *
-	 * @param result
-	 *            The result to which the local variable and the statements are added.
-	 * @param ctx
-	 *            The parse tree context for the local variable definition.
-	 * @param identifier
-	 *            The identifier of the local variable that receives the result.
-	 * @param location
-	 *            The location in the source code where this instruction is defined.
-	 */
-	public static void handlePhiInst(final Result result, final LLVMIRParser.LocalDefInstContext ctx,
-			final String identifier, final LlvmirLocation location) {
-		final LLVMIRParser.ValueInstructionContext instructionType = ctx.valueInstruction();
-		final LLVMIRParser.TypeContext typeContext = instructionType.phiInst().type();
-		result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, location));
-		for (final LLVMIRParser.IncContext inc : instructionType.phiInst().inc()) {
-			final String incIdentifier = unifyIdentifier(inc.LocalIdent().getText());
-			final int labelIndex = getLabelIndexFromFuncBody(ctx, incIdentifier);
-			final IdentifierExpression incExpr = new IdentifierExpression(location, LABEL_IDENTIFIER);
-			final IntegerLiteral labelIndexLiteral = new IntegerLiteral(location, Integer.toString(labelIndex));
-			final BinaryExpression binaryExpr =
-					new BinaryExpression(location, Operator.COMPEQ, incExpr, labelIndexLiteral);
-			final VariableLHS varLhs = new VariableLHS(location, identifier);
-			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-					new Expression[] { constructExpressionFromValue(inc.value(), typeContext, location, false) });
-			final IfStatement ifStmt =
-					new IfStatement(location, binaryExpr, new Statement[] { assignment }, new Statement[] {});
-			result.addFuncBlock(ifStmt);
-		}
 	}
 
 	/**
