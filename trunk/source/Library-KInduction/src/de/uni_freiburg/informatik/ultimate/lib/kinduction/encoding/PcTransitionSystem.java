@@ -40,6 +40,7 @@ import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -398,6 +399,46 @@ public class PcTransitionSystem<STATE> {
 			disjuncts.add(SmtUtils.and(script, conjuncts));
 		}
 		return SmtUtils.or(script, disjuncts);
+	}
+
+	/** The number of nodes of the DAG of {@code term}, shared subterms counted once. */
+	public static long dagSize(final Term term) {
+		return Long.parseLong(new DagSizePrinter(term).toString());
+	}
+
+	/**
+	 * What one unrolled step costs, for the log: the frame equalities and auxiliary variables {@link #step} adds per
+	 * step and the size of the transition formulas, each counted on its own.
+	 */
+	public String getStatistics() {
+		long frameEqualities = 0;
+		long auxVars = 0;
+		long formulaDagSize = 0;
+		for (final Transition<STATE> t : mTransitions) {
+			final UnmodifiableTransFormula tf = t.mFormula;
+			if (tf == null) {
+				frameEqualities += mVars.size();
+				continue;
+			}
+			final Set<IProgramVar> assigned = new LinkedHashSet<>();
+			for (final IProgramVar pv : tf.getInVars().keySet()) {
+				if (!tf.getOutVars().containsKey(pv)) {
+					assigned.add(pv);
+				}
+			}
+			for (final Map.Entry<IProgramVar, TermVariable> out : tf.getOutVars().entrySet()) {
+				if (tf.getInVars().get(out.getKey()) != out.getValue()) {
+					assigned.add(out.getKey());
+				}
+			}
+			assigned.retainAll(mVars);
+			frameEqualities += mVars.size() - assigned.size();
+			auxVars += tf.getAuxVars().size();
+			formulaDagSize += dagSize(tf.getFormula());
+		}
+		return mTransitions.size() + " transition(s), " + mVars.size() + " variable(s), " + frameEqualities
+				+ " frame equalities and " + auxVars + " aux variable(s) per step, transition formulas of DAG size "
+				+ formulaDagSize;
 	}
 
 	private Term instantiate(final Transition<STATE> t, final int idx, final StepVars sv,
