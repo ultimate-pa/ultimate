@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgGraphProvider;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment.SegmentType;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GraphMLCorrectnessWitnessGenerator;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GraphMLViolationWitnessGenerator;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
@@ -232,9 +233,8 @@ public class WitnessPrinter implements IOutput {
 					targetIndices = Set.of(backtransPe.getLength() - 1);
 				}
 
-				final String witness =
-						new YamlViolationWitnessGenerator<>(backtransPe, mLogger, mServices, targetIndices)
-								.makeYamlString();
+				final String witness = new YamlViolationWitnessGenerator(mLogger, mServices)
+						.addSegments(backtransPe, SegmentType.FOLLOW, targetIndices).makeYamlString();
 				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
 			}
 		}
@@ -260,9 +260,9 @@ public class WitnessPrinter implements IOutput {
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
 			if (createYaml) {
-				final String witness =
-						new YamlViolationWitnessGenerator<>(lasso.stem(), lasso.loop(), mLogger, mServices, Set.of())
-								.makeYamlString();
+				final String witness = new YamlViolationWitnessGenerator(mLogger, mServices)
+						.addSegments(lasso.stem(), SegmentType.FOLLOW, Set.of())
+						.addSegments(lasso.loop(), SegmentType.CYCLE, Set.of()).makeYamlString();
 				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
 			}
 		}
