@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions;
 
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructVarDecFromTypeContext;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.VariableDeclarationBuilder.constructVarDecFromTypeContext;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructExpressionFromValue;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;

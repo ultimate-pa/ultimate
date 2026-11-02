@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.llvmir.LlvmirLocation;
  *
  * All methods only work on their parameters and do not access any state of the translation.
  */
-public final class AuxFunctionBuilder {
+public final class AuxFunctionDeclerationBuilder {
 
 	public static final String CDIV_IDENTIFIER = "aux#cdiv";
 	public static final String REM_IDENTIFIER = "aux#rem";
@@ -54,7 +54,7 @@ public final class AuxFunctionBuilder {
 	private static final String MAX_FROM_BIT_LENGTH_IDENTIFIER = "aux#maxFromBitLength";
 	private static final String IS_SIGNED_IDENTIFIER = "aux#isSigned";
 
-	private AuxFunctionBuilder() {
+	private AuxFunctionDeclerationBuilder() {
 		// utility class, not meant to be instantiated
 	}
 

@@ -34,12 +34,14 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRParser;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LlvmirLocation;
 import de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.Result;
@@ -49,9 +51,9 @@ import de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.Result;
  *
  * All methods only work on their parameters and do not access any state of the translation.
  */
-public final class ProcedureBuilder {
+public final class ProcedureDeclerationBuilder {
 
-	private ProcedureBuilder() {
+	private ProcedureDeclerationBuilder() {
 		// utility class, not meant to be instantiated
 	}
 
@@ -238,5 +240,23 @@ public final class ProcedureBuilder {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Constructs a specification from a given identifier and location.
+	 *
+	 * This method constructs a ModifiesSpecification that indicates the specified variable is modified in the Boogie
+	 * AST.
+	 *
+	 * @param identifier
+	 *            The identifier of the variable to be modified.
+	 * @param location
+	 *            The location in the source code where this specification is defined.
+	 * @return A ModifiesSpecification object representing the modifies specification for the given identifier.
+	 */
+	public static ModifiesSpecification constructSpecFromIdentifier(final String identifier,
+			final LlvmirLocation location) {
+		final VariableLHS varLhs = new VariableLHS(location, identifier);
+		return new ModifiesSpecification(location, false, new VariableLHS[] { varLhs });
 	}
 }

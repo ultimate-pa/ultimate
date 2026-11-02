@@ -26,10 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions;
 
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.AuxFunctionBuilder.CDIV_IDENTIFIER;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.AuxFunctionBuilder.REM_IDENTIFIER;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructVarDecFromString;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructVarDecFromTypeContext;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.AuxFunctionDeclerationBuilder.CDIV_IDENTIFIER;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.AuxFunctionDeclerationBuilder.REM_IDENTIFIER;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.VariableDeclarationBuilder.constructVarDecFromString;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.VariableDeclarationBuilder.constructVarDecFromTypeContext;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructBitLengthLiteral;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructExpressionFromValue;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructSignedExpression;
