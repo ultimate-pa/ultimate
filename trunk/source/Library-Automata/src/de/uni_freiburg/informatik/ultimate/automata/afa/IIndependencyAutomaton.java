@@ -35,8 +35,6 @@ public interface IIndependencyAutomaton<L, S> extends INwaOutgoingLetterAndTrans
 
 	Optional<L> getSpecialSymbol(final L letter1, final L letter2);
 
-	void addSpecialSymbol(final L letter1, final L letter2);
-
-	void addIndependence(final L specialSymbol,
+	void addIndependence(final L letter1, final L letter2,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> interpolantAutomaton) throws AutomataLibraryException;
 }

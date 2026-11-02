@@ -26,9 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.afa;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.BinaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -43,14 +47,31 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S> {
 
 	Map<Pair<L, L>, L> mSpecialSymbols;
-	// map from special symbols to their corresponding interpolant automaton (or union of automata)
-	private final Map<L, INwaOutgoingLetterAndTransitionProvider<L, S>> mIndependenceAutomata;
-	// TODO: we need a factory
-	private IUnionStateFactory<S> mFactory;
+	private final Set<L> mAlphabet;
+	private final VpAlphabet<L> mVpAlphabet;
 
-	public IndependencyAutomaton() {
+	// TODO: do we need our own Implementation of IUnionStateFactory<S> or can we reuse an existing one?
+	private final IUnionStateFactory<S> mFactory;
+	private INwaOutgoingLetterAndTransitionProvider<L, S> mAutomaton;
+
+	public IndependencyAutomaton(final Set<L> alphabet, final IUnionStateFactory<S> unionFactory,
+			final BinaryOperator<L> specialSymbolFactory) {
 		mSpecialSymbols = new HashMap<>();
-		mIndependenceAutomata = new HashMap<>();
+		mFactory = unionFactory;
+		mAlphabet = new HashSet<>(alphabet);
+		for (final L letter1 : alphabet) {
+			for (final L letter2 : alphabet) {
+				// TODO: we need a factory for the special symbols or maybe we can use a BinaryOperator<L> instead?
+				// TODO: specialSymbolFactory needs to be implemented
+				final L specialSymbol = specialSymbolFactory.apply(letter1, letter2);
+				if (!mAlphabet.add(specialSymbol)) {
+					throw new IllegalArgumentException("Special symbol is not unique: " + specialSymbol);
+				}
+
+				mSpecialSymbols.put(new Pair<>(letter1, letter2), specialSymbol);
+			}
+		}
+		mVpAlphabet = new VpAlphabet<>(mAlphabet, null, null);
 	}
 
 	@Override
@@ -59,87 +80,88 @@ public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S>
 	}
 
 	@Override
-	public void addSpecialSymbol(final L letter1, final L letter2) {
-		final Pair<L, L> pair = new Pair<>(letter1, letter2);
+	public void addIndependence(final L letter1, final L letter2,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> automaton) throws AutomataLibraryException {
 
-		mSpecialSymbols.computeIfAbsent(pair, p -> createSpecialSymbol(p));
-	}
-
-	private L createSpecialSymbol(final Pair<L, L> pair) {
-		// TODO create a special symbol
-		return null;
-	}
-
-	@Override
-	public void addIndependence(final L specialSymbol, final INwaOutgoingLetterAndTransitionProvider<L, S> automaton)
-			throws AutomataLibraryException {
-
-		if (mIndependenceAutomata.containsKey(specialSymbol)) {
-			mIndependenceAutomata.replace(specialSymbol,
-					new UnionNwa<>(mIndependenceAutomata.get(specialSymbol), automaton, mFactory, false));
-
-		} else {
-			mIndependenceAutomata.put(specialSymbol, automaton);
+		if (!mSpecialSymbols.containsKey(new Pair<>(letter1, letter2))) {
+			throw new IllegalArgumentException("Unknown letter pair: " + letter1 + ", " + letter2);
 		}
+
+		if (!mVpAlphabet.equals(automaton.getVpAlphabet())) {
+			throw new IllegalArgumentException("Automaton has a different alphabet.");
+		}
+
+		if (mAutomaton == null) {
+			mAutomaton = automaton;
+		} else {
+			mAutomaton = new UnionNwa<>(mAutomaton, automaton, mFactory, false);
+		}
+
 	}
 
 	@Override
 	public VpAlphabet<L> getVpAlphabet() {
-		// TODO Auto-generated method stub
-		return null;
+		return mVpAlphabet;
+	}
+
+	@Override
+	public Set<L> getAlphabet() {
+		return mAlphabet;
 	}
 
 	@Override
 	public S getEmptyStackState() {
-		// TODO Auto-generated method stub
-		return null;
+		if (mAutomaton == null) {
+			return null;
+		}
+		return mAutomaton.getEmptyStackState();
 	}
 
 	@Override
 	public Iterable<S> getInitialStates() {
-		// TODO Auto-generated method stub
-		return null;
+		if (mAutomaton == null) {
+			return Collections.emptySet();
+		}
+		return mAutomaton.getInitialStates();
 	}
 
 	@Override
 	public boolean isInitial(final S state) {
-		// TODO Auto-generated method stub
-		return false;
+		return mAutomaton != null && mAutomaton.isInitial(state);
 	}
 
 	@Override
 	public boolean isFinal(final S state) {
-		// TODO Auto-generated method stub
-		return false;
+		return mAutomaton != null && mAutomaton.isFinal(state);
 	}
 
 	@Override
 	public int size() {
-		// TODO Auto-generated method stub
-		return 0;
+		return mAutomaton == null ? 0 : mAutomaton.size();
 	}
 
 	@Override
 	public String sizeInformation() {
-		// TODO Auto-generated method stub
-		return null;
+		return mAutomaton == null ? "Empty independency automaton" : mAutomaton.sizeInformation();
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
-		// TODO Auto-generated method stub
-		return null;
+		if (mAutomaton == null) {
+			return Collections.emptySet();
+		}
+		return mAutomaton.internalSuccessors(state, letter);
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<L, S>> callSuccessors(final S state, final L letter) {
-		// TODO Auto-generated method stub
+		// not supported
 		return null;
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<L, S>> returnSuccessors(final S state, final S hier, final L letter) {
-		// TODO Auto-generated method stub
+		// not supported
 		return null;
 	}
 
