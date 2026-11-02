@@ -28,16 +28,10 @@ package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declara
 
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.unifyIdentifier;
 
-import java.util.ArrayList;
-import java.util.Optional;
-
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRParser;
