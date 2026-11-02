@@ -38,8 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRParser;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LlvmirLocation;
 
 /**
- * Builders for Boogie variable declarations, specifications and struct types used by the translation of LLVM-IR to
- * Boogie.
+ * Builders for Boogie variable declarations used by the translation of LLVM-IR to Boogie.
  *
  * All methods only work on their parameters and do not access any state of the translation.
  */
