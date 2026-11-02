@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation.Race;
@@ -39,8 +41,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithFiniteTrace;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -204,5 +208,20 @@ public class DataRaceFoundResult<ELEM extends IElement, TE extends IElement, E> 
 	@Override
 	public IProgramExecution<TE, E> getProgramExecution() {
 		return mProgramExecution;
+	}
+
+	public Set<Integer> getInvolvedThreadIds() {
+		final Set<Race> races = mPossibleConflicts.getSetOfPairs().stream()
+				.flatMap(x -> Stream.of(x.getKey(), x.getValue())).collect(Collectors.toSet());
+		final Set<Integer> result = new HashSet<>();
+		for (int i = 0; i < mProgramExecution.getLength(); i++) {
+			final AtomicTraceElement<TE> ate = mProgramExecution.getTraceElement(i);
+			final DataRaceAnnotation annot = DataRaceAnnotation.getAnnotation(ate.getStep());
+			if (annot != null && DataStructureUtils.haveNonEmptyIntersection(annot.getRaces(), races)
+					&& ate.hasThreadId()) {
+				result.add(ate.getThreadId());
+			}
+		}
+		return result;
 	}
 }

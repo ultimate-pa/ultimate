@@ -56,7 +56,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String UNUSED_GRAPH_DATA = "UNUSED";
 
 	public static final String LABEL_GENERATE_GRAPHML_WITNESS = "Generate GraphML witnesses";
-	private static final boolean VALUE_GENERATE_GRAPHML_WITNESS = true;
+	private static final boolean VALUE_GENERATE_GRAPHML_WITNESS = false;
 
 	public static final String LABEL_GENERATE_YAML_WITNESS = "Generate YAML witnesses";
 	private static final boolean VALUE_GENERATE_YAML_WITNESS = true;
@@ -66,7 +66,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_WITNESS_WRITE_BESIDE_FILE = "Write witness besides input file";
 	private static final boolean VALUE_WITNESS_WRITE_BESIDE_FILE = true;
-	private static final String DESC_WITNESS_WRITE_BESIDE_FILE = "Write witness as \"<inputfilename>-witness.graphml\" "
+	private static final String DESC_WITNESS_WRITE_BESIDE_FILE = "Write witness as \"<inputfilename>-witness.yml\" "
 			+ "in the same directory as the input file. All other output options are ignored.";
 
 	public static final String LABEL_WITNESS_DIRECTORY = "Witness directory";
@@ -97,12 +97,11 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_WITNESS_VERIFIER_TIMEOUT = "Timeout in seconds for witness verifier";
 	private static final int VALUE_WITNESS_VERIFIER_TIMEOUT = 10;
 
-	public static final String LABEL_WITNESS_DELETE_GRAPHML = "Delete the .graphml file after verification";
-	private static final boolean VALUE_WITNESS_DELETE_GRAPHML = false;
+	public static final String LABEL_WITNESS_DELETE = "Delete the witness file after verification";
+	private static final boolean VALUE_WITNESS_DELETE = false;
 	public static final String LABEL_DO_NOT_USE_ACSL = "Do not use ACSL";
 	private static final Boolean VALUE_DO_NOT_USE_ACSL = true;
-	private static final String DESC_DO_NOT_USE_ACSL =
-			"Prevent the generation of invariants in GraphML which require ACSL syntax";
+	private static final String DESC_DO_NOT_USE_ACSL = "Prevent the generation of invariants which require ACSL syntax";
 
 	public static final String LABEL_YAML_FORMAT_VERSION = "YAML Format version";
 	private static final String VALUE_YAML_FORMAT_VERSION = "2.2";
@@ -137,8 +136,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						new IUltimatePreferenceItemValidator.IntegerValidator(1, Integer.MAX_VALUE)),
 				new UltimatePreferenceItem<>(LABEL_WITNESS_CPACHECKER_PROPERTY, VALUE_WITNESS_CPACHECKER_PROPERTY,
 						DESC_WITNESS_CPACHECKER_PROPERTY, PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_WITNESS_DELETE_GRAPHML, VALUE_WITNESS_DELETE_GRAPHML,
-						PreferenceType.Boolean, new WitnessVerifierValidator()),
+				new UltimatePreferenceItem<>(LABEL_WITNESS_DELETE, VALUE_WITNESS_DELETE, PreferenceType.Boolean,
+						new WitnessVerifierValidator()),
 				new UltimatePreferenceItem<>(LABEL_DO_NOT_USE_ACSL, VALUE_DO_NOT_USE_ACSL, DESC_DO_NOT_USE_ACSL,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_YAML_FORMAT_VERSION, VALUE_YAML_FORMAT_VERSION,

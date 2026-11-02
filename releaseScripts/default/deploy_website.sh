@@ -38,11 +38,11 @@ EOF
   put -r WebBackend/* ${TARGET_DIR}/backend/
   put -r WebFrontend/* ${TARGET_DIR}/frontend/
   put -r ../website-config/* ${TARGET_DIR}/config/
-  put adds/z3 ${TARGET_DIR}/solver/
-  put adds/bitwuzla ${TARGET_DIR}/solver/
-  put adds/cvc5 ${TARGET_DIR}/solver/
-  put adds/mathsat ${TARGET_DIR}/solver/
-  put adds/ltl2ba ${TARGET_DIR}/solver/
+  put adds/solvers/linux/x86_64/z3 ${TARGET_DIR}/solver/
+  put adds/solvers/linux/x86_64/bitwuzla ${TARGET_DIR}/solver/
+  put adds/solvers/linux/x86_64/cvc5 ${TARGET_DIR}/solver/
+  put adds/solvers/linux/x86_64/mathsat ${TARGET_DIR}/solver/
+  put adds/solvers/linux/x86_64/ltl2ba ${TARGET_DIR}/solver/
   put WEBSITE_VERSION ${TARGET_DIR}/VERSION
 EOF
   rm WEBSITE_VERSION

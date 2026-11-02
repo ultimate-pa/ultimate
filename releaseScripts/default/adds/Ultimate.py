@@ -20,6 +20,9 @@ from functools import lru_cache
 # fmt: off
 version = '4f54f8f5'
 toolname = 'Automizer'
+memory_heap_size_init = '2M'
+memory_heap_size_max = '15G'
+memory_stack_size_max = '1M'
 # fmt: on
 
 write_ultimate_output_to_file = True
@@ -291,8 +294,9 @@ def create_ultimate_base_call():
     ultimate_bin = [
         get_java(),
         "-Dosgi.configuration.area=" + os.path.join(datadir, "config"),
-        "-Xmx15G",
-        "-Xms4m",
+        "-Xms" + memory_heap_size_init,
+        "-Xmx" + memory_heap_size_max,
+        "-Xss" + memory_stack_size_max,
     ]
 
     if enable_assertions:
@@ -526,10 +530,12 @@ def create_cli_settings(prop, validate_witness, witness_type, architecture, inpu
             "--traceabstraction.positions.where.we.compute.the.hoare.annotation"
         )
         ret.append("None")
-        # For YAML violation witnesses, disable procedure inlining
+        # For YAML violation witnesses, disable procedure inlining and the aggressive block encoding
         if witness_type == "violation_witness" and any(i.endswith(".yml") for i in input_files):
             ret.append("--procedureinliner.inline.calls.to.implemented.procedures")
             ret.append("ONLY_FOR_CONCURRENT_PROGRAMS")
+            ret.append("--icfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks")
+            ret.append("false")
     elif not validate_witness:
         # we are not in validation mode, so we should generate a witness and need
         # to pass some things to the witness printer
@@ -571,7 +577,6 @@ def get_settings_path(bitprecise, settings_search_string):
 
     if settings_argument == "" or settings_argument is None:
         print("No suitable settings file found using " + settings_search_string)
-        print("ERROR: UNSUPPORTED PROPERTY")
         raise _AbortButPrint("ERROR: UNSUPPORTED PROPERTY")
     return settings_argument
 
@@ -976,8 +981,8 @@ def main():
     settings_search_string = create_settings_search_string(prop, architecture)
     try:
         settings_file = get_settings_path(False, settings_search_string)
-    except _AbortButPrint:
-        # just abort, there is nothing to print left
+    except _AbortButPrint as e:
+        print(e)
         sys.exit(ExitCode.FAIL_NO_SETTINGS_FILE_FOUND)
 
     # create manual settings that override settings files for witness passthrough (collecting various things)

@@ -38,7 +38,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -143,12 +142,12 @@ public class FunctionInliner extends BoogieTransformer implements IUnmanagedObse
 		for (final VarList vl : fdecl.getInParams()) {
 			if (vl.getIdentifiers().length == 0) {
 				params.add(new IdentifierExpression(vl.getLocation(), vl.getType().getBoogieType(), "#" + anonctr,
-						new DeclarationInformation(StorageClass.QUANTIFIED, null)));
+						DeclarationInformation.DECLARATIONINFO_QUANTIFIED));
 				anonctr++;
 			} else {
 				for (final String i : vl.getIdentifiers()) {
 					params.add(new IdentifierExpression(vl.getLocation(), vl.getType().getBoogieType(), i,
-							new DeclarationInformation(StorageClass.QUANTIFIED, null)));
+							DeclarationInformation.DECLARATIONINFO_QUANTIFIED));
 				}
 			}
 		}
@@ -283,7 +282,7 @@ public class FunctionInliner extends BoogieTransformer implements IUnmanagedObse
 						newIds[idNr] = newname;
 						mCurrentScope.addRenaming(ids[idNr],
 								new IdentifierExpression(vl[vlNr].getLocation(), vl[vlNr].getType().getBoogieType(),
-										newname, new DeclarationInformation(StorageClass.QUANTIFIED, null)));
+										newname, DeclarationInformation.DECLARATIONINFO_QUANTIFIED));
 					}
 					if (newIds != ids) {
 						if (newVl == vl) {

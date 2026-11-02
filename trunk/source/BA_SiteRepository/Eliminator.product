@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?pde version="3.5"?>
+
+<product name="Ultimate-Eliminator" uid="Eliminator" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.3.2" type="bundles" includeLaunchers="true" autoIncludeRequirements="true">
+
+   <aboutInfo>
+      <text>
+         Ultimate is a tool for model checking and static program analysis. It provides multiple toolchains which check properties or transform input files.
+      </text>
+   </aboutInfo>
+
+   <configIni use="default">
+   </configIni>
+
+   <launcherArgs>
+      <programArgs>-nosplash -consoleLog
+      </programArgs>
+      <programArgsLin>-data @user.home/.ultimate
+      </programArgsLin>
+      <programArgsMac>-data @user.home/.ultimate
+      </programArgsMac>
+      <programArgsWin>-data @user.home\ultimate-data
+      </programArgsWin>
+      <vmArgs>-Xms2M -Xmx15G -Xss1M -Dequinox.resolver.revision.batch.size=1
+      </vmArgs>
+   </launcherArgs>
+
+   <windowImages/>
+
+
+   <launcher name="Ultimate">
+      <linux icon="/CoreRCP/icons/icon.xpm"/>
+      <macosx icon="/CoreRCP/icons/icon.icns"/>
+      <win useIco="true">
+         <ico path="/CoreRCP/icons/icon.ico"/>
+         <bmp/>
+      </win>
+   </launcher>
+
+
+   <vm>
+      <linux include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21</linux>
+      <macos include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21</macos>
+      <windows include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21</windows>
+   </vm>
+
+   <features>
+      <feature id="BA_FeatureUltimateCommandLine"/>
+   </features>
+
+   <configurations>
+      <plugin id="org.apache.felix.scr" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.equinox.event" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.osgi" autoStart="true" startLevel="1" />
+   </configurations>
+
+   <preferencesInfo>
+      <targetfile overwrite="false"/>
+   </preferencesInfo>
+
+   <cssInfo>
+   </cssInfo>
+
+</product>

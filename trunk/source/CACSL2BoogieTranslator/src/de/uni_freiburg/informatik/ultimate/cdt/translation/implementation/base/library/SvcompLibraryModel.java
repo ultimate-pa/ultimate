@@ -37,6 +37,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 
@@ -46,11 +47,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -62,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -91,16 +98,21 @@ public class SvcompLibraryModel implements ILibraryModel {
 	private final INameHandler mNameHandler;
 	private final boolean mCheckErrorFunction;
 	private final ExpressionResultTransformer mExprResultTransformer;
+	private final MemoryHandler mMemoryHandler;
+	private final CHandler mCHandler;
 
 	public SvcompLibraryModel(final FunctionModelHelper helper, final AuxVarInfoBuilder auxVarInfoBuilder,
 			final ExpressionTranslation expressionTranslation, final INameHandler nameHandler,
-			final boolean checkErrorFunction, final ExpressionResultTransformer exprResultTransformer) {
+			final boolean checkErrorFunction, final ExpressionResultTransformer exprResultTransformer,
+			final MemoryHandler memoryHandler, final CHandler cHandler) {
 		mHelper = helper;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mExpressionTranslation = expressionTranslation;
 		mNameHandler = nameHandler;
 		mCheckErrorFunction = checkErrorFunction;
 		mExprResultTransformer = exprResultTransformer;
+		mMemoryHandler = memoryHandler;
+		mCHandler = cHandler;
 	}
 
 	@Override
@@ -112,6 +124,8 @@ public class SvcompLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("reach_error", this::handleErrorFunction));
 
 		result.add(new FunctionModel("__VERIFIER_assume", this::handleVerifierAssume));
+
+		result.add(new FunctionModel("__VERIFIER_nondet_memory", this::handleVerifierNondetMemory));
 
 		result.add(new FunctionModel("__VERIFIER_nondet_bool",
 				(main, node, loc, name) -> handleVerifierNondetBool(main, loc)));
@@ -178,6 +192,63 @@ public class SvcompLibraryModel implements ILibraryModel {
 				node, loc, name, new CPrimitive(CPrimitives.VOID))));
 
 		return result;
+	}
+
+	/**
+	 * Models __VERIFIER_nondet_memory(void *mem, size_t size) using bytewise writes, i.e., mem is cast to an unsigned
+	 * pointer and each byte (up to size) is assigned non-deterministically.
+	 */
+	private Result handleVerifierNondetMemory(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		// Since we bytewise writes, we need to adapt the memory model to use a 1-byte resolution
+		// (otherwise this translation is potentially unsound)
+		mCHandler.adaptMemoryModelIfNecessary(loc, "Found a call to " + name, 1);
+
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, 2, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+
+		final CPrimitive ucharType = new CPrimitive(CPrimitives.UCHAR);
+		final ExpressionResult ptr = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
+				arguments[0], new CPointer(ucharType));
+		final CPrimitive counterType = new CPrimitive(CPrimitives.ULONG);
+		final ExpressionResult size = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
+				arguments[1], counterType);
+		builder.addAllExceptLrValue(ptr, size);
+
+		final AuxVarInfo ctr = mAuxVarInfoBuilder.constructAuxVarInfo(loc, counterType, SFO.AUXVAR.LOOPCTR);
+		builder.addAuxVarWithDeclaration(ctr);
+		final AuxVarInfo aux = mAuxVarInfoBuilder.constructAuxVarInfo(loc, ucharType, SFO.AUXVAR.NONDET);
+		builder.addAuxVarWithDeclaration(aux);
+
+		final Expression zero =
+				mExpressionTranslation.constructLiteralForIntegerType(loc, counterType, BigInteger.ZERO);
+		final Expression one = mExpressionTranslation.constructLiteralForIntegerType(loc, counterType, BigInteger.ONE);
+		// ctr := 0
+		builder.addStatement(StatementFactory.constructSingleAssignmentStatement(loc, ctr.getLhs(), zero));
+
+		// The auxvar occurs in a loop, so it must always be havoced in each iteration (independent of
+		// HAVOC_NONDET_AUXVARS_ALSO_BEFORE).
+		final List<Statement> body = new ArrayList<>();
+		body.add(new HavocStatement(loc, new VariableLHS[] { aux.getLhs() }));
+
+		final Expression ptrPlusCtr =
+				mMemoryHandler.addExpressionToPointer(loc, ptr.getLrValue().getValue(), ctr.getExp());
+		body.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(ptrPlusCtr, ucharType, null), aux.getExp(),
+				ucharType, false));
+		body.add(StatementFactory.constructSingleAssignmentStatement(loc, ctr.getLhs(),
+				mExpressionTranslation.constructArithmeticIntegerExpression(loc, IASTBinaryExpression.op_plus,
+						ctr.getExp(), counterType, one, counterType)));
+
+		// while (ctr < size) { havoc aux; *(mem + ctr) := aux; ctr := ctr + 1; }
+		final ILocation ignoreLoc = LocationFactory.createIgnoreLocation(loc);
+		final Expression condition = mExpressionTranslation.constructBinaryComparisonExpression(ignoreLoc,
+				IASTBinaryExpression.op_lessThan, ctr.getExp(), counterType, size.getLrValue().getValue(), counterType);
+		builder.addStatement(new WhileStatement(ignoreLoc, condition, new LoopInvariantSpecification[0],
+				body.toArray(Statement[]::new)));
+
+		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, builder.getDeclarations(), builder.getAuxVars());
+		return builder.build();
 	}
 
 	private ExpressionResult handleVerifierNondetBool(final IDispatcher main, final ILocation loc) {

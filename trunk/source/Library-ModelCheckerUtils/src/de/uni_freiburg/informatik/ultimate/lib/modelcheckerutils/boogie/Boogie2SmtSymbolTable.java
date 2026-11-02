@@ -717,7 +717,7 @@ public class Boogie2SmtSymbolTable
 	private ProgramNonOldVar constructGlobalBoogieVar(final String identifier, final IBoogieType iType,
 			final VarList varlist) {
 		final Sort sort = mTypeSortTranslator.getSort(iType, varlist);
-		final DeclarationInformation declarationInformation = new DeclarationInformation(StorageClass.GLOBAL, null);
+		final DeclarationInformation declarationInformation = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 
 		final ProgramNonOldVar nonOldVar =
 				ProgramVarUtils.constructGlobalProgramVarPair(identifier, sort, mScript, this);
