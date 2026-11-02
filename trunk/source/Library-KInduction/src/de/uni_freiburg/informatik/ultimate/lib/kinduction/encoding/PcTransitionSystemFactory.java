@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormulaBuilder.LoopTree;
 
@@ -53,11 +54,13 @@ public final class PcTransitionSystemFactory {
 	/**
 	 * @param system
 	 *            the transition system, over {@link CallNode}s of the automaton's states
-	 * @param summaries
-	 *            the resolved call sites, {@code null} if the automaton has no call transition
+	 * @param stackPointer
+	 *            see {@link ProcedureSummaries#getStackPointer()}, {@code null} if no call needs an activation record
+	 * @param sealedStates
+	 *            see {@link ProcedureSummaries#getSealedStates()}
 	 */
-	public record Result<LETTER extends IAction, STATE>(PcTransitionSystem<CallNode<STATE>> system,
-			ProcedureSummaries<LETTER, STATE> summaries) {
+	public record Result<STATE>(PcTransitionSystem<CallNode<STATE>> system, IProgramVar stackPointer,
+			Set<CallNode<STATE>> sealedStates) {
 	}
 
 	private PcTransitionSystemFactory() {
@@ -75,28 +78,28 @@ public final class PcTransitionSystemFactory {
 	 * @param counterSort
 	 *            the sort of the pc, the transition ids and the call stack index
 	 */
-	public static <LETTER extends IAction, STATE> Result<LETTER, STATE> build(final IUltimateServiceProvider services,
+	public static <LETTER extends IAction, STATE> Result<STATE> build(final IUltimateServiceProvider services,
 			final ILogger logger, final CfgSmtToolkit csToolkit, final ManagedScript mgdScript,
 			final INestedWordAutomaton<LETTER, STATE> abstraction, final CounterSort counterSort) {
-		final LoopTree<CallNode<STATE>> tree;
-		final ProcedureSummaries<LETTER, STATE> summaries;
 		if (!hasCallTransitions(abstraction)) {
-			summaries = null;
 			// Only the states that can reach an error, see LiveStates: a loop no error is reachable from is no loop
 			// k-induction has to unroll.
 			final Set<STATE> live = LiveStates.compute(abstraction);
 			logger.info("KInduction: %d of %d state(s) can reach an error, the other %d are left out", live.size(),
 					abstraction.size(), abstraction.size() - live.size());
-			tree = new LoopTreeFormulaBuilder<>(services, logger, mgdScript, new UnfoldedGraph<>(abstraction),
-					roots(live), roots(abstraction.getInitialStates()),
-					roots(abstraction.getFinalStates()), Collections.emptyMap(), Collections.emptySet()).build();
-		} else {
-			summaries = new ProcedureSummaries<>(services, logger, csToolkit, mgdScript, abstraction, counterSort);
-			tree = new LoopTreeFormulaBuilder<>(services, logger, mgdScript, summaries.getGraph(),
-					summaries.getScopeStates(), summaries.getInitStates(), summaries.getFinalStates(),
-					summaries.getVirtualCallEdges(), summaries.getSealedStates()).build();
+			final LoopTree<CallNode<STATE>> tree =
+					new LoopTreeFormulaBuilder<>(services, logger, mgdScript, new UnfoldedGraph<>(abstraction),
+							roots(live), roots(abstraction.getInitialStates()), roots(abstraction.getFinalStates()),
+							Collections.emptyMap(), Collections.emptySet()).build();
+			return new Result<>(new PcTransitionSystem<>(tree, counterSort), null, Collections.emptySet());
 		}
-		return new Result<>(new PcTransitionSystem<>(tree, counterSort), summaries);
+		final ProcedureSummaries<LETTER, STATE> summaries =
+				new ProcedureSummaries<>(services, logger, csToolkit, mgdScript, abstraction, counterSort);
+		final LoopTree<CallNode<STATE>> tree = new LoopTreeFormulaBuilder<>(services, logger, mgdScript,
+				summaries.getGraph(), summaries.getScopeStates(), summaries.getInitStates(),
+				summaries.getFinalStates(), summaries.getVirtualCallEdges(), summaries.getSealedStates()).build();
+		return new Result<>(new PcTransitionSystem<>(tree, counterSort), summaries.getStackPointer(),
+				summaries.getSealedStates());
 	}
 
 	/** The given states as nodes with no pending call, for a program in which nothing is ever called. */

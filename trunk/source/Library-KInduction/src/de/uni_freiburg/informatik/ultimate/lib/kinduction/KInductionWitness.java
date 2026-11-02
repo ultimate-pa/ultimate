@@ -109,20 +109,6 @@ public final class KInductionWitness {
 		return mStackPointers[idx] - mStackPointers[0];
 	}
 
-	/**
-	 * @return the first step whose pc is {@link PcTransitionSystem#FINAL}. Everything after it is the stutter self
-	 *         loop, so this is the length of the counterexample in pc steps.
-	 */
-	public int getFirstFinalStep() {
-		for (int idx = 0; idx <= mK; idx++) {
-			if (mPcValues[idx] == PcTransitionSystem.FINAL) {
-				return idx;
-			}
-		}
-		throw new AssertionError("the base case was satisfiable, so some state must have pc = FINAL, but "
-				+ "the model has none: " + this);
-	}
-
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder("k=").append(mK).append(", pc/transition sequence: ");

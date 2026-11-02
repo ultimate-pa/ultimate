@@ -61,6 +61,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * <ul>
  * <li>{@code ki_sp}, the stack pointer,
  * <li>{@code ki_ret}, an array mapping a stack index to the call site the activation at that index must return to,
+ * <li>{@code ki_ret_p} per procedure {@code p} that is on no call cycle, the call site its activation must return to.
+ * Such a procedure has at most one activation at a time, so it needs neither an index nor an array, whose frame is an
+ * extensional equality the solver pays for in every step,
  * <li>one array {@code ki_stack_l} per local variable {@code l} of a recursive procedure, mapping a stack index to
  * the value {@code l} had in the activation at that index.
  * </ul>
@@ -91,6 +94,8 @@ public final class CallStack {
 	private final Sort mIndexSort;
 	private final IProgramNonOldVar mStackPointer;
 	private final IProgramNonOldVar mReturnSites;
+	/** The return site of each procedure that is on no call cycle, which has at most one activation at a time. */
+	private final Map<String, IProgramNonOldVar> mSingleReturnSites = new LinkedHashMap<>();
 	/** One array variable per local that an activation has to keep its own copy of. */
 	private final Map<IProgramVar, IProgramNonOldVar> mSlots = new LinkedHashMap<>();
 
@@ -99,11 +104,13 @@ public final class CallStack {
 	 *            every local variable of every recursive procedure. Minting the variables takes the script's
 	 *            lock, so this has to happen while the loop tree is being built - before {@code KInduction.run} takes
 	 *            it for the solver queries.
+	 * @param notRecursive
+	 *            the procedures with an activation record that are on no call cycle
 	 * @param counterSort
 	 *            the sort of the stack pointer and of the array indices
 	 */
 	public CallStack(final ManagedScript mgdScript, final Collection<? extends IProgramVar> locals,
-			final CounterSort counterSort) {
+			final Collection<String> notRecursive, final CounterSort counterSort) {
 		mMgdScript = mgdScript;
 		mScript = mgdScript.getScript();
 		mCounterSort = counterSort;
@@ -116,6 +123,10 @@ public final class CallStack {
 			mStackPointer = ProgramVarUtils.constructGlobalProgramVarPair(SP, mIndexSort, mMgdScript, this);
 			mReturnSites = ProgramVarUtils.constructGlobalProgramVarPair(RET,
 					SmtSortUtils.getArraySort(mScript, mIndexSort, mIndexSort), mMgdScript, this);
+			for (final String procedure : notRecursive) {
+				mSingleReturnSites.put(procedure, ProgramVarUtils.constructGlobalProgramVarPair(RET + "_" + procedure,
+						mIndexSort, mMgdScript, this));
+			}
 			for (final IProgramVar local : locals) {
 				final Sort slotSort =
 						SmtSortUtils.getArraySort(mScript, mIndexSort, local.getTermVariable().getSort());
@@ -132,6 +143,7 @@ public final class CallStack {
 		final Set<IProgramVar> result = new LinkedHashSet<>();
 		result.add(mStackPointer);
 		result.add(mReturnSites);
+		result.addAll(mSingleReturnSites.values());
 		result.addAll(mSlots.values());
 		return result;
 	}
@@ -141,14 +153,15 @@ public final class CallStack {
 	}
 
 	/**
-	 * Entering an activation: remember where it has to return to, remember the values {@code toSave} has in the
-	 * caller, and move the stack pointer up.
+	 * Entering an activation of {@code callee}: remember where it has to return to, remember the values {@code toSave}
+	 * has in the caller, and move the stack pointer up.
 	 * <p>
 	 * {@code toSave} is empty unless the caller can be re-entered while the callee is running, i.e. unless caller and
 	 * callee lie on a common call cycle - the locals of a caller that cannot be re-entered are never overwritten and
 	 * need no copy.
 	 */
-	public UnmodifiableTransFormula push(final int returnSiteId, final Collection<IProgramVar> toSave) {
+	public UnmodifiableTransFormula push(final String callee, final int returnSiteId,
+			final Collection<IProgramVar> toSave) {
 		final Map<IProgramVar, TermVariable> inVars = new LinkedHashMap<>();
 		final Map<IProgramVar, TermVariable> outVars = new LinkedHashMap<>();
 		final List<Term> conjuncts = new ArrayList<>();
@@ -158,9 +171,14 @@ public final class CallStack {
 		conjuncts.add(SmtUtils.binaryEquality(mScript, spOut,
 				SmtUtils.sum(mScript, mIndexSort, sp, index(1))));
 
-		final TermVariable ret = in(inVars, outVars, mReturnSites, false);
-		conjuncts.add(SmtUtils.binaryEquality(mScript, out(outVars, mReturnSites),
-				SmtUtils.store(mScript, ret, sp, index(returnSiteId))));
+		final IProgramNonOldVar singleReturnSite = mSingleReturnSites.get(callee);
+		if (singleReturnSite != null) {
+			conjuncts.add(SmtUtils.binaryEquality(mScript, out(outVars, singleReturnSite), index(returnSiteId)));
+		} else {
+			final TermVariable ret = in(inVars, outVars, mReturnSites, false);
+			conjuncts.add(SmtUtils.binaryEquality(mScript, out(outVars, mReturnSites),
+					SmtUtils.store(mScript, ret, sp, index(returnSiteId))));
+		}
 
 		for (final IProgramVar local : toSave) {
 			final IProgramNonOldVar slot = slotOf(local);
@@ -174,14 +192,15 @@ public final class CallStack {
 	}
 
 	/**
-	 * Leaving an activation: check that it is the one that was entered from {@code returnSiteId}, move the stack
-	 * pointer down and give {@code toRestore} back the values the caller left them with.
+	 * Leaving an activation of {@code callee}: check that it is the one that was entered from {@code returnSiteId},
+	 * move the stack pointer down and give {@code toRestore} back the values the caller left them with.
 	 * <p>
 	 * {@code toRestore} must not contain a variable the return statement itself assigns - that one carries the
 	 * result out of the activation being left, and the composition puts the return assignment before this formula
 	 * for exactly that reason.
 	 */
-	public UnmodifiableTransFormula pop(final int returnSiteId, final Collection<IProgramVar> toRestore) {
+	public UnmodifiableTransFormula pop(final String callee, final int returnSiteId,
+			final Collection<IProgramVar> toRestore) {
 		final Map<IProgramVar, TermVariable> inVars = new LinkedHashMap<>();
 		final Map<IProgramVar, TermVariable> outVars = new LinkedHashMap<>();
 		final List<Term> conjuncts = new ArrayList<>();
@@ -191,9 +210,15 @@ public final class CallStack {
 		conjuncts.add(SmtUtils.binaryEquality(mScript, spOut,
 				SmtUtils.minus(mScript, sp, index(1))));
 
-		final TermVariable ret = in(inVars, outVars, mReturnSites, true);
-		conjuncts.add(SmtUtils.binaryEquality(mScript, SmtUtils.select(mScript, ret, spOut),
-				index(returnSiteId)));
+		final IProgramNonOldVar singleReturnSite = mSingleReturnSites.get(callee);
+		if (singleReturnSite != null) {
+			conjuncts.add(SmtUtils.binaryEquality(mScript, in(inVars, outVars, singleReturnSite, true),
+					index(returnSiteId)));
+		} else {
+			final TermVariable ret = in(inVars, outVars, mReturnSites, true);
+			conjuncts.add(SmtUtils.binaryEquality(mScript, SmtUtils.select(mScript, ret, spOut),
+					index(returnSiteId)));
+		}
 
 		for (final IProgramVar local : toRestore) {
 			final IProgramNonOldVar slot = slotOf(local);

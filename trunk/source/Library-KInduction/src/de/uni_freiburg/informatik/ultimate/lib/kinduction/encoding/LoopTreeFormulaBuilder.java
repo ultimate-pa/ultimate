@@ -78,17 +78,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * ({@code INIT}, one per head of the scope), the heads of its directly nested loops, its end ({@code END(h)}, one of
  * the scope's own heads reached again after one iteration), the error/accepting states ({@code FINAL}) and every
  * state the scope can leave to ({@code ESCAPE}, e.g. a {@code break} out of a loop). The edges are formulas
- * summarizing <b>all</b> loop-free paths between two checkpoints, so the requested parts are:
- * <ul>
- * <li>part before / after a loop: the root scope's edges {@code INIT -> loopHead} and {@code loopHead -> FINAL} (for
- * a nested loop: the same edges in its enclosing loop's scope),
- * <li>loop entry: {@link Scope#getEntry}, the union of the transitions that go from a head into the loop,
- * <li>loop exit: {@link Scope#getExit}, the union of the transitions that leave the loop from a head,
- * <li>loop body: {@link Scope#getBody()} for a loop with one head and without inner loops (one iteration, head back
- * to head, including the entry transition). Any other loop has no single loop-free body formula; its body is the
- * checkpoint graph of its scope ({@link Scope#getEdge}), where each head of each inner loop is a checkpoint,
- * <li>no loop at all: the root scope's edge {@code INIT -> FINAL} is the whole program.
- * </ul>
+ * summarizing <b>all</b> loop-free paths between two checkpoints. The root scope of a program without a loop has the
+ * single edge {@code INIT -> FINAL}. The part before and after a loop are the edges {@code INIT -> loopHead} and
+ * {@code loopHead -> FINAL} of the scope around it, and the body of a loop is the checkpoint graph of its own scope.
  * <p>
  * Loops are found structurally (strongly connected components, recursively with the heads removed), so no annotation
  * is required. Several entry and exit transitions per head are supported.
@@ -136,63 +128,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * vars and therefore acquires the lock itself. Lock the script afterwards, once all formulas exist, to use them in a
  * solver. Every {@code getEdge} returns {@code null} if there is no such path, which is normal and not an error.
  *
- * <pre>{@code
- * final LoopTreeFormulaBuilder<LETTER, STATE> builder =
- * 		new LoopTreeFormulaBuilder<>(services, logger, mgdScript, nwa);
- * final LoopTree<STATE> tree = builder.build();
- * final Scope<STATE> root = tree.getRoot();
- * }</pre>
- *
- * <b>No loop.</b> The whole program is one formula:
- *
- * <pre>{@code
- * final UnmodifiableTransFormula program = root.getEdge(Checkpoint.init(), Checkpoint.fin());
- * }</pre>
- *
- * <b>Sequential loops.</b> The parts before and after each loop are edges of the root scope, the loop itself is a
- * child scope. The part between two loops {@code a} and {@code b} is
- * {@code root.getEdge(Checkpoint.loopHead(a), Checkpoint.loopHead(b))}, and {@code root.enumeratePaths()} lists all
- * checkpoint sequences from the program start to an error state, e.g. {@code [INIT, loopHead(a), loopHead(b), FINAL]}.
- *
- * <pre>{@code
- * for (final STATE head : root.getLoopHeads()) {
- * 	final Scope<STATE> loop = root.getChild(head);
- * 	final Checkpoint<STATE> headCp = Checkpoint.loopHead(head);
- * 	final UnmodifiableTransFormula before = root.getEdge(Checkpoint.init(), headCp);
- * 	final UnmodifiableTransFormula after = root.getEdge(headCp, Checkpoint.fin());
- * 	final UnmodifiableTransFormula entry = loop.getEntry(head); // head into the loop
- * 	final UnmodifiableTransFormula exit = loop.getExit(head); // head out of the loop
- * 	final UnmodifiableTransFormula body = loop.getBody(); // one iteration; single-head loops only
- * }
- * }</pre>
- *
- * The edges leaving {@code Checkpoint.init(head)} inside a loop scope include the entry transition, so
- * {@code getBody()} already contains the loop condition; {@code getEntry(head)} gives the entry transition on its
- * own.
- * <p>
- * <b>Nested loops.</b> {@code tree.getLoops()} lists all loops, outer loops before the loops nested in them. A loop
- * with one head and without inner loops (see {@link Scope#isLeaf()}) has a single body formula. For any other loop
- * {@code getBody()} throws an {@link UnsupportedOperationException}; use the checkpoint graph of its scope instead,
- * in which every head of every inner loop is a checkpoint:
- *
- * <pre>{@code
- * for (final Scope<STATE> loop : tree.getLoops()) {
- * 	if (loop.isLeaf() && loop.getHeads().size() == 1) {
- * 		final UnmodifiableTransFormula body = loop.getBody();
- * 	} else {
- * 		final STATE head = loop.getHeads().iterator().next();
- * 		final Checkpoint<STATE> inner = Checkpoint.loopHead(loop.getLoopHeads().iterator().next());
- * 		loop.getEdge(Checkpoint.init(head), inner); // start of this loop's body to the inner loop head
- * 		loop.getEdge(inner, Checkpoint.end(head)); // inner loop head back to this loop's head
- * 		loop.getEdge(inner, Checkpoint.fin()); // inner loop head to an error state
- * 		loop.getEdge(inner, Checkpoint.escape(state)); // inner loop head to a state outside this loop (break)
- * 	}
- * }
- * }</pre>
- *
- * To restrict the builder to a single procedure, use the second constructor with explicit scope, initial and final
- * states.
- *
  * @param <LETTER>
  *            letter type
  * @param <STATE>
@@ -211,34 +146,9 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 	private final Collection<STATE> mFinalStates;
 	private final Map<STATE, Map<STATE, UnmodifiableTransFormula>> mVirtualCallEdges;
 	private final Set<STATE> mSealedStates;
-	private final Map<LETTER, UnmodifiableTransFormula> mLetterCache = new HashMap<>();
 
 	private final Map<STATE, List<Pair<Edge<LETTER>, STATE>>> mSuccessors = new HashMap<>();
 	private final Map<STATE, Set<STATE>> mPredecessors = new HashMap<>();
-
-	/**
-	 * Whole-automaton constructor: no scoping, no virtual call edges. Every state is in the scope, so every call
-	 * and every return transition of the abstraction would be an edge of the flat graph; {@link #build()}
-	 * therefore refuses an abstraction that has one. Use the scoped constructor with virtual call edges for a
-	 * program whose procedures are not inlined.
-	 */
-	public LoopTreeFormulaBuilder(final IUltimateServiceProvider services, final ILogger logger,
-			final ManagedScript mgdScript, final INestedWordAutomaton<LETTER, STATE> abstraction) {
-		this(services, logger, mgdScript, abstraction, abstraction.getStates(), abstraction.getInitialStates(),
-				abstraction.getFinalStates(), Collections.emptyMap());
-	}
-
-	/**
-	 * Scoped constructor, e.g. for a single procedure's body. Only states in {@code scopeStates} are considered;
-	 * {@code virtualCallEdges} adds one precomputed edge per call site (call state, post-return state, formula).
-	 */
-	public LoopTreeFormulaBuilder(final IUltimateServiceProvider services, final ILogger logger,
-			final ManagedScript mgdScript, final INestedWordAutomaton<LETTER, STATE> abstraction,
-			final Set<STATE> scopeStates, final Set<STATE> initStates, final Collection<STATE> finalStates,
-			final Map<STATE, Map<STATE, UnmodifiableTransFormula>> virtualCallEdges) {
-		this(services, logger, mgdScript, abstraction, scopeStates, initStates, finalStates, virtualCallEdges,
-				Collections.emptySet());
-	}
 
 	/**
 	 * Scoped constructor with sealed states: states of {@code scopeStates} that are dead ends here, i.e. whose own
@@ -282,7 +192,6 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 	 * Builds the loop tree. All formulas are native to the {@link ManagedScript} passed to the constructor.
 	 */
 	public LoopTree<STATE> build() {
-		rejectUnresolvedCallsAndReturns();
 		final Set<STATE> reachable = computeReachable();
 		for (final STATE state : reachable) {
 			for (final Pair<Edge<LETTER>, STATE> t : successors(state)) {
@@ -306,8 +215,11 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 	 * leaves the scope is not refused: it is what a virtual call edge stands for.
 	 * <p>
 	 * A sealed state has no edges at all here, so its transitions cannot become one either.
+	 * <p>
+	 * This is up to whoever builds trees over a graph that has calls, since the cost is the states times the call sites:
+	 * once per scope is enough, the result does not depend on the initial and final states of a tree.
 	 */
-	private void rejectUnresolvedCallsAndReturns() {
+	public void rejectUnresolvedCallsAndReturns() {
 		final List<STATE> callSites = new ArrayList<>();
 		for (final STATE state : mScopeStates) {
 			if (mGraph.callSuccessors(state).iterator().hasNext()) {
@@ -634,8 +546,6 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 		// formula or null, first state) pair.
 		final List<Pair<UnmodifiableTransFormula, STATE>> rootSources = new ArrayList<>();
 		final Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> sourcesPerHead = new LinkedHashMap<>();
-		final Map<STATE, UnmodifiableTransFormula> entryPerHead = new LinkedHashMap<>();
-		final Map<STATE, UnmodifiableTransFormula> exitPerHead = new LinkedHashMap<>();
 		if (isRoot) {
 			for (final STATE init : mInitStates) {
 				if (nodes.contains(init)) {
@@ -645,20 +555,12 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 		} else {
 			for (final STATE head : heads) {
 				final List<Pair<UnmodifiableTransFormula, STATE>> sources = new ArrayList<>();
-				final List<UnmodifiableTransFormula> entries = new ArrayList<>();
-				final List<UnmodifiableTransFormula> exits = new ArrayList<>();
 				for (final Pair<Edge<LETTER>, STATE> t : successors(head)) {
-					final UnmodifiableTransFormula tf = evaluator.letterFormula(t.getFirst());
 					if (region.contains(t.getSecond())) {
-						entries.add(tf);
-						sources.add(new Pair<>(tf, t.getSecond()));
-					} else {
-						exits.add(tf);
+						sources.add(new Pair<>(evaluator.letterFormula(t.getFirst()), t.getSecond()));
 					}
 				}
 				sourcesPerHead.put(head, sources);
-				entryPerHead.put(head, combineAlternatives(mLogger, mServices, mMgdScript, entries));
-				exitPerHead.put(head, combineAlternatives(mLogger, mServices, mMgdScript, exits));
 			}
 		}
 
@@ -713,10 +615,9 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 						if (body == null) {
 							continue;
 						}
+						// The child's own edge INIT(h) -> FINAL is a transition of the system already, between the same two
+						// pc nodes as LOOP_HEAD(h) -> FINAL here, so it is not repeated here.
 						if (leave.isFinal()) {
-							if (target.getKey().isFinal()) {
-								alternatives.add(body);
-							}
 							continue;
 						}
 						final STATE escapeState = leave.getEscapeState();
@@ -724,6 +625,10 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 							continue;
 						}
 						for (final STATE rep : target.getValue()) {
+							// Neither is the child's edge INIT(h) -> ESCAPE(rep), for the same reason.
+							if (rep.equals(escapeState)) {
+								continue;
+							}
 							final UnmodifiableTransFormula tail =
 									evaluator.evaluate(pathExprComputer.exprBetween(escapeState, rep));
 							if (tail != null) {
@@ -785,8 +690,7 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 			}
 		}
 
-		final Scope<STATE> scope = new Scope<>(heads, region, children, entryPerHead, exitPerHead, edges, depth,
-				checkpointStates, nodes);
+		final Scope<STATE> scope = new Scope<>(heads, region, children, edges, depth, checkpointStates);
 		mLogger.info("LoopTree: scope %s built: %d inner loop(s), %d state(s), %d checkpoint edge(s)",
 				isRoot ? "ROOT" : "loop " + heads, children.size(), region.size(), scope.getNumEdges());
 		return scope;
@@ -1092,11 +996,7 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 		}
 
 		UnmodifiableTransFormula letterFormula(final Edge<LETTER> edge) {
-			if (edge.isVirtual()) {
-				return edge.getVirtualFormula();
-			}
-			final LETTER letter = edge.getRealLetter();
-			return mLetterCache.computeIfAbsent(letter, IAction::getTransformula);
+			return edge.isVirtual() ? edge.getVirtualFormula() : edge.getRealLetter().getTransformula();
 		}
 
 		@Override
@@ -1347,16 +1247,6 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 			}
 		}
 
-		/** The scope of the loop one of whose heads is {@code head}, or {@code null}. */
-		public Scope<STATE> getLoop(final STATE head) {
-			for (final Scope<STATE> loop : getLoops()) {
-				if (loop.getHeads().contains(head)) {
-					return loop;
-				}
-			}
-			return null;
-		}
-
 		public int getMaxDepth() {
 			int result = 0;
 			for (final Scope<STATE> loop : getLoops()) {
@@ -1374,27 +1264,19 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 		private final Set<STATE> mHeads;
 		private final Set<STATE> mRegion;
 		private final List<Scope<STATE>> mChildren;
-		private final Map<STATE, UnmodifiableTransFormula> mEntry;
-		private final Map<STATE, UnmodifiableTransFormula> mExit;
 		private final Map<Checkpoint<STATE>, Map<Checkpoint<STATE>, UnmodifiableTransFormula>> mEdges;
 		private final int mDepth;
 		private final Map<Checkpoint<STATE>, Collection<STATE>> mCheckpointStates;
-		private final Set<STATE> mCutGraphNodes;
 
 		Scope(final Set<STATE> heads, final Set<STATE> region, final List<Scope<STATE>> children,
-				final Map<STATE, UnmodifiableTransFormula> entry, final Map<STATE, UnmodifiableTransFormula> exit,
 				final Map<Checkpoint<STATE>, Map<Checkpoint<STATE>, UnmodifiableTransFormula>> edges,
-				final int depth, final Map<Checkpoint<STATE>, Collection<STATE>> checkpointStates,
-				final Set<STATE> cutGraphNodes) {
+				final int depth, final Map<Checkpoint<STATE>, Collection<STATE>> checkpointStates) {
 			mHeads = heads;
 			mRegion = region;
 			mChildren = children;
-			mEntry = entry;
-			mExit = exit;
 			mEdges = edges;
 			mDepth = depth;
 			mCheckpointStates = checkpointStates;
-			mCutGraphNodes = cutGraphNodes;
 		}
 
 		/**
@@ -1408,11 +1290,6 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 		public Collection<STATE> getCheckpointStates(final Checkpoint<STATE> checkpoint) {
 			final Collection<STATE> result = mCheckpointStates.get(checkpoint);
 			return result == null ? Collections.emptyList() : Collections.unmodifiableCollection(result);
-		}
-
-		/** The nodes of this scope's cut graph: the region without the interiors of inner loops, plus the escapes. */
-		public Set<STATE> getCutGraphNodes() {
-			return Collections.unmodifiableSet(mCutGraphNodes);
 		}
 
 		public boolean isRoot() {
@@ -1440,73 +1317,6 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 		/** The loops directly nested in this scope. */
 		public List<Scope<STATE>> getChildren() {
 			return mChildren;
-		}
-
-		/**
-		 * Heads of the loops directly nested in this scope. A child with irreducible control flow contributes
-		 * several, so this is not in bijection with {@link #getChildren()}.
-		 */
-		public Set<STATE> getLoopHeads() {
-			final Set<STATE> result = new LinkedHashSet<>();
-			for (final Scope<STATE> child : mChildren) {
-				result.addAll(child.getHeads());
-			}
-			return result;
-		}
-
-		public boolean isLeaf() {
-			return mChildren.isEmpty();
-		}
-
-		/** The directly nested loop one of whose heads is {@code head}, or {@code null}. */
-		public Scope<STATE> getChild(final STATE head) {
-			for (final Scope<STATE> child : mChildren) {
-				if (child.getHeads().contains(head)) {
-					return child;
-				}
-			}
-			return null;
-		}
-
-		/** Loop entry: union of the transitions from {@code head} into the loop. */
-		public UnmodifiableTransFormula getEntry(final STATE head) {
-			requireHead(head);
-			return mEntry.get(head);
-		}
-
-		/** Loop exit: union of the transitions from {@code head} out of the loop. */
-		public UnmodifiableTransFormula getExit(final STATE head) {
-			requireHead(head);
-			return mExit.get(head);
-		}
-
-		/**
-		 * One iteration of this loop (head back to head, including the entry transition). Only for a loop
-		 * without inner loops and with a single head, otherwise use {@link #getEdge} on this scope's
-		 * checkpoints.
-		 * <p>
-		 * A loop with several heads deliberately has no body formula, not even
-		 * {@code getEdge(init(h), end(h))}: that is a <em>proper subset</em> of one iteration, because an
-		 * iteration may enter at one head and come back round to another. Unrolling it would under-approximate
-		 * the loop and could prove a program safe that is not.
-		 */
-		public UnmodifiableTransFormula getBody() {
-			if (isRoot() || !isLeaf() || mHeads.size() != 1) {
-				throw new UnsupportedOperationException("No single loop-free body formula for " + this
-						+ ": it is the root, has inner loops, or is entered at several heads; use the checkpoint "
-						+ "graph (getEdge) instead");
-			}
-			final STATE head = mHeads.iterator().next();
-			return getEdge(Checkpoint.init(head), Checkpoint.end(head));
-		}
-
-		/** The body formula of the directly nested loop with head {@code head}, see {@link #getBody()}. */
-		public UnmodifiableTransFormula getLoopBody(final STATE head) {
-			final Scope<STATE> child = getChild(head);
-			if (child == null) {
-				throw new IllegalArgumentException(head + " is not the head of a loop nested directly in " + this);
-			}
-			return child.getBody();
 		}
 
 		private void requireHead(final STATE head) {
@@ -1544,15 +1354,6 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 				throw new IllegalArgumentException(
 						checkpoint + " does not belong to " + this + ", whose heads are " + mHeads);
 			}
-		}
-
-		/** The checkpoints (other than INIT) reachable from INIT. */
-		public Set<Checkpoint<STATE>> getCheckpoints() {
-			final Set<Checkpoint<STATE>> result = new LinkedHashSet<>();
-			for (final Map<Checkpoint<STATE>, UnmodifiableTransFormula> outgoing : mEdges.values()) {
-				result.addAll(outgoing.keySet());
-			}
-			return result;
 		}
 
 		/**
@@ -1614,54 +1415,6 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 				result += outgoing.size();
 			}
 			return result;
-		}
-
-		/** All simple paths from INIT to FINAL, see {@link #enumeratePaths(Checkpoint)}. */
-		public List<List<Checkpoint<STATE>>> enumeratePaths() {
-			return enumeratePaths(Checkpoint.fin());
-		}
-
-		/**
-		 * Every simple path from INIT to {@code target} through the present edges, as an ordered checkpoint list.
-		 * An execution may visit only a subset of the inner loop heads, possibly several in sequence, so this is a
-		 * genuine enumeration. There is no upper bound on the number of paths, which can be exponential in the
-		 * number of loops.
-		 */
-		public List<List<Checkpoint<STATE>>> enumeratePaths(final Checkpoint<STATE> target) {
-			if (!isRoot()) {
-				throw new UnsupportedOperationException("Path enumeration starts at INIT, which only the root "
-						+ "scope has; a loop scope starts at one INIT(head) per head, see getHeads()");
-			}
-			final List<List<Checkpoint<STATE>>> result = new ArrayList<>();
-			final Deque<Checkpoint<STATE>> current = new ArrayDeque<>();
-			final Checkpoint<STATE> init = Checkpoint.init();
-			current.addLast(init);
-			final Set<Checkpoint<STATE>> visited = new HashSet<>();
-			visited.add(init);
-			enumeratePaths(init, target, current, visited, result);
-			return result;
-		}
-
-		private void enumeratePaths(final Checkpoint<STATE> node, final Checkpoint<STATE> target,
-				final Deque<Checkpoint<STATE>> current, final Set<Checkpoint<STATE>> visited,
-				final List<List<Checkpoint<STATE>>> result) {
-			if (node.equals(target)) {
-				result.add(new ArrayList<>(current));
-				return;
-			}
-			final Map<Checkpoint<STATE>, UnmodifiableTransFormula> outgoing = mEdges.get(node);
-			if (outgoing == null) {
-				return;
-			}
-			for (final Checkpoint<STATE> next : outgoing.keySet()) {
-				if (!visited.add(next)) {
-					continue;
-				}
-				current.addLast(next);
-				enumeratePaths(next, target, current, visited, result);
-				current.removeLast();
-				visited.remove(next);
-			}
 		}
 
 		@Override
