@@ -28,13 +28,10 @@ package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instruc
 
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.AuxFunctionDeclarationBuilder.CDIV_IDENTIFIER;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.AuxFunctionDeclarationBuilder.REM_IDENTIFIER;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.VariableDeclarationBuilder.constructVarDecFromString;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.VariableDeclarationBuilder.constructVarDecFromTypeContext;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructBitLengthLiteral;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructExpressionFromValue;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructSignedExpression;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.getBitLengthFromType;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.getCompOperatorFromOperatorValue;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -400,55 +397,6 @@ public final class ArithmeticInstructionHandler {
 				new BinaryExpression(location, Operator.ARITHMOD, binaryExpr, bitLengthLiteral);
 		final AssignmentStatement assignment =
 				new AssignmentStatement(location, new LeftHandSide[] { varLhs }, new Expression[] { signedExpr });
-		result.addFuncBlock(assignment);
-	}
-
-	/**
-	 * Constructs the local variable and the assignment for an integer comparison (icmp instruction).
-	 *
-	 * The comparison is a Boogie Boolean. For signed relational predicates on integer types other than i1, both
-	 * operands are converted to signed values first.
-	 *
-	 * @param result
-	 *            The result to which the local variable and the assignment are added.
-	 * @param instructionType
-	 *            The value instruction context from the LLVM IR parse tree.
-	 * @param identifier
-	 *            The identifier of the local variable that receives the result.
-	 * @param location
-	 *            The location in the source code where this instruction is defined.
-	 */
-	public static void handleICmpInst(final Result result, final LLVMIRParser.ValueInstructionContext instructionType,
-			final String identifier, final LlvmirLocation location) {
-		result.addFuncLocalVar(constructVarDecFromString("bool", identifier, location));
-		final LLVMIRParser.ConcreteTypeContext typeContext =
-				instructionType.iCmpInst().typeValue().firstClassType().concreteType();
-
-		Expression leftExpr = null;
-		Expression rightExpr = null;
-		final String operatorString = instructionType.iCmpInst().iPred().getText();
-		final Operator operator = getCompOperatorFromOperatorValue(operatorString);
-		final boolean isSigned = operatorString.startsWith("s");
-
-		final LLVMIRParser.ValueContext leftValue = instructionType.iCmpInst().typeValue().value();
-		leftExpr = constructExpressionFromValue(leftValue, typeContext, location, isSigned);
-
-		final LLVMIRParser.ValueContext rightValue = instructionType.iCmpInst().value();
-		rightExpr = constructExpressionFromValue(rightValue, typeContext, location, isSigned);
-
-		if (isSigned && typeContext.intType() != null && !typeContext.intType().getText().equals("i1")) {
-			final int bitLength = getBitLengthFromType(typeContext);
-			if (operator == Operator.COMPLEQ || operator == Operator.COMPLT || operator == Operator.COMPGEQ
-					|| operator == Operator.COMPGT) {
-				leftExpr = constructSignedExpression(leftExpr, bitLength, location);
-				rightExpr = constructSignedExpression(rightExpr, bitLength, location);
-			}
-		}
-
-		final VariableLHS varLhs = new VariableLHS(location, identifier);
-		final BinaryExpression binaryExpr = new BinaryExpression(location, operator, leftExpr, rightExpr);
-		final AssignmentStatement assignment =
-				new AssignmentStatement(location, new LeftHandSide[] { varLhs }, new Expression[] { binaryExpr });
 		result.addFuncBlock(assignment);
 	}
 }
