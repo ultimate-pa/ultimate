@@ -33,7 +33,6 @@ import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.d
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructVarDecFromTypeContext;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.contructRemainderFunction;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.procedureAlreadyPresent;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.constructHavocStatementFromTypeValue;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleAddInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleICmpInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleMulInst;
@@ -42,6 +41,12 @@ import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.i
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleSubInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleUDivInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleURemInst;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.BitwiseInstructionHandler.handleAShrInst;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.BitwiseInstructionHandler.handleAndInst;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.BitwiseInstructionHandler.handleLShrInst;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.BitwiseInstructionHandler.handleOrInst;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.BitwiseInstructionHandler.handleShlInst;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.BitwiseInstructionHandler.handleXorInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.CallInstructionHandler.handleCallInstWithResult;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.CallInstructionHandler.handleCallInstWithoutResult;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ControlFlowInstructionHandler.handleBrTerm;
@@ -539,23 +544,17 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 					new Expression[] { structAccessExpr });
 			result.addFuncBlock(assignment);
 		} else if (instructionType.andInst() != null) {
-			constructHavocStatementFromTypeValue(result, instructionType.andInst().typeValue(), location, identifier,
-					"andInst");
+			handleAndInst(result, instructionType, identifier, location);
 		} else if (instructionType.orInst() != null) {
-			constructHavocStatementFromTypeValue(result, instructionType.orInst().typeValue(), location, identifier,
-					"orInst");
+			handleOrInst(result, instructionType, identifier, location);
 		} else if (instructionType.xorInst() != null) {
-			constructHavocStatementFromTypeValue(result, instructionType.xorInst().typeValue(), location, identifier,
-					"xorInst");
+			handleXorInst(result, instructionType, identifier, location);
 		} else if (instructionType.shlInst() != null) {
-			constructHavocStatementFromTypeValue(result, instructionType.shlInst().typeValue(), location, identifier,
-					"shlInst");
+			handleShlInst(result, instructionType, identifier, location);
 		} else if (instructionType.aShrInst() != null) {
-			constructHavocStatementFromTypeValue(result, instructionType.aShrInst().typeValue(), location, identifier,
-					"aShrInst");
+			handleAShrInst(result, instructionType, identifier, location);
 		} else if (instructionType.lShrInst() != null) {
-			constructHavocStatementFromTypeValue(result, instructionType.lShrInst().typeValue(), location, identifier,
-					"lShrInst");
+			handleLShrInst(result, instructionType, identifier, location);
 		} else {
 			throw new AssertionError("The support for the given instruction is not implemented yet.");
 		}
