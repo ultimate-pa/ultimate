@@ -152,7 +152,7 @@ public final class SmtParserUtils {
 
 		final Term noIte;
 		if (SmtSortUtils.isBoolSort(noLet.getSort())) {
-			noIte = new IteRemover(mgdScript).transform(noLet);
+			noIte = IteRemover.apply(mgdScript, noLet);
 		} else {
 			noIte = noLet;
 		}
