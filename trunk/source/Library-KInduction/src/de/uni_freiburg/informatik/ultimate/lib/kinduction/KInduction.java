@@ -92,8 +92,8 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.IndexedConsta
  * step {@code > k} is preceded by k non-INIT states, and errors at steps {@code <= k} are found by the base case.
  * </ul>
  * Since the whole program, including all loop heads, is one system, a SAFE result is a genuine proof also for several
- * and for nested loops; there is no per-loop or per-path approximation. The only incompleteness is {@link #MAX_K} and
- * the solver returning unknown.
+ * and for nested loops; there is no per-loop or per-path approximation. A program that is not k-inductive for any k
+ * runs until the timeout; otherwise the only incompleteness is the solver returning unknown.
  * <p>
  * <b>Procedures.</b> The transition system is flat and has no call stack, so it never contains a call or a return. If
  * the abstraction has any, {@link ProcedureSummaries} resolves every call site first: a callee whose graph is loop-free
@@ -101,7 +101,8 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.IndexedConsta
  * returns), while a callee that contains a loop is unfolded into one copy of its states per call site, so that its loop
  * becomes an ordinary nested loop of the tree and gets {@code pc} values of its own. The nodes of the tree are
  * therefore {@link CallNode}s - a state plus the call sites it was reached through - and a loop head of an unfolded
- * callee is a different head at each of its call sites. Recursion is refused there.
+ * callee is a different head at each of its call sites. A procedure on a call cycle gets an activation record instead,
+ * see {@code CallStack}.
  * <p>
  * <b>Invariant injection.</b> The {@link IInvariantSupplier} may return a trusted invariant for any loop head, also a
  * nested one. It is assumed in every unrolled state where {@code pc} is that loop head, in the base and the step case.
@@ -121,12 +122,6 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.IndexedConsta
  *            state type
  */
 public class KInduction<LETTER extends IAction, STATE> {
-
-	/**
-	 * Upper bound on how many transitions are unrolled while searching for an inductive step. Placeholder constant,
-	 * matching {@code InterpolationBasedModelChecking}; not yet wired through a preference.
-	 */
-	private static final int MAX_K = 200000;
 
 	/**
 	 * How long an interrupted query may take to end before its solver is killed and restarted, see
@@ -209,7 +204,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 	}
 
 	private void run() throws AutomataLibraryException {
-		mLogger.info("KInduction: starting k-induction (MAX_K=%d)", MAX_K);
+		mLogger.info("KInduction: starting k-induction");
 		// Building the loop tree composes transition formulas, which declares constants for their aux vars and thus
 		// locks the script itself. So the tree has to be complete before we take the lock for the solver queries.
 		final PcTransitionSystemFactory.Result<LETTER, STATE> encoding;
@@ -264,7 +259,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 	}
 
 	private Verdict kInduction() {
-		for (int k = 1; k <= MAX_K; k++) {
+		for (int k = 1;; k++) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException(getClass(), "k-induction at k=" + k);
 			}
@@ -297,9 +292,6 @@ public class KInduction<LETTER extends IAction, STATE> {
 			}
 			// step case SAT: not yet inductive, unroll once more
 		}
-		mInconclusive = Inconclusive.boundExhausted(MAX_K);
-		mLogger.info("KInduction: " + mInconclusive);
-		return Verdict.UNKNOWN;
 	}
 
 	/**
@@ -826,10 +818,9 @@ public class KInduction<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * Why k-induction stopped without proving or refuting the program. The two possibilities are kept apart because
-	 * they call for opposite remedies: an exhausted unrolling bound means the search was cut short and a larger bound
-	 * might still decide it, whereas a solver that answers {@code unknown} will keep doing so until the query itself
-	 * changes (fewer variables, a different encoding, an injected invariant, or a higher resource limit).
+	 * Why k-induction stopped without proving or refuting the program: the solver answered {@code unknown}, and it will
+	 * keep doing so until the query itself changes (fewer variables, a different encoding, an injected invariant, or a
+	 * higher resource limit).
 	 */
 	public static final class Inconclusive {
 		private final int mK;
@@ -844,23 +835,12 @@ public class KInduction<LETTER extends IAction, STATE> {
 			return new Inconclusive(k, theCase);
 		}
 
-		static Inconclusive boundExhausted(final int maxK) {
-			return new Inconclusive(maxK, null);
-		}
-
-		/**
-		 * @return true if the unrolling bound was reached, false if the solver gave up first.
-		 */
-		public boolean isBoundExhausted() {
-			return mCase == null;
-		}
-
 		public int getK() {
 			return mK;
 		}
 
 		/**
-		 * @return "base" or "step". Only defined unless {@link #isBoundExhausted()}.
+		 * @return "base" or "step".
 		 */
 		public String getCase() {
 			return mCase;
@@ -868,10 +848,6 @@ public class KInduction<LETTER extends IAction, STATE> {
 
 		@Override
 		public String toString() {
-			if (isBoundExhausted()) {
-				return "k-induction reached the unrolling bound MAX_K=" + mK
-						+ " without an inductive step; neither a proof nor a violation was found";
-			}
 			return "k-induction is inconclusive: the solver returned unknown for the " + mCase + " case at k=" + mK
 					+ ", so the program is neither proved safe nor refuted";
 		}

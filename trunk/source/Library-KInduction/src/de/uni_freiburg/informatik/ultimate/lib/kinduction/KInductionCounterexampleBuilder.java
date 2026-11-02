@@ -129,9 +129,10 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionS
  * acyclic, and all of a scope's own heads and the heads of its inner loops are sealed in it - they are nodes but
  * have no outgoing edges - so such a state can only ever be a path's last. The exception is what a loop body needs:
  * {@code INIT(h) -> END(h)} in a loop scope runs from the head back to the head. Restricting the search to simple
- * paths alone would drop exactly those, and restricting it no further keeps the search finite. A state visited
- * inside a call is a different search node from the same state visited outside it, since the two differ in what
- * the run may do next, so "simple" is meant with respect to the call stack.
+ * paths alone would drop exactly those. A state visited inside a call is a different search node from the same state
+ * visited outside it, since the two differ in what the run may do next, so "simple" is meant with respect to the call
+ * stack. Without recursion that keeps the search finite. With recursion the call stack, and so the search, has no
+ * bound: only cancellation through the progress monitor or a solver limit ends a search that keeps descending.
  * <p>
  * A loop that is entered at several heads also has the steps {@code INIT(h1) -> END(h2)}, whose path runs between
  * two <em>different</em> sealed states and is therefore plainly simple. On such a program the search may leave the
@@ -148,12 +149,6 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionS
  * @author Max Barth (max.barth@lmu.de)
  */
 public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE> {
-
-	/**
-	 * Cuts off a search that is not going to finish, so that a pathological abstraction produces a legible failure
-	 * instead of hanging. Reaching this is a bug or a program far outside what k-induction is used on.
-	 */
-	private static final int MAX_EXPANSIONS = 100_000;
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -403,7 +398,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	 *            how many letters of this step have been taken.
 	 */
 	private boolean extend(final Step step, final STATE current, final int length) {
-		checkBudget();
+		pollCancellation();
 
 		// Can this step end here? A zero-length step is legitimate: an edge whose path expression is Epsilon
 		// composes to the trivial transition formula.
@@ -927,12 +922,8 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 		mPredecessors.computeIfAbsent(successor, k -> new ArrayList<>()).add(predecessor);
 	}
 
-	private void checkBudget() {
+	private void pollCancellation() {
 		mExpansions++;
-		if (mExpansions > MAX_EXPANSIONS) {
-			throw new KInductionCounterexampleException("gave up reconstructing a counterexample after "
-					+ MAX_EXPANSIONS + " expansions for " + mWitness);
-		}
 		if (mExpansions % 512 == 0 && !mServices.getProgressMonitorService().continueProcessing()) {
 			throw new KInductionCounterexampleException(
 					"cancelled while reconstructing a counterexample for " + mWitness);

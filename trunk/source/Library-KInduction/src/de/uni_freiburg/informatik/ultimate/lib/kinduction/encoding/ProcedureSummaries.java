@@ -147,8 +147,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	 * {@link #stackUnfoldingsThatDoNotFit}. Unfolding is exponential in the depth of the call graph times the number
 	 * of call sites per procedure, so a program can ask for arbitrarily many nodes. This is a budget for that choice,
 	 * not a limit on the graph: a graph that is bigger anyway, because the procedures themselves are big or because
-	 * the estimate was low, is built all the same. Like {@code KInduction.MAX_K} this is a constant rather than a
-	 * preference so far.
+	 * the estimate was low, is built all the same. This is a constant rather than a preference so far.
 	 */
 	public static final int UNFOLDING_BUDGET = 50_000;
 
