@@ -96,7 +96,7 @@ public final class CallStack {
 
 	/**
 	 * @param locals
-	 *            every local variable of every stack-encoded procedure. Minting the variables takes the script's
+	 *            every local variable of every recursive procedure. Minting the variables takes the script's
 	 *            lock, so this has to happen while the loop tree is being built - before {@code KInduction.run} takes
 	 *            it for the solver queries.
 	 * @param counterSort

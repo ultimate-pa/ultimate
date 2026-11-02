@@ -170,6 +170,11 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	 * {@link #UNFOLDING_BUDGET}. Their states occur exactly once in the graph.
 	 */
 	private final Set<String> mStacked = new LinkedHashSet<>();
+	/**
+	 * The procedures of {@link #mStacked} on a call cycle. Only they can be re-entered while one of their callees runs,
+	 * so only their locals need a copy per activation.
+	 */
+	private final Set<String> mRecursive = new LinkedHashSet<>();
 	/** Null exactly if {@link #mStacked} is empty, i.e. if no call needs an activation record. */
 	private CallStack mCallStack;
 	/** Hands out the id that tells a stacked return which call site it has to go back to. */
@@ -273,8 +278,9 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		// about this program, and encoding it would spend a stack on activations that never happen.
 		final Set<String> reachable = callGraph.getReachableProcedures();
 		for (final Set<String> cycle : callGraph.getRecursiveSccs(reachable)) {
-			mStacked.addAll(cycle);
+			mRecursive.addAll(cycle);
 		}
+		mStacked.addAll(mRecursive);
 		final List<String> order = new ArrayList<>();
 		for (final Set<String> scc : callGraph.getSccsCalleeFirst(reachable)) {
 			order.addAll(scc);
@@ -293,7 +299,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		reduceRootProcedures(order, entryProcedures);
 		stackUnfoldingsThatDoNotFit(order, entryProcedures);
 		if (!mStacked.isEmpty()) {
-			mCallStack = new CallStack(mMgdScript, localsOf(mStacked), counterSort);
+			mCallStack = new CallStack(mMgdScript, localsOf(mRecursive), counterSort);
 		}
 		rejectOldVarReadsAcrossStackFreeCalls(entryProcedures, callGraph);
 		unfold(entryProcedures);
@@ -810,7 +816,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		// a caller that lies on a call cycle itself. A caller that cannot be re-entered still needs the return site
 		// pushed, or the callee would not know where to go back to.
 		final Collection<IProgramVar> toSave =
-				mStacked.contains(caller) ? localsOf(Collections.singleton(caller)) : Collections.emptyList();
+				mRecursive.contains(caller) ? localsOf(Collections.singleton(caller)) : Collections.emptyList();
 
 		final CallNode<STATE> entryNode = CallNode.root(call.getSucc());
 		addAlternative(alternatives, callSite, entryNode, TransFormulaUtils.sequentialComposition(mLogger, mServices,
