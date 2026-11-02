@@ -27,18 +27,28 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
+import java.util.function.BiFunction;
+import java.util.function.IntPredicate;
 import java.util.function.UnaryOperator;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
@@ -51,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormulaBuilder.Checkpoint;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormulaBuilder.LoopTree;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormulaBuilder.Scope;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * A transition system made from a {@link LoopTree}: the state is the program variables plus a program counter
@@ -63,16 +74,37 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormu
  * control flow one per entry state,
  * <li>every "waypoint": a state outside a loop that a {@code break} out of the loop can jump to.
  * </ul>
- * Every edge of every scope of the tree is one transition, from the node of its source checkpoint to the node of its
- * target checkpoint, labelled with the edge's formula. Every program execution is a sequence of such transitions,
- * because it is cut at each visit of a loop head. One transition can stand for many letters, and at a call site for
- * a whole call-to-return span (see {@link ProcedureSummaries}); {@link KInductionCounterexampleBuilder} is what
- * turns a transition back into letters.
+ * One step goes from one pc value to the next along a path of one scope's cut graph. Every program execution is a
+ * sequence of such steps, because it is cut at each visit of a loop head. {@link KInductionCounterexampleBuilder} is
+ * what turns a step back into letters.
+ *
+ * <h2>The formula of a step</h2>
+ *
+ * The cut graphs are acyclic, and the paths through them are not composed. {@link #step} instead gives every node
+ * {@code n} of a cut graph one subformula, "a path from here ends in a pc value":
+ *
+ * <pre>
+ *   F(n) = OR_(n is a target of pc value p) (pc' = p and outputs) or OR_(edge e from n to m) (e and joins(e) and F(m))
+ *   step = OR_(source of pc value p) (pc = p and F(source))
+ * </pre>
+ *
+ * Subformulas are shared, so a step is linear in the size of the cut graphs, however many paths they have. This is why
+ * these terms are built without {@link SmtUtils}: it flattens nested conjunctions, which would undo that sharing.
  * <p>
- * {@link #step} builds the relation between step {@code idx} and step {@code idx + 1}. Variables a transition does
- * not assign are explicitly kept equal (frame); one that is only an inVar is havoced, so it is not framed. Auxiliary
- * variables are instantiated separately for every transition and step. The pc and the transition ids are of the
- * {@link CounterSort} of the program.
+ * Variables are in static single assignment form, per step. The <em>version</em> of a variable at a node is its value
+ * at the start of the step, the constant an edge writes it to, or, where edges with different versions meet, a constant
+ * of that node, which each of those edges sets ({@code joins(e)} above). On the path a model selects the versions hold
+ * the path's values, and on any other path they are unconstrained. Together this is exactly the union of the paths: a
+ * model has a chain of edges from the source to a target whose formulas all hold, and every path gives a model.
+ * <p>
+ * A variable only has to keep its value where that value can still be read. Where it cannot, {@link #step} for a query
+ * leaves it unconstrained, see {@link Encoding}. This cannot change a query's answer, since such a value has no
+ * influence on the rest of a run. The one exception is an injected invariant that mentions it, which then assumes less
+ * than it could. The full-frame {@link #step(int, StepVars, ManagedScript)} is for everyone who needs the exact relation
+ * between two states.
+ * <p>
+ * An old variable is not part of the state: a step starts with {@link IProgramVar#getDefaultConstant()}, and a call
+ * inside the step gives it a version of its own.
  *
  * @param <STATE>
  *            state type of the automaton
@@ -82,13 +114,31 @@ public class PcTransitionSystem<STATE> {
 	public static final int INIT = 0;
 	public static final int FINAL = 1;
 
-	private final List<Transition<STATE>> mTransitions = new ArrayList<>();
+	/** The owner of the version a variable has at the start of a step. */
+	private static final int STEP_START = -1;
+
 	private final Map<STATE, Integer> mHeadNodes = new LinkedHashMap<>();
 	private final Map<STATE, Integer> mWaypointNodes = new LinkedHashMap<>();
 	private final Set<IProgramVar> mVars = new LinkedHashSet<>();
 	private final Set<IProgramVar> mOldVars = new LinkedHashSet<>();
-	private int mNumNodes = 2;
+	private final Set<IProgramVar> mAlwaysFramed;
 	private final CounterSort mCounterSort;
+	private int mNumNodes = 2;
+
+	// The cut graphs of all scopes, shared with every transferred copy of this system: only the formulas differ. An edge
+	// always leads to a later node of mDagNodes.
+	private final List<DagNode> mDagNodes;
+	private final List<DagNode> mSources;
+	private final Map<Integer, Set<STATE>> mSourceStates;
+	private final Map<Integer, Set<STATE>> mTargetStates;
+	private int mNextDagId;
+
+	/** The formula of each edge, by {@link DagEdge#mFormulaIndex}. */
+	private final List<UnmodifiableTransFormula> mFormulas = new ArrayList<>();
+	/** {@link #mFormulas} as they are instantiated, computed the first time a step needs them. */
+	private final Map<Integer, Term> mEncodedFormulas = new HashMap<>();
+	private Encoding mQueryEncoding;
+	private Encoding mFullFrameEncoding;
 
 	/**
 	 * Supplies the terms for one unrolling of the system, either constants (for a solver query) or term variables
@@ -101,85 +151,308 @@ public class PcTransitionSystem<STATE> {
 		/** The program counter in step {@code idx}. */
 		Term pc(int idx);
 
-		/** The auxiliary variable of transition {@code transitionId}, as used between step {@code idx} and the next. */
-		Term aux(int transitionId, TermVariable auxVar, int idx);
-
 		/**
-		 * A term that names which transition is taken between step {@code idx} and the next, so that a model can
-		 * be asked for it. {@code null}, the default, encodes no selector at all and leaves {@link #step} exactly
-		 * as it was.
+		 * A value inside the step from {@code idx} to the next, one per {@code id} and {@code auxVar}: an auxiliary
+		 * variable of an edge, or the version of a program variable at an edge or a node.
 		 */
-		default Term sel(final int idx) {
-			return null;
+		Term aux(int id, TermVariable auxVar, int idx);
+	}
+
+	/** A node of a cut graph, or the start of a step in a scope (a source). */
+	private static final class DagNode {
+		private final int mId;
+		private final int mPosition;
+		private final List<DagEdge> mOutgoing = new ArrayList<>();
+		private final List<DagEdge> mIncoming = new ArrayList<>();
+		/** The pc values a path may end in at this node. */
+		private final List<Integer> mTargetPcs = new ArrayList<>();
+		/** The pc value this node starts a step from, {@code -1} if it is no source. */
+		private final int mSourcePc;
+
+		private DagNode(final int id, final int position, final int sourcePc) {
+			mId = id;
+			mPosition = position;
+			mSourcePc = sourcePc;
+		}
+	}
+
+	private static final class DagEdge {
+		private final int mId;
+		private final DagNode mSource;
+		private final DagNode mTarget;
+		/** {@code -1}: the empty path from a source to the node it starts at. */
+		private final int mFormulaIndex;
+
+		private DagEdge(final int id, final DagNode source, final DagNode target, final int formulaIndex) {
+			mId = id;
+			mSource = source;
+			mTarget = target;
+			mFormulaIndex = formulaIndex;
+		}
+	}
+
+	/** The value of a variable inside a step: at its start, or a constant of the edge or node {@code owner}. */
+	private record Version(IProgramVar var, int owner) {
+	}
+
+	/** An edge that leads to a node where versions meet says which one holds. */
+	private record Join(Version atNode, Version onEdge) {
+	}
+
+	/** How an edge is instantiated, see {@link Encoding}. */
+	private record EdgeCode(Map<TermVariable, Version> versions, List<Join> joins) {
+	}
+
+	/** A path that ends in {@code pc}, with the version of every variable the state there has to keep. */
+	private record TargetCode(int pc, List<Version> outputs) {
+	}
+
+	/** All paths between two pc values, see {@link PcTransitionSystem#composeSteps}. */
+	private record ComposedStep(int from, int to, UnmodifiableTransFormula formula) {
+	}
+
+	/**
+	 * The versions of all variables at all nodes, and what follows from them for the edges and targets. There is one for
+	 * the queries, in which only live variables are kept, and one with the full frame.
+	 * <p>
+	 * A variable is live at a node if a path from there reads it before writing it. For an edge {@code e} from n to m,
+	 * {@code live(n)} contains {@code reads(e) + (live(m) - writes(e))}. A node that is a target of a pc value has what
+	 * is live at the sources of that value. This is the usual fixed point, whose only cycles are through the pc values,
+	 * since every cut graph is acyclic. A variable of {@link #mAlwaysFramed} is live at every pc value.
+	 */
+	private final class Encoding {
+		private final Map<DagEdge, EdgeCode> mEdgeCode = new HashMap<>();
+		private final Map<DagNode, List<TargetCode>> mTargetCode = new HashMap<>();
+
+		private final List<IProgramVar> mIndexedVars = new ArrayList<>();
+		private final Map<IProgramVar, Integer> mVarIndex = new HashMap<>();
+		private final List<Set<TermVariable>> mFreeVars = new ArrayList<>();
+		private final List<BitSet> mReads = new ArrayList<>();
+		private final List<BitSet> mWrites = new ArrayList<>();
+
+		private Encoding(final boolean fullFrame) {
+			// The state variables come first, so that they are the bits below mVars.size().
+			for (final IProgramVar pv : mVars) {
+				mVarIndex.put(pv, mIndexedVars.size());
+				mIndexedVars.add(pv);
+			}
+			for (final IProgramVar pv : mOldVars) {
+				mVarIndex.put(pv, mIndexedVars.size());
+				mIndexedVars.add(pv);
+			}
+			for (final UnmodifiableTransFormula tf : mFormulas) {
+				final Set<TermVariable> free = new HashSet<>(Arrays.asList(tf.getFormula().getFreeVars()));
+				final BitSet reads = new BitSet();
+				for (final Map.Entry<IProgramVar, TermVariable> in : tf.getInVars().entrySet()) {
+					if (free.contains(in.getValue())) {
+						reads.set(mVarIndex.get(in.getKey()));
+					}
+				}
+				final BitSet writes = new BitSet();
+				for (final IProgramVar pv : assignedVars(tf)) {
+					writes.set(mVarIndex.get(pv));
+				}
+				mFreeVars.add(free);
+				mReads.add(reads);
+				mWrites.add(writes);
+			}
+			final BitSet stateVars = new BitSet();
+			stateVars.set(0, mVars.size());
+			final BitSet[] liveAtPc = new BitSet[mNumNodes];
+			final BitSet[] liveAtNode = new BitSet[mDagNodes.size()];
+			if (fullFrame) {
+				final BitSet allVars = new BitSet();
+				allVars.set(0, mIndexedVars.size());
+				Arrays.fill(liveAtPc, stateVars);
+				Arrays.fill(liveAtNode, allVars);
+			} else {
+				computeLiveness(liveAtPc, liveAtNode, stateVars);
+			}
+			computeVersions(liveAtPc, liveAtNode);
+		}
+
+		private void computeLiveness(final BitSet[] liveAtPc, final BitSet[] liveAtNode, final BitSet stateVars) {
+			final BitSet alwaysLive = new BitSet();
+			for (final IProgramVar pv : mAlwaysFramed) {
+				alwaysLive.set(mVarIndex.get(pv));
+			}
+			for (int pc = 0; pc < liveAtPc.length; pc++) {
+				liveAtPc[pc] = (BitSet) alwaysLive.clone();
+			}
+			boolean changed = true;
+			while (changed) {
+				changed = false;
+				for (int position = mDagNodes.size() - 1; position >= 0; position--) {
+					final DagNode node = mDagNodes.get(position);
+					final BitSet live = new BitSet();
+					for (final int pc : node.mTargetPcs) {
+						live.or(liveAtPc[pc]);
+					}
+					for (final DagEdge edge : node.mOutgoing) {
+						final BitSet behind = (BitSet) liveAtNode[edge.mTarget.mPosition].clone();
+						if (edge.mFormulaIndex >= 0) {
+							behind.andNot(mWrites.get(edge.mFormulaIndex));
+							behind.or(mReads.get(edge.mFormulaIndex));
+						}
+						live.or(behind);
+					}
+					liveAtNode[position] = live;
+					if (node.mSourcePc >= 0) {
+						final BitSet atPc = liveAtPc[node.mSourcePc];
+						final int before = atPc.cardinality();
+						final BitSet stateVarsHere = (BitSet) live.clone();
+						stateVarsHere.and(stateVars);
+						atPc.or(stateVarsHere);
+						changed |= atPc.cardinality() != before;
+					}
+				}
+			}
+		}
+
+		private void computeVersions(final BitSet[] liveAtPc, final BitSet[] liveAtNode) {
+			final Version[] atStepStart = new Version[mIndexedVars.size()];
+			for (int i = 0; i < atStepStart.length; i++) {
+				atStepStart[i] = new Version(mIndexedVars.get(i), STEP_START);
+			}
+			final Version[][] versions = new Version[mDagNodes.size()][];
+			// How many edges still need the versions of a node, which are of no use after that.
+			final int[] pending = new int[mDagNodes.size()];
+			for (final DagNode node : mDagNodes) {
+				pending[node.mPosition] = node.mOutgoing.size();
+			}
+			for (final DagNode node : mDagNodes) {
+				final Version[] here;
+				if (node.mIncoming.isEmpty()) {
+					here = atStepStart;
+				} else {
+					here = new Version[atStepStart.length];
+					final BitSet live = liveAtNode[node.mPosition];
+					for (int i = live.nextSetBit(0); i >= 0; i = live.nextSetBit(i + 1)) {
+						here[i] = meet(node, i, versions);
+					}
+					for (final DagEdge edge : node.mIncoming) {
+						final int source = edge.mSource.mPosition;
+						if (--pending[source] == 0) {
+							versions[source] = null;
+						}
+					}
+				}
+				if (pending[node.mPosition] > 0) {
+					versions[node.mPosition] = here;
+				}
+				for (final DagEdge edge : node.mOutgoing) {
+					mEdgeCode.put(edge, edgeCode(edge, here));
+				}
+				if (!node.mTargetPcs.isEmpty()) {
+					final List<TargetCode> targets = new ArrayList<>(node.mTargetPcs.size());
+					for (final int pc : node.mTargetPcs) {
+						final List<Version> outputs = new ArrayList<>();
+						final BitSet live = liveAtPc[pc];
+						for (int i = live.nextSetBit(0); i >= 0; i = live.nextSetBit(i + 1)) {
+							outputs.add(here[i]);
+						}
+						targets.add(new TargetCode(pc, outputs));
+					}
+					mTargetCode.put(node, targets);
+				}
+			}
+		}
+
+		/** The version of the variable {@code i} at {@code node}, adding the joins it takes to the edges into it. */
+		private Version meet(final DagNode node, final int i, final Version[][] versions) {
+			Version common = null;
+			boolean differ = false;
+			for (final DagEdge edge : node.mIncoming) {
+				final Version behind = behind(edge, i, versions[edge.mSource.mPosition]);
+				if (common != null && !common.equals(behind)) {
+					differ = true;
+				}
+				common = behind;
+			}
+			if (!differ) {
+				return common;
+			}
+			final Version joined = new Version(mIndexedVars.get(i), node.mId);
+			for (final DagEdge edge : node.mIncoming) {
+				mEdgeCode.get(edge).joins().add(new Join(joined, behind(edge, i, versions[edge.mSource.mPosition])));
+			}
+			return joined;
+		}
+
+		private Version behind(final DagEdge edge, final int i, final Version[] before) {
+			if (edge.mFormulaIndex >= 0 && mWrites.get(edge.mFormulaIndex).get(i)) {
+				return new Version(mIndexedVars.get(i), edge.mId);
+			}
+			return before[i];
+		}
+
+		private EdgeCode edgeCode(final DagEdge edge, final Version[] before) {
+			final Map<TermVariable, Version> versions = new HashMap<>();
+			if (edge.mFormulaIndex >= 0) {
+				final UnmodifiableTransFormula tf = mFormulas.get(edge.mFormulaIndex);
+				final Set<TermVariable> free = mFreeVars.get(edge.mFormulaIndex);
+				for (final Map.Entry<IProgramVar, TermVariable> in : tf.getInVars().entrySet()) {
+					if (free.contains(in.getValue())) {
+						versions.put(in.getValue(), before[mVarIndex.get(in.getKey())]);
+					}
+				}
+				for (final Map.Entry<IProgramVar, TermVariable> out : tf.getOutVars().entrySet()) {
+					if (tf.getInVars().get(out.getKey()) != out.getValue() && free.contains(out.getValue())) {
+						versions.put(out.getValue(), new Version(out.getKey(), edge.mId));
+					}
+				}
+			}
+			return new EdgeCode(versions, new ArrayList<>());
+		}
+
+		private long numberOfFrameEqualities() {
+			long result = 0;
+			for (final EdgeCode code : mEdgeCode.values()) {
+				result += code.joins().size();
+			}
+			for (final List<TargetCode> targets : mTargetCode.values()) {
+				for (final TargetCode target : targets) {
+					result += target.outputs().size();
+				}
+			}
+			return result;
 		}
 	}
 
 	/**
-	 * One transition of the system: an edge of one scope's checkpoint graph, or the stutter self loop of
-	 * {@link #FINAL}. Besides the pc nodes it remembers the automaton states the two checkpoints stand for, which
-	 * is what lets a counterexample be reconstructed from a model.
+	 * What a formula writes: what it has an outVar of that is not its inVar, and what it only has an inVar of. The latter
+	 * means the variable is havoced, see {@code TransFormulaUtils#computeAssignedVars}: {@code TransFormulaBuilder} drops
+	 * the outVar of an assigned variable whose new value the formula does not constrain. An old variable that is only an
+	 * inVar is only read, since only a call changes the snapshot.
 	 */
-	public static final class Transition<STATE> {
-		private final int mId;
-		private final int mFrom;
-		private final int mTo;
-		// null: identity (stutter)
-		private final UnmodifiableTransFormula mFormula;
-		private final Collection<STATE> mSourceStates;
-		private final Collection<STATE> mTargetStates;
-
-		Transition(final int id, final int from, final int to, final UnmodifiableTransFormula formula,
-				final Collection<STATE> sourceStates, final Collection<STATE> targetStates) {
-			mId = id;
-			mFrom = from;
-			mTo = to;
-			mFormula = formula;
-			mSourceStates = sourceStates;
-			mTargetStates = targetStates;
-		}
-
-		public int getId() {
-			return mId;
-		}
-
-		public int getFromNode() {
-			return mFrom;
-		}
-
-		public int getToNode() {
-			return mTo;
-		}
-
-		/** The transition relation, {@code null} for the stutter self loop of {@link PcTransitionSystem#FINAL}. */
-		public UnmodifiableTransFormula getFormula() {
-			return mFormula;
-		}
-
-		/** The automaton states a letter path realising this transition can start in. */
-		public Collection<STATE> getSourceStates() {
-			return mSourceStates;
-		}
-
-		/** The automaton states a letter path realising this transition can end in. */
-		public Collection<STATE> getTargetStates() {
-			return mTargetStates;
-		}
-
-		public boolean isStutter() {
-			return mFormula == null;
-		}
-
-		@Override
-		public String toString() {
-			if (isStutter()) {
-				return "t" + mId + ": FINAL -> FINAL (stutter)";
+	private static Set<IProgramVar> assignedVars(final UnmodifiableTransFormula tf) {
+		final Set<IProgramVar> result = new LinkedHashSet<>();
+		for (final IProgramVar pv : tf.getInVars().keySet()) {
+			if (!tf.getOutVars().containsKey(pv) && !pv.isOldvar()) {
+				result.add(pv);
 			}
-			return "t" + mId + ": " + mFrom + " -> " + mTo + " (" + mSourceStates + " -> " + mTargetStates + ")";
 		}
+		for (final Map.Entry<IProgramVar, TermVariable> out : tf.getOutVars().entrySet()) {
+			if (tf.getInVars().get(out.getKey()) != out.getValue()) {
+				result.add(out.getKey());
+			}
+		}
+		return result;
 	}
 
-	public PcTransitionSystem(final LoopTree<STATE> tree, final CounterSort counterSort) {
+	/**
+	 * @param alwaysFramed
+	 *            the variables that have to keep their value in every step of a query, even where nothing reads it,
+	 *            because their value is read off a model
+	 */
+	public PcTransitionSystem(final LoopTree<STATE> tree, final CounterSort counterSort,
+			final Set<IProgramVar> alwaysFramed) {
 		mCounterSort = counterSort;
+		mAlwaysFramed = alwaysFramed;
+		mDagNodes = new ArrayList<>();
+		mSources = new ArrayList<>();
+		mSourceStates = new HashMap<>();
+		mTargetStates = new HashMap<>();
 		final List<Scope<STATE>> scopes = new ArrayList<>();
 		scopes.add(tree.getRoot());
 		for (final Scope<STATE> loop : tree.getLoops()) {
@@ -189,25 +462,33 @@ public class PcTransitionSystem<STATE> {
 			scopes.add(loop);
 		}
 		for (final Scope<STATE> scope : scopes) {
-			for (final Map.Entry<Checkpoint<STATE>, Map<Checkpoint<STATE>, UnmodifiableTransFormula>> from : scope
-					.getEdges().entrySet()) {
-				for (final Map.Entry<Checkpoint<STATE>, UnmodifiableTransFormula> to : from.getValue().entrySet()) {
-					addTransition(scope, from.getKey(), to.getKey(), to.getValue());
-				}
+			addScope(scope);
+		}
+		for (final Map.Entry<STATE, Integer> waypoint : mWaypointNodes.entrySet()) {
+			// A run that jumps to a waypoint without a way on would silently end there, which proves too much.
+			if (!mSourceStates.containsKey(waypoint.getValue())) {
+				throw new IllegalStateException("The waypoint " + waypoint.getKey() + " is no source of any scope");
 			}
 		}
-		mTransitions.add(new Transition<>(mTransitions.size(), FINAL, FINAL, null, Collections.emptyList(),
-				Collections.emptyList()));
 	}
 
-	private PcTransitionSystem(final CounterSort counterSort) {
+	private PcTransitionSystem(final PcTransitionSystem<STATE> original, final CounterSort counterSort) {
 		mCounterSort = counterSort;
+		// Only for reading a model, which nobody does on a copy.
+		mAlwaysFramed = Collections.emptySet();
+		mDagNodes = original.mDagNodes;
+		mSources = original.mSources;
+		mSourceStates = original.mSourceStates;
+		mTargetStates = original.mTargetStates;
+		mHeadNodes.putAll(original.mHeadNodes);
+		mWaypointNodes.putAll(original.mWaypointNodes);
+		mNumNodes = original.mNumNodes;
 	}
 
 	/**
 	 * This system for another script, so that whoever reasons about the same program there need not build it again:
-	 * the same pc nodes and transitions, with every formula replaced by its copy. The states of the transitions are
-	 * this system's, they only serve to reconstruct a counterexample.
+	 * the same pc nodes and cut graphs, with every formula replaced by its copy. The states are this system's, they
+	 * only serve to reconstruct a counterexample.
 	 *
 	 * @param transferFormula
 	 *            copies a formula of this system to the other script, together with its program variables
@@ -216,25 +497,80 @@ public class PcTransitionSystem<STATE> {
 	 */
 	public PcTransitionSystem<STATE> transfer(final UnaryOperator<UnmodifiableTransFormula> transferFormula,
 			final CounterSort counterSort) {
-		final PcTransitionSystem<STATE> result = new PcTransitionSystem<>(counterSort);
-		result.mHeadNodes.putAll(mHeadNodes);
-		result.mWaypointNodes.putAll(mWaypointNodes);
-		result.mNumNodes = mNumNodes;
-		for (final Transition<STATE> t : mTransitions) {
-			final UnmodifiableTransFormula formula = t.mFormula == null ? null : transferFormula.apply(t.mFormula);
-			result.mTransitions.add(new Transition<>(t.mId, t.mFrom, t.mTo, formula, t.mSourceStates, t.mTargetStates));
-			if (formula != null) {
-				result.collectVars(formula.getInVars().keySet());
-				result.collectVars(formula.getOutVars().keySet());
-			}
+		final PcTransitionSystem<STATE> result = new PcTransitionSystem<>(this, counterSort);
+		// The edges of the copies of a procedure share their formulas, and a formula must be constructed only once on a
+		// script, since its constructor declares a constant per auxiliary variable.
+		final Map<UnmodifiableTransFormula, UnmodifiableTransFormula> copies = new IdentityHashMap<>();
+		for (final UnmodifiableTransFormula formula : mFormulas) {
+			final UnmodifiableTransFormula copy = copies.computeIfAbsent(formula, transferFormula);
+			result.mFormulas.add(copy);
+			result.collectVars(copy);
 		}
 		return result;
 	}
 
-	private void addTransition(final Scope<STATE> scope, final Checkpoint<STATE> from, final Checkpoint<STATE> to,
-			final UnmodifiableTransFormula formula) {
-		mTransitions.add(new Transition<>(mTransitions.size(), nodeOf(from), nodeOf(to), formula,
-				scope.getCheckpointStates(from), scope.getCheckpointStates(to)));
+	private void addScope(final Scope<STATE> scope) {
+		final Map<DagNode, List<Pair<UnmodifiableTransFormula, STATE>>> sources = new LinkedHashMap<>();
+		for (final Map.Entry<Checkpoint<STATE>, List<Pair<UnmodifiableTransFormula, STATE>>> source : scope.getSources()
+				.entrySet()) {
+			final int pc = nodeOf(source.getKey());
+			final DagNode node = newDagNode(pc);
+			mSources.add(node);
+			sources.put(node, source.getValue());
+			mSourceStates.computeIfAbsent(pc, k -> new LinkedHashSet<>())
+					.addAll(scope.getCheckpointStates(source.getKey()));
+		}
+		final Map<STATE, DagNode> nodes = new HashMap<>();
+		for (final STATE state : scope.getCutGraph().keySet()) {
+			nodes.put(state, newDagNode(-1));
+		}
+		for (final Map.Entry<DagNode, List<Pair<UnmodifiableTransFormula, STATE>>> source : sources.entrySet()) {
+			for (final Pair<UnmodifiableTransFormula, STATE> first : source.getValue()) {
+				addDagEdge(source.getKey(), first.getFirst(), nodeOfState(nodes, first.getSecond()));
+			}
+		}
+		for (final Map.Entry<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> from : scope.getCutGraph()
+				.entrySet()) {
+			for (final Pair<UnmodifiableTransFormula, STATE> edge : from.getValue()) {
+				addDagEdge(nodes.get(from.getKey()), edge.getFirst(), nodeOfState(nodes, edge.getSecond()));
+			}
+		}
+		for (final Map.Entry<Checkpoint<STATE>, Collection<STATE>> target : scope.getTargets().entrySet()) {
+			final int pc = nodeOf(target.getKey());
+			mTargetStates.computeIfAbsent(pc, k -> new LinkedHashSet<>()).addAll(target.getValue());
+			for (final STATE state : target.getValue()) {
+				nodeOfState(nodes, state).mTargetPcs.add(pc);
+			}
+		}
+	}
+
+	private DagNode nodeOfState(final Map<STATE, DagNode> nodes, final STATE state) {
+		final DagNode node = nodes.get(state);
+		if (node == null) {
+			throw new IllegalStateException(state + " is not a node of the cut graph it is used in");
+		}
+		return node;
+	}
+
+	private DagNode newDagNode(final int sourcePc) {
+		final DagNode node = new DagNode(mNextDagId++, mDagNodes.size(), sourcePc);
+		mDagNodes.add(node);
+		return node;
+	}
+
+	private void addDagEdge(final DagNode from, final UnmodifiableTransFormula formula, final DagNode to) {
+		int formulaIndex = -1;
+		if (formula != null) {
+			formulaIndex = mFormulas.size();
+			mFormulas.add(formula);
+			collectVars(formula);
+		}
+		final DagEdge edge = new DagEdge(mNextDagId++, from, to, formulaIndex);
+		from.mOutgoing.add(edge);
+		to.mIncoming.add(edge);
+	}
+
+	private void collectVars(final UnmodifiableTransFormula formula) {
 		collectVars(formula.getInVars().keySet());
 		collectVars(formula.getOutVars().keySet());
 	}
@@ -288,15 +624,12 @@ public class PcTransitionSystem<STATE> {
 		return Collections.unmodifiableMap(mHeadNodes);
 	}
 
-	/** The non-old program variables that occur in some transition. */
+	/** The non-old program variables that occur in some edge. */
 	public Set<IProgramVar> getVars() {
 		return Collections.unmodifiableSet(mVars);
 	}
 
-	/**
-	 * The old variables that occur in some transition. They are not part of the state: {@link #instantiate} maps
-	 * them to {@link IProgramVar#getDefaultConstant()}, which is shared by every step.
-	 */
+	/** The old variables that occur in some edge. They are not part of the state, see the class javadoc. */
 	public Set<IProgramVar> getOldVars() {
 		return Collections.unmodifiableSet(mOldVars);
 	}
@@ -306,23 +639,46 @@ public class PcTransitionSystem<STATE> {
 		return Collections.unmodifiableMap(mWaypointNodes);
 	}
 
-	public Transition<STATE> getTransition(final int id) {
-		if (id < 0 || id >= mTransitions.size()) {
-			throw new IllegalArgumentException(
-					"no transition with id " + id + ", the system has " + mTransitions.size());
-		}
-		return mTransitions.get(id);
+	/** The automaton states a letter path of a step from the pc value {@code pc} can start in. */
+	public Set<STATE> getSourceStates(final int pc) {
+		return Collections.unmodifiableSet(mSourceStates.getOrDefault(pc, Collections.emptySet()));
 	}
 
-	public int getNumTransitions() {
-		return mTransitions.size();
+	/** The automaton states a letter path of a step into the pc value {@code pc} can end in. */
+	public Set<STATE> getTargetStates(final int pc) {
+		return Collections.unmodifiableSet(mTargetStates.getOrDefault(pc, Collections.emptySet()));
+	}
+
+	/** Every pair of pc values with a step from the first to the second, without the stutter of {@link #FINAL}. */
+	public Set<List<Integer>> getStepPairs() {
+		final Map<DagNode, Set<Integer>> targets = new HashMap<>();
+		for (int position = mDagNodes.size() - 1; position >= 0; position--) {
+			final DagNode node = mDagNodes.get(position);
+			final Set<Integer> here = new HashSet<>(node.mTargetPcs);
+			for (final DagEdge edge : node.mOutgoing) {
+				here.addAll(targets.get(edge.mTarget));
+			}
+			targets.put(node, here);
+		}
+		final Set<List<Integer>> result = new LinkedHashSet<>();
+		for (final DagNode source : mSources) {
+			for (final int target : targets.get(source)) {
+				result.add(List.of(source.mSourcePc, target));
+			}
+		}
+		return result;
 	}
 
 	public int getNumNodes() {
 		return mNumNodes;
 	}
 
-	/** The sort of the pc and of the transition ids. */
+	/** The number of edges with a formula. */
+	public int getNumEdges() {
+		return mFormulas.size();
+	}
+
+	/** The sort of the pc. */
 	public CounterSort getCounterSort() {
 		return mCounterSort;
 	}
@@ -332,56 +688,213 @@ public class PcTransitionSystem<STATE> {
 		return mCounterSort.value(script, node);
 	}
 
-	/** The term that names transition {@code id} in a step selector, see {@link StepVars#sel(int)}. */
-	public Term transitionIdValue(final Script script, final int id) {
-		return mCounterSort.value(script, id);
-	}
-
 	/**
-	 * The relation between step {@code idx} and step {@code idx + 1}: some transition is taken, i.e. pc and variables
-	 * of the two steps fit to one of the transitions.
+	 * The relation between step {@code idx} and step {@code idx + 1}: some path is taken, i.e. pc and variables of the two
+	 * steps fit to it, and every variable the path does not assign keeps its value.
+	 * <p>
+	 * For constants only: over term variables every shared subformula would hold its free variables, which is the number
+	 * of nodes times the number of variables. See {@link #composeSteps} for that.
 	 */
 	public Term step(final int idx, final StepVars sv, final ManagedScript mgdScript) {
-		return step(idx, sv, mgdScript, t -> true);
+		if (mFullFrameEncoding == null) {
+			mFullFrameEncoding = new Encoding(true);
+		}
+		final Script script = mgdScript.getScript();
+		return or(script, List.of(encode(mFullFrameEncoding, idx, sv, mgdScript, pc -> true, pc -> true),
+				stutter(idx, sv, script)));
+	}
+
+	/** The self loop of {@link #FINAL}. */
+	private Term stutter(final int idx, final StepVars sv, final Script script) {
+		final List<Term> conjuncts = new ArrayList<>();
+		conjuncts.add(SmtUtils.binaryEquality(script, sv.pc(idx), pcValue(script, FINAL)));
+		conjuncts.add(SmtUtils.binaryEquality(script, sv.pc(idx + 1), pcValue(script, FINAL)));
+		for (final IProgramVar pv : mVars) {
+			conjuncts.add(SmtUtils.binaryEquality(script, sv.var(pv, idx + 1), sv.var(pv, idx)));
+		}
+		return and(script, conjuncts);
 	}
 
 	/**
 	 * The relation between step {@code idx} and step {@code idx + 1} on a run that reaches {@link #FINAL} exactly at its
-	 * end: only the transitions of this kind, and never the stutter. A transition from {@link #INIT} can only be a run's
-	 * first, since INIT has no incoming transition, and a transition into FINAL only its last.
+	 * end: only the paths of this kind, and never the stutter. A path from {@link #INIT} can only be a run's first, since
+	 * INIT has no incoming path, and a path into FINAL only its last. A variable that nothing reads any more is left
+	 * unconstrained, see the class javadoc.
 	 *
 	 * @param fromInit
-	 *            whether these are the transitions that leave INIT or those that do not
+	 *            whether these are the paths that leave INIT or those that do not
 	 * @param intoFinal
-	 *            whether these are the transitions that enter FINAL or those that do not
+	 *            whether these are the paths that enter FINAL or those that do not
 	 */
 	public Term step(final int idx, final StepVars sv, final ManagedScript mgdScript, final boolean fromInit,
 			final boolean intoFinal) {
-		return step(idx, sv, mgdScript,
-				t -> !t.isStutter() && (t.mFrom == INIT) == fromInit && (t.mTo == FINAL) == intoFinal);
+		return encode(queryEncoding(), idx, sv, mgdScript, pc -> (pc == INIT) == fromInit,
+				pc -> (pc == FINAL) == intoFinal);
 	}
 
-	private Term step(final int idx, final StepVars sv, final ManagedScript mgdScript,
-			final Predicate<Transition<STATE>> filter) {
+	private Encoding queryEncoding() {
+		if (mQueryEncoding == null) {
+			mQueryEncoding = new Encoding(false);
+		}
+		return mQueryEncoding;
+	}
+
+	private Term encode(final Encoding encoding, final int idx, final StepVars sv, final ManagedScript mgdScript,
+			final IntPredicate fromPc, final IntPredicate toPc) {
 		final Script script = mgdScript.getScript();
-		final List<Term> disjuncts = new ArrayList<>();
-		final Term selector = sv.sel(idx);
-		for (final Transition<STATE> t : mTransitions) {
-			if (!filter.test(t)) {
+		final Term falseTerm = script.term("false");
+
+		final Map<DagNode, Term> atSource = new LinkedHashMap<>();
+		final boolean[] reached = new boolean[mDagNodes.size()];
+		final Deque<DagNode> worklist = new ArrayDeque<>();
+		for (final DagNode source : mSources) {
+			if (!fromPc.test(source.mSourcePc)) {
 				continue;
 			}
+			final Term isSource = SmtUtils.binaryEquality(script, sv.pc(idx), pcValue(script, source.mSourcePc));
+			if (isSource != falseTerm) {
+				atSource.put(source, isSource);
+				reached[source.mPosition] = true;
+				worklist.add(source);
+			}
+		}
+		while (!worklist.isEmpty()) {
+			for (final DagEdge edge : worklist.poll().mOutgoing) {
+				if (!reached[edge.mTarget.mPosition]) {
+					reached[edge.mTarget.mPosition] = true;
+					worklist.add(edge.mTarget);
+				}
+			}
+		}
+
+		final Map<Integer, Term> isTarget = new HashMap<>();
+		final Term[] formulas = new Term[mDagNodes.size()];
+		for (int position = mDagNodes.size() - 1; position >= 0; position--) {
+			if (!reached[position]) {
+				continue;
+			}
+			final DagNode node = mDagNodes.get(position);
+			final List<Term> disjuncts = new ArrayList<>();
+			for (final TargetCode target : encoding.mTargetCode.getOrDefault(node, Collections.emptyList())) {
+				if (!toPc.test(target.pc())) {
+					continue;
+				}
+				final Term isPc = isTarget.computeIfAbsent(target.pc(),
+						pc -> SmtUtils.binaryEquality(script, sv.pc(idx + 1), pcValue(script, pc)));
+				if (isPc == falseTerm) {
+					continue;
+				}
+				final List<Term> conjuncts = new ArrayList<>();
+				conjuncts.add(isPc);
+				for (final Version output : target.outputs()) {
+					conjuncts.add(
+							SmtUtils.binaryEquality(script, sv.var(output.var(), idx + 1), termOf(output, sv, idx)));
+				}
+				disjuncts.add(and(script, conjuncts));
+			}
+			for (final DagEdge edge : node.mOutgoing) {
+				final Term behind = formulas[edge.mTarget.mPosition];
+				if (behind == falseTerm) {
+					continue;
+				}
+				final EdgeCode code = encoding.mEdgeCode.get(edge);
+				final List<Term> conjuncts = new ArrayList<>();
+				if (edge.mFormulaIndex >= 0) {
+					conjuncts.add(instantiate(edge, code, idx, sv, mgdScript));
+				}
+				for (final Join join : code.joins()) {
+					conjuncts.add(SmtUtils.binaryEquality(script, termOf(join.atNode(), sv, idx),
+							termOf(join.onEdge(), sv, idx)));
+				}
+				conjuncts.add(behind);
+				disjuncts.add(and(script, conjuncts));
+			}
+			formulas[position] = or(script, disjuncts);
+		}
+
+		final List<Term> disjuncts = new ArrayList<>();
+		for (final Map.Entry<DagNode, Term> source : atSource.entrySet()) {
+			disjuncts.add(and(script, List.of(source.getValue(), formulas[source.getKey().mPosition])));
+		}
+		return or(script, disjuncts);
+	}
+
+	/**
+	 * The relation of {@link #step(int, StepVars, ManagedScript)} with the paths of a step composed, so that it has no
+	 * variables inside but the auxiliary ones of the composition, which is what quantifier elimination can handle. This
+	 * costs what a query must not pay for: its size is the sum over all pairs of pc values of their paths.
+	 * <p>
+	 * Must be called when the script is not locked, since composing takes the lock. The relation it returns need not.
+	 *
+	 * @return the relation of one step, as a function of the step's index and variables
+	 */
+	public BiFunction<Integer, StepVars, Term> composeSteps(final IUltimateServiceProvider services,
+			final ILogger logger, final ManagedScript mgdScript) {
+		final UnmodifiableTransFormula empty = TransFormulaBuilder.getTrivialTransFormula(mgdScript);
+		final Map<DagNode, List<Pair<UnmodifiableTransFormula, DagNode>>> edges = new LinkedHashMap<>();
+		final Map<Integer, List<DagNode>> nodesOfTarget = new LinkedHashMap<>();
+		for (final DagNode node : mDagNodes) {
+			final List<Pair<UnmodifiableTransFormula, DagNode>> outgoing = new ArrayList<>();
+			for (final DagEdge edge : node.mOutgoing) {
+				outgoing.add(new Pair<>(edge.mFormulaIndex < 0 ? empty : mFormulas.get(edge.mFormulaIndex), edge.mTarget));
+			}
+			edges.put(node, outgoing);
+			for (final int pc : node.mTargetPcs) {
+				nodesOfTarget.computeIfAbsent(pc, k -> new ArrayList<>()).add(node);
+			}
+		}
+		final PathFormulaComposer<DagNode> composer = new PathFormulaComposer<>(services, logger, mgdScript, edges);
+		final List<ComposedStep> steps = new ArrayList<>();
+		for (final DagNode source : mSources) {
+			for (final Map.Entry<Integer, List<DagNode>> target : nodesOfTarget.entrySet()) {
+				final List<UnmodifiableTransFormula> alternatives = new ArrayList<>();
+				for (final DagNode node : target.getValue()) {
+					final UnmodifiableTransFormula paths = composer.pathsBetween(source, node);
+					if (paths != null) {
+						alternatives.add(paths);
+					}
+				}
+				final UnmodifiableTransFormula formula =
+						LoopTreeFormulaBuilder.combineAlternatives(logger, services, mgdScript, alternatives);
+				if (formula != null) {
+					steps.add(new ComposedStep(source.mSourcePc, target.getKey(), formula));
+				}
+			}
+		}
+		return (idx, sv) -> composedStep(steps, idx, sv, mgdScript);
+	}
+
+	private Term composedStep(final List<ComposedStep> steps, final int idx, final StepVars sv,
+			final ManagedScript mgdScript) {
+		final Script script = mgdScript.getScript();
+		final List<Term> disjuncts = new ArrayList<>();
+		for (int id = 0; id < steps.size(); id++) {
+			final UnmodifiableTransFormula tf = steps.get(id).formula();
+			final Term isSource = SmtUtils.binaryEquality(script, sv.pc(idx), pcValue(script, steps.get(id).from()));
+			final Term isTarget = SmtUtils.binaryEquality(script, sv.pc(idx + 1), pcValue(script, steps.get(id).to()));
+			if (SmtUtils.isFalseLiteral(isSource) || SmtUtils.isFalseLiteral(isTarget)) {
+				continue;
+			}
+			final Map<Term, Term> substitution = new HashMap<>();
+			final Set<IProgramVar> assigned = assignedVars(tf);
+			for (final Map.Entry<IProgramVar, TermVariable> in : tf.getInVars().entrySet()) {
+				final IProgramVar pv = in.getKey();
+				substitution.put(in.getValue(), pv.isOldvar() ? pv.getDefaultConstant() : sv.var(pv, idx));
+			}
+			for (final IProgramVar pv : assigned) {
+				final TermVariable out = tf.getOutVars().get(pv);
+				if (out != null) {
+					substitution.put(out, sv.var(pv, idx + 1));
+				}
+			}
+			for (final TermVariable aux : tf.getAuxVars()) {
+				substitution.put(aux, sv.aux(id, aux, idx));
+			}
 			final List<Term> conjuncts = new ArrayList<>();
-			conjuncts.add(SmtUtils.binaryEquality(script, sv.pc(idx), pcValue(script, t.mFrom)));
-			conjuncts.add(SmtUtils.binaryEquality(script, sv.pc(idx + 1), pcValue(script, t.mTo)));
-			if (selector != null) {
-				// Pins a fresh, otherwise unconstrained constant to this disjunct's transition id, so a model
-				// names the transition that was taken. Satisfiability is unchanged in both directions.
-				conjuncts.add(SmtUtils.binaryEquality(script, selector, transitionIdValue(script, t.mId)));
-			}
-			final Set<IProgramVar> assigned = new LinkedHashSet<>();
-			if (t.mFormula != null) {
-				conjuncts.add(instantiate(t, idx, sv, mgdScript, assigned));
-			}
+			conjuncts.add(isSource);
+			conjuncts.add(isTarget);
+			conjuncts.add(PureSubstitution.apply(mgdScript, substitution,
+					IteComparisonEncoder.apply(script, tf.getFormula())));
 			for (final IProgramVar pv : mVars) {
 				if (!assigned.contains(pv)) {
 					conjuncts.add(SmtUtils.binaryEquality(script, sv.var(pv, idx + 1), sv.var(pv, idx)));
@@ -389,7 +902,63 @@ public class PcTransitionSystem<STATE> {
 			}
 			disjuncts.add(SmtUtils.and(script, conjuncts));
 		}
+		disjuncts.add(stutter(idx, sv, script));
 		return SmtUtils.or(script, disjuncts);
+	}
+
+	/** A conjunction that keeps its conjuncts as they are, see the class javadoc. */
+	private static Term and(final Script script, final List<Term> conjuncts) {
+		return junction(script, "and", "true", "false", conjuncts);
+	}
+
+	/** A disjunction that keeps its disjuncts as they are, see the class javadoc. */
+	private static Term or(final Script script, final List<Term> disjuncts) {
+		return junction(script, "or", "false", "true", disjuncts);
+	}
+
+	private static Term junction(final Script script, final String connective, final String neutral,
+			final String absorbing, final List<Term> juncts) {
+		final Term neutralTerm = script.term(neutral);
+		final Term absorbingTerm = script.term(absorbing);
+		final Set<Term> distinct = new LinkedHashSet<>();
+		for (final Term junct : juncts) {
+			if (junct == absorbingTerm) {
+				return absorbingTerm;
+			}
+			if (junct != neutralTerm) {
+				distinct.add(junct);
+			}
+		}
+		if (distinct.isEmpty()) {
+			return neutralTerm;
+		}
+		if (distinct.size() == 1) {
+			return distinct.iterator().next();
+		}
+		return script.term(connective, distinct.toArray(new Term[0]));
+	}
+
+	private Term termOf(final Version version, final StepVars sv, final int idx) {
+		final IProgramVar pv = version.var();
+		if (version.owner() == STEP_START) {
+			return pv.isOldvar() ? pv.getDefaultConstant() : sv.var(pv, idx);
+		}
+		return sv.aux(version.owner(), pv.getTermVariable(), idx);
+	}
+
+	private Term instantiate(final DagEdge edge, final EdgeCode code, final int idx, final StepVars sv,
+			final ManagedScript mgdScript) {
+		final UnmodifiableTransFormula tf = mFormulas.get(edge.mFormulaIndex);
+		final Map<Term, Term> substitution = new HashMap<>();
+		for (final Map.Entry<TermVariable, Version> version : code.versions().entrySet()) {
+			substitution.put(version.getKey(), termOf(version.getValue(), sv, idx));
+		}
+		for (final TermVariable aux : tf.getAuxVars()) {
+			substitution.put(aux, sv.aux(edge.mId, aux, idx));
+		}
+		final Term encoded = mEncodedFormulas.computeIfAbsent(edge.mFormulaIndex,
+				index -> IteComparisonEncoder.apply(mgdScript.getScript(), tf.getFormula()));
+		return PureSubstitution.apply(mgdScript, substitution, encoded);
 	}
 
 	/** The number of nodes of the DAG of {@code term}, shared subterms counted once. */
@@ -398,69 +967,18 @@ public class PcTransitionSystem<STATE> {
 	}
 
 	/**
-	 * What one unrolled step costs, for the log: the frame equalities and auxiliary variables {@link #step} adds per
-	 * step and the size of the transition formulas, each counted on its own.
+	 * What one unrolled step costs, for the log: the frame equalities and auxiliary variables a query's step has, and the
+	 * size of the edges' formulas, each counted on its own.
 	 */
 	public String getStatistics() {
-		long frameEqualities = 0;
 		long auxVars = 0;
 		long formulaDagSize = 0;
-		for (final Transition<STATE> t : mTransitions) {
-			final UnmodifiableTransFormula tf = t.mFormula;
-			if (tf == null) {
-				frameEqualities += mVars.size();
-				continue;
-			}
-			final Set<IProgramVar> assigned = new LinkedHashSet<>();
-			for (final IProgramVar pv : tf.getInVars().keySet()) {
-				if (!tf.getOutVars().containsKey(pv)) {
-					assigned.add(pv);
-				}
-			}
-			for (final Map.Entry<IProgramVar, TermVariable> out : tf.getOutVars().entrySet()) {
-				if (tf.getInVars().get(out.getKey()) != out.getValue()) {
-					assigned.add(out.getKey());
-				}
-			}
-			assigned.retainAll(mVars);
-			frameEqualities += mVars.size() - assigned.size();
+		for (final UnmodifiableTransFormula tf : mFormulas) {
 			auxVars += tf.getAuxVars().size();
 			formulaDagSize += dagSize(tf.getFormula());
 		}
-		return mTransitions.size() + " transition(s), " + mVars.size() + " variable(s), " + frameEqualities
-				+ " frame equalities and " + auxVars + " aux variable(s) per step, transition formulas of DAG size "
-				+ formulaDagSize;
-	}
-
-	private Term instantiate(final Transition<STATE> t, final int idx, final StepVars sv,
-			final ManagedScript mgdScript, final Set<IProgramVar> assigned) {
-		final UnmodifiableTransFormula tf = t.mFormula;
-		final Map<Term, Term> substitution = new HashMap<>();
-		for (final Map.Entry<IProgramVar, TermVariable> in : tf.getInVars().entrySet()) {
-			final IProgramVar pv = in.getKey();
-			substitution.put(in.getValue(), pv.isOldvar() ? pv.getDefaultConstant() : sv.var(pv, idx));
-			if (!tf.getOutVars().containsKey(pv)) {
-				// Read, then havoced: a variable that is only an inVar may have any value afterwards (see
-				// TransFormulaUtils#computeAssignedVars). TransFormulaBuilder drops the outVar of an assigned
-				// variable whose new value the formula does not constrain, so a composed loop body has such
-				// variables. Framing them would keep their value and lose every run in which it changes.
-				assigned.add(pv);
-			}
-		}
-		for (final Map.Entry<IProgramVar, TermVariable> out : tf.getOutVars().entrySet()) {
-			final IProgramVar pv = out.getKey();
-			if (tf.getInVars().get(pv) == out.getValue()) {
-				continue;
-			}
-			assigned.add(pv);
-			substitution.put(out.getValue(),
-					pv.isOldvar() && !tf.getAssignedVars().contains(pv) ? pv.getDefaultConstant()
-							: sv.var(pv, idx + 1));
-		}
-		for (final TermVariable aux : tf.getAuxVars()) {
-			substitution.put(aux, sv.aux(t.mId, aux, idx));
-		}
-		return PureSubstitution.apply(mgdScript, substitution,
-				IteComparisonEncoder.apply(mgdScript.getScript(), tf.getFormula()));
+		return mFormulas.size() + " edge(s), " + mVars.size() + " variable(s), "
+				+ queryEncoding().numberOfFrameEqualities() + " frame equalities and " + auxVars
+				+ " aux variable(s) per step, edge formulas of DAG size " + formulaDagSize;
 	}
 }

@@ -61,8 +61,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormulaBuilder.Checkpoint;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormulaBuilder.LoopTree;
 
 /**
  * Resolves every procedure call of a nested word automaton, so that the graph {@link LoopTreeFormulaBuilder} builds -
@@ -234,7 +232,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		}
 	}
 
-	/** Everything one procedure's own checkpoint graph is built from, once its callees are done. */
+	/** Everything one procedure's own formulas are built from, once its callees are done. */
 	private final class ScopeData {
 		private final String mProcedure;
 		/** The procedure's own states plus the error states imported from its callees. */
@@ -313,7 +311,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 
 		mLogger.info(
 				"KInduction: resolved %d call site(s) by summary, %d by unfolding and %d by an activation record "
-						+ "(%d checkpoint graph(s) built); entry scope has %d node(s), %d error node(s)",
+						+ "(%d graph(s) composed); entry scope has %d node(s), %d error node(s)",
 				mNumSummarizedCallSites, mNumUnfoldedCallSites, mNumStackedCallSites, mNumBuilds,
 				mRootScopeStates.size(), mRootFinalStates.size());
 		if (!mUnfolded.isEmpty()) {
@@ -509,7 +507,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	/**
 	 * {@code procedure}'s own graph, reduced to the states that have to be nodes of the root graph.
 	 * <p>
-	 * {@link LoopTreeFormulaBuilder} composes everything between two checkpoints anyway, so a state that is no cut
+	 * {@link PcTransitionSystem} encodes every state of the graph per step, so a state that is no cut
 	 * point only costs: one node per copy of the procedure, and one more step of every composition through it. Large
 	 * block encoding has merged what it could, but it stops at every call, so on a program with many calls nearly
 	 * every state starts or ends one. Once a callee is summarized, its call site and its return site are two states
@@ -898,7 +896,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			if (worst == null) {
 				// Nothing left to stack: the graph is this big because the procedures themselves are, not because
 				// they are copied. An activation record would not shrink it, so it is built as it is.
-				mLogger.info("KInduction: the checkpoint graph has about %d node(s), past the unfolding budget of %d, "
+				mLogger.info("KInduction: the root graph has about %d node(s), past the unfolding budget of %d, "
 						+ "but none of that is unfolding that an activation record could replace", total,
 						UNFOLDING_BUDGET);
 				return;
@@ -1135,7 +1133,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			final Map<N, UnmodifiableTransFormula> combined = new LinkedHashMap<>();
 			for (final Map.Entry<N, List<UnmodifiableTransFormula>> to : from.getValue().entrySet()) {
 				// Several call transitions, exits or returns can join the same pair of nodes; their union is the
-				// edge, exactly as for the alternatives of an ordinary checkpoint edge.
+				// edge.
 				combined.put(to.getKey(),
 						LoopTreeFormulaBuilder.combineAlternatives(mLogger, mServices, mMgdScript, to.getValue()));
 			}
@@ -1165,12 +1163,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			builder.rejectUnresolvedCallsAndReturns();
 			data.mCallsChecked = true;
 		}
-		final LoopTree<STATE> tree = builder.build();
-		if (!tree.getLoops().isEmpty()) {
-			throw new AssertionError("procedure " + data.mProcedure + " was summarized although its graph has a "
-					+ "loop; classify() should have marked it for unfolding");
-		}
-		return tree.getRoot().getEdge(Checkpoint.init(), Checkpoint.fin());
+		return builder.buildLoopFreeFormula();
 	}
 
 	/**
@@ -1335,7 +1328,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 
 	/**
 	 * The states of {@code data}'s scope reachable from {@code inits}. Only used to skip exit and error states
-	 * that no path can reach, so that no checkpoint graph is built for them.
+	 * that no path can reach, so that nothing is composed for them.
 	 */
 	private Set<STATE> reachableInScope(final ScopeData data, final Set<STATE> inits) {
 		final Set<STATE> visited = new LinkedHashSet<>(inits);

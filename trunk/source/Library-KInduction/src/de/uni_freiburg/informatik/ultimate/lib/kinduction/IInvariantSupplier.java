@@ -144,17 +144,4 @@ public interface IInvariantSupplier<STATE> {
 	static <STATE> IInvariantSupplier<STATE> none() {
 		return (loopHead, targetScript) -> Optional.empty();
 	}
-
-	/**
-	 * @param invariants
-	 *            invariants over the loop heads' own {@code IProgramVar}s, native to {@code script}
-	 * @param script
-	 *            the {@link ManagedScript} the invariants are native to
-	 * @return a supplier that returns the given invariants, and none for other loop heads or for another script.
-	 */
-	static <STATE> IInvariantSupplier<STATE> fromMap(final java.util.Map<STATE, Term> invariants,
-			final ManagedScript script) {
-		return (loopHead, targetScript) -> targetScript == script ? Optional.ofNullable(invariants.get(loopHead))
-				: Optional.empty();
-	}
 }

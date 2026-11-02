@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -79,9 +80,9 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.IndexedConsta
  * k-induction on a nested word automaton (path program or abstraction) that represents a program with any number of
  * loops, sequential or nested.
  * <p>
- * {@link LoopTreeFormulaBuilder} summarizes the program as a tree of loops whose edges are transition formulas between
- * checkpoints (program start, loop heads, error states, ...). {@link PcTransitionSystem} turns this into one transition
- * system whose state is the program variables plus a program counter {@code pc}. An error is reachable iff the system
+ * {@link LoopTreeFormulaBuilder} cuts the program into a tree of loops, each an acyclic graph between checkpoints
+ * (program start, loop heads, error states, ...). {@link PcTransitionSystem} turns this into one transition system
+ * whose state is the program variables plus a program counter {@code pc}. An error is reachable iff the system
  * reaches {@code pc = FINAL}. This class runs plain k-induction on it, for {@code k = 1, 2, ...}:
  * <ul>
  * <li><b>Base case</b>: {@code pc_0 = INIT}, k transitions, {@code pc_k = FINAL} and not before. SAT means
@@ -111,10 +112,6 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.IndexedConsta
  * always sound. With probation, the supplier watches how long the queries take and may interrupt one that an
  * invariant made slow, after publishing a better invariant. k-induction then takes the answer of the supplier's
  * probe, or asks the query again for a violation (see {@link #answer}).
- * <p>
- * <b>Learned invariants.</b> If the program is proven safe with some k, {@link #getLearnedInvariants()} returns for
- * every loop head the formula "no error can be reached from here within k steps". It holds in every reachable state of
- * the head, because the program is safe, and can be given to other components as an invariant.
  *
  * @param <LETTER>
  *            letter type
@@ -150,7 +147,6 @@ public class KInduction<LETTER extends IAction, STATE> {
 	private boolean mSafe;
 	private int mProvedK = -1;
 	private Inconclusive mInconclusive;
-	private final Map<CallNode<STATE>, Term> mLearnedInvariants = new LinkedHashMap<>();
 
 	private final IInvariantSupplier<CallNode<STATE>> mInvariantSupplier;
 
@@ -221,9 +217,9 @@ public class KInduction<LETTER extends IAction, STATE> {
 		mSealedStates = encoding.sealedStates();
 		mInvariantSupplier.systemBuilt(mSystem, mWorkerMgdScript);
 		mLogger.info(
-				"KInduction: transition system with %d pc value(s), %d transition(s), %d variable(s), %d loop head(s), "
+				"KInduction: transition system with %d pc value(s), %d edge(s), %d variable(s), %d loop head(s), "
 						+ "counters of sort %s",
-				mSystem.getNumNodes(), mSystem.getNumTransitions(), mSystem.getVars().size(),
+				mSystem.getNumNodes(), mSystem.getNumEdges(), mSystem.getVars().size(),
 				mSystem.getHeadNodes().size(), mSystem.getCounterSort());
 		mLogger.info("KInduction: encoding statistics: %s", mSystem.getStatistics());
 
@@ -244,9 +240,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 			final Verdict verdict = kInduction();
 			mSafe = verdict == Verdict.SAFE;
 			mSolverReturnedUnknown = verdict == Verdict.UNKNOWN;
-			if (mSafe) {
-				learnInvariants();
-			} else if (verdict == Verdict.UNSAFE) {
+			if (verdict == Verdict.UNSAFE) {
 				// Still under the lock, but after the base case's pop: reconstruction asserts terms, which would
 				// invalidate the model we are working from. mWitness already holds everything we need from it.
 				mCounterexample = new KInductionCounterexampleBuilder<>(mServices, mLogger, mWorkerMgdScript, mKILock,
@@ -401,9 +395,6 @@ public class KInduction<LETTER extends IAction, STATE> {
 		for (int j = 0; j <= k; j++) {
 			queried.add(mConstants.pc(j));
 		}
-		for (int j = 0; j < k; j++) {
-			queried.add(mConstants.sel(j));
-		}
 		if (mStackPointer != null) {
 			for (int j = 0; j <= k; j++) {
 				queried.add(mConstants.var(mStackPointer, j));
@@ -424,10 +415,6 @@ public class KInduction<LETTER extends IAction, STATE> {
 		for (int j = 0; j <= k; j++) {
 			pcValues[j] = counterValue(model, mConstants.pc(j), "pc_" + j);
 		}
-		final int[] transitionIds = new int[k];
-		for (int j = 0; j < k; j++) {
-			transitionIds[j] = counterValue(model, mConstants.sel(j), "selector_" + j);
-		}
 		int[] stackPointers = null;
 		if (mStackPointer != null) {
 			stackPointers = new int[k + 1];
@@ -435,10 +422,10 @@ public class KInduction<LETTER extends IAction, STATE> {
 				stackPointers[j] = counterValue(model, mConstants.var(mStackPointer, j), mStackPointer + "_" + j);
 			}
 		}
-		return new KInductionWitness(k, pcValues, transitionIds, stackPointers);
+		return new KInductionWitness(k, pcValues, stackPointers);
 	}
 
-	/** The value the model gives a pc, selector or stack pointer constant, see {@link CounterSort#toInt}. */
+	/** The value the model gives a pc or stack pointer constant, see {@link CounterSort#toInt}. */
 	private int counterValue(final Map<Term, Term> model, final Term term, final String description) {
 		return mSystem.getCounterSort().toInt(model.get(term), description);
 	}
@@ -476,33 +463,20 @@ public class KInduction<LETTER extends IAction, STATE> {
 		}
 	}
 
-	// ------------------------------------------------------------------------------------------------------------
-	// Learned invariants
-	// ------------------------------------------------------------------------------------------------------------
-
-	/**
-	 * For every loop head {@code h}: not (exists a run of {@link #mProvedK} transitions from {@code h} that ends in
-	 * FINAL), over the term variables of the program variables.
-	 */
-	private void learnInvariants() {
-		for (final Map.Entry<CallNode<STATE>, Integer> head : mSystem.getHeadNodes().entrySet()) {
-			mLearnedInvariants.put(head.getKey(), noErrorWithinK(head.getValue()));
-		}
-		mLogger.info("KInduction: learned an invariant for %d loop head(s) from k=%d", mLearnedInvariants.size(),
-				mProvedK);
-	}
-
 	/**
 	 * Not (exists a run of {@link #mProvedK} transitions from {@code node} that ends in FINAL), over the term variables
 	 * of the program variables. Since FINAL only has its stutter loop, this says that no error is reachable from
 	 * {@code node} within k steps.
+	 *
+	 * @param step
+	 *            the relation of one step over the given variables
 	 */
-	private Term noErrorWithinK(final int node) {
+	private Term noErrorWithinK(final int node, final BiFunction<Integer, StepVars, Term> step) {
 		final Script script = mWorkerMgdScript.getScript();
 		final FreshVars vars = new FreshVars(node);
 		final List<Term> conjuncts = new ArrayList<>();
 		for (int j = 0; j < mProvedK; j++) {
-			conjuncts.add(mSystem.step(j, vars, mWorkerMgdScript));
+			conjuncts.add(step.apply(j, vars));
 		}
 		conjuncts.add(SmtUtils.binaryEquality(script, vars.pc(mProvedK),
 				mSystem.pcValue(script, PcTransitionSystem.FINAL)));
@@ -519,7 +493,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * Invariants for a correctness witness: for every loop head {@code h}, {@code J_h && noErrorWithinK(h)}, where
 	 * {@code J_h} is the injected invariant the deciding step case assumed.
 	 * <p>
-	 * {@link #getLearnedInvariants()} alone is not inductive if the step case relied on injected invariants. With them
+	 * {@code noErrorWithinK(h)} alone is not inductive if the step case relied on injected invariants. With them
 	 * it is 1-inductive: from a state that satisfies it, a successor and the next k - 1 states cannot be errors, since
 	 * they are within k steps, the injected invariants hold along the way, since they are inductive themselves, and
 	 * then the step case says that the k-th state cannot be an error either. Rather than trusting this argument, the
@@ -555,6 +529,9 @@ public class KInduction<LETTER extends IAction, STATE> {
 		mSystem.getOldVars().forEach(pv -> oldVarConstants.add(pv.getDefaultConstant()));
 		final SubtermPropertyChecker mentionsOldVar = new SubtermPropertyChecker(oldVarConstants::contains);
 
+		// Not the formula of a query: over term variables every shared subformula would hold its free variables, and
+		// quantifier elimination does badly on the variables a step has inside.
+		final BiFunction<Integer, StepVars, Term> composedStep = mSystem.composeSteps(services, mLogger, mWorkerMgdScript);
 		final Map<Integer, Term> invariants = new LinkedHashMap<>();
 		invariants.put(PcTransitionSystem.INIT, script.term("true"));
 		invariants.put(PcTransitionSystem.FINAL, script.term("false"));
@@ -572,8 +549,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 				// only give back an equivalent of J_node.
 				invariant = injected == null ? script.term("true") : injected.term();
 			} else {
-				final Term withQuantifiers = injected == null ? noErrorWithinK(node)
-						: SmtUtils.and(script, injected.term(), noErrorWithinK(node));
+				final Term noError = noErrorWithinK(node, composedStep);
+				final Term withQuantifiers = injected == null ? noError : SmtUtils.and(script, injected.term(), noError);
 				// Quantifier elimination expects its input in commuhash normal form.
 				invariant = PartialQuantifierElimination.eliminate(services, mWorkerMgdScript,
 						CommuhashNormalFormTransformer.apply(script, withQuantifiers), simplificationTechnique);
@@ -586,7 +563,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 			}
 			invariants.put(node, invariant);
 		}
-		if (!isInductive(services, invariants)) {
+		if (!isInductive(services, invariants, composedStep)) {
 			return Optional.empty();
 		}
 		final Map<CallNode<STATE>, Term> result = new LinkedHashMap<>();
@@ -605,30 +582,27 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * @return whether every transition of the system leads from a state that satisfies the invariant of its source
 	 *         to one that satisfies the invariant of its target
 	 */
-	private boolean isInductive(final IUltimateServiceProvider services, final Map<Integer, Term> invariants) {
+	private boolean isInductive(final IUltimateServiceProvider services, final Map<Integer, Term> invariants,
+			final BiFunction<Integer, StepVars, Term> step) {
 		final Script script = mWorkerMgdScript.getScript();
-		final Set<List<Integer>> checked = new LinkedHashSet<>();
 		mWorkerMgdScript.lock(mKILock);
 		try {
-			for (int id = 0; id < mSystem.getNumTransitions(); id++) {
-				final PcTransitionSystem.Transition<CallNode<STATE>> t = mSystem.getTransition(id);
-				// step() takes every transition between the two nodes at once
-				if (t.isStutter() || !checked.add(List.of(t.getFromNode(), t.getToNode()))) {
-					continue;
-				}
-				if (!invariants.containsKey(t.getFromNode()) || !invariants.containsKey(t.getToNode())) {
-					mLogger.warn("KInduction: no correctness witness invariants, %s has a node without one", t);
+			for (final List<Integer> pair : mSystem.getStepPairs()) {
+				final int from = pair.get(0);
+				final int to = pair.get(1);
+				if (!invariants.containsKey(from) || !invariants.containsKey(to)) {
+					mLogger.warn("KInduction: no correctness witness invariants, the step from node %d to %d has a node "
+							+ "without one", from, to);
 					return false;
 				}
-				final ConsecutionVars vars = new ConsecutionVars(t.getFromNode(), t.getToNode());
+				final ConsecutionVars vars = new ConsecutionVars(from, to);
 				final Map<Term, Term> toSuccessor = new HashMap<>();
 				for (final IProgramVar pv : mSystem.getVars()) {
 					toSuccessor.put(pv.getTermVariable(), vars.var(pv, 1));
 				}
-				final Term post = PureSubstitution.apply(mWorkerMgdScript, toSuccessor,
-						invariants.get(t.getToNode()));
-				final Term violation = SmtUtils.and(script, invariants.get(t.getFromNode()),
-						mSystem.step(0, vars, mWorkerMgdScript), SmtUtils.not(script, post));
+				final Term post = PureSubstitution.apply(mWorkerMgdScript, toSuccessor, invariants.get(to));
+				final Term violation = SmtUtils.and(script, invariants.get(from),
+						step.apply(0, vars), SmtUtils.not(script, post));
 				mWorkerMgdScript.push(mKILock, 1);
 				final LBool result;
 				try {
@@ -640,7 +614,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 				}
 				if (result != LBool.UNSAT) {
 					mLogger.warn("KInduction: no correctness witness invariants, the transition from node %d to %d "
-							+ "does not preserve them (%s)", t.getFromNode(), t.getToNode(), result);
+							+ "does not preserve them (%s)", from, to, result);
 					return false;
 				}
 			}
@@ -746,8 +720,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 		}
 
 		@Override
-		public Term aux(final int transitionId, final TermVariable auxVar, final int idx) {
-			return fresh("aux_" + transitionId + "_" + auxVar.getName(), auxVar.getSort());
+		public Term aux(final int id, final TermVariable auxVar, final int idx) {
+			return fresh("aux_" + id + "_" + auxVar.getName(), auxVar.getSort());
 		}
 	}
 
@@ -795,8 +769,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 		}
 
 		@Override
-		public Term aux(final int transitionId, final TermVariable auxVar, final int idx) {
-			return fresh("aux_" + transitionId + "_" + auxVar.getName() + "_" + idx, auxVar.getSort());
+		public Term aux(final int id, final TermVariable auxVar, final int idx) {
+			return fresh("aux_" + id + "_" + auxVar.getName() + "_" + idx, auxVar.getSort());
 		}
 	}
 
@@ -853,21 +827,6 @@ public class KInduction<LETTER extends IAction, STATE> {
 			return "k-induction is inconclusive: the solver returned unknown for the " + mCase + " case at k=" + mK
 					+ ", so the program is neither proved safe nor refuted";
 		}
-	}
-
-	/**
-	 * @return for every loop head, an invariant learned from the k-induction proof (empty unless the program was proven
-	 *         safe). The terms are native to the worker's {@link ManagedScript}.
-	 */
-	public Map<CallNode<STATE>, Term> getLearnedInvariants() {
-		return Collections.unmodifiableMap(mLearnedInvariants);
-	}
-
-	/**
-	 * @return {@link #getLearnedInvariants()} as a supplier, for use as the invariants of another run.
-	 */
-	public IInvariantSupplier<CallNode<STATE>> getLearnedInvariantSupplier() {
-		return IInvariantSupplier.fromMap(mLearnedInvariants, mWorkerMgdScript);
 	}
 
 	/**
