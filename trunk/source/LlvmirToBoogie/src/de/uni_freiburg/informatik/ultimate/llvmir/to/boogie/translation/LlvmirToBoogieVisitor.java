@@ -30,7 +30,6 @@ import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.d
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructInitialProcedure;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructSpecFromIdentifier;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructVarDecFromString;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructVarDecFromTypeContext;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.contructRemainderFunction;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.procedureAlreadyPresent;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleAddInst;
@@ -60,10 +59,11 @@ import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.i
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.MemoryInstructionHandler.handleAllocaInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.MemoryInstructionHandler.handleLoadInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.MemoryInstructionHandler.handleStoreInst;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.OtherInstructionHandler.handleExtractValueInst;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.OtherInstructionHandler.handleSelectInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.LABEL_IDENTIFIER;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.UNDEF_IDENTIFIER;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructExpressionFromConstant;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructExpressionFromValue;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructLabelAssignment;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.unifyIdentifier;
 
@@ -81,7 +81,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
@@ -89,7 +88,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -501,48 +499,11 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		} else if (instructionType.callInst() != null) {
 			handleCallInstWithResult(result, instructionType, identifier, location, mDeclarations);
 		} else if (instructionType.selectInst() != null) {
-			final LLVMIRParser.ConcreteTypeContext typeContext0 =
-					instructionType.selectInst().typeValue(0).firstClassType().concreteType();
-			final LLVMIRParser.ConcreteTypeContext typeContext1 =
-					instructionType.selectInst().typeValue(1).firstClassType().concreteType();
-
-			final Expression ifExpr = constructExpressionFromValue(instructionType.selectInst().typeValue(0).value(),
-					typeContext0, location, false);
-			final Expression thenExpr = constructExpressionFromValue(instructionType.selectInst().typeValue(1).value(),
-					typeContext1, location, false);
-			final Expression elseExpr = constructExpressionFromValue(instructionType.selectInst().typeValue(2).value(),
-					typeContext1, location, false);
-			result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext1, identifier, location));
-			final VariableLHS thenVarLhs = new VariableLHS(location, identifier);
-			final VariableLHS elseVarLhs = new VariableLHS(location, identifier);
-			final AssignmentStatement thenAssignment =
-					new AssignmentStatement(location, new LeftHandSide[] { thenVarLhs }, new Expression[] { thenExpr });
-			final AssignmentStatement elseAssignment =
-					new AssignmentStatement(location, new LeftHandSide[] { elseVarLhs }, new Expression[] { elseExpr });
-			final IfStatement ifStmt = new IfStatement(location, ifExpr, new Statement[] { thenAssignment },
-					new Statement[] { elseAssignment });
-			result.addFuncBlock(ifStmt);
+			handleSelectInst(result, instructionType, identifier, location);
 		} else if (instructionType.truncInst() != null) {
 			handleTruncInst(result, instructionType, identifier, location);
 		} else if (instructionType.extractValueInst() != null) {
-			if (instructionType.extractValueInst().typeValue().firstClassType().concreteType().structType() == null) {
-				throw new AssertionError(
-						"The support for extractValue instructions without a struct type is not implemented yet.");
-			}
-			final int indexNumber = Integer.parseInt(instructionType.extractValueInst().IntLit(0).toString());
-			final LLVMIRParser.TypeContext typeContext = instructionType.extractValueInst().typeValue().firstClassType()
-					.concreteType().structType().type(indexNumber);
-			final VariableDeclaration varDecl = (constructVarDecFromTypeContext(typeContext, identifier, location));
-			result.addFuncLocalVar(varDecl);
-			final StructAccessExpression structAccessExpr = new StructAccessExpression(location,
-					constructExpressionFromValue(instructionType.extractValueInst().typeValue().value(),
-							instructionType.extractValueInst().typeValue().firstClassType().concreteType(), location,
-							false),
-					String.valueOf(indexNumber));
-			final VariableLHS varLhs = new VariableLHS(location, identifier);
-			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-					new Expression[] { structAccessExpr });
-			result.addFuncBlock(assignment);
+			handleExtractValueInst(result, instructionType, identifier, location);
 		} else if (instructionType.andInst() != null) {
 			handleAndInst(result, instructionType, identifier, location);
 		} else if (instructionType.orInst() != null) {
