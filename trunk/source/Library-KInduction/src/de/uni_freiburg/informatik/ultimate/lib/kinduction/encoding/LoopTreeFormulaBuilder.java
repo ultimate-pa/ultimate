@@ -42,21 +42,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Given a nested word automaton, cuts it into the graphs {@link PcTransitionSystem} needs, for
+ * Given a graph whose edges are transition formulas, cuts it into the graphs {@link PcTransitionSystem} needs, for
  * programs with no loop, any number of sequential loops, and arbitrarily <b>nested</b> loops.
  * <p>
  * The result is a {@link LoopTree}: a tree of {@link Scope}s. The root scope is the whole program, every other scope
@@ -88,24 +83,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * <p>
  * <h2>Procedure calls</h2>
  *
- * Call and return transitions are <b>not</b> edges of this graph. A call's transition formula is only the
- * parameter assignment and a return's only the assignment of the result, so using them as ordinary edges gets the
- * scoping of oldvars, modifiable globals and the callee's locals wrong, and - because the graph has no stack - it
- * also admits paths that leave through one call site and come back at another, splicing away everything in
- * between. Both of those are silent unsoundness, so a call or a return that would end up as an edge here is
- * <b>refused</b> (see {@code rejectUnresolvedCallsAndReturns}).
- * <p>
- * Instead, a caller resolves every call site into a "virtual" call edge before building: one formula for a whole
- * call-to-return span, passed to the scoped constructor. {@link ProcedureSummaries} builds those for k-induction
- * with {@link ProcedureCallGraph#computeVirtualEdge}. A call or a return whose target lies outside the scope is then
- * simply not an edge of this scope's graph, which is the point: the callee is described by the virtual edge.
- * <p>
- * A callee that contains a loop has no such formula. For it, {@link ProcedureSummaries} instead <em>unfolds</em> a
- * copy of the callee per call site into the graph, with a virtual edge for the call and one for the return, and
- * hands this builder an {@link ICallResolvedGraph} whose nodes are {@link CallNode}s rather than plain states. The
- * copies are distinct nodes, so the splicing above cannot happen, and the callee's loop is found by the ordinary
- * SCC search as a nested loop of the caller's scope. Nothing below cares which of the two resolutions produced a
- * node: this class only ever sees a graph with no call and no return transition left.
+ * The graph has no call and no return transition, since it has no stack. A call's transition formula is only the
+ * parameter assignment and a return's only the assignment of the result, so using them as ordinary edges would get the
+ * scoping of oldvars, modifiable globals and the callee's locals wrong, and it would admit paths that leave through one
+ * call site and come back at another, splicing away everything in between. {@link ProcedureSummaries} resolves every
+ * call site before this class sees the graph: into an edge for the whole call-to-return span, or, for a callee that
+ * contains a loop, into a copy of the callee per call site with an edge for the call and one for the return. The copies
+ * are distinct nodes, so the splicing cannot happen, and the callee's loop is found by the ordinary SCC search as a
+ * nested loop of the caller's scope.
  *
  * <h2>How to use</h2>
  *
@@ -116,64 +101,37 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * vars and therefore acquires the lock itself. Lock the script afterwards, once all formulas exist, to use them in a
  * solver.
  *
- * @param <LETTER>
- *            letter type
  * @param <STATE>
- *            node type of the flat graph. The abstraction's own state type when the graph is the automaton (see
- *            {@link AutomatonGraph}), a {@link CallNode} when a callee is unfolded into it (see
- *            {@link UnfoldedGraph}).
+ *            node type of the graph
  */
-public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
+public class LoopTreeFormulaBuilder<STATE> {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ManagedScript mMgdScript;
-	private final ICallResolvedGraph<LETTER, STATE> mGraph;
-	private final Set<STATE> mScopeStates;
+	private final Map<STATE, Map<STATE, UnmodifiableTransFormula>> mEdges;
 	private final Set<STATE> mInitStates;
 	private final Collection<STATE> mFinalStates;
-	private final Map<STATE, Map<STATE, UnmodifiableTransFormula>> mVirtualCallEdges;
-	private final Set<STATE> mSealedStates;
 
-	private final Map<STATE, List<Pair<Edge<LETTER>, STATE>>> mSuccessors = new HashMap<>();
 	private final Map<STATE, Set<STATE>> mPredecessors = new HashMap<>();
 
 	/**
-	 * Scoped constructor with sealed states: states of {@code scopeStates} that are dead ends here, i.e. whose own
-	 * outgoing transitions are not edges of this graph. That is what a state which is only ever reached through a
-	 * virtual call edge needs - an error state inside a callee, say, which belongs to the callee and whose own
-	 * successors are described nowhere in this scope. Left unsealed, such a state's outgoing return transition
-	 * would become a real edge back into this scope, which is exactly the unscoped call/return treatment this
-	 * class refuses everywhere else.
+	 * @param edges
+	 *            every node with an outgoing edge, with its successors and the formula of the edge to each
+	 * @param initStates
+	 *            the nodes a run starts at
+	 * @param finalStates
+	 *            the accepting nodes
 	 */
 	public LoopTreeFormulaBuilder(final IUltimateServiceProvider services, final ILogger logger,
-			final ManagedScript mgdScript, final INestedWordAutomaton<LETTER, STATE> abstraction,
-			final Set<STATE> scopeStates, final Set<STATE> initStates, final Collection<STATE> finalStates,
-			final Map<STATE, Map<STATE, UnmodifiableTransFormula>> virtualCallEdges,
-			final Set<STATE> sealedStates) {
-		this(services, logger, mgdScript, new AutomatonGraph<>(abstraction), scopeStates, initStates, finalStates,
-				virtualCallEdges, sealedStates);
-	}
-
-	/**
-	 * Scoped constructor over an arbitrary {@link ICallResolvedGraph} rather than the automaton itself. This is
-	 * what k-induction uses: its nodes are {@link CallNode}s, so that a callee with a loop can be unfolded into
-	 * one copy per call site instead of being summarized (see {@link ProcedureSummaries}).
-	 */
-	public LoopTreeFormulaBuilder(final IUltimateServiceProvider services, final ILogger logger,
-			final ManagedScript mgdScript, final ICallResolvedGraph<LETTER, STATE> graph,
-			final Set<STATE> scopeStates, final Set<STATE> initStates, final Collection<STATE> finalStates,
-			final Map<STATE, Map<STATE, UnmodifiableTransFormula>> virtualCallEdges,
-			final Set<STATE> sealedStates) {
+			final ManagedScript mgdScript, final Map<STATE, Map<STATE, UnmodifiableTransFormula>> edges,
+			final Set<STATE> initStates, final Collection<STATE> finalStates) {
 		mServices = services;
 		mLogger = logger;
 		mMgdScript = mgdScript;
-		mGraph = graph;
-		mScopeStates = scopeStates;
+		mEdges = edges;
 		mInitStates = initStates;
 		mFinalStates = finalStates;
-		mVirtualCallEdges = virtualCallEdges;
-		mSealedStates = sealedStates;
 	}
 
 	/**
@@ -182,8 +140,8 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 	public LoopTree<STATE> build() {
 		final Set<STATE> reachable = computeReachable();
 		for (final STATE state : reachable) {
-			for (final Pair<Edge<LETTER>, STATE> t : successors(state)) {
-				mPredecessors.computeIfAbsent(t.getSecond(), k -> new LinkedHashSet<>()).add(state);
+			for (final STATE successor : successors(state).keySet()) {
+				mPredecessors.computeIfAbsent(successor, k -> new LinkedHashSet<>()).add(state);
 			}
 		}
 		final Scope<STATE> root = buildScope(Collections.emptySet(), reachable, 0);
@@ -197,110 +155,33 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 	// Flat graph
 	// ------------------------------------------------------------------------------------------------------------
 
-	/**
-	 * Refuses every call and return transition that would become an edge of this scope's graph, i.e. whose target
-	 * is in the scope, since treating it as a plain edge is unsound (see the class javadoc). A call or return that
-	 * leaves the scope is not refused: it is what a virtual call edge stands for.
-	 * <p>
-	 * A sealed state has no edges at all here, so its transitions cannot become one either.
-	 * <p>
-	 * This is up to whoever builds trees over a graph that has calls, since the cost is the states times the call sites:
-	 * once per scope is enough, the result does not depend on the initial and final states of a tree.
-	 */
-	public void rejectUnresolvedCallsAndReturns() {
-		final List<STATE> callSites = new ArrayList<>();
-		for (final STATE state : mScopeStates) {
-			if (mGraph.callSuccessors(state).iterator().hasNext()) {
-				callSites.add(state);
-			}
-		}
-		for (final STATE state : mScopeStates) {
-			if (mSealedStates.contains(state)) {
-				continue;
-			}
-			for (final OutgoingCallTransition<LETTER, STATE> t : mGraph.callSuccessors(state)) {
-				rejectUnresolved(state, t.getLetter(), t.getSucc(), "call");
-			}
-			for (final STATE hier : callSites) {
-				for (final OutgoingReturnTransition<LETTER, STATE> t : mGraph.returnSuccessorsGivenHier(state,
-						hier)) {
-					rejectUnresolved(state, t.getLetter(), t.getSucc(), "return");
-				}
-			}
-		}
-	}
-
-	private void rejectUnresolved(final STATE source, final LETTER letter, final STATE target, final String kind) {
-		if (!mScopeStates.contains(target)) {
-			return;
-		}
-		throw new UnsupportedOperationException("The " + kind + " transition " + source + " -" + letter + "-> "
-				+ target + " is inside the scope of this loop tree, so it would become an ordinary edge of the flat "
-				+ "graph. That is unsound: the graph has no call stack, and a " + kind + "'s transition formula "
-				+ "describes only the parameter resp. result assignment. Resolve the call site into a virtual call "
-				+ "edge (see ProcedureSummaries) or hand this builder a scope that the " + kind + " leaves.");
-	}
-
 	private Set<STATE> computeReachable() {
 		final Set<STATE> visited = new LinkedHashSet<>();
 		final Deque<STATE> worklist = new ArrayDeque<>();
 		for (final STATE init : mInitStates) {
-			if (mScopeStates.contains(init) && visited.add(init)) {
+			if (visited.add(init)) {
 				worklist.add(init);
 			}
 		}
 		while (!worklist.isEmpty()) {
-			final STATE state = worklist.poll();
-			for (final Pair<Edge<LETTER>, STATE> t : successors(state)) {
-				if (visited.add(t.getSecond())) {
-					worklist.add(t.getSecond());
+			for (final STATE successor : successors(worklist.poll()).keySet()) {
+				if (visited.add(successor)) {
+					worklist.add(successor);
 				}
 			}
 		}
 		return visited;
 	}
 
-	/**
-	 * Every way to leave {@code state} inside the scope: its internal transitions plus the precomputed virtual call
-	 * edges that start here. Call and return transitions are none of them, see the class javadoc. A sealed state
-	 * has no outgoing edge at all. Memoized.
-	 */
-	private List<Pair<Edge<LETTER>, STATE>> successors(final STATE state) {
-		final List<Pair<Edge<LETTER>, STATE>> cached = mSuccessors.get(state);
-		if (cached != null) {
-			return cached;
-		}
-		if (mSealedStates.contains(state)) {
-			mSuccessors.put(state, Collections.emptyList());
-			return Collections.emptyList();
-		}
-		final List<Pair<Edge<LETTER>, STATE>> result = new ArrayList<>();
-		final Set<Pair<LETTER, STATE>> seen = new HashSet<>();
-		for (final OutgoingInternalTransition<LETTER, STATE> t : mGraph.internalSuccessors(state)) {
-			addReal(result, seen, t.getLetter(), t.getSucc());
-		}
-		final Map<STATE, UnmodifiableTransFormula> virtualFromHere = mVirtualCallEdges.get(state);
-		if (virtualFromHere != null) {
-			for (final Map.Entry<STATE, UnmodifiableTransFormula> entry : virtualFromHere.entrySet()) {
-				result.add(new Pair<>(Edge.virtual(entry.getValue()), entry.getKey()));
-			}
-		}
-		mSuccessors.put(state, result);
-		return result;
-	}
-
-	private void addReal(final List<Pair<Edge<LETTER>, STATE>> result, final Set<Pair<LETTER, STATE>> seen,
-			final LETTER letter, final STATE succ) {
-		if (mScopeStates.contains(succ) && seen.add(new Pair<>(letter, succ))) {
-			result.add(new Pair<>(Edge.real(letter), succ));
-		}
+	private Map<STATE, UnmodifiableTransFormula> successors(final STATE state) {
+		return mEdges.getOrDefault(state, Collections.emptyMap());
 	}
 
 	private List<STATE> neighbors(final STATE state, final Set<STATE> within) {
 		final List<STATE> result = new ArrayList<>();
-		for (final Pair<Edge<LETTER>, STATE> t : successors(state)) {
-			if (within.contains(t.getSecond()) && !result.contains(t.getSecond())) {
-				result.add(t.getSecond());
+		for (final STATE successor : successors(state).keySet()) {
+			if (within.contains(successor)) {
+				result.add(successor);
 			}
 		}
 		return result;
@@ -458,9 +339,9 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 				if (heads.contains(state)) {
 					continue;
 				}
-				for (final Pair<Edge<LETTER>, STATE> t : successors(state)) {
-					if (!region.contains(t.getSecond())) {
-						escapes.add(t.getSecond());
+				for (final STATE successor : successors(state).keySet()) {
+					if (!region.contains(successor)) {
+						escapes.add(successor);
 					}
 				}
 			}
@@ -475,13 +356,13 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 			}
 		}
 		nodes.addAll(escapes);
-		final Map<STATE, List<Pair<Edge<LETTER>, STATE>>> cutEdges = new LinkedHashMap<>();
+		final Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> cutEdges = new LinkedHashMap<>();
 		for (final STATE node : nodes) {
-			final List<Pair<Edge<LETTER>, STATE>> out = new ArrayList<>();
+			final List<Pair<UnmodifiableTransFormula, STATE>> out = new ArrayList<>();
 			if (!escapes.contains(node) && !heads.contains(node) && !childHeads.contains(node)) {
-				for (final Pair<Edge<LETTER>, STATE> t : successors(node)) {
-					if (nodes.contains(t.getSecond())) {
-						out.add(t);
+				for (final Pair<UnmodifiableTransFormula, STATE> edge : edgesFrom(node)) {
+					if (nodes.contains(edge.getSecond())) {
+						out.add(edge);
 					}
 				}
 			}
@@ -529,9 +410,9 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 		} else {
 			for (final STATE head : heads) {
 				final List<Pair<UnmodifiableTransFormula, STATE>> entries = new ArrayList<>();
-				for (final Pair<Edge<LETTER>, STATE> t : successors(head)) {
-					if (region.contains(t.getSecond())) {
-						entries.add(new Pair<>(formulaOf(t.getFirst()), t.getSecond()));
+				for (final Pair<UnmodifiableTransFormula, STATE> edge : edgesFrom(head)) {
+					if (region.contains(edge.getSecond())) {
+						entries.add(edge);
 					}
 				}
 				sources.put(Checkpoint.init(head), entries);
@@ -541,9 +422,9 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 		for (final Scope<STATE> child : children) {
 			for (final STATE childHead : child.getHeads()) {
 				final List<Pair<UnmodifiableTransFormula, STATE>> exits = new ArrayList<>();
-				for (final Pair<Edge<LETTER>, STATE> t : successors(childHead)) {
-					if (!child.getRegion().contains(t.getSecond())) {
-						exits.add(new Pair<>(formulaOf(t.getFirst()), t.getSecond()));
+				for (final Pair<UnmodifiableTransFormula, STATE> edge : edgesFrom(childHead)) {
+					if (!child.getRegion().contains(edge.getSecond())) {
+						exits.add(edge);
 					}
 				}
 				sources.put(Checkpoint.loopHead(childHead), exits);
@@ -563,26 +444,26 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 			}
 		}
 
-		final Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> cutGraph = formulasInOrder(cutEdges);
 		mLogger.info("LoopTree: scope %s built: %d inner loop(s), %d state(s), %d node(s)",
 				isRoot ? "ROOT" : "loop " + heads, children.size(), region.size(), nodes.size());
-		return new Scope<>(heads, region, children, depth, cutGraph, sources, targets, checkpointStates);
+		return new Scope<>(heads, region, children, depth, inTopologicalOrder(cutEdges), sources, targets,
+				checkpointStates);
 	}
 
-	private UnmodifiableTransFormula formulaOf(final Edge<LETTER> edge) {
-		return edge.isVirtual() ? edge.getVirtualFormula() : edge.getRealLetter().getTransformula();
+	private List<Pair<UnmodifiableTransFormula, STATE>> edgesFrom(final STATE state) {
+		final List<Pair<UnmodifiableTransFormula, STATE>> result = new ArrayList<>();
+		for (final Map.Entry<STATE, UnmodifiableTransFormula> edge : successors(state).entrySet()) {
+			result.add(new Pair<>(edge.getValue(), edge.getKey()));
+		}
+		return result;
 	}
 
-	/** The formulas of a graph without a loop, every node before its successors. */
+	/** A graph without a loop, every node before its successors. */
 	private Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>>
-			formulasInOrder(final Map<STATE, List<Pair<Edge<LETTER>, STATE>>> edges) {
+			inTopologicalOrder(final Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> edges) {
 		final Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> result = new LinkedHashMap<>();
 		for (final STATE node : topologicalOrder(edges)) {
-			final List<Pair<UnmodifiableTransFormula, STATE>> outgoing = new ArrayList<>();
-			for (final Pair<Edge<LETTER>, STATE> t : edges.get(node)) {
-				outgoing.add(new Pair<>(formulaOf(t.getFirst()), t.getSecond()));
-			}
-			result.put(node, outgoing);
+			result.put(node, edges.get(node));
 		}
 		return result;
 	}
@@ -599,12 +480,12 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 		if (!nontrivialSccs(nodes).isEmpty()) {
 			throw new IllegalStateException("The graph has a loop, so it has no single formula: " + nodes);
 		}
-		final Map<STATE, List<Pair<Edge<LETTER>, STATE>>> edges = new LinkedHashMap<>();
+		final Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> edges = new LinkedHashMap<>();
 		for (final STATE node : nodes) {
-			edges.put(node, successors(node));
+			edges.put(node, edgesFrom(node));
 		}
 		final PathFormulaComposer<STATE> composer =
-				new PathFormulaComposer<>(mServices, mLogger, mMgdScript, formulasInOrder(edges));
+				new PathFormulaComposer<>(mServices, mLogger, mMgdScript, inTopologicalOrder(edges));
 		final List<UnmodifiableTransFormula> alternatives = new ArrayList<>();
 		for (final STATE init : mInitStates) {
 			if (!nodes.contains(init)) {
@@ -641,11 +522,11 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 	 *            every node of the cut graph with its outgoing edges, which stay inside the graph
 	 * @return the nodes, each before all of its successors
 	 */
-	private List<STATE> topologicalOrder(final Map<STATE, List<Pair<Edge<LETTER>, STATE>>> edges) {
+	private List<STATE> topologicalOrder(final Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> edges) {
 		final Map<STATE, Integer> inDegree = new HashMap<>();
 		for (final STATE node : edges.keySet()) {
 			inDegree.putIfAbsent(node, 0);
-			for (final Pair<Edge<LETTER>, STATE> t : edges.get(node)) {
+			for (final Pair<UnmodifiableTransFormula, STATE> t : edges.get(node)) {
 				inDegree.merge(t.getSecond(), 1, Integer::sum);
 			}
 		}
@@ -659,7 +540,7 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 		while (!ready.isEmpty()) {
 			final STATE node = ready.poll();
 			result.add(node);
-			for (final Pair<Edge<LETTER>, STATE> t : edges.get(node)) {
+			for (final Pair<UnmodifiableTransFormula, STATE> t : edges.get(node)) {
 				if (inDegree.merge(t.getSecond(), -1, Integer::sum) == 0) {
 					ready.add(t.getSecond());
 				}
@@ -687,45 +568,6 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 				alternatives.toArray(new UnmodifiableTransFormula[0]));
 	}
 
-
-	/**
-	 * One edge of a cut graph: a real automaton letter, or a precomputed virtual edge for a whole call-to-return
-	 * span.
-	 */
-	static final class Edge<LETTER> {
-		private final LETTER mRealLetter;
-		private final UnmodifiableTransFormula mVirtualFormula;
-
-		private Edge(final LETTER realLetter, final UnmodifiableTransFormula virtualFormula) {
-			mRealLetter = realLetter;
-			mVirtualFormula = virtualFormula;
-		}
-
-		static <L> Edge<L> real(final L letter) {
-			return new Edge<>(letter, null);
-		}
-
-		static <L> Edge<L> virtual(final UnmodifiableTransFormula formula) {
-			return new Edge<>(null, formula);
-		}
-
-		boolean isVirtual() {
-			return mRealLetter == null;
-		}
-
-		LETTER getRealLetter() {
-			return mRealLetter;
-		}
-
-		UnmodifiableTransFormula getVirtualFormula() {
-			return mVirtualFormula;
-		}
-
-		@Override
-		public String toString() {
-			return isVirtual() ? "virtual(call)" : String.valueOf(mRealLetter);
-		}
-	}
 
 	/**
 	 * A place a step through a scope can start or end at.

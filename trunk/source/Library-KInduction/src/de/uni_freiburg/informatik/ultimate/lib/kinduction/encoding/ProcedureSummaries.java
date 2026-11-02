@@ -102,16 +102,14 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * The procedures whose states are nodes of the root graph - the entry procedures and every unfolded or stacked
  * one - are first reduced to their cut points, once each (see {@code reduce}): chains of states with one predecessor
  * and one successor are composed into single edges, and so are the summarized calls on them. Every copy of a
- * procedure then costs its cut points rather than all of its states, and the root graph has no transition of its
- * own, only edges.
+ * procedure then costs its cut points rather than all of its states.
  *
  * <h2>Errors inside a callee</h2>
  *
  * An error state of a <b>summarized</b> callee becomes an <b>error edge</b> {@code callSite -> that error state},
  * built with {@link TransFormulaUtils#sequentialCompositionWithPendingCall}. The error state becomes a state (and a
- * final state) of the caller's graph, sealed so that its own transitions are not edges there, see
- * {@link LoopTreeFormulaBuilder}'s sealed-state constructor. Error states are carried up this way through any
- * number of levels. In an <b>unfolded</b> callee the error state is simply a node of the copy, and needs no edge of
+ * final state) of the caller's graph, sealed so that its own transitions are not edges there. Error states are carried
+ * up this way through any number of levels. In an <b>unfolded</b> callee the error state is simply a node of the copy, and needs no edge of
  * its own. Either way the call stays pending, so the counterexample {@link KInductionCounterexampleBuilder} builds
  * ends with an unmatched call.
  * <p>
@@ -188,7 +186,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	private final Set<CallNode<STATE>> mRootInitStates = new LinkedHashSet<>();
 	private final Set<CallNode<STATE>> mRootFinalStates = new LinkedHashSet<>();
 	private final Set<CallNode<STATE>> mRootSealedStates = new LinkedHashSet<>();
-	private final Map<CallNode<STATE>, Map<CallNode<STATE>, UnmodifiableTransFormula>> mRootVirtualCallEdges =
+	private final Map<CallNode<STATE>, Map<CallNode<STATE>, UnmodifiableTransFormula>> mRootEdges =
 			new LinkedHashMap<>();
 	private final Map<CallKey<LETTER, STATE>, List<SummaryEdge<STATE>>> mSummaryEdges = new HashMap<>();
 
@@ -258,8 +256,9 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		private final Set<STATE> mSealed = new LinkedHashSet<>();
 		/** This procedure's own accepting states plus the imported ones. */
 		private final Set<STATE> mErrorStates = new LinkedHashSet<>();
-		private final Map<STATE, Map<STATE, UnmodifiableTransFormula>> mVirtualEdges;
-		/** Whether {@link LoopTreeFormulaBuilder#rejectUnresolvedCallsAndReturns} has accepted this scope. */
+		/** The internal transitions inside the procedure and the edges of its calls, see {@link #buildScopeEdges}. */
+		private final Map<STATE, Map<STATE, UnmodifiableTransFormula>> mEdges;
+		/** Whether {@link #rejectUnresolvedCallsAndReturns} has accepted this scope. */
 		private boolean mCallsChecked;
 		/** Entry state -> the states reachable from it, see {@link #reachableInScope}. */
 		private final Map<STATE, Set<STATE>> mReachable = new HashMap<>();
@@ -269,7 +268,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		private ScopeData(final String procedure, final Map<STATE, Map<STATE, UnmodifiableTransFormula>> edges,
 				final Set<STATE> imported) {
 			mProcedure = procedure;
-			mVirtualEdges = edges;
+			mEdges = edges;
 			mScopeStates.addAll(ownStates(procedure));
 			mScopeStates.addAll(imported);
 			mSealed.addAll(imported);
@@ -346,40 +345,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	// ----------------------------------------------------------------------------------------------------------
-	// Results, to be handed to LoopTreeFormulaBuilder's scoped constructor
+	// Results, to be handed to LoopTreeFormulaBuilder
 	// ----------------------------------------------------------------------------------------------------------
-
-	/**
-	 * The flat graph the nodes below live in. It has no transition of its own: every edge between two of
-	 * {@link #getScopeStates()} is one of {@link #getVirtualCallEdges()}, since the nodes are only the cut points of
-	 * each procedure, see {@link #reduce}.
-	 */
-	public ICallResolvedGraph<LETTER, CallNode<STATE>> getGraph() {
-		return new ICallResolvedGraph<>() {
-			@Override
-			public Iterable<OutgoingInternalTransition<LETTER, CallNode<STATE>>> internalSuccessors(
-					final CallNode<STATE> node) {
-				return Collections.emptyList();
-			}
-
-			@Override
-			public Iterable<OutgoingCallTransition<LETTER, CallNode<STATE>>> callSuccessors(
-					final CallNode<STATE> node) {
-				return Collections.emptyList();
-			}
-
-			@Override
-			public Iterable<OutgoingReturnTransition<LETTER, CallNode<STATE>>> returnSuccessorsGivenHier(
-					final CallNode<STATE> node, final CallNode<STATE> hier) {
-				return Collections.emptyList();
-			}
-		};
-	}
-
-	/** The entry procedures' nodes, the nodes of every unfolded callee copy, and every imported error node. */
-	public Set<CallNode<STATE>> getScopeStates() {
-		return Collections.unmodifiableSet(mRootScopeStates);
-	}
 
 	public Set<CallNode<STATE>> getInitStates() {
 		return Collections.unmodifiableSet(mRootInitStates);
@@ -393,10 +360,11 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	/**
 	 * Every edge of the graph: the reduced edges of each procedure copy, which include the summaries of its
 	 * error-free summarized calls, the error edges of the other summarized calls, and the call and return edges of
-	 * unfolded and stacked callees.
+	 * unfolded and stacked callees. Its nodes are the entry procedures' cut points, those of every unfolded or stacked
+	 * callee, and every imported error node.
 	 */
-	public Map<CallNode<STATE>, Map<CallNode<STATE>, UnmodifiableTransFormula>> getVirtualCallEdges() {
-		return Collections.unmodifiableMap(mRootVirtualCallEdges);
+	public Map<CallNode<STATE>, Map<CallNode<STATE>, UnmodifiableTransFormula>> getEdges() {
+		return Collections.unmodifiableMap(mRootEdges);
 	}
 
 	/**
@@ -437,7 +405,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			}
 		}
 		final Set<STATE> imported = new LinkedHashSet<>();
-		final Map<STATE, Map<STATE, UnmodifiableTransFormula>> edges = buildVirtualEdges(procedure, imported);
+		final Map<STATE, Map<STATE, UnmodifiableTransFormula>> edges = buildScopeEdges(procedure, imported);
 		final ScopeData data = new ScopeData(procedure, edges, imported);
 		if (hasCycleInScope(data, entryStates(procedure))) {
 			mUnfolded.add(procedure);
@@ -562,11 +530,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			if (mAbstraction.returnSuccessors(state).iterator().hasNext()) {
 				keep.add(state);
 			}
-			for (final OutgoingInternalTransition<LETTER, STATE> t : mAbstraction.internalSuccessors(state)) {
-				if (own.contains(t.getSucc())) {
-					addAlternative(succ, state, t.getSucc(), t.getLetter().getTransformula());
-				}
-			}
+			addInternalTransitions(state, own, succ);
 			foldCalls(procedure, state, own, succ, keep, folded);
 		}
 
@@ -632,6 +596,23 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		final Set<STATE> nodes = new LinkedHashSet<>(own);
 		nodes.removeAll(removed);
 		return new ReducedProcedure(nodes, combine(succ), folded);
+	}
+
+	/**
+	 * The internal transitions of {@code state}, which stay in its procedure {@code own}. A transition into a dead state
+	 * is left out. An internal transition into a live state of another procedure would be lost here, which could prove
+	 * an unsafe program safe, so it is refused.
+	 */
+	private void addInternalTransitions(final STATE state, final Set<STATE> own,
+			final Map<STATE, Map<STATE, List<UnmodifiableTransFormula>>> edges) {
+		for (final OutgoingInternalTransition<LETTER, STATE> t : mAbstraction.internalSuccessors(state)) {
+			if (own.contains(t.getSucc())) {
+				addAlternative(edges, state, t.getSucc(), t.getLetter().getTransformula());
+			} else if (mLive.contains(t.getSucc())) {
+				throw new UnsupportedOperationException("The internal transition " + state + " -" + t.getLetter()
+						+ "-> " + t.getSucc() + " leaves its procedure, which only a call or a return can do.");
+			}
+		}
 	}
 
 	private boolean isRemovable(final STATE state, final Set<STATE> keep, final Set<STATE> removed,
@@ -772,7 +753,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 				}
 			}
 		}
-		mRootVirtualCallEdges.putAll(combine(alternatives));
+		mRootEdges.putAll(combine(alternatives));
 	}
 
 	private void enqueue(final Deque<CallNode<STATE>> worklist, final CallNode<STATE> node) {
@@ -1072,18 +1053,20 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * Every virtual call edge of {@code caller}, in its own state space: one per (call transition, exit state of
-	 * the callee) pair for the normal return, and one per (call transition, error state inside the callee) pair
-	 * for a violation that never returns. Fills {@code imported} with the error states the edges point at. Only
-	 * called for a summarizable procedure, so every callee has a summary.
+	 * Every edge of {@code caller}, in its own state space: its internal transitions, and for its calls one edge per
+	 * (call transition, exit state of the callee) pair for the normal return, and one per (call transition, error state
+	 * inside the callee) pair for a violation that never returns. Fills {@code imported} with the error states the edges
+	 * point at, which have no edges themselves. Only called for a summarizable procedure, so every callee has a summary.
 	 */
-	private Map<STATE, Map<STATE, UnmodifiableTransFormula>> buildVirtualEdges(final String caller,
+	private Map<STATE, Map<STATE, UnmodifiableTransFormula>> buildScopeEdges(final String caller,
 			final Set<STATE> imported) {
 		final Map<STATE, Map<STATE, List<UnmodifiableTransFormula>>> alternatives = new LinkedHashMap<>();
 		final INodeSpace<STATE, STATE> identity = identitySpace();
-		for (final STATE callSite : ownStates(caller)) {
-			for (final OutgoingCallTransition<LETTER, STATE> call : liveCalls(callSite)) {
-				resolveBySummary(caller, callSite, call, identity, alternatives, imported);
+		final Set<STATE> own = ownStates(caller);
+		for (final STATE state : own) {
+			addInternalTransitions(state, own, alternatives);
+			for (final OutgoingCallTransition<LETTER, STATE> call : liveCalls(state)) {
+				resolveBySummary(caller, state, call, identity, alternatives, imported);
 			}
 		}
 		return combine(alternatives);
@@ -1194,17 +1177,54 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			return data.mFormulas.get(key);
 		}
 		mNumBuilds++;
-		final LoopTreeFormulaBuilder<LETTER, STATE> builder = new LoopTreeFormulaBuilder<>(mServices, mLogger,
-				mMgdScript, mAbstraction, data.mScopeStates, Collections.singleton(entry), Collections.singleton(target),
-				data.mVirtualEdges, data.mSealed);
-		// Only this graph has calls: the root graph has no transition of its own, see getGraph.
 		if (!data.mCallsChecked) {
-			builder.rejectUnresolvedCallsAndReturns();
+			rejectUnresolvedCallsAndReturns(data);
 			data.mCallsChecked = true;
 		}
-		final UnmodifiableTransFormula result = builder.buildLoopFreeFormula();
+		final UnmodifiableTransFormula result = new LoopTreeFormulaBuilder<>(mServices, mLogger, mMgdScript, data.mEdges,
+				Collections.singleton(entry), Collections.singleton(target)).buildLoopFreeFormula();
 		data.mFormulas.put(key, result);
 		return result;
+	}
+
+	/**
+	 * Refuses every call and return transition whose target is in {@code data}'s scope: the scope's edges would not
+	 * describe it, since it has no call stack (see {@link LoopTreeFormulaBuilder}). A call or return that leaves the scope
+	 * is not refused: it is what an edge of {@link #buildScopeEdges} stands for. A sealed state has no edges at all, so its
+	 * transitions are not refused either.
+	 * <p>
+	 * The cost is the states times the call sites, so this is run once per scope.
+	 */
+	private void rejectUnresolvedCallsAndReturns(final ScopeData data) {
+		final List<STATE> callSites = new ArrayList<>();
+		for (final STATE state : data.mScopeStates) {
+			if (mAbstraction.callSuccessors(state).iterator().hasNext()) {
+				callSites.add(state);
+			}
+		}
+		for (final STATE state : data.mScopeStates) {
+			if (data.mSealed.contains(state)) {
+				continue;
+			}
+			for (final OutgoingCallTransition<LETTER, STATE> t : mAbstraction.callSuccessors(state)) {
+				rejectUnresolved(data, state, t.getLetter(), t.getSucc(), "call");
+			}
+			for (final STATE hier : callSites) {
+				for (final OutgoingReturnTransition<LETTER, STATE> t : mAbstraction.returnSuccessorsGivenHier(state,
+						hier)) {
+					rejectUnresolved(data, state, t.getLetter(), t.getSucc(), "return");
+				}
+			}
+		}
+	}
+
+	private void rejectUnresolved(final ScopeData data, final STATE source, final LETTER letter, final STATE target,
+			final String kind) {
+		if (data.mScopeStates.contains(target)) {
+			throw new UnsupportedOperationException("The " + kind + " transition " + source + " -" + letter + "-> "
+					+ target + " stays inside the scope of procedure " + data.mProcedure + ", which has no call stack, "
+					+ "and a " + kind + "'s transition formula describes only the parameter resp. result assignment.");
+		}
 	}
 
 	/**
@@ -1348,23 +1368,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	// Traversal of one procedure's own scope
 	// ----------------------------------------------------------------------------------------------------------
 
-	/**
-	 * Every way to leave {@code state} inside {@code data}'s scope, over the same edges
-	 * {@link LoopTreeFormulaBuilder} would use: internal transitions that stay in the scope and virtual call
-	 * edges, nothing else. A sealed state has none.
-	 */
-	private List<STATE> scopeSuccessors(final ScopeData data, final STATE state) {
-		if (data.mSealed.contains(state)) {
-			return Collections.emptyList();
-		}
-		final List<STATE> result = new ArrayList<>();
-		for (final OutgoingInternalTransition<LETTER, STATE> t : mAbstraction.internalSuccessors(state)) {
-			if (data.mScopeStates.contains(t.getSucc())) {
-				result.add(t.getSucc());
-			}
-		}
-		result.addAll(data.mVirtualEdges.getOrDefault(state, Collections.emptyMap()).keySet());
-		return result;
+	private Set<STATE> scopeSuccessors(final ScopeData data, final STATE state) {
+		return data.mEdges.getOrDefault(state, Collections.emptyMap()).keySet();
 	}
 
 	/**
