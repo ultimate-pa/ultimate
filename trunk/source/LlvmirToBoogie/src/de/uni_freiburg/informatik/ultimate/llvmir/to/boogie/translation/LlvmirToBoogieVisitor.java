@@ -27,11 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation;
 
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructCDivFunction;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructInitialProcedure;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructSpecFromIdentifier;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructProcedureFromFuncDef;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructVarDecFromString;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.contructRemainderFunction;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.procedureAlreadyPresent;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.InitialDeclarationBuilder.constructInitialDeclarations;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleAddInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleICmpInst;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleMulInst;
@@ -75,21 +75,15 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -144,74 +138,6 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	}
 
 	/**
-	 * Constructs initial declarations for global variables and the ULTIMATE.start procedure.
-	 *
-	 * This method initializes the global variables and constructs the ULTIMATE.start procedure that will be executed at
-	 * the start of the program. It also constructs an aux#init procedure for global variable initialization.
-	 *
-	 * Using addFirst ensures that the initial declarations are at the beginning of the Boogie AST unit.
-	 */
-	private void constructInitialDeclarations() {
-		final ArrayList<Statement> stmts = new ArrayList<>();
-		final ArrayList<Specification> specs = new ArrayList<>();
-		final ArrayList<Declaration> decls = new ArrayList<>();
-		for (final String key : mGlobalVars.keySet()) {
-			final Pair<Declaration, Statement> pair = mGlobalVars.get(key);
-			if (pair == null) {
-				mLogger.error("No pair found for global variable: " + key);
-				continue;
-			}
-			decls.add(pair.getFirst());
-			stmts.add(pair.getSecond());
-			specs.add(constructSpecFromIdentifier(unifyIdentifier(key), (LlvmirLocation) pair.getSecond().getLoc()));
-		}
-
-		final String initIdentifier = "aux#init";
-		mDeclarations.addFirst(constructInitialProcedure(mLocation, initIdentifier, new VariableDeclaration[] {},
-				stmts.toArray(Statement[]::new), specs.toArray(Specification[]::new)));
-		final CallStatement initCall =
-				new CallStatement(mLocation, false, new VariableLHS[] {}, initIdentifier, new Expression[] {});
-
-		VariableLHS[] lhsVars;
-		VariableDeclaration[] varDecls;
-		final String mainReturnType = getMainReturnType();
-		if (mainReturnType.equals("void")) {
-			lhsVars = new VariableLHS[] {};
-			varDecls = new VariableDeclaration[] {};
-		} else {
-			final String tmpVarIdentifier = "aux#tmp";
-			final VariableLHS varLhs = new VariableLHS(mLocation, tmpVarIdentifier);
-			lhsVars = new VariableLHS[] { varLhs };
-			varDecls = new VariableDeclaration[] {
-					constructVarDecFromString(mainReturnType, tmpVarIdentifier, mLocation) };
-		}
-		final CallStatement mainCall = new CallStatement(mLocation, false, lhsVars, "#main", new Expression[] {});
-
-		mDeclarations.addFirst(constructInitialProcedure(mLocation, "ULTIMATE.start", varDecls,
-				new Statement[] { initCall, mainCall }, specs.toArray(Specification[]::new)));
-
-		mDeclarations.addAll(0, decls);
-	}
-
-	/**
-	 * Retrieves the return type of the #main procedure.
-	 *
-	 * This method searches for the #main procedure in the declarations and returns its return type as a String. If no
-	 * such procedure is found, it throws an IllegalStateException.
-	 *
-	 * @return The return type of the #main procedure.
-	 * @throws IllegalStateException
-	 *             if no #main procedure is found in the declarations.
-	 */
-	private String getMainReturnType() throws IllegalStateException {
-		final Procedure main = (Procedure) mDeclarations.stream()
-				.filter(decl -> decl instanceof Procedure && ((Procedure) decl).getIdentifier().equals("#main"))
-				.findFirst().orElseThrow(() -> new IllegalStateException("No #main declaration found"));
-		final String retString = main.getOutParams().length > 0 ? main.getOutParams()[0].getType().toString() : "void";
-		return retString.contains("int") ? "int" : retString.contains("bool") ? "bool" : "void";
-	}
-
-	/**
 	 * Handles the visit event for the compilation unit in the LLVM IR parse tree.
 	 *
 	 * This method initializes the location and processes the children of the compilation unit context to construct
@@ -250,7 +176,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			visit(mainFunc);
 		}
 
-		constructInitialDeclarations();
+		constructInitialDeclarations(mDeclarations, mGlobalVars, mLocation, mLogger);
 		mResult = new Unit(mLocation, mDeclarations.toArray(Declaration[]::new));
 		return null;
 	}
@@ -283,49 +209,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		}
 
 		result.addFuncLocalVar(constructVarDecFromString("int", LABEL_IDENTIFIER, mLocation));
-		final String funcName = unifyIdentifier(ctx.funcHeader().GlobalIdent().getText());
-		final LLVMIRParser.TypeContext returnType = ctx.funcHeader().type();
-
 		final LlvmirLocation location = constructLocation(ctx);
-
-		final Body body = new Body(location, result.getFuncLocalVars().toArray(VariableDeclaration[]::new),
-				result.getFuncBlock().toArray(Statement[]::new));
-		final ArrayList<Attribute> attributes = new ArrayList<>();
-		final ArrayList<String> typeParams = new ArrayList<>();
-		final ArrayList<VarList> inParams = new ArrayList<>();
-		final ArrayList<VarList> outParams = new ArrayList<>();
-
-		for (final LLVMIRParser.ParamContext param : ctx.funcHeader().params().param()) {
-			PrimitiveType paramType = null;
-			if (param.type().intType().getText().equals("i1")) {
-				paramType = new PrimitiveType(location, "bool");
-			} else {
-				paramType = new PrimitiveType(location, "int");
-			}
-			final VarList varList =
-					new VarList(location, new String[] { unifyIdentifier(param.LocalIdent().getText()) }, paramType);
-			inParams.add(varList);
-		}
-
-		if (returnType.getText().equals("void")) {
-			// Nothing gets returned
-		} else if (returnType.intType() != null) {
-			PrimitiveType returnTypePrim = null;
-			if (returnType.intType().getText().equals("i1")) {
-				returnTypePrim = new PrimitiveType(location, "bool");
-			} else {
-				returnTypePrim = new PrimitiveType(location, "int");
-			}
-			final VarList retVarList = new VarList(location, new String[] { "ret" }, returnTypePrim);
-			outParams.add(retVarList);
-		} else {
-			throw new AssertionError(
-					"The support for return types other than void and integers is not implemented yet.");
-		}
-
-		final Procedure procedure = new Procedure(location, attributes.toArray(Attribute[]::new), funcName,
-				typeParams.toArray(String[]::new), inParams.toArray(VarList[]::new), outParams.toArray(VarList[]::new),
-				result.getFuncModifiedGlobalVars().toArray(Specification[]::new), body);
+		final Procedure procedure = constructProcedureFromFuncDef(ctx, result, location);
 
 		if (!procedureAlreadyPresent(procedure, mDeclarations)) {
 			mDeclarations.add(procedure);
