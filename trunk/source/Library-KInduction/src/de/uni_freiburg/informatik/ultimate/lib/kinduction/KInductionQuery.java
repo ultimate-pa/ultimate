@@ -81,6 +81,8 @@ public final class KInductionQuery<STATE> {
 	private final Object mLock;
 	private final StepVars mConstants;
 	private final List<Term> mStepTerms = new ArrayList<>();
+	private final List<Long> mStepDagSizes = new ArrayList<>();
+	private long mAssertedDagSize;
 	private final Map<TermVariable, IProgramVar> mVarOfTermVariable = new HashMap<>();
 
 	/**
@@ -98,6 +100,18 @@ public final class KInductionQuery<STATE> {
 		for (final IProgramVar pv : system.getVars()) {
 			mVarOfTermVariable.put(pv.getTermVariable(), pv);
 		}
+	}
+
+	/**
+	 * @return the DAG size of the last step built so far, 0 if there is none
+	 */
+	public long getLastStepDagSize() {
+		return mStepDagSizes.isEmpty() ? 0 : mStepDagSizes.get(mStepDagSizes.size() - 1);
+	}
+
+	/** @return the DAG sizes of all step terms ever sent to the solver, counted each time one was sent */
+	public long getAssertedDagSize() {
+		return mAssertedDagSize;
 	}
 
 	/**
@@ -126,7 +140,9 @@ public final class KInductionQuery<STATE> {
 	 */
 	public List<Term> prepare(final int k, final Map<Integer, Invariant> invariants) {
 		while (mStepTerms.size() < k) {
-			mStepTerms.add(mSystem.step(mStepTerms.size(), mConstants, mMgdScript));
+			final Term step = mSystem.step(mStepTerms.size(), mConstants, mMgdScript);
+			mStepTerms.add(step);
+			mStepDagSizes.add(PcTransitionSystem.dagSize(step));
 		}
 		for (int j = 0; j <= k; j++) {
 			mConstants.pc(j);
@@ -166,6 +182,7 @@ public final class KInductionQuery<STATE> {
 		}
 		for (int j = 0; j < k; j++) {
 			mMgdScript.assertTerm(mLock, mStepTerms.get(j));
+			mAssertedDagSize += mStepDagSizes.get(j);
 		}
 		if (kind == Kind.STEP) {
 			for (int j = 0; j < k; j++) {

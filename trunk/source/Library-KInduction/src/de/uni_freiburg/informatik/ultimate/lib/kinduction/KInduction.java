@@ -223,6 +223,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 						+ "counters of sort %s",
 				mSystem.getNumNodes(), mSystem.getNumTransitions(), mSystem.getVars().size(),
 				mSystem.getHeadNodes().size(), mSystem.getCounterSort());
+		mLogger.info("KInduction: encoding statistics: %s", mSystem.getStatistics());
 
 		mWorkerMgdScript.lock(mKILock);
 		try {
@@ -279,6 +280,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 			}
 			final LBool step = answer(Kind.STEP, k);
 			mLogger.info("KInduction: k=%d - step case: %s", k, step);
+			mLogger.info("KInduction: k=%d - last step of DAG size %d, %d constants, DAG size sent so far %d", k,
+					mQuery.getLastStepDagSize(), mIndexedConstantsWorkerScript.size(), mQuery.getAssertedDagSize());
 			if (step == LBool.UNSAT) {
 				mProvedK = k;
 				// What the deciding step case assumed: a correctness witness has to assume it too.
