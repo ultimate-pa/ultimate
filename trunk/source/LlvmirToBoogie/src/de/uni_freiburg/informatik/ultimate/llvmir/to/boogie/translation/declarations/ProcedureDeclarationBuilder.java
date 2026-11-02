@@ -51,9 +51,9 @@ import de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.Result;
  *
  * All methods only work on their parameters and do not access any state of the translation.
  */
-public final class ProcedureDeclerationBuilder {
+public final class ProcedureDeclarationBuilder {
 
-	private ProcedureDeclerationBuilder() {
+	private ProcedureDeclarationBuilder() {
 		// utility class, not meant to be instantiated
 	}
 

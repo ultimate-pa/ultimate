@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions;
 
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.ProcedureDeclerationBuilder.constructSpecFromIdentifier;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.ProcedureDeclerationBuilder.getProcedureFromDeclarations;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.ProcedureDeclarationBuilder.constructSpecFromIdentifier;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.ProcedureDeclarationBuilder.getProcedureFromDeclarations;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.TypeDeclarationBuilder.bitLengthPairExists;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.TypeDeclarationBuilder.constructBitLengthPairTypeDeclaration;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.VariableDeclarationBuilder.constructVarDecFromTypeContext;
