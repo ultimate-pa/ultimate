@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -92,6 +93,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	private int mLoopBound = -1;
 	// a -> b then state is a
 	private final List<Pair<STATE, LETTER>> mCurrentPrefix = new ArrayList<>();
+	/** The initial state that {@link #mCurrentPrefix} begins at. */
+	private STATE mCurrentStart;
 
 	/**
 	 * HashMap used for parallel trace abstraction Maps TraceHash to Trace, has an entry for every counterexample
@@ -475,17 +478,13 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 		mVisitedPairs.clear(); // reset visited Pairs, then add start of subsearch
 		if (counterexamples.isEmpty()) {
-			final IsEmptyHeuristic<LETTER, STATE> runsearch;
-			if (mGoalStates != null) {
-				final Predicate<STATE> funIsForbiddenState = a -> false;
-				final Predicate<STATE> goals = a -> mGoalStates.contains(a);
-				final Set<STATE> startset = new HashSet<>(mStartStates);
-				runsearch = new IsEmptyHeuristic<>(mServices, mOperand, startset, funIsForbiddenState, goals,
-						IHeuristic.getHeuristic(AStarHeuristic.ZERO, null, 0), new ArrayList<>(mCurrentPrefix));
-			} else {
-				runsearch = new IsEmptyHeuristic<>(mServices, mOperand,
-						IHeuristic.getHeuristic(AStarHeuristic.ZERO, null, 0), new ArrayList<>(mCurrentPrefix));
-			}
+			// Only from the start being explored: no active counterexample begins there. An automaton with several
+			// initial states, e.g. a library without an entry procedure, has other starts that active ones begin at, and
+			// the shortest run from those would be one of them.
+			final Predicate<STATE> goals = mGoalStates != null ? mGoalStates::contains : mOperand::isFinal;
+			final IsEmptyHeuristic<LETTER, STATE> runsearch = new IsEmptyHeuristic<>(mServices, mOperand,
+					Collections.singleton(mCurrentStart), a -> false, goals,
+					IHeuristic.getHeuristic(AStarHeuristic.ZERO, null, 0), new ArrayList<>(mCurrentPrefix));
 			final NestedRun<LETTER, STATE> run = runsearch.getNestedRun();
 			if (run == null) {
 				return run;
@@ -569,6 +568,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		while (!pqStart.isEmpty()) {
 			final PQState startpq = pqStart.poll();
 			final STATE start = startpq.getSucc();
+			mCurrentStart = start;
 			final NestedRun<LETTER, STATE> runToGoal = constructRunFromStateToNextBranch(0,
 					new DoubleDecker<>(mDummyEmptyStackState, start), startpq.getCounterexamplesUnderConsideration());
 
