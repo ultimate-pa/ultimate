@@ -26,10 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation;
 
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructCDivFunction;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.AuxFunctionBuilder.constructCDivFunction;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.AuxFunctionBuilder.constructRemainderFunction;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructProcedureFromFuncDef;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructVarDecFromString;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.contructRemainderFunction;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.procedureAlreadyPresent;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.InitialDeclarationBuilder.constructInitialDeclarations;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.handleAddInst;
@@ -151,7 +151,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	public Result visitCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
 		mLocation = constructLocation(ctx);
 		mDeclarations.add(constructCDivFunction(mLocation));
-		mDeclarations.add(contructRemainderFunction(mLocation));
+		mDeclarations.add(constructRemainderFunction(mLocation));
 
 		ParseTree mainFunc = null;
 
