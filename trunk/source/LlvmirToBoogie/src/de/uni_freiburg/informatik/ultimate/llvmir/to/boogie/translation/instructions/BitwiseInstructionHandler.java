@@ -26,8 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions;
 
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.constructHavocStatementFromTypeValue;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.VariableDeclarationBuilder.constructVarDecFromTypeContext;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRParser;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LlvmirLocation;
 import de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.Result;
@@ -41,6 +44,36 @@ public final class BitwiseInstructionHandler {
 
 	private BitwiseInstructionHandler() {
 		// utility class, not meant to be instantiated
+	}
+
+	/**
+	 * Constructs a havoc statement for bitwise instructions.
+	 *
+	 * This method generates a havoc statement for arithmetic or logic instructions based on the type of the
+	 * instruction. It constructs a local variable with either "bool" or "int" type and adds a havoc statement to the
+	 * result.
+	 *
+	 * @param result
+	 *            The result to which the havoc statement will be added.
+	 * @param typeValue
+	 *            The type value context from the LLVM IR parse tree.
+	 * @param location
+	 *            The location in the source code where this instruction is defined.
+	 * @param reason
+	 *            The reason for the overapproximation.
+	 * @param identifier
+	 *            The identifier for the local variable to be constructed.
+	 */
+	private static void constructHavocStatementFromTypeValue(final Result result,
+			final LLVMIRParser.TypeValueContext typeValue, final LlvmirLocation location, final String identifier,
+			final String reason) {
+		final LLVMIRParser.ConcreteTypeContext tpyeContext = typeValue.firstClassType().concreteType();
+		result.addFuncLocalVar(constructVarDecFromTypeContext(tpyeContext, identifier, location));
+		final VariableLHS varLhs = new VariableLHS(location, identifier);
+		final HavocStatement havocStmt = new HavocStatement(location, new VariableLHS[] { varLhs });
+		final Overapprox overapprox = new Overapprox(reason, location);
+		overapprox.annotate(havocStmt);
+		result.addFuncBlock(havocStmt);
 	}
 
 	/**

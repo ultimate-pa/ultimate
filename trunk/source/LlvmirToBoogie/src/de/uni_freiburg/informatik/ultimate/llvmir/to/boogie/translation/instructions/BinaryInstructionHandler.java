@@ -33,121 +33,27 @@ import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.u
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructExpressionFromValue;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.getBitLengthFromType;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRParser;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LlvmirLocation;
 import de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.Result;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Builders for the Boogie statements of arithmetic and logic instructions of LLVM-IR.
+ * Builders for the Boogie statements of binary operations of LLVM-IR.
  *
  * All methods only work on their parameters and do not access any state of the translation.
  */
-public final class ArithmeticInstructionHandler {
+public final class BinaryInstructionHandler {
 
-	private ArithmeticInstructionHandler() {
+	private BinaryInstructionHandler() {
 		// utility class, not meant to be instantiated
-	}
-
-	/**
-	 * Constructs a havoc statement for arithmetic or logic instructions.
-	 *
-	 * This method generates a havoc statement for arithmetic or logic instructions based on the type of the
-	 * instruction. It constructs a local variable with either "bool" or "int" type and adds a havoc statement to the
-	 * result.
-	 *
-	 * @param result
-	 *            The result to which the havoc statement will be added.
-	 * @param typeValue
-	 *            The type value context from the LLVM IR parse tree.
-	 * @param location
-	 *            The location in the source code where this instruction is defined.
-	 * @param reason
-	 *            The reason for the overapproximation.
-	 * @param identifier
-	 *            The identifier for the local variable to be constructed.
-	 */
-	public static void constructHavocStatementFromTypeValue(final Result result,
-			final LLVMIRParser.TypeValueContext typeValue, final LlvmirLocation location, final String identifier,
-			final String reason) {
-		final LLVMIRParser.ConcreteTypeContext tpyeContext = typeValue.firstClassType().concreteType();
-		result.addFuncLocalVar(constructVarDecFromTypeContext(tpyeContext, identifier, location));
-		final VariableLHS varLhs = new VariableLHS(location, identifier);
-		final HavocStatement havocStmt = new HavocStatement(location, new VariableLHS[] { varLhs });
-		final Overapprox overapprox = new Overapprox(reason, location);
-		overapprox.annotate(havocStmt);
-		result.addFuncBlock(havocStmt);
-	}
-
-	/**
-	 * Constructs a variable declaration and an assignment statement for an LLVM operation with overflow handling.
-	 *
-	 * This method creates a VariableDeclaration for a struct type that holds the result of the operation and an
-	 * overflow flag. It also constructs an AssignmentStatement that assigns the result of the operation and the
-	 * overflow status to the struct fields.
-	 *
-	 * @param operation
-	 *            The expression representing the LLVM operation.
-	 * @param bitLength
-	 *            The bit length of the integer type involved in the operation.
-	 * @param isSigned
-	 *            Indicates whether the integer type is signed or unsigned.
-	 * @param identifier
-	 *            The identifier for the variable to be declared and assigned.
-	 * @param location
-	 *            The location in the source code where this operation occurs.
-	 * @return A Pair containing the VariableDeclaration and AssignmentStatement.
-	 */
-	public static Pair<VariableDeclaration, AssignmentStatement> constructLlvmOperationWithOverflow(
-			final Expression operation, final int bitLength, final boolean isSigned, final String identifier,
-			final LlvmirLocation location) {
-		final NamedType namedType = new NamedType(location, "i" + bitLength + "Pair", new ASTType[] {});
-		final VarList varList = new VarList(location, new String[] { identifier }, namedType);
-		final VariableDeclaration varDec =
-				new VariableDeclaration(location, new Attribute[] {}, new VarList[] { varList });
-
-		final String[] fieldIdentifiers = { "e0", "e1" };
-		final Expression[] fieldValues = {};
-		final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength, false);
-		final BinaryExpression binaryExpr1 =
-				new BinaryExpression(location, Operator.ARITHMOD, operation, bitLengthLiteral);
-		fieldValues[0] = binaryExpr1;
-
-		final IntegerLiteral signedBitLengthLiteral = constructBitLengthLiteral(location, bitLength, isSigned);
-		final BinaryExpression binaryExpr2 =
-				new BinaryExpression(location, Operator.COMPGT, operation, signedBitLengthLiteral);
-
-		final Expression expr =
-				isSigned ? new UnaryExpression(location, UnaryExpression.Operator.ARITHNEGATIVE, signedBitLengthLiteral)
-						: new IntegerLiteral(location, "0");
-		final BinaryExpression binaryExpr3 = new BinaryExpression(location, Operator.ARITHPLUS, operation, expr);
-
-		final BinaryExpression binaryExpr4 = new BinaryExpression(location, Operator.LOGICOR, binaryExpr2, binaryExpr3);
-		fieldValues[1] = binaryExpr4;
-
-		final StructConstructor structConstructor = new StructConstructor(location, fieldIdentifiers, fieldValues);
-		final VariableLHS varLhs = new VariableLHS(location, identifier);
-		final AssignmentStatement assignmentStmt = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-				new Expression[] { structConstructor });
-
-		return new Pair<>(varDec, assignmentStmt);
 	}
 
 	/**
