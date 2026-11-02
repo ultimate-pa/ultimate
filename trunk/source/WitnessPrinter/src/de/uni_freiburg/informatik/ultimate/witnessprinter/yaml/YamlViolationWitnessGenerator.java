@@ -191,7 +191,7 @@ public class YamlViolationWitnessGenerator<TE, E> {
 			segments.addAll(getSegments(mStem, SegmentType.FOLLOW, mTargetIndices));
 		} else {
 			segments.addAll(getSegments(mStem, SegmentType.FOLLOW, Set.of()));
-			segments.addAll(getSegments(mLoop, SegmentType.CYCLE, mTargetIndices));
+			segments.addAll(getSegments(mLoop, SegmentType.CYCLE, Set.of()));
 		}
 		mLogger.info("Generated YAML witness of length %d.", segments.size());
 		return mWriter.toString(new Witness(List.of(new ViolationSequence(segments))));

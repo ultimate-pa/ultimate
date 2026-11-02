@@ -260,8 +260,9 @@ public class WitnessPrinter implements IOutput {
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
 			if (createYaml) {
-				final String witness = new YamlViolationWitnessGenerator<>(lasso.stem(), lasso.loop(), mLogger,
-						mServices, Set.of(lasso.loop().getLength() - 1)).makeYamlString();
+				final String witness =
+						new YamlViolationWitnessGenerator<>(lasso.stem(), lasso.loop(), mLogger, mServices, Set.of())
+								.makeYamlString();
 				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
 			}
 		}
