@@ -1,0 +1,472 @@
+/*
+ * Copyright (C) 2026 Max Lehr
+ * Copyright (C) 2026 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Library-Sifa plug-in.
+ *
+ * The ULTIMATE Library-Sifa plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Library-Sifa plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Library-Sifa plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Library-Sifa plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Library-Sifa plug-in grant you additional permission
+ * to convey the resulting work.
+ */
+package de.uni_freiburg.informatik.ultimate.lib.sifa.test;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.ConstraintRepresentation;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.GeneratorRepresentation;
+import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence.RationalVector;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
+
+public class ConstraintRepresentationTest {
+	private static List<ConstraintRepresentation> getTestConstraints() {
+		return List.of(getConstraints1(), getConstraints2(), getConstraints3(), getConstraints4(), getConstraints5(),
+				getConstraints6(), getConstraints7(), getConstraints8(), getConstraints9(), getConstraints10(),
+				getConstraints11(), getConstraints12(), getConstraints13(), getConstraints14());
+	}
+
+	private static ConstraintRepresentation getConstraints1() {
+		// @formatter:off
+		/*
+		 * x1 = -1
+		 * x1 = -1
+		 * x1 + x2 = -1
+		 * x1 + x2 - 2*x3 = 0 [1]
+		 * x4 = 0 [1]
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(RationalVector.fromIntList(List.of(1, 1, 0, 0, 0)));
+		equalities.add(RationalVector.fromIntList(List.of(1, 1, 0, 0, 0)));
+		equalities.add(RationalVector.fromIntList(List.of(1, 1, 1, 0, 0)));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(RationalVector.fromIntList(List.of(0, 1, 1, -2, 0)));
+		congruences.add(RationalVector.fromIntList(List.of(0, 0, 0, 0, 1)));
+
+		return new ConstraintRepresentation(equalities, congruences, 5);
+	}
+
+	private static ConstraintRepresentation getConstraints2() {
+		// @formatter:off
+		/*
+		 * x1 = -1
+		 * x1 + x4 = -1
+		 * x1 + x2 = -1
+		 * x1 + x2 - 2*x3 = 0 [1]
+		 * x4 = -1 [1]
+		 */
+		// @formatter:on
+
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(RationalVector.fromIntList(List.of(1, 1, 0, 0, 0)));
+		equalities.add(RationalVector.fromIntList(List.of(1, 1, 0, 0, 1)));
+		equalities.add(RationalVector.fromIntList(List.of(1, 1, 1, 0, 0)));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(RationalVector.fromIntList(List.of(0, 1, 1, -2, 0)));
+		congruences.add(RationalVector.fromIntList(List.of(1, 0, 0, 0, 1)));
+
+		return new ConstraintRepresentation(equalities, congruences, 5);
+	}
+
+	private static ConstraintRepresentation getConstraints3() {
+		// @formatter:off
+		/*
+		 * x1 = -1
+		 * x1 = 1
+		 */
+		// @formatter:on
+
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(RationalVector.fromIntList(List.of(1, 1, 0, 0, 0)));
+		equalities.add(RationalVector.fromIntList(List.of(-1, 1, 0, 0, 0)));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+
+		return new ConstraintRepresentation(equalities, congruences, 5);
+	}
+
+	private static ConstraintRepresentation getConstraints4() {
+		// @formatter:off
+		/*
+		 * x4 = 1 [2]
+		 */
+		// @formatter:on
+
+		final List<RationalVector> equalities = new ArrayList<>();
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(
+				List.of(Rational.valueOf(-1, 2), Rational.ZERO, Rational.ZERO, Rational.ZERO, Rational.valueOf(1, 2))));
+
+		return new ConstraintRepresentation(equalities, congruences, 5);
+	}
+
+	private static ConstraintRepresentation getConstraints5() {
+		// @formatter:off
+		/*
+		 * x1 = 0 [2]
+		 * x1 + x2 = 0 [3]
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(List.of(Rational.ZERO, Rational.valueOf(1, 2), Rational.ZERO)));
+		congruences.add(new RationalVector(List.of(Rational.ZERO, Rational.valueOf(1, 3), Rational.valueOf(1, 3))));
+
+		return new ConstraintRepresentation(equalities, congruences, 3);
+	}
+
+	private static ConstraintRepresentation getConstraints6() {
+		// @formatter:off
+		/*
+		 * 1 = 0 [2]
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(List.of(Rational.valueOf(-1, 2), Rational.ZERO)));
+
+		return new ConstraintRepresentation(equalities, congruences, 2);
+	}
+
+	private static ConstraintRepresentation getConstraints7() {
+		// @formatter:off
+		/*
+		 * x1 - x2 = 0 [2]
+		 * x1 + x2 = 0 [3]
+		 * x1 + x2 + 2*x3 = 1 [5]
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(
+				List.of(Rational.ZERO, Rational.valueOf(1, 2), Rational.valueOf(-1, 2), Rational.ZERO)));
+		congruences.add(new RationalVector(
+				List.of(Rational.ZERO, Rational.valueOf(1, 3), Rational.valueOf(1, 3), Rational.ZERO)));
+		congruences.add(new RationalVector(List.of(Rational.valueOf(-1, 5), Rational.valueOf(1, 5),
+				Rational.valueOf(1, 5), Rational.valueOf(2, 5))));
+
+		return new ConstraintRepresentation(equalities, congruences, 4);
+	}
+
+	private static ConstraintRepresentation getConstraints8() {
+		// @formatter:off
+		/*
+		 * x1 = 1 [2]
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(List.of(Rational.valueOf(-1, 2), Rational.valueOf(1, 2))));
+
+		return new ConstraintRepresentation(equalities, congruences, 2);
+	}
+
+	private static ConstraintRepresentation getConstraints9() {
+		// @formatter:off
+		/*
+		 * 0 = -1
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(RationalVector.fromIntList(List.of(1, 0)));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+
+		return new ConstraintRepresentation(equalities, congruences, 2);
+	}
+
+	private static ConstraintRepresentation getConstraints10() {
+		// @formatter:off
+		/*
+		 * No constraints
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+
+		final List<RationalVector> congruences = new ArrayList<>();
+
+		return new ConstraintRepresentation(equalities, congruences, 2);
+	}
+
+	private static ConstraintRepresentation getConstraints11() {
+		// @formatter:off
+		/*
+		 * 2*x1 + 3*x2 = 4 [10]
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(
+				List.of(Rational.valueOf(-4, 10), Rational.valueOf(2, 10), Rational.valueOf(3, 10))));
+
+		return new ConstraintRepresentation(equalities, congruences, 3);
+	}
+
+	private static ConstraintRepresentation getConstraints12() {
+		// @formatter:off
+		/*
+		 * x1 = 1
+		 * x1 + x2 = 2 [3]
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(new RationalVector(List.of(Rational.valueOf(-1, 1), Rational.ONE, Rational.ZERO)));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(
+				new RationalVector(List.of(Rational.valueOf(-2, 3), Rational.valueOf(1, 3), Rational.valueOf(1, 3))));
+
+		return new ConstraintRepresentation(equalities, congruences, 3);
+	}
+
+	private static ConstraintRepresentation getConstraints13() {
+		// @formatter:off
+		/*
+		 * 1 = 0
+		 * x1 = 0
+		 * x2 = 0
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(RationalVector.getUnitVector(0, 3));
+		equalities.add(RationalVector.getUnitVector(1, 3));
+		equalities.add(RationalVector.getUnitVector(2, 3));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+
+		return new ConstraintRepresentation(equalities, congruences, 3);
+	}
+
+	private static ConstraintRepresentation getConstraints14() {
+		// @formatter:off
+		/*
+		 * 1 = 0 [1]
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(List.of(Rational.valueOf(-1, 1), Rational.ZERO)));
+
+		return new ConstraintRepresentation(equalities, congruences, 2);
+	}
+
+	private static GeneratorRepresentation getGenerators8() {
+		// @formatter:off
+		/*
+		 * L = {(1, 1)}
+		 * Q = {(0, 2)}
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(new RationalVector(List.of(Rational.ONE, Rational.ONE)));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(List.of(Rational.ZERO, Rational.TWO)));
+
+		return new GeneratorRepresentation(equalities, congruences, 2);
+	}
+
+	private static GeneratorRepresentation getGenerators9() {
+		// @formatter:off
+		/*
+		 * L = {(0, 1)}
+		 * Q = {}
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(new RationalVector(List.of(Rational.ZERO, Rational.ONE)));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+
+		return new GeneratorRepresentation(equalities, congruences, 2);
+	}
+
+	private static GeneratorRepresentation getGenerators10() {
+		// @formatter:off
+		/*
+		 * L = {(1, 0), (0, 1)}
+		 * Q = {}
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(new RationalVector(List.of(Rational.ONE, Rational.ZERO)));
+		equalities.add(new RationalVector(List.of(Rational.ZERO, Rational.ONE)));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+
+		return new GeneratorRepresentation(equalities, congruences, 2);
+	}
+
+	private static GeneratorRepresentation getGenerators11() {
+		// @formatter:off
+		/*
+		 * L = {(1, 0, 4/3), (0, 1, -2/3)}
+		 * Q = {(0, 0, 10/3)}
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(new RationalVector(List.of(Rational.ONE, Rational.ZERO, Rational.valueOf(4, 3))));
+		equalities.add(new RationalVector(List.of(Rational.ZERO, Rational.ONE, Rational.valueOf(-2, 3))));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(List.of(Rational.ZERO, Rational.ZERO, Rational.valueOf(10, 3))));
+
+		return new GeneratorRepresentation(equalities, congruences, 3);
+	}
+
+	private static GeneratorRepresentation getGenerators12() {
+		// @formatter:off
+		/*
+		 * L = {(1, 1, 1)}
+		 * Q = {(0, 0, 3)}
+		 */
+		// @formatter:on
+		final List<RationalVector> equalities = new ArrayList<>();
+		equalities.add(new RationalVector(List.of(Rational.ONE, Rational.ONE, Rational.ONE)));
+
+		final List<RationalVector> congruences = new ArrayList<>();
+		congruences.add(new RationalVector(List.of(Rational.ZERO, Rational.ZERO, Rational.valueOf(3, 1))));
+
+		return new GeneratorRepresentation(equalities, congruences, 3);
+	}
+
+	@Test
+	public void testGetMinimalForm() {
+		for (final ConstraintRepresentation constraints : getTestConstraints()) {
+			constraints.minimize();
+			Assert.assertTrue(hasMinimalForm(constraints));
+		}
+	}
+
+	@Test
+	public void testIsUnsat() {
+		Assert.assertFalse(getConstraints1().computeGeneratorRepresentation().isUnsat());
+		Assert.assertFalse(getConstraints2().computeGeneratorRepresentation().isUnsat());
+		Assert.assertTrue(getConstraints3().computeGeneratorRepresentation().isUnsat());
+		Assert.assertFalse(getConstraints4().computeGeneratorRepresentation().isUnsat());
+		Assert.assertFalse(getConstraints5().computeGeneratorRepresentation().isUnsat());
+		Assert.assertTrue(getConstraints6().computeGeneratorRepresentation().isUnsat());
+		Assert.assertFalse(getConstraints14().computeGeneratorRepresentation().isUnsat());
+	}
+
+	@Test
+	public void testGetStrongMinimalForm() {
+		for (final ConstraintRepresentation constraints : getTestConstraints()) {
+			constraints.stronglyMinimize();
+			Assert.assertTrue(hasStrongMinimalForm(constraints));
+		}
+	}
+
+	@Test
+	public void testComputeGeneratorRepresentation() {
+		final List<ConstraintRepresentation> constraints = List.of(getConstraints8(), getConstraints9(),
+				getConstraints10(), getConstraints11(), getConstraints12());
+		final List<GeneratorRepresentation> generators =
+				List.of(getGenerators8(), getGenerators9(), getGenerators10(), getGenerators11(), getGenerators12());
+
+		for (int i = 0; i < constraints.size(); i++) {
+			final GeneratorRepresentation expected = generators.get(i);
+			final GeneratorRepresentation result = constraints.get(i).computeGeneratorRepresentation();
+			Assert.assertEquals(expected, result);
+		}
+	}
+
+	private static boolean hasMinimalForm(final ConstraintRepresentation constraints) {
+		if (!constraints.isMinimal()) {
+			return false;
+		}
+
+		final List<RationalVector> equalities = constraints.getEqualities();
+		final List<RationalVector> congruences = constraints.getCongruences();
+
+		// Check the satisfiable case
+		final List<RationalVector> vectors = new ArrayList<>(equalities);
+		vectors.addAll(congruences);
+
+		for (int i = 0; i < vectors.size(); i++) {
+			final var vector = vectors.get(i);
+			final var pivot = vector.lastPivot();
+
+			if (pivot == -1) {
+				return false;
+			}
+			final var value = vector.get(pivot);
+			if (value.numerator().compareTo(BigInteger.ZERO) <= 0) {
+				return false;
+			}
+			for (int j = i + 1; j < vectors.size(); j++) {
+				final var other = vectors.get(j);
+				if (pivot == other.lastPivot()) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	private static boolean hasStrongMinimalForm(final ConstraintRepresentation constraints) {
+		if (!hasMinimalForm(constraints)) {
+			return false;
+		}
+
+		if (!constraints.isStrongMinimal()) {
+			return false;
+		}
+
+		final List<RationalVector> congruences = constraints.getCongruences();
+
+		for (int i = 0; i < congruences.size(); i++) {
+			final RationalVector congruence = congruences.get(i);
+			final int pivot = congruence.lastPivot();
+			final Rational pivotElement = congruence.get(pivot);
+
+			for (int j = 0; j < congruences.size(); j++) {
+				if (i == j) {
+					continue;
+				}
+				final RationalVector other = congruences.get(j);
+				final Rational otherElement = other.get(pivot);
+				final Rational otherElement2 = otherElement.mul(Rational.TWO);
+
+				// Test if: -pivotElement < 2 * otherElement <= pivotElement
+				if (!(pivotElement.negate().compareTo(otherElement2) < 0)) {
+					return false;
+				}
+				if (!(otherElement2.compareTo(pivotElement) <= 0)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+}

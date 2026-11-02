@@ -27,7 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library;
 
-import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 
@@ -54,8 +53,6 @@ public class StdboolLibraryModel implements ILibraryModel {
 
 	@Override
 	public Collection<ConstantModel> getConstantModels() {
-		return List.of(
-				new ConstantModel("false", loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ZERO, BOOL_TYPE)),
-				new ConstantModel("true", loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ONE, BOOL_TYPE)));
+		return List.of(mHelper.integerConstant("false", 0), mHelper.integerConstant("true", 1));
 	}
 }

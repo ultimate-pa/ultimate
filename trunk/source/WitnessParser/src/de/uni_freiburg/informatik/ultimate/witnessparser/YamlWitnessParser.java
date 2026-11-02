@@ -119,6 +119,8 @@ public class YamlWitnessParser {
 		final List<Segment> parsedContent = new ArrayList<>();
 		for (final Map<String, List<Map<String, Object>>> seg : content) {
 			final List<Waypoint> avoidWP = new ArrayList<>();
+			final List<Waypoint> followWP = new ArrayList<>();
+			SegmentType segmentType = null;
 			for (final Map<String, Object> wpMap : seg.get("segment")) {
 				final Map<String, Object> wp = (Map<String, Object>) wpMap.get("waypoint");
 				final String action = (String) wp.get("action");
@@ -129,12 +131,15 @@ public class YamlWitnessParser {
 					avoidWP.add(parseViolationWaypoint(wp));
 					break;
 				case "follow":
-					parsedContent.add(new Segment(avoidWP, parseViolationWaypoint(wp), SegmentType.FOLLOW));
+					followWP.add(parseViolationWaypoint(wp));
+					segmentType = SegmentType.FOLLOW;
 					break;
 				case "cycle":
-					parsedContent.add(new Segment(avoidWP, parseViolationWaypoint(wp), SegmentType.CYCLE));
+					segmentType = SegmentType.CYCLE;
+					followWP.add(parseViolationWaypoint(wp));
 				}
 			}
+			parsedContent.add(new Segment(avoidWP, followWP, segmentType));
 		}
 		return new ViolationSequence(parsedContent);
 	}

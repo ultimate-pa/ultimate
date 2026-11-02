@@ -125,7 +125,7 @@ public class WitnessManager {
 						WitnessVerificationStatus.UNVERIFIED);
 			}
 
-			if (ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_DELETE_GRAPHML)) {
+			if (ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_DELETE)) {
 				for (final String fi : filenamesToDelete) {
 					deleteFile(fi);
 				}

@@ -94,15 +94,16 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	@Override
 	protected Term constructContextForApplicationTerm(final Term context, final FunctionSymbol symb,
 			final List<Term> allParams, final int selectedParam) {
+
 		return Context.buildCriticalConstraintForConDis(mServices, mMgdScript, context, symb, allParams, selectedParam,
-				CcTransformation.TO_NNF);
+				CcTransformation.NONE);
 	}
 
 	@Override
 	protected Term constructContextForQuantifiedFormula(final Term context, final int quant,
 			final List<TermVariable> vars) {
 		return Context.buildCriticalContraintForQuantifiedFormula(mMgdScript.getScript(), context, vars,
-				CcTransformation.TO_NNF);
+				CcTransformation.NONE);
 	}
 
 	@Override

@@ -8,5 +8,4 @@ z3 -version
 cvc5 --version | head -n 3
 mathsat -version
 bitwuzla --version
-mvn --version
 echo "All solvers available!"

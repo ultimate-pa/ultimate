@@ -46,16 +46,12 @@
 									<attachId>UltimateDebug</attachId>
 								</product>
 								<product>
-									<id>ReqAnalyzer</id>
-									<attachId>ReqAnalyzer</attachId>
-								</product>
-								<product>
 									<id>DeltaDebugger</id>
 									<attachId>UltimateDeltaDebugger</attachId>
 								</product>
 								<product>
-									<id>UltimateEliminator</id>
-									<attachId>UltimateEliminator</attachId>
+									<id>Eliminator</id>
+									<attachId>Eliminator</attachId>
 								</product>
 								<product>
 									<id>WebBackend</id>

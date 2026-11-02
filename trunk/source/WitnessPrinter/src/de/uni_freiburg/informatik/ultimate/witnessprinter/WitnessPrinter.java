@@ -31,7 +31,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
@@ -39,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DataRaceFoundResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.LassoShapedNonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.BacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -53,11 +56,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService.Lasso;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgGraphProvider;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment.SegmentType;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GraphMLCorrectnessWitnessGenerator;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GraphMLViolationWitnessGenerator;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
@@ -145,6 +150,9 @@ public class WitnessPrinter implements IOutput {
 		} else if (results.stream().anyMatch(a -> a instanceof AllSpecificationsHoldResult)) {
 			mLogger.info("Generating witness for correct program");
 			witnesses = generateProofWitness(results, createGraphML, createYaml);
+		} else if (results.stream().anyMatch(a -> a instanceof TerminationAnalysisResult)) {
+			mLogger.info("Generating witness for terminating program");
+			witnesses = generateTerminationWitness(results, createGraphML, createYaml);
 		} else {
 			mLogger.info("No result that supports witness generation found");
 			witnesses = List.of();
@@ -154,6 +162,13 @@ public class WitnessPrinter implements IOutput {
 		} catch (IOException | InterruptedException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private List<ResultWitness> generateTerminationWitness(final List<IResult> results, final boolean createGraphML,
+			final boolean createYaml) {
+		// TODO: This is a just a quick workaround to generate an empty witness without any invariants
+		// Replace this with some actual computation of a termination witness
+		return generateProofWitness(results, createGraphML, createYaml);
 	}
 
 	private List<ResultWitness> generateProofWitness(final List<IResult> results, final boolean createGraphML,
@@ -201,8 +216,25 @@ public class WitnessPrinter implements IOutput {
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
 			if (createYaml) {
-				final String witness =
-						new YamlViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeYamlString();
+				final Set<Integer> targetIndices;
+				if (cex instanceof final DataRaceFoundResult<?, ?, ?> dataRace) {
+					final Set<Integer> involvedThreadIds = dataRace.getInvolvedThreadIds();
+					// Extract the last two indices, where a data race can occur
+					// TODO: What if we are unsure about the statements that occur in a data race?
+					final Set<Integer> raceIndices = new HashSet<>();
+					for (int i = backtransPe.getLength() - 1; i >= 0 && raceIndices.size() < 2; i--) {
+						final AtomicTraceElement<?> ate = backtransPe.getTraceElement(i);
+						if (ate.hasThreadId() && involvedThreadIds.contains(ate.getThreadId())) {
+							raceIndices.add(i);
+						}
+					}
+					targetIndices = raceIndices;
+				} else {
+					targetIndices = Set.of(backtransPe.getLength() - 1);
+				}
+
+				final String witness = new YamlViolationWitnessGenerator(mLogger, mServices)
+						.addSegments(backtransPe, SegmentType.FOLLOW, targetIndices).makeYamlString();
 				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
 			}
 		}
@@ -228,9 +260,9 @@ public class WitnessPrinter implements IOutput {
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
 			if (createYaml) {
-				final String witness =
-						new YamlViolationWitnessGenerator<>(lasso.stem(), lasso.loop(), mLogger, mServices)
-								.makeYamlString();
+				final String witness = new YamlViolationWitnessGenerator(mLogger, mServices)
+						.addSegments(lasso.stem(), SegmentType.FOLLOW, Set.of())
+						.addSegments(lasso.loop(), SegmentType.CYCLE, Set.of()).makeYamlString();
 				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
 			}
 		}
