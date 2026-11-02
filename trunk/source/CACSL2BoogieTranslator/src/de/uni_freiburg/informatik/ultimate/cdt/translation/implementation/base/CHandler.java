@@ -3742,7 +3742,8 @@ public class CHandler {
 		}
 		final CPointer pointer = (CPointer) rValue.getCType().getUnderlyingType();
 		final ICType pointedType = pointer.getPointsToType();
-		if (pointedType.isIncomplete()) {
+		// An incomplete array can still be indexed, decay to an element pointer, or have its address taken.
+		if (!(pointedType.getUnderlyingType() instanceof CArray) && pointedType.isIncomplete()) {
 			return new ExpressionWithIncompleteTypeResult(rop.getStatements(),
 					LRValueFactory.constructHeapLValue(mTypeHandler, rValue.getValue(), pointedType, null),
 					rop.getDeclarations(), rop.getAuxVars(), rop.getOverapprs(), loc);
