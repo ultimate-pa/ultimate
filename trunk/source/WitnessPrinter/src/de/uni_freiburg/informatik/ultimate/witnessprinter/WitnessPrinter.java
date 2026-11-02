@@ -216,29 +216,32 @@ public class WitnessPrinter implements IOutput {
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
 			if (createYaml) {
-				final Set<Integer> targetIndices;
-				if (cex instanceof final DataRaceFoundResult<?, ?, ?> dataRace) {
-					final Set<Integer> involvedThreadIds = dataRace.getInvolvedThreadIds();
-					// Extract the last two indices, where a data race can occur
-					// TODO: What if we are unsure about the statements that occur in a data race?
-					final Set<Integer> raceIndices = new HashSet<>();
-					for (int i = backtransPe.getLength() - 1; i >= 0 && raceIndices.size() < 2; i--) {
-						final AtomicTraceElement<?> ate = backtransPe.getTraceElement(i);
-						if (ate.hasThreadId() && involvedThreadIds.contains(ate.getThreadId())) {
-							raceIndices.add(i);
-						}
-					}
-					targetIndices = raceIndices;
-				} else {
-					targetIndices = Set.of(backtransPe.getLength() - 1);
-				}
-
 				final String witness = new YamlViolationWitnessGenerator(mLogger, mServices)
-						.addSegments(backtransPe, SegmentType.FOLLOW, targetIndices).makeYamlString();
+						.addSegments(backtransPe, SegmentType.FOLLOW, getReachabilityWitnessTargets(cex, backtransPe))
+						.makeYamlString();
 				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
 			}
 		}
 		return suppliers;
+	}
+
+	private static Set<Integer> getReachabilityWitnessTargets(final IResultWithFiniteTrace<?, ?> cex,
+			final IProgramExecution<?, ?> backtransPe) {
+		if (!(cex instanceof final DataRaceFoundResult<?, ?, ?> dataRace)) {
+			// The target is the last statement in the execution
+			return Set.of(backtransPe.getLength() - 1);
+		}
+		final Set<Integer> involvedThreadIds = dataRace.getInvolvedThreadIds();
+		// Extract the last two indices, where a data race can occur
+		// TODO: What if we are unsure about the statements that occur in a data race?
+		final Set<Integer> result = new HashSet<>();
+		for (int i = backtransPe.getLength() - 1; i >= 0 && result.size() < 2; i--) {
+			final AtomicTraceElement<?> ate = backtransPe.getTraceElement(i);
+			if (ate.hasThreadId() && involvedThreadIds.contains(ate.getThreadId())) {
+				result.add(i);
+			}
+		}
+		return result;
 	}
 
 	@SuppressWarnings("rawtypes")
