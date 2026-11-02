@@ -91,7 +91,7 @@ public final class PcTransitionSystemFactory {
 					new LoopTreeFormulaBuilder<>(services, logger, mgdScript, new UnfoldedGraph<>(abstraction),
 							roots(live), roots(abstraction.getInitialStates()), roots(abstraction.getFinalStates()),
 							Collections.emptyMap(), Collections.emptySet()).build();
-			return new Result<>(new PcTransitionSystem<>(tree, counterSort, Collections.emptySet()), null,
+			return new Result<>(new PcTransitionSystem<>(mgdScript.getScript(), tree, counterSort, Collections.emptySet()), null,
 					Collections.emptySet());
 		}
 		final ProcedureSummaries<LETTER, STATE> summaries =
@@ -103,7 +103,7 @@ public final class PcTransitionSystemFactory {
 		// KInductionCounterexampleBuilder reads the stack pointer off a model.
 		final Set<IProgramVar> alwaysFramed =
 				stackPointer == null ? Collections.emptySet() : Collections.singleton(stackPointer);
-		return new Result<>(new PcTransitionSystem<>(tree, counterSort, alwaysFramed), stackPointer,
+		return new Result<>(new PcTransitionSystem<>(mgdScript.getScript(), tree, counterSort, alwaysFramed), stackPointer,
 				summaries.getSealedStates());
 	}
 

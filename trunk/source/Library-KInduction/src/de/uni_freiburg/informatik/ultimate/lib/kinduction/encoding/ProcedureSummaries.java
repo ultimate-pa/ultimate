@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Iterator;
@@ -189,11 +190,27 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	private final Set<CallNode<STATE>> mRootSealedStates = new LinkedHashSet<>();
 	private final Map<CallNode<STATE>, Map<CallNode<STATE>, UnmodifiableTransFormula>> mRootVirtualCallEdges =
 			new LinkedHashMap<>();
+	private final Map<CallKey<LETTER, STATE>, List<SummaryEdge<STATE>>> mSummaryEdges = new HashMap<>();
 
 	private int mNumBuilds;
 	private int mNumUnfoldedCallSites;
 	private int mNumSummarizedCallSites;
 	private int mNumStackedCallSites;
+
+	/** One call transition of the automaton. */
+	private record CallKey<LETTER, STATE>(STATE callSite, LETTER letter, STATE entry) {
+	}
+
+	/**
+	 * An edge of a summarized call.
+	 *
+	 * @param target
+	 *            the return site, or an error state in the callee or deeper
+	 * @param isError
+	 *            whether the call does not return but reaches the error state {@code target}
+	 */
+	private record SummaryEdge<STATE>(STATE target, boolean isError, UnmodifiableTransFormula formula) {
+	}
 
 	/**
 	 * Where a resolved call site puts the nodes it creates. A procedure's own scope works in plain states, so both
@@ -244,6 +261,10 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		private final Map<STATE, Map<STATE, UnmodifiableTransFormula>> mVirtualEdges;
 		/** Whether {@link LoopTreeFormulaBuilder#rejectUnresolvedCallsAndReturns} has accepted this scope. */
 		private boolean mCallsChecked;
+		/** Entry state -> the states reachable from it, see {@link #reachableInScope}. */
+		private final Map<STATE, Set<STATE>> mReachable = new HashMap<>();
+		/** [entry state, target state] -> what {@link #formulaBetween} found, which may be {@code null}. */
+		private final Map<List<STATE>, UnmodifiableTransFormula> mFormulas = new HashMap<>();
 
 		private ScopeData(final String procedure, final Map<STATE, Map<STATE, UnmodifiableTransFormula>> edges,
 				final Set<STATE> imported) {
@@ -1075,6 +1096,27 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	private <N> void resolveBySummary(final String caller, final STATE callSite,
 			final OutgoingCallTransition<LETTER, STATE> call, final INodeSpace<STATE, N> space,
 			final Map<N, Map<N, List<UnmodifiableTransFormula>>> alternatives, final Set<N> imported) {
+		for (final SummaryEdge<STATE> edge : summaryEdges(caller, callSite, call)) {
+			final N target = edge.isError() ? space.enter(edge.target()) : space.sibling(edge.target());
+			addAlternative(alternatives, space.sibling(callSite), target, edge.formula());
+			if (edge.isError()) {
+				imported.add(target);
+			}
+		}
+	}
+
+	/**
+	 * The edges of one call transition, composed once. A caller's scope and each copy of it in the root graph ask for
+	 * the same ones, and they can all use the same formulas: composing a formula renames its variables, and a transition
+	 * system gives the auxiliary variables of each of its edges constants of their own.
+	 */
+	private List<SummaryEdge<STATE>> summaryEdges(final String caller, final STATE callSite,
+			final OutgoingCallTransition<LETTER, STATE> call) {
+		final CallKey<LETTER, STATE> key = new CallKey<>(callSite, call.getLetter(), call.getSucc());
+		final List<SummaryEdge<STATE>> known = mSummaryEdges.get(key);
+		if (known != null) {
+			return known;
+		}
 		final ICallAction callAction = asCallAction(call.getLetter());
 		final String callee = call.getLetter().getSucceedingProcedure();
 		final ScopeData calleeData = mScopeData.get(callee);
@@ -1082,10 +1124,9 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			throw new AssertionError("callee " + callee + " of " + caller + " has no summary, although it was "
 					+ "neither marked for unfolding nor left unprocessed by ProcedureCallGraph's ordering");
 		}
-		final Set<STATE> entry = Collections.singleton(call.getSucc());
+		final STATE entry = call.getSucc();
 		final Set<STATE> reachable = reachableInScope(calleeData, entry);
-
-		int edges = 0;
+		final List<SummaryEdge<STATE>> edges = new ArrayList<>();
 		for (final STATE exit : ProcedureCallGraph.computeExitStates(mAbstraction, ownStates(callee),
 				Collections.singleton(callSite))) {
 			if (!reachable.contains(exit)) {
@@ -1095,13 +1136,10 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			if (summary == null) {
 				continue;
 			}
-			for (final OutgoingReturnTransition<LETTER, STATE> ret : liveReturns(exit,
-					callSite)) {
-				final UnmodifiableTransFormula edge = ProcedureCallGraph.computeVirtualEdge(mServices, mLogger,
-						mCsToolkit, mMgdScript, callAction, callee, summary,
-						asReturnAction(ret.getLetter()).getAssignmentOfReturn());
-				addAlternative(alternatives, space.sibling(callSite), space.sibling(ret.getSucc()), edge);
-				edges++;
+			for (final OutgoingReturnTransition<LETTER, STATE> ret : liveReturns(exit, callSite)) {
+				edges.add(new SummaryEdge<>(ret.getSucc(), false,
+						ProcedureCallGraph.computeVirtualEdge(mServices, mLogger, mCsToolkit, mMgdScript, callAction, callee,
+								summary, asReturnAction(ret.getLetter()).getAssignmentOfReturn())));
 			}
 		}
 		for (final STATE error : calleeData.mErrorStates) {
@@ -1109,21 +1147,18 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 				continue;
 			}
 			final UnmodifiableTransFormula toError = formulaBetween(calleeData, entry, error);
-			if (toError == null) {
-				continue;
+			if (toError != null) {
+				edges.add(new SummaryEdge<>(error, true, pendingCallToError(caller, callAction, callee, error, toError)));
 			}
-			final N errorNode = space.enter(error);
-			addAlternative(alternatives, space.sibling(callSite), errorNode,
-					pendingCallToError(caller, callAction, callee, error, toError));
-			imported.add(errorNode);
-			edges++;
 		}
-		if (edges == 0) {
+		if (edges.isEmpty()) {
 			// Legitimate: a call to a procedure that never returns (abort, exit) and contains no reachable
 			// error is a dead end. Logged because it silently removes the call site from the graph.
 			mLogger.info("KInduction: call %s -> %s at %s has no virtual edge: the callee neither returns "
 					+ "nor reaches an error on any path from %s", caller, callee, callSite, call.getSucc());
 		}
+		mSummaryEdges.put(key, edges);
+		return edges;
 	}
 
 	private <N> Map<N, Map<N, UnmodifiableTransFormula>> combine(
@@ -1149,21 +1184,27 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * The formula of every path through {@code data}'s procedure from {@code inits} to {@code target}, or
-	 * {@code null} if there is none. Only called for a summarizable procedure, whose graph has no loop.
+	 * The formula of every path through {@code data}'s procedure from {@code entry} to {@code target}, or
+	 * {@code null} if there is none. Only called for a summarizable procedure, whose graph has no loop. Built once,
+	 * since all call sites of a procedure usually enter it at the same state.
 	 */
-	private UnmodifiableTransFormula formulaBetween(final ScopeData data, final Set<STATE> inits,
-			final STATE target) {
+	private UnmodifiableTransFormula formulaBetween(final ScopeData data, final STATE entry, final STATE target) {
+		final List<STATE> key = List.of(entry, target);
+		if (data.mFormulas.containsKey(key)) {
+			return data.mFormulas.get(key);
+		}
 		mNumBuilds++;
 		final LoopTreeFormulaBuilder<LETTER, STATE> builder = new LoopTreeFormulaBuilder<>(mServices, mLogger,
-				mMgdScript, mAbstraction, data.mScopeStates, inits, Collections.singleton(target), data.mVirtualEdges,
-				data.mSealed);
+				mMgdScript, mAbstraction, data.mScopeStates, Collections.singleton(entry), Collections.singleton(target),
+				data.mVirtualEdges, data.mSealed);
 		// Only this graph has calls: the root graph has no transition of its own, see getGraph.
 		if (!data.mCallsChecked) {
 			builder.rejectUnresolvedCallsAndReturns();
 			data.mCallsChecked = true;
 		}
-		return builder.buildLoopFreeFormula();
+		final UnmodifiableTransFormula result = builder.buildLoopFreeFormula();
+		data.mFormulas.put(key, result);
+		return result;
 	}
 
 	/**
@@ -1327,20 +1368,24 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * The states of {@code data}'s scope reachable from {@code inits}. Only used to skip exit and error states
+	 * The states of {@code data}'s scope reachable from {@code entry}. Only used to skip exit and error states
 	 * that no path can reach, so that nothing is composed for them.
 	 */
-	private Set<STATE> reachableInScope(final ScopeData data, final Set<STATE> inits) {
-		final Set<STATE> visited = new LinkedHashSet<>(inits);
-		final Deque<STATE> worklist = new ArrayDeque<>(inits);
-		while (!worklist.isEmpty()) {
-			for (final STATE succ : scopeSuccessors(data, worklist.poll())) {
-				if (visited.add(succ)) {
-					worklist.add(succ);
+	private Set<STATE> reachableInScope(final ScopeData data, final STATE entry) {
+		return data.mReachable.computeIfAbsent(entry, start -> {
+			final Set<STATE> visited = new LinkedHashSet<>();
+			visited.add(start);
+			final Deque<STATE> worklist = new ArrayDeque<>();
+			worklist.add(start);
+			while (!worklist.isEmpty()) {
+				for (final STATE succ : scopeSuccessors(data, worklist.poll())) {
+					if (visited.add(succ)) {
+						worklist.add(succ);
+					}
 				}
 			}
-		}
-		return visited;
+			return visited;
+		});
 	}
 
 	/**
