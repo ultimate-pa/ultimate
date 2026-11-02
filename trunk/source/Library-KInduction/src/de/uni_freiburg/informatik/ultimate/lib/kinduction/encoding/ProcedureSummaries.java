@@ -304,6 +304,15 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			}
 		}
 		mStacked.addAll(mCycleOf.keySet());
+		// In library mode a procedure can be an entry and be called as well. It has no summary, see below, and its
+		// states are nodes of the root graph already, so its calls share them through an activation record.
+		for (final String caller : reachable) {
+			for (final String callee : callGraph.getCallees(caller)) {
+				if (entryProcedures.contains(callee)) {
+					mStacked.add(callee);
+				}
+			}
+		}
 		final List<String> order = new ArrayList<>();
 		for (final Set<String> scc : callGraph.getSccsCalleeFirst(reachable)) {
 			order.addAll(scc);
@@ -313,8 +322,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 
 		for (final String procedure : order) {
 			if (entryProcedures.contains(procedure) || mStacked.contains(procedure)) {
-				// An entry procedure is never summarized (nothing calls it, its graph is the root graph itself), and
-				// a procedure on a call cycle has no summary by definition.
+				// An entry procedure is never summarized (its graph is the root graph itself), and a procedure on a
+				// call cycle has no summary by definition.
 				continue;
 			}
 			classify(callGraph, procedure);
@@ -745,7 +754,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			for (final OutgoingCallTransition<LETTER, STATE> call : liveCalls(state)) {
 				final String callee = call.getLetter().getSucceedingProcedure();
 				if (mStacked.contains(callee)) {
-					stackCallee(worklist, alternatives, node, call);
+					stackCallee(worklist, alternatives, node, call, entryProcedures.contains(callee));
 				} else if (mUnfolded.contains(callee)) {
 					unfoldCallee(worklist, alternatives, node, call);
 				} else {
@@ -814,7 +823,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	 */
 	private void stackCallee(final Deque<CallNode<STATE>> worklist,
 			final Map<CallNode<STATE>, Map<CallNode<STATE>, List<UnmodifiableTransFormula>>> alternatives,
-			final CallNode<STATE> callSite, final OutgoingCallTransition<LETTER, STATE> call) {
+			final CallNode<STATE> callSite, final OutgoingCallTransition<LETTER, STATE> call,
+			final boolean calleeIsEntry) {
 		final ICallAction callAction = asCallAction(call.getLetter());
 		final String callee = call.getLetter().getSucceedingProcedure();
 		final String caller = ProcedureCallGraph.procedureOf(callSite.getState());
@@ -847,7 +857,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 				addAlternative(alternatives, CallNode.root(exit), callSite.sibling(ret.getSucc()),
 						TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, false, false, false,
 								SimplificationTechnique.NONE,
-								Arrays.asList(returnTf, mCallStack.pop(callee, returnSiteId, toRestore))));
+								Arrays.asList(returnTf, mCallStack.pop(callee, returnSiteId, toRestore, calleeIsEntry))));
 				enqueue(worklist, callSite.sibling(ret.getSucc()));
 				returns++;
 			}
