@@ -1564,12 +1564,25 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 			return Collections.unmodifiableMap(mEdges);
 		}
 
-		/** All ESCAPE checkpoints that occur as the target of an edge of this scope. */
+		/**
+		 * All ESCAPE checkpoints a run inside this loop can jump to: the targets of this scope's edges, and the targets
+		 * of the loops nested in it that lie outside this one. Without the latter, a jump out of three or more loops
+		 * from an inner loop that this scope only reaches through the head of a loop in between is the target of no
+		 * edge of this scope, so the enclosing scope would not make that state a waypoint and the jump would be a dead
+		 * end. See the waypoints in {@link LoopTreeFormulaBuilder#buildScope}.
+		 */
 		public Set<Checkpoint<STATE>> getEscapeTargets() {
 			final Set<Checkpoint<STATE>> result = new LinkedHashSet<>();
 			for (final Map<Checkpoint<STATE>, UnmodifiableTransFormula> outgoing : mEdges.values()) {
 				for (final Checkpoint<STATE> target : outgoing.keySet()) {
 					if (target.isEscape()) {
+						result.add(target);
+					}
+				}
+			}
+			for (final Scope<STATE> child : mChildren) {
+				for (final Checkpoint<STATE> target : child.getEscapeTargets()) {
+					if (!mRegion.contains(target.getEscapeState())) {
 						result.add(target);
 					}
 				}
