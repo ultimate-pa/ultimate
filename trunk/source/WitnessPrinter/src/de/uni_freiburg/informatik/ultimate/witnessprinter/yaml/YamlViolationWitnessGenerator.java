@@ -93,7 +93,7 @@ public class YamlViolationWitnessGenerator {
 	public <TE, E> YamlViolationWitnessGenerator addSegments(final IProgramExecution<TE, E> execution,
 			final SegmentType segmentType, final Set<Integer> targetIndices) {
 		final IBacktranslationValueProvider<TE, E> stringProvider = execution.getBacktranslationValueProvider();
-		if (mWriter == null) {
+		if (mWriter == null && execution.getLength() > 0) {
 			final String filename = stringProvider.getFileNameFromStep(execution.getTraceElement(0).getStep());
 			mWriter = createWriter(filename);
 		}
@@ -177,7 +177,7 @@ public class YamlViolationWitnessGenerator {
 
 	public String makeYamlString() {
 		if (mWriter == null) {
-			throw new IllegalStateException("Add an execution before generating the witness");
+			throw new IllegalStateException("Add a non-empty execution before generating the witness");
 		}
 		mLogger.info("Generated YAML witness of length %d.", mSegments.size());
 		return mWriter.toString(new Witness(List.of(new ViolationSequence(mSegments))));
