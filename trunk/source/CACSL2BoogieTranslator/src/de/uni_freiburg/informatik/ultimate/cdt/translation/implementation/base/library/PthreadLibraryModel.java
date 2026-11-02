@@ -494,12 +494,8 @@ public class PthreadLibraryModel implements ILibraryModel {
 	public Collection<ConstantModel> getConstantModels() {
 		// TODO: Add more constants?
 		// TODO: Model initializers properly?
-		return List.of(
-				new ConstantModel("PTHREAD_MUTEX_INITIALIZER",
-						loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ZERO, new CPrimitive(CPrimitives.INT))),
-				new ConstantModel("PTHREAD_RWLOCK_INITIALIZER",
-						loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ZERO, new CPrimitive(CPrimitives.INT))),
-				new ConstantModel("PTHREAD_COND_INITIALIZER",
-						loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ZERO, new CPrimitive(CPrimitives.INT))));
+		return List.of(mHelper.integerConstant("PTHREAD_MUTEX_INITIALIZER", 0),
+				mHelper.integerConstant("PTHREAD_RWLOCK_INITIALIZER", 0),
+				mHelper.integerConstant("PTHREAD_COND_INITIALIZER", 0));
 	}
 }

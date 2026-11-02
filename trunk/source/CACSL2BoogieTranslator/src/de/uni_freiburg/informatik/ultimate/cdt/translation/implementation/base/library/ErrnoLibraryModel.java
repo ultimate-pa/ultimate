@@ -26,12 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library;
 
-import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
-
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
 /** Models the Linux errno.h error constants as integer literals. */
 public class ErrnoLibraryModel implements ILibraryModel {
@@ -42,8 +38,7 @@ public class ErrnoLibraryModel implements ILibraryModel {
 	}
 
 	private ConstantModel constant(final String name, final int value) {
-		return new ConstantModel(name, loc -> mHelper.constructIntegerLiteral(loc, BigInteger.valueOf(value),
-				new CPrimitive(CPrimitives.INT)));
+		return mHelper.integerConstant(name, value);
 	}
 
 	@Override
