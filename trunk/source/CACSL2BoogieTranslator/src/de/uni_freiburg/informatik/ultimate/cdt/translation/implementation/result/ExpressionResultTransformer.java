@@ -388,7 +388,7 @@ public class ExpressionResultTransformer {
 
 				final Offset innerStructOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, structType, i);
 				if (innerStructOffset.isBitfieldOffset()) {
-					throw new UnsupportedOperationException("Bitfield read struct from heap");
+					throw new UnsupportedSyntaxException(loc, "Bitfield read struct from heap");
 				}
 
 				final var newAddress = mMemoryHandler.constructAddressForStructField(loc, structOnHeapAddress,

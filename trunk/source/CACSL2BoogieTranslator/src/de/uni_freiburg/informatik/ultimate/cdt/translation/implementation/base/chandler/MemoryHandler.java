@@ -2042,7 +2042,7 @@ public class MemoryHandler {
 
 			final Offset fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, valueType, fieldId);
 			if (fieldOffset.isBitfieldOffset()) {
-				throw new UnsupportedOperationException("Bitfield write");
+				throw new UnsupportedSyntaxException(loc, "Bitfield write");
 			}
 
 			final Expression newPointer = mMemoryModel.constructAddressForStructField(loc, startAddress, fieldOffset,
