@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions;
 
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.CDIV_IDENTIFIER;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.REM_IDENTIFIER;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.AuxFunctionBuilder.CDIV_IDENTIFIER;
+import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.AuxFunctionBuilder.REM_IDENTIFIER;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructVarDecFromString;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.DeclarationBuilder.constructVarDecFromTypeContext;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructBitLengthLiteral;
