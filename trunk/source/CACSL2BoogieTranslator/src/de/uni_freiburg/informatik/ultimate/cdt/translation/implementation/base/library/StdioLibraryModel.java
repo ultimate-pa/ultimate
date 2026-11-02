@@ -482,4 +482,19 @@ public class StdioLibraryModel implements ILibraryModel {
 	public Collection<TypeModel> getTypeModels() {
 		return List.of(new TypeModel("FILE", getFileType()));
 	}
+
+	@Override
+	public Collection<ConstantModel> getConstantModels() {
+		// The stream objects are not modeled, they just evaluate to a non-deterministic pointer.
+		// We currently cannot handle files properly anyway.
+		return List.of(new ConstantModel("stdin", this::nondetStream), new ConstantModel("stdout", this::nondetStream),
+				new ConstantModel("stderr", this::nondetStream));
+	}
+
+	private ExpressionResult nondetStream(final ILocation loc) {
+		final var type = new CPointer(getFileType());
+		final var auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, SFO.AUXVAR.NONDET);
+		return new ExpressionResultBuilder().addAuxVarWithDeclaration(auxvar)
+				.setLrValue(new RValue(auxvar.getExp(), type)).build();
+	}
 }
