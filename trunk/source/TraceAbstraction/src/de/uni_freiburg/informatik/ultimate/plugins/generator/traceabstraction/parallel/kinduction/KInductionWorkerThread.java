@@ -324,7 +324,7 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 							+ "sites", loc);
 					return null;
 				}
-				final IProgramVar outOfScope = findOutOfScopeVariable(entry.getValue(), loc.getProcedure());
+				final TermVariable outOfScope = findOutOfScopeVariable(entry.getValue(), loc.getProcedure());
 				if (outOfScope != null) {
 					mLogger.warn("KInduction: no correctness witness invariants, the invariant of %s mentions %s, "
 							+ "which is not in scope there", loc, outOfScope);
@@ -353,13 +353,15 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 
 	/**
 	 * @return a variable of {@code invariant} that is neither global nor a local of {@code procedure}, or null. The
-	 *         transition system is flat, so the invariant of a loop head in a callee may speak about its callers.
+	 *         transition system is flat, so the invariant of a loop head in a callee may speak about its callers. A
+	 *         variable the symbol table does not know, such as the stack pointer of {@code CallStack}, does not exist in
+	 *         the program at all, so it counts as out of scope too.
 	 */
-	private IProgramVar findOutOfScopeVariable(final Term invariant, final String procedure) {
+	private TermVariable findOutOfScopeVariable(final Term invariant, final String procedure) {
 		for (final TermVariable tv : invariant.getFreeVars()) {
 			final IProgramVar pv = mCfgSmtToolkit.getSymbolTable().getProgramVar(tv);
 			if (pv == null || !pv.isGlobal() && !procedure.equals(pv.getProcedure())) {
-				return pv;
+				return tv;
 			}
 		}
 		return null;
