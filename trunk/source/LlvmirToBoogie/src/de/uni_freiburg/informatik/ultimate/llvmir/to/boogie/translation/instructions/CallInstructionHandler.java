@@ -31,7 +31,6 @@ import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.d
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.TypeDeclarationBuilder.bitLengthPairExists;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.TypeDeclarationBuilder.constructBitLengthPairTypeDeclaration;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.declarations.VariableDeclarationBuilder.constructVarDecFromTypeContext;
-import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.instructions.ArithmeticInstructionHandler.constructLlvmOperationWithOverflow;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructBitLengthLiteral;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructExpressionFromValue;
 import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.util.BoogieExpressionHelper.constructSignedExpression;
@@ -42,9 +41,11 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -58,8 +59,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
@@ -83,6 +88,60 @@ public final class CallInstructionHandler {
 
 	private CallInstructionHandler() {
 		// utility class, not meant to be instantiated
+	}
+
+	/**
+	 * Constructs a variable declaration and an assignment statement for an LLVM operation with overflow handling.
+	 *
+	 * This method creates a VariableDeclaration for a struct type that holds the result of the operation and an
+	 * overflow flag. It also constructs an AssignmentStatement that assigns the result of the operation and the
+	 * overflow status to the struct fields.
+	 *
+	 * @param operation
+	 *            The expression representing the LLVM operation.
+	 * @param bitLength
+	 *            The bit length of the integer type involved in the operation.
+	 * @param isSigned
+	 *            Indicates whether the integer type is signed or unsigned.
+	 * @param identifier
+	 *            The identifier for the variable to be declared and assigned.
+	 * @param location
+	 *            The location in the source code where this operation occurs.
+	 * @return A Pair containing the VariableDeclaration and AssignmentStatement.
+	 */
+	private static Pair<VariableDeclaration, AssignmentStatement> constructLlvmOperationWithOverflow(
+			final Expression operation, final int bitLength, final boolean isSigned, final String identifier,
+			final LlvmirLocation location) {
+		final NamedType namedType = new NamedType(location, "i" + bitLength + "Pair", new ASTType[] {});
+		final VarList varList = new VarList(location, new String[] { identifier }, namedType);
+		final VariableDeclaration varDec =
+				new VariableDeclaration(location, new Attribute[] {}, new VarList[] { varList });
+
+		final String[] fieldIdentifiers = { "e0", "e1" };
+		final Expression[] fieldValues = {};
+		final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength, false);
+		final BinaryExpression binaryExpr1 =
+				new BinaryExpression(location, Operator.ARITHMOD, operation, bitLengthLiteral);
+		fieldValues[0] = binaryExpr1;
+
+		final IntegerLiteral signedBitLengthLiteral = constructBitLengthLiteral(location, bitLength, isSigned);
+		final BinaryExpression binaryExpr2 =
+				new BinaryExpression(location, Operator.COMPGT, operation, signedBitLengthLiteral);
+
+		final Expression expr =
+				isSigned ? new UnaryExpression(location, UnaryExpression.Operator.ARITHNEGATIVE, signedBitLengthLiteral)
+						: new IntegerLiteral(location, "0");
+		final BinaryExpression binaryExpr3 = new BinaryExpression(location, Operator.ARITHPLUS, operation, expr);
+
+		final BinaryExpression binaryExpr4 = new BinaryExpression(location, Operator.LOGICOR, binaryExpr2, binaryExpr3);
+		fieldValues[1] = binaryExpr4;
+
+		final StructConstructor structConstructor = new StructConstructor(location, fieldIdentifiers, fieldValues);
+		final VariableLHS varLhs = new VariableLHS(location, identifier);
+		final AssignmentStatement assignmentStmt = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
+				new Expression[] { structConstructor });
+
+		return new Pair<>(varDec, assignmentStmt);
 	}
 
 	/**
