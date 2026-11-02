@@ -59,8 +59,8 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * callee", derived from the automaton's call transitions) and answers the two questions its interprocedural
  * consumers ask of it: in which order to process the procedures, and which of them lie on a call cycle.
  * <p>
- * A call cycle matters because {@link LoopTreeFormulaBuilder}'s virtual call edges (see its class javadoc) need
- * their callee's summary to already exist as a finished formula, which is undefined for a cycle.
+ * A call cycle matters because the edge of a summarized call (see {@link ProcedureSummaries}) needs
+ * its callee's summary to already exist as a finished formula, which is undefined for a cycle.
  * {@link #getSccsCalleeFirst(java.util.Collection)} keeps the procedures of a cycle together in one component, and
  * {@link #getRecursiveSccs(java.util.Collection)} names them - {@link ProcedureSummaries} gives those an activation
  * record instead of a summary, see {@link CallStack}.

@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding;
 
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -69,11 +68,9 @@ public final class PcTransitionSystemFactory {
 
 	/**
 	 * The loop tree of the program, made a transition system. Its nodes are {@link CallNode}s: a state together with
-	 * the call sites it was reached through. If the abstraction has no call transition every node is at depth zero and
-	 * the tree is the whole automaton. Otherwise every call site is first resolved by {@link ProcedureSummaries} - into
-	 * a virtual call edge if the callee can be summarized, into an unfolded copy of the callee if it contains a loop -
-	 * and the tree is built for the resulting graph, which has no call and no return transition left. A call that
-	 * stayed in it would be unsound, see {@link LoopTreeFormulaBuilder}.
+	 * the call sites it was reached through. Every call site is first resolved by {@link ProcedureSummaries} - into an
+	 * edge if the callee can be summarized, into an unfolded copy of the callee if it contains a loop - and the tree is
+	 * built for the resulting graph, which has no call and no return transition left.
 	 *
 	 * @param counterSort
 	 *            the sort of the pc and the call stack index
@@ -81,47 +78,15 @@ public final class PcTransitionSystemFactory {
 	public static <LETTER extends IAction, STATE> Result<STATE> build(final IUltimateServiceProvider services,
 			final ILogger logger, final CfgSmtToolkit csToolkit, final ManagedScript mgdScript,
 			final INestedWordAutomaton<LETTER, STATE> abstraction, final CounterSort counterSort) {
-		if (!hasCallTransitions(abstraction)) {
-			// Only the states that can reach an error, see LiveStates: a loop no error is reachable from is no loop
-			// k-induction has to unroll.
-			final Set<STATE> live = LiveStates.compute(abstraction);
-			logger.info("KInduction: %d of %d state(s) can reach an error, the other %d are left out", live.size(),
-					abstraction.size(), abstraction.size() - live.size());
-			final LoopTree<CallNode<STATE>> tree =
-					new LoopTreeFormulaBuilder<>(services, logger, mgdScript, new UnfoldedGraph<>(abstraction),
-							roots(live), roots(abstraction.getInitialStates()), roots(abstraction.getFinalStates()),
-							Collections.emptyMap(), Collections.emptySet()).build();
-			return new Result<>(new PcTransitionSystem<>(mgdScript.getScript(), tree, counterSort, Collections.emptySet()), null,
-					Collections.emptySet());
-		}
 		final ProcedureSummaries<LETTER, STATE> summaries =
 				new ProcedureSummaries<>(services, logger, csToolkit, mgdScript, abstraction, counterSort);
 		final LoopTree<CallNode<STATE>> tree = new LoopTreeFormulaBuilder<>(services, logger, mgdScript,
-				summaries.getGraph(), summaries.getScopeStates(), summaries.getInitStates(),
-				summaries.getFinalStates(), summaries.getVirtualCallEdges(), summaries.getSealedStates()).build();
+				summaries.getEdges(), summaries.getInitStates(), summaries.getFinalStates()).build();
 		final IProgramVar stackPointer = summaries.getStackPointer();
 		// KInductionCounterexampleBuilder reads the stack pointer off a model.
 		final Set<IProgramVar> alwaysFramed =
 				stackPointer == null ? Collections.emptySet() : Collections.singleton(stackPointer);
 		return new Result<>(new PcTransitionSystem<>(mgdScript.getScript(), tree, counterSort, alwaysFramed), stackPointer,
 				summaries.getSealedStates());
-	}
-
-	/** The given states as nodes with no pending call, for a program in which nothing is ever called. */
-	private static <STATE> Set<CallNode<STATE>> roots(final Iterable<STATE> states) {
-		final Set<CallNode<STATE>> result = new LinkedHashSet<>();
-		for (final STATE state : states) {
-			result.add(CallNode.root(state));
-		}
-		return result;
-	}
-
-	private static <LETTER, STATE> boolean hasCallTransitions(final INestedWordAutomaton<LETTER, STATE> abstraction) {
-		for (final STATE state : abstraction.getStates()) {
-			if (abstraction.callSuccessors(state).iterator().hasNext()) {
-				return true;
-			}
-		}
-		return false;
 	}
 }
