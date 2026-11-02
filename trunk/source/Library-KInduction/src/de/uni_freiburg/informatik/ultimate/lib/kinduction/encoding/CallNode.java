@@ -103,19 +103,9 @@ public final class CallNode<STATE> {
 		return mState;
 	}
 
-	/** The call site this node was reached through, or {@code null} if no call is pending here. */
-	public CallNode<STATE> getFrame() {
-		return mFrame;
-	}
-
-	/** How many calls are pending at this node. Zero in the procedure the analysis starts in. */
-	public int getDepth() {
-		return mDepth;
-	}
-
 	/**
-	 * The states of the pending call sites, innermost first. Empty iff {@link #getDepth()} is zero. This is the
-	 * shape {@link KInductionCounterexampleBuilder} keeps its own call stack in, so the two can be compared.
+	 * The states of the pending call sites, innermost first. Empty for a node of the procedure the analysis starts in.
+	 * This is the shape {@link KInductionCounterexampleBuilder} keeps its own call stack in, so the two can be compared.
 	 */
 	public List<STATE> getCallSites() {
 		if (mFrame == null) {

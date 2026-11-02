@@ -248,8 +248,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 				// invalidate the model we are working from. mWitness already holds everything we need from it.
 				mCounterexample = new KInductionCounterexampleBuilder<>(mServices, mLogger, mWorkerMgdScript, mKILock,
 						mCsToolkit, mAbstraction, mSystem, mWitness,
-						mSummaries == null ? Collections.emptySet() : mSummaries.getSealedStates(),
-						mSummaries == null ? Collections.emptySet() : mSummaries.getStackedProcedures()).build();
+						mSummaries == null ? Collections.emptySet() : mSummaries.getSealedStates()).build();
 			}
 		} finally {
 			mWorkerMgdScript.unlock(mKILock);

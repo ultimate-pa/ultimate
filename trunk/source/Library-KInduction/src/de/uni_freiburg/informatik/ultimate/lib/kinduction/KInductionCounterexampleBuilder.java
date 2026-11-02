@@ -165,8 +165,6 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	 * error several summarized levels down is reached with that whole chain of calls pending.
 	 */
 	private final Set<CallNode<STATE>> mSummarizedErrorTargets;
-	/** See {@code ProcedureSummaries#getStackedProcedures()}; empty for a program with no recursion. */
-	private final Set<String> mStackedProcedures;
 
 	/** Enough of the stuck state's outgoing transitions to see what went wrong, without flooding the log. */
 	private static final int MAX_SUCCESSORS_IN_MESSAGE = 8;
@@ -284,7 +282,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 			final ManagedScript mgdScript, final Object lockOwner, final CfgSmtToolkit csToolkit,
 			final INestedWordAutomaton<LETTER, STATE> abstraction,
 			final PcTransitionSystem<CallNode<STATE>> system, final KInductionWitness witness,
-			final Set<CallNode<STATE>> summarizedErrorTargets, final Set<String> stackedProcedures) {
+			final Set<CallNode<STATE>> summarizedErrorTargets) {
 		mServices = services;
 		mLogger = logger;
 		mMgdScript = mgdScript;
@@ -294,7 +292,6 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 		mSystem = system;
 		mWitness = witness;
 		mSummarizedErrorTargets = summarizedErrorTargets;
-		mStackedProcedures = stackedProcedures;
 		mSteps = witness.getFirstFinalStep();
 	}
 

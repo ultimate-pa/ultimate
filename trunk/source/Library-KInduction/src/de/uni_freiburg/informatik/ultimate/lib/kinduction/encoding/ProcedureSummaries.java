@@ -113,8 +113,8 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormu
  * final state) of the caller's graph, sealed so that its own transitions are not edges there, see
  * {@link LoopTreeFormulaBuilder}'s sealed-state constructor. Error states are carried up this way through any
  * number of levels. In an <b>unfolded</b> callee the error state is simply a node of the copy, and needs no edge of
- * its own. Either way the call stays pending, so such a node is reported by {@link #getPendingErrorTargets()} and
- * {@link KInductionCounterexampleBuilder} knows the counterexample ends with an unmatched call.
+ * its own. Either way the call stays pending, so the counterexample {@link KInductionCounterexampleBuilder} builds
+ * ends with an unmatched call.
  * <p>
  * Every summary formula is built for <b>one</b> call transition and <b>one</b> exit resp. error state, never for
  * the union of all of them: the union would let a path that reaches one exit leave through another exit's return
@@ -183,7 +183,6 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	private final Set<CallNode<STATE>> mRootInitStates = new LinkedHashSet<>();
 	private final Set<CallNode<STATE>> mRootFinalStates = new LinkedHashSet<>();
 	private final Set<CallNode<STATE>> mRootSealedStates = new LinkedHashSet<>();
-	private final Set<CallNode<STATE>> mRootPendingErrors = new LinkedHashSet<>();
 	private final Map<CallNode<STATE>, Map<CallNode<STATE>, UnmodifiableTransFormula>> mRootVirtualCallEdges =
 			new LinkedHashMap<>();
 
@@ -301,10 +300,9 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 
 		mLogger.info(
 				"KInduction: resolved %d call site(s) by summary, %d by unfolding and %d by an activation record "
-						+ "(%d checkpoint graph(s) built); entry scope has %d node(s), %d error node(s), of which %d "
-						+ "with a pending call",
+						+ "(%d checkpoint graph(s) built); entry scope has %d node(s), %d error node(s)",
 				mNumSummarizedCallSites, mNumUnfoldedCallSites, mNumStackedCallSites, mNumBuilds,
-				mRootScopeStates.size(), mRootFinalStates.size(), mRootPendingErrors.size());
+				mRootScopeStates.size(), mRootFinalStates.size());
 		if (!mUnfolded.isEmpty()) {
 			mLogger.info("KInduction: unfolded procedure(s) %s, because they contain a loop or call one that does",
 					mUnfolded);
@@ -370,15 +368,6 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * The procedures whose activations {@link CallStack} tells apart, so that their states occur exactly once in
-	 * the graph however deep the recursion goes. A node inside one of them cannot say which activation it belongs
-	 * to - see {@link CallNode} - which is what {@link KInductionCounterexampleBuilder} has to allow for.
-	 */
-	public Set<String> getStackedProcedures() {
-		return Collections.unmodifiableSet(mStacked);
-	}
-
-	/**
 	 * The variable that counts the activations {@link CallStack} keeps, or {@code null} if this program needed no
 	 * activation record at all. How many calls are open at a node is exactly its chain of call sites plus how far
 	 * this has moved since the start, which is what lets {@link KInductionCounterexampleBuilder} cut a run into pc
@@ -395,16 +384,6 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	 */
 	public Set<CallNode<STATE>> getSealedStates() {
 		return Collections.unmodifiableSet(mRootSealedStates);
-	}
-
-	/**
-	 * The error nodes that lie inside a callee, i.e. that are reached with the call still pending. A
-	 * counterexample that ends in one of them ends with an unmatched call, see
-	 * {@link KInductionCounterexampleBuilder}. This is a superset of {@link #getSealedStates()}: an error inside an
-	 * unfolded callee is reached with a pending call as well, but is not sealed.
-	 */
-	public Set<CallNode<STATE>> getPendingErrorTargets() {
-		return Collections.unmodifiableSet(mRootPendingErrors);
 	}
 
 	// ----------------------------------------------------------------------------------------------------------
@@ -735,9 +714,6 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			final STATE state = node.getState();
 			if (mAbstraction.getFinalStates().contains(state)) {
 				mRootFinalStates.add(node);
-				if (node.getDepth() > 0) {
-					mRootPendingErrors.add(node);
-				}
 			}
 			if (mRootSealedStates.contains(node)) {
 				// An error imported from a summarized callee: reached only through its error edge, no successors.
@@ -975,7 +951,6 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 				}, mine, imported);
 		for (final CallNode<STATE> error : imported) {
 			mRootSealedStates.add(error);
-			mRootPendingErrors.add(error);
 		}
 		for (final Map.Entry<CallNode<STATE>, Map<CallNode<STATE>, List<UnmodifiableTransFormula>>> from : mine
 				.entrySet()) {
