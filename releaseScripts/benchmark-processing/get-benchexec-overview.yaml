@@ -115,6 +115,7 @@ known_exceptions:
   "UnsupportedOperationException: Incomplete atomic composition (dangling start of atomic block:":
   "UnsupportedOperationException: Incomplete atomic composition (dangling end of atomic block:":
   "identifier is not declared (neither a variable nor a function name): argv in file":
+  "identifier is not declared (neither a variable nor a function name)":
   "Undeclared variable in ACSL expression":
   "The following witness entry could not be matched":
   "Field not in struct":
