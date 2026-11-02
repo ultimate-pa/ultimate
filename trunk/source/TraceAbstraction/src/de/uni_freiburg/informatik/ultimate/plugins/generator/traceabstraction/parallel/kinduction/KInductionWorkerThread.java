@@ -201,7 +201,7 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 				return;
 			}
 			if (isLimit(t)) {
-				// Not a bug in k-induction: its solver or one of its own bounds gave up. The other workers go on.
+				// Not a bug in k-induction: its solver gave up or it could not build a run. The other workers go on.
 				mLogger.warn("KInduction: stopped by %s; the k-induction worker retires without a verdict", t);
 				if (mLogger.isDebugEnabled()) {
 					for (final StackTraceElement element : t.getStackTrace()) {
@@ -254,7 +254,6 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 		if (kInduction.wasUnkown()) {
 			// Not a crash: the encoding is fine, the query was just not decided. Retiring this worker leaves the
 			// other workers - and, if there are none, the main thread's UNKNOWN result - to speak for the program.
-			// The unrolling bound and a solver that gave up are entirely different situations, so name which one.
 			mLogger.warn("KInduction: " + kInduction.getInconclusive());
 			return Verdict.NO_VERDICT;
 		}

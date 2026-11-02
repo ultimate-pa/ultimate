@@ -282,7 +282,6 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 	 * Builds the loop tree. All formulas are native to the {@link ManagedScript} passed to the constructor.
 	 */
 	public LoopTree<STATE> build() {
-		rejectRecursion();
 		rejectUnresolvedCallsAndReturns();
 		final Set<STATE> reachable = computeReachable();
 		for (final STATE state : reachable) {
@@ -300,41 +299,6 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 	// ------------------------------------------------------------------------------------------------------------
 	// Flat graph
 	// ------------------------------------------------------------------------------------------------------------
-
-	/**
-	 * A virtual call edge needs its callee's summary to already exist as a finished formula, which is undefined
-	 * for a cycle in the call graph. Throws {@link UnsupportedOperationException} if some procedure can call
-	 * itself.
-	 */
-	private void rejectRecursion() {
-		final Map<String, Set<String>> calls = new LinkedHashMap<>();
-		for (final STATE state : mScopeStates) {
-			for (final OutgoingCallTransition<LETTER, STATE> t : mGraph.callSuccessors(state)) {
-				calls.computeIfAbsent(t.getLetter().getPrecedingProcedure(), k -> new LinkedHashSet<>())
-						.add(t.getLetter().getSucceedingProcedure());
-			}
-		}
-		final Set<String> done = new HashSet<>();
-		for (final String procedure : calls.keySet()) {
-			findCycle(procedure, calls, done, new ArrayList<>());
-		}
-	}
-
-	private static void findCycle(final String procedure, final Map<String, Set<String>> calls,
-			final Set<String> done, final List<String> path) {
-		if (path.contains(procedure)) {
-			throw new UnsupportedOperationException("Recursion is not supported (procedures must be inlinable), call cycle: "
-					+ path.subList(path.indexOf(procedure), path.size()) + " -> " + procedure);
-		}
-		if (!done.add(procedure)) {
-			return;
-		}
-		path.add(procedure);
-		for (final String callee : calls.getOrDefault(procedure, Collections.emptySet())) {
-			findCycle(callee, calls, done, path);
-		}
-		path.remove(path.size() - 1);
-	}
 
 	/**
 	 * Refuses every call and return transition that would become an edge of this scope's graph, i.e. whose target
