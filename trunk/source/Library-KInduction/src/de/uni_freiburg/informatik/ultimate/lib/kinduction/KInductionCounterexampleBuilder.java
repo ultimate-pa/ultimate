@@ -64,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem.Transition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.ProcedureSummaries;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
@@ -76,25 +75,21 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionS
  *
  * <h2>Why a search is needed at all</h2>
  *
- * A step of the {@link PcTransitionSystem} is not a single letter. Each of its transitions is one edge of one
- * scope's checkpoint graph, and {@link LoopTreeFormulaBuilder} built that edge by composing whole <em>paths</em> of
- * letters: {@code sequentialComposition} for concatenation, {@code parallelComposition} for the union of
- * alternatives, and, at a call site, a whole call-to-return span ({@link ProcedureSummaries}). The union is built
- * without branch indicators, so the composed formula does not record which alternative a model took, and the
- * letters themselves are gone. The model therefore pins down the program state at every checkpoint, but not the
- * way between two of them; that has to be searched for.
+ * A step of the {@link PcTransitionSystem} is not a single letter. It is a <em>path</em> through one scope's cut graph,
+ * whose edges are composed from letters where a chain or a whole call-to-return span was summarized
+ * ({@link ProcedureSummaries}). The formula of a step does not record which path a model took, and the letters of an
+ * edge are gone. The model therefore pins down the pc at every step, but not the way between two of them; that has to
+ * be searched for.
  *
  * <h2>What the search may and may not assume</h2>
  *
- * The model is used for the <b>shape</b> of the violation only: which pc node each unrolled state has, and which
- * transition was taken between two of them. That fixes, for every step, the automaton states the letter path has to
- * run between, which is what makes the search tractable.
+ * The model is used for the <b>shape</b> of the violation only: which pc node each unrolled state has. That fixes, for
+ * every step, the automaton states the letter path has to run between, which is what makes the search tractable.
  * <p>
- * The model's <b>variable values</b> are deliberately not used. A composed edge relation need not agree with any
- * single concrete path about the value a variable ends up with - where the composition leaves an out-variable
- * unconstrained, the model may pick a value no concrete path produces - so constraining the search with those
- * values makes it fail on perfectly good counterexamples. Feasibility is therefore established by the search
- * itself, which is what actually matters.
+ * The model's <b>variable values</b> are deliberately not used. The encoding need not agree with any single concrete
+ * path about the value a variable ends up with - where it leaves a variable unconstrained, the model may pick a value
+ * no concrete path produces - so constraining the search with those values makes it fail on perfectly good
+ * counterexamples. Feasibility is therefore established by the search itself, which is what actually matters.
  * <p>
  * Every path the search considers is checked against the solver as it is extended, over one continuous SSA that
  * spans all steps, so the run that comes back is feasible as a whole and ends in an accepting state. It is
@@ -105,7 +100,7 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionS
  *
  * <h2>Calls</h2>
  *
- * A pc transition can be a whole call-to-return span, so the search walks call and return transitions as well, with
+ * A pc step can contain a whole call-to-return span, so the search walks call and return transitions as well, with
  * a stack of the call sites it has entered; a return is only ever taken with the hierarchical predecessor that
  * stack names, which is what makes the reconstructed word properly nested. The SSA mirrors what
  * {@code TransFormulaUtils.sequentialCompositionWithCallAndReturn} did to the formula the model was produced from:
@@ -113,9 +108,9 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionS
  * global's current value, and every local of the callee that is not an inparam becomes an unconstrained fresh
  * constant (it is arbitrary at procedure entry); at the return the assignment of the result is asserted and the
  * callee's scope - those oldvars and locals - is restored to what the caller saw. An oldvar that no call on the
- * stack assigns keeps {@code getDefaultConstant()}, exactly as {@code PcTransitionSystem.instantiate} uses it.
+ * stack assigns keeps {@code getDefaultConstant()}, as a step of {@code PcTransitionSystem} starts with it.
  * <p>
- * A step ends where the pc transition's target nodes are. Each such node carries the call sites it stands for, so
+ * A step ends at the target nodes of its pc value. Each such node carries the call sites it stands for, so
  * a step over a <em>summarized</em> call ends back in the caller with an empty stack, while a step inside an
  * <em>unfolded</em> callee ends with exactly that callee's call sites still open - its loop heads are pc values of
  * their own, so ending there is normal. A violation inside a summarized callee is the one node that says less than
@@ -137,7 +132,7 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionS
  * <p>
  * A loop that is entered at several heads also has the steps {@code INIT(h1) -> END(h2)}, whose path runs between
  * two <em>different</em> sealed states and is therefore plainly simple. On such a program the search may leave the
- * transition the model named and come back through a third head, so the run it returns need not be the model's.
+ * path the model took and come back through a third head, so the run it returns need not be the model's.
  * That is harmless: the path was checked against the solver as it was extended, {@link #assemble} re-checks it with
  * {@code Accepts}, and {@code KInductionWorkerThread.reportCounterexample} re-runs the ordinary trace check - so
  * what comes back is a genuine counterexample either way.
@@ -207,7 +202,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	/** How many scopes we have pushed. A successful search returns with its whole stack standing; see build(). */
 	private int mPushDepth;
 
-	// state -> states reachable from it, computed lazily per transition id
+	// state -> states reachable from it, computed lazily per target pc value
 	private final Map<Integer, Set<STATE>> mCanReachTarget = new HashMap<>();
 	private Map<STATE, List<STATE>> mPredecessors;
 
@@ -231,21 +226,23 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	/** What stays fixed while the letter path of one pc step is searched for. */
 	private final class Step {
 		private final int mIndex;
-		private final Transition<CallNode<STATE>> mTransition;
+		/** The nodes the step can end at. */
+		private final Set<CallNode<STATE>> mTargets;
 		/** The state the step started in; the only state the path may return to, and only as its last. */
 		private final STATE mFirst;
 		/** The search nodes (state plus open calls) already on this step's path. */
 		private final Set<Object> mVisited = new LinkedHashSet<>();
-		/** The states from which a target of the transition is still reachable. */
+		/** The states from which a target of the step is still reachable. */
 		private final Set<STATE> mUseful;
 		/** How many calls may be open during this step, see the class javadoc. */
 		private final int mMaxOpenCalls;
 
-		private Step(final int index, final Transition<CallNode<STATE>> transition, final STATE first) {
+		private Step(final int index, final STATE first) {
+			final int targetPc = mWitness.getPc(index + 1);
 			mIndex = index;
-			mTransition = transition;
+			mTargets = mSystem.getTargetStates(targetPc);
 			mFirst = first;
-			mUseful = canReachATargetOf(transition);
+			mUseful = canReachATargetOf(targetPc);
 			mMaxOpenCalls = mStack.size() + mCsToolkit.getProcedures().size() + 1;
 			mVisited.add(nodeAfter(first, null, false));
 		}
@@ -310,8 +307,8 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 
 		push();
 		try {
-			final Transition<CallNode<STATE>> first = mSystem.getTransition(mWitness.getTransitionId(0));
-			for (final STATE start : statesOf(first.getSourceStates())) {
+			final Set<STATE> starts = statesOf(mSystem.getSourceStates(mWitness.getPc(0)));
+			for (final STATE start : starts) {
 				if (!mAbstraction.isInitial(start)) {
 					continue;
 				}
@@ -325,10 +322,8 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 				mStack.clear();
 				mCurrent.clear();
 			}
-			throw noRunFound("no counterexample run starts in any of the initial states "
-					+ statesOf(first.getSourceStates())
-					+ " of " + first + ", although k-induction reported a violation at k=" + mWitness.getK()
-					+ " (" + mWitness + ")");
+			throw noRunFound("no counterexample run starts in any of the initial states " + starts
+					+ ", although k-induction reported a violation at k=" + mWitness.getK() + " (" + mWitness + ")");
 		} finally {
 			// A search that succeeded returns with every scope it pushed still on the stack, so unwind by depth
 			// rather than by a fixed count.
@@ -376,11 +371,10 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 		if (step == mSteps) {
 			return mAbstraction.isFinal(state);
 		}
-		final Transition<CallNode<STATE>> transition = mSystem.getTransition(mWitness.getTransitionId(step));
-		if (!statesOf(transition.getSourceStates()).contains(state)) {
+		if (!statesOf(mSystem.getSourceStates(mWitness.getPc(step))).contains(state)) {
 			return false;
 		}
-		return extend(new Step(step, transition, state), state, 0);
+		return extend(new Step(step, state), state, 0);
 	}
 
 	/**
@@ -545,8 +539,8 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 
 
 	/**
-	 * Where a pc step may end: at a target node of the transition whose state is {@code current} and whose call
-	 * site chain is exactly the calls this search still has open.
+	 * Where a pc step may end: at a target node of the step whose state is {@code current} and whose call site chain
+	 * is exactly the calls this search still has open.
 	 * <p>
 	 * For a node of the entry procedure that chain is empty, i.e. no call may be left open - the summary of a
 	 * call-to-return span is one edge, so a step never ends in the middle of a summarized call. For a node of an
@@ -559,7 +553,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	 * a node keeps the older, weaker rule - any open calls, and nothing may follow.
 	 */
 	private boolean canEndStep(final Step step, final STATE current) {
-		for (final CallNode<STATE> target : step.mTransition.getTargetStates()) {
+		for (final CallNode<STATE> target : step.mTargets) {
 			if (!target.getState().equals(current)) {
 				continue;
 			}
@@ -658,7 +652,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	}
 
 	/**
-	 * A transition formula over the SSA constants, following {@code PcTransitionSystem.instantiate}: a variable is
+	 * A transition formula over the SSA constants, as in a step of {@code PcTransitionSystem}: a variable is
 	 * read at the constant that currently holds it and written to a fresh one.
 	 *
 	 * @param updates
@@ -790,12 +784,12 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	private KInductionCounterexampleException noRunFound(final String what) {
 		return new KInductionCounterexampleException(what + ". The search got as far as the start of pc step "
 				+ mDeepestStep + " of " + mSteps + ", in state " + mDeepestState + " with " + mDeepestOpenCalls
-				+ " call(s) open, and found no letter path for " + (mDeepestStep < mSteps
-						? mSystem.getTransition(mWitness.getTransitionId(mDeepestStep)).toString()
+				+ " call(s) open, and found no letter path for " + (mDeepestStep >= 0 && mDeepestStep < mSteps
+						? "the step from pc " + mWitness.getPc(mDeepestStep) + " to pc "
+								+ mWitness.getPc(mDeepestStep + 1)
 						: "the accepting state it has to end in")
-				+ ", whose source(s) are " + (mDeepestStep < mSteps
-						? statesOf(mSystem.getTransition(mWitness.getTransitionId(mDeepestStep)).getSourceStates())
-								.toString()
+				+ ", whose source(s) are " + (mDeepestStep >= 0 && mDeepestStep < mSteps
+						? statesOf(mSystem.getSourceStates(mWitness.getPc(mDeepestStep))).toString()
 						: "none")
 				+ " and whose target(s) are " + describeTargets() + ". From there the abstraction offers "
 				+ describeSuccessors()
@@ -813,9 +807,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 		if (mDeepestState == null) {
 			return "nothing";
 		}
-		final Set<STATE> useful = mDeepestStep < mSteps
-				? canReachATargetOf(mSystem.getTransition(mWitness.getTransitionId(mDeepestStep)))
-				: Set.of();
+		final Set<STATE> useful = mDeepestStep < mSteps ? canReachATargetOf(mWitness.getPc(mDeepestStep + 1)) : Set.of();
 		final StringBuilder sb = new StringBuilder();
 		int shown = 0;
 		for (final OutgoingInternalTransition<LETTER, STATE> out : mAbstraction.internalSuccessors(mDeepestState)) {
@@ -835,7 +827,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 
 	/** Whether the search would even try a successor, i.e. whether a target is still reachable behind it. */
 	private String usefulness(final Set<STATE> useful, final STATE succ) {
-		return useful.contains(succ) ? "" : " [PRUNED: no target of this transition is reachable from it]";
+		return useful.contains(succ) ? "" : " [PRUNED: no target of this step is reachable from it]";
 	}
 
 	private static int append(final StringBuilder sb, final int shown, final String what) {
@@ -849,14 +841,13 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 		return shown + 1;
 	}
 
-	/** The target checkpoints of the transition the failed search got stuck on, with what each one demands. */
+	/** The target nodes of the step the failed search got stuck on, with what each one demands. */
 	private String describeTargets() {
 		if (mDeepestStep < 0 || mDeepestStep >= mSteps) {
 			return "none";
 		}
 		final StringBuilder sb = new StringBuilder();
-		for (final CallNode<STATE> target : mSystem.getTransition(mWitness.getTransitionId(mDeepestStep))
-				.getTargetStates()) {
+		for (final CallNode<STATE> target : mSystem.getTargetStates(mWitness.getPc(mDeepestStep + 1))) {
 			sb.append(sb.length() == 0 ? "" : ", ").append(target.getState());
 			if (mSummarizedErrorTargets.contains(target)) {
 				sb.append(" (an error imported from a summarized callee)");
@@ -873,14 +864,14 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	}
 
 	/**
-	 * The states from which some target of {@code transition} is still reachable. Prunes the search away from
-	 * parts of the automaton that cannot end this step at all. Call and return transitions count as edges here:
+	 * The states from which some target of the pc value {@code targetPc} is still reachable. Prunes the search away
+	 * from parts of the automaton that cannot end this step at all. Call and return transitions count as edges here:
 	 * over-approximating reachability only weakens the pruning, it can never rule out a real path.
 	 */
-	private Set<STATE> canReachATargetOf(final Transition<CallNode<STATE>> transition) {
-		return mCanReachTarget.computeIfAbsent(transition.getId(), id -> {
+	private Set<STATE> canReachATargetOf(final int targetPc) {
+		return mCanReachTarget.computeIfAbsent(targetPc, pc -> {
 			final Map<STATE, List<STATE>> predecessors = predecessors();
-			final Set<STATE> result = new HashSet<>(statesOf(transition.getTargetStates()));
+			final Set<STATE> result = new HashSet<>(statesOf(mSystem.getTargetStates(pc)));
 			final Deque<STATE> worklist = new ArrayDeque<>(result);
 			while (!worklist.isEmpty()) {
 				for (final STATE pred : predecessors.getOrDefault(worklist.pop(), List.of())) {

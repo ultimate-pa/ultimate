@@ -34,7 +34,6 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -51,36 +50,24 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.GenericLabeledGraph;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.PathExpressionComputer;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Concatenation;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.EmptySet;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Epsilon;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegexVisitor;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Literal;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Regex;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Union;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Given a nested word automaton, builds every {@link UnmodifiableTransFormula} that k-induction needs, for
+ * Given a nested word automaton, cuts it into the graphs {@link PcTransitionSystem} needs, for
  * programs with no loop, any number of sequential loops, and arbitrarily <b>nested</b> loops.
  * <p>
  * The result is a {@link LoopTree}: a tree of {@link Scope}s. The root scope is the whole program, every other scope
  * is one loop. Inside a scope, the nodes are <em>checkpoints</em> (see {@link Checkpoint}): the scope's start
  * ({@code INIT}, one per head of the scope), the heads of its directly nested loops, its end ({@code END(h)}, one of
  * the scope's own heads reached again after one iteration), the error/accepting states ({@code FINAL}) and every
- * state the scope can leave to ({@code ESCAPE}, e.g. a {@code break} out of a loop). The edges are formulas
- * summarizing <b>all</b> loop-free paths between two checkpoints. The root scope of a program without a loop has the
- * single edge {@code INIT -> FINAL}. The part before and after a loop are the edges {@code INIT -> loopHead} and
- * {@code loopHead -> FINAL} of the scope around it, and the body of a loop is the checkpoint graph of its own scope.
+ * state the scope can leave to ({@code ESCAPE}, e.g. a {@code break} out of a loop). The checkpoints are connected by
+ * a <em>cut graph</em>, which is acyclic and holds all loop-free paths between them. The root scope of a program without a
+ * loop has only paths from {@code INIT} to {@code FINAL}. The parts before and after a loop are the paths {@code INIT -> loopHead} and
+ * {@code loopHead -> FINAL} of the scope around it, and the body of a loop is the cut graph of its own scope. The paths are
+ * not composed: {@link PcTransitionSystem} encodes the graph as it is, so its size is what a step costs.
  * <p>
  * Loops are found structurally (strongly connected components, recursively with the heads removed), so no annotation
  * is required. Several entry and exit transitions per head are supported.
@@ -122,11 +109,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  * <h2>How to use</h2>
  *
- * Construct the builder, call {@link #build()} once, and read the formulas off the scopes of the resulting
- * {@link LoopTree}. All formulas live in the {@link ManagedScript} passed to the constructor. That script must
- * <b>not</b> be locked while {@link #build()} runs: composing transition formulas declares constants for their aux
+ * Construct the builder, call {@link #build()} once, and read the graphs off the scopes of the resulting
+ * {@link LoopTree}, or, for a graph without a loop, call {@link #buildLoopFreeFormula()} for the formula of all its
+ * paths. All formulas live in the {@link ManagedScript} passed to the constructor. That script must
+ * <b>not</b> be locked while {@link #buildLoopFreeFormula()} runs: composing transition formulas declares constants for their aux
  * vars and therefore acquires the lock itself. Lock the script afterwards, once all formulas exist, to use them in a
- * solver. Every {@code getEdge} returns {@code null} if there is no such path, which is normal and not an error.
+ * solver.
  *
  * @param <LETTER>
  *            letter type
@@ -499,23 +487,6 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 			}
 			cutEdges.put(node, out);
 		}
-		// Linked sets and topological order: PathExpressionComputer numbers the nodes in the order of getNodes(), and
-		// with a topological numbering its elimination has nothing to do and solve() is one forward pass in which
-		// P(u,w) is just the union of the edges u -> w. That is the shape RegexToTransFormula factors completely.
-		final GenericLabeledGraph<STATE, Edge<LETTER>> graph =
-				new GenericLabeledGraph<>(new LinkedHashSet<>(), new LinkedHashSet<>()) {
-				};
-		for (final STATE node : topologicalOrder(cutEdges)) {
-			graph.addNode(node);
-		}
-		for (final Map.Entry<STATE, List<Pair<Edge<LETTER>, STATE>>> entry : cutEdges.entrySet()) {
-			for (final Pair<Edge<LETTER>, STATE> t : entry.getValue()) {
-				graph.addEdge(entry.getKey(), t.getFirst(), t.getSecond());
-			}
-		}
-		final PathExpressionComputer<STATE, Edge<LETTER>> pathExprComputer = new PathExpressionComputer<>(graph);
-		final RegexToTransFormula evaluator = new RegexToTransFormula();
-
 		// checkpoints and the states each stands for
 		final Map<Checkpoint<STATE>, Collection<STATE>> targets = new LinkedHashMap<>();
 		for (final STATE childHead : childHeads) {
@@ -539,168 +510,123 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 			}
 		}
 
-		final Map<Checkpoint<STATE>, Map<Checkpoint<STATE>, UnmodifiableTransFormula>> edges = new LinkedHashMap<>();
-
-		// Where a path through this scope starts: in the root the initial states, once; in a loop the head of the
-		// INIT(h) it starts from, having taken one of that head's entry transitions first. A source is a (prefix
-		// formula or null, first state) pair.
-		final List<Pair<UnmodifiableTransFormula, STATE>> rootSources = new ArrayList<>();
-		final Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> sourcesPerHead = new LinkedHashMap<>();
+		// Where a step through this scope starts: what it takes first, if anything, and the node of the cut graph that
+		// leads to. In the root that is the initial states. In a loop a step from a head of the scope takes one of that
+		// head's entry transitions, and a step from an inner loop head one of its exit transitions.
+		final Map<Checkpoint<STATE>, List<Pair<UnmodifiableTransFormula, STATE>>> sources = new LinkedHashMap<>();
+		final Map<Checkpoint<STATE>, Collection<STATE>> checkpointStates = new LinkedHashMap<>(targets);
 		if (isRoot) {
+			final List<Pair<UnmodifiableTransFormula, STATE>> starts = new ArrayList<>();
+			final Set<STATE> startStates = new LinkedHashSet<>();
 			for (final STATE init : mInitStates) {
 				if (nodes.contains(init)) {
-					rootSources.add(new Pair<>(null, init));
+					starts.add(new Pair<>(null, init));
+					startStates.add(init);
 				}
 			}
+			sources.put(Checkpoint.init(), starts);
+			checkpointStates.put(Checkpoint.init(), startStates);
 		} else {
 			for (final STATE head : heads) {
-				final List<Pair<UnmodifiableTransFormula, STATE>> sources = new ArrayList<>();
+				final List<Pair<UnmodifiableTransFormula, STATE>> entries = new ArrayList<>();
 				for (final Pair<Edge<LETTER>, STATE> t : successors(head)) {
 					if (region.contains(t.getSecond())) {
-						sources.add(new Pair<>(evaluator.letterFormula(t.getFirst()), t.getSecond()));
+						entries.add(new Pair<>(formulaOf(t.getFirst()), t.getSecond()));
 					}
 				}
-				sourcesPerHead.put(head, sources);
+				sources.put(Checkpoint.init(head), entries);
+				checkpointStates.put(Checkpoint.init(head), Collections.singleton(head));
 			}
 		}
-
-		// edges out of the start: one INIT in the root, one INIT(h) per head otherwise. The edges INIT(h1) ->
-		// END(h2) between two different heads are not an extra: an iteration that enters at h1 and comes back
-		// round to h2 has no other representation, because in the enclosing scope both heads are sealed and
-		// everything between them is an interior and not even a node there.
-		final Collection<STATE> startHeads = isRoot ? Collections.<STATE> singletonList(null) : heads;
-		for (final STATE head : startHeads) {
-			final List<Pair<UnmodifiableTransFormula, STATE>> sources =
-					isRoot ? rootSources : sourcesPerHead.get(head);
-			for (final Map.Entry<Checkpoint<STATE>, Collection<STATE>> target : targets.entrySet()) {
-				final List<UnmodifiableTransFormula> alternatives = new ArrayList<>();
-				for (final Pair<UnmodifiableTransFormula, STATE> source : sources) {
-					for (final STATE rep : target.getValue()) {
-						final UnmodifiableTransFormula path =
-								evaluator.evaluate(pathExprComputer.exprBetween(source.getSecond(), rep));
-						if (path == null) {
-							continue;
-						}
-						alternatives.add(source.getFirst() == null ? path : sequential(source.getFirst(), path));
-					}
-				}
-				addEdge(edges, Checkpoint.init(head), target.getKey(), alternatives);
-			}
-		}
-
-		// edges out of inner loop heads: leave via an exit transition, or (mid-body) leave from inside the body
 		for (final Scope<STATE> child : children) {
 			for (final STATE childHead : child.getHeads()) {
-				final Checkpoint<STATE> from = Checkpoint.loopHead(childHead);
-				for (final Map.Entry<Checkpoint<STATE>, Collection<STATE>> target : targets.entrySet()) {
-					if (target.getKey().equals(from)) {
-						continue;
+				final List<Pair<UnmodifiableTransFormula, STATE>> exits = new ArrayList<>();
+				for (final Pair<Edge<LETTER>, STATE> t : successors(childHead)) {
+					if (!child.getRegion().contains(t.getSecond())) {
+						exits.add(new Pair<>(formulaOf(t.getFirst()), t.getSecond()));
 					}
-					final List<UnmodifiableTransFormula> alternatives = new ArrayList<>();
-					for (final Pair<Edge<LETTER>, STATE> t : successors(childHead)) {
-						if (child.getRegion().contains(t.getSecond())) {
-							continue;
-						}
-						final UnmodifiableTransFormula exitTf = evaluator.letterFormula(t.getFirst());
-						for (final STATE rep : target.getValue()) {
-							final UnmodifiableTransFormula tail =
-									evaluator.evaluate(pathExprComputer.exprBetween(t.getSecond(), rep));
-							if (tail != null) {
-								alternatives.add(sequential(exitTf, tail));
-							}
-						}
-					}
-					for (final Checkpoint<STATE> leave : child.getLeaveCheckpoints(childHead)) {
-						final UnmodifiableTransFormula body = child.getEdge(Checkpoint.init(childHead), leave);
-						if (body == null) {
-							continue;
-						}
-						// The child's own edge INIT(h) -> FINAL is a transition of the system already, between the same two
-						// pc nodes as LOOP_HEAD(h) -> FINAL here, so it is not repeated here.
-						if (leave.isFinal()) {
-							continue;
-						}
-						final STATE escapeState = leave.getEscapeState();
-						if (!nodes.contains(escapeState)) {
-							continue;
-						}
-						for (final STATE rep : target.getValue()) {
-							// Neither is the child's edge INIT(h) -> ESCAPE(rep), for the same reason.
-							if (rep.equals(escapeState)) {
-								continue;
-							}
-							final UnmodifiableTransFormula tail =
-									evaluator.evaluate(pathExprComputer.exprBetween(escapeState, rep));
-							if (tail != null) {
-								alternatives.add(sequential(body, tail));
-							}
-						}
-					}
-					addEdge(edges, from, target.getKey(), alternatives);
 				}
+				sources.put(Checkpoint.loopHead(childHead), exits);
 			}
 		}
-
-		// edges out of "waypoints": a plain state of this scope that an inner loop can jump to (e.g. by break). The
-		// inner loop's scope only knows how to get to the waypoint, the way on from there is described here.
-		final Set<STATE> waypoints = new LinkedHashSet<>();
+		// A plain state of this scope that an inner loop can jump to (e.g. by break) is a "waypoint". The inner loop's
+		// scope only knows how to get to it, the way on from there starts here. A jump out of several loops is a target
+		// of every loop it leaves, so the scope that holds the state is the one that makes it a waypoint.
 		for (final Scope<STATE> child : children) {
 			for (final Checkpoint<STATE> escape : child.getEscapeTargets()) {
 				final STATE w = escape.getEscapeState();
 				if (nodes.contains(w) && !childHeads.contains(w) && !heads.contains(w) && !escapes.contains(w)
 						&& !finals.contains(w)) {
-					waypoints.add(w);
+					sources.put(escape, List.of(new Pair<>(null, w)));
+					checkpointStates.put(escape, Collections.singleton(w));
 				}
 			}
 		}
-		for (final STATE waypoint : waypoints) {
-			for (final Map.Entry<Checkpoint<STATE>, Collection<STATE>> target : targets.entrySet()) {
-				final List<UnmodifiableTransFormula> alternatives = new ArrayList<>();
-				for (final STATE rep : target.getValue()) {
-					final UnmodifiableTransFormula path =
-							evaluator.evaluate(pathExprComputer.exprBetween(waypoint, rep));
+
+		final Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> cutGraph = formulasInOrder(cutEdges);
+		mLogger.info("LoopTree: scope %s built: %d inner loop(s), %d state(s), %d node(s)",
+				isRoot ? "ROOT" : "loop " + heads, children.size(), region.size(), nodes.size());
+		return new Scope<>(heads, region, children, depth, cutGraph, sources, targets, checkpointStates);
+	}
+
+	private UnmodifiableTransFormula formulaOf(final Edge<LETTER> edge) {
+		return edge.isVirtual() ? edge.getVirtualFormula() : edge.getRealLetter().getTransformula();
+	}
+
+	/** The formulas of a graph without a loop, every node before its successors. */
+	private Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>>
+			formulasInOrder(final Map<STATE, List<Pair<Edge<LETTER>, STATE>>> edges) {
+		final Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> result = new LinkedHashMap<>();
+		for (final STATE node : topologicalOrder(edges)) {
+			final List<Pair<UnmodifiableTransFormula, STATE>> outgoing = new ArrayList<>();
+			for (final Pair<Edge<LETTER>, STATE> t : edges.get(node)) {
+				outgoing.add(new Pair<>(formulaOf(t.getFirst()), t.getSecond()));
+			}
+			result.put(node, outgoing);
+		}
+		return result;
+	}
+
+	/**
+	 * The formula of every path of a graph without a loop, from the initial to the final states, or {@code null} if there
+	 * is none. All formulas are native to the {@link ManagedScript} passed to the constructor.
+	 *
+	 * @throws IllegalStateException
+	 *             if the part of the graph reachable from the initial states has a loop
+	 */
+	public UnmodifiableTransFormula buildLoopFreeFormula() {
+		final Set<STATE> nodes = computeReachable();
+		if (!nontrivialSccs(nodes).isEmpty()) {
+			throw new IllegalStateException("The graph has a loop, so it has no single formula: " + nodes);
+		}
+		final Map<STATE, List<Pair<Edge<LETTER>, STATE>>> edges = new LinkedHashMap<>();
+		for (final STATE node : nodes) {
+			edges.put(node, successors(node));
+		}
+		final PathFormulaComposer<STATE> composer =
+				new PathFormulaComposer<>(mServices, mLogger, mMgdScript, formulasInOrder(edges));
+		final List<UnmodifiableTransFormula> alternatives = new ArrayList<>();
+		for (final STATE init : mInitStates) {
+			if (!nodes.contains(init)) {
+				continue;
+			}
+			for (final STATE target : mFinalStates) {
+				if (nodes.contains(target)) {
+					final UnmodifiableTransFormula path = composer.pathsBetween(init, target);
 					if (path != null) {
 						alternatives.add(path);
 					}
 				}
-				addEdge(edges, Checkpoint.escape(waypoint), target.getKey(), alternatives);
 			}
 		}
-
-		// The automaton states behind each checkpoint. Built here, from the maps above, rather than re-derived
-		// by a consumer: a re-derivation could drift from what the formulas were actually built from.
-		final Map<Checkpoint<STATE>, Collection<STATE>> checkpointStates = new LinkedHashMap<>(targets);
-		// A waypoint is only ever an edge *source* in this scope - the inner loop it is escaped to from is what
-		// has it as a target - so it is not in "targets" and would otherwise stand for no state at all. A consumer
-		// that asks which states an edge may start in (KInductionCounterexampleBuilder does, to reconstruct the
-		// letters of a pc step) would get the empty set and conclude that the step cannot start anywhere.
-		for (final STATE waypoint : waypoints) {
-			checkpointStates.putIfAbsent(Checkpoint.escape(waypoint), Collections.singleton(waypoint));
-		}
-		if (isRoot) {
-			final Set<STATE> starts = new LinkedHashSet<>();
-			for (final Pair<UnmodifiableTransFormula, STATE> source : rootSources) {
-				starts.add(source.getSecond());
-			}
-			checkpointStates.put(Checkpoint.init(), starts);
-		} else {
-			// In a loop scope an edge out of INIT(h) starts AT h and takes an entry transition first.
-			for (final STATE head : heads) {
-				checkpointStates.put(Checkpoint.init(head), Collections.singleton(head));
-			}
-		}
-
-		final Scope<STATE> scope = new Scope<>(heads, region, children, edges, depth, checkpointStates);
-		mLogger.info("LoopTree: scope %s built: %d inner loop(s), %d state(s), %d checkpoint edge(s)",
-				isRoot ? "ROOT" : "loop " + heads, children.size(), region.size(), scope.getNumEdges());
-		return scope;
+		checkCanceled("composing the transition formulas of a graph without a loop");
+		return combineAlternatives(mLogger, mServices, mMgdScript, alternatives);
 	}
 
 	/**
-	 * Throws if the toolchain's deadline has passed, or k-induction's memory budget is exceeded. Polled before every
-	 * composition of formulas: a scope with several heads builds an edge for every (head, checkpoint) pair, so the
-	 * work is quadratic in the number of heads, and evaluating a path expression is still exponential in the worst
-	 * case (see {@link RegexToTransFormula}). A pathological abstraction must not run past either limit uninterrupted.
+	 * Throws if the progress monitor of k-induction says stop, e.g. because the toolchain's deadline has passed. Polled
+	 * before a composition of formulas, since evaluating a path expression is still exponential in the worst case
+	 * (see {@link PathFormulaComposer}). A pathological abstraction must not run past the deadline uninterrupted.
 	 */
 	private void checkCanceled(final String task) {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -746,19 +672,6 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * Stores one checkpoint edge.
-	 */
-	private void addEdge(final Map<Checkpoint<STATE>, Map<Checkpoint<STATE>, UnmodifiableTransFormula>> edges,
-			final Checkpoint<STATE> from, final Checkpoint<STATE> to,
-			final List<UnmodifiableTransFormula> alternatives) {
-		checkCanceled("building the checkpoint edge " + from + " -> " + to);
-		final UnmodifiableTransFormula tf = combineAlternatives(mLogger, mServices, mMgdScript, alternatives);
-		if (tf != null) {
-			edges.computeIfAbsent(from, k -> new LinkedHashMap<>()).put(to, tf);
-		}
-	}
-
-	/**
 	 * Disjunction of alternatives, {@code null} if there is none (a legitimately absent edge, not an error).
 	 */
 	public static UnmodifiableTransFormula combineAlternatives(final ILogger logger,
@@ -774,289 +687,6 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 				alternatives.toArray(new UnmodifiableTransFormula[0]));
 	}
 
-	private UnmodifiableTransFormula sequential(final UnmodifiableTransFormula first,
-			final UnmodifiableTransFormula second) {
-		return sequential(List.of(first, second));
-	}
-
-	/**
-	 * One composition for a whole sequence rather than one per step: every composed formula declares a constant per
-	 * auxiliary variable in the solver, so the intermediate results would cost a solver round trip each.
-	 */
-	private UnmodifiableTransFormula sequential(final List<UnmodifiableTransFormula> sequence) {
-		if (sequence.size() == 1) {
-			return sequence.get(0);
-		}
-		checkCanceled("composing the transition formulas of a path in the loop tree");
-		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, false, false, false,
-				SimplificationTechnique.NONE, sequence);
-	}
-
-	/**
-	 * Evaluates a path expression into one relational {@link UnmodifiableTransFormula}, or {@code null} if it
-	 * describes no path ({@code null} is the algebraic zero). The cut graphs are acyclic, so {@link Star} cannot
-	 * occur.
-	 * <p>
-	 * {@link PathExpressionComputer} builds its expressions with shared sub-objects: it extends the expression of
-	 * every predecessor u of a node w by the edges u -> w, {@code F(w) = F(u1)·e1 ∪ F(u2)·e2}. Behind an
-	 * if-then-else both alternatives start with the same object F(fork), so evaluating the expression as a tree
-	 * composes F(fork) once per branch, and the work and the size of the formula double with every if-then-else in
-	 * sequence. This visitor therefore never evaluates a union or a concatenation as a tree. It flattens a union into
-	 * its alternatives and each alternative into its sequence of factors, and merges the alternatives into a
-	 * {@link PrefixTrie} on their factors. Each common prefix is then evaluated once, followed by the union of what
-	 * comes after it: {@code X·A ∪ X·B = X·(A ∪ B)}, which holds for the relational composition of transition
-	 * formulas. The prefixes are spliced into one sequential composition rather than composed level by level, see
-	 * {@link #appendSequence(PrefixTrie, List)}. For the series-parallel control flow of structured code this is
-	 * linear. Sharing that is not a common prefix (e.g. a {@code goto} into a branch) is still evaluated once per path
-	 * through it.
-	 * <p>
-	 * Do <b>not</b> memoize results on the regex object: the constructor of {@link UnmodifiableTransFormula} declares
-	 * a constant per auxiliary variable, so handing the same composed formula to two compositions makes the second
-	 * one declare those constants again and the solver rejects it ("Function c_aux_... is already defined").
-	 */
-	private final class RegexToTransFormula implements IRegexVisitor<Edge<LETTER>, UnmodifiableTransFormula, Void> {
-
-		private final Map<Union<Edge<LETTER>>, List<IRegex<Edge<LETTER>>>> mHeadExpansions = new IdentityHashMap<>();
-
-		UnmodifiableTransFormula evaluate(final IRegex<Edge<LETTER>> regex) {
-			final List<UnmodifiableTransFormula> sequence = new ArrayList<>();
-			if (!appendSequence(regex, sequence)) {
-				return null;
-			}
-			return compose(sequence);
-		}
-
-		/**
-		 * Appends formulas whose sequential composition is {@code regex}. A union or a concatenation is factored
-		 * into a {@link PrefixTrie} first.
-		 *
-		 * @return {@code false} if {@code regex} describes no path; {@code sequence} is then incomplete
-		 */
-		private boolean appendSequence(final IRegex<Edge<LETTER>> regex,
-				final List<UnmodifiableTransFormula> sequence) {
-			checkCanceled("evaluating a path expression of the loop tree");
-			if (regex instanceof Union || regex instanceof Concatenation) {
-				return appendSequence(trie(regex), sequence);
-			}
-			if (regex instanceof EmptySet) {
-				return false;
-			}
-			if (!(regex instanceof Epsilon)) {
-				sequence.add(regex.accept(this));
-			}
-			return true;
-		}
-
-		/**
-		 * Appends the formulas of a trie. The common prefix is spliced into {@code sequence}, recursively, so a union
-		 * that starts with the union of the preceding if-then-else does not compose that one again: a whole chain of
-		 * if-then-elses becomes one sequential composition of its statements and its small branch unions. Composing
-		 * the chain level by level instead would rename and declare the auxiliary variables of everything before a
-		 * level again at every level, which is quadratic in the length of the chain.
-		 *
-		 * @return {@code false} if the trie describes no path; {@code sequence} is then incomplete
-		 */
-		private boolean appendSequence(final PrefixTrie node, final List<UnmodifiableTransFormula> sequence) {
-			PrefixTrie current = node;
-			while (!current.mEndsHere && current.mChildren.size() == 1) {
-				final Pair<IRegex<Edge<LETTER>>, PrefixTrie> only = current.mChildren.get(0);
-				if (!appendSequence(only.getFirst(), sequence)) {
-					return false;
-				}
-				current = only.getSecond();
-			}
-			if (current.mChildren.isEmpty()) {
-				// Either every alternative ends here, or there was none at all.
-				return current.mEndsHere;
-			}
-			final List<UnmodifiableTransFormula> alternatives = new ArrayList<>();
-			if (current.mEndsHere) {
-				alternatives.add(TransFormulaBuilder.getTrivialTransFormula(mMgdScript));
-			}
-			for (final Pair<IRegex<Edge<LETTER>>, PrefixTrie> child : current.mChildren) {
-				final List<UnmodifiableTransFormula> alternative = new ArrayList<>();
-				if (appendSequence(child.getFirst(), alternative) && appendSequence(child.getSecond(), alternative)) {
-					alternatives.add(compose(alternative));
-				}
-			}
-			if (alternatives.isEmpty()) {
-				return false;
-			}
-			checkCanceled("evaluating a path expression of the loop tree");
-			sequence.add(combineAlternatives(mLogger, mServices, mMgdScript, alternatives));
-			return true;
-		}
-
-		private UnmodifiableTransFormula compose(final List<UnmodifiableTransFormula> sequence) {
-			if (sequence.isEmpty()) {
-				return TransFormulaBuilder.getTrivialTransFormula(mMgdScript);
-			}
-			return sequential(sequence);
-		}
-
-		/**
-		 * @return the alternatives of nested unions, in order, without the empty ones
-		 */
-		private List<IRegex<Edge<LETTER>>> alternatives(final IRegex<Edge<LETTER>> regex) {
-			final List<IRegex<Edge<LETTER>>> result = new ArrayList<>();
-			final Deque<IRegex<Edge<LETTER>>> worklist = new ArrayDeque<>();
-			worklist.push(regex);
-			while (!worklist.isEmpty()) {
-				final IRegex<Edge<LETTER>> current = worklist.pop();
-				if (current instanceof Union) {
-					final Union<Edge<LETTER>> union = (Union<Edge<LETTER>>) current;
-					worklist.push(union.getSecond());
-					worklist.push(union.getFirst());
-				} else if (!(current instanceof EmptySet)) {
-					result.add(current);
-				}
-			}
-			return result;
-		}
-
-		private PrefixTrie trie(final IRegex<Edge<LETTER>> regex) {
-			final PrefixTrie root = new PrefixTrie();
-			for (final IRegex<Edge<LETTER>> alternative : alternatives(regex)) {
-				root.insert(factors(alternative));
-			}
-			return root;
-		}
-
-		/**
-		 * @return the factors of nested concatenations, in order, without the epsilons, and with a leading union
-		 *         replaced by its {@link #headExpansion}
-		 */
-		private List<IRegex<Edge<LETTER>>> factors(final IRegex<Edge<LETTER>> regex) {
-			final List<IRegex<Edge<LETTER>>> result = new ArrayList<>();
-			final Deque<IRegex<Edge<LETTER>>> worklist = new ArrayDeque<>();
-			worklist.push(regex);
-			while (!worklist.isEmpty()) {
-				final IRegex<Edge<LETTER>> current = worklist.pop();
-				if (current instanceof Concatenation) {
-					final Concatenation<Edge<LETTER>> concatenation = (Concatenation<Edge<LETTER>>) current;
-					worklist.push(concatenation.getSecond());
-					worklist.push(concatenation.getFirst());
-				} else if (!(current instanceof Epsilon)) {
-					result.add(current);
-				}
-			}
-			if (!result.isEmpty() && result.get(0) instanceof Union) {
-				final List<IRegex<Edge<LETTER>>> expanded =
-						new ArrayList<>(headExpansion((Union<Edge<LETTER>>) result.get(0)));
-				expanded.addAll(result.subList(1, result.size()));
-				return expanded;
-			}
-			return result;
-		}
-
-		/**
-		 * A union that does not start with the same factors as its sibling alternatives can still share a prefix with
-		 * them: behind {@code if (a && b) X else Y}, Y is reached both from the test of a and from the test of b, so
-		 * the expression of Y is a union whose alternatives start with the prefix P before the {@code if}, while the
-		 * expression of X is a concatenation that starts with P as well. As a single factor, the union hides P, and P
-		 * would be evaluated twice, once more for every such condition in sequence. So a leading union is replaced by
-		 * the common prefix of its alternatives followed by one union of the rest. The expansion is cached per union
-		 * object, so all alternatives that start with the same union start with the same factors.
-		 *
-		 * @return factors whose concatenation is {@code union}
-		 */
-		private List<IRegex<Edge<LETTER>>> headExpansion(final Union<Edge<LETTER>> union) {
-			final List<IRegex<Edge<LETTER>>> cached = mHeadExpansions.get(union);
-			if (cached != null) {
-				return cached;
-			}
-			PrefixTrie current = trie(union);
-			final List<IRegex<Edge<LETTER>>> result = new ArrayList<>();
-			while (!current.mEndsHere && current.mChildren.size() == 1) {
-				result.add(current.mChildren.get(0).getFirst());
-				current = current.mChildren.get(0).getSecond();
-			}
-			if (result.isEmpty()) {
-				// No common prefix: the union itself keeps its identity, so it can still be shared.
-				result.add(union);
-			} else if (!current.mChildren.isEmpty()) {
-				result.add(toRegex(current));
-			}
-			mHeadExpansions.put(union, result);
-			return result;
-		}
-
-		/**
-		 * @return the union of the alternatives below {@code node}
-		 */
-		private IRegex<Edge<LETTER>> toRegex(final PrefixTrie node) {
-			IRegex<Edge<LETTER>> result = node.mEndsHere ? Regex.epsilon() : null;
-			for (final Pair<IRegex<Edge<LETTER>>, PrefixTrie> child : node.mChildren) {
-				final PrefixTrie rest = child.getSecond();
-				final IRegex<Edge<LETTER>> alternative = rest.mChildren.isEmpty() ? child.getFirst()
-						: Regex.concat(child.getFirst(), toRegex(rest));
-				result = result == null ? alternative : Regex.union(result, alternative);
-			}
-			return result;
-		}
-
-		UnmodifiableTransFormula letterFormula(final Edge<LETTER> edge) {
-			return edge.isVirtual() ? edge.getVirtualFormula() : edge.getRealLetter().getTransformula();
-		}
-
-		@Override
-		public UnmodifiableTransFormula visit(final Union<Edge<LETTER>> union, final Void argument) {
-			return evaluate(union);
-		}
-
-		@Override
-		public UnmodifiableTransFormula visit(final Concatenation<Edge<LETTER>> concatenation, final Void argument) {
-			return evaluate(concatenation);
-		}
-
-		@Override
-		public UnmodifiableTransFormula visit(final Star<Edge<LETTER>> star, final Void argument) {
-			throw new AssertionError("Unexpected cycle in the cut graph of a scope");
-		}
-
-		@Override
-		public UnmodifiableTransFormula visit(final Literal<Edge<LETTER>> literal, final Void argument) {
-			return letterFormula(literal.getLetter());
-		}
-
-		@Override
-		public UnmodifiableTransFormula visit(final Epsilon<Edge<LETTER>> epsilon, final Void argument) {
-			return TransFormulaBuilder.getTrivialTransFormula(mMgdScript);
-		}
-
-		@Override
-		public UnmodifiableTransFormula visit(final EmptySet<Edge<LETTER>> emptySet, final Void argument) {
-			return null;
-		}
-	}
-
-	/**
-	 * The alternatives of a union, merged on their common prefixes; see {@link RegexToTransFormula}.
-	 */
-	private final class PrefixTrie {
-		// Factors are compared by identity: the shared sub-objects are what makes prefixes common, and equals and
-		// hashCode of the regex classes recurse through the whole expression, which costs as much as the tree
-		// evaluation this avoids.
-		private final Map<IRegex<Edge<LETTER>>, PrefixTrie> mChildByFactor = new IdentityHashMap<>();
-		// The same children in insertion order, so the formulas are composed in a deterministic order.
-		private final List<Pair<IRegex<Edge<LETTER>>, PrefixTrie>> mChildren = new ArrayList<>();
-		// Whether an alternative ends at this node, i.e. the empty continuation belongs to the union.
-		private boolean mEndsHere;
-
-		void insert(final List<IRegex<Edge<LETTER>>> factors) {
-			PrefixTrie node = this;
-			for (final IRegex<Edge<LETTER>> factor : factors) {
-				PrefixTrie child = node.mChildByFactor.get(factor);
-				if (child == null) {
-					child = new PrefixTrie();
-					node.mChildByFactor.put(factor, child);
-					node.mChildren.add(new Pair<>(factor, child));
-				}
-				node = child;
-			}
-			node.mEndsHere = true;
-		}
-	}
 
 	/**
 	 * One edge of a cut graph: a real automaton letter, or a precomputed virtual edge for a whole call-to-return
@@ -1098,7 +728,7 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * A node of a scope's checkpoint graph.
+	 * A place a step through a scope can start or end at.
 	 * <ul>
 	 * <li>INIT(h): the start of the scope; the program entry for the root (which has no head), otherwise the head
 	 * {@code h} the iteration starts at, with its entry transition still to be taken,
@@ -1257,43 +887,44 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * The program (root, {@code getHead() == null}) or one loop, with all formulas between its {@link Checkpoint}s.
-	 * Edges are {@code null} if there is no such path.
+	 * The program (root, no heads) or one loop: the cut graph of the scope, whose nodes are the checkpoints' states and the
+	 * states on the way between them, and where a step through it can start and end.
 	 */
 	public static final class Scope<STATE> {
 		private final Set<STATE> mHeads;
 		private final Set<STATE> mRegion;
 		private final List<Scope<STATE>> mChildren;
-		private final Map<Checkpoint<STATE>, Map<Checkpoint<STATE>, UnmodifiableTransFormula>> mEdges;
 		private final int mDepth;
+		private final Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> mCutGraph;
+		private final Map<Checkpoint<STATE>, List<Pair<UnmodifiableTransFormula, STATE>>> mSources;
+		private final Map<Checkpoint<STATE>, Collection<STATE>> mTargets;
 		private final Map<Checkpoint<STATE>, Collection<STATE>> mCheckpointStates;
 
-		Scope(final Set<STATE> heads, final Set<STATE> region, final List<Scope<STATE>> children,
-				final Map<Checkpoint<STATE>, Map<Checkpoint<STATE>, UnmodifiableTransFormula>> edges,
-				final int depth, final Map<Checkpoint<STATE>, Collection<STATE>> checkpointStates) {
+		Scope(final Set<STATE> heads, final Set<STATE> region, final List<Scope<STATE>> children, final int depth,
+				final Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> cutGraph,
+				final Map<Checkpoint<STATE>, List<Pair<UnmodifiableTransFormula, STATE>>> sources,
+				final Map<Checkpoint<STATE>, Collection<STATE>> targets,
+				final Map<Checkpoint<STATE>, Collection<STATE>> checkpointStates) {
 			mHeads = heads;
 			mRegion = region;
 			mChildren = children;
-			mEdges = edges;
 			mDepth = depth;
+			mCutGraph = cutGraph;
+			mSources = sources;
+			mTargets = targets;
 			mCheckpointStates = checkpointStates;
 		}
 
 		/**
-		 * The automaton states a checkpoint stands for, both as the source and as the target of this scope's
-		 * edges: INIT in the root are the initial states inside this scope, INIT(h) in a loop is {@code h} (an
-		 * edge out of it starts there and takes an entry transition first), END(h) is {@code h}, LOOP_HEAD(c) is
-		 * {@code c}, FINAL are the accepting states inside this scope, ESCAPE(s) is {@code s}.
+		 * The automaton states a checkpoint stands for: INIT in the root are the initial states inside this scope, INIT(h)
+		 * in a loop is {@code h} (a step from it starts there and takes an entry transition first), END(h) is {@code h},
+		 * LOOP_HEAD(c) is {@code c}, FINAL are the accepting states inside this scope, ESCAPE(s) is {@code s}.
 		 *
 		 * @return the states, empty if the checkpoint does not occur in this scope.
 		 */
 		public Collection<STATE> getCheckpointStates(final Checkpoint<STATE> checkpoint) {
 			final Collection<STATE> result = mCheckpointStates.get(checkpoint);
 			return result == null ? Collections.emptyList() : Collections.unmodifiableCollection(result);
-		}
-
-		public boolean isRoot() {
-			return mHeads.isEmpty();
 		}
 
 		/**
@@ -1319,107 +950,45 @@ public class LoopTreeFormulaBuilder<LETTER extends IAction, STATE> {
 			return mChildren;
 		}
 
-		private void requireHead(final STATE head) {
-			if (!mHeads.contains(head)) {
-				throw new IllegalArgumentException(head + " is not a head of " + this + ", whose heads are "
-						+ mHeads);
-			}
-		}
-
-		/** Every loop-free way of getting from checkpoint {@code from} to {@code to}, or {@code null}. */
-		public UnmodifiableTransFormula getEdge(final Checkpoint<STATE> from, final Checkpoint<STATE> to) {
-			requireCheckpointOfThisScope(from);
-			requireCheckpointOfThisScope(to);
-			final Map<Checkpoint<STATE>, UnmodifiableTransFormula> outgoing = mEdges.get(from);
-			return outgoing == null ? null : outgoing.get(to);
-		}
-
 		/**
-		 * An INIT or END checkpoint names the head it belongs to, so one built for another scope - or the
-		 * headless {@link Checkpoint#init()} used on a loop scope - matches no key here. Left alone that would
-		 * return {@code null}, which every caller reads as "there is no such path", and the missing edge would
-		 * silently shrink the transition system instead of failing.
+		 * The acyclic graph of this scope, every node before its successors: no interiors of inner loops, and the heads of
+		 * the scope and of its inner loops have no outgoing edges.
 		 */
-		private void requireCheckpointOfThisScope(final Checkpoint<STATE> checkpoint) {
-			if (!checkpoint.isInit() && !checkpoint.isEnd()) {
-				return;
-			}
-			final STATE head = checkpoint.getScopeHead();
-			if (head == null) {
-				if (!checkpoint.isInit() || !isRoot()) {
-					throw new IllegalArgumentException(checkpoint + " names no head, but " + this
-							+ " is a loop scope; use Checkpoint.init(head) / Checkpoint.end(head)");
-				}
-			} else if (!mHeads.contains(head)) {
-				throw new IllegalArgumentException(
-						checkpoint + " does not belong to " + this + ", whose heads are " + mHeads);
-			}
+		public Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> getCutGraph() {
+			return Collections.unmodifiableMap(mCutGraph);
 		}
 
 		/**
-		 * All edges of this scope: source checkpoint, target checkpoint, formula. A source can be INIT, an inner
-		 * loop head, or an ESCAPE checkpoint that stands for a "waypoint" state of this scope, i.e. a state inside
-		 * this scope that an inner loop can jump to (the way on from there is described by these edges).
+		 * Where a step through this scope can start, a checkpoint with its ways into the cut graph: a formula to take
+		 * first, {@code null} for none, and the node it leads to.
 		 */
-		public Map<Checkpoint<STATE>, Map<Checkpoint<STATE>, UnmodifiableTransFormula>> getEdges() {
-			return Collections.unmodifiableMap(mEdges);
+		public Map<Checkpoint<STATE>, List<Pair<UnmodifiableTransFormula, STATE>>> getSources() {
+			return Collections.unmodifiableMap(mSources);
+		}
+
+		/** Where a step through this scope can end: a checkpoint with the nodes of the cut graph it stands for. */
+		public Map<Checkpoint<STATE>, Collection<STATE>> getTargets() {
+			return Collections.unmodifiableMap(mTargets);
 		}
 
 		/**
-		 * All ESCAPE checkpoints a run inside this loop can jump to: the targets of this scope's edges, and the targets
-		 * of the loops nested in it that lie outside this one. Without the latter, a jump out of three or more loops
-		 * from an inner loop that this scope only reaches through the head of a loop in between is the target of no
-		 * edge of this scope, so the enclosing scope would not make that state a waypoint and the jump would be a dead
-		 * end. See the waypoints in {@link LoopTreeFormulaBuilder#buildScope}.
+		 * All ESCAPE checkpoints a run inside this loop can jump to. A jump out of several loops is one of each of them,
+		 * since it counts as an escape of a loop wherever inside the loop it starts. The scope that holds the state makes
+		 * it a waypoint, see {@link LoopTreeFormulaBuilder#buildScope}.
 		 */
 		public Set<Checkpoint<STATE>> getEscapeTargets() {
 			final Set<Checkpoint<STATE>> result = new LinkedHashSet<>();
-			for (final Map<Checkpoint<STATE>, UnmodifiableTransFormula> outgoing : mEdges.values()) {
-				for (final Checkpoint<STATE> target : outgoing.keySet()) {
-					if (target.isEscape()) {
-						result.add(target);
-					}
+			for (final Checkpoint<STATE> target : mTargets.keySet()) {
+				if (target.isEscape()) {
+					result.add(target);
 				}
-			}
-			for (final Scope<STATE> child : mChildren) {
-				for (final Checkpoint<STATE> target : child.getEscapeTargets()) {
-					if (!mRegion.contains(target.getEscapeState())) {
-						result.add(target);
-					}
-				}
-			}
-			return result;
-		}
-
-		/**
-		 * The FINAL and ESCAPE checkpoints INIT({@code head}) has an edge to, i.e. the ways a path that entered
-		 * this loop at {@code head} can leave it.
-		 */
-		List<Checkpoint<STATE>> getLeaveCheckpoints(final STATE head) {
-			requireHead(head);
-			final List<Checkpoint<STATE>> result = new ArrayList<>();
-			final Map<Checkpoint<STATE>, UnmodifiableTransFormula> outgoing = mEdges.get(Checkpoint.init(head));
-			if (outgoing != null) {
-				for (final Checkpoint<STATE> checkpoint : outgoing.keySet()) {
-					if (checkpoint.isFinal() || checkpoint.isEscape()) {
-						result.add(checkpoint);
-					}
-				}
-			}
-			return result;
-		}
-
-		int getNumEdges() {
-			int result = 0;
-			for (final Map<Checkpoint<STATE>, UnmodifiableTransFormula> outgoing : mEdges.values()) {
-				result += outgoing.size();
 			}
 			return result;
 		}
 
 		@Override
 		public String toString() {
-			return isRoot() ? "ROOT" : "loop" + mHeads;
+			return mHeads.isEmpty() ? "ROOT" : "loop" + mHeads;
 		}
 	}
 }

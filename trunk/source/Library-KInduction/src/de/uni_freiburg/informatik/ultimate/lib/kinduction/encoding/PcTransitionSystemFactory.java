@@ -76,7 +76,7 @@ public final class PcTransitionSystemFactory {
 	 * stayed in it would be unsound, see {@link LoopTreeFormulaBuilder}.
 	 *
 	 * @param counterSort
-	 *            the sort of the pc, the transition ids and the call stack index
+	 *            the sort of the pc and the call stack index
 	 */
 	public static <LETTER extends IAction, STATE> Result<STATE> build(final IUltimateServiceProvider services,
 			final ILogger logger, final CfgSmtToolkit csToolkit, final ManagedScript mgdScript,
@@ -91,14 +91,19 @@ public final class PcTransitionSystemFactory {
 					new LoopTreeFormulaBuilder<>(services, logger, mgdScript, new UnfoldedGraph<>(abstraction),
 							roots(live), roots(abstraction.getInitialStates()), roots(abstraction.getFinalStates()),
 							Collections.emptyMap(), Collections.emptySet()).build();
-			return new Result<>(new PcTransitionSystem<>(tree, counterSort), null, Collections.emptySet());
+			return new Result<>(new PcTransitionSystem<>(tree, counterSort, Collections.emptySet()), null,
+					Collections.emptySet());
 		}
 		final ProcedureSummaries<LETTER, STATE> summaries =
 				new ProcedureSummaries<>(services, logger, csToolkit, mgdScript, abstraction, counterSort);
 		final LoopTree<CallNode<STATE>> tree = new LoopTreeFormulaBuilder<>(services, logger, mgdScript,
 				summaries.getGraph(), summaries.getScopeStates(), summaries.getInitStates(),
 				summaries.getFinalStates(), summaries.getVirtualCallEdges(), summaries.getSealedStates()).build();
-		return new Result<>(new PcTransitionSystem<>(tree, counterSort), summaries.getStackPointer(),
+		final IProgramVar stackPointer = summaries.getStackPointer();
+		// KInductionCounterexampleBuilder reads the stack pointer off a model.
+		final Set<IProgramVar> alwaysFramed =
+				stackPointer == null ? Collections.emptySet() : Collections.singleton(stackPointer);
+		return new Result<>(new PcTransitionSystem<>(tree, counterSort, alwaysFramed), stackPointer,
 				summaries.getSealedStates());
 	}
 

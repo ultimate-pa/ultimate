@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 
 /**
- * The sort of the integers the encoding adds itself: the pc, the transition selector and the index of the
+ * The sort of the integers the encoding adds itself: the pc and the index of the
  * {@link CallStack}. It is {@code Int} unless the program is bit-precise, i.e. none of its variables involves
  * {@code Int} or {@code Real}. Then it is a bitvector, because the solver of a bit-precise analysis (e.g. bitwuzla)
  * need not support {@code Int} at all.
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
  */
 public final class CounterSort {
 	/**
-	 * Covers the pc values and transitions of any program we can build, and the stack pointer up to far more
+	 * Covers the pc values of any program we can build, and the stack pointer up to far more
 	 * activations than k-induction unrolls steps.
 	 */
 	private static final int BITVECTOR_WIDTH = 32;
@@ -154,7 +154,7 @@ public final class CounterSort {
 	}
 
 	/**
-	 * The pc, the transition selector and the stack pointer are literals of this sort by construction, so anything
+	 * The pc and the stack pointer are literals of this sort by construction, so anything
 	 * else means the model does not fit the encoding, which is a bug rather than an unsupported case.
 	 */
 	private AssertionError notALiteral(final Term literal, final String description) {

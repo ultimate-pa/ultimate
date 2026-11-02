@@ -56,9 +56,9 @@ public final class IndexedConstantVars implements StepVars {
 	 * @param cache
 	 *            the declared constants, shared by every query on {@code script}
 	 * @param prefix
-	 *            put in front of the names of the pc, selector and auxiliary constants
+	 *            put in front of the names of the pc and auxiliary constants
 	 * @param counterSort
-	 *            the sort of the pc and selector constants
+	 *            the sort of the pc constants
 	 */
 	public IndexedConstantVars(final Script script, final Map<String, Term> cache, final String prefix,
 			final CounterSort counterSort) {
@@ -79,13 +79,8 @@ public final class IndexedConstantVars implements StepVars {
 	}
 
 	@Override
-	public Term aux(final int transitionId, final TermVariable auxVar, final int idx) {
-		return PredicateUtils.getIndexedConstant(mPrefix + "aux_" + transitionId + "_" + auxVar.getName(),
+	public Term aux(final int id, final TermVariable auxVar, final int idx) {
+		return PredicateUtils.getIndexedConstant(mPrefix + "aux_" + id + "_" + auxVar.getName(),
 				auxVar.getSort(), idx, mCache, mScript);
-	}
-
-	@Override
-	public Term sel(final int idx) {
-		return PredicateUtils.getIndexedConstant(mPrefix + "sel", mPcSort, idx, mCache, mScript);
 	}
 }
