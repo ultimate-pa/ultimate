@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.LocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
@@ -331,6 +332,10 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 					break;
 				}
 				case final LocalProgramVar var -> {
+					transferredProgramVar = mVarTransfer.translateProgramVar(var);
+					break;
+				}
+				case final ProgramOldVar var -> {
 					transferredProgramVar = mVarTransfer.translateProgramVar(var);
 					break;
 				}
