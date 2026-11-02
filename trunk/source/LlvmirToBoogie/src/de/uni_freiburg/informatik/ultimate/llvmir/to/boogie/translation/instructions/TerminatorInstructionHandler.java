@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.llvmir.LlvmirLocation;
 import de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.Result;
 
 /**
- * Builders for the Boogie statements of the control flow instructions of LLVM-IR.
+ * Builders for the Boogie statements of the terminator instructions of LLVM-IR.
  *
  * All methods only work on their parameters and do not access any state of the translation.
  */

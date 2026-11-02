@@ -79,6 +79,8 @@ public final class ArithmeticInstructionHandler {
 	 *            The type value context from the LLVM IR parse tree.
 	 * @param location
 	 *            The location in the source code where this instruction is defined.
+	 * @param reason
+	 *            The reason for the overapproximation.
 	 * @param identifier
 	 *            The identifier for the local variable to be constructed.
 	 */
@@ -107,17 +109,17 @@ public final class ArithmeticInstructionHandler {
 	 *            The bit length of the integer type involved in the operation.
 	 * @param isSigned
 	 *            Indicates whether the integer type is signed or unsigned.
-	 * @param Identifier
+	 * @param identifier
 	 *            The identifier for the variable to be declared and assigned.
 	 * @param location
 	 *            The location in the source code where this operation occurs.
 	 * @return A Pair containing the VariableDeclaration and AssignmentStatement.
 	 */
 	public static Pair<VariableDeclaration, AssignmentStatement> constructLlvmOperationWithOverflow(
-			final Expression operation, final int bitLength, final boolean isSigned, final String Identifier,
+			final Expression operation, final int bitLength, final boolean isSigned, final String identifier,
 			final LlvmirLocation location) {
 		final NamedType namedType = new NamedType(location, "i" + bitLength + "Pair", new ASTType[] {});
-		final VarList varList = new VarList(location, new String[] { Identifier }, namedType);
+		final VarList varList = new VarList(location, new String[] { identifier }, namedType);
 		final VariableDeclaration varDec =
 				new VariableDeclaration(location, new Attribute[] {}, new VarList[] { varList });
 
@@ -141,7 +143,7 @@ public final class ArithmeticInstructionHandler {
 		fieldValues[1] = binaryExpr4;
 
 		final StructConstructor structConstructor = new StructConstructor(location, fieldIdentifiers, fieldValues);
-		final VariableLHS varLhs = new VariableLHS(location, Identifier);
+		final VariableLHS varLhs = new VariableLHS(location, identifier);
 		final AssignmentStatement assignmentStmt = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 				new Expression[] { structConstructor });
 
