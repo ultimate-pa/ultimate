@@ -84,8 +84,8 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.IndexedConsta
  * system whose state is the program variables plus a program counter {@code pc}. An error is reachable iff the system
  * reaches {@code pc = FINAL}. This class runs plain k-induction on it, for {@code k = 1, 2, ...}:
  * <ul>
- * <li><b>Base case</b>: {@code pc_0 = INIT}, k transitions, {@code pc_k = FINAL}. SAT means (<i>unsafe</i>), since
- * FINAL has a self loop this covers every error within k steps.
+ * <li><b>Base case</b>: {@code pc_0 = INIT}, k transitions, {@code pc_k = FINAL} and not before. SAT means
+ * (<i>unsafe</i>). Since k runs upwards, the base cases together cover every error within k steps.
  * <li><b>Step case</b>: k transitions starting in an arbitrary state that is not {@code INIT}, no error in the first k
  * states, but an error in the last one. UNSAT together with the base case for k proves that no error is reachable at
  * all (<i>safe</i>). INIT can be excluded in the first state because it has no incoming transition, so every error at a
@@ -159,8 +159,9 @@ public class KInduction<LETTER extends IAction, STATE> {
 	private final Map<String, Term> mIndexedConstantsWorkerScript = new HashMap<>();
 
 	private PcTransitionSystem<CallNode<STATE>> mSystem;
-	// null unless the abstraction has calls, in which case it holds the resolved call sites
-	private ProcedureSummaries<LETTER, STATE> mSummaries;
+	// See PcTransitionSystemFactory.Result. Nothing else of the encoding is kept beyond the system.
+	private IProgramVar mStackPointer;
+	private Set<CallNode<STATE>> mSealedStates;
 	private StepVars mConstants;
 	private KInductionQuery<CallNode<STATE>> mQuery;
 	// pc node of a loop head -> its invariant, over the program variables' term variables
@@ -207,7 +208,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 		mLogger.info("KInduction: starting k-induction");
 		// Building the loop tree composes transition formulas, which declares constants for their aux vars and thus
 		// locks the script itself. So the tree has to be complete before we take the lock for the solver queries.
-		final PcTransitionSystemFactory.Result<LETTER, STATE> encoding;
+		final PcTransitionSystemFactory.Result<STATE> encoding;
 		try {
 			encoding = PcTransitionSystemFactory.build(mServices, mLogger, mCsToolkit, mWorkerMgdScript, mAbstraction,
 					CounterSort.forProgram(mWorkerMgdScript.getScript(), mCsToolkit));
@@ -216,7 +217,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 			throw e;
 		}
 		mSystem = encoding.system();
-		mSummaries = encoding.summaries();
+		mStackPointer = encoding.stackPointer();
+		mSealedStates = encoding.sealedStates();
 		mInvariantSupplier.systemBuilt(mSystem, mWorkerMgdScript);
 		mLogger.info(
 				"KInduction: transition system with %d pc value(s), %d transition(s), %d variable(s), %d loop head(s), "
@@ -248,8 +250,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 				// Still under the lock, but after the base case's pop: reconstruction asserts terms, which would
 				// invalidate the model we are working from. mWitness already holds everything we need from it.
 				mCounterexample = new KInductionCounterexampleBuilder<>(mServices, mLogger, mWorkerMgdScript, mKILock,
-						mCsToolkit, mAbstraction, mSystem, mWitness,
-						mSummaries == null ? Collections.emptySet() : mSummaries.getSealedStates()).build();
+						mCsToolkit, mAbstraction, mSystem, mWitness, mSealedStates).build();
 			}
 		} finally {
 			mWorkerMgdScript.unlock(mKILock);
@@ -396,7 +397,6 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * the {@code pop} of that query.
 	 */
 	private KInductionWitness extractWitness(final int k) {
-		final IProgramVar stackPointer = mSummaries == null ? null : mSummaries.getStackPointer();
 		final List<Term> queried = new ArrayList<>();
 		for (int j = 0; j <= k; j++) {
 			queried.add(mConstants.pc(j));
@@ -404,9 +404,9 @@ public class KInduction<LETTER extends IAction, STATE> {
 		for (int j = 0; j < k; j++) {
 			queried.add(mConstants.sel(j));
 		}
-		if (stackPointer != null) {
+		if (mStackPointer != null) {
 			for (int j = 0; j <= k; j++) {
-				queried.add(mConstants.var(stackPointer, j));
+				queried.add(mConstants.var(mStackPointer, j));
 			}
 		}
 
@@ -429,10 +429,10 @@ public class KInduction<LETTER extends IAction, STATE> {
 			transitionIds[j] = counterValue(model, mConstants.sel(j), "selector_" + j);
 		}
 		int[] stackPointers = null;
-		if (stackPointer != null) {
+		if (mStackPointer != null) {
 			stackPointers = new int[k + 1];
 			for (int j = 0; j <= k; j++) {
-				stackPointers[j] = counterValue(model, mConstants.var(stackPointer, j), stackPointer + "_" + j);
+				stackPointers[j] = counterValue(model, mConstants.var(mStackPointer, j), mStackPointer + "_" + j);
 			}
 		}
 		return new KInductionWitness(k, pcValues, transitionIds, stackPointers);

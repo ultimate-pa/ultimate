@@ -36,6 +36,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -87,7 +88,6 @@ public class PcTransitionSystem<STATE> {
 	private final Set<IProgramVar> mVars = new LinkedHashSet<>();
 	private final Set<IProgramVar> mOldVars = new LinkedHashSet<>();
 	private int mNumNodes = 2;
-	private int mStutterTransitionId = -1;
 	private final CounterSort mCounterSort;
 
 	/**
@@ -125,24 +125,15 @@ public class PcTransitionSystem<STATE> {
 		private final int mTo;
 		// null: identity (stutter)
 		private final UnmodifiableTransFormula mFormula;
-		// null for the stutter
-		private final Scope<STATE> mScope;
-		private final Checkpoint<STATE> mFromCheckpoint;
-		private final Checkpoint<STATE> mToCheckpoint;
 		private final Collection<STATE> mSourceStates;
 		private final Collection<STATE> mTargetStates;
 
 		Transition(final int id, final int from, final int to, final UnmodifiableTransFormula formula,
-				final Scope<STATE> scope, final Checkpoint<STATE> fromCheckpoint,
-				final Checkpoint<STATE> toCheckpoint, final Collection<STATE> sourceStates,
-				final Collection<STATE> targetStates) {
+				final Collection<STATE> sourceStates, final Collection<STATE> targetStates) {
 			mId = id;
 			mFrom = from;
 			mTo = to;
 			mFormula = formula;
-			mScope = scope;
-			mFromCheckpoint = fromCheckpoint;
-			mToCheckpoint = toCheckpoint;
 			mSourceStates = sourceStates;
 			mTargetStates = targetStates;
 		}
@@ -164,21 +155,6 @@ public class PcTransitionSystem<STATE> {
 			return mFormula;
 		}
 
-		/** The scope this edge came from, {@code null} for the stutter. */
-		public Scope<STATE> getScope() {
-			return mScope;
-		}
-
-		/** The source checkpoint, {@code null} for the stutter. */
-		public Checkpoint<STATE> getFromCheckpoint() {
-			return mFromCheckpoint;
-		}
-
-		/** The target checkpoint, {@code null} for the stutter. */
-		public Checkpoint<STATE> getToCheckpoint() {
-			return mToCheckpoint;
-		}
-
 		/** The automaton states a letter path realising this transition can start in. */
 		public Collection<STATE> getSourceStates() {
 			return mSourceStates;
@@ -198,8 +174,7 @@ public class PcTransitionSystem<STATE> {
 			if (isStutter()) {
 				return "t" + mId + ": FINAL -> FINAL (stutter)";
 			}
-			return "t" + mId + ": " + mFrom + " -> " + mTo + " (" + mScope + ", " + mFromCheckpoint + " -> "
-					+ mToCheckpoint + ")";
+			return "t" + mId + ": " + mFrom + " -> " + mTo + " (" + mSourceStates + " -> " + mTargetStates + ")";
 		}
 	}
 
@@ -221,9 +196,8 @@ public class PcTransitionSystem<STATE> {
 				}
 			}
 		}
-		mStutterTransitionId = mTransitions.size();
-		mTransitions.add(new Transition<>(mStutterTransitionId, FINAL, FINAL, null, null, null, null,
-				Collections.emptyList(), Collections.emptyList()));
+		mTransitions.add(new Transition<>(mTransitions.size(), FINAL, FINAL, null, Collections.emptyList(),
+				Collections.emptyList()));
 	}
 
 	private PcTransitionSystem(final CounterSort counterSort) {
@@ -232,8 +206,8 @@ public class PcTransitionSystem<STATE> {
 
 	/**
 	 * This system for another script, so that whoever reasons about the same program there need not build it again:
-	 * the same pc nodes and transitions, with every formula replaced by its copy. The scopes, checkpoints and states
-	 * of the transitions are this system's, they only serve to reconstruct a counterexample.
+	 * the same pc nodes and transitions, with every formula replaced by its copy. The states of the transitions are
+	 * this system's, they only serve to reconstruct a counterexample.
 	 *
 	 * @param transferFormula
 	 *            copies a formula of this system to the other script, together with its program variables
@@ -246,11 +220,9 @@ public class PcTransitionSystem<STATE> {
 		result.mHeadNodes.putAll(mHeadNodes);
 		result.mWaypointNodes.putAll(mWaypointNodes);
 		result.mNumNodes = mNumNodes;
-		result.mStutterTransitionId = mStutterTransitionId;
 		for (final Transition<STATE> t : mTransitions) {
 			final UnmodifiableTransFormula formula = t.mFormula == null ? null : transferFormula.apply(t.mFormula);
-			result.mTransitions.add(new Transition<>(t.mId, t.mFrom, t.mTo, formula, t.mScope, t.mFromCheckpoint,
-					t.mToCheckpoint, t.mSourceStates, t.mTargetStates));
+			result.mTransitions.add(new Transition<>(t.mId, t.mFrom, t.mTo, formula, t.mSourceStates, t.mTargetStates));
 			if (formula != null) {
 				result.collectVars(formula.getInVars().keySet());
 				result.collectVars(formula.getOutVars().keySet());
@@ -262,7 +234,7 @@ public class PcTransitionSystem<STATE> {
 	private void addTransition(final Scope<STATE> scope, final Checkpoint<STATE> from, final Checkpoint<STATE> to,
 			final UnmodifiableTransFormula formula) {
 		mTransitions.add(new Transition<>(mTransitions.size(), nodeOf(from), nodeOf(to), formula,
-				scope, from, to, scope.getCheckpointStates(from), scope.getCheckpointStates(to)));
+				scope.getCheckpointStates(from), scope.getCheckpointStates(to)));
 		collectVars(formula.getInVars().keySet());
 		collectVars(formula.getOutVars().keySet());
 	}
@@ -342,11 +314,6 @@ public class PcTransitionSystem<STATE> {
 		return mTransitions.get(id);
 	}
 
-	/** The id of the stutter self loop of {@link #FINAL}, the only transition leaving FINAL. */
-	public int getStutterTransitionId() {
-		return mStutterTransitionId;
-	}
-
 	public int getNumTransitions() {
 		return mTransitions.size();
 	}
@@ -375,10 +342,34 @@ public class PcTransitionSystem<STATE> {
 	 * of the two steps fit to one of the transitions.
 	 */
 	public Term step(final int idx, final StepVars sv, final ManagedScript mgdScript) {
+		return step(idx, sv, mgdScript, t -> true);
+	}
+
+	/**
+	 * The relation between step {@code idx} and step {@code idx + 1} on a run that reaches {@link #FINAL} exactly at its
+	 * end: only the transitions of this kind, and never the stutter. A transition from {@link #INIT} can only be a run's
+	 * first, since INIT has no incoming transition, and a transition into FINAL only its last.
+	 *
+	 * @param fromInit
+	 *            whether these are the transitions that leave INIT or those that do not
+	 * @param intoFinal
+	 *            whether these are the transitions that enter FINAL or those that do not
+	 */
+	public Term step(final int idx, final StepVars sv, final ManagedScript mgdScript, final boolean fromInit,
+			final boolean intoFinal) {
+		return step(idx, sv, mgdScript,
+				t -> !t.isStutter() && (t.mFrom == INIT) == fromInit && (t.mTo == FINAL) == intoFinal);
+	}
+
+	private Term step(final int idx, final StepVars sv, final ManagedScript mgdScript,
+			final Predicate<Transition<STATE>> filter) {
 		final Script script = mgdScript.getScript();
 		final List<Term> disjuncts = new ArrayList<>();
 		final Term selector = sv.sel(idx);
 		for (final Transition<STATE> t : mTransitions) {
+			if (!filter.test(t)) {
+				continue;
+			}
 			final List<Term> conjuncts = new ArrayList<>();
 			conjuncts.add(SmtUtils.binaryEquality(script, sv.pc(idx), pcValue(script, t.mFrom)));
 			conjuncts.add(SmtUtils.binaryEquality(script, sv.pc(idx + 1), pcValue(script, t.mTo)));

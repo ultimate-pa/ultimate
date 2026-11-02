@@ -59,10 +59,17 @@ public final class KInductionQuery<STATE> {
 
 	/** The two queries of k-induction. */
 	public enum Kind {
-		/** Is {@code pc = FINAL} reachable from {@code pc = INIT} in {@code k} transitions? */
+		/**
+		 * Is {@code pc = FINAL} reached first after exactly {@code k} transitions from {@code pc = INIT}? Asked for
+		 * {@code k = 1, 2, ...}, this finds every error within {@code k}.
+		 */
 		BASE,
 		/** Can {@code k} transitions from a non-INIT state without error reach an error? UNSAT: inductive. */
 		STEP
+	}
+
+	/** A step term as it is sent to the solver, with its DAG size. */
+	private record StepTerm(Term term, long dagSize) {
 	}
 
 	/**
@@ -80,8 +87,17 @@ public final class KInductionQuery<STATE> {
 	private final ManagedScript mMgdScript;
 	private final Object mLock;
 	private final StepVars mConstants;
-	private final List<Term> mStepTerms = new ArrayList<>();
-	private final List<Long> mStepDagSizes = new ArrayList<>();
+	/**
+	 * Per step, the transitions of a query's run in the middle: neither from INIT nor into FINAL. A query's first step in
+	 * the step case is one of them too, because it starts in a state that is not INIT.
+	 */
+	private final List<StepTerm> mCoreSteps = new ArrayList<>();
+	/** Per step, the transitions of a query's last step, from anywhere but INIT into FINAL. */
+	private final Map<Integer, StepTerm> mLastSteps = new HashMap<>();
+	/** The transitions from INIT into anything but FINAL: the first step of the base case for {@code k > 1}. */
+	private StepTerm mFirstStep;
+	/** The transitions from INIT into FINAL: the base case for {@code k = 1}. */
+	private StepTerm mOnlyStep;
 	private long mAssertedDagSize;
 	private final Map<TermVariable, IProgramVar> mVarOfTermVariable = new HashMap<>();
 
@@ -103,10 +119,10 @@ public final class KInductionQuery<STATE> {
 	}
 
 	/**
-	 * @return the DAG size of the last step built so far, 0 if there is none
+	 * @return the DAG size of the last step from the middle of a run built so far, 0 if there is none
 	 */
 	public long getLastStepDagSize() {
-		return mStepDagSizes.isEmpty() ? 0 : mStepDagSizes.get(mStepDagSizes.size() - 1);
+		return mCoreSteps.isEmpty() ? 0 : mCoreSteps.get(mCoreSteps.size() - 1).dagSize();
 	}
 
 	/** @return the DAG sizes of all step terms ever sent to the solver, counted each time one was sent */
@@ -139,10 +155,15 @@ public final class KInductionQuery<STATE> {
 	 * @return the invariant assertions for the states {@code 0..k}
 	 */
 	public List<Term> prepare(final int k, final Map<Integer, Invariant> invariants) {
-		while (mStepTerms.size() < k) {
-			final Term step = mSystem.step(mStepTerms.size(), mConstants, mMgdScript);
-			mStepTerms.add(step);
-			mStepDagSizes.add(PcTransitionSystem.dagSize(step));
+		while (mCoreSteps.size() < k - 1) {
+			mCoreSteps.add(stepTerm(mCoreSteps.size(), false, false));
+		}
+		mLastSteps.computeIfAbsent(k - 1, j -> stepTerm(j, false, true));
+		if (k == 1 && mOnlyStep == null) {
+			mOnlyStep = stepTerm(0, true, true);
+		}
+		if (k > 1 && mFirstStep == null) {
+			mFirstStep = stepTerm(0, true, false);
 		}
 		for (int j = 0; j <= k; j++) {
 			mConstants.pc(j);
@@ -164,9 +185,19 @@ public final class KInductionQuery<STATE> {
 		return result;
 	}
 
+	private StepTerm stepTerm(final int idx, final boolean fromInit, final boolean intoFinal) {
+		final Term term = mSystem.step(idx, mConstants, mMgdScript, fromInit, intoFinal);
+		return new StepTerm(term, PcTransitionSystem.dagSize(term));
+	}
+
 	/**
 	 * Asserts the query of {@code kind} for {@code k}. Must be called inside the query's {@code push}, after
 	 * {@link #prepare}.
+	 * <p>
+	 * Both queries ask for a run that reaches FINAL exactly at its end, so each step holds only the transitions that
+	 * can be taken at its place. That FINAL is not reached earlier, and that the step case does not start in INIT, is
+	 * therefore implied. Nothing is lost by the base case not looking for an earlier error: the queries of smaller
+	 * {@code k} have ruled that out already.
 	 *
 	 * @param invariantAssertions
 	 *            what {@link #prepare} returned for {@code k}
@@ -177,21 +208,26 @@ public final class KInductionQuery<STATE> {
 		final Term fin = mSystem.pcValue(script, PcTransitionSystem.FINAL);
 		if (kind == Kind.BASE) {
 			mMgdScript.assertTerm(mLock, SmtUtils.binaryEquality(script, mConstants.pc(0), init));
+		}
+		if (kind == Kind.BASE && k == 1) {
+			assertStep(mOnlyStep);
 		} else {
-			mMgdScript.assertTerm(mLock, SmtUtils.distinct(script, mConstants.pc(0), init));
-		}
-		for (int j = 0; j < k; j++) {
-			mMgdScript.assertTerm(mLock, mStepTerms.get(j));
-			mAssertedDagSize += mStepDagSizes.get(j);
-		}
-		if (kind == Kind.STEP) {
-			for (int j = 0; j < k; j++) {
-				mMgdScript.assertTerm(mLock, SmtUtils.distinct(script, mConstants.pc(j), fin));
+			if (kind == Kind.BASE) {
+				assertStep(mFirstStep);
 			}
+			for (int j = kind == Kind.BASE ? 1 : 0; j < k - 1; j++) {
+				assertStep(mCoreSteps.get(j));
+			}
+			assertStep(mLastSteps.get(k - 1));
 		}
 		mMgdScript.assertTerm(mLock, SmtUtils.binaryEquality(script, mConstants.pc(k), fin));
 		for (final Term invariant : invariantAssertions) {
 			mMgdScript.assertTerm(mLock, invariant);
 		}
+	}
+
+	private void assertStep(final StepTerm step) {
+		mMgdScript.assertTerm(mLock, step.term());
+		mAssertedDagSize += step.dagSize();
 	}
 }

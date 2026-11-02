@@ -60,16 +60,14 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * consumers ask of it: in which order to process the procedures, and which of them lie on a call cycle.
  * <p>
  * A call cycle matters because {@link LoopTreeFormulaBuilder}'s virtual call edges (see its class javadoc) need
- * their callee's summary to already exist as a finished formula, which is undefined for a cycle. A consumer that
- * can encode a cycle some other way asks {@link #getSccsCalleeFirst(java.util.Collection)}, which keeps the
- * procedures of a cycle together in one component, and {@link #getRecursiveSccs(java.util.Collection)}, which
- * names them - {@link ProcedureSummaries} gives those an activation record instead of a summary, see
- * {@link CallStack}. A consumer that cannot asks {@link #getProceduresCalleeFirst()}, which refuses a recursive
- * call graph with an {@link UnsupportedOperationException} naming the offending call and the full cycle.
+ * their callee's summary to already exist as a finished formula, which is undefined for a cycle.
+ * {@link #getSccsCalleeFirst(java.util.Collection)} keeps the procedures of a cycle together in one component, and
+ * {@link #getRecursiveSccs(java.util.Collection)} names them - {@link ProcedureSummaries} gives those an activation
+ * record instead of a summary, see {@link CallStack}.
  * <p>
- * Either way the order is the one every interprocedural consumer needs: every callee fully processed (and thus
- * already holding a summary, if it needs one) before any of its callers. {@link ProcedureSummaries} uses it that
- * way; the small per-procedure helpers (state grouping, exit states, the call/summary/return composition) live here.
+ * The order is the one every interprocedural consumer needs: every callee fully processed (and thus already holding a
+ * summary, if it needs one) before any of its callers. {@link ProcedureSummaries} uses it that way; the small
+ * per-procedure helpers (state grouping, exit states, the call/summary/return composition) live here.
  */
 public final class ProcedureCallGraph {
 
@@ -127,27 +125,6 @@ public final class ProcedureCallGraph {
 	/** Every procedure that {@code caller} calls directly. */
 	public Set<String> getCallees(final String caller) {
 		return mCalls.getImage(caller);
-	}
-
-	/**
-	 * Every procedure, in an order where every callee occurs before every one of its callers. Throws if the call
-	 * graph is recursive (a procedure transitively/mutually calls itself).
-	 * <p>
-	 * For a caller that can handle recursion, {@link #getSccsCalleeFirst(Collection)} is the same order without the
-	 * refusal: it keeps the procedures of a call cycle together in one component instead of rejecting them.
-	 */
-	public List<String> getProceduresCalleeFirst() {
-		final List<String> result = new ArrayList<>();
-		for (final Set<String> scc : getSccsCalleeFirst(mProcedures)) {
-			if (scc.size() > 1 || mCalls.getImage(scc.iterator().next()).contains(scc.iterator().next())) {
-				final String caller = someCallerInside(scc);
-				throw new UnsupportedOperationException("Recursion is not supported: procedure "
-						+ someCalleeInside(scc, caller) + " is (transitively) reachable from itself via a call from "
-						+ caller + "; the full recursive call cycle is " + scc);
-			}
-			result.add(scc.iterator().next());
-		}
-		return result;
 	}
 
 	/**
@@ -210,26 +187,6 @@ public final class ProcedureCallGraph {
 			}
 		}
 		return result;
-	}
-
-	private String someCallerInside(final Set<String> cycle) {
-		for (final String c : cycle) {
-			for (final String d : mCalls.getImage(c)) {
-				if (cycle.contains(d)) {
-					return c;
-				}
-			}
-		}
-		throw new AssertionError("component " + cycle + " was reported as a call cycle but has no call inside it");
-	}
-
-	private String someCalleeInside(final Set<String> cycle, final String caller) {
-		for (final String d : mCalls.getImage(caller)) {
-			if (cycle.contains(d)) {
-				return d;
-			}
-		}
-		throw new AssertionError(caller + " was reported as a caller inside " + cycle + " but calls nothing in it");
 	}
 
 	// ----------------------------------------------------------------------------------------------------------

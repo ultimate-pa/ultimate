@@ -131,8 +131,9 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionS
  * {@code INIT(h) -> END(h)} in a loop scope runs from the head back to the head. Restricting the search to simple
  * paths alone would drop exactly those. A state visited inside a call is a different search node from the same state
  * visited outside it, since the two differ in what the run may do next, so "simple" is meant with respect to the call
- * stack. Without recursion that keeps the search finite. With recursion the call stack, and so the search, has no
- * bound: only cancellation through the progress monitor or a solver limit ends a search that keeps descending.
+ * stack. Without recursion that keeps the search finite. With recursion the call stack alone would not, so a step may
+ * open at most one call per procedure, plus one: a recursive cycle contains a loop head, and a step can pass one only
+ * as its first and last state. A search that gives up on this retires the worker, it cannot change a verdict.
  * <p>
  * A loop that is entered at several heads also has the steps {@code INIT(h1) -> END(h2)}, whose path runs between
  * two <em>different</em> sealed states and is therefore plainly simple. On such a program the search may leave the
@@ -178,7 +179,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	private STATE mFurthestLetterState;
 	private int mFurthestLetterStep = -1;
 
-	/** The number of pc steps to reconstruct: everything after it is the FINAL stutter self loop. */
+	/** The number of pc steps to reconstruct. */
 	private final int mSteps;
 
 	// The run being built. All three are undone on backtracking.
@@ -237,12 +238,15 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 		private final Set<Object> mVisited = new LinkedHashSet<>();
 		/** The states from which a target of the transition is still reachable. */
 		private final Set<STATE> mUseful;
+		/** How many calls may be open during this step, see the class javadoc. */
+		private final int mMaxOpenCalls;
 
 		private Step(final int index, final Transition<CallNode<STATE>> transition, final STATE first) {
 			mIndex = index;
 			mTransition = transition;
 			mFirst = first;
 			mUseful = canReachATargetOf(transition);
+			mMaxOpenCalls = mStack.size() + mCsToolkit.getProcedures().size() + 1;
 			mVisited.add(nodeAfter(first, null, false));
 		}
 	}
@@ -292,7 +296,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 		mSystem = system;
 		mWitness = witness;
 		mSummarizedErrorTargets = summarizedErrorTargets;
-		mSteps = witness.getFirstFinalStep();
+		mSteps = witness.getK();
 	}
 
 	/**
@@ -350,18 +354,9 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 			throw new AssertionError("the base case asserts pc_0 = INIT, but the model says pc_0 = "
 					+ mWitness.getPc(0));
 		}
-		if (mSteps == 0) {
-			throw new AssertionError("the model has pc_0 = FINAL although pc_0 = INIT was asserted");
-		}
-		for (int j = mSteps; j < mWitness.getK(); j++) {
-			if (mWitness.getTransitionId(j) != mSystem.getStutterTransitionId()) {
-				throw new AssertionError("FINAL has no outgoing transition but the stutter self loop, yet the "
-						+ "model leaves it at step " + j + " via t" + mWitness.getTransitionId(j));
-			}
-		}
-		if (mSteps < mWitness.getK()) {
-			mLogger.info("KInduction: the model reaches FINAL after %d of %d step(s); the rest is the stutter self "
-					+ "loop and is dropped", mSteps, mWitness.getK());
+		if (mWitness.getPc(mSteps) != PcTransitionSystem.FINAL) {
+			throw new AssertionError("the base case asserts pc_" + mSteps + " = FINAL, but the model says pc_" + mSteps
+					+ " = " + mWitness.getPc(mSteps));
 		}
 	}
 
@@ -466,7 +461,8 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 
 	/**
 	 * A letter the search could take next, or {@code null} if it is pruned: because no target of the step is
-	 * reachable behind it, or because this step's path has already been here with the same calls open.
+	 * reachable behind it, because this step's path has already been here with the same calls open, or because the
+	 * step has opened as many calls as it can.
 	 *
 	 * @param entered
 	 *            the state the call is made in, if the letter is a call
@@ -475,7 +471,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	 */
 	private Candidate candidate(final Step step, final LETTER letter, final STATE succ, final STATE entered,
 			final boolean leavesCall) {
-		if (!step.mUseful.contains(succ)) {
+		if (!step.mUseful.contains(succ) || entered != null && mStack.size() >= step.mMaxOpenCalls) {
 			return null;
 		}
 		final Object node = nodeAfter(succ, entered, leavesCall);

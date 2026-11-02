@@ -171,10 +171,11 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	 */
 	private final Set<String> mStacked = new LinkedHashSet<>();
 	/**
-	 * The procedures of {@link #mStacked} on a call cycle. Only they can be re-entered while one of their callees runs,
-	 * so only their locals need a copy per activation.
+	 * The procedures of {@link #mStacked} on a call cycle, each with the procedures of its cycle. Only they can be
+	 * re-entered while one of their callees runs, and only while a callee on the same cycle does, so only then their
+	 * locals need a copy per activation.
 	 */
-	private final Set<String> mRecursive = new LinkedHashSet<>();
+	private final Map<String, Set<String>> mCycleOf = new LinkedHashMap<>();
 	/** Null exactly if {@link #mStacked} is empty, i.e. if no call needs an activation record. */
 	private CallStack mCallStack;
 	/** Hands out the id that tells a stacked return which call site it has to go back to. */
@@ -243,6 +244,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		/** This procedure's own accepting states plus the imported ones. */
 		private final Set<STATE> mErrorStates = new LinkedHashSet<>();
 		private final Map<STATE, Map<STATE, UnmodifiableTransFormula>> mVirtualEdges;
+		/** Whether {@link LoopTreeFormulaBuilder#rejectUnresolvedCallsAndReturns} has accepted this scope. */
+		private boolean mCallsChecked;
 
 		private ScopeData(final String procedure, final Map<STATE, Map<STATE, UnmodifiableTransFormula>> edges,
 				final Set<STATE> imported) {
@@ -278,9 +281,11 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		// about this program, and encoding it would spend a stack on activations that never happen.
 		final Set<String> reachable = callGraph.getReachableProcedures();
 		for (final Set<String> cycle : callGraph.getRecursiveSccs(reachable)) {
-			mRecursive.addAll(cycle);
+			for (final String procedure : cycle) {
+				mCycleOf.put(procedure, cycle);
+			}
 		}
-		mStacked.addAll(mRecursive);
+		mStacked.addAll(mCycleOf.keySet());
 		final List<String> order = new ArrayList<>();
 		for (final Set<String> scc : callGraph.getSccsCalleeFirst(reachable)) {
 			order.addAll(scc);
@@ -299,7 +304,9 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		reduceRootProcedures(order, entryProcedures);
 		stackUnfoldingsThatDoNotFit(order, entryProcedures);
 		if (!mStacked.isEmpty()) {
-			mCallStack = new CallStack(mMgdScript, localsOf(mRecursive), counterSort);
+			final Set<String> notRecursive = new LinkedHashSet<>(mStacked);
+			notRecursive.removeAll(mCycleOf.keySet());
+			mCallStack = new CallStack(mMgdScript, localsOf(mCycleOf.keySet()), notRecursive, counterSort);
 		}
 		rejectOldVarReadsAcrossStackFreeCalls(entryProcedures, callGraph);
 		unfold(entryProcedures);
@@ -813,15 +820,17 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		final String caller = ProcedureCallGraph.procedureOf(callSite.getState());
 		final int returnSiteId = mNextReturnSiteId++;
 		// Only a caller that can be re-entered while the callee runs needs a copy of its locals, and that is exactly
-		// a caller that lies on a call cycle itself. A caller that cannot be re-entered still needs the return site
+		// a caller on a call cycle with the callee. A caller that cannot be re-entered still needs the return site
 		// pushed, or the callee would not know where to go back to.
-		final Collection<IProgramVar> toSave =
-				mRecursive.contains(caller) ? localsOf(Collections.singleton(caller)) : Collections.emptyList();
+		final Set<String> cycle = mCycleOf.get(caller);
+		final Collection<IProgramVar> toSave = cycle != null && cycle.contains(callee)
+				? localsOf(Collections.singleton(caller))
+				: Collections.emptyList();
 
 		final CallNode<STATE> entryNode = CallNode.root(call.getSucc());
 		addAlternative(alternatives, callSite, entryNode, TransFormulaUtils.sequentialComposition(mLogger, mServices,
 				mMgdScript, false, false, false, SimplificationTechnique.NONE,
-				Arrays.asList(mCallStack.push(returnSiteId, toSave), callEntryFormula(callAction, callee, true))));
+				Arrays.asList(mCallStack.push(callee, returnSiteId, toSave), callEntryFormula(callAction, callee, true))));
 		enqueue(worklist, entryNode);
 
 		int returns = 0;
@@ -838,7 +847,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 				addAlternative(alternatives, CallNode.root(exit), callSite.sibling(ret.getSucc()),
 						TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, false, false, false,
 								SimplificationTechnique.NONE,
-								Arrays.asList(returnTf, mCallStack.pop(returnSiteId, toRestore))));
+								Arrays.asList(returnTf, mCallStack.pop(callee, returnSiteId, toRestore))));
 				enqueue(worklist, callSite.sibling(ret.getSucc()));
 				returns++;
 			}
@@ -876,8 +885,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			String worst = null;
 			long worstNodes = -1;
 			for (final Map.Entry<String, Long> entry : copies.entrySet()) {
-				final long nodes = entry.getValue() * mReduced.get(entry.getKey()).mNodes.size();
-				total += nodes;
+				final long nodes = saturatedProduct(entry.getValue(), mReduced.get(entry.getKey()).mNodes.size());
+				total = saturatedSum(total, nodes);
 				if (mUnfolded.contains(entry.getKey()) && nodes > worstNodes) {
 					worst = entry.getKey();
 					worstNodes = nodes;
@@ -927,12 +936,25 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 				for (final OutgoingCallTransition<LETTER, STATE> call : liveCalls(state)) {
 					final String callee = call.getLetter().getSucceedingProcedure();
 					if (mUnfolded.contains(callee)) {
-						copies.merge(callee, own, Long::sum);
+						copies.merge(callee, own, ProcedureSummaries::saturatedSum);
 					}
 				}
 			}
 		}
 		return copies;
+	}
+
+	/**
+	 * The number of copies is exponential in the depth of the call graph, so it can pass what a long holds. A sum that
+	 * wrapped around could look small and pass the budget.
+	 */
+	private static long saturatedSum(final long a, final long b) {
+		final long sum = a + b;
+		return sum < 0 ? Long.MAX_VALUE : sum;
+	}
+
+	private static long saturatedProduct(final long a, final long b) {
+		return Math.multiplyHigh(a, b) == 0 && a * b >= 0 ? a * b : Long.MAX_VALUE;
 	}
 
 	/** Resolves one call site of the root graph into summary and error edges, as {@link #buildVirtualEdges} does. */
@@ -973,19 +995,6 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	// ----------------------------------------------------------------------------------------------------------
 	// Summary edges
 	// ----------------------------------------------------------------------------------------------------------
-
-	private static Set<String> callReachable(final ProcedureCallGraph callGraph, final Set<String> entries) {
-		final Set<String> visited = new LinkedHashSet<>(entries);
-		final Deque<String> worklist = new ArrayDeque<>(entries);
-		while (!worklist.isEmpty()) {
-			for (final String callee : callGraph.getCallees(worklist.poll())) {
-				if (visited.add(callee)) {
-					worklist.add(callee);
-				}
-			}
-		}
-		return visited;
-	}
 
 	private static Set<String> union(final Set<String> a, final Set<String> b) {
 		final Set<String> result = new LinkedHashSet<>(a);
@@ -1148,8 +1157,15 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	private UnmodifiableTransFormula formulaBetween(final ScopeData data, final Set<STATE> inits,
 			final STATE target) {
 		mNumBuilds++;
-		final LoopTree<STATE> tree = new LoopTreeFormulaBuilder<>(mServices, mLogger, mMgdScript, mAbstraction,
-				data.mScopeStates, inits, Collections.singleton(target), data.mVirtualEdges, data.mSealed).build();
+		final LoopTreeFormulaBuilder<LETTER, STATE> builder = new LoopTreeFormulaBuilder<>(mServices, mLogger,
+				mMgdScript, mAbstraction, data.mScopeStates, inits, Collections.singleton(target), data.mVirtualEdges,
+				data.mSealed);
+		// Only this graph has calls: the root graph has no transition of its own, see getGraph.
+		if (!data.mCallsChecked) {
+			builder.rejectUnresolvedCallsAndReturns();
+			data.mCallsChecked = true;
+		}
+		final LoopTree<STATE> tree = builder.build();
 		if (!tree.getLoops().isEmpty()) {
 			throw new AssertionError("procedure " + data.mProcedure + " was summarized although its graph has a "
 					+ "loop; classify() should have marked it for unfolding");
