@@ -29,12 +29,15 @@ package de.uni_freiburg.informatik.ultimate.automata.afa;
 import java.util.Optional;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.afa.IndependencyAutomaton.IndependenceLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 
-public interface IIndependencyAutomaton<L, S> extends INwaOutgoingLetterAndTransitionProvider<L, S> {
+public interface IIndependencyAutomaton<L, S>
+		extends INwaOutgoingLetterAndTransitionProvider<IndependenceLetter<L>, S> {
 
-	Optional<L> getSpecialSymbol(final L letter1, final L letter2);
+	Optional<IndependenceLetter<L>> getSpecialSymbol(final L letter1, final L letter2);
 
 	void addIndependence(final L letter1, final L letter2,
-			final INwaOutgoingLetterAndTransitionProvider<L, S> interpolantAutomaton) throws AutomataLibraryException;
+			final INwaOutgoingLetterAndTransitionProvider<IndependenceLetter<L>, S> interpolantAutomaton)
+			throws AutomataLibraryException;
 }

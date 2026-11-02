@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.afa;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -35,6 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.afa.AFAReductionAutomaton.AfaState;
 import de.uni_freiburg.informatik.ultimate.automata.afa.AFAReductionAutomaton.AfaState.StateType;
+import de.uni_freiburg.informatik.ultimate.automata.afa.IndependencyAutomaton.IndependenceLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
@@ -43,9 +45,9 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 
 	private final IDfsOrder<L, S2> mOrder;
 	private final Set<L> mAlphabet;
-	private Set<AfaState<L, S1, S2>> mStates;
-	private Set<AfaState<L, S1, S2>> mInitialStates;
-	private Set<AfaState<L, S1, S2>> mFinalStates;
+	private final Set<AfaState<L, S1, S2>> mStates = new HashSet<>();
+	private final Set<AfaState<L, S1, S2>> mInitialStates = new HashSet<>();
+	private final Set<AfaState<L, S1, S2>> mFinalStates = new HashSet<>();
 	final BddManager<AfaState<L, S1, S2>> mBddManager = new BddManager<>();
 	private final IIndependencyAutomaton<L, S1> mIndependencyAutomaton;
 	// TODO: implement order automaton
@@ -69,7 +71,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 		final Iterable<S2> orderInitialStates = mOrderAutomaton.getInitialStates();
 		for (final S1 independencyState : independencyInitialStates) {
 			for (final S2 orderState : orderInitialStates) {
-				mInitialStates.add(new AfaState<>(StateType.TRACK, null, independencyState, orderState));
+				mInitialStates.add(getOrConstructState(StateType.TRACK, null, independencyState, orderState));
 			}
 		}
 	}
@@ -105,15 +107,15 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 		final L sleepLetter = state.mSleepletter;
 		final S1 independencyState = state.mIndependencyState;
 		final S2 orderState = state.mOrderState;
-		final Iterable<OutgoingInternalTransition<L, S1>> independencyTransitions =
-				mIndependencyAutomaton.internalSuccessors(independencyState, letter);
+		final Iterable<OutgoingInternalTransition<IndependenceLetter<L>, S1>> independencyTransitions =
+				mIndependencyAutomaton.internalSuccessors(independencyState, IndependenceLetter.normal(letter));
 		final S2 orderSucc = getUniqueOrderSuccessor(orderState, letter);
 		Bdd<AfaState<L, S1, S2>> bddResult = mBddManager.getTrue();
 		AfaState<L, S1, S2> succ;
 
 		switch (state.mType) {
 		case TRACK:
-			for (final OutgoingInternalTransition<L, S1> t : independencyTransitions) {
+			for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : independencyTransitions) {
 				succ = getOrConstructState(StateType.TRACK, null, t.getSucc(), orderSucc);
 				bddResult = bddResult.and(mBddManager.variable(succ));
 			}
@@ -123,16 +125,17 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 				Bdd<AfaState<L, S1, S2>> bddDisjunct2;
 				// TODO: use the Order from the orderState instead
 				if (mOrder.getOrder(orderState).compare(letter2, letter) < 0) {
-					for (final OutgoingInternalTransition<L, S1> t : independencyTransitions) {
+					for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : independencyTransitions) {
 						succ = getOrConstructState(StateType.SLEEP, letter2, t.getSucc(), orderSucc);
 						bddDisjunct1 = bddDisjunct1.and(mBddManager.variable(succ));
 
 					}
-					final Optional<L> specialSymbol = mIndependencyAutomaton.getSpecialSymbol(letter, letter2);
+					final Optional<IndependenceLetter<L>> specialSymbol =
+							mIndependencyAutomaton.getSpecialSymbol(letter, letter2);
 					if (specialSymbol.isPresent()) {
-						final L symbol = specialSymbol.get();
+						final IndependenceLetter<L> symbol = specialSymbol.get();
 						bddDisjunct2 = mBddManager.getTrue();
-						for (final OutgoingInternalTransition<L, S1> t : mIndependencyAutomaton
+						for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : mIndependencyAutomaton
 								.internalSuccessors(independencyState, symbol)) {
 							succ = getOrConstructState(StateType.WAIT, letter2, t.getSucc(), orderSucc);
 							bddDisjunct2 = bddDisjunct2.and(mBddManager.variable(succ));
@@ -152,16 +155,17 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 			} else {
 				Bdd<AfaState<L, S1, S2>> bddDisjunct1 = mBddManager.getTrue();
 				Bdd<AfaState<L, S1, S2>> bddDisjunct2;
-				for (final OutgoingInternalTransition<L, S1> t : independencyTransitions) {
+				for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : independencyTransitions) {
 					succ = getOrConstructState(StateType.SLEEP, sleepLetter, t.getSucc(), orderSucc);
 					bddDisjunct1 = bddDisjunct1.and(mBddManager.variable(succ));
 
 				}
-				final Optional<L> specialSymbol = mIndependencyAutomaton.getSpecialSymbol(letter, sleepLetter);
+				final Optional<IndependenceLetter<L>> specialSymbol =
+						mIndependencyAutomaton.getSpecialSymbol(letter, sleepLetter);
 				if (specialSymbol.isPresent()) {
-					final L symbol = specialSymbol.get();
+					final IndependenceLetter<L> symbol = specialSymbol.get();
 					bddDisjunct2 = mBddManager.getTrue();
-					for (final OutgoingInternalTransition<L, S1> t : mIndependencyAutomaton
+					for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : mIndependencyAutomaton
 							.internalSuccessors(independencyState, symbol)) {
 						succ = getOrConstructState(StateType.WAIT, sleepLetter, t.getSucc(), orderSucc);
 						bddDisjunct2 = bddDisjunct2.and(mBddManager.variable(succ));
@@ -179,7 +183,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 				bddResult = mBddManager.variable(succ);
 
 			} else {
-				for (final OutgoingInternalTransition<L, S1> t : independencyTransitions) {
+				for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : independencyTransitions) {
 					succ = getOrConstructState(StateType.WAIT, sleepLetter, t.getSucc(), orderSucc);
 					bddResult = bddResult.and(mBddManager.variable(succ));
 
@@ -187,7 +191,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 			}
 			break;
 		case CHECK:
-			for (final OutgoingInternalTransition<L, S1> t1 : independencyTransitions) {
+			for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t1 : independencyTransitions) {
 				succ = getOrConstructState(StateType.CHECK, null, t1.getSucc(), orderSucc);
 				bddResult = bddResult.and(mBddManager.variable(succ));
 
@@ -221,7 +225,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 			default:
 				throw new IllegalArgumentException("Unknown state type: " + k.type());
 			}
-
+			mStates.add(state);
 			return state;
 		});
 	}
