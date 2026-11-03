@@ -46,7 +46,6 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -773,11 +772,10 @@ public class MemoryHandler {
 	 * @param value
 	 * @param valueType
 	 * @param omit
-	 * @param hook
 	 * @return
 	 */
 	public List<Statement> getInitCall(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final ICType valueType, final IASTNode hook) {
+			final ICType valueType) {
 		final ICType realValueType = valueType.getUnderlyingType();
 		return getWriteCall(loc, hlv, value, realValueType, HeapWriteMode.SELECT);
 	}

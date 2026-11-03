@@ -2225,7 +2225,7 @@ public class CHandler {
 			final CPrimitive charType = new CPrimitive(CPrimitives.CHAR);
 			final Expression zero = mTypeSizes.constructLiteralForIntegerType(actualLoc, charType, BigInteger.ZERO);
 			mStaticObjectsHandler.addStatementsForUltimateInit(
-					mMemoryHandler.getInitCall(actualLoc, lastByteLValue, zero, charType, node));
+					mMemoryHandler.getInitCall(actualLoc, lastByteLValue, zero, charType));
 			return new StringLiteralResult(addressRValue, overapprox, stringLiteral);
 		}
 		final ExpressionResult exprRes = mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node);
