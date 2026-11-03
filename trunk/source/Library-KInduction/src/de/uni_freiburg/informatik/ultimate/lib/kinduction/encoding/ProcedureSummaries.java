@@ -967,7 +967,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		return Math.multiplyHigh(a, b) == 0 && a * b >= 0 ? a * b : Long.MAX_VALUE;
 	}
 
-	/** Resolves one call site of the root graph into summary and error edges, as {@link #buildVirtualEdges} does. */
+	/** Resolves one call site of the root graph into summary and error edges, as {@link #buildScopeEdges} does. */
 	private void summarizeCallee(final Deque<CallNode<STATE>> worklist,
 			final Map<CallNode<STATE>, Map<CallNode<STATE>, List<UnmodifiableTransFormula>>> alternatives,
 			final CallNode<STATE> callSite, final OutgoingCallTransition<LETTER, STATE> call) {

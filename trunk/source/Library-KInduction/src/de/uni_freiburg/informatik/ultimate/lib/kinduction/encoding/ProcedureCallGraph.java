@@ -72,14 +72,8 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 public final class ProcedureCallGraph {
 
 	private final ILogger mLogger;
-	private final Set<String> mProcedures = new LinkedHashSet<>();
 	private final Set<String> mEntryProcedures = new LinkedHashSet<>();
 	private final HashRelation<String, String> mCalls = new HashRelation<>();
-
-	public <LETTER extends IAction, STATE> ProcedureCallGraph(final ILogger logger,
-			final INestedWordAutomaton<LETTER, STATE> abstraction) {
-		this(logger, abstraction, abstraction.getStates());
-	}
 
 	/**
 	 * The call graph of the part of {@code abstraction} made of {@code states}: their procedures, and the calls
@@ -88,9 +82,6 @@ public final class ProcedureCallGraph {
 	public <LETTER extends IAction, STATE> ProcedureCallGraph(final ILogger logger,
 			final INestedWordAutomaton<LETTER, STATE> abstraction, final Set<STATE> states) {
 		mLogger = logger;
-		for (final STATE state : states) {
-			mProcedures.add(procedureOf(state));
-		}
 		for (final STATE init : abstraction.getInitialStates()) {
 			if (states.contains(init)) {
 				mEntryProcedures.add(procedureOf(init));
