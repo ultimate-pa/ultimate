@@ -87,6 +87,8 @@ public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S>
 			throws AutomataLibraryException {
 
 		// The given (interpolant) automaton needs to have letters of type IndependenceLetter<L>
+		// TODO: does the given (interpolant) automaton have to be total and deterministic?
+		// I think the UnionNwa requires at least totally
 		if (!mSpecialSymbols.containsKey(new Pair<>(letter1, letter2))) {
 			throw new IllegalArgumentException("Unknown letter pair: " + letter1 + ", " + letter2);
 		}
