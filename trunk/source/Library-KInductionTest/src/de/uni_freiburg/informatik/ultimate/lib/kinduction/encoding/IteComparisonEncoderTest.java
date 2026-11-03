@@ -166,7 +166,7 @@ public class IteComparisonEncoderTest {
 		}
 		final Term input = parse(String.format("(= (ite (and %s) %s %s) %s)", String.join(" ", conjuncts), ONE, ZERO, ZERO));
 		final Term encoded = IteComparisonEncoder.apply(mScript, input);
-		final Term withoutIte = new IteRemover(mMgdScript).transform(encoded);
+		final Term withoutIte = IteRemover.apply(mMgdScript, encoded);
 		Assert.assertTrue(SmtUtils.extractApplicationTerms("ite", withoutIte, false).isEmpty());
 	}
 
