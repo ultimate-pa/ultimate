@@ -211,20 +211,6 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * Where a resolved call site puts the nodes it creates. A procedure's own scope works in plain states, so both
-	 * operations are the identity there; the unfolded root graph works in {@link CallNode}s, where they are
-	 * "another state of this activation" and "a state of the activation the call enters".
-	 *
-	 * @param <N>
-	 *            node type
-	 */
-	private interface INodeSpace<S, N> {
-		N sibling(S state);
-
-		N enter(S calleeState);
-	}
-
-	/**
 	 * A procedure's own graph with every state removed that is neither a cut point nor needed otherwise, see
 	 * {@link #reduce}. Its edges are formulas over the procedure's own scope, so one reduction serves every copy.
 	 */
@@ -525,7 +511,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	 * exactly one other, so none grows beyond the sum of the formulas it is made of. The heads of a loop stay: a head
 	 * is entered from outside the loop and from inside it, so it has two predecessors, unless it is an initial or an
 	 * entry state. A removed state can still lie on a counterexample, since {@link KInductionCounterexampleBuilder}
-	 * searches the letters between two checkpoints in the automaton, not in this graph.
+	 * searches the letters between two pc values in the automaton, not in this graph.
 	 */
 	private ReducedProcedure reduce(final String procedure) {
 		final Set<STATE> own = ownStates(procedure);
@@ -661,7 +647,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 				continue;
 			}
 			final Set<STATE> imported = new LinkedHashSet<>();
-			resolveBySummary(procedure, callSite, call, identitySpace(), summaries, imported);
+			addSummaryEdges(procedure, callSite, call, summaries, imported);
 			if (!imported.isEmpty()) {
 				foldable = false;
 			}
@@ -686,21 +672,6 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 				keep.add(target);
 			}
 		}
-	}
-
-	/** The node space of a procedure's own scope: plain states, so both operations are the identity. */
-	private INodeSpace<STATE, STATE> identitySpace() {
-		return new INodeSpace<>() {
-			@Override
-			public STATE sibling(final STATE state) {
-				return state;
-			}
-
-			@Override
-			public STATE enter(final STATE calleeState) {
-				return calleeState;
-			}
-		};
 	}
 
 	// ----------------------------------------------------------------------------------------------------------
@@ -967,37 +938,22 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		return Math.multiplyHigh(a, b) == 0 && a * b >= 0 ? a * b : Long.MAX_VALUE;
 	}
 
-	/** Resolves one call site of the root graph into summary and error edges, as {@link #buildScopeEdges} does. */
+	/**
+	 * Resolves one call site of the root graph into summary and error edges. A return site is another state of this
+	 * activation, and an error state lies in the activation the call enters.
+	 */
 	private void summarizeCallee(final Deque<CallNode<STATE>> worklist,
 			final Map<CallNode<STATE>, Map<CallNode<STATE>, List<UnmodifiableTransFormula>>> alternatives,
 			final CallNode<STATE> callSite, final OutgoingCallTransition<LETTER, STATE> call) {
-		final Set<CallNode<STATE>> imported = new LinkedHashSet<>();
-		// A map of this call site's own edges, so that only the nodes it creates have to be enqueued.
-		final Map<CallNode<STATE>, Map<CallNode<STATE>, List<UnmodifiableTransFormula>>> mine =
-				new LinkedHashMap<>();
-		resolveBySummary(ProcedureCallGraph.procedureOf(callSite.getState()), callSite.getState(), call,
-				new INodeSpace<STATE, CallNode<STATE>>() {
-					@Override
-					public CallNode<STATE> sibling(final STATE state) {
-						return callSite.sibling(state);
-					}
-
-					@Override
-					public CallNode<STATE> enter(final STATE calleeState) {
-						return callSite.enter(calleeState);
-					}
-				}, mine, imported);
-		for (final CallNode<STATE> error : imported) {
-			mRootSealedStates.add(error);
-		}
-		for (final Map.Entry<CallNode<STATE>, Map<CallNode<STATE>, List<UnmodifiableTransFormula>>> from : mine
-				.entrySet()) {
-			for (final Map.Entry<CallNode<STATE>, List<UnmodifiableTransFormula>> to : from.getValue().entrySet()) {
-				for (final UnmodifiableTransFormula formula : to.getValue()) {
-					addAlternative(alternatives, from.getKey(), to.getKey(), formula);
-				}
-				enqueue(worklist, to.getKey());
+		for (final SummaryEdge<STATE> edge : summaryEdges(ProcedureCallGraph.procedureOf(callSite.getState()),
+				callSite.getState(), call)) {
+			final CallNode<STATE> target =
+					edge.isError() ? callSite.enter(edge.target()) : callSite.sibling(edge.target());
+			if (edge.isError()) {
+				mRootSealedStates.add(target);
 			}
+			addAlternative(alternatives, callSite, target, edge.formula());
+			enqueue(worklist, target);
 		}
 		mNumSummarizedCallSites++;
 	}
@@ -1071,29 +1027,27 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	private Map<STATE, Map<STATE, UnmodifiableTransFormula>> buildScopeEdges(final String caller,
 			final Set<STATE> imported) {
 		final Map<STATE, Map<STATE, List<UnmodifiableTransFormula>>> alternatives = new LinkedHashMap<>();
-		final INodeSpace<STATE, STATE> identity = identitySpace();
 		final Set<STATE> own = ownStates(caller);
 		for (final STATE state : own) {
 			addInternalTransitions(state, own, alternatives);
 			for (final OutgoingCallTransition<LETTER, STATE> call : liveCalls(state)) {
-				resolveBySummary(caller, state, call, identity, alternatives, imported);
+				addSummaryEdges(caller, state, call, alternatives, imported);
 			}
 		}
 		return combine(alternatives);
 	}
 
 	/**
-	 * The summary and error edges of one call site, expressed in whatever node space {@code space} describes: the
-	 * caller's own states when a procedure's scope is built, {@link CallNode}s when the root graph is.
+	 * The summary and error edges of one call site in the caller's own states, for its scope and its reduced graph.
+	 * Fills {@code imported} with the error states they point at.
 	 */
-	private <N> void resolveBySummary(final String caller, final STATE callSite,
-			final OutgoingCallTransition<LETTER, STATE> call, final INodeSpace<STATE, N> space,
-			final Map<N, Map<N, List<UnmodifiableTransFormula>>> alternatives, final Set<N> imported) {
+	private void addSummaryEdges(final String caller, final STATE callSite,
+			final OutgoingCallTransition<LETTER, STATE> call,
+			final Map<STATE, Map<STATE, List<UnmodifiableTransFormula>>> alternatives, final Set<STATE> imported) {
 		for (final SummaryEdge<STATE> edge : summaryEdges(caller, callSite, call)) {
-			final N target = edge.isError() ? space.enter(edge.target()) : space.sibling(edge.target());
-			addAlternative(alternatives, space.sibling(callSite), target, edge.formula());
+			addAlternative(alternatives, callSite, edge.target(), edge.formula());
 			if (edge.isError()) {
-				imported.add(target);
+				imported.add(edge.target());
 			}
 		}
 	}

@@ -39,7 +39,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -54,15 +53,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Given a graph whose edges are transition formulas, cuts it into the graphs {@link PcTransitionSystem} needs, for
  * programs with no loop, any number of sequential loops, and arbitrarily <b>nested</b> loops.
  * <p>
- * The result is a {@link LoopTree}: a tree of {@link Scope}s. The root scope is the whole program, every other scope
- * is one loop. Inside a scope, the nodes are <em>checkpoints</em> (see {@link Checkpoint}): the scope's start
- * ({@code INIT}, one per head of the scope), the heads of its directly nested loops, its end ({@code END(h)}, one of
- * the scope's own heads reached again after one iteration), the error/accepting states ({@code FINAL}) and every
- * state the scope can leave to ({@code ESCAPE}, e.g. a {@code break} out of a loop). The checkpoints are connected by
- * a <em>cut graph</em>, which is acyclic and holds all loop-free paths between them. The root scope of a program without a
- * loop has only paths from {@code INIT} to {@code FINAL}. The parts before and after a loop are the paths {@code INIT -> loopHead} and
- * {@code loopHead -> FINAL} of the scope around it, and the body of a loop is the cut graph of its own scope. The paths are
- * not composed: {@link PcTransitionSystem} encodes the graph as it is, so its size is what a step costs.
+ * The result is a tree of {@link Scope}s. The root scope is the whole program, every other scope is one loop. A
+ * scope's <em>cut graph</em> is acyclic and holds all loop-free paths between the places a step through the scope can
+ * start and end: the program's start in the root and the scope's own heads in a loop, the heads of its directly nested
+ * loops, the error/accepting states, and every state the scope can leave to (e.g. by a {@code break} out of a loop). The
+ * root scope of a program without a loop has only paths from the start to an error. The parts before and after a loop
+ * are paths to and from its heads in the scope around it, and the body of a loop is the cut graph of its own scope. The
+ * paths are not composed: {@link PcTransitionSystem} encodes the graph as it is, so its size is what a step costs.
  * <p>
  * Loops are found structurally (strongly connected components, recursively with the heads removed), so no annotation
  * is required. Several entry and exit transitions per head are supported.
@@ -71,12 +68,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  * The heads of a loop are <b>all</b> the states it is entered at from outside it. A reducible loop has one;
  * irreducible control flow (a {@code goto} into the middle of a loop, or an abstraction in which one loop head
- * location has split into several states) has more, and is supported rather than rejected. Every head gets its own
- * {@code INIT(h)} and {@code END(h)} checkpoint, so a scope with the heads {@code h1, h2} has the edges
- * {@code INIT(h1) -> END(h1)}, {@code INIT(h1) -> END(h2)}, {@code INIT(h2) -> END(h1)} and
- * {@code INIT(h2) -> END(h2)}: the traversals of one iteration, by where it started and where it came back round to.
+ * location has split into several states) has more, and is supported rather than rejected. An iteration can start at
+ * every head and come back round to every head, so a scope with the heads {@code h1, h2} has steps from {@code h1} to
+ * {@code h1}, from {@code h1} to {@code h2}, from {@code h2} to {@code h1} and from {@code h2} to {@code h2}.
  * <p>
- * The cross edges are not an extra. An iteration from {@code h1} to {@code h2} has no other representation, because
+ * The cross steps are not an extra. An iteration from {@code h1} to {@code h2} has no other representation, because
  * in the enclosing scope both heads are sealed (they are nodes with no outgoing edges) and everything between them
  * is an interior state that is not a node there at all. Taking every entry state as a head is also what keeps the
  * recursion correct, see invariant (I1) at {@code findHeads}.
@@ -94,8 +90,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  * <h2>How to use</h2>
  *
- * Construct the builder, call {@link #build()} once, and read the graphs off the scopes of the resulting
- * {@link LoopTree}, or, for a graph without a loop, call {@link #buildLoopFreeFormula()} for the formula of all its
+ * Construct the builder, call {@link #build()} once, and read the graphs off the resulting tree of {@link Scope}s,
+ * or, for a graph without a loop, call {@link #buildLoopFreeFormula()} for the formula of all its
  * paths. All formulas live in the {@link ManagedScript} passed to the constructor. That script must
  * <b>not</b> be locked while {@link #buildLoopFreeFormula()} runs: composing transition formulas declares constants for their aux
  * vars and therefore acquires the lock itself. Lock the script afterwards, once all formulas exist, to use them in a
@@ -136,19 +132,20 @@ public class LoopTreeFormulaBuilder<STATE> {
 
 	/**
 	 * Builds the loop tree. All formulas are native to the {@link ManagedScript} passed to the constructor.
+	 *
+	 * @return the root scope, with all loops as nested scopes
 	 */
-	public LoopTree<STATE> build() {
+	public Scope<STATE> build() {
 		final Set<STATE> reachable = computeReachable();
 		for (final STATE state : reachable) {
 			for (final STATE successor : successors(state).keySet()) {
 				mPredecessors.computeIfAbsent(successor, k -> new LinkedHashSet<>()).add(state);
 			}
 		}
-		final Scope<STATE> root = buildScope(Collections.emptySet(), reachable, 0);
-		final LoopTree<STATE> tree = new LoopTree<>(root);
-		mLogger.info("LoopTree: built tree with %d loop(s), maximal nesting depth %d", tree.getLoops().size(),
-				tree.getMaxDepth());
-		return tree;
+		final Scope<STATE> root = buildScope(Collections.emptySet(), reachable);
+		mLogger.info("LoopTree: built tree with %d loop(s), maximal nesting depth %d", root.loops().size(),
+				root.nestingDepth());
+		return root;
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -259,8 +256,8 @@ public class LoopTreeFormulaBuilder<STATE> {
 	/**
 	 * The heads of the loop {@code loop} (a strongly connected component inside {@code enclosing}): <b>every</b>
 	 * state that is entered from outside the loop. A loop with more than one head is irreducible control flow,
-	 * which is supported: each head becomes a checkpoint of its own, so an iteration that enters the loop at one
-	 * head and comes back round to another is the scope edge {@code INIT(h1) -> END(h2)}.
+	 * which is supported: each head has a pc value of its own, so an iteration that enters the loop at one head and
+	 * comes back round to another is a step from {@code h1} to {@code h2}.
 	 * <p>
 	 * Returning <em>all</em> entry states, rather than picking one, is what keeps the rest of the construction
 	 * correct. It establishes the invariant
@@ -271,7 +268,7 @@ public class LoopTreeFormulaBuilder<STATE> {
 	 * (I1) is why the "entered from outside the enclosing loop" case below cannot happen, why the initial-state
 	 * test only has to look at the root (deeper down, an initial state is already a head of every enclosing
 	 * region, so it never reaches an inner strongly connected component), and why a path that leaves a region can
-	 * only come back into it through a head - which that scope's own {@code INIT(h)} edges describe.
+	 * only come back into it through a head - which that scope's own steps from {@code h} describe.
 	 */
 	private Set<STATE> findHeads(final Set<STATE> loop, final Set<STATE> enclosing, final boolean enclosingIsRoot) {
 		final Set<STATE> entries = new LinkedHashSet<>();
@@ -310,10 +307,10 @@ public class LoopTreeFormulaBuilder<STATE> {
 
 	/**
 	 * Builds the scope of the loop with heads {@code heads} and states {@code region}, or the root scope if
-	 * {@code heads} is empty. Inner loops are built first (bottom-up), and every head of an inner loop shows up
-	 * here as a checkpoint.
+	 * {@code heads} is empty. Inner loops are built first (bottom-up), and a step through this scope can start and
+	 * end at every head of an inner loop.
 	 */
-	private Scope<STATE> buildScope(final Set<STATE> heads, final Set<STATE> region, final int depth) {
+	private Scope<STATE> buildScope(final Set<STATE> heads, final Set<STATE> region) {
 		final boolean isRoot = heads.isEmpty();
 		final Set<STATE> inner = new LinkedHashSet<>(region);
 		inner.removeAll(heads);
@@ -323,13 +320,13 @@ public class LoopTreeFormulaBuilder<STATE> {
 		final Set<STATE> interiors = new HashSet<>();
 		for (final Set<STATE> loop : nontrivialSccs(inner)) {
 			final Set<STATE> loopHeads = findHeads(loop, region, isRoot);
-			children.add(buildScope(loopHeads, loop, depth + 1));
+			children.add(buildScope(loopHeads, loop));
 			interiors.addAll(loop);
 			interiors.removeAll(loopHeads);
 		}
 		final Set<STATE> childHeads = new LinkedHashSet<>();
 		for (final Scope<STATE> child : children) {
-			childHeads.addAll(child.getHeads());
+			childHeads.addAll(child.heads());
 		}
 
 		// states this scope can leave to
@@ -368,45 +365,27 @@ public class LoopTreeFormulaBuilder<STATE> {
 			}
 			cutEdges.put(node, out);
 		}
-		// checkpoints and the states each stands for
-		final Map<Checkpoint<STATE>, Collection<STATE>> targets = new LinkedHashMap<>();
-		for (final STATE childHead : childHeads) {
-			targets.put(Checkpoint.loopHead(childHead), Collections.singleton(childHead));
-		}
-		for (final STATE head : heads) {
-			targets.put(Checkpoint.end(head), Collections.singleton(head));
-		}
 		final List<STATE> finals = new ArrayList<>();
 		for (final STATE state : mFinalStates) {
 			if (nodes.contains(state)) {
 				finals.add(state);
 			}
 		}
-		if (!finals.isEmpty()) {
-			targets.put(Checkpoint.fin(), finals);
-		}
-		for (final STATE escape : escapes) {
-			if (!finals.contains(escape)) {
-				targets.put(Checkpoint.escape(escape), Collections.singleton(escape));
-			}
-		}
+		// An escape to an error state ends a step in that error, so only the others have a pc value of their own.
+		final Set<STATE> otherEscapes = new LinkedHashSet<>(escapes);
+		otherEscapes.removeAll(finals);
 
 		// Where a step through this scope starts: what it takes first, if anything, and the node of the cut graph that
 		// leads to. In the root that is the initial states. In a loop a step from a head of the scope takes one of that
 		// head's entry transitions, and a step from an inner loop head one of its exit transitions.
-		final Map<Checkpoint<STATE>, List<Pair<UnmodifiableTransFormula, STATE>>> sources = new LinkedHashMap<>();
-		final Map<Checkpoint<STATE>, Collection<STATE>> checkpointStates = new LinkedHashMap<>(targets);
+		final Set<STATE> programStarts = new LinkedHashSet<>();
+		final Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> sources = new LinkedHashMap<>();
 		if (isRoot) {
-			final List<Pair<UnmodifiableTransFormula, STATE>> starts = new ArrayList<>();
-			final Set<STATE> startStates = new LinkedHashSet<>();
 			for (final STATE init : mInitStates) {
 				if (nodes.contains(init)) {
-					starts.add(new Pair<>(null, init));
-					startStates.add(init);
+					programStarts.add(init);
 				}
 			}
-			sources.put(Checkpoint.init(), starts);
-			checkpointStates.put(Checkpoint.init(), startStates);
 		} else {
 			for (final STATE head : heads) {
 				final List<Pair<UnmodifiableTransFormula, STATE>> entries = new ArrayList<>();
@@ -415,39 +394,36 @@ public class LoopTreeFormulaBuilder<STATE> {
 						entries.add(edge);
 					}
 				}
-				sources.put(Checkpoint.init(head), entries);
-				checkpointStates.put(Checkpoint.init(head), Collections.singleton(head));
+				sources.put(head, entries);
 			}
 		}
 		for (final Scope<STATE> child : children) {
-			for (final STATE childHead : child.getHeads()) {
+			for (final STATE childHead : child.heads()) {
 				final List<Pair<UnmodifiableTransFormula, STATE>> exits = new ArrayList<>();
 				for (final Pair<UnmodifiableTransFormula, STATE> edge : edgesFrom(childHead)) {
-					if (!child.getRegion().contains(edge.getSecond())) {
+					if (!child.region().contains(edge.getSecond())) {
 						exits.add(edge);
 					}
 				}
-				sources.put(Checkpoint.loopHead(childHead), exits);
+				sources.put(childHead, exits);
 			}
 		}
 		// A plain state of this scope that an inner loop can jump to (e.g. by break) is a "waypoint". The inner loop's
-		// scope only knows how to get to it, the way on from there starts here. A jump out of several loops is a target
+		// scope only knows how to get to it, the way on from there starts here. A jump out of several loops is an escape
 		// of every loop it leaves, so the scope that holds the state is the one that makes it a waypoint.
 		for (final Scope<STATE> child : children) {
-			for (final Checkpoint<STATE> escape : child.getEscapeTargets()) {
-				final STATE w = escape.getEscapeState();
+			for (final STATE w : child.escapes()) {
 				if (nodes.contains(w) && !childHeads.contains(w) && !heads.contains(w) && !escapes.contains(w)
 						&& !finals.contains(w)) {
-					sources.put(escape, List.of(new Pair<>(null, w)));
-					checkpointStates.put(escape, Collections.singleton(w));
+					sources.put(w, List.of(new Pair<>(null, w)));
 				}
 			}
 		}
 
 		mLogger.info("LoopTree: scope %s built: %d inner loop(s), %d state(s), %d node(s)",
 				isRoot ? "ROOT" : "loop " + heads, children.size(), region.size(), nodes.size());
-		return new Scope<>(heads, region, children, depth, inTopologicalOrder(cutEdges), sources, targets,
-				checkpointStates);
+		return new Scope<>(heads, region, children, inTopologicalOrder(cutEdges), programStarts, sources, finals,
+				otherEscapes);
 	}
 
 	private List<Pair<UnmodifiableTransFormula, STATE>> edgesFrom(final STATE state) {
@@ -570,267 +546,57 @@ public class LoopTreeFormulaBuilder<STATE> {
 
 
 	/**
-	 * A place a step through a scope can start or end at.
-	 * <ul>
-	 * <li>INIT(h): the start of the scope; the program entry for the root (which has no head), otherwise the head
-	 * {@code h} the iteration starts at, with its entry transition still to be taken,
-	 * <li>LOOP_HEAD(c): a head of a loop directly nested in the scope,
-	 * <li>END(h): a loop scope only, the scope's own head {@code h} reached again after one iteration,
-	 * <li>FINAL: the accepting/error states,
-	 * <li>ESCAPE: a state outside the loop that its body can jump to (e.g. by {@code break}).
-	 * </ul>
+	 * The program (no heads) or one loop: its cut graph, and where a step through it can start and end. A step can start
+	 * at {@code programStarts} and {@code sources}, and end at the heads of this scope and of its children, at
+	 * {@code finals} and at {@code escapes}.
+	 *
+	 * @param heads
+	 *            the heads of this loop: every state it is entered from outside at. Empty for the root, a single state
+	 *            for a reducible loop, several for irreducible control flow.
+	 * @param region
+	 *            the states of this scope, those of its inner loops included
+	 * @param children
+	 *            the loops directly nested in this scope
+	 * @param cutGraph
+	 *            the acyclic graph of this scope, every node before its successors: no interiors of inner loops, and the
+	 *            heads of the scope and of its inner loops have no outgoing edges
+	 * @param programStarts
+	 *            the initial states inside this scope, empty for a loop
+	 * @param sources
+	 *            the other states a step can start from, with its ways into the cut graph: a formula to take first,
+	 *            {@code null} for none, and the node it leads to
+	 * @param finals
+	 *            the accepting states inside this scope
+	 * @param escapes
+	 *            the states a run inside this loop can jump to, other than accepting ones. A jump out of several loops is
+	 *            one of each of them, since it counts as an escape of a loop wherever inside the loop it starts. The scope
+	 *            that holds the state makes it a waypoint, see {@link LoopTreeFormulaBuilder#buildScope}.
 	 */
-	public static final class Checkpoint<STATE> {
-		private enum Kind {
-			INIT, LOOP_HEAD, END, FINAL, ESCAPE
+	public record Scope<STATE>(Set<STATE> heads, Set<STATE> region, List<Scope<STATE>> children,
+			Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> cutGraph, Set<STATE> programStarts,
+			Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> sources, List<STATE> finals, Set<STATE> escapes) {
+
+		public boolean isRoot() {
+			return heads.isEmpty();
 		}
 
-		private final Kind mKind;
-		private final STATE mState;
-
-		private Checkpoint(final Kind kind, final STATE state) {
-			mKind = kind;
-			mState = state;
-		}
-
-		/** The start of the root scope, which has no head. */
-		public static <STATE> Checkpoint<STATE> init() {
-			return new Checkpoint<>(Kind.INIT, null);
-		}
-
-		/**
-		 * The start of a loop scope at the head {@code head}: an edge out of it starts at {@code head} and takes
-		 * one of that head's entry transitions first. {@code null} gives the root scope's {@link #init()}.
-		 */
-		public static <STATE> Checkpoint<STATE> init(final STATE head) {
-			return new Checkpoint<>(Kind.INIT, head);
-		}
-
-		/** The head {@code head} of this loop scope, reached again after one iteration. */
-		public static <STATE> Checkpoint<STATE> end(final STATE head) {
-			return new Checkpoint<>(Kind.END, Objects.requireNonNull(head));
-		}
-
-		public static <STATE> Checkpoint<STATE> fin() {
-			return new Checkpoint<>(Kind.FINAL, null);
-		}
-
-		public static <STATE> Checkpoint<STATE> loopHead(final STATE loopHead) {
-			return new Checkpoint<>(Kind.LOOP_HEAD, loopHead);
-		}
-
-		public static <STATE> Checkpoint<STATE> escape(final STATE state) {
-			return new Checkpoint<>(Kind.ESCAPE, state);
-		}
-
-		public boolean isInit() {
-			return mKind == Kind.INIT;
-		}
-
-		public boolean isEnd() {
-			return mKind == Kind.END;
-		}
-
-		public boolean isFinal() {
-			return mKind == Kind.FINAL;
-		}
-
-		public boolean isLoopHead() {
-			return mKind == Kind.LOOP_HEAD;
-		}
-
-		public boolean isEscape() {
-			return mKind == Kind.ESCAPE;
-		}
-
-		public STATE getLoopHead() {
-			if (mKind != Kind.LOOP_HEAD) {
-				throw new IllegalStateException("Not a loop-head checkpoint: " + this);
-			}
-			return mState;
-		}
-
-		public STATE getEscapeState() {
-			if (mKind != Kind.ESCAPE) {
-				throw new IllegalStateException("Not an escape checkpoint: " + this);
-			}
-			return mState;
-		}
-
-		/**
-		 * The head an INIT or END checkpoint belongs to, {@code null} only for the root scope's {@link #init()}.
-		 * A loop scope has one INIT and one END per head, see {@link Scope#getHeads()}.
-		 */
-		public STATE getScopeHead() {
-			if (mKind != Kind.INIT && mKind != Kind.END) {
-				throw new IllegalStateException("Not an init or end checkpoint: " + this);
-			}
-			return mState;
-		}
-
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (!(obj instanceof Checkpoint)) {
-				return false;
-			}
-			final Checkpoint<?> other = (Checkpoint<?>) obj;
-			return mKind == other.mKind && Objects.equals(mState, other.mState);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(mKind, mState);
-		}
-
-		@Override
-		public String toString() {
-			return mState == null ? mKind.toString() : mKind + "(" + mState + ")";
-		}
-	}
-
-	/**
-	 * The result: the root scope (whole program) with all loops as nested scopes.
-	 */
-	public static final class LoopTree<STATE> {
-		private final Scope<STATE> mRoot;
-
-		LoopTree(final Scope<STATE> root) {
-			mRoot = root;
-		}
-
-		public Scope<STATE> getRoot() {
-			return mRoot;
-		}
-
-		/** All loops, outer loops before the loops nested in them. */
-		public List<Scope<STATE>> getLoops() {
+		/** All loops below this scope, outer loops before the loops nested in them. */
+		public List<Scope<STATE>> loops() {
 			final List<Scope<STATE>> result = new ArrayList<>();
-			collect(mRoot, result);
-			return result;
-		}
-
-		private void collect(final Scope<STATE> scope, final List<Scope<STATE>> result) {
-			for (final Scope<STATE> child : scope.getChildren()) {
+			for (final Scope<STATE> child : children) {
 				result.add(child);
-				collect(child, result);
+				result.addAll(child.loops());
 			}
+			return result;
 		}
 
-		public int getMaxDepth() {
+		/** How many levels of loops are below this scope. */
+		int nestingDepth() {
 			int result = 0;
-			for (final Scope<STATE> loop : getLoops()) {
-				result = Math.max(result, loop.getDepth());
+			for (final Scope<STATE> child : children) {
+				result = Math.max(result, child.nestingDepth() + 1);
 			}
 			return result;
-		}
-	}
-
-	/**
-	 * The program (root, no heads) or one loop: the cut graph of the scope, whose nodes are the checkpoints' states and the
-	 * states on the way between them, and where a step through it can start and end.
-	 */
-	public static final class Scope<STATE> {
-		private final Set<STATE> mHeads;
-		private final Set<STATE> mRegion;
-		private final List<Scope<STATE>> mChildren;
-		private final int mDepth;
-		private final Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> mCutGraph;
-		private final Map<Checkpoint<STATE>, List<Pair<UnmodifiableTransFormula, STATE>>> mSources;
-		private final Map<Checkpoint<STATE>, Collection<STATE>> mTargets;
-		private final Map<Checkpoint<STATE>, Collection<STATE>> mCheckpointStates;
-
-		Scope(final Set<STATE> heads, final Set<STATE> region, final List<Scope<STATE>> children, final int depth,
-				final Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> cutGraph,
-				final Map<Checkpoint<STATE>, List<Pair<UnmodifiableTransFormula, STATE>>> sources,
-				final Map<Checkpoint<STATE>, Collection<STATE>> targets,
-				final Map<Checkpoint<STATE>, Collection<STATE>> checkpointStates) {
-			mHeads = heads;
-			mRegion = region;
-			mChildren = children;
-			mDepth = depth;
-			mCutGraph = cutGraph;
-			mSources = sources;
-			mTargets = targets;
-			mCheckpointStates = checkpointStates;
-		}
-
-		/**
-		 * The automaton states a checkpoint stands for: INIT in the root are the initial states inside this scope, INIT(h)
-		 * in a loop is {@code h} (a step from it starts there and takes an entry transition first), END(h) is {@code h},
-		 * LOOP_HEAD(c) is {@code c}, FINAL are the accepting states inside this scope, ESCAPE(s) is {@code s}.
-		 *
-		 * @return the states, empty if the checkpoint does not occur in this scope.
-		 */
-		public Collection<STATE> getCheckpointStates(final Checkpoint<STATE> checkpoint) {
-			final Collection<STATE> result = mCheckpointStates.get(checkpoint);
-			return result == null ? Collections.emptyList() : Collections.unmodifiableCollection(result);
-		}
-
-		/**
-		 * The heads of this loop: every state it is entered from outside at. Empty for the root, a single state
-		 * for a reducible loop, several for irreducible control flow. The scope has one {@link Checkpoint#init}
-		 * and one {@link Checkpoint#end} per head.
-		 */
-		public Set<STATE> getHeads() {
-			return Collections.unmodifiableSet(mHeads);
-		}
-
-		/** Nesting depth: 0 for the root, 1 for an outermost loop, ... */
-		public int getDepth() {
-			return mDepth;
-		}
-
-		public Set<STATE> getRegion() {
-			return mRegion;
-		}
-
-		/** The loops directly nested in this scope. */
-		public List<Scope<STATE>> getChildren() {
-			return mChildren;
-		}
-
-		/**
-		 * The acyclic graph of this scope, every node before its successors: no interiors of inner loops, and the heads of
-		 * the scope and of its inner loops have no outgoing edges.
-		 */
-		public Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> getCutGraph() {
-			return Collections.unmodifiableMap(mCutGraph);
-		}
-
-		/**
-		 * Where a step through this scope can start, a checkpoint with its ways into the cut graph: a formula to take
-		 * first, {@code null} for none, and the node it leads to.
-		 */
-		public Map<Checkpoint<STATE>, List<Pair<UnmodifiableTransFormula, STATE>>> getSources() {
-			return Collections.unmodifiableMap(mSources);
-		}
-
-		/** Where a step through this scope can end: a checkpoint with the nodes of the cut graph it stands for. */
-		public Map<Checkpoint<STATE>, Collection<STATE>> getTargets() {
-			return Collections.unmodifiableMap(mTargets);
-		}
-
-		/**
-		 * All ESCAPE checkpoints a run inside this loop can jump to. A jump out of several loops is one of each of them,
-		 * since it counts as an escape of a loop wherever inside the loop it starts. The scope that holds the state makes
-		 * it a waypoint, see {@link LoopTreeFormulaBuilder#buildScope}.
-		 */
-		public Set<Checkpoint<STATE>> getEscapeTargets() {
-			final Set<Checkpoint<STATE>> result = new LinkedHashSet<>();
-			for (final Checkpoint<STATE> target : mTargets.keySet()) {
-				if (target.isEscape()) {
-					result.add(target);
-				}
-			}
-			return result;
-		}
-
-		@Override
-		public String toString() {
-			return mHeads.isEmpty() ? "ROOT" : "loop" + mHeads;
 		}
 	}
 }

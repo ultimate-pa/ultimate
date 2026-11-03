@@ -79,10 +79,10 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.IndexedConsta
  * k-induction on a nested word automaton (path program or abstraction) that represents a program with any number of
  * loops, sequential or nested.
  * <p>
- * {@link LoopTreeFormulaBuilder} cuts the program into a tree of loops, each an acyclic graph between checkpoints
- * (program start, loop heads, error states, ...). {@link PcTransitionSystem} turns this into one transition system
- * whose state is the program variables plus a program counter {@code pc}. An error is reachable iff the system
- * reaches {@code pc = FINAL}. This class runs plain k-induction on it, for {@code k = 1, 2, ...}:
+ * {@link LoopTreeFormulaBuilder} cuts the program into a tree of loops, each an acyclic graph between the places a step
+ * can start and end (program start, loop heads, error states, ...). {@link PcTransitionSystem} turns this into one
+ * transition system whose state is the program variables plus a program counter {@code pc}. An error is reachable iff
+ * the system reaches {@code pc = FINAL}. This class runs plain k-induction on it, for {@code k = 1, 2, ...}:
  * <ul>
  * <li><b>Base case</b>: {@code pc_0 = INIT}, k transitions, {@code pc_k = FINAL} and not before. SAT means
  * (<i>unsafe</i>). Since k runs upwards, the base cases together cover every error within k steps.

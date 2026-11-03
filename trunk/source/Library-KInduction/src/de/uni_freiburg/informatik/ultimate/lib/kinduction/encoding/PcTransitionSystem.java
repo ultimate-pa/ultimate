@@ -31,7 +31,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -58,13 +57,11 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormulaBuilder.Checkpoint;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormulaBuilder.LoopTree;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormulaBuilder.Scope;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * A transition system made from a {@link LoopTree}: the state is the program variables plus a program counter
+ * A transition system made from a tree of {@link Scope}s: the state is the program variables plus a program counter
  * {@code pc}. The values of {@code pc} are
  * <ul>
  * <li>{@link #INIT}: program start, has no incoming transition,
@@ -212,15 +209,34 @@ public class PcTransitionSystem<STATE> {
 	}
 
 	/**
-	 * The versions of all variables at all nodes, and what follows from them for the edges and targets. There is one for
-	 * the queries, in which only live variables are kept, and one with the full frame.
+	 * How the edges and targets are instantiated, see {@link EncodingBuilder}. There is one for the queries, in which only
+	 * live variables are kept, and one with the full frame.
+	 */
+	private record Encoding(Map<DagEdge, EdgeCode> edgeCode, Map<DagNode, List<TargetCode>> targetCode) {
+		private long numberOfFrameEqualities() {
+			long result = 0;
+			for (final EdgeCode code : edgeCode.values()) {
+				result += code.joins().size();
+			}
+			for (final List<TargetCode> targets : targetCode.values()) {
+				for (final TargetCode target : targets) {
+					result += target.outputs().size();
+				}
+			}
+			return result;
+		}
+	}
+
+	/**
+	 * Computes the versions of all variables at all nodes, and what follows from them for the edges and targets. What it
+	 * holds besides the result is only needed for that, so it does not stay on the heap during the queries.
 	 * <p>
 	 * A variable is live at a node if a path from there reads it before writing it. For an edge {@code e} from n to m,
 	 * {@code live(n)} contains {@code reads(e) + (live(m) - writes(e))}. A node that is a target of a pc value has what
 	 * is live at the sources of that value. This is the usual fixed point, whose only cycles are through the pc values,
 	 * since every cut graph is acyclic. A variable of {@link #mAlwaysFramed} is live at every pc value.
 	 */
-	private final class Encoding {
+	private final class EncodingBuilder {
 		private final Map<DagEdge, EdgeCode> mEdgeCode = new HashMap<>();
 		private final Map<DagNode, List<TargetCode>> mTargetCode = new HashMap<>();
 
@@ -230,7 +246,7 @@ public class PcTransitionSystem<STATE> {
 		private final List<BitSet> mReads = new ArrayList<>();
 		private final List<BitSet> mWrites = new ArrayList<>();
 
-		private Encoding(final boolean fullFrame) {
+		private Encoding build(final boolean fullFrame) {
 			// The state variables come first, so that they are the bits below mVars.size().
 			for (final IProgramVar pv : mVars) {
 				mVarIndex.put(pv, mIndexedVars.size());
@@ -269,6 +285,7 @@ public class PcTransitionSystem<STATE> {
 				computeLiveness(liveAtPc, liveAtNode, stateVars);
 			}
 			computeVersions(liveAtPc, liveAtNode);
+			return new Encoding(mEdgeCode, mTargetCode);
 		}
 
 		private void computeLiveness(final BitSet[] liveAtPc, final BitSet[] liveAtNode, final BitSet stateVars) {
@@ -404,19 +421,6 @@ public class PcTransitionSystem<STATE> {
 			}
 			return new EdgeCode(versions, new ArrayList<>());
 		}
-
-		private long numberOfFrameEqualities() {
-			long result = 0;
-			for (final EdgeCode code : mEdgeCode.values()) {
-				result += code.joins().size();
-			}
-			for (final List<TargetCode> targets : mTargetCode.values()) {
-				for (final TargetCode target : targets) {
-					result += target.outputs().size();
-				}
-			}
-			return result;
-		}
 	}
 
 	/**
@@ -447,7 +451,7 @@ public class PcTransitionSystem<STATE> {
 	 *            the variables that have to keep their value in every step of a query, even where nothing reads it,
 	 *            because their value is read off a model
 	 */
-	public PcTransitionSystem(final Script script, final LoopTree<STATE> tree, final CounterSort counterSort,
+	public PcTransitionSystem(final Script script, final Scope<STATE> root, final CounterSort counterSort,
 			final Set<IProgramVar> alwaysFramed) {
 		mAlwaysFramed = alwaysFramed;
 		mDagNodes = new ArrayList<>();
@@ -455,9 +459,9 @@ public class PcTransitionSystem<STATE> {
 		mSourceStates = new HashMap<>();
 		mTargetStates = new HashMap<>();
 		final List<Scope<STATE>> scopes = new ArrayList<>();
-		scopes.add(tree.getRoot());
-		for (final Scope<STATE> loop : tree.getLoops()) {
-			for (final STATE head : loop.getHeads()) {
+		scopes.add(root);
+		for (final Scope<STATE> loop : root.loops()) {
+			for (final STATE head : loop.heads()) {
 				mHeadNodes.put(head, mNumNodes++);
 			}
 			scopes.add(loop);
@@ -513,17 +517,18 @@ public class PcTransitionSystem<STATE> {
 
 	private void addScope(final Scope<STATE> scope) {
 		final Map<DagNode, List<Pair<UnmodifiableTransFormula, STATE>>> sources = new LinkedHashMap<>();
-		for (final Map.Entry<Checkpoint<STATE>, List<Pair<UnmodifiableTransFormula, STATE>>> source : scope.getSources()
-				.entrySet()) {
-			final int pc = nodeOf(source.getKey());
-			final DagNode node = newDagNode(pc);
-			mSources.add(node);
-			sources.put(node, source.getValue());
-			mSourceStates.computeIfAbsent(pc, k -> new LinkedHashSet<>())
-					.addAll(scope.getCheckpointStates(source.getKey()));
+		if (scope.isRoot()) {
+			final List<Pair<UnmodifiableTransFormula, STATE>> starts = new ArrayList<>();
+			for (final STATE start : scope.programStarts()) {
+				starts.add(new Pair<>(null, start));
+			}
+			sources.put(newSource(INIT, scope.programStarts()), starts);
+		}
+		for (final Map.Entry<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> source : scope.sources().entrySet()) {
+			sources.put(newSource(pcOf(source.getKey()), Collections.singleton(source.getKey())), source.getValue());
 		}
 		final Map<STATE, DagNode> nodes = new HashMap<>();
-		for (final STATE state : scope.getCutGraph().keySet()) {
+		for (final STATE state : scope.cutGraph().keySet()) {
 			nodes.put(state, newDagNode(-1));
 		}
 		for (final Map.Entry<DagNode, List<Pair<UnmodifiableTransFormula, STATE>>> source : sources.entrySet()) {
@@ -531,19 +536,37 @@ public class PcTransitionSystem<STATE> {
 				addDagEdge(source.getKey(), first.getFirst(), nodeOfState(nodes, first.getSecond()));
 			}
 		}
-		for (final Map.Entry<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> from : scope.getCutGraph()
-				.entrySet()) {
+		for (final Map.Entry<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> from : scope.cutGraph().entrySet()) {
 			for (final Pair<UnmodifiableTransFormula, STATE> edge : from.getValue()) {
 				addDagEdge(nodes.get(from.getKey()), edge.getFirst(), nodeOfState(nodes, edge.getSecond()));
 			}
 		}
-		for (final Map.Entry<Checkpoint<STATE>, Collection<STATE>> target : scope.getTargets().entrySet()) {
-			final int pc = nodeOf(target.getKey());
-			mTargetStates.computeIfAbsent(pc, k -> new LinkedHashSet<>()).addAll(target.getValue());
-			for (final STATE state : target.getValue()) {
-				nodeOfState(nodes, state).mTargetPcs.add(pc);
+		for (final Scope<STATE> child : scope.children()) {
+			for (final STATE head : child.heads()) {
+				addTarget(nodes, pcOf(head), head);
 			}
 		}
+		for (final STATE head : scope.heads()) {
+			addTarget(nodes, pcOf(head), head);
+		}
+		for (final STATE state : scope.finals()) {
+			addTarget(nodes, FINAL, state);
+		}
+		for (final STATE escape : scope.escapes()) {
+			addTarget(nodes, pcOf(escape), escape);
+		}
+	}
+
+	private DagNode newSource(final int pc, final Set<STATE> states) {
+		final DagNode node = newDagNode(pc);
+		mSources.add(node);
+		mSourceStates.computeIfAbsent(pc, k -> new LinkedHashSet<>()).addAll(states);
+		return node;
+	}
+
+	private void addTarget(final Map<STATE, DagNode> nodes, final int pc, final STATE state) {
+		mTargetStates.computeIfAbsent(pc, k -> new LinkedHashSet<>()).add(state);
+		nodeOfState(nodes, state).mTargetPcs.add(pc);
 	}
 
 	private DagNode nodeOfState(final Map<STATE, DagNode> nodes, final STATE state) {
@@ -587,38 +610,13 @@ public class PcTransitionSystem<STATE> {
 		}
 	}
 
-	private int nodeOf(final Checkpoint<STATE> checkpoint) {
-		if (checkpoint.isInit() || checkpoint.isEnd()) {
-			// An INIT or END checkpoint names its own head, so a scope with several heads maps to several nodes.
-			// Only the root's INIT has none.
-			final STATE head = checkpoint.getScopeHead();
-			return head == null ? INIT : headNode(head, checkpoint);
-		}
-		if (checkpoint.isFinal()) {
-			return FINAL;
-		}
-		if (checkpoint.isLoopHead()) {
-			return headNode(checkpoint.getLoopHead(), checkpoint);
-		}
-		final STATE state = checkpoint.getEscapeState();
-		final Integer head = mHeadNodes.get(state);
-		if (head != null) {
-			return head;
-		}
-		return mWaypointNodes.computeIfAbsent(state, k -> mNumNodes++);
-	}
-
 	/**
-	 * The pc node of a loop head. A head that was never registered must not fall through to a fresh waypoint node:
-	 * that would split one program point into two pc values and break the cut the whole encoding rests on.
+	 * The pc value of a state a step starts or ends at: its own if it is a head of a loop, otherwise that of a waypoint.
+	 * The constructor has numbered the heads of all loops of the tree by now.
 	 */
-	private int headNode(final STATE head, final Checkpoint<STATE> checkpoint) {
-		final Integer node = mHeadNodes.get(head);
-		if (node == null) {
-			throw new IllegalStateException(
-					"Checkpoint " + checkpoint + " names " + head + ", which is not a head of any loop of the tree");
-		}
-		return node;
+	private int pcOf(final STATE state) {
+		final Integer head = mHeadNodes.get(state);
+		return head != null ? head : mWaypointNodes.computeIfAbsent(state, k -> mNumNodes++);
 	}
 
 	/** The pc value of each head of each loop. */
@@ -699,7 +697,7 @@ public class PcTransitionSystem<STATE> {
 	 */
 	public Term step(final int idx, final StepVars sv, final ManagedScript mgdScript) {
 		if (mFullFrameEncoding == null) {
-			mFullFrameEncoding = new Encoding(true);
+			mFullFrameEncoding = new EncodingBuilder().build(true);
 		}
 		final Script script = mgdScript.getScript();
 		return or(script, List.of(encode(mFullFrameEncoding, idx, sv, mgdScript, pc -> true, pc -> true),
@@ -736,7 +734,7 @@ public class PcTransitionSystem<STATE> {
 
 	private Encoding queryEncoding() {
 		if (mQueryEncoding == null) {
-			mQueryEncoding = new Encoding(false);
+			mQueryEncoding = new EncodingBuilder().build(false);
 		}
 		return mQueryEncoding;
 	}
@@ -777,7 +775,7 @@ public class PcTransitionSystem<STATE> {
 			}
 			final DagNode node = mDagNodes.get(position);
 			final List<Term> disjuncts = new ArrayList<>();
-			for (final TargetCode target : encoding.mTargetCode.getOrDefault(node, Collections.emptyList())) {
+			for (final TargetCode target : encoding.targetCode().getOrDefault(node, Collections.emptyList())) {
 				if (!toPc.test(target.pc())) {
 					continue;
 				}
@@ -799,7 +797,7 @@ public class PcTransitionSystem<STATE> {
 				if (behind == falseTerm) {
 					continue;
 				}
-				final EdgeCode code = encoding.mEdgeCode.get(edge);
+				final EdgeCode code = encoding.edgeCode().get(edge);
 				final List<Term> conjuncts = new ArrayList<>();
 				if (edge.mFormulaIndex >= 0) {
 					conjuncts.add(instantiate(edge, code, idx, sv, mgdScript));

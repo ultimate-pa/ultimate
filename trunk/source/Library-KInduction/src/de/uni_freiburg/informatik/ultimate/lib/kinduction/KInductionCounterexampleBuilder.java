@@ -123,14 +123,14 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionS
  * Per step the letter path is <b>simple, except that its last state may equal its first</b>. A cut graph is
  * acyclic, and all of a scope's own heads and the heads of its inner loops are sealed in it - they are nodes but
  * have no outgoing edges - so such a state can only ever be a path's last. The exception is what a loop body needs:
- * {@code INIT(h) -> END(h)} in a loop scope runs from the head back to the head. Restricting the search to simple
+ * a step in a loop scope can run from a head back to the same head. Restricting the search to simple
  * paths alone would drop exactly those. A state visited inside a call is a different search node from the same state
  * visited outside it, since the two differ in what the run may do next, so "simple" is meant with respect to the call
  * stack. Without recursion that keeps the search finite. With recursion the call stack alone would not, so a step may
  * open at most one call per procedure, plus one: a recursive cycle contains a loop head, and a step can pass one only
  * as its first and last state. A search that gives up on this retires the worker, it cannot change a verdict.
  * <p>
- * A loop that is entered at several heads also has the steps {@code INIT(h1) -> END(h2)}, whose path runs between
+ * A loop that is entered at several heads also has steps from {@code h1} to {@code h2}, whose path runs between
  * two <em>different</em> sealed states and is therefore plainly simple. On such a program the search may leave the
  * path the model took and come back through a third head, so the run it returns need not be the model's.
  * That is harmless: the path was checked against the solver as it was extended, {@link #assemble} re-checks it with

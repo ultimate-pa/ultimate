@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormulaBuilder.LoopTree;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormulaBuilder.Scope;
 
 /**
  * Builds the {@link PcTransitionSystem} of a nested word automaton, so that {@link KInduction} and everyone else who
@@ -80,7 +80,7 @@ public final class PcTransitionSystemFactory {
 			final INestedWordAutomaton<LETTER, STATE> abstraction, final CounterSort counterSort) {
 		final ProcedureSummaries<LETTER, STATE> summaries =
 				new ProcedureSummaries<>(services, logger, csToolkit, mgdScript, abstraction, counterSort);
-		final LoopTree<CallNode<STATE>> tree = new LoopTreeFormulaBuilder<>(services, logger, mgdScript,
+		final Scope<CallNode<STATE>> tree = new LoopTreeFormulaBuilder<>(services, logger, mgdScript,
 				summaries.getEdges(), summaries.getInitStates(), summaries.getFinalStates()).build();
 		final IProgramVar stackPointer = summaries.getStackPointer();
 		// KInductionCounterexampleBuilder reads the stack pointer off a model.
