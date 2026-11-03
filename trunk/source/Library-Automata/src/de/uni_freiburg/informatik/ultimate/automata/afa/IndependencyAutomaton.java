@@ -59,10 +59,10 @@ public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S>
 		mFactory = unionFactory;
 		mAlphabet = new HashSet<>();
 
+		// Initialize the alphabet to Sigma x Sigma^2
 		for (final L letter : alphabet) {
 			mAlphabet.add(IndependenceLetter.normal(letter));
 		}
-
 		for (final L letter1 : alphabet) {
 			for (final L letter2 : alphabet) {
 
@@ -86,7 +86,7 @@ public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S>
 			final INwaOutgoingLetterAndTransitionProvider<IndependenceLetter<L>, S> automaton)
 			throws AutomataLibraryException {
 
-		// The given automaton needs to have letters of type IndependenceLetter<L>
+		// The given (interpolant) automaton needs to have letters of type IndependenceLetter<L>
 		if (!mSpecialSymbols.containsKey(new Pair<>(letter1, letter2))) {
 			throw new IllegalArgumentException("Unknown letter pair: " + letter1 + ", " + letter2);
 		}
@@ -95,6 +95,7 @@ public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S>
 			throw new IllegalArgumentException("Automaton has a different alphabet.");
 		}
 
+		// either initialize if it's the first automaton or construct the union instead
 		if (mAutomaton == null) {
 			mAutomaton = automaton;
 		} else {
@@ -172,6 +173,7 @@ public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S>
 		return null;
 	}
 
+	// data structure to represent the letters of Sigma x Sigma^2
 	public static class IndependenceLetter<L1> {
 		private final L1 mLetter1;
 		private final L1 mLetter2;
@@ -183,10 +185,12 @@ public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S>
 			mIsSpecial = isSpecial;
 		}
 
+		// construct a normal symbol (i.e. letters of Sigma)
 		public static <L> IndependenceLetter<L> normal(final L letter) {
 			return new IndependenceLetter<>(letter, null, false);
 		}
 
+		// construct a special symbol (i.e. letters of Sigma^2)
 		public static <L> IndependenceLetter<L> special(final L letter1, final L letter2) {
 			return new IndependenceLetter<>(letter1, letter2, true);
 		}

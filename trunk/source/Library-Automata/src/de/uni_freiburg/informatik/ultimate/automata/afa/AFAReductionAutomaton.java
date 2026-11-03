@@ -49,11 +49,14 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 	private final Set<AfaState<L, S1, S2>> mInitialStates = new HashSet<>();
 	private final Set<AfaState<L, S1, S2>> mFinalStates = new HashSet<>();
 	final BddManager<AfaState<L, S1, S2>> mBddManager = new BddManager<>();
+	private final Map<StateKey<L, S1, S2>, AfaState<L, S1, S2>> mStateCache = new HashMap<>();
+
+	// The independency automaton accepts words of the form "rho <ab> sigma" s.t. (rho,a,b,sigma) in I
 	private final IIndependencyAutomaton<L, S1> mIndependencyAutomaton;
+
 	// TODO: implement order automaton
 	// I assume the order automaton to be total and deterministic!
 	private final INwaOutgoingLetterAndTransitionProvider<L, S2> mOrderAutomaton;
-	private final Map<StateKey<L, S1, S2>, AfaState<L, S1, S2>> mStateCache = new HashMap<>();
 
 	// before the search, do an intersection of the current abstraction (transformed to an AFA) with the reduction AFA
 	public AFAReductionAutomaton(final IDfsOrder<L, S2> order, final Set<L> alphabet,
@@ -101,6 +104,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 		return mFinalStates.contains(state);
 	}
 
+	// this implementation follows the definition of the prefix-suffix AFA's transition function in our paper
 	@Override
 	public Bdd<AfaState<L, S1, S2>> getSuccessors(final AfaState<L, S1, S2> state, final L letter) {
 
@@ -110,6 +114,8 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 		final Iterable<OutgoingInternalTransition<IndependenceLetter<L>, S1>> independencyTransitions =
 				mIndependencyAutomaton.internalSuccessors(independencyState, IndependenceLetter.normal(letter));
 		final S2 orderSucc = getUniqueOrderSuccessor(orderState, letter);
+
+		// dummy result so we can use Bdd.and and Bdd.or
 		Bdd<AfaState<L, S1, S2>> bddResult = mBddManager.getTrue();
 		AfaState<L, S1, S2> succ;
 
@@ -202,6 +208,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 
 	}
 
+	// on demand construction of AfaStates
 	public AfaState<L, S1, S2> getOrConstructState(final StateType type, final L sleepletter,
 			final S1 independencyState, final S2 orderState) {
 
@@ -252,6 +259,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 
 	}
 
+	// method to ensure that the order automaton is total and deterministic
 	private S2 getUniqueOrderSuccessor(final S2 state, final L letter) {
 		final Iterator<OutgoingInternalTransition<L, S2>> iterator =
 				mOrderAutomaton.internalSuccessors(state, letter).iterator();
