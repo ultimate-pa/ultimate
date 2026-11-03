@@ -31,10 +31,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -64,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgGraphProvider;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment.SegmentType;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GraphMLCorrectnessWitnessGenerator;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GraphMLViolationWitnessGenerator;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
@@ -217,27 +216,32 @@ public class WitnessPrinter implements IOutput {
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
 			if (createYaml) {
-				final Set<Integer> targetIndices;
-				if (cex instanceof final DataRaceFoundResult<?, ?, ?> dataRace) {
-					final Map<Integer, Integer> lastStepByThread = new HashMap<>();
-					for (int i = 0; i < backtransPe.getLength(); i++) {
-						final AtomicTraceElement<?> ate = backtransPe.getTraceElement(i);
-						if (ate.hasThreadId() && dataRace.isThreadInvolved(ate.getThreadId())) {
-							lastStepByThread.put(ate.getThreadId(), i);
-						}
-					}
-					targetIndices = new HashSet<>(lastStepByThread.values());
-				} else {
-					targetIndices = Set.of(backtransPe.getLength() - 1);
-				}
-
-				final String witness =
-						new YamlViolationWitnessGenerator<>(backtransPe, mLogger, mServices, targetIndices)
-								.makeYamlString();
+				final String witness = new YamlViolationWitnessGenerator(mLogger, mServices)
+						.addSegments(backtransPe, SegmentType.FOLLOW, getReachabilityWitnessTargets(cex, backtransPe))
+						.makeYamlString();
 				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
 			}
 		}
 		return suppliers;
+	}
+
+	private static Set<Integer> getReachabilityWitnessTargets(final IResultWithFiniteTrace<?, ?> cex,
+			final IProgramExecution<?, ?> backtransPe) {
+		if (!(cex instanceof final DataRaceFoundResult<?, ?, ?> dataRace)) {
+			// The target is the last statement in the execution
+			return Set.of(backtransPe.getLength() - 1);
+		}
+		final Set<Integer> involvedThreadIds = dataRace.getInvolvedThreadIds();
+		// Extract the last two indices, where a data race can occur
+		// TODO: What if we are unsure about the statements that occur in a data race?
+		final Set<Integer> result = new HashSet<>();
+		for (int i = backtransPe.getLength() - 1; i >= 0 && result.size() < 2; i--) {
+			final AtomicTraceElement<?> ate = backtransPe.getTraceElement(i);
+			if (ate.hasThreadId() && involvedThreadIds.contains(ate.getThreadId())) {
+				result.add(i);
+			}
+		}
+		return result;
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -259,8 +263,9 @@ public class WitnessPrinter implements IOutput {
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
 			if (createYaml) {
-				final String witness = new YamlViolationWitnessGenerator<>(lasso.stem(), lasso.loop(), mLogger,
-						mServices, Set.of(lasso.loop().getLength() - 1)).makeYamlString();
+				final String witness = new YamlViolationWitnessGenerator(mLogger, mServices)
+						.addSegments(lasso.stem(), SegmentType.FOLLOW, Set.of())
+						.addSegments(lasso.loop(), SegmentType.CYCLE, Set.of()).makeYamlString();
 				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
 			}
 		}

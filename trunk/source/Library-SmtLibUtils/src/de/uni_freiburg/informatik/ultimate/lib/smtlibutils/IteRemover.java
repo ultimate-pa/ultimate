@@ -53,18 +53,30 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 	// May be null, then the transformation cannot be canceled.
 	private final IUltimateServiceProvider mServices;
 
-	public IteRemover(final ManagedScript script) {
-		this(null, script);
+	private IteRemover(final IUltimateServiceProvider services, final ManagedScript script) {
+		mServices = services;
+		mScript = script;
 	}
 
 	/**
+	 * Remove all ite terms from a term. This transformation cannot be canceled, prefer
+	 * {@link #apply(IUltimateServiceProvider, ManagedScript, Term)} if services are available.
+	 */
+	public static Term apply(final ManagedScript script, final Term term) {
+		return apply(null, script, term);
+	}
+
+	/**
+	 * Remove all ite terms from a term.
+	 *
 	 * @param services
 	 *            used to check for a timeout or cancellation after each removed ite. Removing the ites of an atom may
 	 *            take exponentially long in their number, since each one doubles the atom.
+	 * @throws ToolchainCanceledException
+	 *             if the services say to stop
 	 */
-	public IteRemover(final IUltimateServiceProvider services, final ManagedScript script) {
-		mServices = services;
-		mScript = script;
+	public static Term apply(final IUltimateServiceProvider services, final ManagedScript script, final Term term) {
+		return new IteRemover(services, script).transform(term);
 	}
 
 	@Override

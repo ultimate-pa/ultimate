@@ -159,7 +159,7 @@ public class UltimateNormalFormTest {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mMgdScript.getScript(),
 				"(bvule (select |#length| (ite (and (= nhb lb) (= nho lo)) nhb hb)) (bvadd (select (select (let ((.cse0 (store |#memory_$Pointer$.offset| nhb (store (select |#memory_$Pointer$.offset| nhb) nho ho)))) (store .cse0 lb (store (select .cse0 lb) lo nho))) nhb) nho) (_ bv8 32)))");
 		final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
-		final Term result = new IteRemover(mMgdScript).transform(letFree);
+		final Term result = IteRemover.apply(mMgdScript, letFree);
 		Assert.isTrue(UltimateNormalFormUtils.respectsUltimateNormalForm(result));
 	}
 

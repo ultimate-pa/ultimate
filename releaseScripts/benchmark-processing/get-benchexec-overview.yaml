@@ -44,10 +44,11 @@ known_exceptions:
   "overapproximation of large string literal":
   "TerminationAnalysisResult: Unable to decide termination":
   "An exception occured during the execution of Ultimate: The toolchain threw an exception":
-  "overapproximation of shiftRight":
-  "overapproximation of overflow check for bitwise shift operation":
-  "overapproximation of bitwiseAnd":
-  "overapproximation of shiftLeft":
+  "overapproximation of bitwise and operator":
+  "overapproximation of bitwise or operator":
+  "overapproximation of bitwise xor operator":
+  "overapproximation of bitwise left shift operator":
+  "overapproximation of bitwise right shift operator":
   "overapproximation of memtrack":
   "overapproximation of sign of NaN":
   "Omit memory slicing because it failed with the following exception:":
@@ -114,6 +115,7 @@ known_exceptions:
   "UnsupportedOperationException: Incomplete atomic composition (dangling start of atomic block:":
   "UnsupportedOperationException: Incomplete atomic composition (dangling end of atomic block:":
   "identifier is not declared (neither a variable nor a function name): argv in file":
+  "identifier is not declared (neither a variable nor a function name)":
   "Undeclared variable in ACSL expression":
   "The following witness entry could not be matched":
   "Field not in struct":

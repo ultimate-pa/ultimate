@@ -502,7 +502,7 @@ public class RtInconcistencyConditionGenerator {
 	}
 
 	private Term toNormalform(final Term t) {
-		final Term withoutIte = new IteRemover(mManagedScript).transform(t);
+		final Term withoutIte = IteRemover.apply(mManagedScript, t);
 		final Term nnf = new NnfTransformer(mManagedScript, mServices, QuantifierHandling.KEEP).transform(withoutIte);
 		return CommuhashNormalFormTransformer.apply(mManagedScript.getScript(), nnf);
 	}
