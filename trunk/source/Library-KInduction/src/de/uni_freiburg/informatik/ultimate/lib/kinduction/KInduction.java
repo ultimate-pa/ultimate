@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.kinduction;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -819,13 +818,6 @@ public class KInduction<LETTER extends IAction, STATE> {
 
 		public int getK() {
 			return mK;
-		}
-
-		/**
-		 * @return "base" or "step".
-		 */
-		public String getCase() {
-			return mCase;
 		}
 
 		@Override
