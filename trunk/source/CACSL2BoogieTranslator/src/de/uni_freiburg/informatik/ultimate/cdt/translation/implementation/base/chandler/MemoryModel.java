@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -230,7 +231,7 @@ public class MemoryModel {
 	public Expression constructAddressForStructField(final ILocation loc, final Expression baseAddress,
 			final Offset fieldOffset, final CPrimitive sizeT) {
 		if (fieldOffset.isBitfieldOffset()) {
-			throw new UnsupportedOperationException("Bitfield read");
+			throw new UnsupportedSyntaxException(loc, "Bitfield read");
 		}
 		return mMemoryAddressing.constructAddressForStructField(loc, baseAddress, fieldOffset, sizeT);
 	}

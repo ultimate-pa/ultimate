@@ -86,7 +86,7 @@ public final class CommandLineOptions {
 				.build());
 		rtr.add(Option.builder(OPTION_NAME_INPUTFILES).longOpt(OPTION_LONG_NAME_INPUTFILES).hasArgs()
 				.required(requireInputFile).argName("FILE").build());
-		rtr.add(Option.builder(OPTION_NAME_SETTINGS).longOpt(OPTION_LONG_NAME_SETTINGS).type(File.class).hasArgs()
+		rtr.add(Option.builder(OPTION_NAME_SETTINGS).longOpt(OPTION_LONG_NAME_SETTINGS).type(File.class).hasArg()
 				.argName("FILE")
 				.desc("Specify one or more paths to Ultimate settings files. Multiple files are applied in the order "
 						+ "they are specified; settings in later files override those in earlier files.")

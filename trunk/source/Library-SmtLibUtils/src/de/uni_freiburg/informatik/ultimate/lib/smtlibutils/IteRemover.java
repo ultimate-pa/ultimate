@@ -30,6 +30,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -48,9 +50,33 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  */
 public class IteRemover extends NonCoreBooleanSubTermTransformer {
 	private final ManagedScript mScript;
+	// May be null, then the transformation cannot be canceled.
+	private final IUltimateServiceProvider mServices;
 
-	public IteRemover(final ManagedScript script) {
+	private IteRemover(final IUltimateServiceProvider services, final ManagedScript script) {
+		mServices = services;
 		mScript = script;
+	}
+
+	/**
+	 * Remove all ite terms from a term. This transformation cannot be canceled, prefer
+	 * {@link #apply(IUltimateServiceProvider, ManagedScript, Term)} if services are available.
+	 */
+	public static Term apply(final ManagedScript script, final Term term) {
+		return apply(null, script, term);
+	}
+
+	/**
+	 * Remove all ite terms from a term.
+	 *
+	 * @param services
+	 *            used to check for a timeout or cancellation after each removed ite. Removing the ites of an atom may
+	 *            take exponentially long in their number, since each one doubles the atom.
+	 * @throws ToolchainCanceledException
+	 *             if the services say to stop
+	 */
+	public static Term apply(final IUltimateServiceProvider services, final ManagedScript script, final Term term) {
+		return new IteRemover(services, script).transform(term);
 	}
 
 	@Override
@@ -59,6 +85,10 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 		Term result = term;
 		Set<ApplicationTerm> iteSubterms = SmtUtils.extractApplicationTerms("ite", result, false);
 		while (!iteSubterms.isEmpty()) {
+			if (mServices != null && !mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(this.getClass(),
+						String.format("removing ite terms, %s left in an atom", iteSubterms.size()));
+			}
 			// remove one ite after another. Cannot naively remove all since
 			// one might be subterm of other.
 			result = removeIteTerm(result, iteSubterms.iterator().next());

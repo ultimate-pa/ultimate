@@ -76,7 +76,7 @@ public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 			final UnmodifiableTransFormula oldTransFormula = edge.getTransformula();
 			final Term newTerm;
 			{
-				final Term withoutIte = new IteRemover(mgdScript).transform(oldTransFormula.getFormula());
+				final Term withoutIte = IteRemover.apply(mgdScript, oldTransFormula.getFormula());
 				final Term inNnf =
 						new NnfTransformer(mgdScript, mServices, QuantifierHandling.KEEP).transform(withoutIte);
 				newTerm = new RewriteDisequality.RewriteDisequalityTransformer(mgdScript.getScript()).transform(inNnf);
