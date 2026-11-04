@@ -224,7 +224,7 @@ public class SmtUtilsTest {
 		declareVar("C1", boolSort);
 		final Term input = TermParseUtils.parseTerm(mScript, "(and (or A1 B1) (or A1 C1))");
 		final Term result =
-				SmtUtils.andWithExtendedLocalSimplification(mScript, Arrays.asList(SmtUtils.getConjuncts(input)));
+				SmtUtils.andWithExtendedLocalSimplification(mScript, true, Arrays.asList(SmtUtils.getConjuncts(input)));
 		final Term expected = TermParseUtils.parseTerm(mScript, "(or (and C1 B1) A1)");
 		Assert.assertEquals(expected, result);
 	}
@@ -236,7 +236,7 @@ public class SmtUtilsTest {
 		declareVar("B2", boolSort);
 		final Term input = TermParseUtils.parseTerm(mScript, "(and A2 (or A2 B2))");
 		final Term result =
-				SmtUtils.andWithExtendedLocalSimplification(mScript, Arrays.asList(SmtUtils.getConjuncts(input)));
+				SmtUtils.andWithExtendedLocalSimplification(mScript, true, Arrays.asList(SmtUtils.getConjuncts(input)));
 		final Term expected = TermParseUtils.parseTerm(mScript, "A2");
 		Assert.assertEquals(expected, result);
 	}
@@ -250,7 +250,7 @@ public class SmtUtilsTest {
 		declareVar("D3", boolSort);
 		final Term input = TermParseUtils.parseTerm(mScript, "(and (or A3 B3) (or C3 D3))");
 		final Term result =
-				SmtUtils.andWithExtendedLocalSimplification(mScript, Arrays.asList(SmtUtils.getConjuncts(input)));
+				SmtUtils.andWithExtendedLocalSimplification(mScript, true, Arrays.asList(SmtUtils.getConjuncts(input)));
 		final Term expected = TermParseUtils.parseTerm(mScript, "(and (or C3 D3) (or A3 B3))");
 		Assert.assertEquals(expected, result);
 	}
@@ -263,7 +263,7 @@ public class SmtUtilsTest {
 		declareVar("C1", boolSort);
 		final Term input = TermParseUtils.parseTerm(mScript, "(or (and A1 B1) (and A1 C1))");
 		final Term result =
-				SmtUtils.orWithExtendedLocalSimplification(mScript, Arrays.asList(SmtUtils.getDisjuncts(input)));
+				SmtUtils.orWithExtendedLocalSimplification(mScript, true, Arrays.asList(SmtUtils.getDisjuncts(input)));
 		final Term expected = TermParseUtils.parseTerm(mScript, "(and (or C1 B1) A1)");
 		Assert.assertEquals(expected, result);
 	}
@@ -275,7 +275,7 @@ public class SmtUtilsTest {
 		declareVar("B2", boolSort);
 		final Term input = TermParseUtils.parseTerm(mScript, "(or A2 (and A2 B2))");
 		final Term result =
-				SmtUtils.orWithExtendedLocalSimplification(mScript, Arrays.asList(SmtUtils.getDisjuncts(input)));
+				SmtUtils.orWithExtendedLocalSimplification(mScript, true, Arrays.asList(SmtUtils.getDisjuncts(input)));
 		final Term expected = TermParseUtils.parseTerm(mScript, "A2");
 		Assert.assertEquals(expected, result);
 	}
@@ -289,7 +289,7 @@ public class SmtUtilsTest {
 		declareVar("D3", boolSort);
 		final Term input = TermParseUtils.parseTerm(mScript, "(or (and A3 B3) (and C3 D3))");
 		final Term result =
-				SmtUtils.orWithExtendedLocalSimplification(mScript, Arrays.asList(SmtUtils.getDisjuncts(input)));
+				SmtUtils.orWithExtendedLocalSimplification(mScript, true, Arrays.asList(SmtUtils.getDisjuncts(input)));
 		final Term expected = TermParseUtils.parseTerm(mScript, "(or (and C3 D3) (and A3 B3))");
 		Assert.assertEquals(expected, result);
 	}
