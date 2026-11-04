@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S> {
 
 	Map<Pair<L, L>, IndependenceLetter<L>> mSpecialSymbols;
-	private final Set<IndependenceLetter<L>> mAlphabet;
 	private final VpAlphabet<IndependenceLetter<L>> mVpAlphabet;
 
 	// TODO: do we need our own Implementation of IUnionStateFactory<S> or can we reuse an existing one?
@@ -56,23 +55,26 @@ public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S>
 	public IndependencyAutomaton(final Set<L> alphabet, final IUnionStateFactory<S> unionFactory) {
 		mSpecialSymbols = new HashMap<>();
 		mFactory = unionFactory;
-		mAlphabet = new HashSet<>();
+		mVpAlphabet = constructAlphabet(alphabet);
+	}
 
-		// Initialize the alphabet to Sigma x Sigma^2
-		for (final L letter : alphabet) {
-			mAlphabet.add(new WrappedLetter<>(letter));
-		}
+	// Initialize the alphabet to Sigma x Sigma^2
+	private VpAlphabet<IndependenceLetter<L>> constructAlphabet(final Set<L> alphabet) {
+		final var internalAlphabet = new HashSet<IndependenceLetter<L>>();
+
 		for (final L letter1 : alphabet) {
-			for (final L letter2 : alphabet) {
+			internalAlphabet.add(new WrappedLetter<>(letter1));
 
+			for (final L letter2 : alphabet) {
 				final IndependenceLetter<L> specialSymbol = new IndependentPair<>(letter1, letter2);
-				if (!mAlphabet.add(specialSymbol)) {
+				if (!internalAlphabet.add(specialSymbol)) {
 					throw new IllegalArgumentException("Special symbol is not unique: " + specialSymbol);
 				}
 				mSpecialSymbols.put(new Pair<>(letter1, letter2), specialSymbol);
 			}
 		}
-		mVpAlphabet = new VpAlphabet<>(mAlphabet, null, null);
+
+		return new VpAlphabet<>(internalAlphabet, null, null);
 	}
 
 	@Override
@@ -101,17 +103,11 @@ public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S>
 		} else {
 			mAutomaton = new UnionNwa<>(mAutomaton, automaton, mFactory, false);
 		}
-
 	}
 
 	@Override
 	public VpAlphabet<IndependenceLetter<L>> getVpAlphabet() {
 		return mVpAlphabet;
-	}
-
-	@Override
-	public Set<IndependenceLetter<L>> getAlphabet() {
-		return mAlphabet;
 	}
 
 	@Override
