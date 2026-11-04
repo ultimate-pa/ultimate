@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -209,6 +210,21 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 				retireForMemory(t);
 				return;
 			}
+			if (isLimit(t)) {
+				// Not a bug in k-induction: its solver or one of its own bounds gave up. The other workers go on.
+				mLogger.warn("KInduction: stopped by %s; the k-induction worker retires without a verdict", t);
+				if (mLogger.isDebugEnabled()) {
+					for (final StackTraceElement element : t.getStackTrace()) {
+						mLogger.debug("\tat " + element);
+					}
+				}
+				try {
+					mBlockingQueueForResults.put(WorkerThreadResult.noVerdict(WorkerType.KINDUCTION));
+				} catch (final InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+				return;
+			}
 			mLogger.error("KInduction worker crashed: " + t);
 			for (final StackTraceElement element : t.getStackTrace()) {
 				mLogger.error("\tat " + element);
@@ -225,6 +241,23 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 						+ "trim the committed one", mHeapTimer.getCollections());
 			}
 		}
+	}
+
+	/**
+	 * @return whether k-induction stopped at a limit rather than at a bug: its solver failed (out of memory,
+	 *         crashed, or rejected the query), it could not express a violation as a run, or the program exceeds what
+	 *         k-induction is willing to build. Such a stop retires the worker, whereas a crash ends the whole analysis.
+	 */
+	private static boolean isLimit(final Throwable t) {
+		if (t instanceof UnsupportedOperationException) {
+			return true;
+		}
+		for (Throwable cause = t; cause != null; cause = cause.getCause()) {
+			if (cause instanceof SMTLIBException || cause instanceof KInductionCounterexampleException) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private enum Verdict {
@@ -395,6 +428,11 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 				new TraceAbstractionRefinementEngine<>(mKInductionServices, mLogger, strategy).getResult();
 
 		final LBool feasibility = refinementResult.getCounterexampleFeasibility();
+		if (feasibility == LBool.UNKNOWN) {
+			// The solvers of the trace check gave up, e.g. on floats; that says nothing about either encoding.
+			throw new KInductionCounterexampleException("k-induction refuted the program, but the trace check of the "
+					+ "reconstructed run answered unknown, so the violation cannot be confirmed");
+		}
 		if (feasibility != LBool.SAT) {
 			// Not an unsupported case: k-induction and the letter-level semantics of the very same abstraction
 			// cannot both be right here, so one of the two encodings is wrong.
