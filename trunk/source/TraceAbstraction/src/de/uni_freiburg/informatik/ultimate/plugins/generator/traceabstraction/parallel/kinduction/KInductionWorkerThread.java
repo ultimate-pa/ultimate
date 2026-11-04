@@ -31,14 +31,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
@@ -46,8 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -67,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopResultBuilder;
@@ -77,7 +72,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.ParallelNwaCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.HeapBudgetTimer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TransferBetweenMainAndWorker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TransferBetweenMainAndWorker.TransferMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadResult;
@@ -131,9 +125,6 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	private final IInvariantSupplier<CallNode<IPredicate>> mInvariantSupplier;
 	// Only used to build a refinement strategy for a counterexample; k-induction has no path-program history.
 	private final PathProgramCache<L> mProgramCache;
-	// Stops k-induction when the live heap exceeds its memory budget. Everything k-induction runs gets
-	// mKInductionServices, whose progress monitor asks this timer, so every poll of continueProcessing() checks it.
-	private final HeapBudgetTimer mHeapTimer;
 	private final IUltimateServiceProvider mKInductionServices;
 	// The invariants of a proof for the main thread's correctness witness, see computeWitnessInvariants
 	private Map<IPredicate, Term> mWitnessInvariants;
@@ -173,10 +164,7 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 		mTaskIdentifier = taskIdentifier;
 		mInvariantSupplier = invariantSupplier;
 		mProgramCache = new PathProgramCache<>(mLogger);
-		final IProgressMonitorService progressMonitor = services.getProgressMonitorService();
-		mHeapTimer = new HeapBudgetTimer(progressMonitor,
-				Runtime.getRuntime().maxMemory() / 100 * pref.getKInductionMemoryBudget(), true);
-		mKInductionServices = progressMonitor.registerChildTimer(services, mHeapTimer);
+		mKInductionServices = services;
 	}
 
 	@Override
@@ -200,9 +188,6 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 			case NO_VERDICT:
 				mBlockingQueueForResults.put(WorkerThreadResult.noVerdict(WorkerType.KINDUCTION));
 				break;
-			case RETIRED:
-				// retireForMemory already told the main thread
-				break;
 			default:
 				throw new AssertionError("unknown k-induction verdict");
 			}
@@ -212,11 +197,6 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 			if (mMainThread.isShuttingDown()) {
 				// Another worker decided and the main thread destroyed our solver under a running query.
 				mLogger.info("KInduction worker: stopping, shut down during a query (" + t + ")");
-				return;
-			}
-			if (mHeapTimer.isHeapBudgetExceeded()) {
-				// Whatever was thrown, a cancellation or an exception that wraps one, it is the memory budget.
-				retireForMemory(t);
 				return;
 			}
 			if (isLimit(t)) {
@@ -244,11 +224,6 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 			} catch (final InterruptedException e) {
 				Thread.currentThread().interrupt();
 			}
-		} finally {
-			if (mHeapTimer.getCollections() > 0) {
-				mLogger.info("KInduction: its memory budget collected garbage %d time(s) to check the live heap and "
-						+ "trim the committed one", mHeapTimer.getCollections());
-			}
 		}
 	}
 
@@ -270,61 +245,12 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	}
 
 	private enum Verdict {
-		SAFE, UNSAFE, NO_VERDICT, RETIRED
-	}
-
-	/**
-	 * Logs that k-induction ran out of its memory budget and retires the worker without a verdict.
-	 *
-	 * @param stop
-	 *            what k-induction threw when the budget stopped it, or null if it ended on its own
-	 */
-	private void retireForMemory(final Throwable stop) {
-		final long maxHeap = Runtime.getRuntime().maxMemory();
-		mLogger.warn(
-				"KInduction: stopped, it exceeded its memory budget: %d MB of heap still live after a garbage "
-						+ "collection, budget %d MB (%d%% of the %d MB max heap), while %s. The k-induction worker "
-						+ "retires without a verdict.",
-				mHeapTimer.getHeapUsedWhenExceeded() >> 20, mHeapTimer.getBudgetBytes() >> 20,
-				mPref.getKInductionMemoryBudget(), maxHeap >> 20, describe(stop));
-		try {
-			mBlockingQueueForResults.put(WorkerThreadResult.noVerdict(WorkerType.KINDUCTION));
-		} catch (final InterruptedException e) {
-			Thread.currentThread().interrupt();
-		}
-		// Most of the heap was ours. Collecting it now lets the JVM shrink its heap instead of keeping it committed
-		// while the other workers and their solvers need the memory.
-		System.gc();
-	}
-
-	/**
-	 * @return what k-induction was doing when it was stopped, from the running tasks of a cancellation
-	 */
-	private static String describe(final Throwable stop) {
-		if (stop == null) {
-			return "a solver query, which then answered unknown";
-		}
-		for (Throwable cause = stop; cause != null; cause = cause.getCause()) {
-			if (cause instanceof IRunningTaskStackProvider) {
-				final String tasks = ((IRunningTaskStackProvider) cause).getRunningTaskStack().stream()
-						.map(RunningTaskInfo::getTaskDescription).filter(Objects::nonNull)
-						.collect(Collectors.joining(", "));
-				if (!tasks.isEmpty()) {
-					return tasks;
-				}
-			}
-		}
-		return stop.getMessage() != null ? stop.getMessage() : stop.getClass().getSimpleName();
+		SAFE, UNSAFE, NO_VERDICT
 	}
 
 	private Verdict runKInduction() throws AutomataLibraryException, InterruptedException {
 		final KInduction<L, IPredicate> kInduction = new KInduction<>(mKInductionServices, mLogger, mCfgSmtToolkit,
 				mAbstraction, mInvariantSupplier, mPref.restartKInductionSolverAfterInterrupt());
-		if (kInduction.wasUnkown() && mHeapTimer.isHeapBudgetExceeded()) {
-			// The budget stopped a query, which answered unknown instead of throwing.
-			retireForMemory(null);
-			return Verdict.RETIRED;
-		}
 		if (kInduction.wasUnkown()) {
 			// Not a crash: the encoding is fine, the query was just not decided. Retiring this worker leaves the
 			// other workers - and, if there are none, the main thread's UNKNOWN result - to speak for the program.

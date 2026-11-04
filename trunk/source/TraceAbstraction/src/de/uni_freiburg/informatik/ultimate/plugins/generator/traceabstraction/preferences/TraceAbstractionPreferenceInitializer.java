@@ -583,15 +583,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "external solver command says instead. Supported for z3, cvc4, cvc5 and bitwuzla.";
 	private static final Integer DEF_KINDUCTION_SOLVER_TIMEOUT = 60 * 60 * 1000;
 
-	public static final String LABEL_KINDUCTION_MEMORY_BUDGET =
-			"Memory budget of the k-induction worker (% of max heap)";
-	private static final String DESC_KINDUCTION_MEMORY_BUDGET =
-			"How much of the JVM's maximum heap may be live while the k-induction worker runs. The heap of the whole "
-					+ "JVM counts, including that of the other workers, but only what is still in use after a garbage "
-					+ "collection. A k-induction worker that exceeds it stops and retires without a verdict, so that "
-					+ "the other workers keep the memory.";
-	private static final int DEF_KINDUCTION_MEMORY_BUDGET = 60;
-
 	public static final String LABEL_INVARIANT_PROBATION = "Probation of invariants for k-induction";
 	private static final String DESC_INVARIANT_PROBATION =
 			"The invariant supplier watches the queries of k-induction. If one runs much longer than the one of the "
@@ -958,9 +949,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_KINDUCTION_SOLVER_TIMEOUT, DEF_KINDUCTION_SOLVER_TIMEOUT,
 						DESC_KINDUCTION_SOLVER_TIMEOUT, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
-				new UltimatePreferenceItem<>(LABEL_KINDUCTION_MEMORY_BUDGET, DEF_KINDUCTION_MEMORY_BUDGET,
-						DESC_KINDUCTION_MEMORY_BUDGET, PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(1, 100)),
 				new UltimatePreferenceItem<>(LABEL_INVARIANT_PROBATION, DEF_INVARIANT_PROBATION,
 						DESC_INVARIANT_PROBATION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_PROBATION_FACTOR, DEF_PROBATION_FACTOR, DESC_PROBATION_FACTOR,

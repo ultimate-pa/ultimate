@@ -107,7 +107,6 @@ public final class TAPreferences {
 	private final int mThreadLimit;
 	private final int mNumKInductionWorkers;
 	private final int mKInductionSolverTimeout;
-	private final int mKInductionMemoryBudget;
 	private final boolean mInvariantProbation;
 	private final int mProbationFactor;
 	private final int mProbationMinimum;
@@ -235,8 +234,6 @@ public final class TAPreferences {
 		mNumKInductionWorkers = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_NUM_KINDUCTION_WORKERS);
 		mKInductionSolverTimeout =
 				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_SOLVER_TIMEOUT);
-		mKInductionMemoryBudget =
-				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_MEMORY_BUDGET);
 		mInvariantProbation = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INVARIANT_PROBATION);
 		mProbationFactor = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_PROBATION_FACTOR);
 		mProbationMinimum = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_PROBATION_MINIMUM);
@@ -695,13 +692,6 @@ public final class TAPreferences {
 	 */
 	public int getKInductionSolverTimeout() {
 		return mKInductionSolverTimeout;
-	}
-
-	/**
-	 * @return how many percent of the JVM's maximum heap may be live while the k-induction worker runs
-	 */
-	public int getKInductionMemoryBudget() {
-		return mKInductionMemoryBudget;
 	}
 
 	/**

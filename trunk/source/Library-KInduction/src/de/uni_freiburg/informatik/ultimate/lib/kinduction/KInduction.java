@@ -270,7 +270,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 				mInconclusive = Inconclusive.solverUnknown(k, "base");
 				return Verdict.UNKNOWN;
 			}
-			// The step case of k is larger than the base case of k, so check the deadline and the memory budget again.
+			// The step case of k is larger than the base case of k, so check the deadline again.
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException(getClass(), "k-induction at k=" + k + ", before the step case");
 			}
