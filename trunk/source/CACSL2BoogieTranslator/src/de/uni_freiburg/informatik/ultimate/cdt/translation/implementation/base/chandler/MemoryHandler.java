@@ -2421,6 +2421,11 @@ public class MemoryHandler {
 	}
 
 	private static Expression constructZeroForBoogieType(final ILocation loc, final BoogieType type) {
+		if (type instanceof final BoogieStructType structType) {
+			final Expression[] fieldValues = Arrays.stream(structType.getFieldTypes())
+					.map(fieldType -> constructZeroForBoogieType(loc, fieldType)).toArray(Expression[]::new);
+			return ExpressionFactory.constructStructConstructor(loc, structType.getFieldIds(), fieldValues);
+		}
 		if (!(type instanceof final BoogiePrimitiveType primitiveType)) {
 			throw new AssertionError("cannot construct a zero for heap content type " + type);
 		}
