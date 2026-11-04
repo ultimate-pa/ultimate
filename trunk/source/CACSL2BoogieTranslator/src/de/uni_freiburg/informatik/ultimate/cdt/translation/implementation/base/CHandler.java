@@ -2218,6 +2218,14 @@ public class CHandler {
 				// performed. This is unsound, but does not lead to any wrong results in SV-COMP.
 				overapprox = List.of();
 			}
+			// Skip the initialization, but still write the terminating zero byte
+			final HeapLValue lastByteLValue = mInitHandler.constructAddressForArrayAtIndex(actualLoc,
+					LRValueFactory.constructHeapLValue(mTypeHandler, addressRValue.getValue(), arrayType, null),
+					sizeInBytes - 1);
+			final CPrimitive charType = new CPrimitive(CPrimitives.CHAR);
+			final Expression zero = mTypeSizes.constructLiteralForIntegerType(actualLoc, charType, BigInteger.ZERO);
+			mStaticObjectsHandler.addStatementsForUltimateInit(
+					mMemoryHandler.getInitCall(actualLoc, lastByteLValue, zero, charType));
 			return new StringLiteralResult(addressRValue, overapprox, stringLiteral);
 		}
 		final ExpressionResult exprRes = mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node);
