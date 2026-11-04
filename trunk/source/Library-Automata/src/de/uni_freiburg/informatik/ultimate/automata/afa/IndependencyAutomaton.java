@@ -80,8 +80,7 @@ public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S>
 		return Optional.ofNullable(mSpecialSymbols.get(new Pair<>(letter1, letter2)));
 	}
 
-	@Override
-	public void addIndependence(final L letter1, final L letter2,
+	void addIndependence(final L letter1, final L letter2,
 			final INwaOutgoingLetterAndTransitionProvider<IndependenceLetter<L>, S> automaton)
 			throws AutomataLibraryException {
 

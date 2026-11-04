@@ -28,17 +28,12 @@ package de.uni_freiburg.informatik.ultimate.automata.afa;
 
 import java.util.Optional;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 
 public interface IIndependencyAutomaton<L, S>
 		extends INwaOutgoingLetterAndTransitionProvider<IIndependencyAutomaton.IndependenceLetter<L>, S> {
 
 	Optional<IndependenceLetter<L>> getSpecialSymbol(final L letter1, final L letter2);
-
-	void addIndependence(final L letter1, final L letter2,
-			final INwaOutgoingLetterAndTransitionProvider<IndependenceLetter<L>, S> interpolantAutomaton)
-			throws AutomataLibraryException;
 
 	public sealed interface IndependenceLetter<L> permits WrappedLetter, IndependentPair {
 		// grouping interface only
