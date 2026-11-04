@@ -30,8 +30,8 @@ import java.util.Optional;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 
-public interface IIndependencyAutomaton<L, S>
-		extends INwaOutgoingLetterAndTransitionProvider<IIndependencyAutomaton.IndependenceLetter<L>, S> {
+public interface IIndependenceAutomaton<L, S>
+		extends INwaOutgoingLetterAndTransitionProvider<IIndependenceAutomaton.IndependenceLetter<L>, S> {
 
 	Optional<IndependenceLetter<L>> getSpecialSymbol(final L letter1, final L letter2);
 

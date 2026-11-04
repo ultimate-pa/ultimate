@@ -36,8 +36,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.afa.AFAReductionAutomaton.AfaState;
 import de.uni_freiburg.informatik.ultimate.automata.afa.AFAReductionAutomaton.AfaState.StateType;
-import de.uni_freiburg.informatik.ultimate.automata.afa.IIndependencyAutomaton.IndependenceLetter;
-import de.uni_freiburg.informatik.ultimate.automata.afa.IIndependencyAutomaton.WrappedLetter;
+import de.uni_freiburg.informatik.ultimate.automata.afa.IIndependenceAutomaton.IndependenceLetter;
+import de.uni_freiburg.informatik.ultimate.automata.afa.IIndependenceAutomaton.WrappedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
@@ -52,8 +52,8 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 	final BddManager<AfaState<L, S1, S2>> mBddManager = new BddManager<>();
 	private final Map<StateKey<L, S1, S2>, AfaState<L, S1, S2>> mStateCache = new HashMap<>();
 
-	// The independency automaton accepts words of the form "rho <ab> sigma" s.t. (rho,a,b,sigma) in I
-	private final IIndependencyAutomaton<L, S1> mIndependencyAutomaton;
+	// The independence automaton accepts words of the form "rho <ab> sigma" s.t. (rho,a,b,sigma) in I
+	private final IIndependenceAutomaton<L, S1> mIndependenceAutomaton;
 
 	// TODO: implement order automaton
 	// I assume the order automaton to be total and deterministic!
@@ -61,21 +61,21 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 
 	// before the search, do an intersection of the current abstraction (transformed to an AFA) with the reduction AFA
 	public AFAReductionAutomaton(final IDfsOrder<L, S2> order, final Set<L> alphabet,
-			final IIndependencyAutomaton<L, S1> independencyAutomaton,
+			final IIndependenceAutomaton<L, S1> independenceAutomaton,
 			final INwaOutgoingLetterAndTransitionProvider<L, S2> orderAutomaton) {
 		mOrder = order;
 		mAlphabet = alphabet;
-		mIndependencyAutomaton = independencyAutomaton;
+		mIndependenceAutomaton = independenceAutomaton;
 		mOrderAutomaton = orderAutomaton;
 		constructInitialStates();
 	}
 
 	private void constructInitialStates() {
-		final Iterable<S1> independencyInitialStates = mIndependencyAutomaton.getInitialStates();
+		final Iterable<S1> independenceInitialStates = mIndependenceAutomaton.getInitialStates();
 		final Iterable<S2> orderInitialStates = mOrderAutomaton.getInitialStates();
-		for (final S1 independencyState : independencyInitialStates) {
+		for (final S1 independenceState : independenceInitialStates) {
 			for (final S2 orderState : orderInitialStates) {
-				mInitialStates.add(getOrConstructState(StateType.TRACK, null, independencyState, orderState));
+				mInitialStates.add(getOrConstructState(StateType.TRACK, null, independenceState, orderState));
 			}
 		}
 	}
@@ -110,10 +110,10 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 	public Bdd<AfaState<L, S1, S2>> getSuccessors(final AfaState<L, S1, S2> state, final L letter) {
 
 		final L sleepLetter = state.mSleepletter;
-		final S1 independencyState = state.mIndependencyState;
+		final S1 independenceState = state.mIndependenceState;
 		final S2 orderState = state.mOrderState;
-		final Iterable<OutgoingInternalTransition<IndependenceLetter<L>, S1>> independencyTransitions =
-				mIndependencyAutomaton.internalSuccessors(independencyState, new WrappedLetter<>(letter));
+		final Iterable<OutgoingInternalTransition<IndependenceLetter<L>, S1>> independenceTransitions =
+				mIndependenceAutomaton.internalSuccessors(independenceState, new WrappedLetter<>(letter));
 		final S2 orderSucc = getUniqueOrderSuccessor(orderState, letter);
 
 		// dummy result so we can use Bdd.and and Bdd.or
@@ -122,7 +122,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 
 		switch (state.mType) {
 		case TRACK:
-			for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : independencyTransitions) {
+			for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : independenceTransitions) {
 				succ = getOrConstructState(StateType.TRACK, null, t.getSucc(), orderSucc);
 				bddResult = bddResult.and(mBddManager.variable(succ));
 			}
@@ -132,18 +132,18 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 				Bdd<AfaState<L, S1, S2>> bddDisjunct2;
 				// TODO: use the Order from the orderState instead
 				if (mOrder.getOrder(orderState).compare(letter2, letter) < 0) {
-					for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : independencyTransitions) {
+					for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : independenceTransitions) {
 						succ = getOrConstructState(StateType.SLEEP, letter2, t.getSucc(), orderSucc);
 						bddDisjunct1 = bddDisjunct1.and(mBddManager.variable(succ));
 
 					}
 					final Optional<IndependenceLetter<L>> specialSymbol =
-							mIndependencyAutomaton.getSpecialSymbol(letter, letter2);
+							mIndependenceAutomaton.getSpecialSymbol(letter, letter2);
 					if (specialSymbol.isPresent()) {
 						final IndependenceLetter<L> symbol = specialSymbol.get();
 						bddDisjunct2 = mBddManager.getTrue();
-						for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : mIndependencyAutomaton
-								.internalSuccessors(independencyState, symbol)) {
+						for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : mIndependenceAutomaton
+								.internalSuccessors(independenceState, symbol)) {
 							succ = getOrConstructState(StateType.WAIT, letter2, t.getSucc(), orderSucc);
 							bddDisjunct2 = bddDisjunct2.and(mBddManager.variable(succ));
 
@@ -162,18 +162,18 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 			} else {
 				Bdd<AfaState<L, S1, S2>> bddDisjunct1 = mBddManager.getTrue();
 				Bdd<AfaState<L, S1, S2>> bddDisjunct2;
-				for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : independencyTransitions) {
+				for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : independenceTransitions) {
 					succ = getOrConstructState(StateType.SLEEP, sleepLetter, t.getSucc(), orderSucc);
 					bddDisjunct1 = bddDisjunct1.and(mBddManager.variable(succ));
 
 				}
 				final Optional<IndependenceLetter<L>> specialSymbol =
-						mIndependencyAutomaton.getSpecialSymbol(letter, sleepLetter);
+						mIndependenceAutomaton.getSpecialSymbol(letter, sleepLetter);
 				if (specialSymbol.isPresent()) {
 					final IndependenceLetter<L> symbol = specialSymbol.get();
 					bddDisjunct2 = mBddManager.getTrue();
-					for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : mIndependencyAutomaton
-							.internalSuccessors(independencyState, symbol)) {
+					for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : mIndependenceAutomaton
+							.internalSuccessors(independenceState, symbol)) {
 						succ = getOrConstructState(StateType.WAIT, sleepLetter, t.getSucc(), orderSucc);
 						bddDisjunct2 = bddDisjunct2.and(mBddManager.variable(succ));
 
@@ -186,11 +186,11 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 			break;
 		case WAIT:
 			if (Objects.equals(sleepLetter, letter)) {
-				succ = getOrConstructState(StateType.CHECK, null, independencyState, orderSucc);
+				succ = getOrConstructState(StateType.CHECK, null, independenceState, orderSucc);
 				bddResult = mBddManager.variable(succ);
 
 			} else {
-				for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : independencyTransitions) {
+				for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : independenceTransitions) {
 					succ = getOrConstructState(StateType.WAIT, sleepLetter, t.getSucc(), orderSucc);
 					bddResult = bddResult.and(mBddManager.variable(succ));
 
@@ -198,7 +198,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 			}
 			break;
 		case CHECK:
-			for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t1 : independencyTransitions) {
+			for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t1 : independenceTransitions) {
 				succ = getOrConstructState(StateType.CHECK, null, t1.getSucc(), orderSucc);
 				bddResult = bddResult.and(mBddManager.variable(succ));
 
@@ -211,13 +211,13 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 
 	// on demand construction of AfaStates
 	public AfaState<L, S1, S2> getOrConstructState(final StateType type, final L sleepletter,
-			final S1 independencyState, final S2 orderState) {
+			final S1 independenceState, final S2 orderState) {
 
-		final StateKey<L, S1, S2> key = new StateKey<>(type, sleepletter, independencyState, orderState);
+		final StateKey<L, S1, S2> key = new StateKey<>(type, sleepletter, independenceState, orderState);
 
 		return mStateCache.computeIfAbsent(key, k -> {
 			final AfaState<L, S1, S2> state =
-					new AfaState<>(k.type(), k.sleepletter(), k.independencyState(), k.orderState());
+					new AfaState<>(k.type(), k.sleepletter(), k.independenceState(), k.orderState());
 
 			switch (k.type()) {
 			case TRACK, SLEEP:
@@ -226,7 +226,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 			case WAIT:
 				break;
 			case CHECK:
-				if (!mIndependencyAutomaton.isFinal(k.independencyState())) {
+				if (!mIndependenceAutomaton.isFinal(k.independenceState())) {
 					mFinalStates.add(state);
 				}
 				break;
@@ -238,23 +238,23 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 		});
 	}
 
-	record StateKey<L, S1, S2>(StateType type, L sleepletter, S1 independencyState, S2 orderState) {
+	record StateKey<L, S1, S2>(StateType type, L sleepletter, S1 independenceState, S2 orderState) {
 	}
 
 	static class AfaState<L, S1, S2> {
 		StateType mType;
 		L mSleepletter;
-		S1 mIndependencyState;
+		S1 mIndependenceState;
 		S2 mOrderState;
 
 		enum StateType {
 			TRACK, SLEEP, WAIT, CHECK
 		}
 
-		AfaState(final StateType type, final L sleepletter, final S1 indenepdencyState, final S2 orderState) {
+		AfaState(final StateType type, final L sleepletter, final S1 independenceState, final S2 orderState) {
 			mType = type;
 			mSleepletter = sleepletter;
-			mIndependencyState = indenepdencyState;
+			mIndependenceState = independenceState;
 			mOrderState = orderState;
 		}
 

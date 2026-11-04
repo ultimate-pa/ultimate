@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S> {
+public class IndependenceAutomaton<L, S> implements IIndependenceAutomaton<L, S> {
 
 	Map<Pair<L, L>, IndependenceLetter<L>> mSpecialSymbols;
 	private final VpAlphabet<IndependenceLetter<L>> mVpAlphabet;
@@ -52,7 +52,7 @@ public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S>
 	private final IUnionStateFactory<S> mFactory;
 	private INwaOutgoingLetterAndTransitionProvider<IndependenceLetter<L>, S> mAutomaton;
 
-	public IndependencyAutomaton(final Set<L> alphabet, final IUnionStateFactory<S> unionFactory) {
+	public IndependenceAutomaton(final Set<L> alphabet, final IUnionStateFactory<S> unionFactory) {
 		mSpecialSymbols = new HashMap<>();
 		mFactory = unionFactory;
 		mVpAlphabet = constructAlphabet(alphabet);
@@ -143,7 +143,7 @@ public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S>
 
 	@Override
 	public String sizeInformation() {
-		return mAutomaton == null ? "Empty independency automaton" : mAutomaton.sizeInformation();
+		return mAutomaton == null ? "Empty independence automaton" : mAutomaton.sizeInformation();
 	}
 
 	@Override
