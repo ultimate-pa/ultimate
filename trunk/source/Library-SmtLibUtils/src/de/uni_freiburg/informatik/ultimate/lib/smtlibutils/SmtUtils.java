@@ -171,11 +171,6 @@ public final class SmtUtils {
 	}
 
 	private static final boolean EXTENDED_LOCAL_SIMPLIFICATION = true;
-	/**
-	 * If true, common inner juncts are pulled out of the formula for conjunctions and disjunctions. E.g., (and (or a b)
-	 * (or a c)) becomes (or a (and b c)).
-	 */
-	private static final boolean PULL_OUT_COMMON_INNER_JUNCTS = true;
 
 	/**
 	 * Has problems with {@link ElimStore3}. Set to true once {@link ElimStore3} has been replace by
@@ -1080,49 +1075,57 @@ public final class SmtUtils {
 		return freeVars;
 	}
 
-	public static Term booleanConnective(final Script script, final String connective, final Collection<Term> terms) {
+	public static Term booleanConnective(final Script script, final boolean pullOutCommonInnerJuncts,
+			final String connective, final Collection<Term> terms) {
 		if (connective.equals("and")) {
-			return and(script, terms);
+			return andWithExtendedLocalSimplification(script, pullOutCommonInnerJuncts, terms);
 		}
 		if (connective.equals("or")) {
-			return or(script, terms);
+			return orWithExtendedLocalSimplification(script, pullOutCommonInnerJuncts, terms);
 		}
 		throw new UnsupportedOperationException("unsupported boolean connective " + connective);
 	}
 
 	public static Term and(final Script script, final Term... terms) {
 		if (EXTENDED_LOCAL_SIMPLIFICATION) {
-			return andWithExtendedLocalSimplification(script, Arrays.asList(terms));
+			return andWithExtendedLocalSimplification(script, false, Arrays.asList(terms));
 		}
 		return Util.and(script, terms);
 	}
 
 	public static Term and(final Script script, final Collection<Term> terms) {
 		if (EXTENDED_LOCAL_SIMPLIFICATION) {
-			return andWithExtendedLocalSimplification(script, terms);
+			return andWithExtendedLocalSimplification(script, false, terms);
 		}
 		return Util.and(script, terms.toArray(new Term[terms.size()]));
 	}
 
 	public static Term or(final Script script, final Term... terms) {
 		if (EXTENDED_LOCAL_SIMPLIFICATION) {
-			return orWithExtendedLocalSimplification(script, Arrays.asList(terms));
+			return orWithExtendedLocalSimplification(script, false, Arrays.asList(terms));
 		}
 		return Util.or(script, terms);
 	}
 
 	public static Term or(final Script script, final Collection<Term> terms) {
 		if (EXTENDED_LOCAL_SIMPLIFICATION) {
-			return orWithExtendedLocalSimplification(script, terms);
+			return orWithExtendedLocalSimplification(script, false, terms);
 		}
 		return Util.or(script, terms.toArray(new Term[terms.size()]));
 	}
 
-	public static Term andWithExtendedLocalSimplification(final Script script, final Term... terms) {
-		return andWithExtendedLocalSimplification(script, Arrays.asList(terms));
+	public static Term andWithExtendedLocalSimplification(final Script script, final boolean pullOutCommonInnerJuncts,
+			final Term... terms) {
+		return andWithExtendedLocalSimplification(script, pullOutCommonInnerJuncts, Arrays.asList(terms));
 	}
 
-	public static Term andWithExtendedLocalSimplification(final Script script, final Collection<Term> terms) {
+	/**
+	 * @param pullOutCommonInnerJuncts
+	 *            If true, common disjuncts are pulled out of the conjunctions and disjunctions. E.g., (and (or a b) (or
+	 *            a c)) becomes (or a (and b c)).
+	 */
+	public static Term andWithExtendedLocalSimplification(final Script script, final boolean pullOutCommonInnerJuncts,
+			final Collection<Term> terms) {
 		final Set<Term> resultJuncts = new HashSet<>();
 		final Set<Term> negativeJuncts = new HashSet<>();
 		final String connective = "and";
@@ -1139,7 +1142,7 @@ public final class SmtUtils {
 		if (resultJuncts.size() == 1) {
 			return resultJuncts.iterator().next();
 		}
-		if (PULL_OUT_COMMON_INNER_JUNCTS) {
+		if (pullOutCommonInnerJuncts) {
 			final Set<Term> commonDisjuncts = getCommomInnerJuncts(resultJuncts, "or");
 			if (!commonDisjuncts.isEmpty()) {
 				return applyDistributivity(script, resultJuncts, connective, commonDisjuncts);
@@ -1158,7 +1161,7 @@ public final class SmtUtils {
 					.getDualFiniteJuncts(QuantifierUtils.getCorrespondingQuantifier(outerConnective), dualJunction);
 			final Term[] remainingInnerDualJuncts = new Term[innerDualJuncts.length - commonInnerDualJuncts.size()];
 			if (remainingInnerDualJuncts.length == 0) {
-				return booleanConnective(script, innerConnective, commonInnerDualJuncts);
+				return booleanConnective(script, false, innerConnective, commonInnerDualJuncts);
 			}
 			int offset = 0;
 			for (final Term innerDualJunct : innerDualJuncts) {
@@ -1173,11 +1176,11 @@ public final class SmtUtils {
 				resultDualJunctions.add(script.term(innerConnective, remainingInnerDualJuncts));
 			}
 		}
-		final Term resultInnerDistributed = booleanConnective(script, outerConnective, resultDualJunctions);
+		final Term resultInnerDistributed = booleanConnective(script, false, outerConnective, resultDualJunctions);
 		final List<Term> resultOuter = new ArrayList<>(commonInnerDualJuncts.size() + 1);
 		resultOuter.addAll(commonInnerDualJuncts);
 		resultOuter.add(resultInnerDistributed);
-		return booleanConnective(script, innerConnective, resultOuter);
+		return booleanConnective(script, false, innerConnective, resultOuter);
 	}
 
 	private static Set<Term> getCommomInnerJuncts(final Set<Term> outJuncts, final String innerConnective) {
@@ -1198,7 +1201,13 @@ public final class SmtUtils {
 		return commonOuterJuncts;
 	}
 
-	public static Term orWithExtendedLocalSimplification(final Script script, final Collection<Term> terms) {
+	/**
+	 * @param pullOutCommonInnerJuncts
+	 *            If true, common disjuncts are pulled out of the conjunctions and disjunctions. E.g., (or (and a b) (and
+	 *            a c)) becomes (and a (or b c)).
+	 */
+	public static Term orWithExtendedLocalSimplification(final Script script, final boolean pullOutCommonInnerJuncts,
+			final Collection<Term> terms) {
 		final Set<Term> resultJuncts = new HashSet<>();
 		final Set<Term> negativeJuncts = new HashSet<>();
 		final String connective = "or";
@@ -1215,7 +1224,7 @@ public final class SmtUtils {
 		if (resultJuncts.size() == 1) {
 			return resultJuncts.iterator().next();
 		}
-		if (PULL_OUT_COMMON_INNER_JUNCTS) {
+		if (pullOutCommonInnerJuncts) {
 			final Set<Term> commonDisjuncts = getCommomInnerJuncts(resultJuncts, "and");
 			if (!commonDisjuncts.isEmpty()) {
 				return applyDistributivity(script, resultJuncts, connective, commonDisjuncts);
