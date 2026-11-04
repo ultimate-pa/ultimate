@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -61,12 +60,12 @@ public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S>
 
 		// Initialize the alphabet to Sigma x Sigma^2
 		for (final L letter : alphabet) {
-			mAlphabet.add(IndependenceLetter.normal(letter));
+			mAlphabet.add(new WrappedLetter<>(letter));
 		}
 		for (final L letter1 : alphabet) {
 			for (final L letter2 : alphabet) {
 
-				final IndependenceLetter<L> specialSymbol = IndependenceLetter.special(letter1, letter2);
+				final IndependenceLetter<L> specialSymbol = new IndependentPair<>(letter1, letter2);
 				if (!mAlphabet.add(specialSymbol)) {
 					throw new IllegalArgumentException("Special symbol is not unique: " + specialSymbol);
 				}
@@ -174,58 +173,4 @@ public class IndependencyAutomaton<L, S> implements IIndependencyAutomaton<L, S>
 		// not supported
 		return null;
 	}
-
-	// data structure to represent the letters of Sigma x Sigma^2
-	public static class IndependenceLetter<L1> {
-		private final L1 mLetter1;
-		private final L1 mLetter2;
-		private final boolean mIsSpecial;
-
-		private IndependenceLetter(final L1 letter1, final L1 letter2, final boolean isSpecial) {
-			mLetter1 = letter1;
-			mLetter2 = letter2;
-			mIsSpecial = isSpecial;
-		}
-
-		// construct a normal symbol (i.e. letters of Sigma)
-		public static <L> IndependenceLetter<L> normal(final L letter) {
-			return new IndependenceLetter<>(letter, null, false);
-		}
-
-		// construct a special symbol (i.e. letters of Sigma^2)
-		public static <L> IndependenceLetter<L> special(final L letter1, final L letter2) {
-			return new IndependenceLetter<>(letter1, letter2, true);
-		}
-
-		public boolean isSpecial() {
-			return mIsSpecial;
-		}
-
-		public L1 getLetter1() {
-			return mLetter1;
-		}
-
-		public L1 getLetter2() {
-			return mLetter2;
-		}
-
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (!(obj instanceof final IndependenceLetter<?> other)) {
-				return false;
-			}
-
-			return mIsSpecial == other.mIsSpecial && Objects.equals(mLetter1, other.mLetter1)
-					&& Objects.equals(mLetter2, other.mLetter2);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(mIsSpecial, mLetter1, mLetter2);
-		}
-	}
-
 }

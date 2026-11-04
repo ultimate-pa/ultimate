@@ -36,7 +36,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.afa.AFAReductionAutomaton.AfaState;
 import de.uni_freiburg.informatik.ultimate.automata.afa.AFAReductionAutomaton.AfaState.StateType;
-import de.uni_freiburg.informatik.ultimate.automata.afa.IndependencyAutomaton.IndependenceLetter;
+import de.uni_freiburg.informatik.ultimate.automata.afa.IIndependencyAutomaton.IndependenceLetter;
+import de.uni_freiburg.informatik.ultimate.automata.afa.IIndependencyAutomaton.WrappedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
@@ -112,7 +113,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 		final S1 independencyState = state.mIndependencyState;
 		final S2 orderState = state.mOrderState;
 		final Iterable<OutgoingInternalTransition<IndependenceLetter<L>, S1>> independencyTransitions =
-				mIndependencyAutomaton.internalSuccessors(independencyState, IndependenceLetter.normal(letter));
+				mIndependencyAutomaton.internalSuccessors(independencyState, new WrappedLetter<>(letter));
 		final S2 orderSucc = getUniqueOrderSuccessor(orderState, letter);
 
 		// dummy result so we can use Bdd.and and Bdd.or
