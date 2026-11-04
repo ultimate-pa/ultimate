@@ -134,4 +134,41 @@ public class FilteredStatesNwa<LETTER, STATE> implements INwaOutgoingLetterAndTr
 		return new FilteredIterable<>(mUnderlying.returnSuccessors(state, hier, letter),
 				transition -> !mIsPrunedState.test(transition.getSucc()));
 	}
+
+	// NOTE: We also override this method instead of just relying on the default implementation -- which calls our
+	// overridden implementation of #internalSuccessors(STATE, LETTER) -- to work around performance issues in the
+	// default implementation.
+	@Override
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
+		if (mIsPrunedState.test(state)) {
+			return List.of();
+		}
+		return new FilteredIterable<>(mUnderlying.internalSuccessors(state),
+				transition -> !mIsPrunedState.test(transition.getSucc()));
+	}
+
+	// NOTE: We also override this method instead of just relying on the default implementation -- which calls our
+	// overridden implementation of #callSuccessors(STATE, LETTER) -- to work around performance issues in the
+	// default implementation.
+	@Override
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
+		if (mIsPrunedState.test(state)) {
+			return List.of();
+		}
+		return new FilteredIterable<>(mUnderlying.callSuccessors(state),
+				transition -> !mIsPrunedState.test(transition.getSucc()));
+	}
+
+	// NOTE: We also override this method instead of just relying on the default implementation -- which calls our
+	// overridden implementation of #returnSuccessorsGivenHier(STATE, STATE, LETTER) -- to work around performance
+	// issues in the default implementation.
+	@Override
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
+			final STATE hier) {
+		if (mIsPrunedState.test(state) || mIsPrunedState.test(hier)) {
+			return List.of();
+		}
+		return new FilteredIterable<>(mUnderlying.returnSuccessorsGivenHier(state, hier),
+				transition -> !mIsPrunedState.test(transition.getSucc()));
+	}
 }
