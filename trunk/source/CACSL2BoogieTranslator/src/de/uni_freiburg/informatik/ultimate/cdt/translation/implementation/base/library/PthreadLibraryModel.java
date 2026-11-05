@@ -179,7 +179,7 @@ public class PthreadLibraryModel implements ILibraryModel {
 		}
 		builder.addAllExceptLrValue(argThreadAttributes, argStartRoutine, startRoutineArguments);
 
-		final String methodName = getFunctionParameterName(node, arguments[2], argStartRoutine, name);
+		final String methodName = getFunctionParameterName(loc, arguments[2], argStartRoutine, name);
 		final CFunction function = mProcedureManager.getCFunctionType(methodName);
 		final int params = function.getParameterTypes().length;
 		final Expression[] forkArguments;
@@ -214,7 +214,7 @@ public class PthreadLibraryModel implements ILibraryModel {
 		return builder.build();
 	}
 
-	private String getFunctionParameterName(final IASTFunctionCallExpression node, final IASTInitializerClause argument,
+	private String getFunctionParameterName(final ILocation loc, final IASTInitializerClause argument,
 			final ExpressionResult argStartRoutine, final String functionName) {
 		// We hope that the function is not given by a function pointer that is stored in a variable but directly by the
 		// function name
@@ -225,31 +225,30 @@ public class PthreadLibraryModel implements ILibraryModel {
 		} else if (argument instanceof CASTUnaryExpression) {
 			final CASTUnaryExpression castUnaryExpr = (CASTUnaryExpression) argument;
 			if (castUnaryExpr.getOperator() != IASTUnaryExpression.op_amper) {
-				throw new UnsupportedOperationException(
+				throw new UnsupportedSyntaxException(loc,
 						"Function parameter of " + functionName + " is: " + argument.getClass().getSimpleName());
 			}
 			// function foo is probably given as a function pointer of the form & foo
 			if (!(castUnaryExpr.getOperand() instanceof CASTIdExpression)) {
-				throw new UnsupportedOperationException("Argument of " + functionName + " is: "
+				throw new UnsupportedSyntaxException(loc, "Argument of " + functionName + " is: "
 						+ castUnaryExpr.getOperand().getClass().getSimpleName());
 			}
 			final CASTIdExpression castIdExpr = (CASTIdExpression) castUnaryExpr.getOperand();
 			rawProcName = castIdExpr.getName().toString();
 		} else {
-			throw new UnsupportedOperationException(
+			throw new UnsupportedSyntaxException(loc,
 					"Function parameter of " + functionName + " is " + argument.getClass().getSimpleName());
 		}
 
-		final String multiParseProcedureName =
-				mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), rawProcName);
+		final String multiParseProcedureName = mSymboltable.applyMultiparseRenaming(loc.getFileName(), rawProcName);
 		if (!mProcedureManager.hasProcedure(multiParseProcedureName)) {
-			throw new UnsupportedOperationException("Cannot find function " + multiParseProcedureName + ". "
+			throw new UnsupportedSyntaxException(loc, "Cannot find function " + multiParseProcedureName + ". "
 					+ functionName + " in combination with function pointers is not supported.");
 		}
 
 		final String id = ((IdentifierExpression) argStartRoutine.getLrValue().getValue()).getIdentifier();
 		if (!id.startsWith(SFO.FUNCTION_ADDRESS)) {
-			throw new UnsupportedOperationException("unable to decode " + id);
+			throw new UnsupportedSyntaxException(loc, "Unable to decode function name " + id);
 		}
 		return id.substring(SFO.FUNCTION_ADDRESS.length());
 	}
@@ -295,7 +294,7 @@ public class PthreadLibraryModel implements ILibraryModel {
 		// If the value of the aux-var is true, call the function and assign once to 2, indicating that the call was
 		// executed
 		final CallStatement call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[0],
-				getFunctionParameterName(node, arguments[1], initRoutine, name), new Expression[0]);
+				getFunctionParameterName(loc, arguments[1], initRoutine, name), new Expression[0]);
 		final ExpressionResult setComplete = mExprResultTransformer.makePointerAssignment(loc, once.getLrValue(), two);
 		builder.addAllExceptLrValueAndStatements(setComplete);
 		builder.addStatement(StatementFactory.constructIfStatement(loc, auxVar.getExp(),
