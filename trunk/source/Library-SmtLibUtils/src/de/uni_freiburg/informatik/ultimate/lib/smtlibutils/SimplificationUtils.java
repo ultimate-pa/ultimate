@@ -27,12 +27,14 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
@@ -154,31 +156,120 @@ public final class SimplificationUtils {
 		}
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final MultiDimensionalSelectOverNestedStore mdsons : list) {
-			if (mdsons.getNestedStore().getValues().size() != 1) {
-				continue;
-			}
-			final ArrayIndex storeIndex = mdsons.getNestedStore().getIndices().get(0);
-			final ArrayIndex selectIndex = mdsons.getSelectIndex();
-			final Term idxEquivalence =
-					ArrayIndex.constructIndexEquality(mgdScript.getScript(), storeIndex, selectIndex);
-			final LBool idxEquivalent = validityCheck.isValid(idxEquivalence);
-			if (idxEquivalent == LBool.UNSAT) {
-				substitutionMapping.put(mdsons.toTerm(mgdScript.getScript()),
-						mdsons.getNestedStore().getValues().get(0));
-				continue;
-			}
-			final LBool idxNotEquivalent = validityCheck.isValid(SmtUtils.not(mgdScript.getScript(), idxEquivalence));
-			if (idxNotEquivalent == LBool.UNSAT) {
-				final MultiDimensionalSelect mds =
-						new MultiDimensionalSelect(mdsons.getNestedStore().getArray(), mdsons.getSelectIndex());
-				substitutionMapping.put(mdsons.toTerm(mgdScript.getScript()), mds.toTerm(mgdScript.getScript()));
+			final Term replaceTerm;
+			replaceTerm = findReplacement(mgdScript, validityCheck, mdsons);
+			if (replaceTerm != null) {
+				substitutionMapping.put(mdsons.toTerm(mgdScript.getScript()), replaceTerm);
 			}
 		}
 		if (substitutionMapping.isEmpty()) {
 			return term;
 		}
-		return Substitution.apply(mgdScript, substitutionMapping, term);
+		final Term result = Substitution.apply(mgdScript, substitutionMapping, term);
+		if (result == term) {
+			throw new AssertionError("Substitution failed to change the term.");
+		}
+		return result;
 
+	}
+
+	private static Term findReplacement(final ManagedScript mgdScript, final ValidityCheck validityCheck,
+			final MultiDimensionalSelectOverNestedStore mdsons) {
+		final ArrayIndex selectIndex = mdsons.getSelectIndex();
+		final ArrayList<ArrayIndex> storeIndices = new ArrayList<>(mdsons.getNestedStore().getIndices());
+		final ArrayList<Term> storeValues = new ArrayList<>(mdsons.getNestedStore().getValues());
+		for (int i = storeIndices.size() - 1; i >= 0; i--) {
+			final ArrayIndex storeIndex = storeIndices.get(i);
+			final LBool isEquivalentToSelectIndex;
+			if (i > 0 || storeIndices.size() == 1) {
+				// we can use this information if the current storeIndex is the outermost storeIndex or not the
+				// innermost storeIndex.
+				isEquivalentToSelectIndex = checkIndexEquivalence(mgdScript, validityCheck, storeIndex, selectIndex);
+			} else {
+				isEquivalentToSelectIndex = null;
+			}
+			// we are currently at the last store, we check equivalence to select index
+			if ((i == storeIndices.size() - 1) && (isEquivalentToSelectIndex == LBool.UNSAT)) {
+				// select reads from this position
+				return storeValues.get(i);
+			}
+			final LBool differentFromSelectIndex =
+					checkIndexNotEquals(mgdScript, validityCheck, selectIndex, storeIndex);
+			if (differentFromSelectIndex == LBool.UNSAT) {
+				// select reads from different position, we can remove this store
+				storeIndices.remove(i);
+				storeValues.remove(i);
+			} else {
+				for (int j = i + 1; j < storeIndices.size(); j++) {
+					final ArrayIndex laterStoreIndex = storeIndices.get(j);
+					final LBool similarThanLaterStoreIndex =
+							checkIndexEquivalence(mgdScript, validityCheck, storeIndex, laterStoreIndex);
+					if (similarThanLaterStoreIndex == LBool.UNSAT) {
+						// we can remove the current store, because it is overwritten by a later store
+						storeIndices.remove(i);
+						storeValues.remove(i);
+						break;
+					}
+				}
+			}
+			if (i > 0 && isEquivalentToSelectIndex == LBool.UNSAT) {
+				// We can remove all preceding stores, because the select reads from this position.
+				// So we remove the elements from 0 to i-1 (inclusive) from the lists.
+				storeIndices.subList(0, i - 1).clear();
+				storeValues.subList(0, i - 1).clear();
+				break;
+			}
+		}
+		if (storeIndices.isEmpty()) {
+			final MultiDimensionalSelect mds =
+					new MultiDimensionalSelect(mdsons.getNestedStore().getArray(), mdsons.getSelectIndex());
+			return mds.toTerm(mgdScript.getScript());
+		}
+		if (storeIndices.size() == mdsons.getNestedStore().getIndices().size()) {
+			// cannot simplify this select-over-store
+			return null;
+		}
+		final MultiDimensionalNestedStore mdns =
+				new MultiDimensionalNestedStore(mdsons.getNestedStore().getArray(), storeIndices, storeValues);
+		final MultiDimensionalSelectOverNestedStore mdsons2 =
+				new MultiDimensionalSelectOverNestedStore(mdsons.getSelectIndex(), mdns);
+		return mdsons2.toTerm(mgdScript.getScript());
+	}
+
+	/**
+	 *
+	 * @return LBool.UNSAT if we can prove that the two indices are equal.
+	 */
+	private static LBool checkIndexEquivalence(final ManagedScript mgdScript, final ValidityCheck validityCheck,
+			final ArrayIndex idx1, final ArrayIndex idx2) {
+		final Term idxEquivalence = ArrayIndex.constructIndexEquality(mgdScript.getScript(), idx1, idx2);
+		final LBool idxEquivalent = validityCheck.isValid(idxEquivalence);
+		return idxEquivalent;
+	}
+
+	/**
+	 *
+	 * @return LBool.UNSAT if we can prove that the two indices are distinct.
+	 */
+	private static LBool checkIndexNotEquals(final ManagedScript mgdScript, final ValidityCheck validityCheck,
+			final ArrayIndex idx1, final ArrayIndex idx2) {
+		assert idx1.size() == idx2.size();
+		boolean resultForSomeEntryIsUnknown = false;
+		for (int i = 0; i < idx1.size(); i++) {
+			final Term negatedEntryEquivalence = SmtUtils.not(mgdScript.getScript(),
+					SmtUtils.binaryEquality(mgdScript.getScript(), idx1.get(i), idx2.get(i)));
+			final LBool idxEntryNotEquivalent = validityCheck.isValid(negatedEntryEquivalence);
+			if (idxEntryNotEquivalent == LBool.UNSAT) {
+				return LBool.UNSAT;
+			}
+			if (idxEntryNotEquivalent == LBool.UNKNOWN) {
+				resultForSomeEntryIsUnknown = true;
+			}
+		}
+		if (resultForSomeEntryIsUnknown) {
+			return LBool.UNKNOWN;
+		}
+		return LBool.SAT;
 	}
 
 }
