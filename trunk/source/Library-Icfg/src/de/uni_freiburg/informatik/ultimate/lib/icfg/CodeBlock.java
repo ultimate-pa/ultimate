@@ -72,10 +72,10 @@ public abstract class CodeBlock extends IcfgEdge implements IActionWithBranchEnc
 
 	protected final ILogger mLogger;
 
-	private final int mSerialnumber;
-
 	protected UnmodifiableTransFormula mTransitionFormula;
 	protected UnmodifiableTransFormula mTransitionFormulaWithBranchEncoders;
+
+	private final int mSerialnumber;
 
 	private String mPrecedingProcedure;
 	private String mSucceedingProcedure;
@@ -95,6 +95,12 @@ public abstract class CodeBlock extends IcfgEdge implements IActionWithBranchEnc
 	 * This constructor is for subclasses that are not constructed by the CodeBlockFactory. All these CodeBlocks will
 	 * have serial number "-1" and hence they will have the same hash code.
 	 *
+	 * @param source
+	 *            the location the edge starts in
+	 * @param target
+	 *            the location the edge ends in
+	 * @param logger
+	 *            the logger to write to
 	 * @deprecated Do not use this constructor, use the {@link CodeBlockFactory} instead.
 	 */
 	@Deprecated
@@ -110,6 +116,8 @@ public abstract class CodeBlock extends IcfgEdge implements IActionWithBranchEnc
 	public abstract String getPrettyPrintedStatements();
 
 	/**
+	 * Returns an SMT-LIB based representation of this CodeBlock's transition relation.
+	 *
 	 * @return an SMT-LIB based representation of this CodeBlock's transition relation
 	 */
 	@Override
@@ -162,6 +170,12 @@ public abstract class CodeBlock extends IcfgEdge implements IActionWithBranchEnc
 		}
 	}
 
+	/**
+	 * Connects this edge to its source location.
+	 *
+	 * @param source
+	 *            the location this edge starts in
+	 */
 	public final void connectSource(final IcfgLocation source) {
 		if (source != null) {
 			setSource(source);
@@ -169,6 +183,12 @@ public abstract class CodeBlock extends IcfgEdge implements IActionWithBranchEnc
 		}
 	}
 
+	/**
+	 * Connects this edge to its target location.
+	 *
+	 * @param target
+	 *            the location this edge ends in
+	 */
 	public final void connectTarget(final IcfgLocation target) {
 		if (target != null) {
 			setTarget(target);
@@ -201,9 +221,12 @@ public abstract class CodeBlock extends IcfgEdge implements IActionWithBranchEnc
 	}
 
 	/**
-	 * Takes over the preceding and succeeding procedure of {@code original}, for a copy of it that could not learn
-	 * them from its source and target: the inner CodeBlocks of a composition are disconnected, but they keep the
-	 * procedures they had while connected.
+	 * Takes over the preceding and succeeding procedure of {@code original}, for a copy of it that could not learn them
+	 * from its source and target: the inner CodeBlocks of a composition are disconnected, but they keep the procedures
+	 * they had while connected.
+	 *
+	 * @param original
+	 *            the code block this one is a copy of
 	 */
 	public void copyProceduresFrom(final CodeBlock original) {
 		mPrecedingProcedure = mergeProcedure(mPrecedingProcedure, original.mPrecedingProcedure);
@@ -236,6 +259,8 @@ public abstract class CodeBlock extends IcfgEdge implements IActionWithBranchEnc
 	}
 
 	/**
+	 * Returns the number of open calls contained in this codeblock.
+	 *
 	 * @return the number of open calls contained in this codeblock.
 	 */
 	protected int getNumberOfOpenCalls() {

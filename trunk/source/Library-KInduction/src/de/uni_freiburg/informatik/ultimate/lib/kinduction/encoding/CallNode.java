@@ -37,19 +37,19 @@ import java.util.Objects;
  * graph {@link LoopTreeFormulaBuilder} works on once calls are resolved.
  * <p>
  * The flat graph has no call stack, so a callee that is called from two sites and is not summarized but
- * <em>unfolded</em> must contribute two disjoint copies of its states - otherwise the two call sites look like a
- * loop and a path may enter at one of them and return to the other, splicing away everything in between (see the
+ * <em>unfolded</em> must contribute two disjoint copies of its states - otherwise the two call sites look like a loop
+ * and a path may enter at one of them and return to the other, splicing away everything in between (see the
  * {@link ProcedureSummaries} class javadoc). The call site chain is what makes those copies distinct: two nodes are
  * equal only if they carry the same state and were reached through the same sequence of call sites.
  * <p>
  * The chain is stored as a link to the <b>call site node</b> in the caller, which is itself a {@code CallNode} and
  * therefore carries the rest of the chain. A node of the procedure the analysis starts in has no such frame.
  * <p>
- * The chain is always finite because nothing on a call cycle is ever unfolded: a recursive procedure's activations
- * are told apart by {@link CallStack} in the state rather than by copies of its states, so its own nodes are
- * {@link #root} nodes and a node reached through one carries only the part of the chain the graph still
- * distinguishes. That is why a node does <b>not</b> determine how many calls are open at it, which
- * {@link KInductionCounterexampleBuilder} has to allow for when it cuts a run into pc steps.
+ * The chain is always finite because nothing on a call cycle is ever unfolded: a recursive procedure's activations are
+ * told apart by {@link CallStack} in the state rather than by copies of its states, so its own nodes are {@link #root}
+ * nodes and a node reached through one carries only the part of the chain the graph still distinguishes. That is why a
+ * node does <b>not</b> determine how many calls are open at it, which {@link KInductionCounterexampleBuilder} has to
+ * allow for when it cuts a run into pc steps.
  *
  * <pre>{@code
  * CallNode<STATE> callSite = ...;                  // a state of the caller with an outgoing call transition
@@ -61,15 +61,16 @@ import java.util.Objects;
  * Instances are immutable and their hash code is computed once, in the constructor: they are used as map keys
  * throughout the loop tree and the pc transition system.
  *
+ * @author Max Barth (max.barth@lmu.de)
  * @param <STATE>
  *            state type of the abstraction
- *
- * @author Max Barth (max.barth@lmu.de)
  */
 public final class CallNode<STATE> {
 
 	private final STATE mState;
-	/** The call site this node was reached through, or {@code null} for the procedure the analysis starts in. */
+	/**
+	 * The call site this node was reached through, or {@code null} for the procedure the analysis starts in.
+	 */
 	private final CallNode<STATE> mFrame;
 	private final int mDepth;
 	private final int mHash;
@@ -81,20 +82,39 @@ public final class CallNode<STATE> {
 		mHash = 31 * state.hashCode() + (frame == null ? 0 : frame.mHash);
 	}
 
-	/** A node of the procedure the analysis starts in, i.e. with no pending call. */
+	/**
+	 * A node of the procedure the analysis starts in, i.e. with no pending call.
+	 *
+	 * @param <STATE>
+	 *            the type of the automaton's states
+	 * @param state
+	 *            the state of the node
+	 * @return a node of the procedure the analysis starts in
+	 */
 	public static <STATE> CallNode<STATE> root(final STATE state) {
 		return new CallNode<>(state, null);
 	}
 
 	/**
-	 * The callee state {@code calleeState} reached by taking a call at <b>this</b> node, which therefore becomes
-	 * the new frame.
+	 * The callee state {@code calleeState} reached by taking a call at <b>this</b> node, which therefore becomes the
+	 * new frame.
+	 *
+	 * @param calleeState
+	 *            the state of the callee that the call reaches
+	 * @return the callee state {@code calleeState} reached by taking a call at <b>this</b> node, which therefore
+	 *         becomes the new frame
 	 */
 	public CallNode<STATE> enter(final STATE calleeState) {
 		return new CallNode<>(calleeState, this);
 	}
 
-	/** Another state of the same procedure activation, i.e. with the same call site chain. */
+	/**
+	 * Another state of the same procedure activation, i.e. with the same call site chain.
+	 *
+	 * @param other
+	 *            the state of the same activation
+	 * @return another state of the same procedure activation
+	 */
 	public CallNode<STATE> sibling(final STATE other) {
 		return new CallNode<>(other, mFrame);
 	}
@@ -105,7 +125,10 @@ public final class CallNode<STATE> {
 
 	/**
 	 * The states of the pending call sites, innermost first. Empty for a node of the procedure the analysis starts in.
-	 * This is the shape {@link KInductionCounterexampleBuilder} keeps its own call stack in, so the two can be compared.
+	 * This is the shape {@link KInductionCounterexampleBuilder} keeps its own call stack in, so the two can be
+	 * compared.
+	 *
+	 * @return the states of the pending call sites, innermost first
 	 */
 	public List<STATE> getCallSites() {
 		if (mFrame == null) {

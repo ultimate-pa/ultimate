@@ -36,16 +36,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.BooleanSupplier;
 
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery.Kind;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery.Kind;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantSupplier.BuiltSystem;
 
 /**
@@ -64,19 +64,6 @@ public final class InvariantSubscription implements IInvariantSupplier<CallNode<
 
 	private final ManagedScript mSource;
 	private final ManagedScript mTarget;
-	/**
-	 * A query k-induction is asking.
-	 *
-	 * @param version
-	 *            the version of the published invariants it runs with
-	 * @param startNanos
-	 *            when it started, by {@link System#nanoTime()}
-	 */
-	record RunningQuery(Kind kind, int k, int version, long startNanos) {
-	}
-
-	private record Update(int version, Map<IcfgLocation, Term> invariants) {
-	}
 
 	private final BlockingQueue<Update> mQueue = new LinkedBlockingQueue<>();
 	// Written by the consumer, read by the supplier.
@@ -84,9 +71,6 @@ public final class InvariantSubscription implements IInvariantSupplier<CallNode<
 	private volatile RunningQuery mRunning;
 	private final Map<Kind, Long> mPreviousMillis = new EnumMap<>(Kind.class);
 	private volatile BooleanSupplier mInterrupter;
-	// The answer of the supplier's probe for the query it interrupted, until k-induction takes it.
-	private record ProbeAnswer(Kind kind, int k, LBool answer) {
-	}
 
 	private volatile ProbeAnswer mAnswer;
 	private final boolean mMayInterrupt;
@@ -100,6 +84,8 @@ public final class InvariantSubscription implements IInvariantSupplier<CallNode<
 	private final CompletableFuture<BuiltSystem> mSystem;
 
 	/**
+	 * Creates an outgoing channel of the supplier.
+	 *
 	 * @param mayInterrupt
 	 *            whether the supplier puts queries on probation and may interrupt them
 	 * @param system
@@ -238,5 +224,27 @@ public final class InvariantSubscription implements IInvariantSupplier<CallNode<
 			mTransferrer = new TermTransferrer(mSource.getScript(), mTarget.getScript());
 		}
 		return mTransferrer.transform(invariant);
+	}
+
+	/**
+	 * A query k-induction is asking.
+	 *
+	 * @param kind
+	 *            the kind of the query
+	 * @param k
+	 *            the number of unrolled steps
+	 * @param version
+	 *            the version of the published invariants it runs with
+	 * @param startNanos
+	 *            when it started, by {@link System#nanoTime()}
+	 */
+	record RunningQuery(Kind kind, int k, int version, long startNanos) {
+	}
+
+	private record Update(int version, Map<IcfgLocation, Term> invariants) {
+	}
+
+	// The answer of the supplier's probe for the query it interrupted, until k-induction takes it.
+	private record ProbeAnswer(Kind kind, int k, LBool answer) {
 	}
 }

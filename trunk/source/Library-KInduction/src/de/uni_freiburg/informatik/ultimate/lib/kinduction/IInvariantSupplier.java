@@ -30,10 +30,9 @@ package de.uni_freiburg.informatik.ultimate.lib.kinduction;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -44,12 +43,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * invariant can only prune the step-case search space (letting a smaller {@code k} become inductive); it can never
  * introduce unsoundness.
  *
+ * @author Max Barth (Max.Barth@lmu.de)
  * @param <STATE>
  *            the automaton state type identifying a loop head, matching {@link KInduction}'s own {@code STATE}.
  */
 public interface IInvariantSupplier<STATE> {
 
 	/**
+	 * Returns an invariant for a loop head, if this supplier has one.
+	 *
 	 * @param loopHead
 	 *            the loop head to supply an invariant for.
 	 * @param targetScript
@@ -72,6 +74,11 @@ public interface IInvariantSupplier<STATE> {
 
 	/**
 	 * Called by k-induction when it starts to ask a query, with the invariants taken by the last {@link #update()}.
+	 *
+	 * @param kind
+	 *            the kind of the query
+	 * @param k
+	 *            the number of unrolled steps
 	 */
 	default void queryStarted(final KInductionQuery.Kind kind, final int k) {
 		// nothing to watch
@@ -80,6 +87,10 @@ public interface IInvariantSupplier<STATE> {
 	/**
 	 * Called by k-induction when a query was answered or interrupted.
 	 *
+	 * @param kind
+	 *            the kind of the query
+	 * @param k
+	 *            the number of unrolled steps
 	 * @param millis
 	 *            how long the query took
 	 */
@@ -88,8 +99,8 @@ public interface IInvariantSupplier<STATE> {
 	}
 
 	/**
-	 * Called by k-induction once its transition system is built, before its first query, so that a supplier that
-	 * checks its candidates on the same encoding can take a copy instead of building it again.
+	 * Called by k-induction once its transition system is built, before its first query, so that a supplier that checks
+	 * its candidates on the same encoding can take a copy instead of building it again.
 	 *
 	 * @param system
 	 *            the transition system; its formulas belong to {@code script}, so k-induction keeps using them
@@ -111,6 +122,9 @@ public interface IInvariantSupplier<STATE> {
 	}
 
 	/**
+	 * Returns whether the supplier may interrupt the queries of k-induction; then k-induction registers an interrupter
+	 * with {@link #setInterrupter}.
+	 *
 	 * @return whether the supplier may interrupt the queries of k-induction; then k-induction registers an interrupter
 	 *         with {@link #setInterrupter}
 	 */
@@ -132,6 +146,10 @@ public interface IInvariantSupplier<STATE> {
 	/**
 	 * Called by k-induction after the supplier interrupted a query.
 	 *
+	 * @param kind
+	 *            the kind of the query
+	 * @param k
+	 *            the number of unrolled steps
 	 * @return the answer the supplier's probe found for this query, with weaker invariants, if it probed it
 	 */
 	default Optional<LBool> takeAnswer(final KInductionQuery.Kind kind, final int k) {
@@ -139,6 +157,10 @@ public interface IInvariantSupplier<STATE> {
 	}
 
 	/**
+	 * Returns a supplier that never provides an invariant, i.e. plain (unstrengthened) k-induction.
+	 *
+	 * @param <STATE>
+	 *            the type of the automaton's states
 	 * @return a supplier that never provides an invariant, i.e. plain (unstrengthened) k-induction.
 	 */
 	static <STATE> IInvariantSupplier<STATE> none() {

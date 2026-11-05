@@ -38,260 +38,6 @@ import java.util.function.Function;
  */
 public class BitvectorConstant {
 
-	/**
-	 * Describes bitvector operations that can be mapped to the SMT theory of fixed-size bitvectors
-	 * (http://smtlib.cs.uiowa.edu/theories-FixedSizeBitVectors.shtml or http://smtlib.cs.uiowa.edu/logics-all.shtml).
-	 *
-	 * @author Matthias Heizmann
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 *
-	 */
-	public enum BvOp {
-		/**
-		 * ((_ sign_extend i) x)
-		 *
-		 * extend x with sign bits to the (signed) equivalent bitvector of size m+i
-		 */
-		sign_extend(2, false, false),
-		/**
-		 * ((_ zero_extend i) x)
-		 *
-		 * extend x with zeroes to the (unsigned) equivalent bitvector of size m+i
-		 */
-		zero_extend(2, false, false),
-
-		/**
-		 * ((_ extract i j) (_ BitVec m) (_ BitVec n))
-		 *
-		 * extraction of bits i down to j from a bitvector of size m to yield a new bitvector of size n, where n = i - j
-		 * + 1
-		 */
-		extract(3, false, false),
-
-		/**
-		 * (concat(_ BitVec m) (_ BitVec n))
-		 *
-		 * concatinates two bitvectors to a bitvector of size m+n
-		 */
-		concat(2, false, false),
-
-		/**
-		 * (bvadd (_ BitVec m) (_ BitVec m) (_ BitVec m))
-		 *
-		 * addition modulo 2^m
-		 */
-		bvadd(2, false, true),
-
-		/**
-		 * (bvsub (_ BitVec m) (_ BitVec m) (_ BitVec m))
-		 *
-		 * 2's complement subtraction modulo 2^m
-		 */
-		bvsub(2, false, false),
-
-		/**
-		 * (bvmul (_ BitVec m) (_ BitVec m) (_ BitVec m))
-		 *
-		 * multiplication modulo 2^m
-		 */
-		bvmul(2, false, true),
-
-		/**
-		 * (bvudiv (_ BitVec m) (_ BitVec m) (_ BitVec m))
-		 *
-		 * unsigned division, truncating towards 0
-		 */
-		bvudiv(2, false, false),
-
-		/**
-		 * (bvurem (_ BitVec m) (_ BitVec m) (_ BitVec m))
-		 *
-		 * unsigned remainder from truncating division
-		 */
-		bvurem(2, false, false),
-
-		/**
-		 * (bvsdiv (_ BitVec m) (_ BitVec m) (_ BitVec m))
-		 *
-		 * 2's complement signed division
-		 */
-		bvsdiv(2, false, false),
-
-		/**
-		 * (bvsrem (_ BitVec m) (_ BitVec m) (_ BitVec m))
-		 *
-		 * 2's complement signed remainder (sign follows dividend)
-		 */
-		bvsrem(2, false, false),
-
-		/**
-		 * (bvsmod (_ BitVec m) (_ BitVec m) (_ BitVec m))
-		 *
-		 * 2's complement signed remainder (sign follows divisor)
-		 */
-		bvsmod(2, false, false),
-
-		/**
-		 * (bvand (_ BitVec m) (_ BitVec m) (_ BitVec m))
-		 *
-		 * bitwise and
-		 */
-		bvand(2, false, true),
-
-		/**
-		 * (bvor (_ BitVec m) (_ BitVec m) (_ BitVec m))
-		 *
-		 * bitwise or
-		 */
-		bvor(2, false, true),
-
-		/**
-		 * (bvxor (_ BitVec m) (_ BitVec m) (_ BitVec m))
-		 *
-		 * bitwise exclusive or
-		 */
-		bvxor(2, false, true),
-
-		/**
-		 * (bvnot (_ BitVec m) (_ BitVec m))
-		 *
-		 * bitwise negation
-		 */
-		bvnot(1, false, true),
-
-		/**
-		 * (bvneg (_ BitVec m) (_ BitVec m))
-		 *
-		 * 2's complement unary minus
-		 */
-		bvneg(1, false, true),
-
-		/**
-		 * (bvshl (_ BitVec m) (_ BitVec m) (_ BitVec m))
-		 *
-		 * shift left (equivalent to multiplication by 2^x where x is the value of the second argument)
-		 */
-		bvshl(2, false, false),
-
-		/**
-		 * (bvlshr (_ BitVec m) (_ BitVec m) (_ BitVec m))
-		 *
-		 * logical shift right (equivalent to unsigned division by 2^x where x is the value of the second argument)
-		 */
-		bvlshr(2, false, false),
-
-		/**
-		 * (bvashr (_ BitVec m) (_ BitVec m) (_ BitVec m))
-		 *
-		 * Arithmetic shift right, like logical shift right except that the most significant bits of the result always
-		 * copy the most significant bit of the first argument.
-		 */
-		bvashr(2, false, false),
-
-		/**
-		 * (bvult (_ BitVec m) (_ BitVec m) Bool)
-		 *
-		 * binary predicate for unsigned less-than
-		 */
-		bvult(2, true, false),
-
-		/**
-		 * (bvule (_ BitVec m) (_ BitVec m) Bool)
-		 *
-		 * binary predicate for unsigned less than or equal
-		 */
-		bvule(2, true, false),
-
-		/**
-		 * (bvugt (_ BitVec m) (_ BitVec m) Bool)
-		 *
-		 * binary predicate for unsigned greater than
-		 */
-		bvugt(2, true, false),
-
-		/**
-		 * (bvuge (_ BitVec m) (_ BitVec m) Bool)
-		 *
-		 * binary predicate for unsigned greater than or equal
-		 */
-		bvuge(2, true, false),
-
-		/**
-		 * (bvslt (_ BitVec m) (_ BitVec m) Bool)
-		 *
-		 * binary predicate for signed less than
-		 */
-		bvslt(2, true, false),
-
-		/**
-		 * (bvsle (_ BitVec m) (_ BitVec m) Bool)
-		 *
-		 * binary predicate for signed less than or equal
-		 */
-		bvsle(2, true, false),
-
-		/**
-		 * (bvsgt (_ BitVec m) (_ BitVec m) Bool)
-		 *
-		 * binary predicate for signed greater than
-		 */
-		bvsgt(2, true, false),
-
-		/**
-		 * (bvsge (_ BitVec m) (_ BitVec m) Bool)
-		 *
-		 * binary predicate for signed greater than or equal
-		 */
-		bvsge(2, true, false);
-
-		private final int mArity;
-		private final boolean mIsBoolean;
-		private final boolean mIsAssociative;
-
-		BvOp(final int arity, final boolean isBoolean, final boolean isAssoc) {
-			mArity = arity;
-			mIsBoolean = isBoolean;
-			mIsAssociative = isAssoc;
-		}
-
-		/**
-		 * @return the arity of this operation
-		 */
-		public int getArity() {
-			return mArity;
-		}
-
-		/**
-		 * @return true iff the result of this operation is of type boolean, false otherwise
-		 */
-		public boolean isBoolean() {
-			return mIsBoolean;
-		}
-
-		/**
-		 * @return true iff the order of the operands does not matter.
-		 */
-		public boolean isCommutative() {
-			return mIsAssociative;
-		}
-
-	}
-
-	public enum ExtendOperation {
-		sign_extend(BvOp.sign_extend), zero_extend(BvOp.zero_extend),;
-
-		private final BvOp mBvOp;
-
-		ExtendOperation(final BvOp bvop) {
-			mBvOp = bvop;
-		}
-
-		public BvOp getBvOp() {
-			return mBvOp;
-		}
-
-	}
-
 	private final BigInteger mValue;
 	private final BigInteger mIndex;
 
@@ -300,6 +46,14 @@ public class BitvectorConstant {
 		mIndex = index;
 	}
 
+	/**
+	 * Creates a bitvector constant from a value and a width given as a string.
+	 *
+	 * @param value
+	 *            the value
+	 * @param index
+	 *            the width
+	 */
 	public BitvectorConstant(final BigInteger value, final String index) {
 		final BigInteger indexAsBi = new BigInteger(index);
 		mValue = computeUnifiedValue(value, indexAsBi);
@@ -307,6 +61,8 @@ public class BitvectorConstant {
 	}
 
 	/**
+	 * Returns the result of value % 2^index.
+	 *
 	 * @return the result of value % 2^index
 	 */
 	private static BigInteger computeUnifiedValue(final BigInteger value, final BigInteger index) {
@@ -334,6 +90,8 @@ public class BitvectorConstant {
 	}
 
 	/**
+	 * Returns true iff this represents a bitvector constant in which all bits are set to one.
+	 *
 	 * @return true iff this represents a bitvector constant in which all bits are set to one.
 	 */
 	public boolean isAllOnes() {
@@ -375,7 +133,7 @@ public class BitvectorConstant {
 	}
 
 	/**
-	 * returns the numeral SMT-LIB representation of this bitvector constant
+	 * returns the numeral SMT-LIB representation of this bitvector constant.
 	 */
 	@Override
 	public String toString() {
@@ -404,6 +162,15 @@ public class BitvectorConstant {
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.multiply(y));
 	}
 
+	/**
+	 * The {@code bvudiv} operation of SMT-LIB.
+	 *
+	 * @param bv1
+	 *            the first operand
+	 * @param bv2
+	 *            the second operand
+	 * @return the result of the operation
+	 */
 	public static BitvectorConstant bvudiv(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		if (bv2.getValue().signum() == 0) {
 			return maxValue(bv1.getIndex());
@@ -411,6 +178,15 @@ public class BitvectorConstant {
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.divide(y));
 	}
 
+	/**
+	 * The {@code bvurem} operation of SMT-LIB.
+	 *
+	 * @param bv1
+	 *            the first operand
+	 * @param bv2
+	 *            the second operand
+	 * @return the result of the operation
+	 */
 	public static BitvectorConstant bvurem(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		if (bv2.getValue().signum() == 0) {
 			return bv1;
@@ -418,6 +194,15 @@ public class BitvectorConstant {
 		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.remainder(y));
 	}
 
+	/**
+	 * The {@code bvsdiv} operation of SMT-LIB.
+	 *
+	 * @param bv1
+	 *            the first operand
+	 * @param bv2
+	 *            the second operand
+	 * @return the result of the operation
+	 */
 	public static BitvectorConstant bvsdiv(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		if (toSignedInt(bv2.getValue(), bv2.getIndex()).signum() == 0) {
 			return bvudiv(bv1, bv2);
@@ -426,6 +211,15 @@ public class BitvectorConstant {
 				x -> y -> toSignedInt(x, bv1.getIndex()).divide(toSignedInt(y, bv2.getIndex())));
 	}
 
+	/**
+	 * The {@code bvsrem} operation of SMT-LIB.
+	 *
+	 * @param bv1
+	 *            the first operand
+	 * @param bv2
+	 *            the second operand
+	 * @return the result of the operation
+	 */
 	public static BitvectorConstant bvsrem(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		if (toSignedInt(bv2.getValue(), bv2.getIndex()).signum() == 0) {
 			return bvurem(bv1, bv2);
@@ -434,6 +228,15 @@ public class BitvectorConstant {
 				x -> y -> toSignedInt(x, bv1.getIndex()).remainder(toSignedInt(y, bv2.getIndex())));
 	}
 
+	/**
+	 * The {@code bvsmod} operation of SMT-LIB.
+	 *
+	 * @param bv1
+	 *            the first operand
+	 * @param bv2
+	 *            the second operand
+	 * @return the result of the operation
+	 */
 	public static BitvectorConstant bvsmod(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		final BigInteger bigInt1 = toSignedInt(bv1.getValue(), bv1.getIndex());
 		final BigInteger bigInt2 = toSignedInt(bv2.getValue(), bv2.getIndex());
@@ -470,13 +273,11 @@ public class BitvectorConstant {
 	}
 
 	public static BitvectorConstant bvshl(final BitvectorConstant bv1, final BitvectorConstant bv2) {
-		return similarIndexBvOp_BitvectorResult(bv1, bv2,
-				x -> y -> x.shiftLeft(shiftDistance(y, bv1.getIndex())));
+		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.shiftLeft(shiftDistance(y, bv1.getIndex())));
 	}
 
 	public static BitvectorConstant bvlshr(final BitvectorConstant bv1, final BitvectorConstant bv2) {
-		return similarIndexBvOp_BitvectorResult(bv1, bv2,
-				x -> y -> x.shiftRight(shiftDistance(y, bv1.getIndex())));
+		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.shiftRight(shiftDistance(y, bv1.getIndex())));
 	}
 
 	public static BitvectorConstant bvashr(final BitvectorConstant bv1, final BitvectorConstant bv2) {
@@ -485,9 +286,9 @@ public class BitvectorConstant {
 	}
 
 	/**
-	 * The shift amount {@code amount} capped at the width {@code index}. Shifting by the width already moves every
-	 * bit out (0 for shl and lshr, all sign bits for ashr), so any larger amount has the same result, and the cap keeps
-	 * an amount of 2^31 or more from overflowing the int that BigInteger's shifts take.
+	 * The shift amount {@code amount} capped at the width {@code index}. Shifting by the width already moves every bit
+	 * out (0 for shl and lshr, all sign bits for ashr), so any larger amount has the same result, and the cap keeps an
+	 * amount of 2^31 or more from overflowing the int that BigInteger's shifts take.
 	 */
 	private static int shiftDistance(final BigInteger amount, final BigInteger index) {
 		return amount.min(index).intValueExact();
@@ -501,6 +302,19 @@ public class BitvectorConstant {
 		return new BitvectorConstant(toSignedInt(bv.getValue(), bv.getIndex()).negate(), bv.getIndex());
 	}
 
+	/**
+	 * Applies an operation to two bitvectors of the same width.
+	 *
+	 * @param bv1
+	 *            the first operand
+	 * @param bv2
+	 *            the second operand
+	 * @param fun
+	 *            the operation, on the values of the bitvectors
+	 * @return a bitvector of the same width with the result as its value
+	 * @throws IllegalArgumentException
+	 *             if an argument is not one this operation accepts
+	 */
 	public static BitvectorConstant similarIndexBvOp_BitvectorResult(final BitvectorConstant bv1,
 			final BitvectorConstant bv2, final Function<BigInteger, Function<BigInteger, BigInteger>> fun) {
 		if (bv1.getIndex().equals(bv2.getIndex())) {
@@ -509,6 +323,19 @@ public class BitvectorConstant {
 		throw new IllegalArgumentException("incompatible indices " + bv1.getIndex() + " " + bv2.getIndex());
 	}
 
+	/**
+	 * Compares two bitvectors of the same width.
+	 *
+	 * @param bv1
+	 *            the first operand
+	 * @param bv2
+	 *            the second operand
+	 * @param fun
+	 *            the comparison, on the values of the bitvectors
+	 * @return the result of the comparison
+	 * @throws IllegalArgumentException
+	 *             if an argument is not one this operation accepts
+	 */
 	public static Boolean comparison(final BitvectorConstant bv1, final BitvectorConstant bv2,
 			final Function<BigInteger, Function<BigInteger, Boolean>> fun) {
 		if (bv1.getIndex().equals(bv2.getIndex())) {
@@ -516,11 +343,6 @@ public class BitvectorConstant {
 		}
 		throw new IllegalArgumentException("incompatible indices " + bv1.getIndex() + " " + bv2.getIndex());
 	}
-
-	// public static BitvectorConstant bvshl(BitvectorConstant b1, BitvectorConstant b2) {
-	// int effectiveShift = Math.min(b1.getIndex().intValueExact(), b2.getValue().intValue());
-	// return new BitvectorConstant(b1.getValue().multiply(new BigInteger("2").pow(effectiveShift)), b1.getIndex());
-	// }
 
 	public static boolean bvult(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		return comparison(bv1, bv2, x -> y -> x.compareTo(y) < 0);
@@ -558,6 +380,15 @@ public class BitvectorConstant {
 				x -> y -> toSignedInt(x, bv1.getIndex()).compareTo(toSignedInt(y, bv2.getIndex())) >= 0);
 	}
 
+	/**
+	 * The {@code concat} operation of SMT-LIB.
+	 *
+	 * @param bv1
+	 *            the first operand
+	 * @param bv2
+	 *            the second operand
+	 * @return {@code bv1} followed by {@code bv2}
+	 */
 	public static BitvectorConstant concat(final BitvectorConstant bv1, final BitvectorConstant bv2) {
 		final BigInteger concatSize = bv1.getIndex().add(bv2.getIndex());
 		final BigInteger concatValue =
@@ -565,6 +396,17 @@ public class BitvectorConstant {
 		return new BitvectorConstant(concatValue, concatSize);
 	}
 
+	/**
+	 * The {@code extract} operation of SMT-LIB.
+	 *
+	 * @param bv
+	 *            the bitvector
+	 * @param upperIndex
+	 *            the highest bit to take
+	 * @param lowerIndex
+	 *            the lowest bit to take
+	 * @return the bits from {@code lowerIndex} to {@code upperIndex}
+	 */
 	public static BitvectorConstant extract(final BitvectorConstant bv, final int upperIndex, final int lowerIndex) {
 		final String binaryString = bvToBinaryString(bv);
 		final int resultIndex = upperIndex + 1 - lowerIndex;
@@ -601,6 +443,15 @@ public class BitvectorConstant {
 		return new BitvectorConstant(signed, bv.getIndex().add(indexExtension));
 	}
 
+	/**
+	 * Reads a bitvector value as two's complement.
+	 *
+	 * @param bvValue
+	 *            the value of the bitvector
+	 * @param bvIndex
+	 *            the width of the bitvector
+	 * @return the signed value
+	 */
 	public static BigInteger toSignedInt(final BigInteger bvValue, final BigInteger bvIndex) {
 		final BigInteger firstNegative = new BigInteger("2").pow(bvIndex.intValueExact() - 1);
 		if (bvValue.compareTo(firstNegative) < 0) {
@@ -614,6 +465,19 @@ public class BitvectorConstant {
 		return toSignedInt(mValue, mIndex);
 	}
 
+	/**
+	 * Applies an operation to bitvector constants.
+	 *
+	 * @param sbo
+	 *            the operation
+	 * @param operands
+	 *            the operands
+	 * @return the result of the operation
+	 * @throws IllegalArgumentException
+	 *             if an argument is not one this operation accepts
+	 * @throws UnsupportedOperationException
+	 *             if the program or the solver is outside what this class supports
+	 */
 	public static BitvectorConstantOperationResult apply(final BvOp sbo, final BitvectorConstant... operands) {
 		if (operands == null) {
 			throw new IllegalArgumentException("No operands");
@@ -652,9 +516,269 @@ public class BitvectorConstant {
 	}
 
 	/**
+	 * Describes bitvector operations that can be mapped to the SMT theory of fixed-size bitvectors
+	 * (http://smtlib.cs.uiowa.edu/theories-FixedSizeBitVectors.shtml or http://smtlib.cs.uiowa.edu/logics-all.shtml).
 	 *
+	 * @author Matthias Heizmann
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
+	 */
+	public enum BvOp {
+		/**
+		 * ((_ sign_extend i) x).
+		 *
+		 * extend x with sign bits to the (signed) equivalent bitvector of size m+i
+		 */
+		sign_extend(2, false, false),
+		/**
+		 * ((_ zero_extend i) x).
+		 *
+		 * extend x with zeroes to the (unsigned) equivalent bitvector of size m+i
+		 */
+		zero_extend(2, false, false),
+
+		/**
+		 * ((_ extract i j) (_ BitVec m) (_ BitVec n)).
+		 *
+		 * extraction of bits i down to j from a bitvector of size m to yield a new bitvector of size n, where n = i - j
+		 * + 1
+		 */
+		extract(3, false, false),
+
+		/**
+		 * (concat(_ BitVec m) (_ BitVec n)).
+		 *
+		 * concatinates two bitvectors to a bitvector of size m+n
+		 */
+		concat(2, false, false),
+
+		/**
+		 * (bvadd (_ BitVec m) (_ BitVec m) (_ BitVec m)).
+		 *
+		 * addition modulo 2^m
+		 */
+		bvadd(2, false, true),
+
+		/**
+		 * (bvsub (_ BitVec m) (_ BitVec m) (_ BitVec m)).
+		 *
+		 * 2's complement subtraction modulo 2^m
+		 */
+		bvsub(2, false, false),
+
+		/**
+		 * (bvmul (_ BitVec m) (_ BitVec m) (_ BitVec m)).
+		 *
+		 * multiplication modulo 2^m
+		 */
+		bvmul(2, false, true),
+
+		/**
+		 * (bvudiv (_ BitVec m) (_ BitVec m) (_ BitVec m)).
+		 *
+		 * unsigned division, truncating towards 0
+		 */
+		bvudiv(2, false, false),
+
+		/**
+		 * (bvurem (_ BitVec m) (_ BitVec m) (_ BitVec m)).
+		 *
+		 * unsigned remainder from truncating division
+		 */
+		bvurem(2, false, false),
+
+		/**
+		 * (bvsdiv (_ BitVec m) (_ BitVec m) (_ BitVec m)).
+		 *
+		 * 2's complement signed division
+		 */
+		bvsdiv(2, false, false),
+
+		/**
+		 * (bvsrem (_ BitVec m) (_ BitVec m) (_ BitVec m)).
+		 *
+		 * 2's complement signed remainder (sign follows dividend)
+		 */
+		bvsrem(2, false, false),
+
+		/**
+		 * (bvsmod (_ BitVec m) (_ BitVec m) (_ BitVec m)).
+		 *
+		 * 2's complement signed remainder (sign follows divisor)
+		 */
+		bvsmod(2, false, false),
+
+		/**
+		 * (bvand (_ BitVec m) (_ BitVec m) (_ BitVec m)).
+		 *
+		 * bitwise and
+		 */
+		bvand(2, false, true),
+
+		/**
+		 * (bvor (_ BitVec m) (_ BitVec m) (_ BitVec m)).
+		 *
+		 * bitwise or
+		 */
+		bvor(2, false, true),
+
+		/**
+		 * (bvxor (_ BitVec m) (_ BitVec m) (_ BitVec m)).
+		 *
+		 * bitwise exclusive or
+		 */
+		bvxor(2, false, true),
+
+		/**
+		 * (bvnot (_ BitVec m) (_ BitVec m)).
+		 *
+		 * bitwise negation
+		 */
+		bvnot(1, false, true),
+
+		/**
+		 * (bvneg (_ BitVec m) (_ BitVec m)).
+		 *
+		 * 2's complement unary minus
+		 */
+		bvneg(1, false, true),
+
+		/**
+		 * (bvshl (_ BitVec m) (_ BitVec m) (_ BitVec m)).
+		 *
+		 * shift left (equivalent to multiplication by 2^x where x is the value of the second argument)
+		 */
+		bvshl(2, false, false),
+
+		/**
+		 * (bvlshr (_ BitVec m) (_ BitVec m) (_ BitVec m)).
+		 *
+		 * logical shift right (equivalent to unsigned division by 2^x where x is the value of the second argument)
+		 */
+		bvlshr(2, false, false),
+
+		/**
+		 * (bvashr (_ BitVec m) (_ BitVec m) (_ BitVec m))
+		 *
+		 * Arithmetic shift right, like logical shift right except that the most significant bits of the result always
+		 * copy the most significant bit of the first argument.
+		 */
+		bvashr(2, false, false),
+
+		/**
+		 * (bvult (_ BitVec m) (_ BitVec m) Bool).
+		 *
+		 * binary predicate for unsigned less-than
+		 */
+		bvult(2, true, false),
+
+		/**
+		 * (bvule (_ BitVec m) (_ BitVec m) Bool).
+		 *
+		 * binary predicate for unsigned less than or equal
+		 */
+		bvule(2, true, false),
+
+		/**
+		 * (bvugt (_ BitVec m) (_ BitVec m) Bool).
+		 *
+		 * binary predicate for unsigned greater than
+		 */
+		bvugt(2, true, false),
+
+		/**
+		 * (bvuge (_ BitVec m) (_ BitVec m) Bool).
+		 *
+		 * binary predicate for unsigned greater than or equal
+		 */
+		bvuge(2, true, false),
+
+		/**
+		 * (bvslt (_ BitVec m) (_ BitVec m) Bool).
+		 *
+		 * binary predicate for signed less than
+		 */
+		bvslt(2, true, false),
+
+		/**
+		 * (bvsle (_ BitVec m) (_ BitVec m) Bool).
+		 *
+		 * binary predicate for signed less than or equal
+		 */
+		bvsle(2, true, false),
+
+		/**
+		 * (bvsgt (_ BitVec m) (_ BitVec m) Bool).
+		 *
+		 * binary predicate for signed greater than
+		 */
+		bvsgt(2, true, false),
+
+		/**
+		 * (bvsge (_ BitVec m) (_ BitVec m) Bool).
+		 *
+		 * binary predicate for signed greater than or equal
+		 */
+		bvsge(2, true, false);
+
+		private final int mArity;
+		private final boolean mIsBoolean;
+		private final boolean mIsAssociative;
+
+		BvOp(final int arity, final boolean isBoolean, final boolean isAssoc) {
+			mArity = arity;
+			mIsBoolean = isBoolean;
+			mIsAssociative = isAssoc;
+		}
+
+		/**
+		 * Returns the arity of this operation.
+		 *
+		 * @return the arity of this operation
+		 */
+		public int getArity() {
+			return mArity;
+		}
+
+		/**
+		 * Returns true iff the result of this operation is of type boolean, false otherwise.
+		 *
+		 * @return true iff the result of this operation is of type boolean, false otherwise
+		 */
+		public boolean isBoolean() {
+			return mIsBoolean;
+		}
+
+		/**
+		 * Returns true iff the order of the operands does not matter.
+		 *
+		 * @return true iff the order of the operands does not matter.
+		 */
+		public boolean isCommutative() {
+			return mIsAssociative;
+		}
+
+	}
+
+	public enum ExtendOperation {
+		sign_extend(BvOp.sign_extend), zero_extend(BvOp.zero_extend),;
+
+		private final BvOp mBvOp;
+
+		ExtendOperation(final BvOp bvop) {
+			mBvOp = bvop;
+		}
+
+		public BvOp getBvOp() {
+			return mBvOp;
+		}
+
+	}
+
+	/**
+	 * The result of a bitvector operation.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 */
 	public static final class BitvectorConstantOperationResult {
 

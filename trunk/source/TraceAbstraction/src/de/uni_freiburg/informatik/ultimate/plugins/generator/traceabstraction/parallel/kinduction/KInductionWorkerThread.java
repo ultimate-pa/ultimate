@@ -44,68 +44,78 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInduction;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionCounterexampleException;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopResultBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop.AutomatonType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.ICegarNwaWorkerThread;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.ParallelNwaCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.ICegarNwaWorkerThread;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.ParallelNwaCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TransferBetweenMainAndWorker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TransferBetweenMainAndWorker.TransferMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadResult.WorkerType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadTask;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInduction;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionCounterexampleException;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
 
 /**
  * Worker thread running {@link KInduction} inside {@link ParallelNwaCegarLoop}'s thread pool. It runs once (see
  * {@link #run()}) on the whole program and reports a {@link WorkerThreadResult} sentinel when the program is safe.
  * <p>
- * When k-induction refutes the program, {@link KInduction} reconstructs a concrete run from the solver's model and
- * this class reports it the same way {@code CegarNwaWorkerThread} reports a feasible counterexample: it runs the
+ * When k-induction refutes the program, {@link KInduction} reconstructs a concrete run from the solver's model and this
+ * class reports it the same way {@code CegarNwaWorkerThread} reports a feasible counterexample: it runs the
  * counterexample through the refinement engine to obtain an {@code IcfgProgramExecution} with values, registers
  * {@code Result.UNSAFE} on the shared result builder, and hands the main thread a result marked
- * {@link AutomatonType#ERROR} so that it terminates instead of refining. It carries no error-automaton scaffolding:
- * the whole program is refuted at once, so there is nothing left to refine.
+ * {@link AutomatonType#ERROR} so that it terminates instead of refining. It carries no error-automaton scaffolding: the
+ * whole program is refuted at once, so there is nothing left to refine.
  *
  * @author Max Barth (max.barth@lmu.de)
+ * @param <L>
+ *            the type of the letters
+ * @param <A>
+ *            the type of the automata
  */
 public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		implements ICegarNwaWorkerThread<L, A> {
+	// How long computing them may delay the verdict. The TA worker and its solver keep running meanwhile: with 10 s,
+	// 723 of 6666 SAFE proofs of an SV-COMP run waited the full time and still got no invariants.
+	private static final long WITNESS_TIMEOUT_MILLIS = 1_500;
+	// How much longer the verdict waits for a computation that has not noticed its timer yet, 2 s in total
+	private static final long WITNESS_GRACE_MILLIS = 500;
+
 	private final ILogger mLogger;
 	private final TAPreferences mPref;
 	private final CegarLoopResultBuilder mResultBuilder;
@@ -115,7 +125,7 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	private int mIteration;
 	private final boolean mComputeHoareAnnotation;
 	private final TaCheckAndRefinementPreferences<L> mTaCheckAndRefinementPrefs;
-	public final ParallelNwaCegarLoop<L, A> mMainThread;
+	private final ParallelNwaCegarLoop<L, A> mMainThread;
 	private final INestedWordAutomaton<L, IPredicate> mAbstraction;
 	// communication with controller
 	private final BlockingQueue<WorkerThreadResult<L, A>> mBlockingQueueForResults;
@@ -128,14 +138,50 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	private final IUltimateServiceProvider mKInductionServices;
 	// The invariants of a proof for the main thread's correctness witness, see computeWitnessInvariants
 	private Map<IPredicate, Term> mWitnessInvariants;
-	// How long computing them may delay the verdict. The TA worker and its solver keep running meanwhile: with 10 s,
-	// 723 of 6666 SAFE proofs of an SV-COMP run waited the full time and still got no invariants.
-	private static final long WITNESS_TIMEOUT_MILLIS = 1_500;
-	// How much longer the verdict waits for a computation that has not noticed its timer yet, 2 s in total
-	private static final long WITNESS_GRACE_MILLIS = 500;
+
 	// Set when the verdict went without the computation, which may still be running
 	private volatile boolean mWitnessAbandoned;
 
+	/**
+	 * Creates the k-induction worker.
+	 *
+	 * @param logger
+	 *            the logger to write to
+	 * @param pref
+	 *            the preferences of trace abstraction
+	 * @param id
+	 *            the number of this worker, unique among the workers
+	 * @param resultBuilder
+	 *            collects the results of the CEGAR loop
+	 * @param services
+	 *            the service provider of this analysis
+	 * @param cfgSmtToolkit
+	 *            the toolkit of the program's CFG on the worker's script
+	 * @param predicateFactory
+	 *            the factory for the predicates of this analysis
+	 * @param taCheckAndRefinementPrefs
+	 *            the preferences of the trace check and the refinement
+	 * @param predicateFactoryInterpolantAutomata
+	 *            the factory for the states of interpolant automata
+	 * @param stateFactoryForRefinement
+	 *            the factory for the states of the refined abstraction
+	 * @param computeHoareAnnotation
+	 *            whether a Hoare annotation has to be computed
+	 * @param mainThread
+	 *            the CEGAR loop this worker belongs to
+	 * @param blockingQueueForResults
+	 *            where this worker puts its results
+	 * @param workerTaskQueue
+	 *            where the main thread puts the tasks of the workers
+	 * @param transferWorkerUtils
+	 *            transfers terms and automata between the main script and the worker's script
+	 * @param taskIdentifier
+	 *            the identifier of the task
+	 * @param invariantSupplier
+	 *            provides invariants that strengthen the queries
+	 * @throws InterruptedException
+	 *             if the thread is interrupted while waiting
+	 */
 	public KInductionWorkerThread(final ILogger logger, final TAPreferences pref, final int id,
 			final CegarLoopResultBuilder resultBuilder, final IUltimateServiceProvider services,
 			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory,
@@ -175,15 +221,15 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 			mIteration = 1;
 			switch (runKInduction()) {
 			case SAFE:
-				mBlockingQueueForResults.put(WorkerThreadResult.kInductionSafe(mWitnessInvariants,
-						mCfgSmtToolkit.getManagedScript()));
+				mBlockingQueueForResults
+						.put(WorkerThreadResult.kInductionSafe(mWitnessInvariants, mCfgSmtToolkit.getManagedScript()));
 				break;
 			case UNSAFE:
 				// The violation is already registered on the shared result builder. AutomatonType.ERROR is what
 				// tells the main thread that this is a refutation and not the "safe" sentinel, which carries a
 				// null automaton type; no subtrahend, because there is nothing left to refine.
-				mBlockingQueueForResults.put(new WorkerThreadResult<>(WorkerType.KINDUCTION, null,
-						AutomatonType.ERROR, null, null, null, false));
+				mBlockingQueueForResults.put(new WorkerThreadResult<>(WorkerType.KINDUCTION, null, AutomatonType.ERROR,
+						null, null, null, false));
 				break;
 			case NO_VERDICT:
 				mBlockingQueueForResults.put(WorkerThreadResult.noVerdict(WorkerType.KINDUCTION));
@@ -228,8 +274,12 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	}
 
 	/**
-	 * @return whether k-induction stopped at a limit rather than at a bug: its solver failed (out of memory,
-	 *         crashed, or rejected the query), it could not express a violation as a run, or the program uses something
+	 * Returns whether k-induction stopped at a limit rather than at a bug: its solver failed (out of memory, crashed,
+	 * or rejected the query), it could not express a violation as a run, or the program uses something k-induction does
+	 * not support. Such a stop retires the worker, whereas a crash ends the whole analysis.
+	 *
+	 * @return whether k-induction stopped at a limit rather than at a bug: its solver failed (out of memory, crashed,
+	 *         or rejected the query), it could not express a violation as a run, or the program uses something
 	 *         k-induction does not support. Such a stop retires the worker, whereas a crash ends the whole analysis.
 	 */
 	private static boolean isLimit(final Throwable t) {
@@ -242,10 +292,6 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 			}
 		}
 		return false;
-	}
-
-	private enum Verdict {
-		SAFE, UNSAFE, NO_VERDICT
 	}
 
 	private Verdict runKInduction() throws AutomataLibraryException, InterruptedException {
@@ -352,10 +398,15 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	}
 
 	/**
+	 * Returns a variable of {@code invariant} that is neither global nor a local of {@code procedure}, or null. The
+	 * transition system is flat, so the invariant of a loop head in a callee may speak about its callers. A variable
+	 * the symbol table does not know, such as the stack pointer of {@code CallStack}, does not exist in the program at
+	 * all, so it counts as out of scope too.
+	 *
 	 * @return a variable of {@code invariant} that is neither global nor a local of {@code procedure}, or null. The
 	 *         transition system is flat, so the invariant of a loop head in a callee may speak about its callers. A
-	 *         variable the symbol table does not know, such as the stack pointer of {@code CallStack}, does not exist in
-	 *         the program at all, so it counts as out of scope too.
+	 *         variable the symbol table does not know, such as the stack pointer of {@code CallStack}, does not exist
+	 *         in the program at all, so it counts as out of scope too.
 	 */
 	private TermVariable findOutOfScopeVariable(final Term invariant, final String procedure) {
 		for (final TermVariable tv : invariant.getFreeVars()) {
@@ -383,13 +434,12 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 		}
 		final Counterexample<L> cex = new Counterexample<>(counterexample.getWord(), locations);
 
-		final StrategyFactory<L> strategyFactory = new StrategyFactory<>(mLogger, mPref, mTaCheckAndRefinementPrefs,
-				mCfgSmtToolkit, mPredicateFactory, mPredicateFactoryInterpolantAutomata,
-				mMainThread.mTransitionClazz, mProgramCache);
+		final StrategyFactory<L> strategyFactory =
+				new StrategyFactory<>(mLogger, mPref, mTaCheckAndRefinementPrefs, mCfgSmtToolkit, mPredicateFactory,
+						mPredicateFactoryInterpolantAutomata, mMainThread.getTransitionClazz(), mProgramCache);
 		final ITARefinementStrategy<L> strategy = strategyFactory.constructStrategy(mKInductionServices, cex,
 				mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, mIteration),
-				mPredicateFactoryInterpolantAutomata,
-				IPreconditionProvider.constructDefaultPreconditionProvider(),
+				mPredicateFactoryInterpolantAutomata, IPreconditionProvider.constructDefaultPreconditionProvider(),
 				IPostconditionProvider.constructDefaultPostconditionProvider(), mPref.getRefinementStrategy());
 		final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinementResult =
 				new TraceAbstractionRefinementEngine<>(mKInductionServices, mLogger, strategy).getResult();
@@ -426,10 +476,16 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 
 	/**
 	 * Worker takes the current abstraction from the main thread (read only), then transfers it to the worker script.
+	 *
+	 * @return the abstraction of the main thread, transferred to the script of the worker
 	 */
 	public INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getAndTransferAbstraction() {
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mainAbstraction = mMainThread.getAbstraction();
 		return mNwaCexTransferrer.transferAutomaton(mainAbstraction, mPredicateFactoryInterpolantAutomata,
 				TransferMode.MAIN2WORKER);
+	}
+
+	private enum Verdict {
+		SAFE, UNSAFE, NO_VERDICT
 	}
 }

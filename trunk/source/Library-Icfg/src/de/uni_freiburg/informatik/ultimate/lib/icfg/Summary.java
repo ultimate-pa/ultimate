@@ -54,6 +54,22 @@ public class Summary extends CodeBlock implements IIcfgSummaryTransition<IcfgLoc
 	@Visualizable
 	private final boolean mCalledProcedureHasImplementation;
 
+	/**
+	 * Creates a summary edge for a call.
+	 *
+	 * @param serialNumber
+	 *            the serial number of this edge
+	 * @param source
+	 *            the location the edge starts in
+	 * @param target
+	 *            the location the edge ends in
+	 * @param st
+	 *            the call statement this edge summarizes
+	 * @param calledProcedureHasImplementation
+	 *            whether the called procedure has an implementation
+	 * @param logger
+	 *            the logger to write to
+	 */
 	public Summary(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final CallStatement st, final boolean calledProcedureHasImplementation, final ILogger logger) {
 		super(serialNumber, source, target, logger);

@@ -51,11 +51,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInduction;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -66,44 +69,45 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.ParallelNwaCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadResult.WorkerType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantMessage.InterpolantSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantMessage.TrustedInvariants;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.IInvariantMessage.InterpolantSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.IInvariantMessage.TrustedInvariants;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantSubscription.RunningQuery;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInduction;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 
 /**
  * Collects invariants for the workers of {@link ParallelNwaCegarLoop}, on a thread of its own.
  * <p>
  * <b>Incoming</b>: producers {@link IInvariantSink#submit} messages without waiting. {@link TrustedInvariants} (the
  * fixpoint of abstract interpretation) are taken as they are. An {@link InterpolantSequence} (the interpolants of an
- * infeasible trace) only yields candidates: every conjunct of an interpolant at a loop head or waypoint of the
- * program. {@link InductivenessChecker} keeps the ones that are inductive relative to everything known so far, on the
- * same {@link KInduction} transition system of the initial abstraction.
+ * infeasible trace) only yields candidates: every conjunct of an interpolant at a loop head or waypoint of the program.
+ * {@link InductivenessChecker} keeps the ones that are inductive relative to everything known so far, on the same
+ * {@link KInduction} transition system of the initial abstraction.
  * <p>
  * <b>Outgoing</b>: every {@link #subscribe subscriber} gets its own channel. Whenever the invariant of a location got
  * stronger, it receives the location's whole current invariant, the conjunction of all trusted and all proven
  * conjuncts. A candidate that was not inductive is kept (up to {@link #MAX_RETRY_POOL}) and tried again once more is
  * known, since a new invariant may be exactly what it was missing.
  * <p>
- * <b>Probation</b>: if enabled, the supplier watches the queries of k-induction through the subscriptions. When one runs
- * much longer than the query of its kind before, it asks the same query with the invariants of other versions: the
+ * <b>Probation</b>: if enabled, the supplier watches the queries of k-induction through the subscriptions. When one
+ * runs much longer than the query of its kind before, it asks the same query with the invariants of other versions: the
  * newest, if it arrived after the query started, then earlier ones (see {@link InvariantProbation}). If one answers
  * within the limit, the supplier interrupts k-induction, which takes the probe's answer (or asks again for a violation,
  * whose witness it needs from its own solver). When a version is on probation for the second time, the supplier also
  * rolls back to the earlier version that answered, and never publishes the conjuncts it dropped again.
  * <p>
- * <b>Nonlinear programs</b>: if a transition of the program has nonlinear arithmetic, only the conjuncts over a
- * single variable are published. On such programs bounds keep the queries of k-induction tractable, while a single
- * relation between two variables can make the solver hang, even one over variables that only occur linearly. The
- * supplier itself keeps every conjunct, so relations still help to prove candidates; each conjunct of an invariant is
- * an invariant, so any subset may be published.
+ * <b>Nonlinear programs</b>: if a transition of the program has nonlinear arithmetic, only the conjuncts over a single
+ * variable are published. On such programs bounds keep the queries of k-induction tractable, while a single relation
+ * between two variables can make the solver hang, even one over variables that only occur linearly. The supplier itself
+ * keeps every conjunct, so relations still help to prove candidates; each conjunct of an invariant is an invariant, so
+ * any subset may be published.
  * <p>
  * <b>Scripts</b>: the supplier owns its script and is the only one to build terms in it. It copies the producers' terms
  * into it on its own thread; subscribers copy from it on theirs.
  *
  * @author Max Barth (max.barth@lmu.de)
+ * @param <L>
+ *            the type of the letters
+ * @param <A>
+ *            the type of the automata
  */
 public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		implements Runnable {
@@ -115,28 +119,6 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 	/** How many earlier versions a probation tries, newest first. */
 	private static final int PROBED_VERSIONS = 3;
 
-	/**
-	 * The settings of the probation.
-	 *
-	 * @param factor
-	 *            a query is on probation once it runs this many times longer than the previous one of its kind
-	 * @param minimumMillis
-	 *            ... and at least this long
-	 * @param solverTimeoutMillis
-	 *            the per-query timeout of the supplier's solver, restored after a probe
-	 */
-	public record Probation(int factor, long minimumMillis, long solverTimeoutMillis) {
-	}
-
-	private record Candidate(IcfgLocation location, Term term) {
-	}
-
-	/**
-	 * The transition system k-induction built, with the script its formulas belong to.
-	 */
-	record BuiltSystem(PcTransitionSystem<CallNode<IPredicate>> system, ManagedScript script) {
-	}
-
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mScript;
@@ -146,7 +128,7 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 	private boolean mNonlinear;
 	private final BlockingQueue<WorkerThreadResult<L, A>> mResultQueue;
 
-	private final BlockingQueue<InvariantMessage> mInbox = new LinkedBlockingQueue<>();
+	private final BlockingQueue<IInvariantMessage> mInbox = new LinkedBlockingQueue<>();
 	// Completed by k-induction through a subscription, see getChecker.
 	private final CompletableFuture<BuiltSystem> mBuiltSystem = new CompletableFuture<>();
 	private volatile boolean mStopped;
@@ -178,6 +160,10 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 	 * Must be called on the main thread. The channels exist from here on, the abstraction follows with
 	 * {@link #setAbstraction}: transferring it adds edges to the ICFG, which other workers must have read before.
 	 *
+	 * @param logger
+	 *            the logger to write to
+	 * @param services
+	 *            the service provider of this analysis
 	 * @param csToolkit
 	 *            the supplier's own toolkit, whose script nobody else builds terms in
 	 * @param resultQueue
@@ -205,6 +191,8 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 	 *
 	 * @param abstraction
 	 *            the initial abstraction, transferred to the supplier's script
+	 * @throws IllegalStateException
+	 *             if this object is used in a state the operation does not allow
 	 */
 	public void setAbstraction(final INestedWordAutomaton<L, IPredicate> abstraction) {
 		if (mAbstraction != null) {
@@ -227,7 +215,13 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 	}
 
 	/**
+	 * Returns the program location of an abstraction state.
+	 *
+	 * @param state
+	 *            the abstraction state
 	 * @return the program location of an abstraction state
+	 * @throws UnsupportedOperationException
+	 *             if the program or the solver is outside what this class supports
 	 */
 	public static IcfgLocation locationOf(final IPredicate state) {
 		if (!(state instanceof ISLPredicate)) {
@@ -238,6 +232,8 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 	}
 
 	/**
+	 * Returns the incoming channel, for producers.
+	 *
 	 * @return the incoming channel, for producers
 	 */
 	public IInvariantSink sink() {
@@ -249,6 +245,8 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 	}
 
 	/**
+	 * Opens a new outgoing channel.
+	 *
 	 * @param target
 	 *            the consumer's script
 	 * @return a new outgoing channel, which starts with everything published so far
@@ -273,12 +271,12 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 				throw new IllegalStateException("the invariant supplier was started without an abstraction");
 			}
 			while (true) {
-				final List<InvariantMessage> batch = new ArrayList<>();
+				final List<IInvariantMessage> batch = new ArrayList<>();
 				if (mProbation == null) {
 					batch.add(mInbox.take());
 				} else {
 					// Wakes up now and then without a message, to watch the queries of k-induction.
-					final InvariantMessage first = mInbox.poll(WATCH_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
+					final IInvariantMessage first = mInbox.poll(WATCH_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
 					if (first != null) {
 						batch.add(first);
 					}
@@ -321,11 +319,11 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 		}
 	}
 
-	private void process(final List<InvariantMessage> batch) {
+	private void process(final List<IInvariantMessage> batch) {
 		// Trusted invariants first and published at once: they need no transition system, which may take long to
 		// build the first time an interpolant arrives.
 		final Set<IcfgLocation> changed = new LinkedHashSet<>();
-		for (final InvariantMessage message : batch) {
+		for (final IInvariantMessage message : batch) {
 			if (message instanceof final TrustedInvariants trusted) {
 				takeTrusted(trusted, changed);
 			}
@@ -335,7 +333,7 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 
 		final Map<IcfgLocation, Set<Term>> candidates = new LinkedHashMap<>();
 		int sequences = 0;
-		for (final InvariantMessage message : batch) {
+		for (final IInvariantMessage message : batch) {
 			if (message instanceof final InterpolantSequence sequence) {
 				takeCandidates(sequence, candidates);
 				sequences++;
@@ -389,8 +387,7 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 				message.origin());
 	}
 
-	private void takeCandidates(final InterpolantSequence message,
-			final Map<IcfgLocation, Set<Term>> candidates) {
+	private void takeCandidates(final InterpolantSequence message, final Map<IcfgLocation, Set<Term>> candidates) {
 		final InductivenessChecker checker = getChecker();
 		for (int i = 0; i < message.locations().size(); i++) {
 			final IcfgLocation location = message.locations().get(i);
@@ -398,7 +395,8 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 				continue;
 			}
 			final Set<Term> tried = mTried.computeIfAbsent(location, x -> new LinkedHashSet<>());
-			for (final Term conjunct : SmtUtils.getConjuncts(transfer(message.source(), message.interpolants().get(i)))) {
+			for (final Term conjunct : SmtUtils
+					.getConjuncts(transfer(message.source(), message.interpolants().get(i)))) {
 				if (SmtUtils.isTrueLiteral(conjunct) || isKnown(location, conjunct) || !tried.add(conjunct)) {
 					continue;
 				}
@@ -523,11 +521,11 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 	}
 
 	/**
-	 * Asks the slow query with other invariants: first the newest version, if the query runs with an older one (e.g. new
-	 * interpolants arrived meanwhile), then earlier versions, newest first. The first one that answers within the limit
-	 * gives k-induction its answer, and k-induction is interrupted. The published invariants are rolled back only if
-	 * the version of the query was already on probation before, and never to an empty version: a single fast probe says
-	 * little about the next queries.
+	 * Asks the slow query with other invariants: first the newest version, if the query runs with an older one (e.g.
+	 * new interpolants arrived meanwhile), then earlier versions, newest first. The first one that answers within the
+	 * limit gives k-induction its answer, and k-induction is interrupted. The published invariants are rolled back only
+	 * if the version of the query was already on probation before, and never to an empty version: a single fast probe
+	 * says little about the next queries.
 	 */
 	private void probe(final InvariantSubscription subscription, final RunningQuery query) {
 		final long limit = mProbation.limitMillis(subscription, query.kind());
@@ -549,8 +547,7 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 				continue;
 			}
 			final long start = System.nanoTime();
-			final LBool answer =
-					mProbation.ask(getChecker(), query.kind(), query.k(), candidate, limit);
+			final LBool answer = mProbation.ask(getChecker(), query.kind(), query.k(), candidate, limit);
 			mLogger.info("InvariantSupplier: probation, version %d answers %s in %d ms", version, answer,
 					(System.nanoTime() - start) / 1_000_000);
 			if (answer == LBool.UNKNOWN) {
@@ -570,8 +567,7 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 			}
 			return;
 		}
-		mLogger.info("InvariantSupplier: probation, no other version answers within %d ms, k-induction goes on",
-				limit);
+		mLogger.info("InvariantSupplier: probation, no other version answers within %d ms, k-induction goes on", limit);
 	}
 
 	private boolean containsRolledBack(final Map<IcfgLocation, Set<Term>> version) {
@@ -598,8 +594,8 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 			dropped += beyond.size();
 			mRolledBack.computeIfAbsent(entry.getKey(), x -> new LinkedHashSet<>()).addAll(beyond);
 		}
-		mLogger.warn("InvariantSupplier: probation, rolling back to version %d, dropping %d conjunct(s)",
-				targetVersion, dropped);
+		mLogger.warn("InvariantSupplier: probation, rolling back to version %d, dropping %d conjunct(s)", targetVersion,
+				dropped);
 		publish(changed);
 	}
 
@@ -617,14 +613,18 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 			final PcTransitionSystem<CallNode<IPredicate>> system = built.system().transfer(
 					transferrer::transferTransFormula, built.system().getCounterSort().in(mScript.getScript()));
 			mChecker = new InductivenessChecker(mLogger, mScript, system);
-			mLogger.info("InvariantSupplier: transition system of k-induction with %d pc value(s), %d loop head(s), "
-					+ "%d waypoint(s)", system.getNumNodes(), system.getHeadNodes().size(),
-					system.getWaypointNodes().size());
+			mLogger.info(
+					"InvariantSupplier: transition system of k-induction with %d pc value(s), %d loop head(s), "
+							+ "%d waypoint(s)",
+					system.getNumNodes(), system.getHeadNodes().size(), system.getWaypointNodes().size());
 		}
 		return mChecker;
 	}
 
 	/**
+	 * Returns the transition system once k-induction has built it; throws what building it threw, or a
+	 * {@link ToolchainCanceledException} if the supplier is stopped first.
+	 *
 	 * @return the transition system once k-induction has built it; throws what building it threw, or a
 	 *         {@link ToolchainCanceledException} if the supplier is stopped first
 	 */
@@ -688,5 +688,32 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 
 	private static int count(final Map<IcfgLocation, Set<Term>> candidates) {
 		return candidates.values().stream().mapToInt(Set::size).sum();
+	}
+
+	/**
+	 * The settings of the probation.
+	 *
+	 * @param factor
+	 *            a query is on probation once it runs this many times longer than the previous one of its kind
+	 * @param minimumMillis
+	 *            ... and at least this long
+	 * @param solverTimeoutMillis
+	 *            the per-query timeout of the supplier's solver, restored after a probe
+	 */
+	public record Probation(int factor, long minimumMillis, long solverTimeoutMillis) {
+	}
+
+	private record Candidate(IcfgLocation location, Term term) {
+	}
+
+	/**
+	 * The transition system k-induction built, with the script its formulas belong to.
+	 *
+	 * @param system
+	 *            the transition system
+	 * @param script
+	 *            the script all terms belong to
+	 */
+	record BuiltSystem(PcTransitionSystem<CallNode<IPredicate>> system, ManagedScript script) {
 	}
 }

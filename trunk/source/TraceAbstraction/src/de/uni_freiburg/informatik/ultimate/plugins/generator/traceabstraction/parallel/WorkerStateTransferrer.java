@@ -64,6 +64,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * Not thread-safe: the main thread is the only one that may use it, since it creates terms of the main script.
  *
  * @author Max Barth (max.barth@lmu.de)
+ * @param <L>
+ *            the type of the letters
  */
 public class WorkerStateTransferrer<L> {
 
@@ -73,6 +75,16 @@ public class WorkerStateTransferrer<L> {
 	// One per worker script; their caches stay valid for the whole run, since terms are immutable.
 	private final Map<ManagedScript, TermTransferrer> mTransferrers = new HashMap<>();
 
+	/**
+	 * Creates a transferrer into the main script.
+	 *
+	 * @param services
+	 *            the service provider of this analysis
+	 * @param mainScript
+	 *            the main script
+	 * @param mainPredicateFactory
+	 *            the factory for the predicates of the main script
+	 */
 	public WorkerStateTransferrer(final AutomataLibraryServices services, final ManagedScript mainScript,
 			final PredicateFactory mainPredicateFactory) {
 		mServices = services;
@@ -81,6 +93,8 @@ public class WorkerStateTransferrer<L> {
 	}
 
 	/**
+	 * Rebuilds an automaton with states of the main script.
+	 *
 	 * @param automaton
 	 *            an automaton whose letters are already the main thread's, as {@link TransferBetweenMainAndWorker}
 	 *            returns it for {@link TransferBetweenMainAndWorker.TransferMode#WORKER2MAIN}
@@ -90,6 +104,8 @@ public class WorkerStateTransferrer<L> {
 	 *            provides the empty stack state of the main thread
 	 * @return a copy of {@code automaton} with the same letters and transitions whose states are predicates of the main
 	 *         script
+	 * @throws UnsupportedOperationException
+	 *             if the program or the solver is outside what this class supports
 	 */
 	public NestedWordAutomaton<L, IPredicate> transferStates(
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> automaton, final ManagedScript workerScript,
@@ -148,6 +164,12 @@ public class WorkerStateTransferrer<L> {
 	}
 
 	/**
+	 * Returns {@code term}, a term of {@code workerScript} over the program variables, as a term of the main script.
+	 *
+	 * @param term
+	 *            the term
+	 * @param workerScript
+	 *            the script of {@code term}
 	 * @return {@code term}, a term of {@code workerScript} over the program variables, as a term of the main script
 	 */
 	public Term transferTerm(final Term term, final ManagedScript workerScript) {

@@ -35,31 +35,44 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * What a producer hands to the {@link InvariantSupplier}. The terms belong to the producer's own script {@link #source()};
- * the supplier copies them into its script on its own thread, so the producer never builds a term in a script it does
- * not own. The producer may keep using its script afterwards: terms are immutable, it only must not submit terms that
- * mention a function symbol it declared itself (program variables and constants are declared in every script).
+ * What a producer hands to the {@link InvariantSupplier}. The terms belong to the producer's own script
+ * {@link #source()}; the supplier copies them into its script on its own thread, so the producer never builds a term in
+ * a script it does not own. The producer may keep using its script afterwards: terms are immutable, it only must not
+ * submit terms that mention a function symbol it declared itself (program variables and constants are declared in every
+ * script).
  *
  * @author Max Barth (max.barth@lmu.de)
  */
-public sealed interface InvariantMessage {
+public sealed interface IInvariantMessage {
 
-	/** The script the terms of this message belong to. */
+	/**
+	 * The script the terms of this message belong to.
+	 *
+	 * @return the script the terms of this message belong to
+	 */
 	ManagedScript source();
 
-	/** Who produced the message, for the log. */
+	/**
+	 * Who produced the message, for the log.
+	 *
+	 * @return who produced the message, for the log
+	 */
 	String origin();
 
 	/**
 	 * Invariants that are sound by construction, e.g. the fixpoint of an abstract interpretation of the program. They
 	 * are taken without a check.
 	 *
+	 * @param source
+	 *            the location the edge starts in
 	 * @param invariants
 	 *            for a program location, a state predicate over the term variables of the program variables that holds
 	 *            whenever control is at that location
+	 * @param origin
+	 *            who produced the message, for the log
 	 */
 	record TrustedInvariants(ManagedScript source, Map<IcfgLocation, Term> invariants, String origin)
-			implements InvariantMessage {
+			implements IInvariantMessage {
 		public TrustedInvariants {
 			invariants = Map.copyOf(invariants);
 		}
@@ -69,9 +82,32 @@ public sealed interface InvariantMessage {
 	 * The interpolants of an infeasible trace. {@code interpolants.get(i)} holds at {@code locations.get(i)} on this
 	 * trace, which does not make it an invariant of that location: the supplier only publishes what it proves to be
 	 * inductive.
+	 *
+	 * @param source
+	 *            the location the edge starts in
+	 * @param locations
+	 *            the location of each interpolant
+	 * @param interpolants
+	 *            the interpolants
+	 * @param origin
+	 *            who produced the message, for the log
 	 */
 	record InterpolantSequence(ManagedScript source, List<IcfgLocation> locations, List<Term> interpolants,
-			String origin) implements InvariantMessage {
+			String origin) implements IInvariantMessage {
+		/**
+		 * Creates a sequence of interpolants from its source and its origin.
+		 *
+		 * @param interpolants
+		 *            the interpolants
+		 * @param locations
+		 *            the location of each interpolant
+		 * @param origin
+		 *            who produced the message, for the log
+		 * @param source
+		 *            the script the terms of this message belong to
+		 * @throws IllegalArgumentException
+		 *             if an argument is not one this operation accepts
+		 */
 		public InterpolantSequence {
 			if (locations.size() != interpolants.size()) {
 				throw new IllegalArgumentException("an interpolant sequence of " + origin + " has "

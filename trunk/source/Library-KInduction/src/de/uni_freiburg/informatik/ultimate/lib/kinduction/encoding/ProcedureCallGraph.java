@@ -55,12 +55,12 @@ import de.uni_freiburg.informatik.ultimate.util.scc.DefaultSccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
- * Builds the procedure call graph of a nested word automaton (nodes = procedure names, edges = "caller calls
- * callee", derived from the automaton's call transitions) and answers the two questions its interprocedural
- * consumers ask of it: in which order to process the procedures, and which of them lie on a call cycle.
+ * Builds the procedure call graph of a nested word automaton (nodes = procedure names, edges = "caller calls callee",
+ * derived from the automaton's call transitions) and answers the two questions its interprocedural consumers ask of it:
+ * in which order to process the procedures, and which of them lie on a call cycle.
  * <p>
- * A call cycle matters because the edge of a summarized call (see {@link ProcedureSummaries}) needs
- * its callee's summary to already exist as a finished formula, which is undefined for a cycle.
+ * A call cycle matters because the edge of a summarized call (see {@link ProcedureSummaries}) needs its callee's
+ * summary to already exist as a finished formula, which is undefined for a cycle.
  * {@link #getSccsCalleeFirst(java.util.Collection)} keeps the procedures of a cycle together in one component, and
  * {@link #getRecursiveSccs(java.util.Collection)} names them - {@link ProcedureSummaries} gives those an activation
  * record instead of a summary, see {@link CallStack}.
@@ -68,6 +68,8 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * The order is the one every interprocedural consumer needs: every callee fully processed (and thus already holding a
  * summary, if it needs one) before any of its callers. {@link ProcedureSummaries} uses it that way; the small
  * per-procedure helpers (state grouping, exit states, the call/summary/return composition) live here.
+ *
+ * @author Max Barth (Max.Barth@lmu.de)
  */
 public final class ProcedureCallGraph {
 
@@ -76,8 +78,19 @@ public final class ProcedureCallGraph {
 	private final HashRelation<String, String> mCalls = new HashRelation<>();
 
 	/**
-	 * The call graph of the part of {@code abstraction} made of {@code states}: their procedures, and the calls
-	 * from one of them into another. A procedure with no state there is not in it, and neither is a call into one.
+	 * The call graph of the part of {@code abstraction} made of {@code states}: their procedures, and the calls from
+	 * one of them into another. A procedure with no state there is not in it, and neither is a call into one.
+	 *
+	 * @param <LETTER>
+	 *            the type of the automaton's letters
+	 * @param <STATE>
+	 *            the type of the automaton's states
+	 * @param logger
+	 *            the logger to write to
+	 * @param abstraction
+	 *            the automaton that represents the program
+	 * @param states
+	 *            the states the graph is made of
 	 */
 	public <LETTER extends IAction, STATE> ProcedureCallGraph(final ILogger logger,
 			final INestedWordAutomaton<LETTER, STATE> abstraction, final Set<STATE> states) {
@@ -97,8 +110,16 @@ public final class ProcedureCallGraph {
 	}
 
 	/**
-	 * The procedure a state belongs to. Only an {@link ISLPredicate} names a program point and therefore a
-	 * procedure; anything else is refused here rather than further down as a {@link ClassCastException}.
+	 * The procedure a state belongs to. Only an {@link ISLPredicate} names a program point and therefore a procedure;
+	 * anything else is refused here rather than further down as a {@link ClassCastException}.
+	 *
+	 * @param <STATE>
+	 *            the type of the automaton's states
+	 * @param state
+	 *            the state
+	 * @return the procedure a state belongs to
+	 * @throws UnsupportedOperationException
+	 *             if the program or the solver is outside what this class supports
 	 */
 	public static <STATE> String procedureOf(final STATE state) {
 		if (!(state instanceof ISLPredicate)) {
@@ -113,7 +134,13 @@ public final class ProcedureCallGraph {
 		return mEntryProcedures;
 	}
 
-	/** Every procedure that {@code caller} calls directly. */
+	/**
+	 * Every procedure that {@code caller} calls directly.
+	 *
+	 * @param caller
+	 *            the calling procedure
+	 * @return every procedure that {@code caller} calls directly
+	 */
 	public Set<String> getCallees(final String caller) {
 		return mCalls.getImage(caller);
 	}
@@ -123,16 +150,20 @@ public final class ProcedureCallGraph {
 	 * component occurs before every component that calls into it.
 	 * <p>
 	 * A component with more than one procedure, or a single procedure that calls itself, is a call cycle: its
-	 * procedures have no summary, because a summary of one of them would need the summaries of all of them. Every
-	 * other component is a single procedure and the order is the plain callee-first order. Restricting to
-	 * {@code scope} matters: a call cycle among procedures that no entry procedure can reach says nothing about the
-	 * program being analysed, and grouping it in anyway would encode procedures that are never executed.
+	 * procedures have no summary, because a summary of one of them would need the summaries of all of them. Every other
+	 * component is a single procedure and the order is the plain callee-first order. Restricting to {@code scope}
+	 * matters: a call cycle among procedures that no entry procedure can reach says nothing about the program being
+	 * analysed, and grouping it in anyway would encode procedures that are never executed.
+	 *
+	 * @param scope
+	 *            the procedures to look at
+	 * @return the strongly connected components of the call graph restricted to {@code scope}, in an order where every
+	 *         component occurs before every component that calls into it
 	 */
 	public List<Set<String>> getSccsCalleeFirst(final Collection<String> scope) {
 		final Set<String> inScope = new LinkedHashSet<>(scope);
-		final DefaultSccComputation<String> sccComputation =
-				new DefaultSccComputation<>(mLogger, node -> calleesInside(node, inScope).iterator(), inScope.size(),
-						inScope);
+		final DefaultSccComputation<String> sccComputation = new DefaultSccComputation<>(mLogger,
+				node -> calleesInside(node, inScope).iterator(), inScope.size(), inScope);
 		final List<Set<String>> result = new ArrayList<>();
 		for (final StronglyConnectedComponent<String> comp : sccComputation.getSCCs()) {
 			result.add(comp.getNodes());
@@ -143,12 +174,15 @@ public final class ProcedureCallGraph {
 	/**
 	 * The components of {@link #getSccsCalleeFirst(Collection)} that are call cycles, i.e. the procedures that cannot
 	 * be summarized because they are (mutually) recursive.
+	 *
+	 * @param scope
+	 *            the procedures to look at
+	 * @return the components of {@link #getSccsCalleeFirst(Collection)} that are call cycles
 	 */
 	public List<Set<String>> getRecursiveSccs(final Collection<String> scope) {
 		final Set<String> inScope = new LinkedHashSet<>(scope);
-		final DefaultSccComputation<String> sccComputation =
-				new DefaultSccComputation<>(mLogger, node -> calleesInside(node, inScope).iterator(), inScope.size(),
-						inScope);
+		final DefaultSccComputation<String> sccComputation = new DefaultSccComputation<>(mLogger,
+				node -> calleesInside(node, inScope).iterator(), inScope.size(), inScope);
 		final List<Set<String>> result = new ArrayList<>();
 		for (final StronglyConnectedComponent<String> ball : sccComputation.getBalls()) {
 			result.add(ball.getNodes());
@@ -156,7 +190,11 @@ public final class ProcedureCallGraph {
 		return result;
 	}
 
-	/** Every procedure that a chain of calls can reach from an entry procedure. */
+	/**
+	 * Every procedure that a chain of calls can reach from an entry procedure.
+	 *
+	 * @return every procedure that a chain of calls can reach from an entry procedure
+	 */
 	public Set<String> getReachableProcedures() {
 		final Set<String> visited = new LinkedHashSet<>(mEntryProcedures);
 		final Deque<String> worklist = new ArrayDeque<>(mEntryProcedures);
@@ -184,7 +222,15 @@ public final class ProcedureCallGraph {
 	// Helpers shared by the interprocedural consumers
 	// ----------------------------------------------------------------------------------------------------------
 
-	/** The states of the abstraction, grouped by the procedure they belong to. */
+	/**
+	 * The states of the abstraction, grouped by the procedure they belong to.
+	 *
+	 * @param <STATE>
+	 *            the type of the automaton's states
+	 * @param states
+	 *            the states to group
+	 * @return the states of the abstraction, grouped by the procedure they belong to
+	 */
 	public static <STATE> Map<String, Set<STATE>> groupStatesByProcedure(final Iterable<STATE> states) {
 		final Map<String, Set<STATE>> result = new LinkedHashMap<>();
 		for (final STATE state : states) {
@@ -195,10 +241,24 @@ public final class ProcedureCallGraph {
 
 	/**
 	 * States in {@code scopeStates} with an outgoing return transition to at least one of {@code callSites} - a
-	 * procedure's own normal-return points, call-site-agnostic (reused as the FINAL set for every caller's virtual
-	 * edge into this procedure). {@code callSites} is every call site anywhere in the automaton that is known to
-	 * call this procedure, so this is sound and complete without needing to query the automaton for "any return
-	 * transition regardless of hier", which its API does not expose directly.
+	 * procedure's own normal-return points, call-site-agnostic (reused as the FINAL set for every caller's virtual edge
+	 * into this procedure). {@code callSites} is every call site anywhere in the automaton that is known to call this
+	 * procedure, so this is sound and complete without needing to query the automaton for "any return transition
+	 * regardless of hier", which its API does not expose directly.
+	 *
+	 * @param <LETTER>
+	 *            the type of the automaton's letters
+	 * @param <STATE>
+	 *            the type of the automaton's states
+	 * @param abstraction
+	 *            the automaton that represents the program
+	 * @param scopeStates
+	 *            the states to look at
+	 * @param callSites
+	 *            the call sites within the scope
+	 * @return the states in {@code scopeStates} with an outgoing return transition to at least one of {@code callSites}
+	 *         - a procedure's own normal-return points, call-site-agnostic (reused as the FINAL set for every caller's
+	 *         virtual edge into this procedure)
 	 */
 	public static <LETTER extends IAction, STATE> Set<STATE> computeExitStates(
 			final INestedWordAutomaton<LETTER, STATE> abstraction, final Set<STATE> scopeStates,
@@ -215,7 +275,17 @@ public final class ProcedureCallGraph {
 		return result;
 	}
 
-	/** The elements of {@code a} that are also in {@code b}. */
+	/**
+	 * The elements of {@code a} that are also in {@code b}.
+	 *
+	 * @param <STATE>
+	 *            the type of the automaton's states
+	 * @param a
+	 *            the elements to filter
+	 * @param b
+	 *            the elements to keep
+	 * @return the elements of {@code a} that are also in {@code b}
+	 */
 	public static <STATE> Set<STATE> intersect(final Iterable<STATE> a, final Set<STATE> b) {
 		final Set<STATE> result = new LinkedHashSet<>();
 		for (final STATE s : a) {
@@ -227,11 +297,29 @@ public final class ProcedureCallGraph {
 	}
 
 	/**
-	 * The formula of a virtual call edge: the whole call-to-return span of one call site, i.e. the parameter
-	 * assignment of the call, the callee's summary and the assignment of the return, composed by
+	 * The formula of a virtual call edge: the whole call-to-return span of one call site, i.e. the parameter assignment
+	 * of the call, the callee's summary and the assignment of the return, composed by
 	 * {@link TransFormulaUtils#sequentialCompositionWithCallAndReturn} - the primitive that gets the scoping of
 	 * oldvars, modifiable globals and the callee's locals right, and the same one the rest of this codebase (e.g.
 	 * {@code IcfgEdgeBuilder}) uses for this composition.
+	 *
+	 * @param services
+	 *            the service provider of this analysis
+	 * @param logger
+	 *            the logger to write to
+	 * @param csToolkit
+	 *            the toolkit of the program's CFG
+	 * @param mgdScript
+	 *            the script all terms belong to
+	 * @param callAction
+	 *            the call
+	 * @param callee
+	 *            the procedure called
+	 * @param calleeSummary
+	 *            the summary of the callee
+	 * @param returnTf
+	 *            the transition formula of the return
+	 * @return the formula of a virtual call edge: the whole call-to-return span of one call site
 	 */
 	public static UnmodifiableTransFormula computeVirtualEdge(final IUltimateServiceProvider services,
 			final ILogger logger, final CfgSmtToolkit csToolkit, final ManagedScript mgdScript,

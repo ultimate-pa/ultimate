@@ -61,6 +61,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
 
+/**
+ * The preferences of trace abstraction.
+ *
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ */
 public final class TAPreferences {
 	private static final boolean SEPARATE_VIOLATION_CHECK = true;
 	private final boolean mInterprocedural;
@@ -94,8 +100,8 @@ public final class TAPreferences {
 	private final AStarHeuristic mHeuristicEmptinessCheckAStarHeuristic;
 	private final Integer mHeuristicEmptinessCheckAStarHeuristicRandomSeed;
 	private final ScoringMethod mHeuristicEmptinessCheckSmtFeatureScoringMethod;
-	private final boolean mSMTFeatureExtraction;
-	private final String mSMTFeatureExtractionDumpPath;
+	private final boolean mSmtFeatureExtraction;
+	private final String mSmtFeatureExtractionDumpPath;
 	private final boolean mOverrideInterpolantAutomaton;
 	private final McrInterpolantMethod mMcrInterpolantMethod;
 
@@ -116,23 +122,14 @@ public final class TAPreferences {
 	private final boolean mMinimizeAbstractionPerWorker;
 	private final int mSearchLoopBound;
 
-	public enum Artifact {
-		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
-	}
-
-	public enum InterpolantAutomatonEnhancement {
-		NONE, EAGER, EAGER_CONSERVATIVE, NO_SECOND_CHANCE, PREDICATE_ABSTRACTION, PREDICATE_ABSTRACTION_CONSERVATIVE,
-		PREDICATE_ABSTRACTION_CANNIBALIZE,
-	}
-
-	public enum Concurrency {
-		FINITE_AUTOMATA, PETRI_NET, PARTIAL_ORDER_FA
-	}
-
-	public enum LooperCheck {
-		SYNTACTIC, SEMANTIC
-	}
-
+	/**
+	 * Reads the preferences of trace abstraction.
+	 *
+	 * @param services
+	 *            the service provider of this analysis
+	 * @throws IllegalArgumentException
+	 *             if an argument is not one this operation accepts
+	 */
 	public TAPreferences(final IUltimateServiceProvider services) {
 
 		mPrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
@@ -212,8 +209,8 @@ public final class TAPreferences {
 		mHeuristicEmptinessCheckAStarHeuristicRandomSeed = mPrefs.getInt(
 				TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK_ASTAR_RANDOM_HEURISTIC_SEED);
 
-		mSMTFeatureExtraction = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION);
-		mSMTFeatureExtractionDumpPath =
+		mSmtFeatureExtraction = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION);
+		mSmtFeatureExtractionDumpPath =
 				mPrefs.getString(TraceAbstractionPreferenceInitializer.LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH);
 		mOverrideInterpolantAutomaton =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_OVERRIDE_INTERPOLANT_AUTOMATON);
@@ -232,15 +229,13 @@ public final class TAPreferences {
 		mParallelCegarLoop = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLEL_CEGAR_LOOP);
 		mThreadLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_THREADLIMIT);
 		mNumKInductionWorkers = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_NUM_KINDUCTION_WORKERS);
-		mKInductionSolverTimeout =
-				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_SOLVER_TIMEOUT);
+		mKInductionSolverTimeout = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_SOLVER_TIMEOUT);
 		mInvariantProbation = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INVARIANT_PROBATION);
 		mProbationFactor = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_PROBATION_FACTOR);
 		mProbationMinimum = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_PROBATION_MINIMUM);
 		mKInductionSolverRestart =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_SOLVER_RESTART);
-		mInterpolantInvariants =
-				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_INVARIANTS);
+		mInterpolantInvariants = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_INVARIANTS);
 		mConsiderOnlyActiveCounterexamplesInIsEmptyParallel =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY);
 		mMinimizeAbstractionPerWorker =
@@ -249,6 +244,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the interprocedural.
+	 *
 	 * @return The interprocedural.
 	 */
 	public boolean interprocedural() {
@@ -303,6 +300,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the maxIterations.
+	 *
 	 * @return The maxIterations.
 	 */
 	public int maxIterations() {
@@ -310,6 +309,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the prefObservedIteration.
+	 *
 	 * @return The prefObservedIteration.
 	 */
 	public int watchIteration() {
@@ -317,6 +318,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the artifact.
+	 *
 	 * @return The artifact.
 	 */
 	public Artifact artifact() {
@@ -328,6 +331,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the interpolation technique.
+	 *
 	 * @return The interpolation technique.
 	 */
 	public InterpolationTechnique interpolation() {
@@ -335,6 +340,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the interpolant automaton.
+	 *
 	 * @return The interpolant automaton.
 	 */
 	public InterpolantAutomaton interpolantAutomaton() {
@@ -342,6 +349,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the dump automata flag.
+	 *
 	 * @return The dump automata flag.
 	 */
 	public boolean dumpAutomata() {
@@ -349,6 +358,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the automata dump format.
+	 *
 	 * @return The automata dump format.
 	 */
 	public Format dumpAutomataFormat() {
@@ -356,6 +367,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the automata dump directory.
+	 *
 	 * @return The automata dump directory.
 	 */
 	public String dumpAutomataDirectory() {
@@ -363,6 +376,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the automata dump filename.
+	 *
 	 * @return The automata dump filename.
 	 */
 	public String dumpAutomataFilename() {
@@ -370,6 +385,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the automata dump besides input file flag.
+	 *
 	 * @return The automata dump besides input file flag.
 	 */
 	public boolean dumpAutomataBesideFile() {
@@ -377,6 +394,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the only-resue automata dump flag.
+	 *
 	 * @return The only-resue automata dump flag.
 	 */
 	public boolean dumpOnlyReuseAutomata() {
@@ -384,6 +403,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the debug information dump flag.
+	 *
 	 * @return The debug information dump flag.
 	 */
 	public boolean dumpDebugInfo() {
@@ -391,6 +412,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the debug information dump directory.
+	 *
 	 * @return The debug information dump directory.
 	 */
 	public String dumpDebugInfoDirectory() {
@@ -398,6 +421,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the debug information dump filename.
+	 *
 	 * @return The debug information dump filename.
 	 */
 	public String dumpDebugInfoFilename() {
@@ -405,6 +430,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the debug information dump besides input file flag.
+	 *
 	 * @return The debug information dump besides input file flag.
 	 */
 	public boolean dumpDebugInfoBesideFile() {
@@ -412,6 +439,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the determinization.
+	 *
 	 * @return The determinization.
 	 */
 	public InterpolantAutomatonEnhancement interpolantAutomatonEnhancement() {
@@ -423,6 +452,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the difference.
+	 *
 	 * @return The difference.
 	 */
 	public boolean differenceSenwa() {
@@ -430,6 +461,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the minimization.
+	 *
 	 * @return The minimization.
 	 */
 	public Minimization getMinimization() {
@@ -500,6 +533,13 @@ public final class TAPreferences {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_MODE, CoinflipMode.class);
 	}
 
+	/**
+	 * Returns the probability of the coin flip in the concurrency analysis.
+	 *
+	 * @param iteration
+	 *            the iteration of the CEGAR loop
+	 * @return the probability in that iteration
+	 */
 	public double getCoinflipProbability(final int iteration) {
 		final int basicProbability = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_COINFLIP_PROB);
 		final int probabilityIncrement =
@@ -516,6 +556,15 @@ public final class TAPreferences {
 		return mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_POR_NUM_INDEPENDENCE);
 	}
 
+	/**
+	 * Returns the independence settings for partial order reduction.
+	 *
+	 * @param index
+	 *            the index of the independence relation
+	 * @return the settings of that relation
+	 * @throws IllegalArgumentException
+	 *             if an argument is not one this operation accepts
+	 */
 	public IndependenceSettings porIndependenceSettings(final int index) {
 		if (index < 0 || index >= getNumberOfIndependenceRelations()) {
 			throw new IllegalArgumentException(
@@ -594,6 +643,9 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns a positive integer that specifies a time limit in seconds for the analysis of an error location or zero
+	 * if no limit is set.
+	 *
 	 * @return A positive integer that specifies a time limit in seconds for the analysis of an error location or zero
 	 *         if no limit is set.
 	 */
@@ -630,11 +682,11 @@ public final class TAPreferences {
 	}
 
 	public boolean useSMTFeatureExtraction() {
-		return mSMTFeatureExtraction;
+		return mSmtFeatureExtraction;
 	}
 
 	public String getSMTFeatureExtractionDumpPath() {
-		return mSMTFeatureExtractionDumpPath;
+		return mSmtFeatureExtractionDumpPath;
 	}
 
 	public boolean overrideInterpolantAutomaton() {
@@ -676,6 +728,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the number of trace abstraction workers, or 0 for one per available core except the main thread's.
+	 *
 	 * @return the number of trace abstraction workers, or 0 for one per available core except the main thread's
 	 */
 	public int getThreadLimit() {
@@ -687,6 +741,9 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns the per-check timeout in ms that the k-induction worker passes to its SMT solver, or -1 to inherit the
+	 * timeout of the configured external solver command.
+	 *
 	 * @return the per-check timeout in ms that the k-induction worker passes to its SMT solver, or -1 to inherit the
 	 *         timeout of the configured external solver command.
 	 */
@@ -695,6 +752,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns whether the invariant supplier may interrupt a query of k-induction that an invariant made slow.
+	 *
 	 * @return whether the invariant supplier may interrupt a query of k-induction that an invariant made slow
 	 */
 	public boolean useInvariantProbation() {
@@ -702,14 +761,19 @@ public final class TAPreferences {
 	}
 
 	/**
-	 * @return how many times longer than the previous query of its kind a query of k-induction may run before it is
-	 *         on probation
+	 * Returns how many times longer than the previous query of its kind a query of k-induction may run before it is on
+	 * probation.
+	 *
+	 * @return how many times longer than the previous query of its kind a query of k-induction may run before it is on
+	 *         probation
 	 */
 	public int getProbationFactor() {
 		return mProbationFactor;
 	}
 
 	/**
+	 * Returns how long (s) a query of k-induction runs at least before it is on probation.
+	 *
 	 * @return how long (s) a query of k-induction runs at least before it is on probation
 	 */
 	public int getProbationMinimum() {
@@ -717,6 +781,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns whether k-induction restarts its solver if an interrupt of the invariant supplier killed it.
+	 *
 	 * @return whether k-induction restarts its solver if an interrupt of the invariant supplier killed it
 	 */
 	public boolean restartKInductionSolverAfterInterrupt() {
@@ -724,6 +790,8 @@ public final class TAPreferences {
 	}
 
 	/**
+	 * Returns whether TA workers hand their interpolants to the invariant supplier.
+	 *
 	 * @return whether TA workers hand their interpolants to the invariant supplier
 	 */
 	public boolean submitInterpolantInvariants() {
@@ -740,5 +808,22 @@ public final class TAPreferences {
 
 	public int getSearchLoopBound() {
 		return mSearchLoopBound;
+	}
+
+	public enum Artifact {
+		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
+	}
+
+	public enum InterpolantAutomatonEnhancement {
+		NONE, EAGER, EAGER_CONSERVATIVE, NO_SECOND_CHANCE, PREDICATE_ABSTRACTION, PREDICATE_ABSTRACTION_CONSERVATIVE,
+		PREDICATE_ABSTRACTION_CANNIBALIZE,
+	}
+
+	public enum Concurrency {
+		FINITE_AUTOMATA, PETRI_NET, PARTIAL_ORDER_FA
+	}
+
+	public enum LooperCheck {
+		SYNTACTIC, SEMANTIC
 	}
 }

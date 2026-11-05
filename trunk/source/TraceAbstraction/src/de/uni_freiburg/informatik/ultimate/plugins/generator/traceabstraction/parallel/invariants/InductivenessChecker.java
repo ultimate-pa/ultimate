@@ -37,6 +37,9 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.IndexedConstantVars;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -49,9 +52,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.IndexedConstantVars;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 
 /**
  * Finds the largest subset of candidate invariants that is inductive relative to invariants already known, on the
@@ -73,10 +73,10 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionS
  * execution all of them are invariants - provided the known ones are. If it is satisfiable, the candidates whose flag
  * {@code b} is true in the model are dropped and the query is repeated; each round drops at least one, so this ends.
  * <p>
- * The model is only asked for the flags, never for a candidate itself: an external solver's answer to
- * {@code get-value} is keyed by the term as it parses back, and a candidate may parse back to a different
- * {@link Term} than the one asked for (seen with bitvector literals; {@code let} and negative literals print differently
- * too). A 0-ary constant parses back to itself.
+ * The model is only asked for the flags, never for a candidate itself: an external solver's answer to {@code get-value}
+ * is keyed by the term as it parses back, and a candidate may parse back to a different {@link Term} than the one asked
+ * for (seen with bitvector literals; {@code let} and negative literals print differently too). A 0-ary constant parses
+ * back to itself.
  *
  * @author Max Barth (max.barth@lmu.de)
  */
@@ -84,10 +84,6 @@ final class InductivenessChecker {
 
 	/** Name of the flags, indexed by the position of their candidate in a round. */
 	private static final String FLAG_NAME = "invrefuted";
-
-	/** {@code flag} is true iff the step ends at {@code location} and violates {@code candidate}. */
-	private record Flag(IcfgLocation location, Term candidate, Term flag) {
-	}
 
 	private final ILogger mLogger;
 	private final ManagedScript mMgdScript;
@@ -117,12 +113,19 @@ final class InductivenessChecker {
 		mConstants = new IndexedConstantVars(mgdScript.getScript(), mConstantCache, "inv", system.getCounterSort());
 	}
 
-	/** @return the transition system of the initial abstraction, over the supplier's script */
+	/**
+	 * Returns the transition system of the initial abstraction, over the supplier's script.
+	 *
+	 * @return the transition system of the initial abstraction, over the supplier's script
+	 */
 	PcTransitionSystem<CallNode<IPredicate>> getSystem() {
 		return mSystem;
 	}
 
 	/**
+	 * Returns indexed constants for other queries on the supplier's script. They share the declared constants with this
+	 * checker: the constant of a program variable has no prefix, so a cache of its own would declare it twice.
+	 *
 	 * @return indexed constants for other queries on the supplier's script. They share the declared constants with this
 	 *         checker: the constant of a program variable has no prefix, so a cache of its own would declare it twice.
 	 */
@@ -130,12 +133,19 @@ final class InductivenessChecker {
 		return new IndexedConstantVars(mMgdScript.getScript(), mConstantCache, prefix, mSystem.getCounterSort());
 	}
 
-	/** @return true if {@code location} has a pc node, i.e. a candidate there can be checked */
+	/**
+	 * Returns true if {@code location} has a pc node, i.e. a candidate there can be checked.
+	 *
+	 * @return true if {@code location} has a pc node, i.e. a candidate there can be checked
+	 */
 	boolean hasNode(final IcfgLocation location) {
 		return mLocationOfNode.containsValue(location);
 	}
 
 	/**
+	 * Returns true if every free variable of {@code term} is a variable of the transition system. Anything else cannot
+	 * be checked and would be ignored by k-induction anyway.
+	 *
 	 * @return true if every free variable of {@code term} is a variable of the transition system. Anything else cannot
 	 *         be checked and would be ignored by k-induction anyway.
 	 */
@@ -149,11 +159,12 @@ final class InductivenessChecker {
 	}
 
 	/**
+	 * Finds the candidates that are inductive given {@code known}.
+	 *
 	 * @param known
 	 *            invariants that are known to hold, per location
 	 * @param candidates
-	 *            candidate conjuncts per location, every one {@link #isExpressible} at a location that
-	 *            {@link #hasNode}
+	 *            candidate conjuncts per location, every one {@link #isExpressible} at a location that {@link #hasNode}
 	 * @return the candidates that are inductive relative to {@code known}, per location, or {@code null} if the solver
 	 *         could not decide a query
 	 */
@@ -284,12 +295,14 @@ final class InductivenessChecker {
 			}
 		}
 		if (!dropped) {
-			throw new AssertionError("the model satisfies the query, but gives the flag of every candidate the value "
-					+ "false");
+			throw new AssertionError(
+					"the model satisfies the query, but gives the flag of every candidate the value " + "false");
 		}
 	}
 
-	/** {@code term} over the program variables' term variables, as a term over the constants of step {@code idx}. */
+	/**
+	 * {@code term} over the program variables' term variables, as a term over the constants of step {@code idx}.
+	 */
 	private Term instantiate(final Term term, final int idx) {
 		final Map<Term, Term> substitution = new HashMap<>();
 		for (final TermVariable tv : term.getFreeVars()) {
@@ -300,5 +313,18 @@ final class InductivenessChecker {
 			substitution.put(tv, mConstants.var(pv, idx));
 		}
 		return PureSubstitution.apply(mMgdScript, substitution, term);
+	}
+
+	/**
+	 * {@code flag} is true iff the step ends at {@code location} and violates {@code candidate}.
+	 *
+	 * @param location
+	 *            the location of the candidate
+	 * @param candidate
+	 *            the candidate
+	 * @param flag
+	 *            the constant of the flag
+	 */
+	private record Flag(IcfgLocation location, Term candidate, Term flag) {
 	}
 }

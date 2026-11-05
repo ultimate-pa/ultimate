@@ -45,6 +45,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 
+/**
+ * Transfers program variables between the script of the main thread and the script of a worker.
+ *
+ * @author Max Barth (Max.Barth@lmu.de)
+ */
 class ProgramVariableTransferrer {
 	private final ConstructionCache<ILocalProgramVar, ILocalProgramVar> mILocalProgramVarCC;
 	private final ConstructionCache<IProgramNonOldVar, IProgramNonOldVar> mIProgramNonOldVarCC;

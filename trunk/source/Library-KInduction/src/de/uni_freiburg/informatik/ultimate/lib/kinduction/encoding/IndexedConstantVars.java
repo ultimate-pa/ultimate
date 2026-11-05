@@ -29,13 +29,13 @@ package de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding;
 
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem.IStepVars;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem.StepVars;
 
 /**
  * Unrolling of a {@link PcTransitionSystem} with constants, for solver queries. Auxiliary variables are separate
@@ -46,13 +46,17 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionS
  *
  * @author Max Barth (max.barth@lmu.de)
  */
-public final class IndexedConstantVars implements StepVars {
+public final class IndexedConstantVars implements IStepVars {
 	private final Script mScript;
 	private final Map<String, Term> mCache;
 	private final String mPrefix;
 	private final Sort mPcSort;
 
 	/**
+	 * Creates indexed constants on {@code script}.
+	 *
+	 * @param script
+	 *            the script all terms belong to
 	 * @param cache
 	 *            the declared constants, shared by every query on {@code script}
 	 * @param prefix
@@ -80,7 +84,7 @@ public final class IndexedConstantVars implements StepVars {
 
 	@Override
 	public Term aux(final int id, final TermVariable auxVar, final int idx) {
-		return PredicateUtils.getIndexedConstant(mPrefix + "aux_" + id + "_" + auxVar.getName(),
-				auxVar.getSort(), idx, mCache, mScript);
+		return PredicateUtils.getIndexedConstant(mPrefix + "aux_" + id + "_" + auxVar.getName(), auxVar.getSort(), idx,
+				mCache, mScript);
 	}
 }

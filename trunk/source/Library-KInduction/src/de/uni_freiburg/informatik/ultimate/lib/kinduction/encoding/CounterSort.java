@@ -44,13 +44,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 
 /**
- * The sort of the integers the encoding adds itself: the pc and the index of the
- * {@link CallStack}. It is {@code Int} unless the program is bit-precise, i.e. none of its variables involves
- * {@code Int} or {@code Real}. Then it is a bitvector, because the solver of a bit-precise analysis (e.g. bitwuzla)
- * need not support {@code Int} at all.
+ * The sort of the integers the encoding adds itself: the pc and the index of the {@link CallStack}. It is {@code Int}
+ * unless the program is bit-precise, i.e. none of its variables involves {@code Int} or {@code Real}. Then it is a
+ * bitvector, because the solver of a bit-precise analysis (e.g. bitwuzla) need not support {@code Int} at all.
  * <p>
- * Bitvector values are read as two's complement: a stack pointer may start anywhere, and only the differences of
- * stack pointers matter, which Java's {@code int} arithmetic wraps exactly like {@code bvadd} at this width.
+ * Bitvector values are read as two's complement: a stack pointer may start anywhere, and only the differences of stack
+ * pointers matter, which Java's {@code int} arithmetic wraps exactly like {@code bvadd} at this width.
  *
  * @author Max Barth (max.barth@lmu.de)
  */
@@ -68,6 +67,12 @@ public final class CounterSort {
 	}
 
 	/**
+	 * Returns {@code Int}, unless no program variable of {@code csToolkit} involves {@code Int} or {@code Real}.
+	 *
+	 * @param script
+	 *            the script all terms belong to
+	 * @param csToolkit
+	 *            the toolkit of the program's CFG
 	 * @return {@code Int}, unless no program variable of {@code csToolkit} involves {@code Int} or {@code Real}
 	 */
 	public static CounterSort forProgram(final Script script, final CfgSmtToolkit csToolkit) {
@@ -103,16 +108,29 @@ public final class CounterSort {
 		return false;
 	}
 
-	/** The same counter sort, over {@code script}. */
+	/**
+	 * The same counter sort, over {@code script}.
+	 *
+	 * @param script
+	 *            the script all terms belong to
+	 * @return the same counter sort, over {@code script}
+	 */
 	public CounterSort in(final Script script) {
-		return new CounterSort(isBitvector() ? SmtSortUtils.getBitvectorSort(script, width())
-				: SmtSortUtils.getIntSort(script));
+		return new CounterSort(
+				isBitvector() ? SmtSortUtils.getBitvectorSort(script, width()) : SmtSortUtils.getIntSort(script));
 	}
 
 	/**
 	 * This counter sort, just wide enough for the values {@code 0..maxValue}, with a spare bit because {@link #toInt}
 	 * reads two's complement. Fewer bits mean fewer gates for a bit-blasting solver. Only for counters that are not
 	 * computed with, like the pc, which is only ever compared to literals.
+	 *
+	 * @param script
+	 *            the script all terms belong to
+	 * @param maxValue
+	 *            the largest value the counter has to hold
+	 * @return this counter sort, just wide enough for the values {@code 0..maxValue}, with a spare bit because
+	 *         {@link #toInt} reads two's complement
 	 */
 	public CounterSort narrowedTo(final Script script, final int maxValue) {
 		if (!isBitvector()) {
@@ -134,7 +152,15 @@ public final class CounterSort {
 		return SmtSortUtils.isBitvecSort(mSort);
 	}
 
-	/** The literal for {@code value}. */
+	/**
+	 * The literal for {@code value}.
+	 *
+	 * @param script
+	 *            the script all terms belong to
+	 * @param value
+	 *            the value of the literal
+	 * @return the literal for {@code value}
+	 */
 	public Term value(final Script script, final int value) {
 		if (isBitvector()) {
 			// Two's complement, the inverse of toInt
@@ -147,8 +173,11 @@ public final class CounterSort {
 	/**
 	 * The value of a literal of this sort, e.g. from a model.
 	 *
+	 * @param literal
+	 *            the literal to read
 	 * @param description
 	 *            what the literal is the value of, for the error message
+	 * @return the value of a literal of this sort
 	 */
 	public int toInt(final Term literal, final String description) {
 		if (isBitvector()) {
@@ -171,8 +200,8 @@ public final class CounterSort {
 	}
 
 	/**
-	 * The pc and the stack pointer are literals of this sort by construction, so anything
-	 * else means the model does not fit the encoding, which is a bug rather than an unsupported case.
+	 * The pc and the stack pointer are literals of this sort by construction, so anything else means the model does not
+	 * fit the encoding, which is a bug rather than an unsupported case.
 	 */
 	private AssertionError notALiteral(final Term literal, final String description) {
 		return new AssertionError("the k-induction model gives " + literal + " for " + description

@@ -47,6 +47,15 @@ public class GotoEdge extends CodeBlock implements IIcfgInternalTransition<IcfgL
 	/**
 	 * Public like the constructors of the other {@link CodeBlock}s, so that a {@link GotoEdge} can be rebuilt on
 	 * another {@link de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript} the way they are.
+	 *
+	 * @param serialNumber
+	 *            the serial number of this edge
+	 * @param source
+	 *            the location the edge starts in
+	 * @param target
+	 *            the location the edge ends in
+	 * @param logger
+	 *            the logger to write to
 	 */
 	public GotoEdge(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final ILogger logger) {
@@ -73,7 +82,12 @@ public class GotoEdge extends CodeBlock implements IIcfgInternalTransition<IcfgL
 		super.setTransitionFormula(transFormula);
 	}
 
-	/** Like the other {@link CodeBlock}s, so that a rebuilt copy keeps the annotations of its original. */
+	/**
+	 * Like the other {@link CodeBlock}s, so that a rebuilt copy keeps the annotations of its original.
+	 *
+	 * @param payload
+	 *            the payload to take over
+	 */
 	public void setPayload(final IPayload payload) {
 		mPayload = payload;
 	}

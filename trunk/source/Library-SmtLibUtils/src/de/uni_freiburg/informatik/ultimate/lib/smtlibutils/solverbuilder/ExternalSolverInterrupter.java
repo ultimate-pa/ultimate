@@ -46,6 +46,10 @@ public final class ExternalSolverInterrupter {
 	}
 
 	/**
+	 * Returns the external solver behind {@code script}.
+	 *
+	 * @param script
+	 *            the script of the solver
 	 * @return the external solver behind {@code script}
 	 * @throws UnsupportedOperationException
 	 *             if {@code script} is not backed by an external solver, e.g. SMTInterpol
@@ -72,6 +76,10 @@ public final class ExternalSolverInterrupter {
 	}
 
 	/**
+	 * Interrupts the running check-sat of {@code script}.
+	 *
+	 * @param script
+	 *            the script of the solver
 	 * @param graceMillis
 	 *            how long to wait for the check-sat to end before killing the solver, or negative to never kill it; a
 	 *            killed solver has to be restarted, see {@link ExternalSolverRestarter}
@@ -82,6 +90,10 @@ public final class ExternalSolverInterrupter {
 	}
 
 	/**
+	 * Returns whether the last check-sat of {@code script} was interrupted.
+	 *
+	 * @param script
+	 *            the script of the solver
 	 * @return whether the last check-sat of {@code script} was interrupted
 	 */
 	public static boolean wasInterrupted(final Script script) {
@@ -89,6 +101,11 @@ public final class ExternalSolverInterrupter {
 	}
 
 	/**
+	 * Returns whether the solver of {@code script} was killed during its last check-sat, by an interrupt it did not
+	 * notice in time; it may have answered before.
+	 *
+	 * @param script
+	 *            the script of the solver
 	 * @return whether the solver of {@code script} was killed during its last check-sat, by an interrupt it did not
 	 *         notice in time; it may have answered before
 	 */
@@ -97,6 +114,10 @@ public final class ExternalSolverInterrupter {
 	}
 
 	/**
+	 * Returns whether the solver process of {@code script} still runs.
+	 *
+	 * @param script
+	 *            the script of the solver
 	 * @return whether the solver process of {@code script} still runs
 	 */
 	public static boolean isAlive(final Script script) {

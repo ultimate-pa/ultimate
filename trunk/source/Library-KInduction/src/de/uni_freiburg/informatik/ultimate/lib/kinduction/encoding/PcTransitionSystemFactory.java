@@ -30,14 +30,14 @@ package de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding;
 import java.util.Collections;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormulaBuilder.Scope;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormulaBuilder.Scope;
 
 /**
  * Builds the {@link PcTransitionSystem} of a nested word automaton, so that {@link KInduction} and everyone else who
@@ -50,18 +50,6 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormu
  */
 public final class PcTransitionSystemFactory {
 
-	/**
-	 * @param system
-	 *            the transition system, over {@link CallNode}s of the automaton's states
-	 * @param stackPointer
-	 *            see {@link ProcedureSummaries#getStackPointer()}, {@code null} if no call needs an activation record
-	 * @param sealedStates
-	 *            see {@link ProcedureSummaries#getSealedStates()}
-	 */
-	public record Result<STATE>(PcTransitionSystem<CallNode<STATE>> system, IProgramVar stackPointer,
-			Set<CallNode<STATE>> sealedStates) {
-	}
-
 	private PcTransitionSystemFactory() {
 		// static only
 	}
@@ -72,8 +60,23 @@ public final class PcTransitionSystemFactory {
 	 * edge if the callee can be summarized, into an unfolded copy of the callee if it contains a loop - and the tree is
 	 * built for the resulting graph, which has no call and no return transition left.
 	 *
+	 * @param <LETTER>
+	 *            the type of the automaton's letters
+	 * @param <STATE>
+	 *            the type of the automaton's states
+	 * @param services
+	 *            the service provider of this analysis
+	 * @param logger
+	 *            the logger to write to
+	 * @param csToolkit
+	 *            the toolkit of the program's CFG
+	 * @param mgdScript
+	 *            the script all terms belong to
+	 * @param abstraction
+	 *            the automaton that represents the program
 	 * @param counterSort
 	 *            the sort of the pc and the call stack index
+	 * @return the loop tree of the program, made a transition system
 	 */
 	public static <LETTER extends IAction, STATE> Result<STATE> build(final IUltimateServiceProvider services,
 			final ILogger logger, final CfgSmtToolkit csToolkit, final ManagedScript mgdScript,
@@ -86,7 +89,23 @@ public final class PcTransitionSystemFactory {
 		// KInductionCounterexampleBuilder reads the stack pointer off a model.
 		final Set<IProgramVar> alwaysFramed =
 				stackPointer == null ? Collections.emptySet() : Collections.singleton(stackPointer);
-		return new Result<>(new PcTransitionSystem<>(mgdScript.getScript(), tree, counterSort, alwaysFramed), stackPointer,
-				summaries.getSealedStates());
+		return new Result<>(new PcTransitionSystem<>(mgdScript.getScript(), tree, counterSort, alwaysFramed),
+				stackPointer, summaries.getSealedStates());
+	}
+
+	/**
+	 * The result of {@link PcTransitionSystemFactory#build}.
+	 *
+	 * @param <STATE>
+	 *            the type of the automaton's states
+	 * @param system
+	 *            the transition system, over {@link CallNode}s of the automaton's states
+	 * @param stackPointer
+	 *            see {@link ProcedureSummaries#getStackPointer()}, {@code null} if no call needs an activation record
+	 * @param sealedStates
+	 *            see {@link ProcedureSummaries#getSealedStates()}
+	 */
+	public record Result<STATE>(PcTransitionSystem<CallNode<STATE>> system, IProgramVar stackPointer,
+			Set<CallNode<STATE>> sealedStates) {
 	}
 }

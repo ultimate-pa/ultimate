@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
  * Boolean type, so its conditions reach us as e.g. {@code (= (ite phi 1 0) 0)}, which is just {@code (not phi)}, and
  * {@code (= 0 (ite c (ite p 1 0) 1))}, which is {@code (and c (not p))}.
  * <p>
- * Without this, a condition like {@code phi} stays hidden inside a non-Boolean equality, which is one atom for everybody
- * who splits a formula along its Boolean structure. IteRemover, which the quantifier elimination uses, doubles an atom
- * per ite in it, so a whole C condition in one atom makes it run into its timeout.
+ * Without this, a condition like {@code phi} stays hidden inside a non-Boolean equality, which is one atom for
+ * everybody who splits a formula along its Boolean structure. IteRemover, which the quantifier elimination uses,
+ * doubles an atom per ite in it, so a whole C condition in one atom makes it run into its timeout.
  *
  * @author Max Barth (max.barth@lmu.de)
  */
@@ -55,6 +55,12 @@ public final class IteComparisonEncoder extends TermTransformer {
 	}
 
 	/**
+	 * Returns a term that is equivalent to {@code term}.
+	 *
+	 * @param script
+	 *            the script all terms belong to
+	 * @param term
+	 *            the term to encode
 	 * @return a term that is equivalent to {@code term}
 	 */
 	public static Term apply(final Script script, final Term term) {
@@ -85,6 +91,8 @@ public final class IteComparisonEncoder extends TermTransformer {
 	}
 
 	/**
+	 * Decides a comparison of an ite term with {@code other} on the leaves of the ite term.
+	 *
 	 * @param decided
 	 *            the results so far: ite terms share subterms, whose repeated visits would take exponentially long
 	 * @return a Boolean term equivalent to {@code (= term other)} without this equality, or null if some leaf of

@@ -35,9 +35,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 @FunctionalInterface
 public interface IInvariantSink {
 
-	void submit(InvariantMessage message);
+	void submit(IInvariantMessage message);
 
 	/**
+	 * Returns a sink that drops everything, for when there is no supplier to feed.
+	 *
 	 * @return a sink that drops everything, for when there is no supplier to feed
 	 */
 	static IInvariantSink none() {

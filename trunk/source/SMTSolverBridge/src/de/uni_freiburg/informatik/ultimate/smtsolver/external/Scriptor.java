@@ -67,11 +67,18 @@ public class Scriptor extends NoopScript {
 	 * @param command
 	 *            the command that starts the external SMT solver. The solver is expected to read smtlib 2 commands on
 	 *            stdin.
+	 * @param logger
+	 *            the logger to write to
 	 * @param services
+	 *            the service provider of this analysis
+	 * @param solverName
+	 *            the name of the solver, for the log
 	 * @param fullPathOfDumpedLogFile
 	 *            null if we should not dump the script to a file or a path to a file
 	 * @throws IOExceptionO
 	 *             If the solver is not installed
+	 * @throws IOException
+	 *             if the solver process cannot be started or reached
 	 */
 	public Scriptor(final String command, final ILogger logger, final IUltimateServiceProvider services,
 			final String solverName, final String fullPathOfDumpedLogFile) throws IOException {
@@ -181,6 +188,8 @@ public class Scriptor extends NoopScript {
 	}
 
 	/**
+	 * Returns whether the last {@link #checkSat()} was interrupted.
+	 *
 	 * @return whether the last {@link #checkSat()} was interrupted
 	 */
 	public boolean wasInterrupted() {
@@ -188,6 +197,8 @@ public class Scriptor extends NoopScript {
 	}
 
 	/**
+	 * Returns whether the solver was killed during the last {@link #checkSat()}, see {@link #interrupt(long)}.
+	 *
 	 * @return whether the solver was killed during the last {@link #checkSat()}, see {@link #interrupt(long)}
 	 */
 	public boolean wasKilled() {
@@ -195,6 +206,8 @@ public class Scriptor extends NoopScript {
 	}
 
 	/**
+	 * Returns whether the solver process is still running.
+	 *
 	 * @return whether the solver process is still running
 	 */
 	public boolean isSolverAlive() {
@@ -212,6 +225,8 @@ public class Scriptor extends NoopScript {
 	 *
 	 * @param declarations
 	 *            SMT-LIB commands (declarations, definitions, push), in order
+	 * @throws SMTLIBException
+	 *             if the solver process cannot be restarted
 	 */
 	public void restartAndReplay(final List<String> declarations) {
 		try {
@@ -243,7 +258,7 @@ public class Scriptor extends NoopScript {
 		return mExecutor.parseGetAssertionsResult();
 	}
 
-	/** Proofs are not supported, since they are not standardized **/
+	/** Proofs are not supported, since they are not standardized *. */
 	@Override
 	public Term getProof() throws SMTLIBException, UnsupportedOperationException {
 		throw new UnsupportedOperationException("Proofs are not supported");
@@ -322,7 +337,11 @@ public class Scriptor extends NoopScript {
 		return mExecutor.parseGetModelResult();
 	}
 
-	/** This method is used in the output parser, to support (get-info :status) **/
+	/**
+	 * This method is used in the output parser, to support (get-info :status) *.
+	 *
+	 * @return the status of the last check-sat
+	 */
 	public LBool getStatus() {
 		return mStatus;
 	}

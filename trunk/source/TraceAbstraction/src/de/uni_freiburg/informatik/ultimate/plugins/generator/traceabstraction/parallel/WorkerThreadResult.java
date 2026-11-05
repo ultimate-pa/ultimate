@@ -39,27 +39,45 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop.AutomatonType;
 
+/**
+ * What a worker sends back to the main thread of the parallel CEGAR loop.
+ *
+ * @author Max Barth (Max.Barth@lmu.de)
+ * @author Max Barth (Max.Barth@lmu.de)
+ * @param <L>
+ *            the type of the letters
+ * @param <A>
+ *            the type of the automata
+ */
 public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
 
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mSubtrahend;
 	private AutomatonType mAutomatonType;
 	private ManagedScript mMgdScript;
 	private IRun<L, ?> mCounterexample;
-	PredicateFactory mPredicateFactory;
+	private PredicateFactory mPredicateFactory;
 	private final boolean mWorkerCrashed;
 	private final boolean mNoVerdict;
 	private Map<IPredicate, Term> mProofInvariants;
-	WorkerType mWorkerType;
-
-	public enum WorkerType
-
-	{
-		TA, KINDUCTION, INVARIANT
-	}
+	private final WorkerType mWorkerType;
 
 	/**
-	 * The object returned by an @ICegarNwaWorkerThread
+	 * The object returned by an @ICegarNwaWorkerThread.
 	 *
+	 * @param workerType
+	 *            the kind of worker that produced this result
+	 * @param subtrahend
+	 *            the automaton to refine with
+	 * @param automatonType
+	 *            the type of {@code subtrahend}
+	 * @param mgdScript
+	 *            the script all terms belong to
+	 * @param counterexample
+	 *            the counterexample
+	 * @param predicateFactory
+	 *            the factory for the predicates of this analysis
+	 * @param workerCrashed
+	 *            whether the worker crashed
 	 */
 	public WorkerThreadResult(final WorkerType workerType,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend, final AutomatonType automatonType,
@@ -85,6 +103,14 @@ public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IA
 	/**
 	 * A worker that ran to completion but neither proved nor refuted the program, for example because the solver
 	 * answered {@code unknown}. It carries nothing to refine with, so the main thread can only retire the worker.
+	 *
+	 * @param <L>
+	 *            the type of the letters
+	 * @param <A>
+	 *            the type of the automata
+	 * @param workerType
+	 *            the kind of worker that produced this result
+	 * @return the result of a worker that ran to completion without a verdict
 	 */
 	public static <L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> WorkerThreadResult<L, A>
 			noVerdict(final WorkerType workerType) {
@@ -92,12 +118,28 @@ public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IA
 	}
 
 	/**
+	 * Returns true if the worker finished without a verdict, see {@link #noVerdict(WorkerType)}.
+	 *
+	 * @return true if the worker finished without a verdict, see {@link #noVerdict(WorkerType)}.
+	 */
+	public boolean noVerdict() {
+		return mNoVerdict;
+	}
+
+	/**
 	 * k-induction proved the whole program safe. Like every SAFE sentinel it has neither a subtrahend nor an automaton
 	 * type.
 	 *
+	 * @param <L>
+	 *            the type of the letters
+	 * @param <A>
+	 *            the type of the automata
 	 * @param proofInvariants
 	 *            for every loop head, a state of the initial abstraction, its invariant for a correctness witness,
 	 *            terms of {@code mgdScript}; null if there are none
+	 * @param mgdScript
+	 *            the script all terms belong to
+	 * @return the result of a worker whose k-induction proved the program safe
 	 */
 	public static <L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> WorkerThreadResult<L, A>
 			kInductionSafe(final Map<IPredicate, Term> proofInvariants, final ManagedScript mgdScript) {
@@ -108,6 +150,9 @@ public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IA
 	}
 
 	/**
+	 * Returns for a k-induction proof the invariants for a correctness witness, see {@link #kInductionSafe}; null if
+	 * there are none.
+	 *
 	 * @return for a k-induction proof the invariants for a correctness witness, see {@link #kInductionSafe}; null if
 	 *         there are none
 	 */
@@ -121,13 +166,6 @@ public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IA
 
 	public boolean workerCrashed() {
 		return mWorkerCrashed;
-	}
-
-	/**
-	 * @return true if the worker finished without a verdict, see {@link #noVerdict(WorkerType)}.
-	 */
-	public boolean noVerdict() {
-		return mNoVerdict;
 	}
 
 	public PredicateFactory getPredicateFactory() {
@@ -150,11 +188,18 @@ public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IA
 		return mCounterexample;
 	}
 
+	/**
+	 * Drops the references to the data of this result.
+	 */
 	public void garbageCollect() {
 		mSubtrahend = null;
 		mAutomatonType = null;
 		mMgdScript = null;
 		mCounterexample = null;
 		mPredicateFactory = null;
+	}
+
+	public enum WorkerType {
+		TA, KINDUCTION, INVARIANT
 	}
 }

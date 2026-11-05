@@ -35,6 +35,11 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery.Invariant;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery.Kind;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -44,11 +49,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantSubscription.RunningQuery;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery.Invariant;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery.Kind;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 
 /**
  * The probation of the {@link InvariantSupplier}: finds out whether an invariant makes a query of k-induction slow.
@@ -77,6 +77,8 @@ final class InvariantProbation {
 	private PcTransitionSystem<CallNode<IPredicate>> mSystem;
 
 	/**
+	 * Creates the probation of queries with invariants.
+	 *
 	 * @param script
 	 *            the supplier's script, backed by z3
 	 * @param solverTimeoutMillis
@@ -96,6 +98,8 @@ final class InvariantProbation {
 	}
 
 	/**
+	 * Returns how long a query of {@code kind} of the subscriber may run before it is on probation.
+	 *
 	 * @return how long a query of {@code kind} of the subscriber may run before it is on probation
 	 */
 	long limitMillis(final InvariantSubscription subscription, final Kind kind) {
@@ -103,6 +107,8 @@ final class InvariantProbation {
 	}
 
 	/**
+	 * Returns the query of the subscriber that is due for probation now, or {@code null}; a query is due only once.
+	 *
 	 * @return the query of the subscriber that is due for probation now, or {@code null}; a query is due only once
 	 */
 	RunningQuery due(final InvariantSubscription subscription) {

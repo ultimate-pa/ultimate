@@ -30,14 +30,24 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 
+/**
+ * What the main thread sends to a worker of the parallel CEGAR loop.
+ *
+ * @author Max Barth (Max.Barth@lmu.de)
+ * @author Max Barth (Max.Barth@lmu.de)
+ * @param <L>
+ *            the type of the letters
+ */
 public final class WorkerThreadTask<L extends IIcfgTransition<?>> {
 
 	private final IRun<L, ?> mCounterexample;
 	private int mPathProgramCount;
 
 	/**
-	 * The object passed from the main thread to an @ICegarNwaWorkerThread via the worker task queue
+	 * The object passed from the main thread to an @ICegarNwaWorkerThread via the worker task queue.
 	 *
+	 * @param counterexample
+	 *            the counterexample to work on
 	 */
 	public WorkerThreadTask(final IRun<L, ?> counterexample) {
 		mCounterexample = counterexample;

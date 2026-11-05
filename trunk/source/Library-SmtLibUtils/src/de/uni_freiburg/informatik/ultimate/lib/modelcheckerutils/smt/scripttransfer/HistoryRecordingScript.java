@@ -58,17 +58,25 @@ public class HistoryRecordingScript extends WrapperScript {
 	private int mCurrentStackLevel;
 
 	/**
-	 * @return the script this one records for
+	 * Wraps {@code script} and records its declarations and definitions.
+	 *
+	 * @param script
+	 *            the script all terms belong to
 	 */
-	public Script getWrappedScript() {
-		return mScript;
-	}
-
 	public HistoryRecordingScript(final Script script) {
 		super(script);
 		mHistory = new ArrayDeque<>();
 		mSymbolTable = new Hashtable<>();
 		mCurrentStackLevel = 0;
+	}
+
+	/**
+	 * Returns the script this one records for.
+	 *
+	 * @return the script this one records for
+	 */
+	public Script getWrappedScript() {
+		return mScript;
 	}
 
 	@Override
@@ -192,6 +200,8 @@ public class HistoryRecordingScript extends WrapperScript {
 	 *            The script from which the history should be transferred.
 	 * @param newScript
 	 *            The script instance to which the history should be transferred.
+	 * @throws IllegalSmtDeclarableUsageException
+	 *             if a declaration is used in a way SMT-LIB does not allow
 	 * @see #transferHistoryFromRecord(Script)
 	 */
 	public static void transferHistoryFromRecord(final Script oldScript, final Script newScript) {
@@ -222,6 +232,8 @@ public class HistoryRecordingScript extends WrapperScript {
 	}
 
 	/**
+	 * Returns a map from symbol name to {@link ISmtDeclarable} in an arbitrary order.
+	 *
 	 * @return A map from symbol name to {@link ISmtDeclarable} in an arbitrary order.
 	 *
 	 *         The map does update when the underlying script changes.

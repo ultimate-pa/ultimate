@@ -87,9 +87,10 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 
 	private final ManagedScript mMainScript;
 	private final ManagedScript mWorkerScript;
-	private final HashMap<LETTER, LETTER> mEdgeCache = new HashMap<>(); // Bidirectional
-	private final HashMap<IProgramVar, IProgramVar> mProgramVarBackTranslationCache = new HashMap<>(); // Maps worker ->
-																										// main
+	// Bidirectional
+	private final HashMap<LETTER, LETTER> mEdgeCache = new HashMap<>();
+	// Maps worker -> main
+	private final HashMap<IProgramVar, IProgramVar> mProgramVarBackTranslationCache = new HashMap<>();
 	private final AutomataLibraryServices mServices;
 	private final IUltimateServiceProvider mIUltiamteServices;
 	private final TermTransferrer mWorker2main;
@@ -98,10 +99,6 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	private final CfgSmtToolkit mMainCsToolkit;
 	private final CfgSmtToolkit mWorkerCsToolkit;
 	private final ProgramVariableTransferrer mVarTransfer;
-
-	public enum TransferMode {
-		NONE, MAIN2WORKER, WORKER2MAIN
-	}
 
 	private TransferMode mMode = TransferMode.NONE;
 
@@ -114,16 +111,24 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	 * See TransferrerWithVariableCache::transferTransFormula and TransFormulaBuilder::transferTransformula In the
 	 * future we might want to use those here, too.
 	 *
+	 * @author Max Barth (max.barth@lmu.de)
+	 * @param services
+	 *            the service provider of this analysis
+	 * @param logger
+	 *            the logger to write to
 	 * @param main
-	 * @param worker
+	 *            the script of the main thread
+	 * @param solverServices
+	 *            the services the solver of the worker runs under
+	 * @param solverSettings
+	 *            the settings of the solver to start
 	 * @param mainCfgToolKit
+	 *            the toolkit of the CFG on the main script
 	 * @param freshVarPrefix
-	 *            carried by every variable the worker {@link ManagedScript} mints, so that its names cannot clash
-	 *            with the main script's, whose whole declaration history is replayed onto the worker script; see
+	 *            carried by every variable the worker {@link ManagedScript} mints, so that its names cannot clash with
+	 *            the main script's, whose whole declaration history is replayed onto the worker script; see
 	 *            {@link CfgSmtToolkit#createFreshManagedScript(IUltimateServiceProvider, SolverSettings, String, String)}.
 	 *            Pass {@code ""} to keep the names a worker produced before this existed.
-	 *
-	 * @author Max Barth (max.barth@lmu.de)
 	 */
 	public TransferBetweenMainAndWorker(final AutomataLibraryServices services, final ILogger logger,
 			final ManagedScript main, final IUltimateServiceProvider solverServices,
@@ -148,6 +153,17 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	 * Gets a run / counterexample with Letters whose transformula comes from one script. Returns a new run with new
 	 * letters, whose transformula comes from target script. The semantics of both runs are equal.
 	 */
+	/**
+	 * Transfers a run.
+	 *
+	 * @param counterexample
+	 *            the run
+	 * @param mode
+	 *            the direction of the transfer
+	 * @return the transferred run
+	 * @throws UnsupportedOperationException
+	 *             if the program or the solver is outside what this class supports
+	 */
 	public IRun<LETTER, ?> transferRun(final NestedRun<LETTER, ?> counterexample, final TransferMode mode) {
 		final NestedRun<LETTER, ?> oldCounterexample = counterexample;
 		mMode = mode;
@@ -162,8 +178,8 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 			case final SequentialComposition seqComp -> nestingOperation = NestedWord.INTERNAL_POSITION;
 			case final Summary sum -> nestingOperation = NestedWord.INTERNAL_POSITION;
 			case final GotoEdge gotoEdge -> nestingOperation = NestedWord.INTERNAL_POSITION;
-			default -> throw new UnsupportedOperationException("Cannot transfer the letter " + letter + ", which is a "
-					+ letter.getClass().getSimpleName());
+			default -> throw new UnsupportedOperationException(
+					"Cannot transfer the letter " + letter + ", which is a " + letter.getClass().getSimpleName());
 			}
 			final NestedWord<LETTER> singleWord = new NestedWord<>(transferEdge(letter), nestingOperation);
 			currentWord = currentWord.concatenate(singleWord);
@@ -202,8 +218,8 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 		if (transferredLetter == null) {
 			// Never a mere assertion: a null letter is accepted by the automaton being built and only surfaces much
 			// later, as a NullPointerException in whoever first asks that transition for its transition formula.
-			throw new AssertionError("Transferring the " + letter.getClass().getSimpleName() + " " + letter
-					+ " produced no letter");
+			throw new AssertionError(
+					"Transferring the " + letter.getClass().getSimpleName() + " " + letter + " produced no letter");
 		}
 		mEdgeCache.put(letter, transferredLetter);
 		mEdgeCache.put(transferredLetter, letter);
@@ -259,8 +275,8 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 
 	/**
 	 * A {@link GotoEdge} carries no statements, but it does carry a transition formula and it does survive into the
-	 * ICFG: removing goto edges is off by default (see {@code IcfgPreferenceInitializer#LABEL_REMOVE_GOTO_EDGES}),
-	 * and a goto that cannot be merged away is kept as an ordinary internal edge.
+	 * ICFG: removing goto edges is off by default (see {@code IcfgPreferenceInitializer#LABEL_REMOVE_GOTO_EDGES}), and
+	 * a goto that cannot be merged away is kept as an ordinary internal edge.
 	 */
 	private GotoEdge getTransferGoto(final GotoEdge gotoEdge) {
 		final GotoEdge newGoto = new GotoEdge(gotoEdge.getSerialNumber(), (BoogieIcfgLocation) gotoEdge.getSource(),
@@ -351,6 +367,15 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 		return transferredMap;
 	}
 
+	/**
+	 * Transfers a set of term variables.
+	 *
+	 * @param transferrer
+	 *            the transferrer to use
+	 * @param inputSet
+	 *            the term variables
+	 * @return the transferred term variables
+	 */
 	public static Set<TermVariable> transferSet(final TermTransferrer transferrer, final Set<TermVariable> inputSet) {
 		final Set<TermVariable> outSet = new HashSet<>();
 		for (final TermVariable var : inputSet) {
@@ -366,6 +391,16 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	 * Thereby, it explores the input automaton and creates the output automaton. States remain the same, Letters are
 	 * transferred from one script to another depending on the @mode. The new automaton has a new Alphabet, and can have
 	 * less transitions than the input automaton. TODO check if this can really be sound
+	 *
+	 * @param automaton
+	 *            the automaton to transfer
+	 * @param emptyStateFactory
+	 *            the factory for the empty stack state
+	 * @param mode
+	 *            the direction of the transfer
+	 * @return the transferred automaton
+	 * @throws AssertionError
+	 *             if an internal invariant does not hold
 	 */
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> transferAutomaton(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton,
@@ -497,6 +532,11 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 
 	}
 
+	/**
+	 * Constructs the toolkit of the CFG on the script of the worker.
+	 *
+	 * @return the toolkit on the script of the worker
+	 */
 	public CfgSmtToolkit constructWorkerCfgSmtToolkit() {
 		final HashRelation<String, IProgramNonOldVar> proc2globals =
 				constructNewProc2Globals(mMainCsToolkit.getModifiableGlobalsTable().getProcToGlobals(), mVarTransfer);
@@ -569,6 +609,10 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 
 	public CfgSmtToolkit getWorkerCfgSmtToolKit() {
 		return mWorkerCsToolkit;
+	}
+
+	public enum TransferMode {
+		NONE, MAIN2WORKER, WORKER2MAIN
 	}
 
 }
