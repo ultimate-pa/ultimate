@@ -31,20 +31,26 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
+import org.eclipse.cdt.core.dom.ast.IASTName;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
+import org.eclipse.cdt.core.dom.ast.IBinding;
+import org.eclipse.cdt.core.dom.ast.IVariable;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
@@ -57,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopTransitionInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
 
@@ -68,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
  */
 public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor {
 	private Witness mWitness;
+	private int mLastPrevVariableCounter;
 
 	public YamlCorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
 		super(service);
@@ -84,6 +92,7 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 
 	@Override
 	protected IExtractedCorrectnessWitness extractWitness() {
+		mLastPrevVariableCounter = 0;
 		// TODO: The column extraction happens in LocationFactory, so we create one as a workaround
 		final LocationFactory locationFactory =
 				new LocationFactory(null, new LineOffsetComputer(mTranslationUnit.getRawSignature()));
@@ -114,6 +123,9 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 				location = update.getLocation();
 				addFunction = node -> rtr.addGhostUpdate(node,
 						new ExtractedGhostUpdate(update.getVariable(), update.getValue(), node));
+			} else if (entry instanceof LoopTransitionInvariant) {
+				location = ((LoopTransitionInvariant) entry).getLocation();
+				addFunction = node -> addLoopTransitionInvariant(((LoopTransitionInvariant) entry), node, rtr);
 			} else {
 				throw new UnsupportedOperationException("Unknown entry type " + entry.getClass().getSimpleName());
 			}
@@ -134,6 +146,80 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 		locationInvariants.forEach(rtr::addInvariant);
 		return rtr;
 
+	}
+
+	private void addLoopTransitionInvariant(final LoopTransitionInvariant loopTransitionInvariant, final IASTNode node,
+			final YamlExtractedCorrectnessWitness result) {
+		if (!(node instanceof IASTWhileStatement) && !(node instanceof IASTForStatement)
+				&& !(node instanceof IASTDoStatement)) {
+			throw new UnsupportedOperationException("Loop transition invariant is only allowed at loop (found "
+					+ node.getClass().getSimpleName() + ")");
+		}
+		final Map<String, String> trackers = new LinkedHashMap<>();
+		final String invariant = rewriteLastPrevExpressions(loopTransitionInvariant.getInvariant(), trackers);
+		if (trackers.isEmpty()) {
+			result.addInvariant(node, new ExtractedLoopInvariant(invariant, node));
+			return;
+		}
+
+		final String firstOccurence = newLastPrevName("first_occurence");
+		for (final Entry<String, String> tracker : trackers.entrySet()) {
+			final String type = findVariableType(node, tracker.getKey());
+			if (type == null) {
+				throw new UnsupportedOperationException(
+						"Unable to determine the type of variable " + tracker.getKey() + " used in \\at(_, LastPrev)");
+			}
+			result.addGlobalDeclaration(new ExtractedGhostVariable(tracker.getValue(), "0", type, mTranslationUnit));
+			result.addGhostUpdate(node, new ExtractedGhostUpdate(tracker.getValue(), tracker.getKey(), node));
+		}
+		result.addGlobalDeclaration(new ExtractedGhostVariable(firstOccurence, "1", "int", mTranslationUnit));
+		result.addGhostUpdate(node, new ExtractedGhostUpdate(firstOccurence, "0", node));
+		result.addInvariant(node, new ExtractedLoopInvariant(firstOccurence + " || (" + invariant + ")", node));
+	}
+
+	private String rewriteLastPrevExpressions(final String invariant, final Map<String, String> trackers) {
+		final Pattern pattern = Pattern.compile("\\\\at\\s*\\(\\s*([A-Za-z_][A-Za-z0-9_]*)\\s*,\\s*LastPrev\\s*\\)");
+		final Matcher matcher = pattern.matcher(invariant);
+		final StringBuffer result = new StringBuffer();
+		while (matcher.find()) {
+			final String variable = matcher.group(1);
+			final String tracker = trackers.computeIfAbsent(variable, x -> newLastPrevName(variable));
+			matcher.appendReplacement(result, Matcher.quoteReplacement(tracker));
+		}
+		matcher.appendTail(result);
+		return result.toString();
+	}
+
+	private String newLastPrevName(final String suffix) {
+		return "last_prev_" + suffix + "_" + mLastPrevVariableCounter++;
+	}
+
+	private String findVariableType(final IASTNode scope, final String variable) {
+		final class VariableTypeVisitor extends ASTGenericVisitor {
+			private String mType;
+
+			private VariableTypeVisitor() {
+				super(true);
+			}
+
+			@Override
+			protected int genericVisit(final IASTNode current) {
+				if (current instanceof final IASTName name && variable.equals(name.toString())) {
+					final IBinding binding = name.resolveBinding();
+					if (binding instanceof final IVariable variableBinding) {
+						mType = variableBinding.getType().toString();
+						return PROCESS_ABORT;
+					}
+				}
+				return PROCESS_CONTINUE;
+			}
+		}
+		final VariableTypeVisitor visitor = new VariableTypeVisitor();
+		scope.accept(visitor);
+		if (visitor.mType == null) {
+			mTranslationUnit.accept(visitor);
+		}
+		return visitor.mType;
 	}
 
 	private static void addFunctionContract(final FunctionContract functionContract, final IASTNode node,
