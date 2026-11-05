@@ -54,8 +54,6 @@ public class GotoEdge extends CodeBlock implements IIcfgInternalTransition<IcfgL
 	 *            the location the edge starts in
 	 * @param target
 	 *            the location the edge ends in
-	 * @param logger
-	 *            the logger to write to
 	 */
 	public GotoEdge(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final ILogger logger) {

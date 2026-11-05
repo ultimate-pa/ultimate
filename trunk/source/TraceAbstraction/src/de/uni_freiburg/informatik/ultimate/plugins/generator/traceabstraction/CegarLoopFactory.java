@@ -102,20 +102,6 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 
 	private IndependenceProviderFactory<L> mIndependenceProviderFactory;
 
-	/**
-	 * Creates a factory for CEGAR loops.
-	 *
-	 * @param services
-	 *            the service provider of this analysis
-	 * @param transitionClazz
-	 *            the class of the letters
-	 * @param taPrefs
-	 *            the preferences of trace abstraction
-	 * @param createCompositionFactory
-	 *            supplies the factory for Lipton reduction
-	 * @param copyFactory
-	 *            the factory for copying letters
-	 */
 	public CegarLoopFactory(final IUltimateServiceProvider services, final Class<L> transitionClazz,
 			final TAPreferences taPrefs, final Supplier<IPLBECompositionFactory<L>> createCompositionFactory,
 			final ICopyActionFactory<L> copyFactory) {
@@ -348,11 +334,13 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		try {
 			return provider.getInitialAbstraction(icfg, errorLocs);
 		} catch (final AutomataOperationCanceledException ex) {
-			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), "constructing initial abstraction");
+			final RunningTaskInfo runningTaskInfo =
+					new RunningTaskInfo(this.getClass(), "constructing initial abstraction");
 			ex.addRunningTaskInfo(runningTaskInfo);
 			throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, ex);
 		} catch (final ToolchainCanceledException ex) {
-			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), "constructing initial abstraction");
+			final RunningTaskInfo runningTaskInfo =
+					new RunningTaskInfo(this.getClass(), "constructing initial abstraction");
 			ex.addRunningTaskInfo(runningTaskInfo);
 			throw ex;
 		} catch (final AutomataLibraryException e) {
@@ -367,9 +355,6 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		return mCegarLoopBenchmark;
 	}
 
-	/**
-	 * Shuts down what this factory started.
-	 */
 	public void shutdown() {
 		if (mIndependenceProviderFactory != null) {
 			mIndependenceProviderFactory.shutdown();

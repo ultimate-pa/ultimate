@@ -77,22 +77,6 @@ public final class NwaHoareProofProducer<L extends IAction>
 	private IFloydHoareAnnotation<IPredicate> mProof;
 	private final Statistics mStatistics;
 
-	/**
-	 * Creates a producer of Hoare proofs for {@code program}.
-	 *
-	 * @param services
-	 *            the service provider of this analysis
-	 * @param program
-	 *            the automaton of the program
-	 * @param csToolkit
-	 *            the toolkit of the program's CFG
-	 * @param predicateFactory
-	 *            the factory for the predicates of this analysis
-	 * @param prefs
-	 *            the settings of the Hoare proof
-	 * @param hoareAnnotationStates
-	 *            the states that get a Hoare annotation
-	 */
 	public NwaHoareProofProducer(final IUltimateServiceProvider services,
 			final INestedWordAutomaton<L, IPredicate> program, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final HoareProofSettings prefs,
@@ -124,17 +108,6 @@ public final class NwaHoareProofProducer<L extends IAction>
 		return result;
 	}
 
-	/**
-	 * Determines the states that get a Hoare annotation.
-	 *
-	 * @param icfg
-	 *            the ICFG of the program
-	 * @param abstraction
-	 *            the automaton that represents the program
-	 * @param hoarePositions
-	 *            which program points get a Hoare annotation
-	 * @return the states that get a Hoare annotation
-	 */
 	public static Set<IPredicate> computeHoareStates(final IIcfg<? extends IcfgLocation> icfg,
 			final INestedWordAutomaton<?, IPredicate> abstraction, final HoareAnnotationPositions hoarePositions) {
 		final var hoareLocs = hoarePositions.getLocations(icfg);

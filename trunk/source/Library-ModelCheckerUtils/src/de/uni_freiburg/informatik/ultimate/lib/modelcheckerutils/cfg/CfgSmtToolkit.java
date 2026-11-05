@@ -41,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 
 /**
- * A collection of the objects that SMT reasoning about the CFG of a program needs.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
  */
 public class CfgSmtToolkit {
 
@@ -59,28 +59,6 @@ public class CfgSmtToolkit {
 	private final ConcurrencyInformation mConcurrencyInformation;
 	private final SmtFunctionsAndAxioms mSmtFunctionsAndAxioms;
 
-	/**
-	 * A collection of the objects that SMT reasoning about the CFG of a program needs.
-	 *
-	 * @param modifiableGlobalsTable
-	 *            the global variables that each procedure may modify
-	 * @param managedScript
-	 *            the script of the terms of the program
-	 * @param symbolTable
-	 *            the variables of the program
-	 * @param procedures
-	 *            the names of the procedures
-	 * @param inParams
-	 *            the in-parameters of each procedure
-	 * @param outParams
-	 *            the out-parameters of each procedure
-	 * @param icfgEdgeFactory
-	 *            the factory for the edges of the CFG
-	 * @param concurInfo
-	 *            the information about concurrency in the program
-	 * @param smtFunctionsAndAxioms
-	 *            the functions and axioms of the program
-	 */
 	public CfgSmtToolkit(final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript managedScript,
 			final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final Map<String, List<ILocalProgramVar>> inParams, final Map<String, List<ILocalProgramVar>> outParams,
@@ -105,12 +83,6 @@ public class CfgSmtToolkit {
 	/**
 	 * Similar to {@link CfgSmtToolkit#createFreshManagedScript(SolverSettings, String)}, but use a default solver id as
 	 * defined in {@link SolverSettings}.
-	 *
-	 * @param services
-	 *            the service provider of this analysis
-	 * @param solverSettings
-	 *            the settings of the solver to start
-	 * @return the new script
 	 */
 	public ManagedScript createFreshManagedScript(final IUltimateServiceProvider services,
 			final SolverSettings solverSettings) {
@@ -121,8 +93,6 @@ public class CfgSmtToolkit {
 	 * Create a new {@link ManagedScript} instance by using {@link SolverBuilder} and transfer all symbols of this
 	 * {@link CfgSmtToolkit} to the new script.
 	 *
-	 * @param services
-	 *            the service provider of this analysis
 	 * @param solverSettings
 	 *            The settings for the new script.
 	 * @param solverId
@@ -196,8 +166,6 @@ public class CfgSmtToolkit {
 
 	/**
 	 * Object that provides additional information about concurrency in the program.
-	 *
-	 * @return the object that provides additional information about concurrency in the program
 	 */
 	public ConcurrencyInformation getConcurrencyInformation() {
 		return mConcurrencyInformation;

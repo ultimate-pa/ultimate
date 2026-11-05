@@ -39,30 +39,20 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop.AutomatonType;
 
-/**
- * What a worker sends back to the main thread of the parallel CEGAR loop.
- *
- * @author Max Barth (Max.Barth@lmu.de)
- * @author Max Barth (Max.Barth@lmu.de)
- * @param <L>
- *            the type of the letters
- * @param <A>
- *            the type of the automata
- */
 public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
 
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mSubtrahend;
 	private AutomatonType mAutomatonType;
 	private ManagedScript mMgdScript;
 	private IRun<L, ?> mCounterexample;
-	private PredicateFactory mPredicateFactory;
+	PredicateFactory mPredicateFactory;
 	private final boolean mWorkerCrashed;
 	private final boolean mNoVerdict;
 	private Map<IPredicate, Term> mProofInvariants;
 	private final WorkerType mWorkerType;
 
 	/**
-	 * The object returned by an @ICegarNwaWorkerThread.
+	 * The object returned by an @ICegarNwaWorkerThread
 	 *
 	 * @param workerType
 	 *            the kind of worker that produced this result
@@ -188,9 +178,6 @@ public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IA
 		return mCounterexample;
 	}
 
-	/**
-	 * Drops the references to the data of this result.
-	 */
 	public void garbageCollect() {
 		mSubtrahend = null;
 		mAutomatonType = null;

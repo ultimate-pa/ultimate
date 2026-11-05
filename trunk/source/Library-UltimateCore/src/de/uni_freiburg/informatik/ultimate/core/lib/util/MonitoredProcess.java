@@ -141,10 +141,6 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	 * @return A monitored process instance that represents the started process.
 	 * @throws IOException
 	 *             If the command cannot be executed because there is no executable, this exception is thrown.
-	 * @throws IllegalArgumentException
-	 *             if an argument is not one this operation accepts
-	 * @throws NullPointerException
-	 *             if a required argument is null
 	 */
 	public static MonitoredProcess exec(final String[] command, final String workingDir, final String exitCommand,
 			final IUltimateServiceProvider services) throws IOException {
@@ -170,6 +166,30 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 		return newMonitoredProcess;
 	}
 
+	private static String findExecutableBinary(final String command, final ILogger logger) {
+		final String binary;
+		File f = new File(command);
+		if (f.exists()) {
+			binary = f.getAbsolutePath();
+		} else {
+			f = new File(Paths.get(System.getProperty("user.dir"), command).toString());
+			if (f.exists() && f.canExecute()) {
+				binary = f.getAbsolutePath();
+			} else {
+				final File absolutePath = CoreUtil.findExecutableBinaryOnPath(command);
+				if (absolutePath == null) {
+					logger.error("Could not determine absolute path of external process, hoping that OS will resolve "
+							+ command);
+					binary = command;
+				} else {
+					binary = absolutePath.getAbsolutePath();
+				}
+			}
+		}
+		logger.info("No working directory specified, using " + binary);
+		return binary;
+	}
+
 	/**
 	 * Start a new monitored process. The process will be terminated at the end of the toolchain or if
 	 * {@link IProgressMonitorService} signals a timeout. Note that you should not start an external process through
@@ -193,30 +213,6 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	public static MonitoredProcess exec(final String command, final String exitCommand,
 			final IUltimateServiceProvider services) throws IOException {
 		return exec(command.split(" "), null, exitCommand, services);
-	}
-
-	private static String findExecutableBinary(final String command, final ILogger logger) {
-		final String binary;
-		File f = new File(command);
-		if (f.exists()) {
-			binary = f.getAbsolutePath();
-		} else {
-			f = new File(Paths.get(System.getProperty("user.dir"), command).toString());
-			if (f.exists() && f.canExecute()) {
-				binary = f.getAbsolutePath();
-			} else {
-				final File absolutePath = CoreUtil.findExecutableBinaryOnPath(command);
-				if (absolutePath == null) {
-					logger.error("Could not determine absolute path of external process, hoping that OS will resolve "
-							+ command);
-					binary = command;
-				} else {
-					binary = absolutePath.getAbsolutePath();
-				}
-			}
-		}
-		logger.info("No working directory specified, using " + binary);
-		return binary;
 	}
 
 	private void start(final String workingDir, final IToolchainStorage storage, final String oneLineCmd) {
@@ -286,8 +282,6 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	 *            The time in milliseconds for which the method waits for the normal termination of the process. Must be
 	 *            non-negative. A value of 0 means waiting forever.
 	 * @return A {@link MonitoredProcessState} instance containing the return code of the process or -1
-	 * @throws IllegalArgumentException
-	 *             if an argument is not one this operation accepts
 	 */
 	public MonitoredProcessState impatientWaitUntilTime(final long millis) {
 		if (millis < 0) {
@@ -325,8 +319,6 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	 *            {@link IProgressMonitorService} signaled timeout before terminating the process. Must be non-negative.
 	 *            0 means no grace-period.
 	 * @return A {@link MonitoredProcessState} instance containing the return code of the process or -1
-	 * @throws IllegalArgumentException
-	 *             if an argument is not one this operation accepts
 	 */
 	public MonitoredProcessState impatientWaitUntilTimeout(final long gracePeriod) {
 		if (gracePeriod < 0) {
@@ -368,10 +360,6 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	 *
 	 * @param millis
 	 *            A time period in milliseconds after which the process should terminate. Must be larger than zero.
-	 * @throws ConcurrentModificationException
-	 *             if a timeout was already attached to this process
-	 * @throws IllegalArgumentException
-	 *             if an argument is not one this operation accepts
 	 */
 	public void setCountdownToTermination(final long millis) {
 		synchronized (this) {
@@ -396,10 +384,6 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	 * @param gracePeriod
 	 *            A time period in milliseconds that we will wait before terminating the process. Must be non-negative.
 	 *            0 means no grace-period.
-	 * @throws ConcurrentModificationException
-	 *             if a timeout was already attached to this process
-	 * @throws IllegalArgumentException
-	 *             if an argument is not one this operation accepts
 	 */
 	public void setTerminationAfterTimeout(final long gracePeriod) {
 		synchronized (this) {
@@ -481,15 +465,7 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 		}
 	}
 
-	@Override
-	public void close() {
-		forceShutdown();
-	}
-
 	/**
-	 * Returns the output stream connected to the normal input of the subprocess. Output to the stream is piped into the
-	 * standard input of the process represented by this Process object.
-	 *
 	 * @return the output stream connected to the normal input of the subprocess. Output to the stream is piped into the
 	 *         standard input of the process represented by this Process object.
 	 */
@@ -498,10 +474,6 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	}
 
 	/**
-	 * Returns the input stream connected to the error output of the subprocess. The stream obtains data piped from the
-	 * error output of the process represented by this Process object. This stream is already pumped to deal with OS
-	 * buffering.
-	 *
 	 * @return the input stream connected to the error output of the subprocess. The stream obtains data piped from the
 	 *         error output of the process represented by this Process object. This stream is already pumped to deal
 	 *         with OS buffering.
@@ -511,10 +483,6 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	}
 
 	/**
-	 * Returns the input stream connected to the normal output of the subprocess. The stream obtains data piped from the
-	 * standard output of the process represented by this Process object. This stream is already pumped to deal with OS
-	 * buffering.
-	 *
 	 * @return the input stream connected to the normal output of the subprocess. The stream obtains data piped from the
 	 *         standard output of the process represented by this Process object. This stream is already pumped to deal
 	 *         with OS buffering.
@@ -525,6 +493,11 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 
 	@Override
 	public void destroy() {
+		forceShutdown();
+	}
+
+	@Override
+	public void close() {
 		forceShutdown();
 	}
 
@@ -608,8 +581,6 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	}
 
 	/**
-	 * The state of a process that ended.
-	 *
 	 * @author dietsch@informatik.uni-freiburg.de
 	 */
 	public static final class MonitoredProcessState {
@@ -637,8 +608,6 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	}
 
 	/**
-	 * Runs the process and reports when it ends.
-	 *
 	 * @author dietsch@informatik.uni-freiburg.de
 	 */
 	private final class ProcessRunner implements Runnable {
@@ -732,8 +701,6 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 	}
 
 	/**
-	 * Copies one stream of the process to another.
-	 *
 	 * @author dietsch@informatik.uni-freiburg.de
 	 */
 	private final class PipePump implements Runnable {

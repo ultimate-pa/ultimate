@@ -119,6 +119,10 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
  */
 public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L, INestedWordAutomaton<L, IPredicate>> {
 
+	public enum AutomatonType {
+		FLOYD_HOARE, ERROR;
+	}
+
 	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;
@@ -133,40 +137,13 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	protected final SearchStrategy mSearchStrategy;
 	protected final ErrorGeneralizationEngine<L> mErrorGeneralizationEngine;
 
+	private final boolean mUseHeuristicEmptinessCheck;
+	private final ScoringMethod mScoringMethod;
+	private final AStarHeuristic mAStarHeuristic;
 	protected final Integer mAStarRandomHeuristicSeed;
 
 	protected final NwaHoareProofProducer<L> mProofUpdater;
 
-	private final boolean mUseHeuristicEmptinessCheck;
-	private final ScoringMethod mScoringMethod;
-	private final AStarHeuristic mAStarHeuristic;
-
-	/**
-	 * Creates a CEGAR loop on nested word automata.
-	 *
-	 * @param name
-	 *            the name of this CEGAR loop, for debug output
-	 * @param initialAbstraction
-	 *            the automaton the CEGAR loop starts with
-	 * @param rootNode
-	 *            the ICFG of the program
-	 * @param csToolkit
-	 *            the toolkit of the program's CFG
-	 * @param predicateFactory
-	 *            the factory for the predicates of this analysis
-	 * @param taPrefs
-	 *            the preferences of trace abstraction
-	 * @param errorLocs
-	 *            the error locations to check
-	 * @param proofProducer
-	 *            computes the proof of the program, or null if none is wanted
-	 * @param services
-	 *            the service provider of this analysis
-	 * @param transitionClazz
-	 *            the class of the letters
-	 * @param stateFactoryForRefinement
-	 *            the factory for the states of the refined abstraction
-	 */
 	public NwaCegarLoop(final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
@@ -595,9 +572,5 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	private List<IcfgLocation> getIcfgLocationsFromRun(final IRun<L, ?> run) {
 		return run.getStateSequence().stream().map(p -> ((ISLPredicate) p).getProgramPoint())
 				.collect(Collectors.toList());
-	}
-
-	public enum AutomatonType {
-		FLOYD_HOARE, ERROR;
 	}
 }

@@ -95,16 +95,6 @@ public class ManagedScript {
 		mSkolemFunctionManager = new SkolemFunctionManager();
 	}
 
-	/**
-	 * Locks this script.
-	 *
-	 * @param lockOwner
-	 *            the object that will own the lock
-	 * @throws IllegalArgumentException
-	 *             if an argument is not one this operation accepts
-	 * @throws IllegalStateException
-	 *             if this object is used in a state the operation does not allow
-	 */
 	public void lock(final Object lockOwner) {
 		if (lockOwner == null) {
 			throw new IllegalArgumentException("cannot be locked by null");
@@ -119,14 +109,6 @@ public class ManagedScript {
 		}
 	}
 
-	/**
-	 * Releases the lock of this script.
-	 *
-	 * @param lockOwner
-	 *            the owner of the lock
-	 * @throws IllegalStateException
-	 *             if this object is used in a state the operation does not allow
-	 */
 	public void unlock(final Object lockOwner) {
 		if (mLockOwner == null) {
 			throw new IllegalStateException("ManagedScript not locked");
@@ -147,9 +129,6 @@ public class ManagedScript {
 
 	/**
 	 * Throw an AssertionError if this {@link ManagedScript} is currently locked.
-	 *
-	 * @throws AssertionError
-	 *             if an internal invariant does not hold
 	 */
 	public void assertScriptNotLocked() throws AssertionError {
 		if (isLocked()) {
@@ -157,13 +136,6 @@ public class ManagedScript {
 		}
 	}
 
-	/**
-	 * Asks the current owner of the lock to release it.
-	 *
-	 * @return whether the owner was asked
-	 * @throws IllegalStateException
-	 *             if this object is used in a state the operation does not allow
-	 */
 	public boolean requestLockRelease() {
 		if (mLockOwner == null) {
 			throw new IllegalStateException("ManagedScript not locked");
@@ -272,38 +244,25 @@ public class ManagedScript {
 	}
 
 	/**
-	 * Constructs a fresh term variable.
-	 *
 	 * @param name
-	 *            what the name of the variable starts with
 	 * @param sort
-	 *            the sort of the variable
-	 * @return the fresh term variable
-	 * @see VariableManager#constructFreshTermVariable(String, Sort)
+	 * @return
+	 * @see de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript.VariableManager#constructFreshTermVariable(java.lang.String,
+	 *      de.uni_freiburg.informatik.ultimate.logic.Sort)
 	 */
 	public TermVariable constructFreshTermVariable(final String name, final Sort sort) {
 		return mVariableManager.constructFreshTermVariable(name, sort);
 	}
 
 	/**
-	 * Constructs a fresh copy of a term variable.
-	 *
 	 * @param tv
-	 *            the term variable to copy
-	 * @return the fresh copy
-	 * @see VariableManager#constructFreshCopy(TermVariable)
+	 * @return
+	 * @see de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript.VariableManager#constructFreshCopy(de.uni_freiburg.informatik.ultimate.logic.TermVariable)
 	 */
 	public TermVariable constructFreshCopy(final TermVariable tv) {
 		return mVariableManager.constructFreshCopy(tv);
 	}
 
-	/**
-	 * Constructs a fresh copy of each term variable.
-	 *
-	 * @param tvs
-	 *            the term variables to copy
-	 * @return for each term variable its fresh copy
-	 */
 	public Map<TermVariable, TermVariable> constructFreshCopies(final Set<TermVariable> tvs) {
 		final Map<TermVariable, TermVariable> result = new LinkedHashMap<>();
 		for (final TermVariable tv : tvs) {
@@ -313,13 +272,9 @@ public class ManagedScript {
 	}
 
 	/**
-	 * Constructs a term variable with a given name.
-	 *
 	 * @param varname
-	 *            the name of the variable
 	 * @param sort
-	 *            the sort of the variable
-	 * @return the term variable
+	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript.VariableManager#variable(java.lang.String,
 	 *      de.uni_freiburg.informatik.ultimate.logic.Sort)
 	 */
@@ -332,10 +287,8 @@ public class ManagedScript {
 	 * function.
 	 *
 	 * @param parameterSorts
-	 *            the sorts of the parameters of the function
 	 * @param resultSort
-	 *            the sort of the result of the function
-	 * @return a fresh name for a skolem function
+	 * @return
 	 */
 	public String constructFreshSkolemFunctionName(final Sort[] parameterSorts, final Sort resultSort) {
 		return mSkolemFunctionManager.constructFreshSkolemFunctionName(parameterSorts, resultSort);
@@ -354,7 +307,7 @@ public class ManagedScript {
 	 *
 	 * @author Matthias Heizmann
 	 */
-	private final class VariableManager {
+	private class VariableManager {
 
 		/**
 		 * Inserted between the "v_" prefix and the basename of every variable this manager constructs, to keep the
@@ -433,15 +386,15 @@ public class ManagedScript {
 		}
 	}
 
-	private static final class SkolemFunctionManager {
+	private static class SkolemFunctionManager {
 
 		private static final String SKOLEM_PREFIX = "skolem";
 
-		private int mCounter;
+		private int counter;
 
 		public String constructFreshSkolemFunctionName(final Sort[] parameterSorts, final Sort resultSort) {
 			// TODO: give nicer name, perhaps using the signature
-			return SKOLEM_PREFIX + mCounter++;
+			return SKOLEM_PREFIX + counter++;
 		}
 	}
 }

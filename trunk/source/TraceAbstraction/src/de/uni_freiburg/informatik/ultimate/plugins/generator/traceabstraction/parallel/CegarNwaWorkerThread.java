@@ -103,8 +103,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		implements ICegarNwaWorkerThread<L, A> {
-	protected static final boolean REMOVE_DEAD_ENDS = true;
-
 	private final ILogger mLogger;
 	private final TAPreferences mPref;
 	private final CegarLoopResultBuilder mResultBuilder;
@@ -124,7 +122,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	private final boolean mComputeHoareAnnotation;
 	private IcfgLocation mCurrentErrorLoc;
 	private final SimplificationTechnique mSimplificationTechnique;
-
+	protected static final boolean REMOVE_DEAD_ENDS = true;
 	private final ParallelNwaCegarLoop<L, A> mMainThread;
 	private INestedWordAutomaton<L, IPredicate> mAbstraction;
 	private StrategyFactory<L> mStrategyFactory;
@@ -152,32 +150,6 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	 * TODO provide CEGAR loop statistics
 	 *
 	 * @author Max Barth (max.barth@lmu.de)
-	 * @param logger
-	 *            the logger to write to
-	 * @param pref
-	 *            the preferences of trace abstraction
-	 * @param id
-	 *            the number of this worker, unique among the workers
-	 * @param resultBuilder
-	 *            collects the results of the CEGAR loop
-	 * @param services
-	 *            the service provider of this analysis
-	 * @param cfgSmtToolkit
-	 *            the toolkit of the program's CFG on the worker's script
-	 * @param predicateFactory
-	 *            the factory for the predicates of this analysis
-	 * @param taCheckAndRefinementPrefs
-	 *            the preferences of the trace check and the refinement
-	 * @param predicateFactoryInterpolantAutomata
-	 *            the factory for the states of interpolant automata
-	 * @param stateFactoryForRefinement
-	 *            the factory for the states of the refined abstraction
-	 * @param computeHoareAnnotation
-	 *            whether a Hoare annotation has to be computed
-	 * @param mainThread
-	 *            the CEGAR loop this worker belongs to
-	 * @param blockingQueueForResults
-	 *            where this worker puts its results
 	 * @param workerTaskQueue
 	 *            where the main thread puts the tasks of the workers
 	 * @param transferWorkerUtils
@@ -318,13 +290,17 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	 * RefinementStrateies here. For example we can use {@link RefinementStrategy.ACCELERATED_TRACE_CHECK} if we have
 	 * seen the pp 7 times.
 	 *
+	 * if (mStrategyFactory.getPathProgramCache().getPathProgramCount(mCounterexample.getWord()) == 7 ) { strategy =
+	 * mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction, new
+	 * SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration), mPredicateFactoryInterpolantAutomata,
+	 * getPreconditionProvider(), getPostconditionProvider(), RefinementStrategy.ACCELERATED_TRACE_CHECK); }
+	 *
 	 * Warning, we have shared (read and write) access to the PathProgramCache here. But the PathProgramCache uses
 	 * thread save lists and maps.
 	 */
 	private ITARefinementStrategy<L> setUpStrategy(final Counterexample<L> counterexample) {
-		mStrategyFactory =
-				new StrategyFactory<>(mLogger, mPref, mTaCheckAndRefinementPrefs, mCfgSmtToolkit, mPredicateFactory,
-						mPredicateFactoryInterpolantAutomata, mMainThread.getTransitionClazz(), mProgramCache);
+		mStrategyFactory = new StrategyFactory<>(mLogger, mPref, mTaCheckAndRefinementPrefs, mCfgSmtToolkit,
+				mPredicateFactory, mPredicateFactoryInterpolantAutomata, mMainThread.mTransitionClazz, mProgramCache);
 
 		final ITARefinementStrategy<L> strategy;
 		strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
@@ -396,10 +372,9 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	/**
-	 * Report results from a feasibility check if necessary and return the type of the refinement automaton.
+	 * Report results from a feasibility check if necessary and return the type of the refinement automaton
 	 *
 	 * @param strategy
-	 *            the refinement strategy that checked the trace
 	 */
 	private AbstractCegarLoop.AutomatonType processFeasibilityCheckResult(final ITARefinementStrategy<L> strategy,
 			final LBool isCounterexampleFeasible, final IProgramExecution<L, Term> programExecution,
@@ -438,12 +413,10 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	/**
-	 * This Method does not do the sanity checks done in NWA for the correctness of Error and Interpolant automata!.
+	 * This Method does not do the sanity checks done in NWA for the correctness of Error and Interpolant automata!
 	 *
 	 * @param automatonType
-	 *            the type of automaton to construct
 	 * @throws AutomataOperationCanceledException
-	 *             if the operation ran out of time or was canceled
 	 */
 	private void constructRefinementAutomaton(final AbstractCegarLoop.AutomatonType automatonType)
 			throws AutomataOperationCanceledException {
@@ -470,6 +443,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 
 	private WorkerThreadResult<L, A> refineAbstractionInternally() throws AutomataLibraryException {
 		mStateFactoryForRefinement.setIteration(mIteration);
+		// mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
 		final IHoareTripleChecker htc = getHoareTripleChecker();
 

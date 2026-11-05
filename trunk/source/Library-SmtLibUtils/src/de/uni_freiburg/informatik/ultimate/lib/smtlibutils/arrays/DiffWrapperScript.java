@@ -43,8 +43,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashSet;
  */
 public class DiffWrapperScript extends WrapperScript {
 
-	private static final String DIFF_FUNCTION_PREFIX = "ULTIMATE@diff";
-
 	/**
 	 * All declared non-polymorphic diff functions.
 	 */
@@ -54,6 +52,8 @@ public class DiffWrapperScript extends WrapperScript {
 	 * All instantiated diff axioms.
 	 */
 	private ScopedHashSet<Doubleton<Term>> mDiffAxioms;
+
+	private static final String DIFF_FUNCTION_PREFIX = "ULTIMATE@diff";
 
 	/**
 	 * Create a new script adding diff support around some existing script.
@@ -79,19 +79,19 @@ public class DiffWrapperScript extends WrapperScript {
 		setLogic(Logics.valueOf(logic));
 	}
 
+	private void setupDiffFunction() {
+		final Theory theory = mScript.term("true").getSort().getTheory();
+		final Sort[] vars = theory.createSortVariables("Index", "Elem");
+		final Sort array = theory.getSort("Array", vars);
+		theory.declareInternalPolymorphicFunction("@diff", vars, new Sort[] { array, array }, vars[0], 0);
+	}
+
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
 		mScript.setLogic(logic);
 		setupDiffFunction();
 		mDiffFunctions = new ScopedHashMap<>();
 		mDiffAxioms = new ScopedHashSet<>();
-	}
-
-	private void setupDiffFunction() {
-		final Theory theory = mScript.term("true").getSort().getTheory();
-		final Sort[] vars = theory.createSortVariables("Index", "Elem");
-		final Sort array = theory.getSort("Array", vars);
-		theory.declareInternalPolymorphicFunction("@diff", vars, new Sort[] { array, array }, vars[0], 0);
 	}
 
 	@Override

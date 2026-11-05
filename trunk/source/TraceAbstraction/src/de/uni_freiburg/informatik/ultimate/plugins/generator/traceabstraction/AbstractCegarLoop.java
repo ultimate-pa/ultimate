@@ -178,41 +178,29 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 
 	protected Dumper mDumper;
 
-	protected final CegarLoopResultBuilder mResultBuilder;
-
 	/**
 	 * Unique mName of this CEGAR loop to distinguish this instance from other instances in a complex verification task.
 	 * Important only for debugging and debugging output written to files.
 	 */
 	private final DebugIdentifier mName;
-
+	protected final CegarLoopResultBuilder mResultBuilder;
 	private Map<IcfgLocation, Long> mTimeBudget;
 
 	/**
-	 * Creates a CEGAR loop.
 	 *
 	 * @param services
-	 *            the service provider of this analysis
 	 * @param name
-	 *            the name of this CEGAR loop, for debug output
 	 * @param initialAbstraction
 	 *            An automaton such that the recognised language is a superset of the language of the program. The
 	 *            initial abstraction in our implementations will usually be an automaton that has the same graph as the
 	 *            program.
 	 * @param rootNode
-	 *            the ICFG of the program
 	 * @param csToolkit
-	 *            the toolkit of the program's CFG
 	 * @param predicateFactory
-	 *            the factory for the predicates of this analysis
 	 * @param taPrefs
-	 *            the preferences of trace abstraction
 	 * @param errorLocs
-	 *            the error locations to check
 	 * @param logger
-	 *            the logger to write to
 	 * @param computeHoareAnnotation
-	 *            whether a Hoare annotation has to be computed
 	 */
 	protected AbstractCegarLoop(final IUltimateServiceProvider services, final DebugIdentifier name,
 			final A initialAbstraction, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
@@ -246,7 +234,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 * Return true iff the mAbstraction does not accept any trace.
 	 *
 	 * @throws AutomataOperationCanceledException
-	 *             if the operation ran out of time or was canceled
 	 */
 	protected abstract boolean isAbstractionEmpty() throws AutomataOperationCanceledException;
 
@@ -268,19 +255,18 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			throws AutomataOperationCanceledException;
 
 	/**
-	 * Construct an automaton mInterpolantAutomaton which.
+	 * Construct an automaton mInterpolantAutomaton which
 	 * <ul>
 	 * <li>accepts the trace of mCounterexample,
 	 * <li>accepts only infeasible traces.
 	 * </ul>
 	 *
 	 * @throws AutomataOperationCanceledException
-	 *             if the operation ran out of time or was canceled
 	 */
 	protected abstract void constructInterpolantAutomaton() throws AutomataOperationCanceledException;
 
 	/**
-	 * Construct an automaton that.
+	 * Construct an automaton that
 	 * <ul>
 	 * <li>accepts the trace of mCounterexample,
 	 * <li>accepts only feasible traces.
@@ -289,7 +275,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	protected abstract void constructErrorAutomaton() throws AutomataOperationCanceledException;
 
 	/**
-	 * Construct a new automaton mAbstraction such that.
+	 * Construct a new automaton mAbstraction such that
 	 * <ul>
 	 * <li>the language of the new mAbstraction is (not necessary strictly) smaller than the language of the old
 	 * mAbstraction
@@ -299,7 +285,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 * @return true iff the trace of mCounterexample (which was accepted by the old mAbstraction) is not accepted by the
 	 *         mAbstraction.
 	 * @throws AutomataLibraryException
-	 *             if an automaton operation fails
 	 */
 	protected abstract boolean refineAbstraction() throws AutomataLibraryException;
 
@@ -349,11 +334,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 */
 	protected abstract void finish();
 
-	/**
-	 * Runs the CEGAR loop.
-	 *
-	 * @return the result of the CEGAR loop
-	 */
 	public final CegarLoopResult<L> runCegar() {
 		final CegarLoopResult<L> r = startCegar();
 		finish();
@@ -386,11 +366,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	}
 
 	/**
-	 * Returns true iff the initial abstraction is empty, false otherwise.
-	 *
 	 * @return true iff the initial abstraction is empty, false otherwise
 	 * @throws AutomataLibraryException
-	 *             if an automaton operation fails
 	 */
 	private boolean computeInitialAbstraction() throws AutomataLibraryException {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime.toString());
@@ -398,7 +375,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			abortIfTimeout();
 			initialize();
 		} catch (AutomataOperationCanceledException | ToolchainCanceledException ex) {
-			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), "constructing initial abstraction");
+			final RunningTaskInfo runningTaskInfo =
+					new RunningTaskInfo(this.getClass(), "constructing initial abstraction");
 			ex.addRunningTaskInfo(runningTaskInfo);
 			throw ex;
 		} finally {
@@ -539,7 +517,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	}
 
 	/**
-	 * Report results from a feasibility check if necessary and return the type of the refinement automaton.
+	 * Report results from a feasibility check if necessary and return the type of the refinement automaton
 	 */
 	private AutomatonType processFeasibilityCheckResult(final LBool isCounterexampleFeasible,
 			final IProgramExecution<L, Term> programExecution, final IcfgLocation currentErrorLoc) {
@@ -717,20 +695,20 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	}
 
 	/**
-	 * Result of CEGAR loop iteration.
+	 * Result of CEGAR loop iteration
 	 */
 	public enum Result {
 		/**
-		 * there is no feasible trace to an error location.
+		 * there is no feasible trace to an error location
 		 */
 		SAFE(2),
 		/**
 		 * there is a feasible trace to an error location (the underlying program has at least one execution which
-		 * violates its specification).
+		 * violates its specification)
 		 */
 		UNSAFE(1),
 		/**
-		 * The core timeout was hit or a user canceled the verification.
+		 * The core timeout was hit or a user canceled the verification
 		 */
 		TIMEOUT(4),
 		/**
@@ -739,24 +717,21 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		 */
 		UNKNOWN(3),
 		/**
-		 * The user-specified timeout for the analysis was hit.
+		 * The user-specified timeout for the analysis was hit
 		 */
 		USER_LIMIT_TIME(4),
 		/**
-		 * The user-specified limit for the max-size of the trace histogram was hit.
+		 * The user-specified limit for the max-size of the trace histogram was hit
 		 */
 		USER_LIMIT_TRACEHISTOGRAM(4),
 		/**
-		 * The user-specified limit for the amount of CEGAR iterations was hit.
+		 * The user-specified limit for the amount of CEGAR iterations was hit
 		 */
 		USER_LIMIT_ITERATIONS(4),
 		/**
-		 * The user-specified limit for the amount of analysis attempts per path program was hit.
+		 * The user-specified limit for the amount of analysis attempts per path program was hit
 		 */
 		USER_LIMIT_PATH_PROGRAM(4);
-
-		public static final Set<Result> USER_LIMIT_RESULTS =
-				EnumSet.of(USER_LIMIT_ITERATIONS, USER_LIMIT_PATH_PROGRAM, USER_LIMIT_TIME, USER_LIMIT_TRACEHISTOGRAM);
 
 		private final int mHierarchy;
 
@@ -767,20 +742,12 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		/**
 		 * Compare two results and return true iff this is more important or of equal importance than the other
 		 * according to their partial order: {@link #UNSAFE} >> {@link #SAFE} >> {@link #UNKNOWN} >> the rest.
-		 *
-		 * @param other
-		 *            the other result
-		 * @return whether this result is at least as important as {@code other}
 		 */
 		public boolean compareAuthority(final Result other) {
 			return mHierarchy <= other.mHierarchy;
 		}
 
 		/**
-		 * Returns true if one result is {@link #UNSAFE} and the other is {@link #SAFE}, false otherwise.
-		 *
-		 * @param other
-		 *            the other result
 		 * @return true if one result is {@link #UNSAFE} and the other is {@link #SAFE}, false otherwise.
 		 */
 		public boolean isConflicting(final Result other) {
@@ -791,19 +758,13 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			return a.compareAuthority(b) ? a : b;
 		}
 
+		public static final Set<Result> USER_LIMIT_RESULTS =
+				EnumSet.of(USER_LIMIT_ITERATIONS, USER_LIMIT_PATH_PROGRAM, USER_LIMIT_TIME, USER_LIMIT_TRACEHISTOGRAM);
+
 		public boolean isLimit() {
 			return this == TIMEOUT || USER_LIMIT_RESULTS.contains(this);
 		}
 
-		/**
-		 * Maps the reason an analysis ended to a result.
-		 *
-		 * @param t
-		 *            what was thrown
-		 * @return the result to report
-		 * @throws UnsupportedOperationException
-		 *             if the program or the solver is outside what this class supports
-		 */
 		public static final Result convert(final Throwable t) {
 			if (t instanceof TaskCanceledException) {
 				final TaskCanceledException tce = (TaskCanceledException) t;
@@ -816,13 +777,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 					"Cannot convert " + t.getClass().getSimpleName() + " to " + Result.class);
 		}
 
-		/**
-		 * Maps the reason an analysis ended to a result.
-		 *
-		 * @param limit
-		 *            the limit that was reached
-		 * @return the result to report
-		 */
 		public static final Result convert(final TaskCanceledException.UserDefinedLimit limit) {
 			return switch (limit) {
 			case ITERATIONS -> Result.USER_LIMIT_ITERATIONS;
@@ -841,19 +795,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			return addResultForAllRemaining(result, null, null, null);
 		}
 
-		/**
-		 * Reports a result for every location that has none yet.
-		 *
-		 * @param result
-		 *            the result to report
-		 * @param rcfgProgramExecution
-		 *            the program execution behind the result, or null
-		 * @param rtsp
-		 *            where the result was found, if the analysis was canceled
-		 * @param reasonUnknown
-		 *            why the result is unknown, or null
-		 * @return this builder
-		 */
 		public CegarLoopResultBuilder addResultForAllRemaining(final Result result,
 				final IProgramExecution<L, Term> rcfgProgramExecution, final IRunningTaskStackProvider rtsp,
 				final UnprovabilityReason reasonUnknown) {
@@ -862,19 +803,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			return this;
 		}
 
-		/**
-		 * Reports a result for the error location of a program execution.
-		 *
-		 * @param result
-		 *            the result to report
-		 * @param programExecution
-		 *            the program execution behind the result
-		 * @param rtsp
-		 *            where the result was found, if the analysis was canceled
-		 * @param reasonUnknown
-		 *            why the result is unknown, or null
-		 * @return this builder
-		 */
 		public CegarLoopResultBuilder addResultForProgramExecution(final Result result,
 				final IProgramExecution<L, Term> programExecution, final IRunningTaskStackProvider rtsp,
 				final UnprovabilityReason reasonUnknown) {
@@ -884,23 +812,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 
 		}
 
-		/**
-		 * Reports a result for one location.
-		 *
-		 * @param loc
-		 *            the error location
-		 * @param result
-		 *            the result to report
-		 * @param rcfgProgramExecution
-		 *            the program execution behind the result, or null
-		 * @param rtsp
-		 *            where the result was found, if the analysis was canceled
-		 * @param reasonUnknown
-		 *            why the result is unknown, or null
-		 * @return this builder
-		 * @throws AssertionError
-		 *             if an internal invariant does not hold
-		 */
 		public CegarLoopResultBuilder addResult(final IcfgLocation loc, final Result result,
 				final IProgramExecution<L, Term> rcfgProgramExecution, final IRunningTaskStackProvider rtsp,
 				final UnprovabilityReason reasonUnknown) {
@@ -957,11 +868,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 
 		}
 
-		/**
-		 * Returns the result collected so far.
-		 *
-		 * @return the result collected so far
-		 */
 		public CegarLoopResult<L> getResult() {
 			final IStatisticsDataProvider cegarLoopBenchmarkGenerator = getCegarLoopBenchmark();
 

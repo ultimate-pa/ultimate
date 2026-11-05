@@ -67,18 +67,11 @@ public class Scriptor extends NoopScript {
 	 * @param command
 	 *            the command that starts the external SMT solver. The solver is expected to read smtlib 2 commands on
 	 *            stdin.
-	 * @param logger
-	 *            the logger to write to
 	 * @param services
-	 *            the service provider of this analysis
-	 * @param solverName
-	 *            the name of the solver, for the log
 	 * @param fullPathOfDumpedLogFile
 	 *            null if we should not dump the script to a file or a path to a file
 	 * @throws IOExceptionO
 	 *             If the solver is not installed
-	 * @throws IOException
-	 *             if the solver process cannot be started or reached
 	 */
 	public Scriptor(final String command, final ILogger logger, final IUltimateServiceProvider services,
 			final String solverName, final String fullPathOfDumpedLogFile) throws IOException {
@@ -258,7 +251,7 @@ public class Scriptor extends NoopScript {
 		return mExecutor.parseGetAssertionsResult();
 	}
 
-	/** Proofs are not supported, since they are not standardized *. */
+	/** Proofs are not supported, since they are not standardized **/
 	@Override
 	public Term getProof() throws SMTLIBException, UnsupportedOperationException {
 		throw new UnsupportedOperationException("Proofs are not supported");
@@ -337,11 +330,7 @@ public class Scriptor extends NoopScript {
 		return mExecutor.parseGetModelResult();
 	}
 
-	/**
-	 * This method is used in the output parser, to support (get-info :status) *.
-	 *
-	 * @return the status of the last check-sat
-	 */
+	/** This method is used in the output parser, to support (get-info :status) **/
 	public LBool getStatus() {
 		return mStatus;
 	}

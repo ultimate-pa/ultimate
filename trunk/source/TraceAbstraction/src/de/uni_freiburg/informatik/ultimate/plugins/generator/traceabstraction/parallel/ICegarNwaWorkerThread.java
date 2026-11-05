@@ -27,15 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel;
 
-/**
- * Interface for grouping different kinds of WorkerThreads.
- *
- * @author Max Barth (Max.Barth@lmu.de)
- * @author Max Barth (Max.Barth@lmu.de)
- * @param <L>
- *            the type of the letters
- * @param <A>
- *            the type of the automata
+/*
+ * Interface for grouping different kinds of WorkerThreads
  */
 public interface ICegarNwaWorkerThread<L, A> extends Runnable {
 

@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
@@ -105,8 +106,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		extends NwaCegarLoop<L> {
 
-	private static final String DESTROY_EVERYTHING = "destroyEverything";
-
 	/** z3's value of :timeout for no timeout at all. */
 	private static final long Z3_NO_TIMEOUT = 4294967295L;
 
@@ -132,7 +131,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 	private static final long WORKER_TERMINATION_TIMEOUT_SECONDS = 10;
 
-	protected InterpolationTechnique mInterpolationTechnique;
+	final String mDestroyEverything = "destroyEverything";
 
 	// Parallel Setup
 	private final ExecutorService mExec;
@@ -150,18 +149,20 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	// Set before the workers are shut down and their solvers destroyed: a query failing from then on is no crash.
 	private volatile boolean mShuttingDown;
 
+	// private final CompletionService<WorkerThreadResult<L, A>> mECS;
 	private final BlockingQueue<WorkerThreadTask<L>> mWorkerTaskQueue = new LinkedBlockingQueue<>();
-	private final BlockingQueue<WorkerThreadResult<L, A>> mWorkerResultQueue = new LinkedBlockingQueue<>();
+	BlockingQueue<WorkerThreadResult<L, A>> mWorkerResultQueue = new LinkedBlockingQueue<>();
 
 	// need global program cache, but worker need to get copy otherwise we
 	// synchronize
 	private final PathProgramCache<L> mProgramCache = new PathProgramCache<>(mLogger);
 
 	// Strategies
-	private final HashMap<Integer, NestedRun<L, ?>> mActiveCounterexamples = new HashMap<>();
+	public final HashMap<Integer, NestedRun<L, ?>> mActiveCounterexamples = new HashMap<>();
 	private final Set<Integer> mCounterexamplesToBeRemovedFromActiveCexMap = new HashSet<>();
+	protected InterpolationTechnique mInterpolationTechnique;
 
-	private Class<L> mTransitionClazz;
+	protected Class<L> mTransitionClazz;
 
 	// Addtional Statistiks for Evaluation
 	private Integer mCounterexamplesChecked = 0;
@@ -171,7 +172,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	private Integer mCountFailedToFindCex = 0;
 	private Integer mCountBfsFoundCex = 1;
 	private final Integer mCountIsEmptyParallel = 0;
-	private Integer mMaxActiveThreads = 0;
+	private Integer maxActiveThreads = 0;
 	private final Integer mActiveExecutors = 0;
 	private long mSearchTime = 0;
 	private long mWorkerSetUpTime = 0;
@@ -196,28 +197,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * TODO option to save memory, measure heap, then dont spawn worker / kill a worker
 	 *
 	 * @author Max Barth (max.barth@lmu.de)
-	 * @param name
-	 *            the name of this CEGAR loop, for debug output
-	 * @param initialAbstraction
-	 *            the automaton the CEGAR loop starts with
-	 * @param rootNode
-	 *            the ICFG of the program
-	 * @param csToolkit
-	 *            the toolkit of the program's CFG
-	 * @param predicateFactory
-	 *            the factory for the predicates of this analysis
-	 * @param taPrefs
-	 *            the preferences of trace abstraction
-	 * @param errorLocs
-	 *            the error locations to check
-	 * @param proofProducer
-	 *            computes the proof of the program, or null if none is wanted
-	 * @param services
-	 *            the service provider of this analysis
-	 * @param transitionClazz
-	 *            the class of the letters
-	 * @param stateFactoryForRefinement
-	 *            the factory for the states of the refined abstraction
 	 * @throws AssertionError
 	 *             if an internal invariant does not hold
 	 * @throws UnsupportedOperationException
@@ -261,7 +240,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 		mExec = Executors.newFixedThreadPool(mThreadLimit, workerThreadFactory("Cegar Worker"));
 		Thread.currentThread().setName("Main Cegar Thread");
-		getServices().getStorage().pushMarker(DESTROY_EVERYTHING);
+		getServices().getStorage().pushMarker(mDestroyEverything);
 	}
 
 	private static ThreadFactory workerThreadFactory(final String name) {
@@ -391,7 +370,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				// TODO we can try to recover, and restart the worker.
 				// It might be that just this counterexample crashes our worker and we can still prove the
 				// program correct
-				shutDownAndDestroy(DESTROY_EVERYTHING);
+				shutDownAndDestroy(mDestroyEverything);
 				throw new AssertionError("Worker Crashed!, Exiting CEGAR loop!");
 			}
 			// A worker that ran to completion without deciding the program (the solver answered unknown). It has
@@ -404,7 +383,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				if (mRetiredWorkers >= mThreadLimit) {
 					mLogger.warn("Main: every worker finished without a verdict, reporting UNKNOWN");
 					mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
-					shutDownAndDestroy(DESTROY_EVERYTHING);
+					shutDownAndDestroy(mDestroyEverything);
 					updateAndPrintStatistics(true);
 					return true;
 				}
@@ -420,7 +399,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				mLogger.info("Main: %s refuted the program", workerResult.getWorkerType());
 				// Fills only the error locations that have no result yet; the refuted one keeps its UNSAFE.
 				mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
-				shutDownAndDestroy(DESTROY_EVERYTHING);
+				shutDownAndDestroy(mDestroyEverything);
 				updateAndPrintStatistics(true);
 				return true;
 			}
@@ -439,7 +418,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			}
 			// If Error automaton terminate immediately
 			if (mPref.stopAfterFirstViolation() && workerResult.getAutomatonType() == AutomatonType.ERROR) {
-				shutDownAndDestroy(DESTROY_EVERYTHING);
+				shutDownAndDestroy(mDestroyEverything);
 				updateAndPrintStatistics(true);
 				return true;
 			}
@@ -657,8 +636,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 	private void updateAndPrintStatistics(final boolean printStatistics) {
 
-		if (mRunningThreads > mMaxActiveThreads) {
-			mMaxActiveThreads = mRunningThreads;
+		if (mRunningThreads > maxActiveThreads) {
+			maxActiveThreads = mRunningThreads;
 		}
 		if (mRunningThreads == mThreadLimit) {
 			mIterationsWithMaxThreads += 1;
@@ -675,7 +654,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			mLogger.info("SearchFailed: " + mCountFailedToFindCex);
 			mLogger.info("BFS: " + mCountBfsFoundCex);
 			mLogger.info("IsEmptyParallel: " + mCountIsEmptyParallel);
-			mLogger.info("ActiveThreads: " + mMaxActiveThreads);
+			mLogger.info("ActiveThreads: " + maxActiveThreads);
 			mLogger.info("ActiveExecutorsForPathPrograms: " + mActiveExecutors);
 			mLogger.info("IterationsWithMaxThreads: " + mIterationsWithMaxThreads);
 			mLogger.info("IterationsWithONEThread: " + mIterationsWithOneThread);
@@ -693,7 +672,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mLogger.info("Checking if program is safe");
 		if (super.isAbstractionEmpty() || mAbstraction.size() == 0) {
 			mResultBuilder.addResultForAllRemaining(Result.SAFE);
-			shutDownAndDestroy(DESTROY_EVERYTHING);
+			shutDownAndDestroy(mDestroyEverything);
 			return true;
 		}
 		// set cex to null to be certain we dont check counterexamples from the old
@@ -913,45 +892,54 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend,
 			final WorkerThreadResult<L, A> workerResult, final PredicateFactoryRefinement stateFactoryForRefinement)
 			throws AutomataLibraryException, AssertionError {
-		mLogger.debug("Start constructing difference");
+		try {
+			mLogger.debug("Start constructing difference");
 
-		if (mLogger.isDebugEnabled() && !new Accepts<>(new AutomataLibraryServices(getServices()), minuend,
-				(NestedWord<L>) workerResult.getCounterexample().getWord()).getResult()) {
-			mLogger.debug("Counterexample of worker result is no longer accepted by the abstraction");
-		}
-
-		final PowersetDeterminizer<L, IPredicate> psd =
-				new PowersetDeterminizer<>(subtrahend, true, mPredicateFactoryInterpolantAutomata);
-		// As in NwaCegarLoop: a proof needs the states that the sigma-star exploitation would skip.
-		final boolean exploitSigmaStarConcatOfIa = workerResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE)
-				&& (mProofUpdater == null || mProofUpdater.exploitSigmaStarConcatOfIa());
-		IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
-		// We never enhance in main thread!
-		if (mPref.differenceSenwa()) {
-			diff = new DifferenceSenwa<>(new AutomataLibraryServices(getServices()), stateFactoryForRefinement, minuend,
-					subtrahend, psd, false);
-		} else {
-			diff = new Difference<>(new AutomataLibraryServices(getServices()), stateFactoryForRefinement, minuend,
-					subtrahend, psd, exploitSigmaStarConcatOfIa);
-		}
-		mCegarLoopBenchmark.reportInterpolantAutomatonStates(subtrahend.size());
-
-		// Future work:
-		assert !mPref.dumpOnlyReuseAutomata();
-		assert mFaultLocalizationMode == RelevanceAnalysisMode.NONE;
-
-		if (REMOVE_DEAD_ENDS) {
-			if (mProofUpdater != null) {
-				// SENWA is rejected in the constructor if we compute a proof
-				final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
-				mProofUpdater.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
+			if (mLogger.isDebugEnabled() && !new Accepts<>(new AutomataLibraryServices(getServices()), minuend,
+					(NestedWord<L>) workerResult.getCounterexample().getWord()).getResult()) {
+				mLogger.debug("Counterexample of worker result is no longer accepted by the abstraction");
 			}
-			diff.removeDeadEnds();
-			if (mProofUpdater != null) {
-				mProofUpdater.addDeadEndDoubleDeckers(diff);
+
+			final PowersetDeterminizer<L, IPredicate> psd =
+					new PowersetDeterminizer<>(subtrahend, true, mPredicateFactoryInterpolantAutomata);
+			// As in NwaCegarLoop: a proof needs the states that the sigma-star exploitation would skip.
+			final boolean exploitSigmaStarConcatOfIa = workerResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE)
+					&& (mProofUpdater == null || mProofUpdater.exploitSigmaStarConcatOfIa());
+			IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
+			try {
+				if (mPref.differenceSenwa()) {
+					diff = new DifferenceSenwa<>(new AutomataLibraryServices(getServices()), stateFactoryForRefinement,
+							minuend, subtrahend, psd, false);
+				} else {
+					diff = new Difference<>(new AutomataLibraryServices(getServices()), stateFactoryForRefinement,
+							minuend, subtrahend, psd, exploitSigmaStarConcatOfIa);
+				}
+				mCegarLoopBenchmark.reportInterpolantAutomatonStates(subtrahend.size());
+
+			} catch (final AutomataOperationCanceledException | ToolchainCanceledException tce) {
+				throw tce;
+			} finally {
+				// We never enhance in main thread!
 			}
+
+			// Future work:
+			assert !mPref.dumpOnlyReuseAutomata();
+			assert mFaultLocalizationMode == RelevanceAnalysisMode.NONE;
+
+			if (REMOVE_DEAD_ENDS) {
+				if (mProofUpdater != null) {
+					// SENWA is rejected in the constructor if we compute a proof
+					final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
+					mProofUpdater.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
+				}
+				diff.removeDeadEnds();
+				if (mProofUpdater != null) {
+					mProofUpdater.addDeadEndDoubleDeckers(diff);
+				}
+			}
+			return diff;
+		} finally {
 		}
-		return diff;
 	}
 
 	/**
@@ -1039,9 +1027,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	/**
-	 * Returns the settings of the invariant supplier's probation of k-induction's queries, or {@code null} if it is
-	 * disabled or there is no k-induction worker.
-	 *
 	 * @return the settings of the invariant supplier's probation of k-induction's queries, or {@code null} if it is
 	 *         disabled or there is no k-induction worker
 	 */

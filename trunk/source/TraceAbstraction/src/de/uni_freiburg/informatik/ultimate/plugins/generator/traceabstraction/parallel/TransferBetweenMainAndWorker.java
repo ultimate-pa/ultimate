@@ -87,10 +87,9 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 
 	private final ManagedScript mMainScript;
 	private final ManagedScript mWorkerScript;
-	// Bidirectional
-	private final HashMap<LETTER, LETTER> mEdgeCache = new HashMap<>();
-	// Maps worker -> main
-	private final HashMap<IProgramVar, IProgramVar> mProgramVarBackTranslationCache = new HashMap<>();
+	private final HashMap<LETTER, LETTER> mEdgeCache = new HashMap<>(); // Bidirectional
+	private final HashMap<IProgramVar, IProgramVar> mProgramVarBackTranslationCache = new HashMap<>(); // Maps worker ->
+																										// main
 	private final AutomataLibraryServices mServices;
 	private final IUltimateServiceProvider mIUltiamteServices;
 	private final TermTransferrer mWorker2main;
@@ -99,6 +98,10 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	private final CfgSmtToolkit mMainCsToolkit;
 	private final CfgSmtToolkit mWorkerCsToolkit;
 	private final ProgramVariableTransferrer mVarTransfer;
+
+	public enum TransferMode {
+		NONE, MAIN2WORKER, WORKER2MAIN
+	}
 
 	private TransferMode mMode = TransferMode.NONE;
 
@@ -112,18 +115,10 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	 * future we might want to use those here, too.
 	 *
 	 * @author Max Barth (max.barth@lmu.de)
-	 * @param services
-	 *            the service provider of this analysis
-	 * @param logger
-	 *            the logger to write to
 	 * @param main
-	 *            the script of the main thread
-	 * @param solverServices
-	 *            the services the solver of the worker runs under
 	 * @param solverSettings
 	 *            the settings of the solver to start
 	 * @param mainCfgToolKit
-	 *            the toolkit of the CFG on the main script
 	 * @param freshVarPrefix
 	 *            carried by every variable the worker {@link ManagedScript} mints, so that its names cannot clash with
 	 *            the main script's, whose whole declaration history is replayed onto the worker script; see
@@ -149,12 +144,9 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 		mWorkerCsToolkit = constructWorkerCfgSmtToolkit();
 	}
 
-	/*
+	/**
 	 * Gets a run / counterexample with Letters whose transformula comes from one script. Returns a new run with new
 	 * letters, whose transformula comes from target script. The semantics of both runs are equal.
-	 */
-	/**
-	 * Transfers a run.
 	 *
 	 * @param counterexample
 	 *            the run
@@ -162,7 +154,7 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	 *            the direction of the transfer
 	 * @return the transferred run
 	 * @throws UnsupportedOperationException
-	 *             if the program or the solver is outside what this class supports
+	 *             if a letter is of a kind that cannot be transferred
 	 */
 	public IRun<LETTER, ?> transferRun(final NestedRun<LETTER, ?> counterexample, final TransferMode mode) {
 		final NestedRun<LETTER, ?> oldCounterexample = counterexample;
@@ -367,15 +359,6 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 		return transferredMap;
 	}
 
-	/**
-	 * Transfers a set of term variables.
-	 *
-	 * @param transferrer
-	 *            the transferrer to use
-	 * @param inputSet
-	 *            the term variables
-	 * @return the transferred term variables
-	 */
 	public static Set<TermVariable> transferSet(final TermTransferrer transferrer, final Set<TermVariable> inputSet) {
 		final Set<TermVariable> outSet = new HashSet<>();
 		for (final TermVariable var : inputSet) {
@@ -392,15 +375,10 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	 * transferred from one script to another depending on the @mode. The new automaton has a new Alphabet, and can have
 	 * less transitions than the input automaton. TODO check if this can really be sound
 	 *
-	 * @param automaton
-	 *            the automaton to transfer
 	 * @param emptyStateFactory
 	 *            the factory for the empty stack state
 	 * @param mode
 	 *            the direction of the transfer
-	 * @return the transferred automaton
-	 * @throws AssertionError
-	 *             if an internal invariant does not hold
 	 */
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> transferAutomaton(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton,
@@ -532,11 +510,6 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 
 	}
 
-	/**
-	 * Constructs the toolkit of the CFG on the script of the worker.
-	 *
-	 * @return the toolkit on the script of the worker
-	 */
 	public CfgSmtToolkit constructWorkerCfgSmtToolkit() {
 		final HashRelation<String, IProgramNonOldVar> proc2globals =
 				constructNewProc2Globals(mMainCsToolkit.getModifiableGlobalsTable().getProcToGlobals(), mVarTransfer);
@@ -609,10 +582,6 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 
 	public CfgSmtToolkit getWorkerCfgSmtToolKit() {
 		return mWorkerCsToolkit;
-	}
-
-	public enum TransferMode {
-		NONE, MAIN2WORKER, WORKER2MAIN
 	}
 
 }

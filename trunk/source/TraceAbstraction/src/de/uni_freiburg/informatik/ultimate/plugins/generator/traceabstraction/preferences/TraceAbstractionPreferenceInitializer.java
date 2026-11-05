@@ -79,54 +79,90 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	// This setting is useful to debug the proof check.
 	public static final String LABEL_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE =
 			"Read initial proof assertions from file if available";
+	private static final boolean DEF_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE = false;
 
 	// User Limits
 	// ========================================================================
 
 	public static final String LABEL_USERLIMIT_TRACE_HISTOGRAM = "Limit trace histogram size";
+	private static final int DEF_USERLIMIT_TRACE_HISTOGRAM = 0;
+	private static final String DESC_USERLIMIT_TRACE_HISTOGRAM =
+			"Abort the analysis of either a single error location or the whole program if the trace histogram of the "
+					+ "current counterexample is larger than this value. 0 disables this limit.";
 
 	public static final String LABEL_USERLIMIT_TIME = "Limit analysis time";
+	private static final int DEF_USERLIMIT_TIME = 0;
+	private static final String DESC_USERLIMIT_TIME =
+			"Abort the analysis of either a single error location or the whole program if more time than specified has "
+					+ "elapsed. Time is specified in seconds. 0 disables this limit.";
 
 	public static final String LABEL_USERLIMIT_PATH_PROGRAM = "Limit path program analysis attempts";
+	private static final int DEF_USERLIMIT_PATH_PROGRAM = 0;
+	private static final String DESC_USERLIMIT_PATH_PROGRAM =
+			"Abort the analysis of either a single error location or the whole program if the same path program has "
+					+ "been induced by spurious counterexamples more than the specified amount of times. "
+					+ "0 disables this limit.";
 
 	public static final String LABEL_USERLIMIT_ITERATIONS = "Limit iterations";
+	private static final int DEF_USERLIMIT_ITERATIONS = 1_000_000;
+	private static final String DESC_USERLIMIT_ITERATIONS =
+			"Abort the analysis of either a single error location or the whole program if more than the specified "
+					+ "amount of iterations occured. 0 disables this limit.";
 
 	// Settings for concurrent programs
 	// ========================================================================
 
 	public static final String LABEL_ORDER_OF_ERROR_LOCATIONS = "Order of the error locations to be checked";
+	private static final OrderOfErrorLocations DEF_ORDER_OF_ERROR_LOCATIONS = OrderOfErrorLocations.TOGETHER;
+	private static final String DESC_ORDER_OF_ERROR_LOCATIONS =
+			"Order to check the reachability for different types of error locations (for concurrent programs). "
+					+ "With " + OrderOfErrorLocations.INSUFFICIENT_FIRST
+					+ " we first check, if there are enough threads in our translation, before checking for errors in the program. "
+					+ OrderOfErrorLocations.PROGRAM_FIRST + " and " + OrderOfErrorLocations.TOGETHER
+					+ " work accordingly.";
 
 	public static final String LABEL_CONCURRENCY = "Automaton type used in concurrency analysis";
+	private static final Concurrency DEF_CONCURRENCY = Concurrency.FINITE_AUTOMATA;
 
 	public static final String LABEL_MCR_REFINEMENT_STRATEGY = "Trace refinement strategy used in MCR";
+	private static final RefinementStrategy DEF_MCR_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
 
 	public static final String LABEL_MCR_INTERPOLANT_METHOD =
 			"Method to provide additional interpolants for the MCR automaton";
+	private static final McrInterpolantMethod DEF_MCR_INTERPOLANT_METHOD = McrInterpolantMethod.WP;
 
 	// Settings for Petri net Large Block Encoding (Lipton Reduction)
 	// ========================================================================
 
 	public static final String LABEL_PETRI_LBE_ONESHOT = "Apply one-shot large block encoding in concurrent analysis";
+	private static final boolean DEF_PETRI_LBE_ONESHOT = false;
 
 	public static final String LABEL_INDEPENDENCE_PLBE =
 			"Independence relation used for large block encoding in concurrent analysis";
+	private static final IndependenceType DEF_INDEPENDENCE_PLBE = IndependenceType.SEMANTIC;
 
 	public static final String LABEL_SEMICOMM_PLBE =
 			"Use semi-commutativity for large block encoding in concurrent analysis";
+	private static final boolean DEF_SEMICOMM_PLBE = true;
 
 	// Settings for Partial Order Reduction (GemCutter)
 	// ========================================================================
 
 	public static final String LABEL_POR_ONESHOT = "Apply one-shot Partial Order Reduction to input program";
+	private static final boolean DEF_POR_ONESHOT = false;
 
 	public static final String LABEL_POR_MODE = "Partial Order Reduction in concurrent analysis";
+	private static final PartialOrderMode DEF_POR_MODE = PartialOrderMode.NONE;
 
 	public static final String LABEL_POR_NUM_INDEPENDENCE = "Number of independence relations to use for POR";
+	private static final int DEF_POR_NUM_INDEPENDENCE = 1;
 
 	public static final String LABEL_DUMP_INDEPENDENCE_SCRIPT = "Dump SMT script used for independence checks";
+	private static final boolean DEF_DUMP_INDEPENDENCE_SCRIPT = false;
 
 	public static final String LABEL_INDEPENDENCE_SCRIPT_DUMP_PATH =
 			"Dump independence script to the following directory";
+	private static final String DEF_INDEPENDENCE_SCRIPT_DUMP_PATH = "";
 
 	public static final String LABEL_INDEPENDENCE_POR = "Independence relation used for POR in concurrent analysis";
 	public static final String LABEL_POR_ABSTRACTION = "Abstraction used for commutativity in POR";
@@ -137,81 +173,156 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			"SMT solver timeout for commutativity in POR (in ms)";
 
 	public static final String LABEL_POR_DFS_ORDER = "DFS Order used in POR";
+	private static final OrderType DEF_POR_DFS_ORDER = OrderType.BY_SERIAL_NUMBER;
 
 	public static final String LABEL_POR_DFS_RANDOM_SEED = "Random seed used by POR DFS order";
+	private static final int DEF_POR_DFS_RANDOM_SEED = 0;
 
 	public static final String LABEL_POR_COINFLIP_MODE = "Coinflip budget determination mode";
+	private static final CoinflipMode DEF_POR_COINFLIP_MODE = CoinflipMode.OFF;
 
 	public static final String LABEL_POR_COINFLIP_PROB = "Coinflip probability value";
+	private static final int DEF_POR_COINFLIP_PROB = 25;
 
 	public static final String LABEL_POR_COINFLIP_SEED = "Coinflip random seed";
+	private static final int DEF_POR_COINFLIP_SEED = 0;
 
 	public static final String LABEL_POR_COINFLIP_INCREMENT = "Coinflip probability increment";
+	private static final int DEF_POR_COINFLIP_INCREMENT = 0;
+
+	public enum CoinflipMode {
+		OFF, FALLBACK, PURE, COARSE
+	}
 
 	public static final String LABEL_COMMUTATIVITY_COND_SYNTHESIS = "Commutativity condition synthesis";
+	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS =
+			"If set to a value other than NONE, GemCutter will generate conditions"
+					+ " enabling commutativity (independence) of certain statements and try to prove that"
+					+ " these conditions hold at relevant points in the program, to enable more reduction.";
+	private static final IndependenceConditions DEF_COMMUTATIVITY_COND_SYNTHESIS = IndependenceConditions.NONE;
 
 	public static final String LABEL_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY =
 			"Refinement strategy for commutativity condition synthesis";
+	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY =
+			"Strategy used to check whether (and prove that) a synthesized commutativity condition holds.";
+	private static final RefinementStrategy DEF_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY = RefinementStrategy.SMTINTERPOL;
 
 	public static final String LABEL_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD =
 			"Path program threshold for commutativity condition synthesis";
+	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD =
+			"If commutativity condition synthesis is enabled, it is applied only to traces whose path program "
+					+ "has been encountered at least n times (where n is the value of this setting).";
+	private static final int DEF_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD = 2;
 
 	public static final String LABEL_COMMUTATIVITY_COND_SYNTHESIS_RETRIES =
 			"Maximum retries for commutativity condition synthesis";
+	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS_RETRIES =
+			"If commutativity condition synthesis fails due to an imperfect proof, "
+					+ "future iterations may retry synthesizing a commutativity condition "
+					+ "for the same point of redundancy/non-minimality, up to the given number of attempts.";
+	private static final int DEF_COMMUTATIVITY_COND_SYNTHESIS_RETRIES = 0;
 
 	// Settings for PetriAutomizer
 	// ========================================================================
 
 	public static final String LABEL_LOOPER_CHECK_PETRI = "Looper check in Petri net analysis";
+	private static final LooperCheck DEF_LOOPER_CHECK_PETRI = LooperCheck.SYNTACTIC;
 
 	public static final String LABEL_CONFIGURATION_ORDER = "Order on configurations for Petri net unfoldings";
+	private static final EventOrderEnum DEF_CONFIGURATION_ORDER = EventOrderEnum.ERV;
 
 	public static final String LABEL_CUTOFF = "cut-off requires same transition";
+	private static final boolean DEF_CUTOFF = false;
 
 	public static final String LABEL_BACKFOLDING = "Use backfolding";
+	private static final boolean DEF_BACKFOLDING = false;
 
 	// ========================================================================
 
 	public static final String LABEL_INTERPROCEDURAL = "Interprocedural analysis (Nested Interpolants)";
+	private static final boolean DEF_INTERPROCEDURAL = true;
 
 	public static final String LABEL_STOP_AFTER_FIRST_VIOLATION = "Stop after first violation was found";
+	private static final boolean DEF_STOP_AFTER_FIRST_VIOLATION = true;
+	private static final String DESC_STOP_AFTER_FIRST_VIOLATION =
+			"Stop the analysis after the first violation was found.";
 
 	public static final String LABEL_CEGAR_RESTART_BEHAVIOUR = "CEGAR restart behaviour";
+	private static final CegarRestartBehaviour DEF_CEGAR_RESTART_BEHAVIOUR = CegarRestartBehaviour.ONLY_ONE_CEGAR;
+	private static final String DESC_CEGAR_RESTART_BEHAVIOUR =
+			"Control how many error locations are analyzed by a single CEGAR loop: all, only one, or other subsets.";
 
 	public static final String LABEL_ERROR_AUTOMATON_MODE = "Error locations removal mode";
+	private static final ErrorAutomatonType DEF_ERROR_AUTOMATON_MODE = ErrorAutomatonType.SIMPLE_ERROR_AUTOMATON;
+	private static final String DESC_ERROR_AUTOMATON_MODE = "If \"" + LABEL_CEGAR_RESTART_BEHAVIOUR + "\" is not "
+			+ "\"ONE_CEGAR_PER_ERROR_LOCATION\", i.e., if one CEGAR loop analyzes multiple error locations, reachable "
+			+ "error locations are removed by refinining the abstraction with an error automaton specified by this mode.";
 
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE = "Reuse of Floyd-Hoare automata";
+	private static final FloydHoareAutomataReuse DEF_FLOYD_HOARE_AUTOMATA_REUSE = FloydHoareAutomataReuse.NONE;
+	private static final String DESC_FLOYD_HOARE_AUTOMATA_REUSE =
+			"Try to re-use interpolant automata from input files and/or previous runs. " + FloydHoareAutomataReuse.NONE
+					+ " disables the re-use, all other settings enable it. You can specifiy additional .ats files as"
+					+ " input and the containing NWAs will be treated as additional interpolant automata. When "
+					+ LABEL_STOP_AFTER_FIRST_VIOLATION
+					+ " is false, this setting will additionally try to re-use the automata " + "from previous runs. "
+					+ FloydHoareAutomataReuse.EAGER + " will compute the difference with the initial abstraction and "
+					+ "all additional interpolant automatas before the first iteration of a run. "
+					+ FloydHoareAutomataReuse.LAZY_IN_ORDER + " tries in each iteration after a potential "
+					+ "counterexample is found if one of the re-usable interpolant automata accepts the counterexample. "
+					+ "If this is the case, this automaton is substracted from the current abstraction and removed from "
+					+ "the set of reusable interpolant automata.";
 
 	public static final String LABEL_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
 			"Enhance during reuse of Floyd-Hoare automata";
+	private static final FloydHoareAutomataReuseEnhancement DEF_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
+			FloydHoareAutomataReuseEnhancement.NONE;
+	private static final String DESC_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
+			"Specifies how to compute successors on-demand for re-use interpolant automata.";
 
 	public static final String LABEL_ARTIFACT = "Kind of artifact that is visualized";
 
 	public static final String LABEL_WATCHITERATION = "Number of iteration whose artifact is visualized";
+	private static final int DEF_WATCHITERATION = 1_000_000;
 
 	public static final String LABEL_HOARE_POSITIONS = "Positions where we compute the Hoare Annotation";
+	private static final HoareAnnotationPositions DEF_HOARE_POSITIONS = HoareAnnotationPositions.None;
 
 	// Dominik (2024-11-18): Introduced this setting to disable contract computation for SV-COMP (where it is currently
 	// not useful) because procedure contract computation has a bug ("ensures" clause uses non-permitted variables).
 	// See https://chat.sopranium.de/swt/pl/im6pymo9zjrn3kkiwzgcrce57o
 	// TODO Find the bug, fix the bug, remove this setting.
 	public static final String LABEL_COMPUTE_PROCEDURE_CONTRACTS = "Compute procedure contracts";
+	private static final String DESC_COMPUTE_PROCEDURE_CONTRACTS =
+			"Controls whether procedure contracts are computed from the Hoare annotation."
+					+ "Contract computation only works if the Hoare annotation for the relevant locations has been computed.";
+	private static final boolean DEF_COMPUTE_PROCEDURE_CONTRACTS = true;
 
 	// Trace Check Solver
 	// ========================================================================
 
 	public static final String LABEL_SEPARATE_SOLVER = "Use separate solver for trace checks";
+	private static final boolean DEF_SEPARATE_SOLVER = true;
 
 	public static final String LABEL_SOLVER = IcfgPreferenceInitializer.LABEL_SOLVER;
+	private static final SolverMode DEF_SOLVER = SolverMode.Internal_SMTInterpol;
 
 	public static final String LABEL_ADDITIONAL_SMT_OPTIONS = IcfgPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS;
+	private static final Map<String, String> DEF_ADDITIONAL_SMT_OPTIONS =
+			IcfgPreferenceInitializer.DEF_ADDITIONAL_SMT_OPTIONS;
 
 	public static final String LABEL_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL =
 			"Use minimal unsat core enumeration";
+	private static final boolean DEF_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL = false;
+	private static final String DESC_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL =
+			"Highly experimental. " + "Enable minimal unsat core enumeration with SMTInterpol. "
+					+ "You can specify which heuristics should be used by setting appropriate SMT-LIB options. "
+					+ "Contact Jochen Hoenicke or Leonard Fichtner for more information.";
 
 	// ========================================================================
 
 	public static final String LABEL_INTERPOLATED_LOCS = "Compute Interpolants along a Counterexample";
+	private static final InterpolationTechnique DEF_INTERPOLANTS = InterpolationTechnique.ForwardPredicates;
 
 	// Path Invariants
 	// ========================================================================
@@ -239,33 +350,62 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	// ========================================================================
 
 	public static final String LABEL_DUMP_AUTOMATA = "Dump automata";
+	private static final boolean DEF_DUMP_AUTOMATA = false;
+	private static final String DESC_DUMP_AUTOMATA = "Dump automata to files.";
 
 	public static final String LABEL_DUMP_AUTOMATA_FORMAT = "Dump automata format";
+	private static final Format DEF_DUMP_AUTOMATA_FORMAT = Format.ATS_NUMERATE;
+	private static final String DESC_DUMP_AUTOMATA_FORMAT = "Output format of dumped automata.";
 
 	public static final String LABEL_DUMP_AUTOMATA_DIRECTORY = "Dump automata directory";
+	private static final String DEF_DUMP_AUTOMATA_DIRECTORY = ".";
+	private static final String DESC_DUMP_AUTOMATA_DIRECTORY = "Dump automata to the specified directory.";
 
 	public static final String LABEL_DUMP_AUTOMATA_FILENAME = "Dump automata filename";
+	private static final String DEF_DUMP_AUTOMATA_FILENAME = "automata";
+	private static final String DESC_DUMP_AUTOMATA_FILENAME =
+			"The filename of the dumped automata (without file extension).";
 
 	public static final String LABEL_DUMP_AUTOMATA_BESIDE_FILE = "Dump automata besides input file";
+	private static final boolean DEF_DUMP_AUTOMATA_BESIDE_FILE = true;
+	private static final String DESC_DUMP_AUTOMATA_BESIDE_FILE =
+			"Dump automata as \"<inputfilename>-automata.ats\" in the same directory as the input file. "
+					+ "All other output options are ignored.";
 
 	public static final String LABEL_DUMP_AUTOMATA_ONLY_REUSE = "Dump only reuse-automata";
+	private static final boolean DEF_DUMP_AUTOMATA_ONLY_REUSE = false;
+	private static final String DESC_DUMP_AUTOMATA_ONLY_REUSE =
+			"When dumping automata is enabled, we only dump the interpolant automaton and add to that file if it "
+					+ "exists s.t. it can be reused by later verification runs.";
 
 	// Debug information dumping
 	// ========================================================================
 
 	public static final String LABEL_DUMP_DEBUG_INFO = "Dump debug information";
+	private static final boolean DEF_DUMP_DEBUG_INFO = false;
+	private static final String DESC_DUMP_DEBUG_INFO = "Dump debug information to files.";
 
 	public static final String LABEL_DUMP_DEBUG_INFO_DIRECTORY = "Dump debug information directory";
+	private static final String DEF_DUMP_DEBUG_INFO_DIRECTORY = ".";
+	private static final String DESC_DUMP_DEBUG_INFO_DIRECTORY = "Dump debug information to the specified directory.";
 
 	public static final String LABEL_DUMP_DEBUG_INFO_FILENAME = "Dump debug information filename";
+	private static final String DEF_DUMP_DEBUG_INFO_FILENAME = "debug";
+	private static final String DESC_DUMP_DEBUG_INFO_FILENAME =
+			"The filename of the dumped debug information (without file extension).";
 
 	public static final String LABEL_DUMP_DEBUG_INFO_BESIDE_FILE = "Dump debug information besides input file";
+	private static final boolean DEF_DUMP_DEBUG_INFO_BESIDE_FILE = true;
+	private static final String DESC_DUMP_DEBUG_INFO_BESIDE_FILE =
+			"Dump debug information as \"<inputfilename>-debug.txt\" in the same directory as the input file. "
+					+ "All other output options are ignored.";
 
 	// ========================================================================
 
 	public static final String LABEL_HOARE_TRIPLE_CHECKS = "Hoare triple checks";
 
 	public static final String LABEL_DIFFERENCE_SENWA = "DifferenceSenwa operation instead classical Difference";
+	private static final boolean DEF_DIFFERENCE_SENWA = false;
 
 	public static final String LABEL_MINIMIZE = "Minimization of abstraction";
 
@@ -278,29 +418,55 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_LANGUAGE_OPERATION = "LanguageOperation";
 
 	public static final String LABEL_ABSINT_MODE = "Abstract interpretation Mode";
+	private static final AbstractInterpretationMode DEF_ABSINT_MODE = AbstractInterpretationMode.NONE;
 
 	public static final String LABEL_ABSINT_ALWAYS_REFINE = "Refine always when using abstract interpretation";
+	private static final boolean DEF_ABSINT_ALWAYS_REFINE = false;
 
 	public static final String LABEL_COMPUTE_COUNTEREXAMPLE = "Compute trace for counterexample result";
+	private static final boolean DEF_COMPUTE_COUNTEREXAMPLE = true;
+	private static final String DESC_COMPUTE_COUNTEREXAMPLE = null;
 
 	public static final String LABEL_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS =
 			"Compute statistics for interpolant sequences";
+	private static final boolean DEF_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS = true;
+	private static final String DESC_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS = null;
 
 	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE =
 			"Highlight relevant statements in error traces";
+	private static final RelevanceAnalysisMode DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE = RelevanceAnalysisMode.NONE;
+	private static final String DESC_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE =
+			"Analyse error traces and identify relevant statements. Warning: For programs with floats, arrays, or"
+					+ " pointers this analysis may take a significant amount of time.";
 
 	public static final String LABEL_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE = "Angelic verification mode";
+	private static final boolean DEF_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE = false;
+	private static final String DESC_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE =
+			"Assume that unspecified inputs (e.g., external functions) return \"safe\" values during error trace "
+					+ "relevance analysis.";
 
 	public static final String LABEL_SIMPLIFICATION_TECHNIQUE = "Simplification technique";
+	private static final SimplificationTechnique DEF_SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA2;
 
 	public static final String LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY = "Counterexample search strategy";
+	private static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY =
+			CounterexampleSearchStrategy.BFS;
 
 	public static final String LABEL_REFINEMENT_STRATEGY = "Trace refinement strategy";
+	private static final RefinementStrategy DEF_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
 
 	public static final String LABEL_ACIP_REFINEMENT_STRATEGY =
 			"Trace refinement strategy used in Accelerated Interpolation";
+	private static final RefinementStrategy DEF_ACIP_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
 
 	public static final String LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST = "Trace refinement exception blacklist";
+	private static final RefinementStrategyExceptionBlacklist DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST =
+			RefinementStrategyExceptionBlacklist.DEPENDING;
+	private static final String DESC_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST =
+			"Sets the category of solver result for which the verification is aborted (even if another solver is "
+					+ "available). When set to " + RefinementStrategyExceptionBlacklist.ALL
+					+ ", every unusable solver result aborts the verification, if set to "
+					+ RefinementStrategyExceptionBlacklist.NONE + " none of them do.";
 
 	// Path Program Dumping
 	// ========================================================================
@@ -327,355 +493,89 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	// ========================================================================
 
 	public static final String LABEL_HEURISTIC_EMPTINESS_CHECK = "Use heuristic emptiness check";
-
-	public static final String LABEL_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD =
-			"Scoring method to use during heuristic emptiness check";
-
-	public static final String LABEL_HEURISTIC_EMPTINESS_CHECK_ASTAR_HEURISTIC =
-			"AStar heuristic to use during heuristic emptiness check";
-
-	public static final String LABEL_HEURISTIC_EMPTINESS_CHECK_ASTAR_RANDOM_HEURISTIC_SEED =
-			"AStar random heuristic seed";
-
-	// ========================================================================
-
-	public static final String LABEL_SMT_FEATURE_EXTRACTION = "Extract SMT features during analysis";
-
-	public static final String LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH = "SMT feature Extraction Dump Path.";
-
-	public static final String LABEL_OVERRIDE_INTERPOLANT_AUTOMATON =
-			"Override the interpolant automaton setting of the refinement strategy";
-
-	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD =
-			"Assert CodeBlocks Term Scoring Heuristic";
-
-	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY =
-			"Assert CodeBlocks Term Scoring Heuristic Partitioning Strategy";
-
-	public static final String LABEL_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE =
-			"Loop acceleration method that is used by accelerated interpolation";
-
-	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
-			"Assert CodeBlocks Term Scoring Heuristic number of partitions";
-
-	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
-			"Assert CodeBlocks Term Scoring Heuristic Score Threshold";
-
-	// Parallel Trace Abstraction
-	// ========================================================================
-	public static final String LABEL_PARALLEL_CEGAR_LOOP = "Use CEGAR loop for Parallel Trace Abstraction";
-
-	public static final String LABEL_THREADLIMIT = "Threadlimit for Parallel CEGAR";
-
-	public static final String LABEL_NUM_KINDUCTION_WORKERS =
-			"Number of K-Induction workers in Parallel Trace Abstraction";
-
-	public static final String LABEL_KINDUCTION_SOLVER_TIMEOUT = "Timeout in ms for each k-induction SMT query";
-
-	public static final String LABEL_INVARIANT_PROBATION = "Probation of invariants for k-induction";
-
-	public static final String LABEL_PROBATION_FACTOR = "Probation limit of invariants: slowdown factor";
-
-	public static final String LABEL_PROBATION_MINIMUM = "Probation limit of invariants: minimum (s)";
-
-	public static final String LABEL_KINDUCTION_SOLVER_RESTART =
-			"Restart the k-induction solver if an interrupt kills it";
-
-	public static final String LABEL_INTERPOLANT_INVARIANTS =
-			"Check interpolants of TA workers for invariants for k-induction";
-
-	public static final String LABEL_MINIMIZE_ABSTRACTION_PER_WORKER =
-			"Minimize Abstraction every time a worker is done";
-
-	// Parallel CEGAR counterexample search stragies
-	// ========================================================================
-	public static final String LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY = "Consider only active in Search Strategy";
-
-	public static final String LABEL_SEARCH_LOOP_BOUND = "search loop bound";
-
-	private static final boolean DEF_READ_INITIAL_PROOF_ASSERTIONS_FROM_FILE = false;
-
-	private static final int DEF_USERLIMIT_TRACE_HISTOGRAM = 0;
-	private static final String DESC_USERLIMIT_TRACE_HISTOGRAM =
-			"Abort the analysis of either a single error location or the whole program if the trace histogram of the "
-					+ "current counterexample is larger than this value. 0 disables this limit.";
-
-	private static final int DEF_USERLIMIT_TIME = 0;
-	private static final String DESC_USERLIMIT_TIME =
-			"Abort the analysis of either a single error location or the whole program if more time than specified has "
-					+ "elapsed. Time is specified in seconds. 0 disables this limit.";
-
-	private static final int DEF_USERLIMIT_PATH_PROGRAM = 0;
-	private static final String DESC_USERLIMIT_PATH_PROGRAM =
-			"Abort the analysis of either a single error location or the whole program if the same path program has "
-					+ "been induced by spurious counterexamples more than the specified amount of times. "
-					+ "0 disables this limit.";
-
-	private static final int DEF_USERLIMIT_ITERATIONS = 1_000_000;
-	private static final String DESC_USERLIMIT_ITERATIONS =
-			"Abort the analysis of either a single error location or the whole program if more than the specified "
-					+ "amount of iterations occured. 0 disables this limit.";
-
-	private static final OrderOfErrorLocations DEF_ORDER_OF_ERROR_LOCATIONS = OrderOfErrorLocations.TOGETHER;
-	private static final String DESC_ORDER_OF_ERROR_LOCATIONS =
-			"Order to check the reachability for different types of error locations (for concurrent programs). "
-					+ "With " + OrderOfErrorLocations.INSUFFICIENT_FIRST
-					+ " we first check, if there are enough threads in our translation, before checking for errors in the program. "
-					+ OrderOfErrorLocations.PROGRAM_FIRST + " and " + OrderOfErrorLocations.TOGETHER
-					+ " work accordingly.";
-
-	private static final Concurrency DEF_CONCURRENCY = Concurrency.FINITE_AUTOMATA;
-
-	private static final RefinementStrategy DEF_MCR_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
-
-	private static final McrInterpolantMethod DEF_MCR_INTERPOLANT_METHOD = McrInterpolantMethod.WP;
-
-	private static final boolean DEF_PETRI_LBE_ONESHOT = false;
-
-	private static final IndependenceType DEF_INDEPENDENCE_PLBE = IndependenceType.SEMANTIC;
-
-	private static final boolean DEF_SEMICOMM_PLBE = true;
-
-	private static final boolean DEF_POR_ONESHOT = false;
-
-	private static final PartialOrderMode DEF_POR_MODE = PartialOrderMode.NONE;
-
-	private static final int DEF_POR_NUM_INDEPENDENCE = 1;
-
-	private static final boolean DEF_DUMP_INDEPENDENCE_SCRIPT = false;
-
-	private static final String DEF_INDEPENDENCE_SCRIPT_DUMP_PATH = "";
-
-	private static final OrderType DEF_POR_DFS_ORDER = OrderType.BY_SERIAL_NUMBER;
-
-	private static final int DEF_POR_DFS_RANDOM_SEED = 0;
-
-	private static final CoinflipMode DEF_POR_COINFLIP_MODE = CoinflipMode.OFF;
-
-	private static final int DEF_POR_COINFLIP_PROB = 25;
-
-	private static final int DEF_POR_COINFLIP_SEED = 0;
-
-	private static final int DEF_POR_COINFLIP_INCREMENT = 0;
-
-	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS =
-			"If set to a value other than NONE, GemCutter will generate conditions"
-					+ " enabling commutativity (independence) of certain statements and try to prove that"
-					+ " these conditions hold at relevant points in the program, to enable more reduction.";
-	private static final IndependenceConditions DEF_COMMUTATIVITY_COND_SYNTHESIS = IndependenceConditions.NONE;
-
-	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY =
-			"Strategy used to check whether (and prove that) a synthesized commutativity condition holds.";
-	private static final RefinementStrategy DEF_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY = RefinementStrategy.SMTINTERPOL;
-
-	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD =
-			"If commutativity condition synthesis is enabled, it is applied only to traces whose path program "
-					+ "has been encountered at least n times (where n is the value of this setting).";
-	private static final int DEF_COMMUTATIVITY_COND_SYNTHESIS_THRESHOLD = 2;
-
-	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS_RETRIES =
-			"If commutativity condition synthesis fails due to an imperfect proof, "
-					+ "future iterations may retry synthesizing a commutativity condition "
-					+ "for the same point of redundancy/non-minimality, up to the given number of attempts.";
-	private static final int DEF_COMMUTATIVITY_COND_SYNTHESIS_RETRIES = 0;
-
-	private static final LooperCheck DEF_LOOPER_CHECK_PETRI = LooperCheck.SYNTACTIC;
-
-	private static final EventOrderEnum DEF_CONFIGURATION_ORDER = EventOrderEnum.ERV;
-
-	private static final boolean DEF_CUTOFF = false;
-
-	private static final boolean DEF_BACKFOLDING = false;
-
-	private static final boolean DEF_INTERPROCEDURAL = true;
-
-	private static final boolean DEF_STOP_AFTER_FIRST_VIOLATION = true;
-	private static final String DESC_STOP_AFTER_FIRST_VIOLATION =
-			"Stop the analysis after the first violation was found.";
-
-	private static final CegarRestartBehaviour DEF_CEGAR_RESTART_BEHAVIOUR = CegarRestartBehaviour.ONLY_ONE_CEGAR;
-	private static final String DESC_CEGAR_RESTART_BEHAVIOUR =
-			"Control how many error locations are analyzed by a single CEGAR loop: all, only one, or other subsets.";
-
-	private static final ErrorAutomatonType DEF_ERROR_AUTOMATON_MODE = ErrorAutomatonType.SIMPLE_ERROR_AUTOMATON;
-	private static final String DESC_ERROR_AUTOMATON_MODE = "If \"" + LABEL_CEGAR_RESTART_BEHAVIOUR + "\" is not "
-			+ "\"ONE_CEGAR_PER_ERROR_LOCATION\", i.e., if one CEGAR loop analyzes multiple error locations, reachable "
-			+ "error locations are removed by refinining the abstraction with an error automaton specified by this mode.";
-
-	private static final FloydHoareAutomataReuse DEF_FLOYD_HOARE_AUTOMATA_REUSE = FloydHoareAutomataReuse.NONE;
-	private static final String DESC_FLOYD_HOARE_AUTOMATA_REUSE =
-			"Try to re-use interpolant automata from input files and/or previous runs. " + FloydHoareAutomataReuse.NONE
-					+ " disables the re-use, all other settings enable it. You can specifiy additional .ats files as"
-					+ " input and the containing NWAs will be treated as additional interpolant automata. When "
-					+ LABEL_STOP_AFTER_FIRST_VIOLATION
-					+ " is false, this setting will additionally try to re-use the automata " + "from previous runs. "
-					+ FloydHoareAutomataReuse.EAGER + " will compute the difference with the initial abstraction and "
-					+ "all additional interpolant automatas before the first iteration of a run. "
-					+ FloydHoareAutomataReuse.LAZY_IN_ORDER + " tries in each iteration after a potential "
-					+ "counterexample is found if one of the re-usable interpolant automata accepts the counterexample. "
-					+ "If this is the case, this automaton is substracted from the current abstraction and removed from "
-					+ "the set of reusable interpolant automata.";
-
-	private static final FloydHoareAutomataReuseEnhancement DEF_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
-			FloydHoareAutomataReuseEnhancement.NONE;
-	private static final String DESC_FLOYD_HOARE_AUTOMATA_REUSE_ENHANCEMENT =
-			"Specifies how to compute successors on-demand for re-use interpolant automata.";
-
-	private static final int DEF_WATCHITERATION = 1_000_000;
-
-	private static final HoareAnnotationPositions DEF_HOARE_POSITIONS = HoareAnnotationPositions.None;
-
-	private static final String DESC_COMPUTE_PROCEDURE_CONTRACTS =
-			"Controls whether procedure contracts are computed from the Hoare annotation."
-					+ "Contract computation only works if the Hoare annotation for the relevant locations has been computed.";
-	private static final boolean DEF_COMPUTE_PROCEDURE_CONTRACTS = true;
-
-	private static final boolean DEF_SEPARATE_SOLVER = true;
-
-	private static final SolverMode DEF_SOLVER = SolverMode.Internal_SMTInterpol;
-
-	private static final Map<String, String> DEF_ADDITIONAL_SMT_OPTIONS =
-			IcfgPreferenceInitializer.DEF_ADDITIONAL_SMT_OPTIONS;
-
-	private static final boolean DEF_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL = false;
-	private static final String DESC_USE_MINIMAL_UNSAT_CORE_ENUMERATION_FOR_SMTINTERPOL =
-			"Highly experimental. " + "Enable minimal unsat core enumeration with SMTInterpol. "
-					+ "You can specify which heuristics should be used by setting appropriate SMT-LIB options. "
-					+ "Contact Jochen Hoenicke or Leonard Fichtner for more information.";
-
-	private static final InterpolationTechnique DEF_INTERPOLANTS = InterpolationTechnique.ForwardPredicates;
-
-	private static final boolean DEF_DUMP_AUTOMATA = false;
-	private static final String DESC_DUMP_AUTOMATA = "Dump automata to files.";
-
-	private static final Format DEF_DUMP_AUTOMATA_FORMAT = Format.ATS_NUMERATE;
-	private static final String DESC_DUMP_AUTOMATA_FORMAT = "Output format of dumped automata.";
-
-	private static final String DEF_DUMP_AUTOMATA_DIRECTORY = ".";
-	private static final String DESC_DUMP_AUTOMATA_DIRECTORY = "Dump automata to the specified directory.";
-
-	private static final String DEF_DUMP_AUTOMATA_FILENAME = "automata";
-	private static final String DESC_DUMP_AUTOMATA_FILENAME =
-			"The filename of the dumped automata (without file extension).";
-
-	private static final boolean DEF_DUMP_AUTOMATA_BESIDE_FILE = true;
-	private static final String DESC_DUMP_AUTOMATA_BESIDE_FILE =
-			"Dump automata as \"<inputfilename>-automata.ats\" in the same directory as the input file. "
-					+ "All other output options are ignored.";
-
-	private static final boolean DEF_DUMP_AUTOMATA_ONLY_REUSE = false;
-	private static final String DESC_DUMP_AUTOMATA_ONLY_REUSE =
-			"When dumping automata is enabled, we only dump the interpolant automaton and add to that file if it "
-					+ "exists s.t. it can be reused by later verification runs.";
-
-	private static final boolean DEF_DUMP_DEBUG_INFO = false;
-	private static final String DESC_DUMP_DEBUG_INFO = "Dump debug information to files.";
-
-	private static final String DEF_DUMP_DEBUG_INFO_DIRECTORY = ".";
-	private static final String DESC_DUMP_DEBUG_INFO_DIRECTORY = "Dump debug information to the specified directory.";
-
-	private static final String DEF_DUMP_DEBUG_INFO_FILENAME = "debug";
-	private static final String DESC_DUMP_DEBUG_INFO_FILENAME =
-			"The filename of the dumped debug information (without file extension).";
-
-	private static final boolean DEF_DUMP_DEBUG_INFO_BESIDE_FILE = true;
-	private static final String DESC_DUMP_DEBUG_INFO_BESIDE_FILE =
-			"Dump debug information as \"<inputfilename>-debug.txt\" in the same directory as the input file. "
-					+ "All other output options are ignored.";
-
-	private static final boolean DEF_DIFFERENCE_SENWA = false;
-
-	private static final AbstractInterpretationMode DEF_ABSINT_MODE = AbstractInterpretationMode.NONE;
-
-	private static final boolean DEF_ABSINT_ALWAYS_REFINE = false;
-
-	private static final boolean DEF_COMPUTE_COUNTEREXAMPLE = true;
-	private static final String DESC_COMPUTE_COUNTEREXAMPLE = null;
-
-	private static final boolean DEF_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS = true;
-	private static final String DESC_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS = null;
-
-	private static final RelevanceAnalysisMode DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE = RelevanceAnalysisMode.NONE;
-	private static final String DESC_ERROR_TRACE_RELEVANCE_ANALYSIS_MODE =
-			"Analyse error traces and identify relevant statements. Warning: For programs with floats, arrays, or"
-					+ " pointers this analysis may take a significant amount of time.";
-
-	private static final boolean DEF_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE = false;
-	private static final String DESC_ERROR_TRACE_ANGELIC_VERIFICATION_ACTIVE =
-			"Assume that unspecified inputs (e.g., external functions) return \"safe\" values during error trace "
-					+ "relevance analysis.";
-
-	private static final SimplificationTechnique DEF_SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA2;
-
-	private static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY =
-			CounterexampleSearchStrategy.BFS;
-
-	private static final RefinementStrategy DEF_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
-
-	private static final RefinementStrategy DEF_ACIP_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
-
-	private static final RefinementStrategyExceptionBlacklist DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST =
-			RefinementStrategyExceptionBlacklist.DEPENDING;
-	private static final String DESC_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST =
-			"Sets the category of solver result for which the verification is aborted (even if another solver is "
-					+ "available). When set to " + RefinementStrategyExceptionBlacklist.ALL
-					+ ", every unusable solver result aborts the verification, if set to "
-					+ RefinementStrategyExceptionBlacklist.NONE + " none of them do.";
-
 	private static final boolean DEF_HEURISTIC_EMPTINESS_CHECK = false;
 	private static final String DESC_HEURISTIC_EMPTINESS_CHECK =
 			"Use heuristics to traverse/explorew a NWA during the check emptiness";
 
+	public static final String LABEL_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD =
+			"Scoring method to use during heuristic emptiness check";
 	private static final ScoringMethod DEF_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD = ScoringMethod.DAGSIZE;
 	private static final String DESC_HEURISTIC_EMPTINESS_CHECK_SCORING_METHOD =
 			"Defines what Scoring method is used to score outgoing transitions of a NWA during the emptiness check.";
 
+	public static final String LABEL_HEURISTIC_EMPTINESS_CHECK_ASTAR_HEURISTIC =
+			"AStar heuristic to use during heuristic emptiness check";
 	private static final AStarHeuristic DEF_HEURISTIC_EMPTINESS_CHECK_ASTAR_HEURISTIC = AStarHeuristic.ZERO;
 	private static final String DESC_HEURISTIC_EMPTINESS_CHECK_ASTAR_HEURISTIC =
 			"Defines which Heuristic is used by AStar during exploration of a NWA during the emptiness check.";
 
+	public static final String LABEL_HEURISTIC_EMPTINESS_CHECK_ASTAR_RANDOM_HEURISTIC_SEED =
+			"AStar random heuristic seed";
 	private static final Integer DEF_HEURISTIC_EMPTINESS_CHECK_ASTAR_RANDOM_HEURISTIC_SEED = 1337;
 	private static final String DESC_HEURISTIC_EMPTINESS_CHECK_ASTAR_RANDOM_HEURISTIC_SEED =
 			"Defines which seed is used for RANDOM_HALF and RANDOM_FULL heuristic";
 
+	// ========================================================================
+
+	public static final String LABEL_SMT_FEATURE_EXTRACTION = "Extract SMT features during analysis";
 	private static final boolean DEF_SMT_FEATURE_EXTRACTION = false;
 	private static final String DESC_SMT_FEATURE_EXTRACTION = "We Extract SMT features during analysis and dump them.";
 
+	public static final String LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH = "SMT feature Extraction Dump Path.";
 	private static final String DEF_SMT_FEATURE_EXTRACTION_DUMP_PATH = ".";
 	private static final String DESC_SMT_FEATURE_EXTRACTION_DUMP_PATH =
 			"We Extract SMT features during analysis and dump them to the given path";
 
+	public static final String LABEL_OVERRIDE_INTERPOLANT_AUTOMATON =
+			"Override the interpolant automaton setting of the refinement strategy";
 	private static final boolean DEF_OVERRIDE_INTERPOLANT_AUTOMATON = false;
 
+	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD =
+			"Assert CodeBlocks Term Scoring Heuristic";
 	private static final ScoringMethod DEF_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD =
 			AssertCodeBlockOrder.DEF_SCORING_METHOD;
 	private static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORING_METHOD =
 			"if Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC, each term in a trace is scored. This setting defines which scoring method is used to score traces";
 
+	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY =
+			"Assert CodeBlocks Term Scoring Heuristic Partitioning Strategy";
 	private static final SmtFeatureHeuristicPartitioningType DEF_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY =
 			AssertCodeBlockOrder.DEF_PARTITIONING_STRATEGY;
 	private static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY =
 			"if Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC, this setting defines which partitioning strategy is used.";
 
+	public static final String LABEL_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE =
+			"Loop acceleration method that is used by accelerated interpolation";
 	private static final LoopAccelerators DEF_LOOPACCELERATION_TECHNIQUE = LoopAccelerators.FAST_UPR;
 	private static final String DESC_ACCELINTERPOL_LOOPACCELERATION_TECHNIQUE = "Set the loop acceleration technique.";
 
+	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
+			"Assert CodeBlocks Term Scoring Heuristic number of partitions";
 	private static final Integer DEF_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
 			AssertCodeBlockOrder.DEF_NUM_PARTITIONS;
 	private static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_NUM_PARTITIONS =
 			"If Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is FIXED_NUM_PARTITIONS, this setting defines the amount of partitions.";
 
+	public static final String LABEL_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
+			"Assert CodeBlocks Term Scoring Heuristic Score Threshold";
 	private static final Double DEF_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
 			AssertCodeBlockOrder.DEF_SCORE_THRESHOLD;
 	private static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
 			"If Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is THRESHOLD, two partitions are created, one partition contains all terms >= threshold  and one all terms < threshold";
 
+	// Parallel Trace Abstraction
+	// ========================================================================
+	public static final String LABEL_PARALLEL_CEGAR_LOOP = "Use CEGAR loop for Parallel Trace Abstraction";
 	private static final boolean DEF_PARALLEL_CEGAR_LOOP = false;
 
+	public static final String LABEL_THREADLIMIT = "Threadlimit for Parallel CEGAR";
 	private static final Integer DEF_THREADLIMIT = 1;
 
+	public static final String LABEL_NUM_KINDUCTION_WORKERS =
+			"Number of K-Induction workers in Parallel Trace Abstraction";
 	private static final Integer DEF_NUM_KINDUCTION_WORKERS = 0;
 
+	public static final String LABEL_KINDUCTION_SOLVER_TIMEOUT = "Timeout in ms for each k-induction SMT query";
 	private static final String DESC_KINDUCTION_SOLVER_TIMEOUT =
 			"Per-check timeout the k-induction worker passes to its SMT solver, one hour by default. This is "
 					+ "deliberately generous: k-induction runs many increasingly large queries, and a short timeout "
@@ -683,6 +583,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "external solver command says instead. Supported for z3, cvc4, cvc5 and bitwuzla.";
 	private static final Integer DEF_KINDUCTION_SOLVER_TIMEOUT = 60 * 60 * 1000;
 
+	public static final String LABEL_INVARIANT_PROBATION = "Probation of invariants for k-induction";
 	private static final String DESC_INVARIANT_PROBATION =
 			"The invariant supplier watches the queries of k-induction. If one runs much longer than the one of the "
 					+ "same kind before, the supplier asks it itself with earlier, weaker invariants. If one of them "
@@ -692,35 +593,45 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "without probation.";
 	private static final boolean DEF_INVARIANT_PROBATION = true;
 
+	public static final String LABEL_PROBATION_FACTOR = "Probation limit of invariants: slowdown factor";
 	private static final String DESC_PROBATION_FACTOR =
 			"A query of k-induction is on probation once it runs longer than this many times the previous query of "
 					+ "the same kind (base or step), and at least the probation minimum.";
 	private static final int DEF_PROBATION_FACTOR = 2;
 
+	public static final String LABEL_PROBATION_MINIMUM = "Probation limit of invariants: minimum (s)";
 	private static final String DESC_PROBATION_MINIMUM =
 			"A query of k-induction is never on probation before it ran this long.";
 	private static final int DEF_PROBATION_MINIMUM = 10;
 
+	public static final String LABEL_KINDUCTION_SOLVER_RESTART =
+			"Restart the k-induction solver if an interrupt kills it";
 	private static final String DESC_KINDUCTION_SOLVER_RESTART =
 			"An interrupt of the invariant supplier that arrives just after the solver answered kills the solver. "
 					+ "If set, k-induction restarts it with its declarations and asks the query again; otherwise "
 					+ "k-induction crashes.";
 	private static final boolean DEF_KINDUCTION_SOLVER_RESTART = true;
 
+	public static final String LABEL_INTERPOLANT_INVARIANTS =
+			"Check interpolants of TA workers for invariants for k-induction";
 	private static final String DESC_INTERPOLANT_INVARIANTS =
-			"If there is a k-induction worker, every TA worker hands the interpolants of each infeasible counterexample "
-					+ "to the invariant supplier. It checks which of them are inductive invariants of the program and "
-					+ "gives those to the k-induction workers while they run.";
+			"If there is a k-induction worker, every TA worker hands the interpolants of each infeasible "
+					+ "counterexample to the invariant supplier. It checks which of them are inductive invariants of "
+					+ "the program and gives those to the k-induction workers while they run.";
 	private static final boolean DEF_INTERPOLANT_INVARIANTS = true;
 
+	public static final String LABEL_MINIMIZE_ABSTRACTION_PER_WORKER =
+			"Minimize Abstraction every time a worker is done";
 	private static final boolean DEF_MINIMIZE_ABSTRACTION_PER_WORKER = true;
 	private static final String DESC_MINIMIZE_ABSTRACTION_PER_WORKER =
 			"Minimize the abstraction everytime a worker is done, or only once per CEGAR iteration.";
-
+	// Parallel CEGAR counterexample search stragies
+	// ========================================================================
+	public static final String LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY = "Consider only active in Search Strategy";
 	private static final boolean DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY = true;
 	private static final String DESC_PARALLELSEARCH_ACTIVE_CEX_ONLY =
 			"IsEmptyParallel must diverge from any previous counterexample (false) or only from counterexamples activley analysed by a worker. ";
-
+	public static final String LABEL_SEARCH_LOOP_BOUND = "search loop bound";
 	private static final String DESC_SEARCH_LOOP_BOUND =
 			"Limits how often the IsEmptyParallel search is allowed to visit the same transition letter pair. Default -1 means infinetly often";
 	private static final int DEF_SEARCH_LOOP_BOUND = -1;
@@ -1027,11 +938,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						(int) IndependenceSettings.DEFAULT_SOLVER_TIMEOUT, PreferenceType.Integer));
 	}
 
-	/**
-	 * Returns the preference items of the parallel CEGAR loop.
-	 *
-	 * @return the preference items of the parallel CEGAR loop
-	 */
 	public static UltimatePreferenceItemContainer getParallelCegarSettings() {
 		return new UltimatePreferenceItemContainer("Parallel Trace Abstraction",
 				new UltimatePreferenceItem<>(LABEL_PARALLEL_CEGAR_LOOP, DEF_PARALLEL_CEGAR_LOOP,
@@ -1062,24 +968,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	}
 
-	/**
-	 * Appends the index to a label.
-	 *
-	 * @param label
-	 *            the label
-	 * @param index
-	 *            the index
-	 * @return the label with the index
-	 */
 	public static String getSuffixedLabel(final String label, final int index) {
 		if (index == 0) {
 			return label;
 		}
 		return label + " #" + (index + 1);
-	}
-
-	public enum CoinflipMode {
-		OFF, FALLBACK, PURE, COARSE
 	}
 
 	/**
@@ -1151,15 +1044,15 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		TAIPAN,
 		/**
-		 * Taipan without abstract interpretation.
+		 * Taipan without abstract interpretation
 		 */
 		RUBBER_TAIPAN,
 		/**
-		 * Taipan with abstract interpretation last.
+		 * Taipan with abstract interpretation last
 		 */
 		LAZY_TAIPAN,
 		/**
-		 * Taipan with abstract interpretation only (no SMT solver).
+		 * Taipan with abstract interpretation only (no SMT solver)
 		 */
 		TOOTHLESS_TAIPAN,
 		/**
@@ -1168,7 +1061,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		PENGUIN,
 		/**
-		 * Bitvector strategy that tries SP/WP with CVC5, Z3 and Mathsat with a low interpolant threshold.
+		 * Bitvector strategy that tries SP/WP with CVC5, Z3 and Mathsat with a low interpolant threshold
 		 */
 		WALRUS,
 		/**
@@ -1200,12 +1093,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		BADGER,
 		/**
-		 * Bitvector strategy that tries SP/WP with bitwuzla, Z3 and Mathsat with a low interpolant threshold.
+		 * Bitvector strategy that tries SP/WP with bitwuzla, Z3 and Mathsat with a low interpolant threshold
 		 */
 		WOLF,
 		/**
 		 * Bitvector strategy that tries SP/WP with bizwuzla, Z3 and Mathsat with a low interpolant threshold (similar
-		 * to {@link #WOLF}, but in a different order and dependent on floats).
+		 * to {@link #WOLF}, but in a different order and dependent on floats)
 		 */
 		FOX,
 		/**
@@ -1214,8 +1107,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		BEAR,
 		/**
-		 * Heavy-weight bitvector strategy that tries SP with bitwuzla, Z3 and Mathsat with a high interpolant
-		 * threshold.
+		 * Heavy-weight bitvector strategy that tries SP with bitwuzla, Z3 and Mathsat with a high interpolant threshold
 		 */
 		WARTHOG,
 		/**
@@ -1249,17 +1141,17 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		TOOTHLESS_SIFA_TAIPAN,
 		/**
-		 * Maximal Causality reduction strategy.
+		 * Maximal Causality reduction strategy
 		 */
 		MCR,
 
 		/**
-		 * Use accelerated interpolation and some other, nested strategy.
+		 * Use accelerated interpolation and some other, nested strategy
 		 */
 		ACCELERATED_INTERPOLATION,
 
 		/**
-		 * Use loop acceleration in combination with the fixed preferences.
+		 * Use loop acceleration in combination with the fixed preferences
 		 */
 		ACCELERATED_TRACE_CHECK
 	}

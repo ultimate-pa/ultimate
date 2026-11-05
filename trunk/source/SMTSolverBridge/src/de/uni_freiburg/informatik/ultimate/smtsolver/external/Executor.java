@@ -64,8 +64,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class Executor {
 
-	private static final String EOF_ERROR_MSG = "Received EOF on stdin.";
-
 	private MonitoredProcess mProcess;
 	private Lexer mLexer;
 
@@ -83,6 +81,8 @@ public class Executor {
 	private final String mExitCommand;
 	private final long mTimeout;
 
+	private static final String EOF_ERROR_MSG = "Received EOF on stdin.";
+
 	// Whether a check-sat is running. An interrupt is only sent then: a solver that waits for input may die of it.
 	private final Object mQueryLock = new Object();
 	private boolean mQueryRunning;
@@ -92,7 +92,6 @@ public class Executor {
 	private long mQueryCount;
 
 	/**
-	 * Starts an external solver process.
 	 *
 	 * @param solverCommand
 	 *            The command to execute an external process with all parameters
@@ -107,7 +106,6 @@ public class Executor {
 	 * @param fullPathOfDumpedFile
 	 *            Path to a file to which all solver output will be written or null to disable logging.
 	 * @throws IOException
-	 *             if the solver process cannot be started or reached
 	 */
 	Executor(final String solverCommand, final Script script, final ILogger logger,
 			final IUltimateServiceProvider services, final String solverName, final String fullPathOfDumpedFile)
@@ -116,30 +114,6 @@ public class Executor {
 				"(set-option :print-success true)", "(exit)", -1L);
 	}
 
-	/**
-	 * Starts an external solver process.
-	 *
-	 * @param solverCommand
-	 *            the command that starts the solver
-	 * @param script
-	 *            the script all terms belong to
-	 * @param logger
-	 *            the logger to write to
-	 * @param services
-	 *            the service provider of this analysis
-	 * @param solverName
-	 *            the name of the solver, for the log
-	 * @param fullPathOfDumpedFile
-	 *            the file to log the commands to, or null for none
-	 * @param setupCommand
-	 *            sent to the solver after it starts
-	 * @param exitCommand
-	 *            sent to the solver to end it
-	 * @param timeout
-	 *            how long to wait for the solver to end, in milliseconds
-	 * @throws IOException
-	 *             if the solver process cannot be started or reached
-	 */
 	public Executor(final String solverCommand, final Script script, final ILogger logger,
 			final IUltimateServiceProvider services, final String solverName, final String fullPathOfDumpedFile,
 			final String setupCommand, final String exitCommand, final long timeout) throws IOException {
@@ -197,12 +171,6 @@ public class Executor {
 		}
 	}
 
-	/**
-	 * Sends a command to the solver.
-	 *
-	 * @param in
-	 *            the command
-	 */
 	public void input(final String in) {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(getLogStringPrefix() + " " + in);
@@ -214,33 +182,22 @@ public class Executor {
 			mWriter.write(in + System.lineSeparator() + System.lineSeparator());
 			mWriter.flush();
 		} catch (final IOException e) {
-			throw convertIoException(e);
+			throw convertIOException(e);
 		}
 	}
 
-	/**
-	 * Ends the solver process.
-	 */
 	public void exit() {
 		if (mProcess != null && mProcess.isRunning()) {
 			input("(exit)");
 			// 2015-11-12 Matthias: Do not parse "success" after exit.
 			// Some solvers do return success (Barcelogic, CVC4, Z3) some solvers
 			// don't do it (Princess, SMTInterpol).
+			// parseSuccess();
 			mProcess.forceShutdown();
 		}
 		mProcess = null;
 	}
 
-	/**
-	 * Parses an S-expression from {@code lexer}.
-	 *
-	 * @param lexer
-	 *            the lexer to read from
-	 * @return the symbols of the S-expression
-	 * @throws IOException
-	 *             if the solver process cannot be started or reached
-	 */
 	public static List<Symbol> parseSexpr(final Lexer lexer) throws IOException {
 		final ArrayList<Symbol> result = new ArrayList<>();
 		int parenLevel = 0;
@@ -268,7 +225,7 @@ public class Executor {
 			}
 			return result;
 		} catch (final IOException e) {
-			throw convertIoException(e);
+			throw convertIOException(e);
 		}
 	}
 
@@ -395,12 +352,6 @@ public class Executor {
 		return mProcess != null && mProcess.isRunning();
 	}
 
-	/**
-	 * Starts the solver process anew.
-	 *
-	 * @throws IOException
-	 *             if the solver process cannot be started or reached
-	 */
 	public void reset() throws IOException {
 		try {
 			mWriter.write("(exit)\n");
@@ -412,17 +363,6 @@ public class Executor {
 		createProcess();
 	}
 
-	/**
-	 * Parses the next answer of the solver.
-	 *
-	 * @param what
-	 *            the token that the answer has to be parsed as
-	 * @return the parsed symbol
-	 * @throws SMTLIBException
-	 *             if the solver process cannot be restarted
-	 * @throws ToolchainCanceledException
-	 *             if the toolchain is canceled while waiting for the solver
-	 */
 	public Symbol parse(final int what) {
 		final List<Symbol> answer = readAnswer();
 		String stderr = "";
@@ -457,7 +397,7 @@ public class Executor {
 			}
 			throw new ToolchainCanceledException(getClass());
 		} catch (final IOException e) {
-			throw convertIoException(e);
+			throw convertIOException(e);
 		} catch (final Exception ex) {
 			throw new SMTLIBException(String.format("%s %s %s", getLogStringPrefix(),
 					"Unexpected Exception while parsing", generateStderrMessage(stderr)), ex);
@@ -523,7 +463,7 @@ public class Executor {
 		return "stderr output: " + stderr;
 	}
 
-	private RuntimeException convertIoException(final IOException ex) {
+	private RuntimeException convertIOException(final IOException ex) {
 		if (mServices.getProgressMonitorService().continueProcessing()) {
 			return new SMTLIBException(getLogStringPrefix() + " Connection to SMT solver broken", ex);
 		}
