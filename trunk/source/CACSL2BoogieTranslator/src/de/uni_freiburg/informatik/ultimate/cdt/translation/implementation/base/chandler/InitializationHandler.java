@@ -325,7 +325,7 @@ public class InitializationHandler {
 			 * We are dealing with an initialization of a value with non-aggregate type.
 			 */
 			return initExpressionWithExpression(loc, lhsIfAny, onHeap, !usingOnHeapInitializationViaConstArray,
-					targetCType, initInfoIfAny, hook);
+					targetCType, initInfoIfAny);
 		} else if (targetCType instanceof CStructOrUnion) {
 			// unions are handled along with structs here
 			return initCStruct(loc, lhsIfAny, (CStructOrUnion) targetCType, initInfoIfAny, onHeap,
@@ -362,7 +362,7 @@ public class InitializationHandler {
 
 	private ExpressionResult initExpressionWithExpression(final ILocation loc, final LRValue lhsIfAny,
 			final boolean onHeap, final boolean useSelectInsteadOfStoreForOnHeapAssignment, final ICType cType,
-			final InitializerInfo initInfo, final IASTNode hook) {
+			final InitializerInfo initInfo) {
 		assert initInfo.hasExpressionResult();
 
 		final ExpressionResultBuilder initializer = new ExpressionResultBuilder();
@@ -374,7 +374,7 @@ public class InitializationHandler {
 			// we have a lhs given, insert assignments such that the lhs is initialized
 			final List<Statement> assigningStatements =
 					makeAssignmentStatements(loc, lhsIfAny, onHeap, useSelectInsteadOfStoreForOnHeapAssignment, cType,
-							initializationValue.getValue(), initInfo.getOverapprs(), hook);
+							initializationValue.getValue(), initInfo.getOverapprs());
 			assigningStatements.forEach(stm -> addOverApprToStatementAnnots(initInfo.getOverapprs(), stm));
 			initializer.addStatements(assigningStatements);
 		} else {
@@ -392,7 +392,7 @@ public class InitializationHandler {
 		if (initInfo.hasExpressionResult()) {
 			// we are initializing through a struct-typed expression, not an initializer list
 			return initExpressionWithExpression(loc, lhsIfAny, onHeap, !usingOnHeapInitializationViaConstArray,
-					cStructType, initInfo, hook);
+					cStructType, initInfo);
 		}
 		// we have an initializer list
 
@@ -644,7 +644,7 @@ public class InitializationHandler {
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
 			final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 			final List<Statement> defaultInit = makeAssignmentStatements(loc, baseAddress, true, true, cType,
-					getDefaultValueForSimpleType(loc, cType), Collections.emptyList(), hook);
+					getDefaultValueForSimpleType(loc, cType), Collections.emptyList());
 			initialization.addStatements(defaultInit);
 			return initialization.build();
 		} else if (cType instanceof final CStructOrUnion cStructType) {
@@ -703,7 +703,7 @@ public class InitializationHandler {
 			if (lhsToInitIfAny != null) {
 				// we have a lhs given, insert assignments such that the lhs is initialized
 				final List<Statement> assigningStatements = makeAssignmentStatements(loc, lhsToInitIfAny, false, false,
-						cType, initializationValue.getValue(), Collections.emptyList(), hook);
+						cType, initializationValue.getValue(), Collections.emptyList());
 				initializer.addStatements(assigningStatements);
 			} else {
 				initializer.setLrValue(initializationValue);
@@ -929,12 +929,12 @@ public class InitializationHandler {
 	 */
 	private List<Statement> makeAssignmentStatements(final ILocation loc, final LRValue lhs, final boolean onHeap,
 			final boolean useSelectInsteadOfStoreForOnHeapAssignment, final ICType cType,
-			final Expression initializationValue, final Collection<Overapprox> overAppr, final IASTNode hook) {
+			final Expression initializationValue, final Collection<Overapprox> overAppr) {
 		assert lhs != null;
 
 		if (onHeap) {
 			if (useSelectInsteadOfStoreForOnHeapAssignment && mUseSelectForArrayCellInitIfPossible) {
-				return mMemoryHandler.getInitCall(loc, (HeapLValue) lhs, initializationValue, cType, hook);
+				return mMemoryHandler.getInitCall(loc, (HeapLValue) lhs, initializationValue, cType);
 			}
 			return mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, initializationValue, cType, true);
 		}

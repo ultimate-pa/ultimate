@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -59,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.AcceptingRunSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor.CoveringMode;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.DeadEndOptimizingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDeadEndStore;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
@@ -140,9 +140,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mItpAutomata;
 	private final List<AbstractInterpolantAutomaton<L>> mAbstractItpAutomata = new LinkedList<>();
 
-	private final boolean mSupportsDeadEnds;
-	private IDeadEndStore<IPredicate, IPredicate> mDeadEndStore;
-
 	// Fields for commutativity condition synthesis
 	private final ConditionalCommutativityCounterexampleChecker<L> mConCounterexampleChecker;
 	private boolean mCounterexampleConComFound;
@@ -187,13 +184,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		final List<IIndependenceRelation<IPredicate, L>> relations = mIndependenceProviders.stream()
 				.map(IRefinableIndependenceProvider::retrieveIndependence).collect(Collectors.toList());
 
-		mSupportsDeadEnds = mPref.getNumberOfIndependenceRelations() == 1
-				&& mPref.porIndependenceSettings(0).getAbstractionType() == AbstractionType.NONE;
-
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs, mPartialOrderMode,
 				mPref.getDfsOrderType(), mPref.getDfsOrderSeed(), relations, this::makeBudget,
-				mSupportsDeadEnds ? this::createDeadEndStore : null);
-		assert mSupportsDeadEnds == (mDeadEndStore != null);
+				this::createDeadEndStore);
 
 		mProgram = initialAbstraction;
 
@@ -369,7 +362,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	private IDfsVisitor<L, IPredicate> createVisitor() {
-		IDfsVisitor<L, IPredicate> visitor = new AcceptingRunSearchVisitor<>(this::isGoalState);
+		return createVisitor(x -> false);
+	}
+
+	private IDfsVisitor<L, IPredicate> createVisitor(final Predicate<IPredicate> isAdditionalGoalState) {
+		IDfsVisitor<L, IPredicate> visitor =
+				new AcceptingRunSearchVisitor<>(isAdditionalGoalState.or(this::isGoalState));
 		if (mPOR.getDfsOrder() instanceof BetterLockstepOrder<?, ?>) {
 			visitor = ((BetterLockstepOrder<L, IPredicate>) mPOR.getDfsOrder()).wrapVisitor(visitor);
 		}
@@ -377,10 +375,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		if (PartialOrderReductionFacade.ENABLE_COVERING_OPTIMIZATION) {
 			visitor = new CoveringOptimizationVisitor<>(visitor, new SleepSetCoveringRelation<>(mPOR.getSleepFactory()),
 					CoveringMode.PRUNE);
-		}
-
-		if (mSupportsDeadEnds) {
-			visitor = new DeadEndOptimizingSearchVisitor<>(visitor, mDeadEndStore, false);
 		}
 
 		return visitor;
@@ -467,7 +461,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	private IDeadEndStore<IPredicate, IPredicate> createDeadEndStore(final StateSplitter<IPredicate> splitter) {
-		assert mDeadEndStore == null : "Already created -- should only be called once";
+		if (mPref.getNumberOfIndependenceRelations() > 1
+				|| mPref.porIndependenceSettings(0).getAbstractionType() != AbstractionType.NONE) {
+			// dead-end pruning is not supported for stratified or abstract independence
+			return null;
+		}
 
 		final UnaryOperator<IPredicate> getUnderlying = state -> state instanceof MLPredicateWithInterpolants
 				? ((MLPredicateWithInterpolants) state).getUnderlying()
@@ -477,13 +475,10 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 				: null;
 
 		if (splitter == null) {
-			mDeadEndStore = new IDeadEndStore.ProductDeadEndStore<>(getUnderlying, getInterpolants);
-		} else {
-			mDeadEndStore = new IDeadEndStore.ProductDeadEndStore<>(getUnderlying.compose(splitter::getOriginal),
-					state -> new Pair<>(splitter.getExtraInfo(state),
-							getInterpolants.apply(splitter.getOriginal(state))));
+			return new IDeadEndStore.ProductDeadEndStore<>(getUnderlying, getInterpolants);
 		}
-		return mDeadEndStore;
+		return new IDeadEndStore.ProductDeadEndStore<>(getUnderlying.compose(splitter::getOriginal),
+				state -> new Pair<>(splitter.getExtraInfo(state), getInterpolants.apply(splitter.getOriginal(state))));
 	}
 
 	private ConditionalCommutativityCounterexampleChecker<L> setupCommutativityConditionSynthesis(
@@ -606,8 +601,9 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		@Override
 		public IPredicate union(final IPredicate state1, final IPredicate state2) {
 			final IPredicate newState = createUnion(state1, state2);
-			if (mSupportsDeadEnds) {
-				mDeadEndStore.copyDeadEndInformation(state1, newState);
+			if (mPOR.getDeadEndStore() != null) {
+				((IDeadEndStore<IPredicate, IPredicate>) mPOR.getDeadEndStore()).copyDeadEndInformation(state1,
+						newState);
 			}
 			return newState;
 		}

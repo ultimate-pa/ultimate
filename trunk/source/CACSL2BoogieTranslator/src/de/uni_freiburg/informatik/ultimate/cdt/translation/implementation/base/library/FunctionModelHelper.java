@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ILibraryModel.ConstantModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -358,6 +359,16 @@ public class FunctionModelHelper {
 		builder.addStatement(stmt);
 
 		return builder.build();
+	}
+
+	/** Construct a constant model with C type int. */
+	public ConstantModel integerConstant(final String name, final int value) {
+		return integerConstant(name, BigInteger.valueOf(value));
+	}
+
+	/** Construct a constant model with C type int. */
+	public ConstantModel integerConstant(final String name, final BigInteger value) {
+		return new ConstantModel(name, loc -> constructIntegerLiteral(loc, value, new CPrimitive(CPrimitives.INT)));
 	}
 
 	public ExpressionResult constructIntegerLiteral(final ILocation loc, final BigInteger value,

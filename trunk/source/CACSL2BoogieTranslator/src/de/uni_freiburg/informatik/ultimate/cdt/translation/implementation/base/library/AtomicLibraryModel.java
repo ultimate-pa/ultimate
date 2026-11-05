@@ -519,10 +519,8 @@ public class AtomicLibraryModel implements ILibraryModel {
 	public Collection<ConstantModel> getConstantModels() {
 		final List<ConstantModel> result = new ArrayList<>();
 		for (final MemoryOrder memOrder : MemoryOrder.values()) {
-			final IConstantModelHandler model =
-					loc -> mHelper.constructIntegerLiteral(loc, memOrder.getValue(), new CPrimitive(CPrimitives.INT));
-			result.add(new ConstantModel(memOrder.getFieldName(), model));
-			result.add(new ConstantModel(memOrder.getGccConstantName(), model));
+			result.add(mHelper.integerConstant(memOrder.getFieldName(), memOrder.getValue()));
+			result.add(mHelper.integerConstant(memOrder.getGccConstantName(), memOrder.getValue()));
 		}
 		return result;
 	}

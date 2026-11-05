@@ -184,6 +184,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.AssertLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.AtomicLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ErrnoLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.FenvLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.FunctionModelHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.GccBuiltinLibraryModel;
@@ -648,7 +649,8 @@ public class CHandler {
 				new TimeLibraryModel(helper, mExpressionTranslation, mAuxVarInfoBuilder),
 				new VariadicLibraryModel(helper, mMemoryHandler, mProcedureManager, mTypeHandler,
 						mExprResultTransformer, mAuxVarInfoBuilder),
-				new StdintLibraryModel(), new LimitsLibraryModel(mTypeSizes, helper), new StdboolLibraryModel(helper));
+				new StdintLibraryModel(), new LimitsLibraryModel(mTypeSizes, helper), new StdboolLibraryModel(helper),
+				new ErrnoLibraryModel(helper));
 	}
 
 	/**
@@ -2216,6 +2218,14 @@ public class CHandler {
 				// performed. This is unsound, but does not lead to any wrong results in SV-COMP.
 				overapprox = List.of();
 			}
+			// Skip the initialization, but still write the terminating zero byte
+			final HeapLValue lastByteLValue = mInitHandler.constructAddressForArrayAtIndex(actualLoc,
+					LRValueFactory.constructHeapLValue(mTypeHandler, addressRValue.getValue(), arrayType, null),
+					sizeInBytes - 1);
+			final CPrimitive charType = new CPrimitive(CPrimitives.CHAR);
+			final Expression zero = mTypeSizes.constructLiteralForIntegerType(actualLoc, charType, BigInteger.ZERO);
+			mStaticObjectsHandler.addStatementsForUltimateInit(
+					mMemoryHandler.getInitCall(actualLoc, lastByteLValue, zero, charType));
 			return new StringLiteralResult(addressRValue, overapprox, stringLiteral);
 		}
 		final ExpressionResult exprRes = mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node);
@@ -3740,7 +3750,8 @@ public class CHandler {
 		}
 		final CPointer pointer = (CPointer) rValue.getCType().getUnderlyingType();
 		final ICType pointedType = pointer.getPointsToType();
-		if (pointedType.isIncomplete()) {
+		// An incomplete array can still be indexed, decay to an element pointer, or have its address taken.
+		if (!(pointedType.getUnderlyingType() instanceof CArray) && pointedType.isIncomplete()) {
 			return new ExpressionWithIncompleteTypeResult(rop.getStatements(),
 					LRValueFactory.constructHeapLValue(mTypeHandler, rValue.getValue(), pointedType, null),
 					rop.getDeclarations(), rop.getAuxVars(), rop.getOverapprs(), loc);

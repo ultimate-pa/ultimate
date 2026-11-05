@@ -46,7 +46,6 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -388,6 +387,11 @@ public class MemoryHandler {
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
 				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX)) {
 			declarations.add(declarePThreadsMutexArray(tuLoc));
+		}
+
+		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
+				.contains(MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER)) {
+			declarations.add(declarePthreadBarrierArray(tuLoc));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
@@ -768,11 +772,10 @@ public class MemoryHandler {
 	 * @param value
 	 * @param valueType
 	 * @param omit
-	 * @param hook
 	 * @return
 	 */
 	public List<Statement> getInitCall(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final ICType valueType, final IASTNode hook) {
+			final ICType valueType) {
 		final ICType realValueType = valueType.getUnderlyingType();
 		return getWriteCall(loc, hlv, value, realValueType, HeapWriteMode.SELECT);
 	}
@@ -888,6 +891,47 @@ public class MemoryHandler {
 				new VariableLHS(loc, boogieType, SFO.ULTIMATE_PTHREADS_MUTEX,
 						DeclarationInformation.DECLARATIONINFO_GLOBAL),
 				getBooleanArrayHelper().constructFromValue(mutexLocked));
+	}
+
+	public Expression constructPthreadBarrierFieldAccess(final ILocation loc, final Expression barrier,
+			final String field) {
+		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER);
+		final BoogieArrayType boogieType =
+				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
+						mMemoryModelDeclarationsHandler.getPthreadBarrierStructType());
+		final Expression barrierArray = ExpressionFactory.constructIdentifierExpression(loc, boogieType,
+				MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER.getName(),
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		return ExpressionFactory.constructStructAccessExpression(loc,
+				ExpressionFactory.constructNestedArrayAccessExpression(loc, barrierArray, new Expression[] { barrier }),
+				field);
+	}
+
+	public AssignmentStatement constructPthreadBarrierAssignment(final ILocation loc, final Expression barrier,
+			final Expression value) {
+		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER);
+		final BoogieArrayType boogieType =
+				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
+						mMemoryModelDeclarationsHandler.getPthreadBarrierStructType());
+		return MemoryHandler.constructOneDimensionalArrayUpdate(loc, barrier,
+				new VariableLHS(loc, boogieType, MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER.getName(),
+						DeclarationInformation.DECLARATIONINFO_GLOBAL),
+				value);
+	}
+
+	public AssignmentStatement constructPthreadBarrierFieldAssignment(final ILocation loc, final Expression barrier,
+			final String field, final Expression value) {
+		requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER);
+		final BoogieArrayType boogieType =
+				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() },
+						mMemoryModelDeclarationsHandler.getPthreadBarrierStructType());
+		final VariableLHS arrayLhs =
+				new VariableLHS(loc, boogieType, MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER.getName(),
+						DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		final LeftHandSide barrierLhs =
+				ExpressionFactory.constructNestedArrayLHS(loc, arrayLhs, new Expression[] { barrier });
+		return StatementFactory.constructSingleAssignmentStatement(loc,
+				ExpressionFactory.constructStructAccessLhs(loc, barrierLhs, field), value);
 	}
 
 	public Expression constructRwLockArrayIdentifierExpression(final ILocation loc) {
@@ -1462,6 +1506,12 @@ public class MemoryHandler {
 		return constructDeclOfPointerIndexedArray(loc, mBooleanArrayHelper.constructBoolReplacementType(), arrayName);
 	}
 
+	private VariableDeclaration declarePthreadBarrierArray(final ILocation loc) {
+		return constructDeclOfPointerIndexedArray(loc,
+				mMemoryModelDeclarationsHandler.getPthreadBarrierStructType().toASTType(loc),
+				MemoryModelDeclarations.ULTIMATE_PTHREADS_BARRIER.getName());
+	}
+
 	private static CPrimitive getRwLockCounterType() {
 		return new CPrimitive(CPrimitives.SCHAR);
 	}
@@ -1990,7 +2040,7 @@ public class MemoryHandler {
 
 			final Offset fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, valueType, fieldId);
 			if (fieldOffset.isBitfieldOffset()) {
-				throw new UnsupportedOperationException("Bitfield write");
+				throw new UnsupportedSyntaxException(loc, "Bitfield write");
 			}
 
 			final Expression newPointer = mMemoryModel.constructAddressForStructField(loc, startAddress, fieldOffset,
