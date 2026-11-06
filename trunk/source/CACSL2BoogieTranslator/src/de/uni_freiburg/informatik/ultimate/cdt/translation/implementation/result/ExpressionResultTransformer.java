@@ -421,9 +421,10 @@ public class ExpressionResultTransformer {
 				fieldIdentifiers.toArray(new String[fieldIdentifiers.size()]),
 				fieldValues.toArray(new Expression[fieldValues.size()]));
 
-		final ExpressionResult result = new ExpressionResult(newStmt, new RValue(sc, structType), newDecl, newAuxVars,
-				old.getOverapprs(), old.getNeighbourUnionFields());
-		return result;
+		final List<Statement> statements =
+				structType.isAtomic() ? List.of(StatementFactory.constructAtomicStatement(loc, newStmt)) : newStmt;
+		return new ExpressionResult(statements, new RValue(sc, structType), newDecl, newAuxVars, old.getOverapprs(),
+				old.getNeighbourUnionFields());
 	}
 
 	/**

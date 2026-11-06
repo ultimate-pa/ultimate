@@ -1334,7 +1334,7 @@ public class CHandler {
 		final boolean isOnHeap = isOnHeap(node);
 
 		final IASTPointerOperator[] pointerOps = node.getPointerOperators();
-		final ICType nestedPointerType = getPointerType(pointerOps.length, pendingResType.getCType());
+		final ICType nestedPointerType = getPointerType(pointerOps, pendingResType.getCType());
 		final TypesResult resType = TypesResult.create(pendingResType, nestedPointerType);
 
 		// Adapt the name for multiparse input
@@ -1551,19 +1551,18 @@ public class CHandler {
 	}
 
 	/**
-	 * Create a nested {@link CPointer} type that ultimately points to the supplied type. If length is smaller or equal
-	 * zero, the supplied type is returned.
+	 * Create a nested {@link CPointer} type that ultimately points to the supplied type.
 	 *
-	 * @param length
-	 *            The nesting depth
+	 * @param pointerOps
+	 *            The pointer operators in declaration order
 	 * @param cType
 	 *            The underlying type
 	 * @return The new CPointer.
 	 */
-	private static ICType getPointerType(int length, final ICType cType) {
+	private static ICType getPointerType(final IASTPointerOperator[] pointerOps, final ICType cType) {
 		ICType type = cType;
-		for (; length > 0; --length) {
-			type = new CPointer(type);
+		for (final IASTPointerOperator pointerOp : pointerOps) {
+			type = new CPointer(type, CTranslationUtil.hasAtomicQualifier(pointerOp));
 		}
 		return type;
 	}
@@ -2337,7 +2336,7 @@ public class CHandler {
 			return new SkipResult();
 		}
 		// TODO: This is just a workaround for now to crash when thread local variables are used in a concurrent program
-		if (CTranslationUtil.hasAttribute(node.getDeclSpecifier(), "thread")) {
+		if (CTranslationUtil.hasThreadLocalQualifier(node.getDeclSpecifier())) {
 			mHasThreadLocalVars = true;
 			// Only crash for thread local variable in concurrent programs
 			if (mIsConcurrent) {
@@ -2995,8 +2994,7 @@ public class CHandler {
 				resultRhs = auxVar.getExp();
 			}
 			// MemoryHandler::getWriteCall already handles atomic types properly, so there is nothing to do here.
-			builder.addStatements(mMemoryHandler.getWriteCall(loc, hlv, resultRhs,
-					rightHandSideValueWithConversionsApplied.getCType(), false));
+			builder.addStatements(mMemoryHandler.getWriteCall(loc, hlv, resultRhs, leftHandSide.getCType(), false));
 
 			// the value of an assignment statement expression is the right hand side of the
 			// assignment
