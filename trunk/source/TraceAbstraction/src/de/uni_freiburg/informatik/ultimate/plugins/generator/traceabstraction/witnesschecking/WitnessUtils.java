@@ -102,6 +102,7 @@ public class WitnessUtils {
 			for (final var wp : unmatchedWaypoints) {
 				logger.warn(wp);
 			}
+			throw new UnsupportedOperationException("The witness contains waypoints that could not be matched");
 		}
 		return result;
 	}
