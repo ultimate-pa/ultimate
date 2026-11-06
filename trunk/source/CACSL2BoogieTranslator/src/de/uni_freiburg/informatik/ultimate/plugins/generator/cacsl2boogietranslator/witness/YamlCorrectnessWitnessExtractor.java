@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationTransitionInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopTransitionInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
@@ -126,6 +127,9 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			} else if (entry instanceof LoopTransitionInvariant) {
 				location = ((LoopTransitionInvariant) entry).getLocation();
 				addFunction = node -> addLoopTransitionInvariant(((LoopTransitionInvariant) entry), node, rtr);
+			} else if (entry instanceof LocationTransitionInvariant) {
+				location = ((LocationTransitionInvariant) entry).getLocation();
+				addFunction = node -> addLocationTransitionInvariant((LocationTransitionInvariant) entry, node, rtr);
 			} else {
 				throw new UnsupportedOperationException("Unknown entry type " + entry.getClass().getSimpleName());
 			}
@@ -157,11 +161,23 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 		}
 		final Map<String, String> trackers = new LinkedHashMap<>();
 		final String invariant = rewriteLastPrevExpressions(loopTransitionInvariant.getInvariant(), trackers);
-		if (trackers.isEmpty()) {
-			result.addInvariant(node, new ExtractedLoopInvariant(invariant, node));
-			return;
-		}
+		result.addInvariant(node,
+				new ExtractedLoopInvariant(addLastPrevTracking(node, invariant, trackers, result), node));
+	}
 
+	private void addLocationTransitionInvariant(final LocationTransitionInvariant locationTransitionInvariant,
+			final IASTNode node, final YamlExtractedCorrectnessWitness result) {
+		final Map<String, String> trackers = new LinkedHashMap<>();
+		final String invariant = rewriteLastPrevExpressions(locationTransitionInvariant.getInvariant(), trackers);
+		result.addInvariant(node,
+				new ExtractedLocationInvariant(addLastPrevTracking(node, invariant, trackers, result), node, true));
+	}
+
+	private String addLastPrevTracking(final IASTNode node, final String invariant, final Map<String, String> trackers,
+			final YamlExtractedCorrectnessWitness result) {
+		if (trackers.isEmpty()) {
+			return invariant;
+		}
 		final String firstOccurence = newLastPrevName("first_occurence");
 		for (final Entry<String, String> tracker : trackers.entrySet()) {
 			final String type = findVariableType(node, tracker.getKey());
@@ -174,7 +190,7 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 		}
 		result.addGlobalDeclaration(new ExtractedGhostVariable(firstOccurence, "1", "int", mTranslationUnit));
 		result.addGhostUpdate(node, new ExtractedGhostUpdate(firstOccurence, "0", node));
-		result.addInvariant(node, new ExtractedLoopInvariant(firstOccurence + " || (" + invariant + ")", node));
+		return firstOccurence + " || (" + invariant + ")";
 	}
 
 	private String rewriteLastPrevExpressions(final String invariant, final Map<String, String> trackers) {
