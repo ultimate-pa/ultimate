@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
  */
 public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor {
 	private Witness mWitness;
-	private int mLastPrevVariableCounter;
+	private int mPrevVariableCounter;
 
 	public YamlCorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
 		super(service);
@@ -93,7 +93,7 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 
 	@Override
 	protected IExtractedCorrectnessWitness extractWitness() {
-		mLastPrevVariableCounter = 0;
+		mPrevVariableCounter = 0;
 		// TODO: The column extraction happens in LocationFactory, so we create one as a workaround
 		final LocationFactory locationFactory =
 				new LocationFactory(null, new LineOffsetComputer(mTranslationUnit.getRawSignature()));
@@ -159,55 +159,76 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 			throw new UnsupportedOperationException("Loop transition invariant is only allowed at loop (found "
 					+ node.getClass().getSimpleName() + ")");
 		}
-		final Map<String, String> trackers = new LinkedHashMap<>();
-		final String invariant = rewriteLastPrevExpressions(loopTransitionInvariant.getInvariant(), trackers);
-		result.addInvariant(node,
-				new ExtractedLoopInvariant(addLastPrevTracking(node, invariant, trackers, result), node));
+		final Map<PrevTracker, String> trackers = new LinkedHashMap<>();
+		final String invariant = rewritePrevExpressions(loopTransitionInvariant.getInvariant(), trackers);
+		result.addInvariant(node, new ExtractedLoopInvariant(addPrevTracking(node, invariant, trackers, result), node));
 	}
 
 	private void addLocationTransitionInvariant(final LocationTransitionInvariant locationTransitionInvariant,
 			final IASTNode node, final YamlExtractedCorrectnessWitness result) {
-		final Map<String, String> trackers = new LinkedHashMap<>();
-		final String invariant = rewriteLastPrevExpressions(locationTransitionInvariant.getInvariant(), trackers);
+		final Map<PrevTracker, String> trackers = new LinkedHashMap<>();
+		final String invariant = rewritePrevExpressions(locationTransitionInvariant.getInvariant(), trackers);
 		result.addInvariant(node,
-				new ExtractedLocationInvariant(addLastPrevTracking(node, invariant, trackers, result), node, true));
+				new ExtractedLocationInvariant(addPrevTracking(node, invariant, trackers, result), node, true));
 	}
 
-	private String addLastPrevTracking(final IASTNode node, final String invariant, final Map<String, String> trackers,
+	private String addPrevTracking(final IASTNode node, final String invariant, final Map<PrevTracker, String> trackers,
 			final YamlExtractedCorrectnessWitness result) {
 		if (trackers.isEmpty()) {
 			return invariant;
 		}
-		final String firstOccurence = freshLastPrevName("first_occurence");
-		for (final Entry<String, String> tracker : trackers.entrySet()) {
-			final String type = findVariableType(node, tracker.getKey());
+		final String firstOccurence = freshVariableName("first_occurence");
+		String anyPrevSelector = null;
+		for (final Entry<PrevTracker, String> tracker : trackers.entrySet()) {
+			final String variable = tracker.getKey().variable();
+			final String type = findVariableType(node, variable);
 			if (type == null) {
-				throw new UnsupportedOperationException(
-						"Unable to determine the type of variable " + tracker.getKey() + " used in \\at(_, LastPrev)");
+				throw new UnsupportedOperationException("Unable to determine the type of variable " + variable
+						+ " used in \\at(_, " + (tracker.getKey().anyPrev() ? "AnyPrev" : "LastPrev") + ")");
 			}
 			result.addGlobalDeclaration(new ExtractedGhostVariable(tracker.getValue(), "0", type, mTranslationUnit));
-			result.addGhostUpdate(node, new ExtractedGhostUpdate(tracker.getValue(), tracker.getKey(), node, false));
+			if (tracker.getKey().anyPrev()) {
+				if (anyPrevSelector == null) {
+					anyPrevSelector = freshVariableName("any_prev_selector");
+					result.addGlobalDeclaration(
+							new ExtractedGhostVariable(anyPrevSelector, "0", "int", mTranslationUnit));
+					result.addGhostUpdate(node, new ExtractedGhostUpdate(anyPrevSelector, "\\nondet", node, false));
+				}
+				result.addGhostUpdate(node, new ExtractedGhostUpdate(tracker.getValue(),
+						anyPrevSelector + " ? " + variable + " : " + tracker.getValue(), node, false));
+				result.addGhostUpdate(node, new ExtractedGhostUpdate(firstOccurence,
+						firstOccurence + " && !" + anyPrevSelector, node, false));
+			} else {
+				result.addGhostUpdate(node, new ExtractedGhostUpdate(tracker.getValue(), variable, node, false));
+				result.addGhostUpdate(node, new ExtractedGhostUpdate(firstOccurence, "0", node, false));
+			}
 		}
 		result.addGlobalDeclaration(new ExtractedGhostVariable(firstOccurence, "1", "int", mTranslationUnit));
-		result.addGhostUpdate(node, new ExtractedGhostUpdate(firstOccurence, "0", node, false));
 		return firstOccurence + " || (" + invariant + ")";
 	}
 
-	private String rewriteLastPrevExpressions(final String invariant, final Map<String, String> trackers) {
-		final Pattern pattern = Pattern.compile("\\\\at\\s*\\(\\s*([A-Za-z_][A-Za-z0-9_]*)\\s*,\\s*LastPrev\\s*\\)");
+	private String rewritePrevExpressions(final String invariant, final Map<PrevTracker, String> trackers) {
+		final Pattern pattern =
+				Pattern.compile("\\\\at\\s*\\(\\s*([A-Za-z_][A-Za-z0-9_]*)\\s*,\\s*(LastPrev|AnyPrev)\\s*\\)");
 		final Matcher matcher = pattern.matcher(invariant);
 		final StringBuffer result = new StringBuffer();
 		while (matcher.find()) {
 			final String variable = matcher.group(1);
-			final String tracker = trackers.computeIfAbsent(variable, x -> freshLastPrevName(variable));
+			final boolean anyPrev = "AnyPrev".equals(matcher.group(2));
+			final PrevTracker key = new PrevTracker(variable, anyPrev);
+			final String tracker = trackers.computeIfAbsent(key,
+					x -> freshVariableName((anyPrev ? "any_prev_" : "last_prev_") + variable));
 			matcher.appendReplacement(result, Matcher.quoteReplacement(tracker));
 		}
 		matcher.appendTail(result);
 		return result.toString();
 	}
 
-	private String freshLastPrevName(final String suffix) {
-		return "last_prev_" + suffix + "_" + mLastPrevVariableCounter++;
+	private String freshVariableName(final String variable) {
+		return variable + "_" + mPrevVariableCounter++;
+	}
+
+	private record PrevTracker(String variable, boolean anyPrev) {
 	}
 
 	private String findVariableType(final IASTNode scope, final String variable) {
