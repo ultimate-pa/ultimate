@@ -178,7 +178,7 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 		if (trackers.isEmpty()) {
 			return invariant;
 		}
-		final String firstOccurence = newLastPrevName("first_occurence");
+		final String firstOccurence = freshLastPrevName("first_occurence");
 		for (final Entry<String, String> tracker : trackers.entrySet()) {
 			final String type = findVariableType(node, tracker.getKey());
 			if (type == null) {
@@ -199,14 +199,14 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 		final StringBuffer result = new StringBuffer();
 		while (matcher.find()) {
 			final String variable = matcher.group(1);
-			final String tracker = trackers.computeIfAbsent(variable, x -> newLastPrevName(variable));
+			final String tracker = trackers.computeIfAbsent(variable, x -> freshLastPrevName(variable));
 			matcher.appendReplacement(result, Matcher.quoteReplacement(tracker));
 		}
 		matcher.appendTail(result);
 		return result.toString();
 	}
 
-	private String newLastPrevName(final String suffix) {
+	private String freshLastPrevName(final String suffix) {
 		return "last_prev_" + suffix + "_" + mLastPrevVariableCounter++;
 	}
 
