@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 import java.util.Collections;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
@@ -55,7 +56,9 @@ public class ResponseBoundL12Pattern extends PatternType<ResponseBoundL12Pattern
 	}
 
 	@Override
-	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
+	public List<CounterTrace> transform(final CDD[] cdds, final int[] durations,
+			final List<PatternType<?>> allPatterns,
+			final ILogger logger) {
 		assert cdds.length == 2 && durations.length == 2;
 
 		// P and Q are reserved for scope.

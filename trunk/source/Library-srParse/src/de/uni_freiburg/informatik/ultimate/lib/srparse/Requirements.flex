@@ -68,6 +68,7 @@ RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
    "always"         { return symbol(ReqSymbols.ALWAYS); }
    "and"            { return symbol(ReqSymbols.AND); }
    "as"             { return symbol(ReqSymbols.AS); }
+   "an"             { return symbol(ReqSymbols.AN); }
    "at"             { return symbol(ReqSymbols.AT); }
    "becomes"        { return symbol(ReqSymbols.BECOMES); }
    "before"         { return symbol(ReqSymbols.BEFORE); }
@@ -75,20 +76,26 @@ RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
    "by"             { return symbol(ReqSymbols.BY); }
    "case"           { return symbol(ReqSymbols.CASE); }
    "does"           { return symbol(ReqSymbols.DOES); }
+   "enabled"        { return symbol(ReqSymbols.ENABLED); }
+   "event"          { return symbol(ReqSymbols.EVENT); }
    "eventually"     { return symbol(ReqSymbols.EVENTUALLY); }
    "every"          { return symbol(ReqSymbols.EVERY); }
+   "fires"          { return symbol(ReqSymbols.FIRES); }
    "for"            { return symbol(ReqSymbols.FOR); }
    "globally"       { return symbol(ReqSymbols.GLOBALLY); }
+   "guard"          { return symbol(ReqSymbols.GUARD); }
    "held"           { return symbol(ReqSymbols.HELD); }
    "hold"           { return symbol(ReqSymbols.HOLD); }
    "holds"          { return symbol(ReqSymbols.HOLDS); }
    "if"             { return symbol(ReqSymbols.IF); }
    "in"             { return symbol(ReqSymbols.IN); }
+   "initial"        { return symbol(ReqSymbols.INITIAL); }
    "is"             { return symbol(ReqSymbols.IS); }
    "it"             { return symbol(ReqSymbols.IT); }
    "least"          { return symbol(ReqSymbols.LEAST); }
    "initially"      { return symbol(ReqSymbols.INITIALLY); }
    "less"           { return symbol(ReqSymbols.LESS); }
+   "location"       { return symbol(ReqSymbols.LOCATION); }
    "later"           { return symbol(ReqSymbols.LATER); }
    "most"           { return symbol(ReqSymbols.MOST); }
    "msec"           { return symbol(ReqSymbols.MSEC); }
@@ -112,6 +119,7 @@ RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
    "to"             { return symbol(ReqSymbols.TO); }
    "toggles"        { return symbol(ReqSymbols.TOGGLES); }
    "enables"        { return symbol(ReqSymbols.TOGGLES); }
+   "transition"     { return symbol(ReqSymbols.TRANSITION); }
    "transitions"    { return symbol(ReqSymbols.TRANSITIONS); }
    "twice"          { return symbol(ReqSymbols.TWICE); }
    "units"          { return symbol(ReqSymbols.UNITS); }
