@@ -123,7 +123,7 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 				final GhostUpdate update = (GhostUpdate) entry;
 				location = update.getLocation();
 				addFunction = node -> rtr.addGhostUpdate(node,
-						new ExtractedGhostUpdate(update.getVariable(), update.getValue(), node));
+						new ExtractedGhostUpdate(update.getVariable(), update.getValue(), node, true));
 			} else if (entry instanceof LoopTransitionInvariant) {
 				location = ((LoopTransitionInvariant) entry).getLocation();
 				addFunction = node -> addLoopTransitionInvariant(((LoopTransitionInvariant) entry), node, rtr);
@@ -186,10 +186,10 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 						"Unable to determine the type of variable " + tracker.getKey() + " used in \\at(_, LastPrev)");
 			}
 			result.addGlobalDeclaration(new ExtractedGhostVariable(tracker.getValue(), "0", type, mTranslationUnit));
-			result.addGhostUpdate(node, new ExtractedGhostUpdate(tracker.getValue(), tracker.getKey(), node));
+			result.addGhostUpdate(node, new ExtractedGhostUpdate(tracker.getValue(), tracker.getKey(), node, false));
 		}
 		result.addGlobalDeclaration(new ExtractedGhostVariable(firstOccurence, "1", "int", mTranslationUnit));
-		result.addGhostUpdate(node, new ExtractedGhostUpdate(firstOccurence, "0", node));
+		result.addGhostUpdate(node, new ExtractedGhostUpdate(firstOccurence, "0", node, false));
 		return firstOccurence + " || (" + invariant + ")";
 	}
 

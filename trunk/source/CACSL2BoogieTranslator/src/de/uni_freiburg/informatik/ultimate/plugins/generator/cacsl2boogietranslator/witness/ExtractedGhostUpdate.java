@@ -79,10 +79,13 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 
 	private final IASTNode mMatchedAstNode;
 	private final String mStatement;
+	private final boolean mInstrumentAtomically;
 
-	public ExtractedGhostUpdate(final String variable, final String value, final IASTNode match) {
+	public ExtractedGhostUpdate(final String variable, final String value, final IASTNode match,
+			final boolean instrumentAtomically) {
 		mStatement = String.format("%s = %s;", variable, value);
 		mMatchedAstNode = match;
+		mInstrumentAtomically = instrumentAtomically;
 	}
 
 	private int getStartline() {
@@ -188,32 +191,36 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 	public ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
 			final ExpressionResult expressionResult) {
 		final ExpressionResult witness = instrument(loc, dispatcher);
-		// TODO: Currently, this handling is only here to handle transition invariants.
-		// Reconsider if this is also what we want for actual ghost updates in witnesses.
-		if (isLoop()) {
-			final List<Statement> statements = new ArrayList<>();
-			boolean hasLoop = false;
-			for (final Statement statement : expressionResult.getStatements()) {
-				if (statement instanceof final WhileStatement loop) {
-					if (hasLoop) {
-						throw new UnsupportedOperationException(
-								"The result contains multiple loops, unable to match the ghost update.");
+		if (!mInstrumentAtomically) {
+			// TODO: Currently, this handling for loops is only here to handle transition invariants.
+			// Reconsider if this is also what we want for actual ghost updates in witnesses.
+			if (isLoop()) {
+				final List<Statement> statements = new ArrayList<>();
+				boolean hasLoop = false;
+				for (final Statement statement : expressionResult.getStatements()) {
+					if (statement instanceof final WhileStatement loop) {
+						if (hasLoop) {
+							throw new UnsupportedOperationException(
+									"The result contains multiple loops, unable to match the ghost update.");
+						}
+						hasLoop = true;
+						final List<Statement> body = new ArrayList<>(witness.getStatements());
+						body.addAll(Arrays.asList(loop.getBody()));
+						statements.add(new WhileStatement(loc, loop.getCondition(), loop.getInvariants(),
+								body.toArray(Statement[]::new)));
+					} else {
+						statements.add(statement);
 					}
-					hasLoop = true;
-					final List<Statement> body = new ArrayList<>(witness.getStatements());
-					body.addAll(Arrays.asList(loop.getBody()));
-					statements.add(new WhileStatement(loc, loop.getCondition(), loop.getInvariants(),
-							body.toArray(Statement[]::new)));
-				} else {
-					statements.add(statement);
 				}
+				if (!hasLoop) {
+					throw new UnsupportedOperationException(
+							"The result contains no loop, unable to match the ghost update.");
+				}
+				return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
+						.resetStatements(statements).build();
 			}
-			if (!hasLoop) {
-				throw new UnsupportedOperationException(
-						"The result contains no loop, unable to match the ghost update.");
-			}
-			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
-					.resetStatements(statements).build();
+			// For non-loops, just concatenate the statements
+			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValue(witness).build();
 		}
 		if (isAssignment()) {
 			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
