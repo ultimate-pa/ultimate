@@ -288,6 +288,7 @@
 		<module>../IRSDependencies</module>
 		<module>../JavaCup</module>
 		<module>../JungVisualization</module>
+		<module>../GraphPrinter</module>
 		<module>../LassoRanker</module>
 		<module>../Library-AcceleratedInterpolation</module>
 		<module>../Library-ApacheCommonsCLI</module>
