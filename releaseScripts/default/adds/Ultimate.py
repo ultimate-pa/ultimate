@@ -78,9 +78,9 @@ class _PropParser:
         "data-race",
     ]
 
-    def __init__(self, propfile):
+    def __init__(self, propfile, *, content=None):
         self.propfile = propfile
-        self.content = open(propfile, "r").read()
+        self.content = open(propfile, "r").read() if content is None else content
         self.termination = False
         self.mem_deref = False
         self.mem_memtrack = False
@@ -140,6 +140,10 @@ class _PropParser:
                 self.ltlformula = formula
             else:
                 raise RuntimeError("The formula {0} is unknown".format(formula))
+
+    @classmethod
+    def reachability(cls, init_method):
+        return cls(None, content=f"CHECK(init({init_method}()), LTL(G ! call(reach_error())))")
 
     def get_init_method(self):
         return self.init
@@ -1049,6 +1053,36 @@ def main():
                 + f"\n{bit_precise_marker}\n"
                 + ultimate_bitprecise_output
             )
+
+    # When validating a correctness witness for termination, we additionally need to check the invariants.
+    # Therefore, after checking for termination, we make another run with reachability, but disabled checking for
+    # the error function, so only the invariants are checked.
+    if result.startswith("TRUE") and prop.is_termination() and validate_witness and witness_type == "correctness_witness":
+        # We use a "fake" reachability property
+        prop = _PropParser.reachability(prop.get_init_method())
+        invariant_toolchain = get_toolchain_path(prop, True)
+        invariant_cli_arguments = create_cli_settings(
+            prop, validate_witness, witness_type, architecture, input_files
+        )
+        try:
+            invariant_settings = get_settings_path(False, "Reach*" + architecture)
+        except _AbortButPrint:
+            result = "ERROR: No settings for invariant validation"
+        else:
+            invariant_call = create_callargs(
+                ultimate_bin,
+                ["-tc", invariant_toolchain, "-i", input_files, "-s",
+                 invariant_settings, invariant_cli_arguments, extras,
+                 "--cacsl2boogietranslator.check.unreachability.of.reach_error.function",
+                 "false"],
+            )
+            invariant_marker = "### Validation of the invariants ###"
+            if verbose:
+                print("\n" + invariant_marker)
+            result, result_msg, overapprox, invariant_output, error_path = run_ultimate(
+                invariant_call, prop, verbose
+            )
+            ultimate_output += f"\n{invariant_marker}\n{invariant_output}"
 
     # summarize results
     if write_ultimate_output_to_file:
