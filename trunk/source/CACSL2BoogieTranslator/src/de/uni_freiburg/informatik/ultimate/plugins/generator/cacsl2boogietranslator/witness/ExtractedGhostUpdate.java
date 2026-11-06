@@ -35,14 +35,11 @@ import java.util.stream.Stream;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
-import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
-import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
-import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
@@ -182,45 +179,29 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 				|| mMatchedAstNode instanceof IASTDeclarationStatement;
 	}
 
-	private boolean isLoop() {
-		return mMatchedAstNode instanceof IASTWhileStatement || mMatchedAstNode instanceof IASTForStatement
-				|| mMatchedAstNode instanceof IASTDoStatement;
-	}
-
 	@Override
 	public ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
 			final ExpressionResult expressionResult) {
 		final ExpressionResult witness = instrument(loc, dispatcher);
 		if (!mInstrumentAtomically) {
-			// TODO: Currently, this handling for loops is only here to handle transition invariants.
-			// Reconsider if this is also what we want for actual ghost updates in witnesses.
-			if (isLoop()) {
-				final List<Statement> statements = new ArrayList<>();
-				boolean hasLoop = false;
-				for (final Statement statement : expressionResult.getStatements()) {
-					if (statement instanceof final WhileStatement loop) {
-						if (hasLoop) {
-							throw new UnsupportedOperationException(
-									"The result contains multiple loops, unable to match the ghost update.");
-						}
-						hasLoop = true;
-						final List<Statement> body = new ArrayList<>(witness.getStatements());
-						body.addAll(Arrays.asList(loop.getBody()));
-						statements.add(new WhileStatement(loc, loop.getCondition(), loop.getInvariants(),
-								body.toArray(Statement[]::new)));
-					} else {
-						statements.add(statement);
+			final List<Statement> statements = new ArrayList<>();
+			boolean hasLoop = false;
+			for (final Statement statement : expressionResult.getStatements()) {
+				if (statement instanceof final WhileStatement loop) {
+					if (hasLoop) {
+						throw new UnsupportedOperationException(
+								"The result contains multiple loops, unable to match the ghost update.");
 					}
+					hasLoop = true;
+					final var newBody = Stream.concat(witness.getStatements().stream(), Arrays.stream(loop.getBody()))
+							.toArray(Statement[]::new);
+					statements.add(new WhileStatement(loc, loop.getCondition(), loop.getInvariants(), newBody));
+				} else {
+					statements.add(statement);
 				}
-				if (!hasLoop) {
-					throw new UnsupportedOperationException(
-							"The result contains no loop, unable to match the ghost update.");
-				}
-				return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
-						.resetStatements(statements).build();
 			}
-			// For non-loops, just concatenate the statements
-			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValue(witness).build();
+			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
+					.resetStatements(statements).build();
 		}
 		if (isAssignment()) {
 			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
