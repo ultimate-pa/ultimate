@@ -239,16 +239,14 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, proofProducer,
 				services, transitionClazz, stateFactoryForRefinement);
-		// Start thread pool
-		if (mPref.getThreadLimit() == 0) { // maximum of available cores
-			mNumTaWorkers = Runtime.getRuntime().availableProcessors() - 1; // one for main thread
-		} else {
-			mNumTaWorkers = mPref.getThreadLimit();
-		}
+		// Start thread pool: one thread per TA and k-induction worker (the value analysis has its own executor)
+		mNumTaWorkers = mPref.getNumTaWorkers();
 		mNumKInductionWorkers = mPref.getNumKInductionWorkers();
 		mThreadLimit = mNumTaWorkers + mNumKInductionWorkers;
 		if (mThreadLimit == 0) {
-			throw new AssertionError("At least one parallel CEGAR worker thread must be configured");
+			// The value analysis alone can never prove a program.
+			throw new IllegalArgumentException(
+					"The parallel CEGAR loop needs at least one TA worker or one k-induction worker");
 		}
 		if (mProofUpdater != null) {
 			if (mPref.differenceSenwa()) {
@@ -314,8 +312,14 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		// TODO manage time and timeout
 		boolean didntFindCexLastIteration = false;
 		setUpWorkerThreads();
-		// start worker for initial cex:
-		startWorker();
+		if (noTaWorkerLeft()) {
+			// Configured without TA workers: nobody would take a counterexample, and the abstraction is never refined.
+			// Must come after the setup, which still reads the initial counterexample.
+			releaseForKInduction();
+		} else {
+			// start worker for initial cex:
+			startWorker();
+		}
 
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			abortIfTimeout();

@@ -105,7 +105,7 @@ public final class TAPreferences {
 
 	// Parallel Trace Abstraction Settings
 	private final boolean mParallelCegarLoop;
-	private final int mThreadLimit;
+	private final int mNumTaWorkers;
 	private final int mNumKInductionWorkers;
 	private final int mKInductionSolverTimeout;
 	private final int mTaRetirementHeap;
@@ -237,7 +237,7 @@ public final class TAPreferences {
 				IndependenceSettings.DEFAULT_SOLVER_TIMEOUT /* currently ignored; not exposed as setting */);
 
 		mParallelCegarLoop = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLEL_CEGAR_LOOP);
-		mThreadLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_THREADLIMIT);
+		mNumTaWorkers = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_NUM_TA_WORKERS);
 		mNumKInductionWorkers = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_NUM_KINDUCTION_WORKERS);
 		mKInductionSolverTimeout =
 				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_SOLVER_TIMEOUT);
@@ -692,10 +692,10 @@ public final class TAPreferences {
 	}
 
 	/**
-	 * @return the number of trace abstraction workers, or 0 for one per available core except the main thread's
+	 * @return the number of trace abstraction workers of the parallel CEGAR loop; 0 if only the other workers run
 	 */
-	public int getThreadLimit() {
-		return mThreadLimit;
+	public int getNumTaWorkers() {
+		return mNumTaWorkers;
 	}
 
 	public int getNumKInductionWorkers() {

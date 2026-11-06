@@ -52,7 +52,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:5120 -smt2 -in
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=LoopHeads
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ CEGAR\ loop\ for\ Parallel\ Trace\ Abstraction=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Threadlimit\ for\ Parallel\ CEGAR=1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Number\ of\ TA\ workers\ in\ Parallel\ Trace\ Abstraction=1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Number\ of\ K-Induction\ workers\ in\ Parallel\ Trace\ Abstraction=1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Value\ analysis\ worker\ in\ Parallel\ Trace\ Abstraction=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Minimize\ Abstraction\ every\ time\ a\ worker\ is\ done=false
