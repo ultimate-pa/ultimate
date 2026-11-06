@@ -31,14 +31,16 @@ public class EGraph {
 	 * This option allows us to toggle whether we detect congruence relations.
 	 */
 	private static final boolean PROCESS_CONGRUENCE = true;
-	private static final boolean ADD_ALL_TERMS = false;
+	private static final boolean ADD_ALL_TERMS = true;
 	private static final boolean PROPOGATE_DISTINCTS_BY_UNION = true;
+	private static final boolean PROCESS_BOOLEAN_EQUALITIES = true;
 
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
 
 	/**
-	 * Internal {@link UnionFind} data structure to partition {@link Term}s into equivalence classes.
+	 * Internal {@link UnionFind} data structure to partition {@link Term}s into
+	 * equivalence classes.
 	 **/
 	private final UnionFind<Term> mUnionFind;
 
@@ -50,15 +52,17 @@ public class EGraph {
 	/**
 	 * Partition of all select terms by their array.
 	 *
-	 * This is represented with a map from a set containing an array and all arrays in its equivalence class, to a set
-	 * of all select terms which contain the array (or an equivalent array) as its array argument.
+	 * This is represented with a map from a set containing an array and all arrays
+	 * in its equivalence class, to a set of all select terms which contain the
+	 * array (or an equivalent array) as its array argument.
 	 **/
 	private final HashMap<ImmutableSet<Term>, Set<ApplicationTerm>> mSelectArrayPartition;
 	/**
 	 * Partition of all select terms by their index.
 	 *
-	 * This is represented with a map from a set containing an index of an array and all indices in its equivalence
-	 * class, to a set of all select terms which contain the index (or an equivalent index) as its index argument.
+	 * This is represented with a map from a set containing an index of an array and
+	 * all indices in its equivalence class, to a set of all select terms which
+	 * contain the index (or an equivalent index) as its index argument.
 	 **/
 	private final HashMap<ImmutableSet<Term>, Set<ApplicationTerm>> mSelectIndexPartition;
 
@@ -91,8 +95,9 @@ public class EGraph {
 	}
 
 	/**
-	 * Comparator which orders {@link Term}s by increasing size. If two Terms of size one are ordered using the order
-	 * literal < constant symbol < variable. Otherwise, in all other cases we order the Terms using
+	 * Comparator which orders {@link Term}s by increasing size. If two Terms of
+	 * size one are ordered using the order literal < constant symbol < variable.
+	 * Otherwise, in all other cases we order the Terms using
 	 * {@link CommuhashUtils#HASH_BASED_COMPERATOR}
 	 **/
 	private static class MinimalSizeElementComparator implements Comparator<Term> {
@@ -103,7 +108,8 @@ public class EGraph {
 		}
 
 		/**
-		 * Helper method that ranks {@link Term}s of size one, using the order literal < constant symbol < variable.
+		 * Helper method that ranks {@link Term}s of size one, using the order literal <
+		 * constant symbol < variable.
 		 **/
 		private static int rankTermOfSizeOne(final Term term) {
 			if (SmtUtils.isFalseLiteral(term) || SmtUtils.isTrueLiteral(term)) {
@@ -120,8 +126,8 @@ public class EGraph {
 		}
 
 		/**
-		 * Helper method that compares two {@link Term}s of size one using the order literal < constant symbol <
-		 * variable, breaking ties lexicographically.
+		 * Helper method that compares two {@link Term}s of size one using the order
+		 * literal < constant symbol < variable, breaking ties lexicographically.
 		 **/
 		private static int compareTermsOfSizeOne(final Term term1, final Term term2) {
 			if (rankTermOfSizeOne(term1) < rankTermOfSizeOne(term2)) {
@@ -158,7 +164,8 @@ public class EGraph {
 	}
 
 	/**
-	 * Adds select terms to the datastructure, creating new partitions for their arguments if necessary.
+	 * Adds select terms to the datastructure, creating new partitions for their
+	 * arguments if necessary.
 	 **/
 	// assumes select term arguments have already been added
 	private void addSelectTerm(final ApplicationTerm selectTerm) {
@@ -174,9 +181,9 @@ public class EGraph {
 		ImmutableSet<Term> arrayESet = mUnionFind.getContainingSet(array);
 		ImmutableSet<Term> indexESet = mUnionFind.getContainingSet(index);
 
-		final Set<ApplicationTerm> alreadyEquivalentSelects =
-				DataStructureUtils.intersection(mSelectArrayPartition.getOrDefault(arrayESet, new HashSet<>()),
-						mSelectIndexPartition.getOrDefault(indexESet, new HashSet<>()));
+		final Set<ApplicationTerm> alreadyEquivalentSelects = DataStructureUtils.intersection(
+				mSelectArrayPartition.getOrDefault(arrayESet, new HashSet<>()),
+				mSelectIndexPartition.getOrDefault(indexESet, new HashSet<>()));
 		// TODO: prove we don't need fixed point here
 		for (final ApplicationTerm alreadyEquiv : alreadyEquivalentSelects) {
 			union(selectTerm, alreadyEquiv);
@@ -207,7 +214,8 @@ public class EGraph {
 	 **/
 	private void addTerm(final Term term) {
 		if ((term instanceof ConstantTerm || term instanceof TermVariable)) {
-			// we add terms that do not appear on either side of an equality/disequality relation so that we do not need
+			// we add terms that do not appear on either side of an equality/disequality
+			// relation so that we do not need
 			// to check for deep equality later on
 			mUnionFind.findAndConstructEquivalenceClassIfNeeded(term);
 		} else if (term instanceof ApplicationTerm) {
@@ -302,7 +310,8 @@ public class EGraph {
 	}
 
 	/**
-	 * Creates an egraph-like datastructure from a formula which is assumed to be of the form of a list of conjuncts.
+	 * Creates an egraph-like datastructure from a formula which is assumed to be of
+	 * the form of a list of conjuncts.
 	 **/
 	public void addFormula(final Term formula) {
 		final Term[] conjuncts = SmtUtils.getConjuncts(formula);
@@ -311,14 +320,16 @@ public class EGraph {
 		final Term falseTerm = mMgdScript.term(this, "false");
 		mMgdScript.unlock(this);
 		for (final Term term : conjuncts) {
-			addTerm(term);
-			union(term, trueTerm);
-			if (term instanceof ApplicationTerm) {
-				final ApplicationTerm appTerm = (ApplicationTerm) term;
+			if (PROCESS_BOOLEAN_EQUALITIES) {
+				addTerm(term);
+				union(term, trueTerm);
+				if (term instanceof ApplicationTerm) {
+					final ApplicationTerm appTerm = (ApplicationTerm) term;
 
-				if (appTerm.getFunction().getName().equals("not")) {
-					addTerm(appTerm.getParameters()[0]);
-					union(appTerm.getParameters()[0], falseTerm);
+					if (appTerm.getFunction().getName().equals("not")) {
+						addTerm(appTerm.getParameters()[0]);
+						union(appTerm.getParameters()[0], falseTerm);
+					}
 				}
 			}
 			processBinaryEqualityRelation(term);
@@ -339,7 +350,8 @@ public class EGraph {
 	}
 
 	/**
-	 * This method finds all possible unions of select terms following a union of two terms.
+	 * This method finds all possible unions of select terms following a union of
+	 * two terms.
 	 **/
 	private void findImpliedSelectUnions(final ImmutableSet<Term> A, final ImmutableSet<Term> B,
 			final ImmutableSet<Term> E) {
@@ -382,15 +394,16 @@ public class EGraph {
 	}
 
 	/**
-	 * Method that unions two sets of select terms while maintaining the required array and index partitions
+	 * Method that unions two sets of select terms while maintaining the required
+	 * array and index partitions
 	 **/
 	private void unionSelectTerms(final ImmutableSet<Term> A, final ImmutableSet<Term> B, final ImmutableSet<Term> E) {
-		final Set<ApplicationTerm> newArrayPartionElement =
-				DataStructureUtils.union(mSelectArrayPartition.getOrDefault(A, new HashSet<>()),
-						mSelectArrayPartition.getOrDefault(B, new HashSet<>()));
-		final Set<ApplicationTerm> newIndexPartionElement =
-				DataStructureUtils.union(mSelectIndexPartition.getOrDefault(A, new HashSet<>()),
-						mSelectIndexPartition.getOrDefault(B, new HashSet<>()));
+		final Set<ApplicationTerm> newArrayPartionElement = DataStructureUtils.union(
+				mSelectArrayPartition.getOrDefault(A, new HashSet<>()),
+				mSelectArrayPartition.getOrDefault(B, new HashSet<>()));
+		final Set<ApplicationTerm> newIndexPartionElement = DataStructureUtils.union(
+				mSelectIndexPartition.getOrDefault(A, new HashSet<>()),
+				mSelectIndexPartition.getOrDefault(B, new HashSet<>()));
 		mSelectArrayPartition.remove(A);
 		mSelectArrayPartition.remove(B);
 		mSelectArrayPartition.put(E, newArrayPartionElement);
@@ -455,7 +468,8 @@ public class EGraph {
 	}
 
 	/**
-	 * Method that given a term, returns IMPLIED or UNKNOWN after checking if the given term is implied by the egraph
+	 * Method that given a term, returns IMPLIED or UNKNOWN after checking if the
+	 * given term is implied by the egraph
 	 **/
 	public Implication isImplied(final Term term) {
 		final BinaryEqualityRelation binaryEqRelation = BinaryEqualityRelation.convert(term);
@@ -502,8 +516,8 @@ public class EGraph {
 	}
 
 	/**
-	 * Whether two terms can be found by the egraph to be equivalent, distinct, or we know nothing about their
-	 * equivalence.
+	 * Whether two terms can be found by the egraph to be equivalent, distinct, or
+	 * we know nothing about their equivalence.
 	 **/
 	public enum EquivalenceState {
 		EQUAL, DISTINCT, UNKNOWN
@@ -526,6 +540,9 @@ public class EGraph {
 		final HashMap<Term, Term> representativeMap = new HashMap();
 		for (final Term term : mUnionFind.getAllElements()) {
 			assert mUnionFind.find(term) != null;
+//			if (mUnionFind.getContainingSet(term).size() > 1) {
+//				representativeMap.put(term, mUnionFind.find(term));
+//			}
 			representativeMap.put(term, mUnionFind.find(term));
 		}
 		return representativeMap;
