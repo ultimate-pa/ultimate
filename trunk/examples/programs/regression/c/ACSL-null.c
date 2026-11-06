@@ -6,5 +6,6 @@
 
 int main() {
   int* p = malloc(sizeof(int));
+  if (p == NULL) return;
   //@ assert p != \null;
 }

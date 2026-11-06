@@ -31,6 +31,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtTestGenerationUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
@@ -49,11 +51,26 @@ public class PartialQuantifierElimination {
 	 */
 	private static final boolean DEBUG_EXPECT_REMOVAL_OF_ALL_QUANTIFIERS = false;
 
+	/**
+	 * Write input and output of expensive quantifier eliminations to disk for further analysis.
+	 */
+	private static boolean DEBUG_DUMP_EXPENSIVE_ELIMINATIONS = false;
+
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final Term term, final SimplificationTechnique simplificationTechnique) {
+		final long startTime = System.nanoTime();
 		final Term tmp = eliminateLight(services, mgdScript, term);
 		final Term result = QuantifierPushTermWalker.eliminate(services, mgdScript, true, PqeTechniques.ALL,
 				simplificationTechnique, tmp);
+		final long endTime = System.nanoTime();
+		final long overallTimeMs = (endTime - startTime) / 1_000_000;
+		if (overallTimeMs >= 1_000) {
+			services.getLoggingService().getLogger(PartialQuantifierElimination.class).warn(
+					SmtUtils.generateSimplificationLogMessage(term, result, overallTimeMs, "quantifier elimination"));
+			if (DEBUG_DUMP_EXPENSIVE_ELIMINATIONS) {
+				SmtTestGenerationUtils.dumpEliminationOpportunity("ExpensiveElimination", term, result);
+			}
+		}
 		if (DEBUG_EXPECT_REMOVAL_OF_ALL_QUANTIFIERS && !QuantifierUtils.isQuantifierFree(result)) {
 			throw new AssertionError(String.format("Not all quantifiers eliminated. Size %s Formula: %s",
 					new DAGSize().treesize(result), result));
@@ -66,7 +83,7 @@ public class PartialQuantifierElimination {
 		// Check input for CommuhashNormalForm. Inputs from Ultimate are already in this form, but e.g., formulas that
 		// are directly obtained from a parser may violate this form.
 		assert CommuhashUtils.isInCommuhashNormalForm(term) : "Not in CommuhashNormalForm";
-		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
+		final Term withoutIte = IteRemover.apply(services, mgdScript, term);
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
 		final Term result = QuantifierPushTermWalker.eliminate(services, mgdScript, false, PqeTechniques.LIGHT,
 				SimplificationTechnique.NONE, nnf);

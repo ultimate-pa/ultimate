@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ParentEdge;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Project;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
@@ -50,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.MultiElementCounter;
 
 /**
  * Utility class to collect the variables occurring (as identifier expressions, or in left-hand-sides) in a Boogie AST.
@@ -57,25 +59,43 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 public class BoogieVariableCollector extends BoogieVisitor {
 	private final boolean mIgnoreOldNonOldContext;
 	private final boolean mIgnoreLHS;
+	private final boolean mIgnoreBoundVariables;
 
 	private final SequencedSet<VariableOccurrence> mResult = new LinkedHashSet<>();
 	private boolean mInOldContext = false;
 
+	// Variables bound by quantifiers in an analysed expression (used if mIgnoreBoundVariables is true).
+	// This MultiElementCounter represents a multiset (elements are mapped to number of occurrences).
+	// We use a multiset since nested quantifiers may use the same names.
+	private final MultiElementCounter<String> mBoundVariables = new MultiElementCounter<>();
+
 	public BoogieVariableCollector(final BoogieASTNode node) {
-		this(node, false, false);
+		this(node, false, false, false);
 	}
 
 	public BoogieVariableCollector(final BoogieASTNode node, final boolean ignoreOldNonOldContext,
 			final boolean ignoreLHS) {
+		this(node, ignoreOldNonOldContext, ignoreLHS, false);
+	}
+
+	public BoogieVariableCollector(final BoogieASTNode node, final boolean ignoreOldNonOldContext,
+			final boolean ignoreLHS, final boolean ignoreBoundVariables) {
 		mIgnoreOldNonOldContext = ignoreOldNonOldContext;
 		mIgnoreLHS = ignoreLHS;
+		mIgnoreBoundVariables = ignoreBoundVariables;
 		process(node);
 	}
 
 	public BoogieVariableCollector(final Collection<? extends BoogieASTNode> nodes,
 			final boolean ignoreOldNonOldContext, final boolean ignoreLHS) {
+		this(nodes, ignoreOldNonOldContext, ignoreLHS, false);
+	}
+
+	public BoogieVariableCollector(final Collection<? extends BoogieASTNode> nodes,
+			final boolean ignoreOldNonOldContext, final boolean ignoreLHS, final boolean ignoreBoundVariables) {
 		mIgnoreOldNonOldContext = ignoreOldNonOldContext;
 		mIgnoreLHS = ignoreLHS;
+		mIgnoreBoundVariables = ignoreBoundVariables;
 		for (final BoogieASTNode node : nodes) {
 			process(node);
 		}
@@ -167,6 +187,9 @@ public class BoogieVariableCollector extends BoogieVisitor {
 
 	@Override
 	protected void visit(final IdentifierExpression expr) {
+		if (mIgnoreBoundVariables && boundVariablesContains(expr.getIdentifier())) {
+			return;
+		}
 		mResult.add(new IdentifierExpressionOccurrence(expr.getIdentifier(), expr.getDeclarationInformation(),
 				(BoogieType) expr.getType(), mInOldContext));
 	}
@@ -189,11 +212,39 @@ public class BoogieVariableCollector extends BoogieVisitor {
 			mInOldContext = prevContext;
 			return result;
 		}
+		if (mIgnoreBoundVariables && expr instanceof final QuantifierExpression quantExpr) {
+			for (final var vl : quantExpr.getParameters()) {
+				for (final var var : vl.getIdentifiers()) {
+					putBoundVariable(var);
+				}
+			}
+
+			final var result = super.processExpression(quantExpr.getSubformula());
+
+			for (final var vl : quantExpr.getParameters()) {
+				for (final var var : vl.getIdentifiers()) {
+					removeBoundVariable(var);
+				}
+			}
+			return result;
+		}
 		return super.processExpression(expr);
 	}
 
+	private boolean boundVariablesContains(final String elem) {
+		return mBoundVariables.getNumber(elem) > 0;
+	}
+
+	private void putBoundVariable(final String elem) {
+		mBoundVariables.increment(elem);
+	}
+
+	private void removeBoundVariable(final String elem) {
+		mBoundVariables.decrement(elem);
+	}
+
 	public static List<String> extractIds(final Expression expr) {
-		return new BoogieVariableCollector(expr, true, false).collectedOccurences().stream()
+		return new BoogieVariableCollector(expr, true, false, false).collectedOccurences().stream()
 				.map(occ -> occ.identifier()).distinct().toList();
 	}
 

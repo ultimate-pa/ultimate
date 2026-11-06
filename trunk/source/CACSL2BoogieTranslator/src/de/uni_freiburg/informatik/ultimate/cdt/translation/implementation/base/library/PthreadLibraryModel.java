@@ -32,9 +32,11 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
@@ -43,20 +45,25 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -83,8 +90,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
- * Model of functions and types from pthread.h (https://pubs.opengroup.org/onlinepubs/7908799/xsh/pthread.h.html) to use
- * concurrency in C
+ * Model of functions and types from pthread.h (https://pubs.opengroup.org/onlinepubs/009696899/basedefs/pthread.h.html)
+ * to use concurrency in C
  */
 public class PthreadLibraryModel implements ILibraryModel {
 	private final FunctionModelHelper mHelper;
@@ -98,6 +105,11 @@ public class PthreadLibraryModel implements ILibraryModel {
 	private final ProcedureManager mProcedureManager;
 	private final ThreadIdManager mThreadIdManager;
 	private final IMemoryPointer mMemoryPointer;
+
+	// The constant PTHREAD_BARRIER_SERIAL_THREAD is defined in <pthread.h> and its value shall be distinct from any
+	// other value returned by pthread_barrier_wait()
+	// (see https://aws.github.io/amazon-freertos/202007.00/html2/POSIX/pthread_8h.html)
+	private static final BigInteger PTHREAD_BARRIER_SERIAL_THREAD = BigInteger.valueOf(-2);
 
 	public PthreadLibraryModel(final FunctionModelHelper helper, final FlatSymbolTable symboltable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionResultTransformer exprResultTransformer,
@@ -121,8 +133,11 @@ public class PthreadLibraryModel implements ILibraryModel {
 	@Override
 	public Collection<FunctionModel> getFunctionModels() {
 		return List.of(new FunctionModel("pthread_create", this::handlePthread_create),
+				new FunctionModel("pthread_once", this::handlePthread_once),
 				new FunctionModel("pthread_join", this::handlePthread_join),
 				new FunctionModel("pthread_mutex_init", this::handlePthread_mutex_init),
+				new FunctionModel("pthread_barrier_init", this::handlePthread_barrier_init),
+				new FunctionModel("pthread_barrier_wait", this::handlePthread_barrier_wait),
 				new FunctionModel("pthread_mutex_lock", this::handlePthread_mutex_lock),
 				new FunctionModel("pthread_mutex_trylock", this::handlePthread_mutex_trylock),
 				new FunctionModel("pthread_mutex_unlock", this::handlePthread_mutex_unlock),
@@ -164,7 +179,7 @@ public class PthreadLibraryModel implements ILibraryModel {
 		}
 		builder.addAllExceptLrValue(argThreadAttributes, argStartRoutine, startRoutineArguments);
 
-		final String methodName = getForkedProcedure(node, arguments[2], argStartRoutine);
+		final String methodName = getFunctionParameterName(loc, arguments[2], argStartRoutine, name);
 		final CFunction function = mProcedureManager.getCFunctionType(methodName);
 		final int params = function.getParameterTypes().length;
 		final Expression[] forkArguments;
@@ -199,49 +214,103 @@ public class PthreadLibraryModel implements ILibraryModel {
 		return builder.build();
 	}
 
-	private String getForkedProcedure(final IASTFunctionCallExpression node, final IASTInitializerClause argument,
-			final ExpressionResult argStartRoutine) {
-		final String methodName;
-		{
-			// We hope that the function is not given by a function pointer that is stored
-			// in a variable but directly by the function name
-			final String rawProcName;
-			if (argument instanceof CASTIdExpression) {
-				final CASTIdExpression castIdExpr = (CASTIdExpression) argument;
-				rawProcName = castIdExpr.getName().toString();
-			} else if (argument instanceof CASTUnaryExpression) {
-				final CASTUnaryExpression castUnaryExpr = (CASTUnaryExpression) argument;
-				if (castUnaryExpr.getOperator() != IASTUnaryExpression.op_amper) {
-					throw new UnsupportedOperationException(
-							"Third argument of pthread_create is: " + argument.getClass().getSimpleName());
-				}
-				// function foo is probably given as a function pointer of the form & foo
-				if (!(castUnaryExpr.getOperand() instanceof CASTIdExpression)) {
-					throw new UnsupportedOperationException("Third argument of pthread_create is: "
-							+ castUnaryExpr.getOperand().getClass().getSimpleName());
-				}
-				final CASTIdExpression castIdExpr = (CASTIdExpression) castUnaryExpr.getOperand();
-				rawProcName = castIdExpr.getName().toString();
-			} else {
-				throw new UnsupportedOperationException(
-						"Third argument of pthread_create is " + argument.getClass().getSimpleName());
+	private String getFunctionParameterName(final ILocation loc, final IASTInitializerClause argument,
+			final ExpressionResult argStartRoutine, final String functionName) {
+		// We hope that the function is not given by a function pointer that is stored in a variable but directly by the
+		// function name
+		final String rawProcName;
+		if (argument instanceof CASTIdExpression) {
+			final CASTIdExpression castIdExpr = (CASTIdExpression) argument;
+			rawProcName = castIdExpr.getName().toString();
+		} else if (argument instanceof CASTUnaryExpression) {
+			final CASTUnaryExpression castUnaryExpr = (CASTUnaryExpression) argument;
+			if (castUnaryExpr.getOperator() != IASTUnaryExpression.op_amper) {
+				throw new UnsupportedSyntaxException(loc,
+						"Function parameter of " + functionName + " is: " + argument.getClass().getSimpleName());
 			}
-
-			final String multiParseProcedureName =
-					mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), rawProcName);
-			if (!mProcedureManager.hasProcedure(multiParseProcedureName)) {
-				throw new UnsupportedOperationException("cannot find function " + multiParseProcedureName
-						+ " Ultimate does not support pthread_create in combination with function pointers");
+			// function foo is probably given as a function pointer of the form & foo
+			if (!(castUnaryExpr.getOperand() instanceof CASTIdExpression)) {
+				throw new UnsupportedSyntaxException(loc, "Argument of " + functionName + " is: "
+						+ castUnaryExpr.getOperand().getClass().getSimpleName());
 			}
-
-			final IdentifierExpression idExpr = (IdentifierExpression) argStartRoutine.getLrValue().getValue();
-			final String prefix = idExpr.getIdentifier().substring(0, 9);
-			if (!prefix.equals(SFO.FUNCTION_ADDRESS)) {
-				throw new UnsupportedOperationException("unable to decode " + idExpr.getIdentifier());
-			}
-			methodName = idExpr.getIdentifier().substring(9);
+			final CASTIdExpression castIdExpr = (CASTIdExpression) castUnaryExpr.getOperand();
+			rawProcName = castIdExpr.getName().toString();
+		} else {
+			throw new UnsupportedSyntaxException(loc,
+					"Function parameter of " + functionName + " is " + argument.getClass().getSimpleName());
 		}
-		return methodName;
+
+		final String multiParseProcedureName = mSymboltable.applyMultiparseRenaming(loc.getFileName(), rawProcName);
+		if (!mProcedureManager.hasProcedure(multiParseProcedureName)) {
+			throw new UnsupportedSyntaxException(loc, "Cannot find function " + multiParseProcedureName + ". "
+					+ functionName + " in combination with function pointers is not supported.");
+		}
+
+		final String id = ((IdentifierExpression) argStartRoutine.getLrValue().getValue()).getIdentifier();
+		if (!id.startsWith(SFO.FUNCTION_ADDRESS)) {
+			throw new UnsupportedSyntaxException(loc, "Unable to decode function name " + id);
+		}
+		return id.substring(SFO.FUNCTION_ADDRESS.length());
+	}
+
+	private Result handlePthread_once(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, 2, name, arguments);
+
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult once = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
+		final ExpressionResult initRoutine =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
+		builder.addAllExceptLrValue(once, initRoutine);
+
+		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
+		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc, intType, BigInteger.ZERO);
+		final Expression one = mTypeSizes.constructLiteralForIntegerType(loc, intType, BigInteger.ONE);
+		final Expression two = mTypeSizes.constructLiteralForIntegerType(loc, intType, BigInteger.TWO);
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
+				new PrimitiveType(loc, BoogieType.TYPE_BOOL, SFO.BOOL), SFO.AUXVAR.NONDET);
+		builder.addAuxVarWithDeclaration(auxVar);
+
+		// If once is zero, set it to 1 and set the aux-var to true, indicating that the function should be called.
+		// Otherwise set the aux-var to false, indicating that the function call should be skipped.
+		final ExpressionResult readBeforeEnter = mExprResultTransformer.readPointerValue(loc, once.getLrValue());
+		builder.addAllExceptLrValueAndStatements(readBeforeEnter);
+		final ExpressionResult setInProgress =
+				mExprResultTransformer.makePointerAssignment(loc, once.getLrValue(), one);
+		builder.addAllExceptLrValueAndStatements(setInProgress);
+		final List<Statement> claimInitStatements = new ArrayList<>(setInProgress.getStatements());
+		claimInitStatements.add(StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(),
+				ExpressionFactory.createBooleanLiteral(loc, true)));
+		final Statement skipInit = StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(),
+				ExpressionFactory.createBooleanLiteral(loc, false));
+		final Expression isUninitialized = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_equals, readBeforeEnter.getLrValue().getValue(), intType, zero, intType);
+		final List<Statement> claimStatements = new ArrayList<>(readBeforeEnter.getStatements());
+		claimStatements.add(
+				StatementFactory.constructIfStatement(loc, isUninitialized, claimInitStatements, List.of(skipInit)));
+		builder.addStatement(StatementFactory.constructAtomicStatement(loc, claimStatements));
+
+		// If the value of the aux-var is true, call the function and assign once to 2, indicating that the call was
+		// executed
+		final CallStatement call = StatementFactory.constructCallStatement(loc, false, new VariableLHS[0],
+				getFunctionParameterName(loc, arguments[1], initRoutine, name), new Expression[0]);
+		final ExpressionResult setComplete = mExprResultTransformer.makePointerAssignment(loc, once.getLrValue(), two);
+		builder.addAllExceptLrValueAndStatements(setComplete);
+		builder.addStatement(StatementFactory.constructIfStatement(loc, auxVar.getExp(),
+				List.of(call, StatementFactory.constructAtomicStatement(loc, setComplete.getStatements()))));
+
+		// assume once == 2 (to wait for another thread to execute the call)
+		final ExpressionResult readAfterComplete = mExprResultTransformer.readPointerValue(loc, once.getLrValue());
+		builder.addAllExceptLrValueAndStatements(readAfterComplete);
+		final Expression isInitComplete = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_equals, readAfterComplete.getLrValue().getValue(), intType, two, intType);
+		final List<Statement> waitStatements = new ArrayList<>(readAfterComplete.getStatements());
+		waitStatements.add(new AssumeStatement(loc, isInitComplete));
+		builder.addStatement(StatementFactory.constructAtomicStatement(loc, waitStatements));
+
+		// Return 0 to indicate success
+		return builder.setLrValue(new RValue(zero, intType)).build();
 	}
 
 	// We assume success and return 0 without any additional checks.
@@ -306,8 +375,6 @@ public class PthreadLibraryModel implements ILibraryModel {
 
 	private Result handlePthread_exit(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
-
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, 1, name, arguments);
 
@@ -460,8 +527,6 @@ public class PthreadLibraryModel implements ILibraryModel {
 
 	private Result handlePthread_mutex_init(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
-
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, 2, name, arguments);
 
@@ -489,13 +554,122 @@ public class PthreadLibraryModel implements ILibraryModel {
 		return erb.build();
 	}
 
+	private Result handlePthread_barrier_init(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, 3, name, arguments);
+
+		final ExpressionResult barrier =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		final ExpressionResult attributes =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
+		final ExpressionResult capacity = mExprResultTransformer.performImplicitConversion(
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[2]),
+				new CPrimitive(CPrimitives.UINT), loc);
+		if (!mMemoryHandler.isNullPointerLiteral(attributes.getLrValue().getValue())) {
+			throw new UnsupportedSyntaxException(loc, "Only default attributes are supported for pthread_barrier_init");
+		}
+
+		// We model a pthread_barrier using a 3-valued struct:
+		// - the number of threads necessary to pass the barrier ("capacity"), initialized with the last parameter
+		// - the number of threads that arrived at the barrier, initialized with 0
+		// - the number of threads that exited the barrier, initialized with 0
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addAllExceptLrValue(barrier, attributes, capacity);
+		final Expression zero =
+				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.UINT), BigInteger.ZERO);
+		final Expression barrierInit = ExpressionFactory.constructStructConstructor(loc,
+				new String[] { SFO.PTHREAD_BARRIER_CAPACITY, SFO.PTHREAD_BARRIER_ARRIVALS, SFO.PTHREAD_BARRIER_EXITED },
+				new Expression[] { capacity.getLrValue().getValue(), zero, zero });
+		builder.addStatement(
+				mMemoryHandler.constructPthreadBarrierAssignment(loc, barrier.getLrValue().getValue(), barrierInit));
+		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
+		return builder.setLrValue(
+				new RValue(mTypeSizes.constructLiteralForIntegerType(loc, returnType, BigInteger.ZERO), returnType))
+				.build();
+	}
+
+	private Result handlePthread_barrier_wait(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, 1, name, arguments);
+
+		final ExpressionResult barrier =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		final Expression index = barrier.getLrValue().getValue();
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addAllExceptLrValue(barrier);
+
+		final CPrimitive counterType = new CPrimitive(CPrimitives.UINT);
+		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
+		final Expression countAtBarrier =
+				mMemoryHandler.constructPthreadBarrierFieldAccess(loc, index, SFO.PTHREAD_BARRIER_CAPACITY);
+		final Expression arrivalsAtBarrier =
+				mMemoryHandler.constructPthreadBarrierFieldAccess(loc, index, SFO.PTHREAD_BARRIER_ARRIVALS);
+		final Expression exitedAtBarrier =
+				mMemoryHandler.constructPthreadBarrierFieldAccess(loc, index, SFO.PTHREAD_BARRIER_EXITED);
+		final Expression one = mTypeSizes.constructLiteralForIntegerType(loc, counterType, BigInteger.ONE);
+		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc, counterType, BigInteger.ZERO);
+		final Expression arrivalsBelowCapacity = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessThan, arrivalsAtBarrier, counterType, countAtBarrier, counterType);
+		final Expression nextArrivalCount = mExpressionTranslation.constructArithmeticExpression(loc,
+				IASTBinaryExpression.op_plus, arrivalsAtBarrier, counterType, one, counterType);
+
+		// Check whether the barrier is already full and otherwise indicate that the thread has arrived
+		// atomic { assume arrivals < capacity; arrivals := arrivals + 1; }
+		builder.addStatement(StatementFactory.constructAtomicStatement(loc,
+				List.of(new AssumeStatement(loc, arrivalsBelowCapacity),
+						mMemoryHandler.constructPthreadBarrierFieldAssignment(loc, index, SFO.PTHREAD_BARRIER_ARRIVALS,
+								nextArrivalCount))));
+
+		// Wait until all threads have arrived
+		// assume arrivals == capacity;
+		final Expression allArrived = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_equals, arrivalsAtBarrier, counterType, countAtBarrier, counterType);
+		builder.addStatement(new AssumeStatement(loc, allArrived));
+
+		final Expression nextExitedCount = mExpressionTranslation.constructArithmeticExpression(loc,
+				IASTBinaryExpression.op_plus, exitedAtBarrier, counterType, one, counterType);
+		final Expression isLastDeparture = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_equals, nextExitedCount, counterType, countAtBarrier, counterType);
+		final Expression nextArrivalState =
+				ExpressionFactory.constructIfThenElseExpression(loc, isLastDeparture, zero, arrivalsAtBarrier);
+		final Expression nextExitedState =
+				ExpressionFactory.constructIfThenElseExpression(loc, isLastDeparture, zero, nextExitedCount);
+		final AuxVarInfo returnValue = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, SFO.AUXVAR.RETURNED);
+		builder.addAuxVarWithDeclaration(returnValue);
+
+		// Record this thread's exit, the last exit resets the counters for the next round.
+		// atomic {
+		// newExited := exited + 1;
+		// isLast := newExited == capacity;
+		// arrivals := if isLast then 0 else arrivals;
+		// result := if isLast then PTHREAD_BARRIER_SERIAL_THREAD else 0;
+		// exited := if isLast then 0 else newExited;
+		// }
+
+		final Expression returnExpression = ExpressionFactory.constructIfThenElseExpression(loc, isLastDeparture,
+				mTypeSizes.constructLiteralForIntegerType(loc, returnType, PTHREAD_BARRIER_SERIAL_THREAD), zero);
+		// The exit is assigned last, so the conditions above still observe its old value
+		builder.addStatement(StatementFactory.constructAtomicStatement(loc, List.of(
+				mMemoryHandler.constructPthreadBarrierFieldAssignment(loc, index, SFO.PTHREAD_BARRIER_ARRIVALS,
+						nextArrivalState),
+				StatementFactory.constructSingleAssignmentStatement(loc, returnValue.getLhs(), returnExpression),
+				mMemoryHandler.constructPthreadBarrierFieldAssignment(loc, index, SFO.PTHREAD_BARRIER_EXITED,
+						nextExitedState))));
+
+		return builder.setLrValue(new RValue(returnValue.getExp(), returnType)).build();
+	}
+
 	@Override
 	public Collection<TypeModel> getTypeModels() {
 		// TODO: Handle more types here that are declared in pthread.h
 		return List.of(new TypeModel("pthread_t", mTypeHandler.getThreadIdType()),
+				new TypeModel("pthread_once_t", new CPrimitive(CPrimitives.INT)),
 				new TypeModel("__pthread_list_t", CPointer.voidPointer()),
 				// TODO: We may want to use a specific type to simplify the mutex/lock handling
 				new TypeModel("pthread_mutex_t", new CPrimitive(CPrimitives.INT)),
+				new TypeModel("pthread_barrier_t", new CPrimitive(CPrimitives.INT)),
 				new TypeModel("pthread_rwlock_t", new CPrimitive(CPrimitives.INT)),
 				new TypeModel("pthread_cond_t", new CPrimitive(CPrimitives.INT)));
 	}
@@ -504,12 +678,10 @@ public class PthreadLibraryModel implements ILibraryModel {
 	public Collection<ConstantModel> getConstantModels() {
 		// TODO: Add more constants?
 		// TODO: Model initializers properly?
-		return List.of(
-				new ConstantModel("PTHREAD_MUTEX_INITIALIZER",
-						loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ZERO, new CPrimitive(CPrimitives.INT))),
-				new ConstantModel("PTHREAD_RWLOCK_INITIALIZER",
-						loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ZERO, new CPrimitive(CPrimitives.INT))),
-				new ConstantModel("PTHREAD_COND_INITIALIZER",
-						loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ZERO, new CPrimitive(CPrimitives.INT))));
+		return List.of(mHelper.integerConstant("PTHREAD_MUTEX_INITIALIZER", 0),
+				mHelper.integerConstant("PTHREAD_ONCE_INIT", 0),
+				mHelper.integerConstant("PTHREAD_BARRIER_SERIAL_THREAD", PTHREAD_BARRIER_SERIAL_THREAD),
+				mHelper.integerConstant("PTHREAD_RWLOCK_INITIALIZER", 0),
+				mHelper.integerConstant("PTHREAD_COND_INITIALIZER", 0));
 	}
 }

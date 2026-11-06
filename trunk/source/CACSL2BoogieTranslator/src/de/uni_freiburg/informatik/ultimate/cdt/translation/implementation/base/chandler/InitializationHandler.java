@@ -325,7 +325,7 @@ public class InitializationHandler {
 			 * We are dealing with an initialization of a value with non-aggregate type.
 			 */
 			return initExpressionWithExpression(loc, lhsIfAny, onHeap, !usingOnHeapInitializationViaConstArray,
-					targetCType, initInfoIfAny, hook);
+					targetCType, initInfoIfAny);
 		} else if (targetCType instanceof CStructOrUnion) {
 			// unions are handled along with structs here
 			return initCStruct(loc, lhsIfAny, (CStructOrUnion) targetCType, initInfoIfAny, onHeap,
@@ -362,7 +362,7 @@ public class InitializationHandler {
 
 	private ExpressionResult initExpressionWithExpression(final ILocation loc, final LRValue lhsIfAny,
 			final boolean onHeap, final boolean useSelectInsteadOfStoreForOnHeapAssignment, final ICType cType,
-			final InitializerInfo initInfo, final IASTNode hook) {
+			final InitializerInfo initInfo) {
 		assert initInfo.hasExpressionResult();
 
 		final ExpressionResultBuilder initializer = new ExpressionResultBuilder();
@@ -374,7 +374,7 @@ public class InitializationHandler {
 			// we have a lhs given, insert assignments such that the lhs is initialized
 			final List<Statement> assigningStatements =
 					makeAssignmentStatements(loc, lhsIfAny, onHeap, useSelectInsteadOfStoreForOnHeapAssignment, cType,
-							initializationValue.getValue(), initInfo.getOverapprs(), hook);
+							initializationValue.getValue(), initInfo.getOverapprs());
 			assigningStatements.forEach(stm -> addOverApprToStatementAnnots(initInfo.getOverapprs(), stm));
 			initializer.addStatements(assigningStatements);
 		} else {
@@ -392,7 +392,7 @@ public class InitializationHandler {
 		if (initInfo.hasExpressionResult()) {
 			// we are initializing through a struct-typed expression, not an initializer list
 			return initExpressionWithExpression(loc, lhsIfAny, onHeap, !usingOnHeapInitializationViaConstArray,
-					cStructType, initInfo, hook);
+					cStructType, initInfo);
 		}
 		// we have an initializer list
 
@@ -644,7 +644,7 @@ public class InitializationHandler {
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
 			final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 			final List<Statement> defaultInit = makeAssignmentStatements(loc, baseAddress, true, true, cType,
-					getDefaultValueForSimpleType(loc, cType), Collections.emptyList(), hook);
+					getDefaultValueForSimpleType(loc, cType), Collections.emptyList());
 			initialization.addStatements(defaultInit);
 			return initialization.build();
 		} else if (cType instanceof final CStructOrUnion cStructType) {
@@ -703,7 +703,7 @@ public class InitializationHandler {
 			if (lhsToInitIfAny != null) {
 				// we have a lhs given, insert assignments such that the lhs is initialized
 				final List<Statement> assigningStatements = makeAssignmentStatements(loc, lhsToInitIfAny, false, false,
-						cType, initializationValue.getValue(), Collections.emptyList(), hook);
+						cType, initializationValue.getValue(), Collections.emptyList());
 				initializer.addStatements(assigningStatements);
 			} else {
 				initializer.setLrValue(initializationValue);
@@ -929,25 +929,19 @@ public class InitializationHandler {
 	 */
 	private List<Statement> makeAssignmentStatements(final ILocation loc, final LRValue lhs, final boolean onHeap,
 			final boolean useSelectInsteadOfStoreForOnHeapAssignment, final ICType cType,
-			final Expression initializationValue, final Collection<Overapprox> overAppr, final IASTNode hook) {
+			final Expression initializationValue, final Collection<Overapprox> overAppr) {
 		assert lhs != null;
 
-		List<Statement> assigningStatements;
 		if (onHeap) {
 			if (useSelectInsteadOfStoreForOnHeapAssignment && mUseSelectForArrayCellInitIfPossible) {
-				assigningStatements =
-						mMemoryHandler.getInitCall(loc, (HeapLValue) lhs, initializationValue, cType, hook);
-			} else {
-				assigningStatements =
-						mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, initializationValue, cType, true);
+				return mMemoryHandler.getInitCall(loc, (HeapLValue) lhs, initializationValue, cType);
 			}
-		} else {
-			final AssignmentStatement assignment = StatementFactory.constructAssignmentStatement(loc,
-					new LeftHandSide[] { ((LocalLValue) lhs).getLhs() }, new Expression[] { initializationValue });
-			addOverApprToStatementAnnots(overAppr, assignment);
-			assigningStatements = Collections.singletonList(assignment);
+			return mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, initializationValue, cType, true);
 		}
-		return assigningStatements;
+		final List<Statement> assignments =
+				mCHandler.constructAssignmentWithoutFlexibleArray(loc, (LocalLValue) lhs, initializationValue);
+		assignments.forEach(s -> addOverApprToStatementAnnots(overAppr, s));
+		return assignments;
 	}
 
 	private Expression getDefaultValueForSimpleType(final ILocation loc, final ICType cTypeRaw) {
@@ -1006,7 +1000,7 @@ public class InitializationHandler {
 				initInfo == null ? BigDecimal.ZERO : BigDecimal.valueOf(initInfo.getNumberOfValues());
 		final BigDecimal threshold = new BigDecimal(numberOfCells)
 				.multiply(BigDecimal.valueOf(MAXIMAL_EXPLICIT_TO_OVERALL_RATIO_FOR_USING_CONSTARRAYS_FOR_ONHEAP_INIT));
-		return numberOfInitializerValues.compareTo(threshold) > 0;
+		return numberOfInitializerValues.compareTo(threshold) <= 0;
 	}
 
 	private BigInteger countNumberOfPrimitiveElementInType(final ICType cTypeRaw, final IASTNode hook) {
@@ -1230,7 +1224,18 @@ public class InitializationHandler {
 		int currentCellIndex = -1;
 		while (!rest.isEmpty() && (currentCellIndex < bound - 1 || rest.peekFirst().hasRootDesignator())) {
 			final InitializerResult firstOfRest = rest.peekFirst();
+			boolean designatesNestedMember = false;
 			if (firstOfRest.hasRootDesignator()) {
+				if (targetCType instanceof final CStructOrUnion structType
+						&& firstOfRest.getRootDesignator() instanceof final StructDesignator sd) {
+					if (!structType.hasField(sd.getStructFieldId())) {
+						// The designated member belongs to an enclosing type (we were handed down the rest of its
+						// list); give the remaining entries back to the caller.
+						break;
+					}
+					// member of an anonymous struct/union: the entry is handed down to the anonymous member
+					designatesNestedMember = structType.getFieldPath(sd.getStructFieldId()).size() > 1;
+				}
 				currentCellIndex = getCellIndex(targetCType, firstOfRest.getRootDesignator());
 			} else {
 				currentCellIndex++;
@@ -1246,11 +1251,11 @@ public class InitializationHandler {
 			 * union type. In the latter case, the initial value of the object, including unnamed members, is that of
 			 * the expression.
 			 */
-			if (firstOfRest.isInitializerList()
+			if (!designatesNestedMember && (firstOfRest.isInitializerList()
 					|| (firstOfRest.hasRootExpressionResult() && areCompatibleStructOrUnionTypes(cellType,
 							firstOfRest.getRootExpressionResult().getLrValue().getCType()))
 					|| (firstOfRest.getRootExpressionResult() instanceof StringLiteralResult
-							&& TypeHandler.isCharArray(cellType))) {
+							&& TypeHandler.isCharArray(cellType)))) {
 				/*
 				 * first case: "{", i.e. one more brace opens (initializer list). Then the cell is initialized with the
 				 * list belonging to that brace (until the matching brace). No residue is taken over if too many
@@ -1294,7 +1299,10 @@ public class InitializationHandler {
 		case final StructDesignator sd -> {
 			assert cType instanceof CStructOrUnion
 					: "Expected CStructOrUnion, but got " + cType.getClass().getSimpleName() + " (" + cType + ")";
-			yield CTranslationUtil.findIndexOfStructField((CStructOrUnion) cType, sd.getStructFieldId());
+			final CStructOrUnion structType = (CStructOrUnion) cType;
+			// The first element of the path is the field itself or the anonymous member that contains it
+			yield CTranslationUtil.findIndexOfStructField(structType,
+					structType.getFieldPath(sd.getStructFieldId()).getFirst());
 		}
 		};
 	}

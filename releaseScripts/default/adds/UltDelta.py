@@ -52,12 +52,23 @@ def check_string_contains(strings, words):
     return False
 
 
+@lru_cache(maxsize=1)
+def get_launcher_jar():
+    candidates = glob.glob(os.path.join(ultimatedir, "plugins", "org.eclipse.equinox.launcher_*.jar"))
+    if not candidates:
+        raise RuntimeError("Could not find any launcher JAR.")
+    if len(candidates) > 1:
+        raise RuntimeError("Found multiple launcher JARs: " + ", ".join(candidates))
+    return candidates[0]
+
+
 def get_binary():
     ultimate_bin = [
         "java",
         "-Dosgi.configuration.area=" + os.path.join(datadir, "config"),
-        "-Xmx12G",
-        "-Xms4m",
+        "-Xms2M",
+        "-Xmx15G",
+        "-Xms1M",
     ]
 
     if enable_assertions:
@@ -65,10 +76,7 @@ def get_binary():
 
     ultimate_bin = ultimate_bin + [
         "-jar",
-        os.path.join(
-            ultimatedir,
-            "plugins/org.eclipse.equinox.launcher_1.7.0.v20250519-0528.jar",
-        ),
+        get_launcher_jar(),
         "-data",
         datadir,
     ]

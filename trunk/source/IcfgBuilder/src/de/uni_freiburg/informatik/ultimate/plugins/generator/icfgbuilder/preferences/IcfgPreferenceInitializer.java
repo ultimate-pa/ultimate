@@ -66,7 +66,7 @@ public class IcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 			"z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.mbqi=false";
 	public static final String Z3_DEFAULT = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
 	public static final String Z3_LOW_TIMEOUT = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:2000";
-	public static final String CVC4 = "cvc4 --incremental --print-success --lang smt --tlimit-per=12000";
+	public static final String CVC5 = "cvc5 --incremental --print-success --lang smt --tlimit-per=12000";
 	public static final String Princess = "princess +incremental +stdin -timeout=12000";
 
 	/*
@@ -100,7 +100,13 @@ public class IcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final CodeBlockSize DEF_CODE_BLOCK_SIZE = CodeBlockSize.LoopFreeBlock;
 	public static final String LABEL_SIMPLIFY = "Simplify code blocks";
 	public static final String LABEL_CNF = "Convert code blocks to CNF";
-	public static final String LABEL_REMOVE_GOTO_EDGES = "Remove goto edges from ICFG";
+	public static final String LABEL_REMOVE_GOTO_EDGES = "Remove goto edges";
+	public static final String LABEL_REMOVE_UNNECESSARY_LABELS = "Remove unnecessary labels";
+	private static final String DESC_REMOVE_UNNECESSARY_LABELS =
+			"If enabled, any label that has no corresponding goto, or whose goto appears only on the line preceding "
+					+ "the label, is removed and not preserved in the ICFG. "
+					+ "Otherwise, this optimization is only applied for auxiliary labels. "
+					+ "Warning: This optimization does not allow to output invariants at all labels.";
 	public static final String LABEL_DUMP_TO_FILE = "Dump SMT script to file";
 	public static final String LABEL_COMPRESS_SMT_DUMP_FILE = "Compress dumped SMT script";
 	public static final String DESC_COMPRESS_SMT_DUMP_FILE = "Compress the written .smt2 script with GZip";
@@ -144,6 +150,8 @@ public class IcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_CONTEXT_SWITCH_ONLY_AT_ATOMIC_BOUNDARIES,
 						DEF_CONTEXT_SWITCH_ONLY_AT_ATOMIC_BOUNDARIES, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_REMOVE_GOTO_EDGES, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_REMOVE_UNNECESSARY_LABELS, true, DESC_REMOVE_UNNECESSARY_LABELS,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SIMPLIFY, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CNF, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SIMPLE_PARTIAL_SKOLEMIZATION, DEF_SIMPLE_PARTIAL_SKOLEMIZATION,

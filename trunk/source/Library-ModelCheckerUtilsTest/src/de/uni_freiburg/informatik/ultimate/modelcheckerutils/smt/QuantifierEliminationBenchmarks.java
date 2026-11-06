@@ -535,5 +535,26 @@ public class QuantifierEliminationBenchmarks {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void ExpensiveElimination_2c0d2d51_2001c959_Treesizes_244_3() {
+		final FunDecl[] funDecls = {
+			new FunDecl(SmtSortUtils::getIntSort, "ULTIMATE.start_aws_linked_list_prev_harness_#t~ret683#1"),
+		};
+		final String formulaAsString = "(exists ((k1 Int) (k2 Int) (a (Array Int Int)) (k3 Int) (k4 Int) (k5 Int) (k6 Int) (k7 Int) (k8 Int) (k9 Int) (k10 Int) (k11 Int)) (and (<= (+ 16 k8) (select a (+ 8 k8))) (<= (+ 16 k11) (select a (+ 8 k11))) (= (select a (select a (+ 8 k8))) k8) (= (select a (select a (+ 8 k1))) k1) (= (select a (select a (+ 8 k11))) k11) (<= (+ 16 k2) (select a (+ 8 k2))) (<= (+ 16 k4) (select a (+ 8 k4))) (= (select a (select a (+ 8 k5))) k5) (= (select a (select a (+ 8 k7))) k7) (= (select a (select a (+ 8 k6))) k6) (<= (+ 16 k9) (select a (+ 8 k9))) (= k2 (select a (select a (+ 8 k2)))) (or (and (= (select a (+ (select a (select a (+ 8 k10))) 8)) (select a (+ 8 k10))) (= |ULTIMATE.start_aws_linked_list_prev_harness_#t~ret683#1| 1)) (and (= |ULTIMATE.start_aws_linked_list_prev_harness_#t~ret683#1| 0) (not (= (select a (+ (select a (select a (+ 8 k10))) 8)) (select a (+ 8 k10)))))) (<= (+ 16 k10) (select a (+ 8 k10))) (<= (+ 16 k5) (select a (+ 8 k5))) (<= (+ 16 k1) (select a (+ 8 k1))) (= (select a (select a (+ 8 k4))) k4) (= (select a (select a (+ 8 k3))) k3) (<= (+ 16 k6) (select a (+ 8 k6))) (<= (+ 16 k3) (select a (+ 8 k3))) (= (select a (select a (+ 8 k9))) k9) (<= (+ 16 k7) (select a (+ 8 k7))) (= (select a (select a (+ 8 k10))) k10)))";
+		final String expectedResult = "(= |ULTIMATE.start_aws_linked_list_prev_harness_#t~ret683#1| 1)";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+
+	@Test
+	public void ExpensiveElimination_d6fcc083_a917abc3_Treesizes_113_56() {
+		final FunDecl[] funDecls = {
+			new FunDecl(SmtSortUtils::getIntSort, "k1", "k2", "#StackHeapBarrier", "#InitialAllocations", "k3"),
+		};
+		final String formulaAsString = "(forall ((v_ArrVal_753 Int) (v_ArrVal_752 Int) (|#memory_$Pointer$.base| (Array Int Int)) (|v_k2_16| Int)) (or (< 0 (let ((.cse0 (store (store (store (store |#memory_$Pointer$.base| k2 |v_k2_16|) (+ |v_k2_16| 8) v_ArrVal_752) |v_k2_16| v_ArrVal_753) (+ k3 24) |v_k2_16|))) (select .cse0 (select .cse0 k1)))) (< |#StackHeapBarrier| (+ |v_k2_16| 17)) (< |v_k2_16| (+ |#InitialAllocations| 1)) (< v_ArrVal_753 (+ k3 16))))";
+		final String expectedResult = "(and (or (< 0 (+ |#InitialAllocations| 1)) (< 0 (+ k3 16)) (= k1 (+ k3 24)) (< |#StackHeapBarrier| (+ |#InitialAllocations| 18))) (or (< 0 (+ k3 24)) (< |#StackHeapBarrier| (+ 41 k3)) (< (+ 23 k3) |#InitialAllocations|)) (or (= k1 k2) (= k1 (+ k3 24)) (< |#StackHeapBarrier| (+ |#InitialAllocations| 18))) (or (< 0 (+ k3 16)) (and (or (< (+ k3 22) |#InitialAllocations|) (< |#StackHeapBarrier| (+ |#InitialAllocations| 18))) (or (< |#StackHeapBarrier| (+ |#InitialAllocations| 18)) (< |#StackHeapBarrier| (+ k3 42))))) (or (< k1 (+ |#InitialAllocations| 9)) (= k1 (+ k3 24)) (< |#StackHeapBarrier| (+ k1 9))) (or (= k1 (+ k3 24)) (< k1 (+ |#InitialAllocations| 1)) (< |#StackHeapBarrier| (+ k1 17))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	//@formatter:on
 }

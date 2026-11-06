@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -46,15 +47,16 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Allows several preconditions. Tries to detect which of them are relevant to prove the implication.
+ * Allows several preconditions. Uses unsat core to determine which preconditions are relevant for the validity of the
+ * Hoare triple.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class HoareTripleCheckerWithPreconditionRelevanceAnalysis extends IncrementalHoareTripleChecker {
 
+	private final IPredicate mAssertedPrecondDummy = new DebugPredicate("dummy", 0, null);
 	private List<IPredicate> mAssertedPrecond;
 
 	public HoareTripleCheckerWithPreconditionRelevanceAnalysis(final CfgSmtToolkit csToolkit, final ILogger logger) {
@@ -65,7 +67,9 @@ public class HoareTripleCheckerWithPreconditionRelevanceAnalysis extends Increme
 		assert mManagedScript.isLockOwner(this);
 		assert mAssertedAction != null : "Assert CodeBlock first";
 		assert mAssertedPrecond == null : "precond already asserted";
+		assert super.mAssertedPrecond == null : "precond already asserted";
 		mAssertedPrecond = pres;
+		super.mAssertedPrecond = mAssertedPrecondDummy;
 		mEdgeCheckerBenchmark.continueEdgeCheckerTime();
 		mManagedScript.push(this, 1);
 		LBool quickCheck = null;
@@ -99,14 +103,16 @@ public class HoareTripleCheckerWithPreconditionRelevanceAnalysis extends Increme
 		return quickCheck;
 	}
 
-	private String getIdentifierForPrecond(final int i) {
+	private static String getIdentifierForPrecond(final int i) {
 		return ID_PRECONDITION + i;
 	}
 
 	private void unAssertPrecondition() {
 		assert mManagedScript.isLockOwner(this);
 		assert mAssertedPrecond != null : "No PrePred asserted";
+		assert super.mAssertedPrecond != null : "No PrePred asserted";
 		mAssertedPrecond = null;
+		super.mAssertedPrecond = null;
 		mManagedScript.pop(this, 1);
 
 		if (mAssertedAction == null) {
@@ -114,25 +120,25 @@ public class HoareTripleCheckerWithPreconditionRelevanceAnalysis extends Increme
 		}
 	}
 
-	public Pair<Validity, List<IPredicate>> checkInternal(final List<IPredicate> pre, final IInternalAction act,
+	public PrecondRelevanceResult checkInternal(final List<IPredicate> pre, final IInternalAction act,
 			final IPredicate post) {
 		assertCodeBlock(act);
 		assertPrecondition(pre);
 		assertPostcond(post);
 		final Validity validity = checkValidity();
-		final List<IPredicate> preconditionsInUnsatCore;
+		final PrecondRelevanceResult preconditionsInUnsatCore;
 		if (validity == Validity.VALID) {
 			preconditionsInUnsatCore = determinePreconditionsInUnsatCore();
 		} else {
-			preconditionsInUnsatCore = null;
+			preconditionsInUnsatCore = new PrecondRelevanceResult(validity, null);
 		}
 		unAssertPostcondition();
 		unAssertPrecondition();
 		unAssertCodeBlock();
-		return new Pair<>(validity, preconditionsInUnsatCore);
+		return preconditionsInUnsatCore;
 	}
 
-	private List<IPredicate> determinePreconditionsInUnsatCore() {
+	private PrecondRelevanceResult determinePreconditionsInUnsatCore() {
 		final Term[] unsatCore = mManagedScript.getUnsatCore(this);
 		final Set<String> idsInUnsatCore = new HashSet<>();
 		for (final Term term : unsatCore) {
@@ -145,45 +151,55 @@ public class HoareTripleCheckerWithPreconditionRelevanceAnalysis extends Increme
 				result.add(mAssertedPrecond.get(i));
 			}
 		}
-		return result;
+		return new PrecondRelevanceResult(Validity.VALID, result);
 	}
 
-	public Pair<Validity, List<IPredicate>> checkCall(final List<IPredicate> pre, final ICallAction act,
-			final IPredicate post) {
+	public PrecondRelevanceResult checkCall(final List<IPredicate> pre, final ICallAction act, final IPredicate post) {
 		assertCodeBlock(act);
 		assertPrecondition(pre);
 		assertPostcond(post);
 		final Validity validity = checkValidity();
-		final List<IPredicate> preconditionsInUnsatCore;
+		final PrecondRelevanceResult preconditionsInUnsatCore;
 		if (validity == Validity.VALID) {
 			preconditionsInUnsatCore = determinePreconditionsInUnsatCore();
 		} else {
-			preconditionsInUnsatCore = null;
+			preconditionsInUnsatCore = new PrecondRelevanceResult(validity, null);
 		}
 		unAssertPostcondition();
 		unAssertPrecondition();
 		unAssertCodeBlock();
-		return new Pair<>(validity, preconditionsInUnsatCore);
+		return preconditionsInUnsatCore;
 	}
 
-	public Pair<Validity, List<IPredicate>> checkReturn(final List<IPredicate> linPre, final IPredicate hierPre,
+	/**
+	 * We allow only one hierarchical precondition because we don't know an application where we need multiple
+	 * hierarchical preconditions. If we use this for postprocessing SP sequences, it would be unsound to do an unsat
+	 * core based reduction of linear and hierarchical preconditions at the same time, because the hierarchical
+	 * precondition constrains the linear precondition by the path over the call which is not reflected by this Hoare
+	 * triple check.
+	 *
+	 */
+	public PrecondRelevanceResult checkReturn(final List<IPredicate> linPre, final IPredicate hierPre,
 			final IReturnAction act, final IPredicate post) {
 		assertCodeBlock(act);
 		assertPrecondition(linPre);
 		assertHierPred(hierPre);
 		assertPostcond(post);
 		final Validity validity = checkValidity();
-		final List<IPredicate> preconditionsInUnsatCore;
+		final PrecondRelevanceResult preconditionsInUnsatCore;
 		if (validity == Validity.VALID) {
 			preconditionsInUnsatCore = determinePreconditionsInUnsatCore();
 		} else {
-			preconditionsInUnsatCore = null;
+			preconditionsInUnsatCore = new PrecondRelevanceResult(validity, null);
 		}
 		unAssertPostcondition();
 		unAssertHierPred();
 		unAssertPrecondition();
 		unAssertCodeBlock();
-		return new Pair<>(validity, preconditionsInUnsatCore);
+		return preconditionsInUnsatCore;
+	}
+
+	public record PrecondRelevanceResult(Validity validity, List<IPredicate> relevantPreconditions) {
 	}
 
 }

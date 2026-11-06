@@ -46,11 +46,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
@@ -89,12 +91,15 @@ public class StdlibLibraryModel implements ILibraryModel {
 	private final ProcedureManager mProcedureManager;
 	private final INameHandler mNameHandler;
 	private final CheckMode mOverflowCheckMode;
+	private final IMemoryPointer mMemoryPointer;
+	private final boolean mAssumeHeapAllocationAlwaysSucceeds;
 
 	public StdlibLibraryModel(final FunctionModelHelper helper, final ExpressionResultTransformer exprResultTransformer,
 			final TypeSizes typeSizes, final TypeSizeAndOffsetComputer typeSizeComputer,
 			final ExpressionTranslation expressionTranslation, final AuxVarInfoBuilder auxVarInfoBuilder,
 			final MemoryHandler memoryHandler, final ProcedureManager procedureManager, final INameHandler nameHandler,
-			final CheckMode overflowCheckMode) {
+			final CheckMode overflowCheckMode, final IMemoryPointer memoryPointer,
+			final boolean assumeHeapAllocationAlwaysSucceeds) {
 		mHelper = helper;
 		mExprResultTransformer = exprResultTransformer;
 		mTypeSizes = typeSizes;
@@ -105,6 +110,8 @@ public class StdlibLibraryModel implements ILibraryModel {
 		mProcedureManager = procedureManager;
 		mNameHandler = nameHandler;
 		mOverflowCheckMode = overflowCheckMode;
+		mMemoryPointer = memoryPointer;
+		mAssumeHeapAllocationAlwaysSucceeds = assumeHeapAllocationAlwaysSucceeds;
 	}
 
 	@Override
@@ -319,8 +326,18 @@ public class StdlibLibraryModel implements ILibraryModel {
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MALLOC);
 		result.addAuxVarWithDeclaration(auxvar);
 		result.addStatement(mMemoryHandler.getUltimateMemAllocCall(product, auxvar.getLhs(), loc, MemoryArea.HEAP));
-		result.addStatement(mMemoryHandler.constructUltimateMeminitCall(loc, nmemb.getLrValue().getValue(),
-				size.getLrValue().getValue(), product, auxvar.getExp()));
+		final CallStatement meminitCall = mMemoryHandler.constructUltimateMeminitCall(loc,
+				nmemb.getLrValue().getValue(), size.getLrValue().getValue(), product, auxvar.getExp());
+		if (mAssumeHeapAllocationAlwaysSucceeds) {
+			result.addStatement(meminitCall);
+		} else {
+			result.addStatement(
+					StatementFactory.constructIfStatement(loc,
+							ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, auxvar.getExp(),
+									mMemoryPointer.constructNullPointer(loc,
+											mExpressionTranslation.getCTypeOfPointerComponents())),
+							List.of(meminitCall)));
+		}
 		result.setLrValue(new RValue(auxvar.getExp(), resultType));
 		return result.build();
 	}

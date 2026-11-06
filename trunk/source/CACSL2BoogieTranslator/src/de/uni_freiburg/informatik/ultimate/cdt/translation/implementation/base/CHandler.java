@@ -154,6 +154,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -183,6 +184,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.AssertLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.AtomicLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ErrnoLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.FenvLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.FunctionModelHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.GccBuiltinLibraryModel;
@@ -409,6 +411,8 @@ public class CHandler {
 
 	private final IMemoryPointer mMemoryPointer;
 
+	private final Map<String, ICType> mTypedefs = new HashMap<>();
+
 	/**
 	 * Constructor for CHandler in pre-run mode.
 	 *
@@ -465,8 +469,7 @@ public class CHandler {
 				mExpressionTranslation, mProcedureManager, mTypeSizeComputer, mAuxVarInfoBuilder, mSettings,
 				mMemoryPointer);
 
-		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler,
-				mLocationFactory);
+		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler);
 		mDataRaceChecker =
 				mSettings.checkDataRaces()
 						? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer,
@@ -479,7 +482,7 @@ public class CHandler {
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
 				mExprResultTransformer, mVariablesOnHeap, mMemoryPointer);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
-				mExprResultTransformer, mMemoryHandler, mLocationFactory);
+				mExprResultTransformer, mMemoryHandler);
 		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mTypeHandler,
 				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer, mMemoryPointer);
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
@@ -559,8 +562,7 @@ public class CHandler {
 		// the memory handler also retains information from the prerun
 		mMemoryHandler = new MemoryHandler(prerunCHandler.mMemoryHandler, typeSizes, nameHandler, typeHandler,
 				expressionTranslation, procedureManager, typeSizeAndOffsetComputer, mAuxVarInfoBuilder, mSettings);
-		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler,
-				mLocationFactory);
+		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler);
 		mDataRaceChecker =
 				mSettings.checkDataRaces()
 						? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer,
@@ -573,7 +575,7 @@ public class CHandler {
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
 				mExprResultTransformer, mVariablesOnHeap, mMemoryPointer);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
-				mExprResultTransformer, mMemoryHandler, mLocationFactory);
+				mExprResultTransformer, mMemoryHandler);
 		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mTypeHandler,
 				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer, mMemoryPointer);
 
@@ -638,15 +640,17 @@ public class CHandler {
 						mTypeSizes, mMemoryHandler, mDataRaceChecker, mTypeHandler),
 				new StdlibLibraryModel(helper, mExprResultTransformer, mTypeSizes, mTypeSizeComputer,
 						mExpressionTranslation, mAuxVarInfoBuilder, mMemoryHandler, mProcedureManager, mNameHandler,
-						mSettings.checkSignedIntegerBounds()),
+						mSettings.checkSignedIntegerBounds(), mMemoryPointer,
+						mSettings.assumeHeapAllocationAlwaysSucceeds()),
 				new StringLibraryModel(helper, mExprResultTransformer, mAuxVarInfoBuilder, mMemoryHandler,
 						mProcedureManager, mExpressionTranslation, mTypeSizeComputer, mMemoryPointer),
 				new SvcompLibraryModel(helper, mAuxVarInfoBuilder, mExpressionTranslation, mNameHandler,
-						mSettings.checkErrorFunction(), mExprResultTransformer),
+						mSettings.checkErrorFunction(), mExprResultTransformer, mMemoryHandler, this),
 				new TimeLibraryModel(helper, mExpressionTranslation, mAuxVarInfoBuilder),
 				new VariadicLibraryModel(helper, mMemoryHandler, mProcedureManager, mTypeHandler,
-						mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder),
-				new StdintLibraryModel(), new LimitsLibraryModel(mTypeSizes, helper), new StdboolLibraryModel(helper));
+						mExprResultTransformer, mAuxVarInfoBuilder),
+				new StdintLibraryModel(), new LimitsLibraryModel(mTypeSizes, helper), new StdboolLibraryModel(helper),
+				new ErrnoLibraryModel(helper));
 	}
 
 	/**
@@ -829,12 +833,12 @@ public class CHandler {
 		final ExpressionResult array = (ExpressionResult) main.dispatch(node.getArrayExpression());
 		final ExpressionResult subscript =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getArgument());
-		return handleArraySubscriptExpression(array, subscript, node);
+		return handleArraySubscriptExpression(loc, array, subscript, node);
 	}
 
-	public ExpressionResult handleArraySubscriptExpression(final ExpressionResult array,
+	public ExpressionResult handleArraySubscriptExpression(final ILocation loc, final ExpressionResult array,
 			final ExpressionResult subscript, final IASTNode hook) {
-		return mArrayHandler.handleArraySubscriptExpression(array, subscript, hook);
+		return mArrayHandler.handleArraySubscriptExpression(loc, array, subscript, hook);
 	}
 
 	public Result visit(final IDispatcher main, final IASTASMDeclaration node) {
@@ -1201,34 +1205,33 @@ public class CHandler {
 			// type sizes are already compatible
 			return;
 		}
-		final BigInteger requiredByteSize = castTargetByteSize.min(operandTypeByteSize);
+		adaptMemoryModelIfNecessary(loc, "Found a cast between two array/pointer types of different sizes",
+				castTargetByteSize.min(operandTypeByteSize).intValueExact());
+	}
 
-		final String msg;
-		if (mSettings.getMemoryStructurePreference() == MemoryStructure.HoenickeLindenmann_Original) {
-			// memory model has no resolution and the operand is
-			// cast to a type of a different size
-			msg = "Found a cast between two array/pointer types of different sizes while using memory model "
-					+ MemoryStructure.HoenickeLindenmann_Original;
-		} else if (BigInteger.valueOf(mSettings.getMemoryStructurePreference().getByteSize())
-				.compareTo(requiredByteSize) > 0) {
-			// memory model resolution is strictly bigger than the minimum of the size of
-			// the operand and the target
-			msg = "Found a cast between two array/pointer types of different sizes where the minimum of "
-					+ "both sizes is smaller than the resolution of our memory model";
-		} else {
-			// no need to change memory model
+	public void adaptMemoryModelIfNecessary(final ILocation loc, final String msg, final int requiredByteSize) {
+		if (!mIsPrerun) {
 			return;
 		}
-
+		final String resultMsg;
+		if (mSettings.getMemoryStructurePreference() == MemoryStructure.HoenickeLindenmann_Original) {
+			// Memory model has no resolution
+			resultMsg = msg + " while using memory model " + MemoryStructure.HoenickeLindenmann_Original;
+		} else if (Integer.compare(mSettings.getMemoryStructurePreference().getByteSize(), requiredByteSize) > 0) {
+			// Memory model resolution is strictly bigger than the required byte size
+			resultMsg = msg + " required byte size is smaller than the resolution of our memory model";
+		} else {
+			// No need to change memory model
+			return;
+		}
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(msg);
+			mLogger.debug(resultMsg);
 			mLogger.debug(" at location: " + loc);
 			mLogger.debug(" current memory model: " + mSettings.getMemoryStructurePreference());
 		}
-		// signal a restart of the translation with a memory model precise
-		// enough for the operands
-		signalTranslationRestartWithDifferentSettings(new TranslationSettings.SettingsChange(loc, msg,
-				MemoryStructure.getPreciseEnoughMemoryStructureFor(requiredByteSize.intValueExact())));
+		// Signal a restart of the translation with a memory model precise enough for the operands
+		signalTranslationRestartWithDifferentSettings(new TranslationSettings.SettingsChange(loc, resultMsg,
+				MemoryStructure.getPreciseEnoughMemoryStructureFor(requiredByteSize)));
 	}
 
 	public Result visit(final IDispatcher main, final IASTCompoundStatement node) {
@@ -1331,7 +1334,7 @@ public class CHandler {
 		final boolean isOnHeap = isOnHeap(node);
 
 		final IASTPointerOperator[] pointerOps = node.getPointerOperators();
-		final ICType nestedPointerType = getPointerType(pointerOps.length, pendingResType.getCType());
+		final ICType nestedPointerType = getPointerType(pointerOps, pendingResType.getCType());
 		final TypesResult resType = TypesResult.create(pendingResType, nestedPointerType);
 
 		// Adapt the name for multiparse input
@@ -1548,19 +1551,18 @@ public class CHandler {
 	}
 
 	/**
-	 * Create a nested {@link CPointer} type that ultimately points to the supplied type. If length is smaller or equal
-	 * zero, the supplied type is returned.
+	 * Create a nested {@link CPointer} type that ultimately points to the supplied type.
 	 *
-	 * @param length
-	 *            The nesting depth
+	 * @param pointerOps
+	 *            The pointer operators in declaration order
 	 * @param cType
 	 *            The underlying type
 	 * @return The new CPointer.
 	 */
-	private static ICType getPointerType(int length, final ICType cType) {
+	private static ICType getPointerType(final IASTPointerOperator[] pointerOps, final ICType cType) {
 		ICType type = cType;
-		for (; length > 0; --length) {
-			type = new CPointer(type);
+		for (final IASTPointerOperator pointerOp : pointerOps) {
+			type = new CPointer(type, CTranslationUtil.hasAtomicQualifier(pointerOp));
 		}
 		return type;
 	}
@@ -1626,7 +1628,16 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTFieldReference node) {
-		return mStructHandler.handleFieldReference(main, mExprResultTransformer, node);
+		final ILocation loc = mLocationFactory.createCLocation(node);
+		final String field = node.getFieldName().toString();
+		final ExpressionResult fieldOwner = (ExpressionResult) main.dispatch(node.getFieldOwner());
+		return mStructHandler.handleFieldReference(loc, mExprResultTransformer, fieldOwner, field,
+				node.isPointerDereference(), node);
+	}
+
+	public ExpressionResult handleFieldReference(final ILocation loc, final ExpressionResult struct, final String field,
+			final IASTNode hook) {
+		return mStructHandler.handleFieldReference(loc, mExprResultTransformer, struct, field, false, hook);
 	}
 
 	/**
@@ -2206,6 +2217,14 @@ public class CHandler {
 				// performed. This is unsound, but does not lead to any wrong results in SV-COMP.
 				overapprox = List.of();
 			}
+			// Skip the initialization, but still write the terminating zero byte
+			final HeapLValue lastByteLValue = mInitHandler.constructAddressForArrayAtIndex(actualLoc,
+					LRValueFactory.constructHeapLValue(mTypeHandler, addressRValue.getValue(), arrayType, null),
+					sizeInBytes - 1);
+			final CPrimitive charType = new CPrimitive(CPrimitives.CHAR);
+			final Expression zero = mTypeSizes.constructLiteralForIntegerType(actualLoc, charType, BigInteger.ZERO);
+			mStaticObjectsHandler.addStatementsForUltimateInit(
+					mMemoryHandler.getInitCall(actualLoc, lastByteLValue, zero, charType));
 			return new StringLiteralResult(addressRValue, overapprox, stringLiteral);
 		}
 		final ExpressionResult exprRes = mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node);
@@ -2317,7 +2336,7 @@ public class CHandler {
 			return new SkipResult();
 		}
 		// TODO: This is just a workaround for now to crash when thread local variables are used in a concurrent program
-		if (CTranslationUtil.hasAttribute(node.getDeclSpecifier(), "thread")) {
+		if (CTranslationUtil.hasThreadLocalQualifier(node.getDeclSpecifier())) {
 			mHasThreadLocalVars = true;
 			// Only crash for thread local variable in concurrent programs
 			if (mIsConcurrent) {
@@ -2975,8 +2994,7 @@ public class CHandler {
 				resultRhs = auxVar.getExp();
 			}
 			// MemoryHandler::getWriteCall already handles atomic types properly, so there is nothing to do here.
-			builder.addStatements(mMemoryHandler.getWriteCall(loc, hlv, resultRhs,
-					rightHandSideValueWithConversionsApplied.getCType(), false));
+			builder.addStatements(mMemoryHandler.getWriteCall(loc, hlv, resultRhs, leftHandSide.getCType(), false));
 
 			// the value of an assignment statement expression is the right hand side of the
 			// assignment
@@ -3012,18 +3030,20 @@ public class CHandler {
 		} else {
 			rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 		}
-		final AssignmentStatement assignStmt = StatementFactory.constructAssignmentStatement(loc,
-				new LeftHandSide[] { lValue.getLhs() }, new Expression[] { rhsWithBitfieldTreatment });
+		final List<Statement> assignStmt =
+				constructAssignmentWithoutFlexibleArray(loc, lValue, rhsWithBitfieldTreatment);
 
 		if (leftHandSide.getCType().isAtomic()) {
 			// For atomic types, make this assignment into an atomic block
-			builder.addStatement(new AtomicStatement(loc, new Statement[] { assignStmt }));
+			builder.addStatement(new AtomicStatement(loc, assignStmt.toArray(Statement[]::new)));
 		} else {
-			builder.addStatement(assignStmt);
+			builder.addStatements(assignStmt);
 		}
 
-		for (final Overapprox oa : rhsConverted.getOverapprs()) {
-			new OverapproxVariable(oa.getOverapproximatedLocations()).annotate(assignStmt);
+		for (final Statement s : assignStmt) {
+			for (final Overapprox oa : rhsConverted.getOverapprs()) {
+				new OverapproxVariable(oa.getOverapproximatedLocations()).annotate(s);
+			}
 		}
 		// TODO: DD 2020-12-02: havocing neighbours should only happen if the field is
 		// really on the stack -- it
@@ -3038,6 +3058,34 @@ public class CHandler {
 			mDataRaceChecker.checkOnWrite(builder, loc, leftHandSide);
 		}
 		return builder.build();
+	}
+
+	/**
+	 * Construct an assignment "lhs := rhs", but if the LHS type is a struct with a flexible array member, assign each
+	 * field separately, but skip flexible. Otherwise, construct just a simple assignment (same as
+	 * {@link StatementFactory#constructAssignmentStatement}).
+	 */
+	public List<Statement> constructAssignmentWithoutFlexibleArray(final ILocation loc, final LocalLValue lhs,
+			final Expression rhs) {
+		if (lhs.getCType().getUnderlyingType() instanceof final CStructOrUnion structType
+				&& structType.hasFlexibleArrayMember()) {
+			// If the LHS type is a struct with a flexible array member, assign each field separately, but skip flexible
+			// arrays (see C11 6.7.2.1).
+			final List<Statement> result = new ArrayList<>();
+			for (final String fieldId : structType.getFieldIds()) {
+				final ICType fieldType = structType.getFieldType(fieldId);
+				if (fieldType.getUnderlyingType() instanceof CArray && fieldType.isIncomplete()) {
+					// Assignment of structs ignores flexible arrays, https://en.cppreference.com/w/c/language/struct
+					continue;
+				}
+				final Expression fieldRhs = ExpressionFactory.constructStructAccessExpression(loc, rhs, fieldId);
+				final StructLHS fieldLhs = new StructLHS(loc, fieldRhs.getType(), lhs.getLhs(), fieldId);
+				result.add(StatementFactory.constructSingleAssignmentStatement(loc, fieldLhs, fieldRhs));
+			}
+			return result;
+		}
+		// Otherwise, construct just a simple assignment.
+		return List.of(StatementFactory.constructSingleAssignmentStatement(loc, lhs.getLhs(), rhs));
 	}
 
 	/**
@@ -3162,6 +3210,18 @@ public class CHandler {
 		final Declaration boogieDec;
 		final Result result;
 		if (storageClass == CStorageClass.TYPEDEF) {
+			result = skipOrSideEffects(declResult);
+			final ICType existingType = mTypedefs.put(bId, cDec.getType());
+			if (existingType != null) {
+				// C11 6.7.3: there shall be no more than one declaration of the identifier [...]
+				// except that a typedef name can be redefined to denote the same type as it currently does
+				if (existingType.getUnderlyingType().equals(cDec.getType().getUnderlyingType())) {
+					// Avoid adding duplicate Boogie declarations (otherwise the solver crashes later)
+					return result;
+				}
+				throw new AssertionError("error: conflicting types for " + cDec.getType() + "; have " + existingType);
+			}
+
 			boogieDec = new TypeDeclaration(loc, new Attribute[0], false, bId, new String[0], translatedType);
 
 			final BoogieType boogieType = mTypeHandler.getBoogieTypeForCType(cDec.getType());
@@ -3183,8 +3243,6 @@ public class CHandler {
 			}
 			// TODO: add a sizeof-constant for the type??
 			mStaticObjectsHandler.addGlobalTypeDeclaration((TypeDeclaration) boogieDec, cDec);
-
-			result = skipOrSideEffects(declResult);
 		} else if (storageClass == CStorageClass.STATIC && !mProcedureManager.isGlobalScope()) {
 			// we have a local static variable -> special treatment
 			// global static variables are treated like normal global variables..
@@ -3652,10 +3710,9 @@ public class CHandler {
 	 * Handle the address operator according to Section 6.5.3.2 of C11.
 	 */
 	private Result handleAddressOfOperator(final ExpressionResult er, final IASTNode hook) throws AssertionError {
-		final RValue rVal;
-		if (er.getLrValue() instanceof HeapLValue) {
-			rVal = ((HeapLValue) er.getLrValue()).getAddressAsPointerRValue(mTypeHandler.getBoogiePointerType());
-		} else if (er.getLrValue() instanceof LocalLValue) {
+		final RValue rVal = switch (er.getLrValue()) {
+		case final HeapLValue heapLValue -> heapLValue.getAddressAsPointerRValue(mTypeHandler.getBoogiePointerType());
+		case final LocalLValue localLValue -> {
 			if (!mIsPrerun) {
 				throw new AssertionError("cannot take address of LocalLValue: this is a on-heap/off-heap bug");
 			}
@@ -3664,19 +3721,17 @@ public class CHandler {
 			// instead of the address. But we add variables to the
 			// heapVars and hence in the non-prerun mode the input
 			// will be a HeapLValue instead of a LocalLValue.
-			final Expression expr = er.getLrValue().getValue();
+			final Expression expr = localLValue.getValue();
 			if (expr instanceof IdentifierExpression) {
 				final IdentifierExpression idExpr = (IdentifierExpression) expr;
 				moveIdOnHeap(idExpr, hook);
 			} else {
-				moveArrayAndStructIdsOnHeap(er.getLrValue().getUnderlyingType(), expr, hook);
+				moveArrayAndStructIdsOnHeap(localLValue.getUnderlyingType(), expr, hook);
 			}
-			rVal = convertToPointerRValue(er.getLrValue(), mTypeHandler.getBoogiePointerType());
-		} else if (er.getLrValue() instanceof RValue) {
-			throw new AssertionError("cannot take address of RValue");
-		} else {
-			throw new AssertionError("Unknown value");
+			yield convertToPointerRValue(localLValue, mTypeHandler.getBoogiePointerType());
 		}
+		case final RValue rValue -> throw new AssertionError("cannot take address of RValue");
+		};
 		return new ExpressionResultBuilder().addAllExceptLrValue(er).setLrValue(rVal).build();
 	}
 
@@ -3693,7 +3748,8 @@ public class CHandler {
 		}
 		final CPointer pointer = (CPointer) rValue.getCType().getUnderlyingType();
 		final ICType pointedType = pointer.getPointsToType();
-		if (pointedType.isIncomplete()) {
+		// An incomplete array can still be indexed, decay to an element pointer, or have its address taken.
+		if (!(pointedType.getUnderlyingType() instanceof CArray) && pointedType.isIncomplete()) {
 			return new ExpressionWithIncompleteTypeResult(rop.getStatements(),
 					LRValueFactory.constructHeapLValue(mTypeHandler, rValue.getValue(), pointedType, null),
 					rop.getDeclarations(), rop.getAuxVars(), rop.getOverapprs(), loc);

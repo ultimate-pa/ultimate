@@ -11,6 +11,7 @@ struct str {
 
 int main() {
   struct str *s = malloc(sizeof (struct str) + 8);
+  if (s == NULL) return;
   int *dp = &(s->d[0]);
   *dp = 42;
   int res = s->d[0];

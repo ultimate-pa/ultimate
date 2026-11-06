@@ -290,7 +290,7 @@ public class TypeChecker extends BaseObserver {
 		final TypeParameters typeParams = new TypeParameters(quant.getTypeParams());
 		mTypeManager.pushTypeScope(typeParams);
 
-		final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.QUANTIFIED, null);
+		final DeclarationInformation declInfo = DeclarationInformation.DECLARATIONINFO_QUANTIFIED;
 		final VarList[] parameters = quant.getParameters();
 
 		mVarScopes.beginScope();
@@ -398,7 +398,7 @@ public class TypeChecker extends BaseObserver {
 	}
 
 	private void processVariableDeclaration(final VariableDeclaration varDecl) {
-		final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
+		final DeclarationInformation declInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 		for (final VarList varlist : varDecl.getVariables()) {
 			final BoogieType type = mTypeManager.resolveType(varlist.getType());
 			for (final String id : varlist.getIdentifiers()) {
@@ -409,7 +409,7 @@ public class TypeChecker extends BaseObserver {
 	}
 
 	private void processConstDeclaration(final ConstDeclaration constDecl) {
-		final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
+		final DeclarationInformation declInfo = DeclarationInformation.DECLARATIONINFO_GLOBAL;
 		final VarList varList = constDecl.getVarList();
 		final BoogieType type = mTypeManager.resolveType(varList.getType());
 		for (final String id : varList.getIdentifiers()) {

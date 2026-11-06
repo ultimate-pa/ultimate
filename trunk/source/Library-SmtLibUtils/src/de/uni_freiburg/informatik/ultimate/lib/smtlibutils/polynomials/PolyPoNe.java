@@ -832,7 +832,7 @@ public class PolyPoNe {
 		for (final Term term : mNegative) {
 			params.add(SmtUtils.not(mScript, term));
 		}
-		return SmtUtils.and(mScript, params);
+		return SmtUtils.andWithExtendedLocalSimplification(mScript, true, params);
 	}
 
 	public final Term or() {
@@ -850,7 +850,7 @@ public class PolyPoNe {
 			params.add(SmtUtils.not(mScript, term));
 		}
 		params.addAll(mNegative);
-		return SmtUtils.or(mScript, params);
+		return SmtUtils.orWithExtendedLocalSimplification(mScript, true, params);
 	}
 
 }

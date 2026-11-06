@@ -20,6 +20,9 @@ from functools import lru_cache
 # fmt: off
 version = '4f54f8f5'
 toolname = 'Automizer'
+memory_heap_size_init = '2M'
+memory_heap_size_max = '15G'
+memory_stack_size_max = '1M'
 # fmt: on
 
 write_ultimate_output_to_file = True
@@ -75,9 +78,9 @@ class _PropParser:
         "data-race",
     ]
 
-    def __init__(self, propfile):
+    def __init__(self, propfile, *, content=None):
         self.propfile = propfile
-        self.content = open(propfile, "r").read()
+        self.content = open(propfile, "r").read() if content is None else content
         self.termination = False
         self.mem_deref = False
         self.mem_memtrack = False
@@ -137,6 +140,10 @@ class _PropParser:
                 self.ltlformula = formula
             else:
                 raise RuntimeError("The formula {0} is unknown".format(formula))
+
+    @classmethod
+    def reachability(cls, init_method):
+        return cls(None, content=f"CHECK(init({init_method}()), LTL(G ! call(reach_error())))")
 
     def get_init_method(self):
         return self.init
@@ -277,12 +284,23 @@ def get_java():
     sys.exit(ExitCode.FAIL_NO_JAVA)
 
 
+@lru_cache(maxsize=1)
+def get_launcher_jar():
+    candidates = glob.glob(os.path.join(ultimatedir, "plugins", "org.eclipse.equinox.launcher_*.jar"))
+    if not candidates:
+        raise RuntimeError("Could not find any launcher JAR.")
+    if len(candidates) > 1:
+        raise RuntimeError("Found multiple launcher JARs: " + ", ".join(candidates))
+    return candidates[0]
+
+
 def create_ultimate_base_call():
     ultimate_bin = [
         get_java(),
         "-Dosgi.configuration.area=" + os.path.join(datadir, "config"),
-        "-Xmx15G",
-        "-Xms4m",
+        "-Xms" + memory_heap_size_init,
+        "-Xmx" + memory_heap_size_max,
+        "-Xss" + memory_stack_size_max,
     ]
 
     if enable_assertions:
@@ -290,10 +308,7 @@ def create_ultimate_base_call():
 
     ultimate_bin = ultimate_bin + [
         "-jar",
-        os.path.join(
-            ultimatedir,
-            "plugins/org.eclipse.equinox.launcher_1.7.0.v20250519-0528.jar",
-        ),
+        get_launcher_jar(),
         "-data",
         "@noDefault",
         "-ultimatedata",
@@ -519,10 +534,12 @@ def create_cli_settings(prop, validate_witness, witness_type, architecture, inpu
             "--traceabstraction.positions.where.we.compute.the.hoare.annotation"
         )
         ret.append("None")
-        # For YAML violation witnesses, disable procedure inlining
+        # For YAML violation witnesses, disable procedure inlining and the aggressive block encoding
         if witness_type == "violation_witness" and any(i.endswith(".yml") for i in input_files):
             ret.append("--procedureinliner.inline.calls.to.implemented.procedures")
             ret.append("ONLY_FOR_CONCURRENT_PROGRAMS")
+            ret.append("--icfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks")
+            ret.append("false")
     elif not validate_witness:
         # we are not in validation mode, so we should generate a witness and need
         # to pass some things to the witness printer
@@ -564,7 +581,6 @@ def get_settings_path(bitprecise, settings_search_string):
 
     if settings_argument == "" or settings_argument is None:
         print("No suitable settings file found using " + settings_search_string)
-        print("ERROR: UNSUPPORTED PROPERTY")
         raise _AbortButPrint("ERROR: UNSUPPORTED PROPERTY")
     return settings_argument
 
@@ -679,8 +695,6 @@ def debug_environment():
     solver_versions = [
         ("z3", "-version"),
         ("mathsat", "-version"),
-        ("cvc4", "--version"),
-        ("cvc4nyu", "--version"),
         ("cvc5", "--version"),
         ("bitwuzla", "--version"),
     ]
@@ -971,8 +985,8 @@ def main():
     settings_search_string = create_settings_search_string(prop, architecture)
     try:
         settings_file = get_settings_path(False, settings_search_string)
-    except _AbortButPrint:
-        # just abort, there is nothing to print left
+    except _AbortButPrint as e:
+        print(e)
         sys.exit(ExitCode.FAIL_NO_SETTINGS_FILE_FOUND)
 
     # create manual settings that override settings files for witness passthrough (collecting various things)
@@ -1039,6 +1053,36 @@ def main():
                 + f"\n{bit_precise_marker}\n"
                 + ultimate_bitprecise_output
             )
+
+    # When validating a correctness witness for termination, we additionally need to check the invariants.
+    # Therefore, after checking for termination, we make another run with reachability, but disabled checking for
+    # the error function, so only the invariants are checked.
+    if result.startswith("TRUE") and prop.is_termination() and validate_witness and witness_type == "correctness_witness":
+        # We use a "fake" reachability property
+        prop = _PropParser.reachability(prop.get_init_method())
+        invariant_toolchain = get_toolchain_path(prop, True)
+        invariant_cli_arguments = create_cli_settings(
+            prop, validate_witness, witness_type, architecture, input_files
+        )
+        try:
+            invariant_settings = get_settings_path(False, "Reach*" + architecture)
+        except _AbortButPrint:
+            result = "ERROR: No settings for invariant validation"
+        else:
+            invariant_call = create_callargs(
+                ultimate_bin,
+                ["-tc", invariant_toolchain, "-i", input_files, "-s",
+                 invariant_settings, invariant_cli_arguments, extras,
+                 "--cacsl2boogietranslator.check.unreachability.of.reach_error.function",
+                 "false"],
+            )
+            invariant_marker = "### Validation of the invariants ###"
+            if verbose:
+                print("\n" + invariant_marker)
+            result, result_msg, overapprox, invariant_output, error_path = run_ultimate(
+                invariant_call, prop, verbose
+            )
+            ultimate_output += f"\n{invariant_marker}\n{invariant_output}"
 
     # summarize results
     if write_ultimate_output_to_file:

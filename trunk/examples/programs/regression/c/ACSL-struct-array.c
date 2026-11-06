@@ -1,0 +1,16 @@
+// #Safe
+/*
+ * Author: schuessf@informatik.uni-freiburg.de
+ *   Date: 2026-10-15
+ */
+
+struct s {
+     int arr[1];
+};
+
+int main()
+{
+    struct s s1;
+    s1.arr[0] = 10;
+    //@ assert s1.arr[0] == 10;
+}

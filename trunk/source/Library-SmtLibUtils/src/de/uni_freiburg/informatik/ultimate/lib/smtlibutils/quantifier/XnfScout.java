@@ -470,10 +470,11 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 				}
 			}
 		}
-		final float currentMax = 0;
+		double currentMax = 0;
 		int argMax = -1;
 		for (int i = 0; i < scores.size(); i++) {
 			if (scores.get(i) != null && scores.get(i) > currentMax) {
+				currentMax = scores.get(i);
 				argMax = i;
 			}
 		}

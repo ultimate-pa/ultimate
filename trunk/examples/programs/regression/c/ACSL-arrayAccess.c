@@ -7,6 +7,7 @@
 
 int main() {
   int *p = malloc(sizeof(int));
+  if (p == NULL) return;
   *p = 42;
   int a[2] = {1, 2};
   //@ assert p[0] == 42 && a[1] == 2;

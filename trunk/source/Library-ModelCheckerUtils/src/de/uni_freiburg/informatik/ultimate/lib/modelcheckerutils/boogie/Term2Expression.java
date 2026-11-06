@@ -197,8 +197,7 @@ public final class Term2Expression implements Serializable {
 			final IProgramFunction programFun = mBoogie2SmtSymbolTable.getProgramFun(term.getFunction());
 			if (programFun instanceof ProgramConst) {
 				return new IdentifierExpression(null, mTypeSortTranslator.getType(term.getSort()),
-						((ProgramConst) programFun).getIdentifier(),
-						new DeclarationInformation(StorageClass.GLOBAL, null));
+						((ProgramConst) programFun).getIdentifier(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
 			}
 			throw new IllegalArgumentException();
 		} else if ("ite".equals(symb.getName())) {
@@ -502,7 +501,7 @@ public final class Term2Expression implements Serializable {
 			assert varList.getIdentifiers().length == 1;
 			final String id = varList.getIdentifiers()[0];
 			result = new IdentifierExpression(null, type, translateIdentifier(id),
-					new DeclarationInformation(StorageClass.QUANTIFIED, null));
+					DeclarationInformation.DECLARATIONINFO_QUANTIFIED);
 		} else if (mBoogie2SmtSymbolTable.getProgramVar(term) == null) {
 			// Case where term contains some auxilliary variable that was
 			// introduced during model checking.

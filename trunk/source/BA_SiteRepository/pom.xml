@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 		<artifactId>mavenparent</artifactId>
-		<version>0.3.1</version>
+		<version>0.3.2</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
@@ -46,16 +46,12 @@
 									<attachId>UltimateDebug</attachId>
 								</product>
 								<product>
-									<id>ReqAnalyzer</id>
-									<attachId>ReqAnalyzer</attachId>
-								</product>
-								<product>
 									<id>DeltaDebugger</id>
 									<attachId>UltimateDeltaDebugger</attachId>
 								</product>
 								<product>
-									<id>UltimateEliminator</id>
-									<attachId>UltimateEliminator</attachId>
+									<id>Eliminator</id>
+									<attachId>Eliminator</attachId>
 								</product>
 								<product>
 									<id>WebBackend</id>

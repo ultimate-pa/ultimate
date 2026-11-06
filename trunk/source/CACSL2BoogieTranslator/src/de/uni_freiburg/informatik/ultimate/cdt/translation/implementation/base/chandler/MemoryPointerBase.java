@@ -33,7 +33,6 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -77,9 +76,8 @@ public abstract class MemoryPointerBase implements IMemoryPointer {
 	 */
 	protected Expression pointerComponentRelation(final ILocation loc, final int op, final Expression leftPointer,
 			final Expression rightPointer, final String component, final ExpressionTranslation expressionTranslation) {
-		final StructAccessExpression leftComponent =
-				ExpressionFactory.constructStructAccessExpression(loc, leftPointer, component);
-		final StructAccessExpression rightComponent =
+		final Expression leftComponent = ExpressionFactory.constructStructAccessExpression(loc, leftPointer, component);
+		final Expression rightComponent =
 				ExpressionFactory.constructStructAccessExpression(loc, rightPointer, component);
 		final var cTypeOfPointerComponents = expressionTranslation.getCTypeOfPointerComponents();
 		switch (op) {

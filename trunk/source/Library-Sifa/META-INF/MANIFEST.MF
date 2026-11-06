@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Library-Sifa
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.sifa
 Bundle-Vendor: Ultimate Program Analysis Team
-Bundle-Version: 0.3.1
+Bundle-Version: 0.3.2
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
@@ -12,10 +12,12 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.pathexpressions,
  de.uni_freiburg.informatik.ultimate.lib.util,
- de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder
+ de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder,
+ org.apache.commons.math3
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.sifa,
  de.uni_freiburg.informatik.ultimate.lib.sifa.cfgpreprocessing,
  de.uni_freiburg.informatik.ultimate.lib.sifa.domain,
+ de.uni_freiburg.informatik.ultimate.lib.sifa.domain.congruence,
  de.uni_freiburg.informatik.ultimate.lib.sifa.fluid,
  de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag,
  de.uni_freiburg.informatik.ultimate.lib.sifa.statistics,

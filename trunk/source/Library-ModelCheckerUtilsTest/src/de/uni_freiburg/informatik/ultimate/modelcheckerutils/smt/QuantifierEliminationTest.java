@@ -109,20 +109,44 @@ public class QuantifierEliminationTest {
 		return SmtSortUtils.getBitvectorSort(script, 8);
 	}
 
+	public static Sort getBitvectorSort16(final Script script) {
+		return SmtSortUtils.getBitvectorSort(script, 16);
+	}
+
 	public static Sort getBitvectorSort32(final Script script) {
 		return SmtSortUtils.getBitvectorSort(script, 32);
+	}
+
+	public static Sort getBitvectorSort64(final Script script) {
+		return SmtSortUtils.getBitvectorSort(script, 64);
+	}
+
+	public static Sort getBitvectorSort128(final Script script) {
+		return SmtSortUtils.getBitvectorSort(script, 128);
 	}
 
 	public static Sort getArrayBv32Bv1Sort(final Script script) {
 		return SmtSortUtils.getArraySort(script, getBitvectorSort32(script), getBitvectorSort1(script));
 	}
 
+	public static Sort getArrayBv64Bv1Sort(final Script script) {
+		return SmtSortUtils.getArraySort(script, getBitvectorSort64(script), getBitvectorSort1(script));
+	}
+
 	public static Sort getArrayBv32Bv8Sort(final Script script) {
 		return SmtSortUtils.getArraySort(script, getBitvectorSort32(script), getBitvectorSort8(script));
 	}
 
+	public static Sort getArrayBv64Bv8Sort(final Script script) {
+		return SmtSortUtils.getArraySort(script, getBitvectorSort64(script), getBitvectorSort8(script));
+	}
+
 	public static Sort getArrayBv32Bv32Sort(final Script script) {
 		return SmtSortUtils.getArraySort(script, getBitvectorSort32(script), getBitvectorSort32(script));
+	}
+
+	public static Sort getArrayBv64Bv64Sort(final Script script) {
+		return SmtSortUtils.getArraySort(script, getBitvectorSort64(script), getBitvectorSort64(script));
 	}
 
 	public static Sort getArrayBv32Bv32Bv32Sort(final Script script) {
@@ -344,12 +368,12 @@ public class QuantifierEliminationTest {
 			Assert.assertTrue("Elimination output is quantifier-free ", !resultIsQuantifierFree);
 		}
 		if (expectedResult != null) {
-			checkLogicalEquivalence(mgdScript.getScript(), result, expectedResult);
+			assert checkLogicalEquivalence(mgdScript.getScript(), result, expectedResult);
 		}
 		csvWriter.reportEliminationSuccess(result, testId, (StatisticsScript) mgdScript.getScript());
 	}
 
-	private static void checkLogicalEquivalence(final Script script, final Term result, final Term expectedResult) {
+	private static boolean checkLogicalEquivalence(final Script script, final Term result, final Term expectedResult) {
 		script.echo(new QuotedObject("Start correctness check for quantifier elimination."));
 		final LBool lbool = SmtUtils.checkEquivalence(result, expectedResult, script);
 		script.echo(new QuotedObject("Finished correctness check for quantifier elimination. Result: " + lbool));
@@ -367,7 +391,9 @@ public class QuantifierEliminationTest {
 		default:
 			throw new AssertionError("unknown value " + lbool);
 		}
-		Assert.assertTrue(errorMessage, lbool == LBool.UNSAT);
+		final boolean areEquivalent = (lbool == LBool.UNSAT);
+		Assert.assertTrue(errorMessage, areEquivalent);
+		return areEquivalent;
 	}
 
 	@Test

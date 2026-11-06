@@ -159,7 +159,7 @@ public class UltimateNormalFormTest {
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mMgdScript.getScript(),
 				"(bvule (select |#length| (ite (and (= nhb lb) (= nho lo)) nhb hb)) (bvadd (select (select (let ((.cse0 (store |#memory_$Pointer$.offset| nhb (store (select |#memory_$Pointer$.offset| nhb) nho ho)))) (store .cse0 lb (store (select .cse0 lb) lo nho))) nhb) nho) (_ bv8 32)))");
 		final Term letFree = new FormulaUnLet().transform(formulaAsTerm);
-		final Term result = new IteRemover(mMgdScript).transform(letFree);
+		final Term result = IteRemover.apply(mMgdScript, letFree);
 		Assert.isTrue(UltimateNormalFormUtils.respectsUltimateNormalForm(result));
 	}
 
@@ -173,8 +173,9 @@ public class UltimateNormalFormTest {
 
 	// --- N-ary bvand/bvor/bvxor simplification (BitvectorUtils) ---
 
+	// Testing new class allowing multiple elements
 	@Test
-	public void bvaddAbsorption() { // Testing new class allowing multiple elements
+	public void bvaddAbsorption() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort8, "x") };
 		final String formulaAsString = "(bvand (_ bv2 8) x (_ bv1 8))";
 		final String simplified = "(_ bv0 8)";

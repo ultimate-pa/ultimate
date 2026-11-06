@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Ultimate-Debug" uid="Debug-E4" id="de.uni_freiburg.informatik.ultimate.core.Debug" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.3.1" type="features" includeLaunchers="true" autoIncludeRequirements="true">
+<product name="Ultimate-Debug" uid="Debug-E4" id="de.uni_freiburg.informatik.ultimate.core.Debug" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.3.2" type="features" includeLaunchers="true" autoIncludeRequirements="true">
 
    <aboutInfo>
       <image path="/CoreRCP/icons/about.gif"/>
@@ -22,7 +22,7 @@
       </programArgsMac>
       <programArgsWin>-data @user.home\ultimate-data
       </programArgsWin>
-      <vmArgs>-Xmx4g -Xms4M -Dequinox.resolver.revision.batch.size=1
+      <vmArgs>-Xms2M -Xmx15G -Xss1M -Dequinox.resolver.revision.batch.size=1
       </vmArgs>
    </launcherArgs>
 
@@ -47,9 +47,6 @@
    </plugins>
 
    <features>
-      <feature id="BA_FeatureDependenciesCommon"/>
-      <feature id="BA_FeatureDependenciesDebugE4"/>
-      <feature id="BA_FeatureUltimateCommon"/>
       <feature id="BA_FeatureUltimateDebug"/>
    </features>
 
@@ -61,6 +58,7 @@
       <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.equinox.event" autoStart="true" startLevel="3" />
       <plugin id="org.eclipse.osgi" autoStart="true" startLevel="1" />
+      <property name="cssTheme" value="none" />
    </configurations>
 
    <preferencesInfo>

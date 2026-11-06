@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
+import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTElaboratedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier;
@@ -50,9 +51,9 @@ import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier.IASTEnumerator;
 import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
+import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
@@ -88,6 +89,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.AnonymousMember;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.Member;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.NamedMember;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
@@ -237,14 +241,14 @@ public class TypeHandler implements ITypeHandler {
 			 */
 			final Result opRes = main.dispatch(node.getDeclTypeExpression());
 			if (opRes instanceof ExpressionResult) {
-				final ICType cType = ((ExpressionResult) opRes).getLrValue().getCType();
+				final ICType cType = qualifyAtomic(node, ((ExpressionResult) opRes).getLrValue().getCType());
 				return new TypesResult(cType2AstType(loc, cType), node.isConst(), false, cType);
 			} else if (opRes instanceof DeclaratorResult) {
 				final var declResult = (DeclaratorResult) opRes;
 				if (!declResult.hasNoSideEffects()) {
 					throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
 				}
-				final ICType cType = declResult.getDeclaration().getType();
+				final ICType cType = qualifyAtomic(node, declResult.getDeclaration().getType());
 				return new TypesResult(cType2AstType(loc, cType), node.isConst(), false, cType);
 			}
 		}
@@ -271,8 +275,8 @@ public class TypeHandler implements ITypeHandler {
 		if (stv == null) {
 			final ICType libraryType = mLibraryTypes.get(cId);
 			if (libraryType != null) {
-				return new TypesResult(cType2AstType(loc, libraryType), node.isConst(), libraryType.isVoidType(),
-						libraryType);
+				final ICType cType = qualifyAtomic(node, libraryType);
+				return new TypesResult(cType2AstType(loc, cType), node.isConst(), cType.isVoidType(), cType);
 			}
 			final String msg = "Undefined type " + cId;
 			throw new UnsupportedSyntaxException(loc, msg);
@@ -284,7 +288,7 @@ public class TypeHandler implements ITypeHandler {
 		final boolean isConstant = false;
 		final boolean isVoid = false;
 		return new TypesResult(new NamedType(loc, boogieType, bId, new ASTType[0]), isConstant, isVoid,
-				new CNamed(bId, cType));
+				qualifyAtomic(node, new CNamed(bId, cType)));
 	}
 
 	@Override
@@ -345,7 +349,7 @@ public class TypeHandler implements ITypeHandler {
 			mDefinedTypes.put(rslvName, result);
 		}
 
-		return result;
+		return TypesResult.create(result, qualifyAtomic(node, cEnum));
 	}
 
 	@Override
@@ -360,8 +364,7 @@ public class TypeHandler implements ITypeHandler {
 			final TypesResult originalType = mDefinedTypes.get(rslvName);
 			if (originalType != null) {
 				// --> we have a normal struct, union or enum declaration
-				return new TypesResult(originalType.getAstType(), originalType.isConst(), originalType.isVoid(),
-						originalType.getCType());
+				return TypesResult.create(originalType, qualifyAtomic(node, originalType.getCType()));
 			}
 			// --> This is a definition of an incomplete struct, enum or union.
 			String incompleteTypeName;
@@ -391,7 +394,7 @@ public class TypeHandler implements ITypeHandler {
 
 			mDefinedTypes.put(rslvName, r);
 
-			return r;
+			return TypesResult.create(r, qualifyAtomic(node, ctype));
 		}
 		final String msg = "Not yet implemented: Spec [" + node.getKind() + "] of " + node.getClass();
 		throw new UnsupportedSyntaxException(loc, msg);
@@ -409,17 +412,24 @@ public class TypeHandler implements ITypeHandler {
 	public Result visit(final IDispatcher main, final IASTCompositeTypeSpecifier node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		// TODO : include inactives? what are inactives?
-		final ArrayList<String> fNames = new ArrayList<>();
-		final ArrayList<ICType> fTypes = new ArrayList<>();
-		final ArrayList<Integer> bitFieldWidths = new ArrayList<>();
+		final ArrayList<Member> members = new ArrayList<>();
 		for (final IASTDeclaration dec : node.getDeclarations(false)) {
+			if (isAnonymousMember(dec)) {
+				// anonymous struct / union member, see C11 6.7.2.1.13
+				final Result anonResult = main.dispatch(((IASTSimpleDeclaration) dec).getDeclSpecifier());
+				if (!(anonResult instanceof final TypesResult tr)
+						|| !(tr.getCType() instanceof final CStructOrUnion type)) {
+					throw new UnsupportedSyntaxException(loc, "Unexpected syntax in anonymous struct/union member!");
+				}
+				members.add(new AnonymousMember(type));
+				continue;
+			}
 			final Result r = main.dispatch(dec);
 			if (r instanceof DeclarationResult) {
 				final DeclarationResult rdec = (DeclarationResult) r;
 				for (final CDeclaration declaration : rdec.getDeclarations()) {
-					fNames.add(declaration.getName());
-					fTypes.add(declaration.getType());
-					bitFieldWidths.add(declaration.getBitfieldSize());
+					members.add(new NamedMember(declaration.getName(), declaration.getType(),
+							declaration.getBitfieldSize()));
 				}
 			} else if (r instanceof SkipResult) { // skip ;)
 			} else {
@@ -443,7 +453,7 @@ public class TypeHandler implements ITypeHandler {
 
 		if (mIncompleteCStructOrUnionObjects.containsKey(rslvName)) {
 			final CStructOrUnion structOrUnion = mIncompleteCStructOrUnionObjects.get(rslvName);
-			structOrUnion.complete(fNames, fTypes, bitFieldWidths);
+			structOrUnion.complete(members);
 			mStaticObjectsHandler.completeTypeDeclaration(structOrUnion.getName(), structOrUnion, this);
 			final TypesResult typeResult = mDefinedTypes.get(rslvName);
 			mDefinedTypes.put(rslvName, TypesResult.create(typeResult, structOrUnion));
@@ -455,7 +465,7 @@ public class TypeHandler implements ITypeHandler {
 			mIncompleteCStructOrUnionObjects.remove(rslvName);
 		}
 
-		final CStructOrUnion cvar = new CStructOrUnion(isStructOrUnion, rslvName, fNames, fTypes, bitFieldWidths);
+		final CStructOrUnion cvar = new CStructOrUnion(isStructOrUnion, rslvName, members);
 
 		// TODO : boogie type
 		final NamedType namedType = new NamedType(loc, BoogieType.TYPE_ERROR, identifier, new ASTType[0]);
@@ -479,7 +489,19 @@ public class TypeHandler implements ITypeHandler {
 		if (!cId.equals(SFO.EMPTY)) {
 			mDefinedTypes.put(rslvName, result);
 		}
-		return result;
+		return TypesResult.create(result, qualifyAtomic(node, cvar));
+	}
+
+	private static ICType qualifyAtomic(final IASTDeclSpecifier node, final ICType type) {
+		return CTranslationUtil.hasAtomicQualifier(node) ? type.toAtomic() : type;
+	}
+
+	private static boolean isAnonymousMember(final IASTDeclaration dec) {
+		if (!(dec instanceof final IASTSimpleDeclaration simple) || simple.getDeclarators().length != 0) {
+			return false;
+		}
+		return simple.getDeclSpecifier() instanceof final IASTCompositeTypeSpecifier spec
+				&& spec.getName().toString().isEmpty();
 	}
 
 	private void redirectNamedType(final Set<String> names, final CStructOrUnion completeStruct, final IASTNode hook) {
@@ -734,9 +756,8 @@ public class TypeHandler implements ITypeHandler {
 		final VarList vl = new VarList(loc, new String[] { boogieId }, enumAstType);
 		final ConstDeclaration cd = new ConstDeclaration(loc, new Attribute[0], false, vl, null, false);
 
-		final Expression identifier =
-				ExpressionFactory.constructIdentifierExpression(loc, getBoogieTypeForBoogieASTType(enumAstType),
-						boogieId, new DeclarationInformation(StorageClass.GLOBAL, null));
+		final Expression identifier = ExpressionFactory.constructIdentifierExpression(loc,
+				getBoogieTypeForBoogieASTType(enumAstType), boogieId, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		mSymboltable.storeCSymbol(node, enumConstId,
 				new SymbolTableValue(boogieId, cd, enumAstType,
 						new CDeclaration(typeOfEnumIdentifiers, enumConstId,

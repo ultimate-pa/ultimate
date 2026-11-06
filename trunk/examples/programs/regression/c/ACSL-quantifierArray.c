@@ -8,6 +8,7 @@
 int main() {
   int n = __VERIFIER_nondet_ushort();
   int* a = malloc(n * sizeof(int));
+  if (a == NULL) return;
   //@ loop invariant \forall int j; (0 <= j && j < i) ==> a[j] == 42;
   for (int i=0; i<n; i++) {
     a[i] = 42;

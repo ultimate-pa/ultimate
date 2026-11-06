@@ -72,13 +72,13 @@ public class ProgramStatePrinter<TE, E> {
 	 */
 	public String stateAsExpression(final ProgramState<E> state, final Predicate<String> variableFilter) {
 		if (state == null) {
-			return null;
+			return "1";
 		}
 		final List<String> conjuncts =
 				state.getVariables().stream().map(x -> singleEntryAsExpression(state, x, variableFilter))
 						.filter(Objects::nonNull).collect(Collectors.toList());
 		if (conjuncts.isEmpty()) {
-			return null;
+			return "1";
 		}
 		return conjuncts.stream().collect(Collectors.joining(" && "));
 	}

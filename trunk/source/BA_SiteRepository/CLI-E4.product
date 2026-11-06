@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Ultimate-CommandLine" uid="CLI-E4" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.3.1" type="features" includeLaunchers="true" autoIncludeRequirements="true">
+<product name="Ultimate-CommandLine" uid="CLI-E4" id="de.uni_freiburg.informatik.ultimate.core.CLI" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.3.2" type="features" includeLaunchers="true" autoIncludeRequirements="true">
 
    <aboutInfo>
       <text>
@@ -21,7 +21,7 @@
       </programArgsMac>
       <programArgsWin>-data @user.home\ultimate-data
       </programArgsWin>
-      <vmArgs>-Xmx4g -Xms4M -Dequinox.resolver.revision.batch.size=1
+      <vmArgs>-Xms2M -Xmx15G -Xss1M -Dequinox.resolver.revision.batch.size=1
       </vmArgs>
    </launcherArgs>
 
@@ -48,8 +48,6 @@
 
    <features>
       <feature id="BA_FeatureUltimateCommandLine"/>
-      <feature id="BA_FeatureUltimateCommon"/>
-      <feature id="BA_FeatureDependenciesCommon"/>
    </features>
 
    <configurations>

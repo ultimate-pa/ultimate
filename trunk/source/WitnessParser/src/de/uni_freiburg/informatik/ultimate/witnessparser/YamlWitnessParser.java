@@ -47,7 +47,9 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationTransitionInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopTransitionInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment.SegmentType;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.ViolationSequence;
@@ -119,6 +121,8 @@ public class YamlWitnessParser {
 		final List<Segment> parsedContent = new ArrayList<>();
 		for (final Map<String, List<Map<String, Object>>> seg : content) {
 			final List<Waypoint> avoidWP = new ArrayList<>();
+			final List<Waypoint> followWP = new ArrayList<>();
+			SegmentType segmentType = null;
 			for (final Map<String, Object> wpMap : seg.get("segment")) {
 				final Map<String, Object> wp = (Map<String, Object>) wpMap.get("waypoint");
 				final String action = (String) wp.get("action");
@@ -129,12 +133,15 @@ public class YamlWitnessParser {
 					avoidWP.add(parseViolationWaypoint(wp));
 					break;
 				case "follow":
-					parsedContent.add(new Segment(avoidWP, parseViolationWaypoint(wp), SegmentType.FOLLOW));
+					followWP.add(parseViolationWaypoint(wp));
+					segmentType = SegmentType.FOLLOW;
 					break;
 				case "cycle":
-					parsedContent.add(new Segment(avoidWP, parseViolationWaypoint(wp), SegmentType.CYCLE));
+					segmentType = SegmentType.CYCLE;
+					followWP.add(parseViolationWaypoint(wp));
 				}
 			}
+			parsedContent.add(new Segment(avoidWP, followWP, segmentType));
 		}
 		return new ViolationSequence(parsedContent);
 	}
@@ -144,17 +151,18 @@ public class YamlWitnessParser {
 		final Location location = parseLocation((Map<String, Object>) wp.get("location"));
 		final Map<String, String> constraintMap = (Map<String, String>) wp.get("constraint");
 		final String constraint = constraintMap == null ? null : constraintMap.get("value").toString();
+		final Integer threadId = (Integer) wp.get("thread_id");
 		switch ((String) wp.get("type")) {
 		case "target":
-			return new WaypointTarget(location);
+			return new WaypointTarget(location, threadId);
 		case "branching":
-			return new WaypointBranching(constraint, location);
+			return new WaypointBranching(constraint, location, threadId);
 		case "assumption":
-			return new WaypointAssumption(constraint, location);
+			return new WaypointAssumption(constraint, location, threadId);
 		case "function_enter":
-			return new WaypointFunctionEnter(location);
+			return new WaypointFunctionEnter(location, threadId);
 		case "function_return":
-			return new WaypointFunctionReturn(constraint, location);
+			return new WaypointFunctionReturn(constraint, location, threadId);
 		default:
 			throw new UnsupportedOperationException("Unable to parse waypoint with type " + wp.get("type"));
 		}
@@ -189,6 +197,10 @@ public class YamlWitnessParser {
 			return new LoopInvariant(location, (String) map.get("value"), format);
 		case FunctionContract.NAME:
 			return new FunctionContract(location, (String) map.get("requires"), (String) map.get("ensures"), format);
+		case LocationTransitionInvariant.NAME:
+			return new LocationTransitionInvariant(location, (String) map.get("value"), format);
+		case LoopTransitionInvariant.NAME:
+			return new LoopTransitionInvariant(location, (String) map.get("value"), format);
 		default:
 			throw new UnsupportedOperationException("Invalid entry in content" + entry);
 		}

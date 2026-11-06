@@ -113,6 +113,11 @@ public final class CNamed implements ICType {
 	}
 
 	@Override
+	public CNamed toAtomic() {
+		return new CNamed(mName, getUnderlyingType().toAtomic());
+	}
+
+	@Override
 	public boolean isVoidPointerType() {
 		return mMappedType.isVoidPointerType();
 	}

@@ -41,6 +41,7 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PolyPacSimplificationTermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
@@ -64,18 +65,34 @@ public class Context {
 	/**
 	 * Transformations that can be done with the critical constraint.
 	 *
+	 *
 	 */
 	public enum CcTransformation {
 		NONE,
 		/**
-		 * Bring negated siblings in for critical constraint in NNF. Allows us in some cases to get a smaller result.
-		 * Comes with small additional consts because of the NNF transformation.
+		 * Bring negated siblings in for critical constraint in NNF. This seems beneficial for the
+		 * {@link PolyPacSimplificationTermWalker}: If the sibling is a disjunction, we effectively add the negated
+		 * disjuncts conjunctively to the critical constraint negated conjuncts are potentially polynomials. One may
+		 * wonder if negated siblings can be disjunctions, since we negate the siblings only if the root is a
+		 * disjunction. However this happens at a stage of the algorithm where children of the disjunction are
+		 * processed, children may become disjunctions during the processing and and the root disjunction is only
+		 * flattened after the processing. This comes however with two shortcomings.
+		 * <li>(1) The obvious costs for the NNF transformation.
+		 * <li>(2) If a sibling `(not F)` is in NNF, the {@link PolyPacSimplificationTermWalker} will not see that it is
+		 * the negation of `F` (unless `F` is an atom).
 		 */
 		TO_NNF,
 		/**
 		 * Bring siblings to NNF and replace all quantified formulas by true.
 		 */
-		OVERAPPROXIMATE_QUANTIFIERS
+		OVERAPPROXIMATE_QUANTIFIERS,
+		/**
+		 * Optimization of {@link #TO_NNF} that addresses both shortcomings mentioned in {@link #TO_NNF}. The negated
+		 * siblings are only pushed one step inwards if the sibling is a disjunction. However an empirical evaluation
+		 * shows that {@link #NONE} outputs smaller slightly smaller results than {@link #PUSH_DISJUNCTION_ONE_STEP} and
+		 * is faster.
+		 */
+		PUSH_DISJUNCTION_ONE_STEP
 	}
 
 	private final Term mCriticalConstraint;
@@ -195,6 +212,20 @@ public class Context {
 			case NONE:
 				otherParamsNegated = otherParams.stream().map(x -> SmtUtils.not(mgdScript.getScript(), x))
 						.collect(Collectors.toList());
+				break;
+			case PUSH_DISJUNCTION_ONE_STEP:
+				otherParamsNegated = new ArrayList<>(otherParams.size());
+				for (final Term otherParam : otherParams) {
+					assert !SmtUtils.isFunctionApplication(otherParam, "=>") : "Implication not allowed here";
+					final Term negated;
+					if (SmtUtils.isFunctionApplication(otherParam, "or")) {
+						negated = NnfTransformer.pushNot1StepInside(mgdScript.getScript(), otherParam,
+								QuantifierHandling.CRASH);
+					} else {
+						negated = SmtUtils.not(mgdScript.getScript(), otherParam);
+					}
+					otherParamsNegated.add(negated);
+				}
 				break;
 			case OVERAPPROXIMATE_QUANTIFIERS:
 			case TO_NNF:

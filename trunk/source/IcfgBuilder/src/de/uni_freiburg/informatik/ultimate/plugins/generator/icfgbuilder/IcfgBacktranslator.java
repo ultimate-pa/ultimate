@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
@@ -197,8 +198,9 @@ public class IcfgBacktranslator extends
 			for (final Statement st : ss.getStatements()) {
 				final BoogieASTNode[] sources = mCodeBlock2Statement.get(st);
 				if (sources != null) {
-					assert sources.length == 1 || sources.length == 2 && sources[0] instanceof CallStatement
-							&& sources[1] instanceof RequiresSpecification;
+					assert sources.length == 1 || (sources.length == 2
+							&& (sources[0] instanceof CallStatement || sources[0] instanceof ForkStatement)
+							&& sources[1] instanceof RequiresSpecification);
 					for (final BoogieASTNode source : sources) {
 						if ((source instanceof WhileStatement || source instanceof IfStatement)
 								&& st instanceof AssumeStatement) {

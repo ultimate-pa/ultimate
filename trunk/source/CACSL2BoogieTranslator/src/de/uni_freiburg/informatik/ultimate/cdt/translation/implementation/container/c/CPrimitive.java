@@ -177,7 +177,7 @@ public final class CPrimitive implements ICType {
 		}
 		mType = getType(cDeclSpec);
 		mGeneralType = mType.getPrimitiveCategory();
-		mIsAtomic = CTranslationUtil.hasAttribute(cDeclSpec, "atomic");
+		mIsAtomic = CTranslationUtil.hasAtomicQualifier(cDeclSpec);
 	}
 
 	private static CPrimitives getType(final IASTDeclSpecifier cDeclSpec) {
@@ -295,6 +295,11 @@ public final class CPrimitive implements ICType {
 	@Override
 	public boolean isAtomic() {
 		return mIsAtomic;
+	}
+
+	@Override
+	public CPrimitive toAtomic() {
+		return constructAtomicType(mType);
 	}
 
 	@Override

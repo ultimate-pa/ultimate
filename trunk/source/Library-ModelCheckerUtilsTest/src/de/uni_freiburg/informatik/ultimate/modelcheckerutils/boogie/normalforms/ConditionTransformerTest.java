@@ -34,7 +34,6 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -120,7 +119,7 @@ public class ConditionTransformerTest {
 	private Expression var(final String varname, final IBoogieType type) {
 		Expression exp = mIdentifier.get(varname + type);
 		if (exp == null) {
-			exp = new IdentifierExpression(null, type, varname, new DeclarationInformation(StorageClass.GLOBAL, null));
+			exp = new IdentifierExpression(null, type, varname, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 			mIdentifier.put(varname, exp);
 		}
 		return exp;

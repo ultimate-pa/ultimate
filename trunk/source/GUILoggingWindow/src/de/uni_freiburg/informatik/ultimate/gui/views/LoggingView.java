@@ -118,6 +118,7 @@ public class LoggingView extends ViewPart {
 		mStyledText = new StyledText(parent, SWT.V_SCROLL | SWT.H_SCROLL | SWT.MULTI | SWT.READ_ONLY | SWT.BORDER);
 		mStyledText.setFont(new Font(mStyledText.getFont().getDevice(), sFontName, FONT_SIZE, SWT.NORMAL));
 		mStyledText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		mStyledText.setBackground(mStyledText.getDisplay().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
 		mStyledText.addModifyListener(e -> mStyledText.setSelection(mStyledText.getCharCount()));
 	}
 

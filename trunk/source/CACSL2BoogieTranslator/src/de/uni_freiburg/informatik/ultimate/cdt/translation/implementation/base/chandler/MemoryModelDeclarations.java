@@ -77,6 +77,8 @@ public enum MemoryModelDeclarations {
 
 	ULTIMATE_PTHREADS_MUTEX_TRYLOCK("#PthreadsMutexTryLock"),
 
+	ULTIMATE_PTHREADS_BARRIER("#PthreadsBarrier"),
+
 	ULTIMATE_PTHREADS_RWLOCK("#PthreadsRwLock"),
 
 	ULTIMATE_PTHREADS_RWLOCK_READLOCK("#PthreadsRwLockReadLock"),

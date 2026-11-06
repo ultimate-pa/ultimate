@@ -2,12 +2,12 @@
 <feature
       id="BA_FeatureWebBackend"
       label="BA_FeatureWebBackend"
-      version="0.3.1"
+      version="0.3.2"
       provider-name="Ultimate Program Analysis Team"
       arch="x86_64">
 
    <requires>
-      <import feature="BA_FeatureDependenciesCommon" version="0.0.0"/>
+      <import feature="BA_FeatureUltimateCommon"/>
    </requires>
 
    <plugin

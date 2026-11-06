@@ -165,7 +165,7 @@ public class BitabsTranslation {
 
 		final List<Pair<Expression, Expression>> exactCases =
 				List.of(new Pair<>(leftOrRightEqualsZero, zero), new Pair<>(leftEqualsRight, left));
-		return buildExpressionResult(loc, "bitwiseAnd", type, auxvarinfo, exactCases, assumptions);
+		return buildExpressionResult(loc, "bitwise and operator", type, auxvarinfo, exactCases, assumptions);
 	}
 
 	private static boolean endsWithOnes(final BigInteger value) {
@@ -306,7 +306,7 @@ public class BitabsTranslation {
 
 		final List<Pair<Expression, Expression>> exactCases =
 				List.of(new Pair<>(leftEqualsZeroOrRight, right), new Pair<>(rightEqualsZero, left));
-		return buildExpressionResult(loc, "bitwiseOr", type, auxvarinfo, exactCases, assumptions);
+		return buildExpressionResult(loc, "bitwise or operator", type, auxvarinfo, exactCases, assumptions);
 	}
 
 	/**
@@ -409,7 +409,7 @@ public class BitabsTranslation {
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, leftWrapped, rightWrapped);
 		final List<Pair<Expression, Expression>> exactCases = List.of(new Pair<>(leftEqualsZero, right),
 				new Pair<>(rightEqualsZero, left), new Pair<>(leftEqualsRight, zero));
-		return buildExpressionResult(loc, "bitwiseOr", type, auxvarinfo, exactCases, assumptions);
+		return buildExpressionResult(loc, "bitwise xor operator", type, auxvarinfo, exactCases, assumptions);
 	}
 
 	/**
@@ -420,8 +420,8 @@ public class BitabsTranslation {
 	 */
 	public ExpressionResult abstractLeftShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
-		return abstractShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder, "shiftLeft", Operator.ARITHMUL,
-				Operator.COMPGT);
+		return abstractShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder, "bitwise left shift operator",
+				Operator.ARITHMUL, Operator.COMPGT);
 	}
 
 	/**
@@ -432,8 +432,8 @@ public class BitabsTranslation {
 	 */
 	public ExpressionResult abstractRightShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder) {
-		return abstractShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder, "shiftRight", Operator.ARITHDIV,
-				Operator.COMPLT);
+		return abstractShift(loc, left, typeLeft, right, typeRight, auxVarInfoBuilder, "bitwise right shift operator",
+				Operator.ARITHDIV, Operator.COMPLT);
 	}
 
 	private Integer extractShiftValue(final Expression expr, final CPrimitive type) {
@@ -452,7 +452,7 @@ public class BitabsTranslation {
 
 	private ExpressionResult abstractShift(final ILocation loc, final Expression left, final CPrimitive typeLeft,
 			final Expression right, final CPrimitive typeRight, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final String functionName, final Operator shiftOperator, final Operator compOperator) {
+			final String overapproxReason, final Operator shiftOperator, final Operator compOperator) {
 		final BigInteger leftValue = mTypeSizes.extractIntegerValue(left, typeLeft);
 		final Integer rightValue = extractShiftValue(right, typeRight);
 		if (BigInteger.ZERO.equals(leftValue) || Integer.valueOf(0).equals(rightValue)) {
@@ -476,7 +476,7 @@ public class BitabsTranslation {
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftEqualsZero, rightEqualsZero);
 		final Expression compLeft = ExpressionFactory.newBinaryExpression(loc, compOperator,
 				applyWraparoundIfNecessary(loc, auxVar.getExp(), typeLeft), leftWrapped);
-		return buildExpressionResult(loc, functionName, typeLeft, auxVar,
+		return buildExpressionResult(loc, overapproxReason, typeLeft, auxVar,
 				List.of(new Pair<>(leftOrRightEqualsZero, left)),
 				mTypeSizes.isUnsigned(typeLeft) ? List.of() : List.of(compLeft));
 	}
@@ -497,7 +497,7 @@ public class BitabsTranslation {
 		return new ExpressionResult(new RValue(new IntegerLiteral(loc, BoogieType.TYPE_INT, result.toString()), type));
 	}
 
-	private static ExpressionResult buildExpressionResult(final ILocation loc, final String functionName,
+	private static ExpressionResult buildExpressionResult(final ILocation loc, final String overapproxReason,
 			final CPrimitive resultType, final AuxVarInfo auxvarinfo,
 			final List<Pair<Expression, Expression>> exactCases,
 			final List<Expression> assumptionsForOverapproximation) {
@@ -510,7 +510,7 @@ public class BitabsTranslation {
 		final AssumeStatement assume =
 				new AssumeStatement(loc, ExpressionFactory.and(loc, assumptionsForOverapproximation));
 		Statement resultStatement = new AtomicStatement(loc, new Statement[] { havoc, assume });
-		new OverapproxVariable(functionName, loc).annotate(resultStatement);
+		new OverapproxVariable(overapproxReason, loc).annotate(resultStatement);
 		for (int i = exactCases.size() - 1; i >= 0; i--) {
 			final Pair<Expression, Expression> pair = exactCases.get(i);
 			final Statement assignment =

@@ -38,7 +38,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
@@ -67,10 +66,10 @@ public class Cdd2BoogieTestsuite {
 		final CDD C = CDD.create(new BooleanDecision("C"), CDD.TRUE_CHILDS);
 		final CDD notC = BoogieBooleanExpressionDecision.createWithoutReduction(
 				ExpressionFactory.constructUnaryExpression(LOC, Operator.LOGICNEG, new IdentifierExpression(LOC,
-						BoogieType.TYPE_BOOL, "C", new DeclarationInformation(StorageClass.GLOBAL, null))));
+						BoogieType.TYPE_BOOL, "C", DeclarationInformation.DECLARATIONINFO_GLOBAL)));
 		final CDD notCCreate = BoogieBooleanExpressionDecision
 				.create(ExpressionFactory.constructUnaryExpression(LOC, Operator.LOGICNEG, new IdentifierExpression(LOC,
-						BoogieType.TYPE_BOOL, "C", new DeclarationInformation(StorageClass.GLOBAL, null))));
+						BoogieType.TYPE_BOOL, "C", DeclarationInformation.DECLARATIONINFO_GLOBAL)));
 
 		final CDD eqAZero = RangeDecision.create("A", RangeDecision.OP_EQ, 0);
 		final CDD gtAOne = RangeDecision.create("A", RangeDecision.OP_GT, 1);

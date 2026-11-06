@@ -2,12 +2,11 @@
 <feature
       id="BA_FeatureUltimateCommandLine"
       label="BA_FeatureUltimateCommandLine"
-      version="0.3.1"
+      version="0.3.2"
       provider-name="Ultimate Program Analysis Team"
       arch="x86_64">
 
    <requires>
-      <import feature="BA_FeatureDependenciesCommon"/>
       <import feature="BA_FeatureUltimateCommon"/>
    </requires>
 

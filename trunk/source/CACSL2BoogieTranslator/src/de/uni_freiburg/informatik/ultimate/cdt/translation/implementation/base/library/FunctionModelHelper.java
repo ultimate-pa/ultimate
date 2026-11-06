@@ -41,9 +41,11 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
@@ -57,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ILibraryModel.ConstantModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -341,6 +344,10 @@ public class FunctionModelHelper {
 						sizeT)));
 		body.add(mMemoryHandler.getUltimateMemAllocCall(len.getExp(), retvar.getLhs(), loc, MemoryArea.HEAP));
 
+		// Assume that the allocation succeeds, there is already the case above for the function to return null
+		body.add(new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ, retvar.getExp(),
+				mMemoryPointer.constructNullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents()))));
+
 		final var nullChar = mTypeSizes.constructLiteralForIntegerType(loc, charType, BigInteger.ZERO);
 		final var lastChar = mMemoryHandler.lastCharOfString(loc, sizeT, len.getExp(), retvar.getExp());
 
@@ -352,6 +359,16 @@ public class FunctionModelHelper {
 		builder.addStatement(stmt);
 
 		return builder.build();
+	}
+
+	/** Construct a constant model with C type int. */
+	public ConstantModel integerConstant(final String name, final int value) {
+		return integerConstant(name, BigInteger.valueOf(value));
+	}
+
+	/** Construct a constant model with C type int. */
+	public ConstantModel integerConstant(final String name, final BigInteger value) {
+		return new ConstantModel(name, loc -> constructIntegerLiteral(loc, value, new CPrimitive(CPrimitives.INT)));
 	}
 
 	public ExpressionResult constructIntegerLiteral(final ILocation loc, final BigInteger value,

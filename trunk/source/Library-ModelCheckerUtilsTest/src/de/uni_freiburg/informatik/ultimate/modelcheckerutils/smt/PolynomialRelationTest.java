@@ -71,7 +71,6 @@ public class PolynomialRelationTest {
 
 	private static final String SOLVER_COMMAND_Z3 =
 			"z3 SMTLIB2_COMPLIANT=true -t:6000 -memory:2024 -smt2 -in smt.arith.solver=2";
-	private static final String SOLVER_COMMAND_CVC4 = "cvc4 --incremental --print-success --lang smt --tlimit-per=6000";
 	private static final String SOLVER_COMMAND_CVC5 = "cvc5 --incremental --print-success --lang smt --tlimit-per=6000";
 	private static final String SOLVER_COMMAND_MATHSAT = "mathsat";
 	private static final String SOLVER_COMMAND_SMTINTERPOL = "INTERNAL_SMTINTERPOL:6000";
@@ -524,11 +523,12 @@ public class PolynomialRelationTest {
 		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, funDecls);
 	}
 
-	@Test
+	// @Test TODO Matthias 20261030: This test passed with MathSAT 5.6.17 but fails due to timeouts with MathSAT 5.6.19
+	// and other solvers. Try to uncomment the test after future solver updates.
 	public void relationIntPolyMATHSATEQ8() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (* 3 y x) (* 21 z))";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_MATHSAT, inputSTR, funDecls);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, funDecls);
 	}
 
 	@Test
