@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Solved
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AbstractGeneralizedAffineTerm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.Xnf;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.LoggingScriptForMainTrackBenchmarks;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
@@ -599,7 +599,7 @@ public class PolynomialRelationTest {
 		mScript = script;
 		final Term subject = TermParseUtils.parseTerm(mScript, "x");
 		final MultiCaseSolvedBinaryRelation sbr =
-				PolynomialRelation.of(mScript, TermParseUtils.parseTerm(mScript, inputAsString)).solveForSubject(
+				IPolynomialRelation.of(mScript, TermParseUtils.parseTerm(mScript, inputAsString)).solveForSubject(
 						new ManagedScript(mServices, script), subject, Xnf.DNF, Collections.emptySet(), true);
 		Assert.assertNull(sbr);
 	}
@@ -627,7 +627,7 @@ public class PolynomialRelationTest {
 		}
 		mScript = script;
 		final Term inputAsTerm = TermParseUtils.parseTerm(mScript, inputAsString);
-		final PolynomialRelation polyRel = PolynomialRelation.of(mScript, inputAsTerm);
+		final IPolynomialRelation polyRel = IPolynomialRelation.of(mScript, inputAsTerm);
 		Assert.assertTrue(polyRel != null);
 		final Term result = polyRel.toTerm(script);
 		mLogger.info("Result: " + result);
@@ -646,20 +646,20 @@ public class PolynomialRelationTest {
 		mScript = script;
 		final Term inputAsTerm = TermParseUtils.parseTerm(script, inputAsString);
 		final Term subject = TermParseUtils.parseTerm(script, "x");
-		final SolvedBinaryRelation sbr = PolynomialRelation.of(mScript, inputAsTerm).solveForSubject(mScript, subject);
+		final SolvedBinaryRelation sbr = IPolynomialRelation.of(mScript, inputAsTerm).solveForSubject(mScript, subject);
 		Assert.assertNull("Solvable, but unsolvable expected", sbr);
 		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.DNF);
 		testMultiCaseSolveForSubject(inputAsTerm, subject, Xnf.CNF);
 	}
 
 	private void testSingleCaseSolveForSubject(final Term inputAsTerm, final Term x) {
-		final SolvedBinaryRelation sbr = PolynomialRelation.of(mScript, inputAsTerm).solveForSubject(mScript, x);
+		final SolvedBinaryRelation sbr = IPolynomialRelation.of(mScript, inputAsTerm).solveForSubject(mScript, x);
 		mScript.echo(new QuotedObject("Checking if input and output of solveForSubject are equivalent"));
 		Assert.assertTrue(SmtUtils.areFormulasEquivalent(sbr.toTerm(mScript), inputAsTerm, mScript));
 	}
 
 	private void testMultiCaseSolveForSubject(final Term inputAsTerm, final Term x, final Xnf xnf) {
-		final MultiCaseSolvedBinaryRelation mcsbr = PolynomialRelation.of(mScript, inputAsTerm)
+		final MultiCaseSolvedBinaryRelation mcsbr = IPolynomialRelation.of(mScript, inputAsTerm)
 				.solveForSubject(new ManagedScript(mServices, mScript), x, xnf, Collections.emptySet(), true);
 		mScript.echo(new QuotedObject("Checking if input and output of multiCaseSolveForSubject are equivalent"));
 		final Term solvedAsTerm = mcsbr.toTerm(mScript);

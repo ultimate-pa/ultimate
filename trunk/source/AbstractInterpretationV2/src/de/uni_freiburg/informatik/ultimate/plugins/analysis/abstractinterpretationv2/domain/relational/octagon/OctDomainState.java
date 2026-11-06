@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.OctagonRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -1159,7 +1159,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 			return EvalResult.FALSE;
 		}
 		final OctagonRelation octRel;
-		final PolynomialRelation polyRel = PolynomialRelation.of(script, term);
+		final IPolynomialRelation polyRel = IPolynomialRelation.of(script, term);
 		if (polyRel == null || !polyRel.isAffine()) {
 			// term is not an affine relation
 			return EvalResult.UNKNOWN; // alternatively apply SMT solver

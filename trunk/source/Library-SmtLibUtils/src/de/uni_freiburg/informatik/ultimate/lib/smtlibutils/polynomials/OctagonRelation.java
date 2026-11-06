@@ -61,7 +61,7 @@ public class OctagonRelation {
 		mConstant = constant;
 	}
 
-	public static OctagonRelation from(final PolynomialRelation polyRel) {
+	public static OctagonRelation from(final IPolynomialRelation polyRel) {
 		final AbstractGeneralizedAffineTerm<?> agat = polyRel.getPolynomialTerm();
 		if (!agat.isAffine()) {
 			return null;
