@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.icfg;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -43,7 +44,18 @@ public class GotoEdge extends CodeBlock implements IIcfgInternalTransition<IcfgL
 
 	private static final long serialVersionUID = -2923506946454722306L;
 
-	GotoEdge(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+	/**
+	 * Public like the constructors of the other {@link CodeBlock}s, so that a {@link GotoEdge} can be rebuilt on
+	 * another {@link de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript} the way they are.
+	 *
+	 * @param serialNumber
+	 *            the serial number of this edge
+	 * @param source
+	 *            the location the edge starts in
+	 * @param target
+	 *            the location the edge ends in
+	 */
+	public GotoEdge(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		assert target != null;
@@ -66,5 +78,15 @@ public class GotoEdge extends CodeBlock implements IIcfgInternalTransition<IcfgL
 	public void setTransitionFormula(final UnmodifiableTransFormula transFormula) {
 		assert TransFormulaUtils.hasInternalNormalForm(transFormula) : "Expected TF in internal normal form";
 		super.setTransitionFormula(transFormula);
+	}
+
+	/**
+	 * Like the other {@link CodeBlock}s, so that a rebuilt copy keeps the annotations of its original.
+	 *
+	 * @param payload
+	 *            the payload to take over
+	 */
+	public void setPayload(final IPayload payload) {
+		mPayload = payload;
 	}
 }

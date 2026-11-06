@@ -298,6 +298,7 @@
 		<module>../Library-Icfg</module>
 		<module>../Library-IcfgTransformer</module>
 		<module>../Library-Jung</module>
+		<module>../Library-KInduction</module>
 		<module>../Library-LassoRanker</module>
 		<module>../Library-MCR</module>
 		<module>../Library-ModelCheckerUtils</module>
@@ -353,6 +354,7 @@
 		<module>../CoreRCPTest</module>
 		<module>../Library-AutomataTest</module>
 		<module>../Library-IcfgTransformerTest</module>
+		<module>../Library-KInductionTest</module>
 		<module>../Library-ModelCheckerUtilsTest</module>
 		<module>../Library-TraceCheckerUtilsTest</module>
 		<module>../Library-MSODTest</module>
