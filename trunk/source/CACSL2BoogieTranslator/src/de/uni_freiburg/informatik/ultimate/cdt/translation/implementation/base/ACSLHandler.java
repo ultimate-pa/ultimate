@@ -579,6 +579,9 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main,
 			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression node) {
+		if ("\\nondet".equals(node.getIdentifier())) {
+			return mCHandler.createNondetIntExpression(mLocationFactory.createACSLLocation(node));
+		}
 		final var boundVar = mBoundVariables.get(node.getIdentifier());
 		if (boundVar != null) {
 			return new ExpressionResult(boundVar);

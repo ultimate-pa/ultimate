@@ -141,6 +141,7 @@ WhiteSpace     = {LineTerminator}* | {space}*
     "\\inter"		{ return symbol("inter",sym.INTER); }
     "\\lambda"		{ return symbol("lambda",sym.LAMBDA); }
     "\\let"			{ return symbol("let",sym.LET); }
+    "\\nondet"      { return symbol(yytext(),sym.IDENTIFIER, yytext()); }
     "\\mallocable"    { return symbol("mallocable",sym.MALLOCABLE);}
     "\\nothing"		{ return symbol("nothing",sym.NOTHING); }
     "\\null"		{ return symbol("null",sym.NULL); }

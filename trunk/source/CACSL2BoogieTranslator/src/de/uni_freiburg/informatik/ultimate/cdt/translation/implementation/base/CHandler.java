@@ -664,6 +664,22 @@ public class CHandler {
 		return mCExpressionTranslator;
 	}
 
+	public ExpressionResult createNondetIntExpression(final ILocation loc) {
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		final CPrimitive cType = new CPrimitive(CPrimitives.INT);
+		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
+		resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
+		final LRValue returnValue = new RValue(auxvarinfo.getExp(), cType);
+		resultBuilder.setLrValue(returnValue);
+		mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(),
+				resultBuilder);
+
+		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder.getDeclarations(),
+				resultBuilder.getAuxVars());
+		return resultBuilder.build();
+	}
+
 	private void
 			signalTranslationRestartWithDifferentSettings(final TranslationSettings.SettingsChange settingsChange) {
 		assert mIsPrerun : "currently only checking the restart flag after the prerunner -- might change it perhaps "
