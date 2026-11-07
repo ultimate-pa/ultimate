@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Ensures;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FieldAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FreeableExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
@@ -290,6 +291,17 @@ public interface IACSLHandler {
 	 * @return a result object
 	 */
 	Result visit(IDispatcher main, FreeableExpression node);
+
+	/**
+	 * Translates a FunctionApplication.
+	 *
+	 * @param main
+	 *            a reference to the main IDispatcher
+	 * @param node
+	 *            the function application to visit
+	 * @return a result object
+	 */
+	Result visit(IDispatcher main, FunctionApplication node);
 
 	/**
 	 * Translates an MallocableExpression.

@@ -126,6 +126,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Ensures;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FieldAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FreeableExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
@@ -314,6 +315,7 @@ public class MainDispatcher implements IDispatcher {
 		case final MallocableExpression malloc -> mAcslHandler.visit(this, malloc);
 		case final ACSLResultExpression result -> mAcslHandler.visit(this, result);
 		case final FieldAccessExpression fieldAccess -> mAcslHandler.visit(this, fieldAccess);
+		case final FunctionApplication functionApplication -> mAcslHandler.visit(this, functionApplication);
 		case final OldValueExpression old -> mAcslHandler.visit(this, old);
 		case final AtLabelExpression at -> mAcslHandler.visit(this, at);
 		case final IdentifierExpression id -> mAcslHandler.visit(this, id);

@@ -271,7 +271,7 @@ non terminal BinaryExpression.Operator relation;
 non terminal LoopInvariant loop_invariant;
 non terminal LoopVariant loop_variant;
 non terminal LoopAssigns loop_effects;
-non terminal Expression[] ne_lexpr_list, zones, ne_zones, assigns;
+non terminal Expression[] lexpr_list, ne_lexpr_list, zones, ne_zones, assigns;
 non terminal List<Requires> requires, ne_requires;
 non terminal Terminates terminates, ne_terminates;
 non terminal Decreases decreases, ne_decreases;
@@ -297,7 +297,7 @@ non terminal ACSLType type_spec_cv, cast_logic_type;
 non terminal Declaration decl_spec;
 non terminal Declaration[] binders, binders_reentrance;
 non terminal Expression lexpr_binder;
-non terminal lexpr_list, lexpr_option, rel_list, bounded_var,
+non terminal lexpr_option, rel_list, bounded_var,
 			 range,
 			 field_init, array_init, update, field_path_elt, field_init_elt, array_path_elt, array_init_elt,
 			 update_elt, path, path_elt, 
@@ -372,8 +372,8 @@ global::=
 
 /*Real-Start of Grammar */
 lexpr_list::=
- /* epsilon */ 
-| ne_lexpr_list  
+ /* epsilon */ {: RESULT = new Expression[0]; :}
+| ne_lexpr_list:expressions {: RESULT = expressions; :}
 ;
 
 ne_lexpr_list::= 
@@ -530,8 +530,8 @@ lexpr_inner::=
 | BLOCK_LENGTH:l LPAR lexpr:expr RPAR:r {: RESULT = setNodeLocationFromSymbols(new BlockLengthExpression(expr), l$, r$);  :}
 | RESULT:e {: RESULT = setNodeLocationFromSymbols(new ACSLResultExpression(), e$); :}
 | SEPARATED:l LPAR ne_lexpr_list:e RPAR:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
-| identifier:e1 LPAR ne_lexpr_list:e2 RPAR:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), e1$, r$); :}
-| identifier:e1 LBRACE ne_tvar_list:e2 RBRACE LPAR ne_lexpr_list:e3 RPAR:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), e1$, r$); :}
+| identifier:e1 LPAR lexpr_list:args RPAR:r {: RESULT = setNodeLocationFromSymbols(new FunctionApplication(e1, args), e1$, r$); :}
+| identifier:e1 LBRACE ne_tvar_list:e2 RBRACE LPAR lexpr_list:args RPAR:r {: RESULT = setNodeLocationFromSymbols(new FunctionApplication(e1, args), e1$, r$); :}
 | identifier:e1 LBRACE ne_tvar_list:e2 RBRACE:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), e1$, r$); :}
 | identifier:ident {: RESULT = setNodeLocationFromSymbols(new IdentifierExpression(ident), ident$);  :} %prec IDENTIFIER 
 | lexpr_inner:e1 GTGT lexpr_inner:e2 {: RESULT = setNodeLocationFromSymbols(new BinaryExpression(BinaryExpression.Operator.BITSHIFTRIGHT, e1, e2), e1$, e2$); :}
