@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -75,10 +76,13 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 
 	private final IASTNode mMatchedAstNode;
 	private final String mStatement;
+	private final boolean mInstrumentAtomically;
 
-	public ExtractedGhostUpdate(final String variable, final String value, final IASTNode match) {
+	public ExtractedGhostUpdate(final String variable, final String value, final IASTNode match,
+			final boolean instrumentAtomically) {
 		mStatement = String.format("%s = %s;", variable, value);
 		mMatchedAstNode = match;
+		mInstrumentAtomically = instrumentAtomically;
 	}
 
 	private int getStartline() {
@@ -179,6 +183,26 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 	public ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
 			final ExpressionResult expressionResult) {
 		final ExpressionResult witness = instrument(loc, dispatcher);
+		if (!mInstrumentAtomically) {
+			final List<Statement> statements = new ArrayList<>();
+			boolean hasLoop = false;
+			for (final Statement statement : expressionResult.getStatements()) {
+				if (statement instanceof final WhileStatement loop) {
+					if (hasLoop) {
+						throw new UnsupportedOperationException(
+								"The result contains multiple loops, unable to match the ghost update.");
+					}
+					hasLoop = true;
+					final var newBody = Stream.concat(witness.getStatements().stream(), Arrays.stream(loop.getBody()))
+							.toArray(Statement[]::new);
+					statements.add(new WhileStatement(loc, loop.getCondition(), loop.getInvariants(), newBody));
+				} else {
+					statements.add(statement);
+				}
+			}
+			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
+					.resetStatements(statements).build();
+		}
 		if (isAssignment()) {
 			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
 					.resetStatements(annotateLastOccurence(loc, expressionResult.getStatements(),
