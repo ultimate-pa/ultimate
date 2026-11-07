@@ -192,7 +192,8 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 					anyPrevSelector = freshVariableName("any_prev_selector");
 					result.addGlobalDeclaration(
 							new ExtractedGhostVariable(anyPrevSelector, "0", "int", mTranslationUnit));
-					result.addGhostUpdate(node, new ExtractedGhostUpdate(anyPrevSelector, "\\nondet", node, false));
+					result.addGhostUpdate(node,
+							new ExtractedGhostUpdate(anyPrevSelector, "__VERIFIER_nondet_int()", node, false));
 				}
 				result.addGhostUpdate(node, new ExtractedGhostUpdate(tracker.getValue(),
 						anyPrevSelector + " ? " + variable + " : " + tracker.getValue(), node, false));

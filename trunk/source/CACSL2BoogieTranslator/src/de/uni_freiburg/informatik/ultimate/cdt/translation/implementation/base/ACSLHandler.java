@@ -110,6 +110,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ContractStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Ensures;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FieldAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FreeableExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IfThenElseExpression;
@@ -202,6 +203,18 @@ public class ACSLHandler implements IACSLHandler {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final String msg = "ACSLHandler: Not yet implemented: " + node.toString();
 		throw new UnsupportedSyntaxException(loc, msg);
+	}
+
+	@Override
+	public Result visit(final IDispatcher main, final FunctionApplication node) {
+		final ILocation loc = mLocationFactory.createACSLLocation(node);
+		switch (node.getIdentifier()) {
+		case "__VERIFIER_nondet_int":
+			return mCHandler.createNondetIntExpression(loc);
+		default:
+			throw new UnsupportedSyntaxException(loc, "Call to " + node.getIdentifier() + " cannot be handled yet.");
+		}
+
 	}
 
 	@Override
@@ -579,9 +592,6 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main,
 			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression node) {
-		if ("\\nondet".equals(node.getIdentifier())) {
-			return mCHandler.createNondetIntExpression(mLocationFactory.createACSLLocation(node));
-		}
 		final var boundVar = mBoundVariables.get(node.getIdentifier());
 		if (boundVar != null) {
 			return new ExpressionResult(boundVar);
