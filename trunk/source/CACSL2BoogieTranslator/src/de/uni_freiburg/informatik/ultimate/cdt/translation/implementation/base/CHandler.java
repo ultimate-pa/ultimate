@@ -131,6 +131,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
@@ -290,6 +291,14 @@ public class CHandler {
 	 * the size from which a string is "large".
 	 */
 	private static final boolean OVERAPPROX_FLAG_LARGE_STRING_LITERAL = false;
+
+	/**
+	 * If we construct an auxvar that models a nondeterministic input, we havoc that auxvar afterwards to ensure that we
+	 * get a new nondeterministic value even if the variable occurs in a loop. If this constant is set, we havoc the
+	 * variable also before the nondeterministic assignment. If the auxvar is also havoced before, it is only
+	 * backward-live to the havoc, otherwise it would be backward-live until the beginning of the procedure.
+	 */
+	private static final boolean HAVOC_NONDET_AUXVARS_ALSO_BEFORE = true;
 
 	private final MemoryHandler mMemoryHandler;
 
@@ -664,16 +673,25 @@ public class CHandler {
 		return mCExpressionTranslator;
 	}
 
-	public ExpressionResult createNondetIntExpression(final ILocation loc) {
+	public ExpressionResult handleNondet(final ILocation loc, final ICType cType) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		final CPrimitive cType = new CPrimitive(CPrimitives.INT);
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
 		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
-		resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
+		if (HAVOC_NONDET_AUXVARS_ALSO_BEFORE) {
+			resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
+		}
 		final LRValue returnValue = new RValue(auxvarinfo.getExp(), cType);
 		resultBuilder.setLrValue(returnValue);
-		mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(),
-				resultBuilder);
+		if (cType.equals(new CPrimitive(CPrimitives.BOOL))) {
+			final Expression isZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, auxvarinfo.getExp(),
+					mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) cType, BigInteger.ZERO));
+			final Expression isOne = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, auxvarinfo.getExp(),
+					mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) cType, BigInteger.ONE));
+			resultBuilder.addStatement(new AssumeStatement(loc, ExpressionFactory.or(loc, List.of(isZero, isOne))));
+		} else {
+			mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(),
+					resultBuilder);
+		}
 
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder.getDeclarations(),
 				resultBuilder.getAuxVars());
