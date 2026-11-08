@@ -80,7 +80,34 @@ public final class IndexedConstantVars implements StepVars {
 
 	@Override
 	public Term aux(final int id, final TermVariable auxVar, final int idx) {
-		return PredicateUtils.getIndexedConstant(mPrefix + "aux_" + id + "_" + auxVar.getName(),
-				auxVar.getSort(), idx, mCache, mScript);
+		return PredicateUtils.getIndexedConstant(auxName(id, auxVar), auxVar.getSort(), idx, mCache, mScript);
+	}
+
+	private String auxName(final int id, final TermVariable auxVar) {
+		return mPrefix + "aux_" + id + "_" + auxVar.getName();
+	}
+
+	/**
+	 * The same constants, but only those that have already been declared: a constant that has not is {@code null}
+	 * rather than declared now. For reading a model, which must not declare anything - a declaration inside the
+	 * query's scope would be forgotten by its pop while the cache kept it.
+	 */
+	public StepVars declaredOnly() {
+		return new StepVars() {
+			@Override
+			public Term var(final IProgramVar pv, final int idx) {
+				return mCache.get(pv.getGloballyUniqueId() + "_" + idx);
+			}
+
+			@Override
+			public Term pc(final int idx) {
+				return mCache.get(mPrefix + "pc_" + idx);
+			}
+
+			@Override
+			public Term aux(final int id, final TermVariable auxVar, final int idx) {
+				return mCache.get(auxName(id, auxVar) + "_" + idx);
+			}
+		};
 	}
 }

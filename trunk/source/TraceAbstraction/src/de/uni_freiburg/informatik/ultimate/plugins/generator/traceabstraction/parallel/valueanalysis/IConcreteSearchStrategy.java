@@ -31,6 +31,8 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.ConcreteConfiguration;
+import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.ConcreteNwaSemantics;
 
 /**
  * A way to explore the concrete configurations of a program in search of an error location. This is the extension

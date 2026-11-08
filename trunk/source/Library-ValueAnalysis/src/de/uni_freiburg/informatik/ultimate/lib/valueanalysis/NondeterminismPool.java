@@ -3,29 +3,29 @@
  * Copyright (C) 2026 LMU Munich
  * Copyright (C) 2026 Max Barth (Max.Barth@lmu.de)
  *
- * This file is part of the ULTIMATE TraceAbstraction plug-in.
+ * This file is part of the ULTIMATE ValueAnalysis Library.
  *
- * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
+ * The ULTIMATE ValueAnalysis Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
+ * The ULTIMATE ValueAnalysis Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE ValueAnalysis Library. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE ValueAnalysis Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
+ * licensors of the ULTIMATE ValueAnalysis Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.valueanalysis;
+package de.uni_freiburg.informatik.ultimate.lib.valueanalysis;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -33,13 +33,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.valueanalysis.IConcreteValue.ArrayValue;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.valueanalysis.IConcreteValue.BitvectorValue;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.valueanalysis.IConcreteValue.BoolValue;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.valueanalysis.IConcreteValue.NumberValue;
+import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.IConcreteValue.ArrayValue;
+import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.IConcreteValue.BitvectorValue;
+import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.IConcreteValue.BoolValue;
+import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.IConcreteValue.NumberValue;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 
 /**
@@ -74,6 +75,20 @@ public class NondeterminismPool {
 		final List<IConcreteValue> result = List.copyOf(computeCandidates(sort));
 		mCache.put(sort, result);
 		return result;
+	}
+
+	/**
+	 * The values to try first for {@code var}, before the literals of the step's formula and before
+	 * {@link #candidates(Sort)}: what a subclass knows about this very variable, e.g. the values a solver's model gave
+	 * it. None by default.
+	 *
+	 * @param var
+	 *            the program variable behind the open variable of the step, {@code null} for an auxiliary variable
+	 * @param sort
+	 *            the sort of the open variable
+	 */
+	public List<IConcreteValue> preferred(final IProgramVar var, final Sort sort) {
+		return List.of();
 	}
 
 	protected List<IConcreteValue> computeCandidates(final Sort sort) {

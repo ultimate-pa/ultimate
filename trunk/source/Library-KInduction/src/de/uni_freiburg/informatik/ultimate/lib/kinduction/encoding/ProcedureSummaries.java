@@ -373,6 +373,14 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	/**
+	 * The variables {@link CallStack} adds to the program - the stack pointer, the return sites and the saved locals -
+	 * none if it needed no activation record. A run of letters has no counterpart of them.
+	 */
+	public Set<IProgramVar> getSyntheticVars() {
+		return mCallStack == null ? Collections.emptySet() : mCallStack.getVariables();
+	}
+
+	/**
 	 * The nodes that are dead ends of this graph because their own transitions belong to a procedure that is not
 	 * in it: the error states imported from a summarized callee. An unfolded callee's states are all in the graph,
 	 * so none of them is sealed.
@@ -1268,7 +1276,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	 * the activation, so without this they would still hold the values of the previous call to the same procedure
 	 * - an under-approximation, which could prove an unsafe program safe. A summarized call needs no such step
 	 * because {@code sequentialCompositionWithCallAndReturn} projects the callee's locals out of the summary,
-	 * which has the same effect. {@link KInductionCounterexampleBuilder} makes them fresh constants for the same
+	 * which has the same effect. {@link KInductionCounterexampleBuilder} leaves them without a value for the same
 	 * reason.
 	 * <p>
 	 * Whether the havoc comes before or after the parameter assignment only matters when the caller and the callee

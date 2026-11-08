@@ -3,34 +3,41 @@
  * Copyright (C) 2026 LMU Munich
  * Copyright (C) 2026 Max Barth (Max.Barth@lmu.de)
  *
- * This file is part of the ULTIMATE TraceAbstraction plug-in.
+ * This file is part of the ULTIMATE ValueAnalysis Library.
  *
- * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
+ * The ULTIMATE ValueAnalysis Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
+ * The ULTIMATE ValueAnalysis Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE ValueAnalysis Library. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE ValueAnalysis Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
+ * licensors of the ULTIMATE ValueAnalysis Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.valueanalysis;
+package de.uni_freiburg.informatik.ultimate.lib.valueanalysis;
 
+import java.util.Collections;
 import java.util.Map.Entry;
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.FunctionalMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 
@@ -45,6 +52,27 @@ public sealed interface IConcreteValue
 		IConcreteValue.ArrayValue {
 
 	/**
+	 * @param sort
+	 *            the sort the term is to have; it decides e.g. whether a number is an Int or a Real literal
+	 * @return this value as a literal term of {@code script}, the inverse of {@link #fromModelTerm(Term)}
+	 */
+	Term toTerm(Script script, Sort sort);
+
+	/**
+	 * Reads a value a solver gave in a model: a numeric, Boolean or bitvector literal, or an array built from
+	 * {@code const} and {@code store}.
+	 *
+	 * @return the value, or {@code null} if the term is no such literal, e.g. a floating point value
+	 */
+	static IConcreteValue fromModelTerm(final Term term) {
+		try {
+			return GroundTermEvaluator.evaluate(term, Collections.emptyMap(), Collections.emptyMap());
+		} catch (final UnsupportedTermException e) {
+			return null;
+		}
+	}
+
+	/**
 	 * A value of sort Bool.
 	 */
 	record BoolValue(boolean value) implements IConcreteValue {
@@ -53,6 +81,11 @@ public sealed interface IConcreteValue
 
 		public static BoolValue of(final boolean value) {
 			return value ? TRUE : FALSE;
+		}
+
+		@Override
+		public Term toTerm(final Script script, final Sort sort) {
+			return script.term(value ? "true" : "false");
 		}
 
 		@Override
@@ -70,6 +103,11 @@ public sealed interface IConcreteValue
 		}
 
 		@Override
+		public Term toTerm(final Script script, final Sort sort) {
+			return SmtUtils.rational2Term(script, value, sort);
+		}
+
+		@Override
 		public String toString() {
 			return value.toString();
 		}
@@ -81,6 +119,11 @@ public sealed interface IConcreteValue
 	record BitvectorValue(BitvectorConstant value) implements IConcreteValue {
 		public BitvectorValue {
 			Objects.requireNonNull(value);
+		}
+
+		@Override
+		public Term toTerm(final Script script, final Sort sort) {
+			return BitvectorUtils.constructTerm(script, value);
 		}
 
 		@Override
@@ -156,6 +199,21 @@ public sealed interface IConcreteValue
 				entriesHash += index.hashCode() ^ value.hashCode();
 			}
 			return new ArrayValue(mDefault, entries, entriesHash, this, index);
+		}
+
+		@Override
+		public Term toTerm(final Script script, final Sort sort) {
+			if (!SmtSortUtils.isArraySort(sort)) {
+				throw new IllegalArgumentException("an array value cannot have sort " + sort);
+			}
+			final Sort indexSort = sort.getRealSort().getArguments()[0];
+			final Sort valueSort = sort.getRealSort().getArguments()[1];
+			Term result = script.term("const", null, sort, mDefault.toTerm(script, valueSort));
+			for (final Entry<IConcreteValue, IConcreteValue> entry : mEntries.entrySet()) {
+				result = SmtUtils.store(script, result, entry.getKey().toTerm(script, indexSort),
+						entry.getValue().toTerm(script, valueSort));
+			}
+			return result;
 		}
 
 		@Override

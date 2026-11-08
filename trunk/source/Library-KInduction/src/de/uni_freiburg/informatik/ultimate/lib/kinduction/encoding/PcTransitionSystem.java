@@ -212,7 +212,8 @@ public class PcTransitionSystem<STATE> {
 	 * How the edges and targets are instantiated, see {@link EncodingBuilder}. There is one for the queries, in which only
 	 * live variables are kept, and one with the full frame.
 	 */
-	private record Encoding(Map<DagEdge, EdgeCode> edgeCode, Map<DagNode, List<TargetCode>> targetCode) {
+	private record Encoding(Map<DagEdge, EdgeCode> edgeCode, Map<DagNode, List<TargetCode>> targetCode,
+			List<Set<IProgramVar>> liveAtPc, Set<Version> innerVersions) {
 		private long numberOfFrameEqualities() {
 			long result = 0;
 			for (final EdgeCode code : edgeCode.values()) {
@@ -285,7 +286,24 @@ public class PcTransitionSystem<STATE> {
 				computeLiveness(liveAtPc, liveAtNode, stateVars);
 			}
 			computeVersions(liveAtPc, liveAtNode);
-			return new Encoding(mEdgeCode, mTargetCode);
+			final List<Set<IProgramVar>> liveVars = new ArrayList<>(liveAtPc.length);
+			for (final BitSet live : liveAtPc) {
+				final Set<IProgramVar> vars = new LinkedHashSet<>();
+				for (int i = live.nextSetBit(0); i >= 0; i = live.nextSetBit(i + 1)) {
+					vars.add(mIndexedVars.get(i));
+				}
+				liveVars.add(Collections.unmodifiableSet(vars));
+			}
+			final Set<Version> innerVersions = new LinkedHashSet<>();
+			for (final EdgeCode code : mEdgeCode.values()) {
+				innerVersions.addAll(code.versions().values());
+				for (final Join join : code.joins()) {
+					innerVersions.add(join.atNode());
+					innerVersions.add(join.onEdge());
+				}
+			}
+			innerVersions.removeIf(version -> version.owner() == STEP_START || version.var().isOldvar());
+			return new Encoding(mEdgeCode, mTargetCode, Collections.unmodifiableList(liveVars), innerVersions);
 		}
 
 		private void computeLiveness(final BitSet[] liveAtPc, final BitSet[] liveAtNode, final BitSet stateVars) {
@@ -617,6 +635,61 @@ public class PcTransitionSystem<STATE> {
 	private int pcOf(final STATE state) {
 		final Integer head = mHeadNodes.get(state);
 		return head != null ? head : mWaypointNodes.computeIfAbsent(state, k -> mNumNodes++);
+	}
+
+	/**
+	 * The variables a state with this pc value has to keep in a query, because a path from there reads them before it
+	 * writes them (and those of {@code alwaysFramed}). Their values in a model of a query are the values of the path
+	 * the model took; every other variable is unconstrained there, see the class javadoc.
+	 */
+	public Set<IProgramVar> getLiveVars(final int pc) {
+		return queryEncoding().liveAtPc().get(pc);
+	}
+
+	/**
+	 * The constants that hold a program variable's value inside step {@code idx} of a query: its version at an edge
+	 * that writes it and at a node where versions meet. On the path a model takes they are the path's values, on every
+	 * other path they are arbitrary - so they are good guesses for a value, nothing more. Old variables are left out.
+	 *
+	 * @param sv
+	 *            the constants of the query; a version it has no constant for ({@code null}) is skipped
+	 */
+	public Map<IProgramVar, List<Term>> getVersionConstants(final int idx, final StepVars sv) {
+		final Map<IProgramVar, List<Term>> result = new LinkedHashMap<>();
+		for (final Version version : queryEncoding().innerVersions()) {
+			final Term constant = sv.aux(version.owner(), version.var().getTermVariable(), idx);
+			if (constant != null) {
+				result.computeIfAbsent(version.var(), k -> new ArrayList<>()).add(constant);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The constants that hold the auxiliary variables of the edges inside step {@code idx} of a query, by auxiliary
+	 * variable. Where an edge was composed from several transitions, these are the values its variables had in
+	 * between, e.g. a variable that a chain assigns and havocs again. Like {@link #getVersionConstants}, they are the
+	 * path's values on the path a model takes and arbitrary elsewhere.
+	 *
+	 * @param sv
+	 *            the constants of the query; an auxiliary variable it has no constant for ({@code null}) is skipped
+	 */
+	public Map<TermVariable, List<Term>> getAuxConstants(final int idx, final StepVars sv) {
+		final Map<TermVariable, List<Term>> result = new LinkedHashMap<>();
+		for (final DagNode node : mDagNodes) {
+			for (final DagEdge edge : node.mOutgoing) {
+				if (edge.mFormulaIndex < 0) {
+					continue;
+				}
+				for (final TermVariable aux : mFormulas.get(edge.mFormulaIndex).getAuxVars()) {
+					final Term constant = sv.aux(edge.mId, aux, idx);
+					if (constant != null) {
+						result.computeIfAbsent(aux, k -> new ArrayList<>()).add(constant);
+					}
+				}
+			}
+		}
+		return result;
 	}
 
 	/** The pc value of each head of each loop. */

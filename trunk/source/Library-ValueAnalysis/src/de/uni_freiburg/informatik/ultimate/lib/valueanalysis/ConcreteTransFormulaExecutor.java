@@ -3,29 +3,29 @@
  * Copyright (C) 2026 LMU Munich
  * Copyright (C) 2026 Max Barth (Max.Barth@lmu.de)
  *
- * This file is part of the ULTIMATE TraceAbstraction plug-in.
+ * This file is part of the ULTIMATE ValueAnalysis Library.
  *
- * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
+ * The ULTIMATE ValueAnalysis Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
+ * The ULTIMATE ValueAnalysis Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE ValueAnalysis Library. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
+ * If you modify the ULTIMATE ValueAnalysis Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
+ * licensors of the ULTIMATE ValueAnalysis Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.valueanalysis;
+package de.uni_freiburg.informatik.ultimate.lib.valueanalysis;
 
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -58,10 +58,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.valueanalysis.IConcreteValue.ArrayValue;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.valueanalysis.IConcreteValue.BitvectorValue;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.valueanalysis.IConcreteValue.BoolValue;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.valueanalysis.IConcreteValue.NumberValue;
+import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.IConcreteValue.ArrayValue;
+import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.IConcreteValue.BitvectorValue;
+import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.IConcreteValue.BoolValue;
+import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.IConcreteValue.NumberValue;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 
 /**
@@ -76,8 +76,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant
  * {@code (= (+ v 1) n)} gives {@code v = n - 1}), repeated until nothing changes;</li>
  * <li>an array variable whose cells a conjunct fixes, {@code (= (select a i) t)}, is tried with those cells
  * first;</li>
- * <li>whatever is still open is chosen, variable by variable, first among the literals of the conjuncts the variable
- * occurs in (and their neighbours), then from the {@link NondeterminismPool};</li>
+ * <li>whatever is still open is chosen, variable by variable - first the variables the pool has
+ * {@linkplain NondeterminismPool#preferred preferred} values for, and these first among them - then among the
+ * literals of the conjuncts the variable occurs in (and their neighbours), then from the
+ * {@link NondeterminismPool};</li>
  * <li>after each choice, every conjunct whose variables all have values is checked, and a choice that falsifies one
  * is abandoned.</li>
  * </ul>
@@ -149,6 +151,27 @@ public final class ConcreteTransFormulaExecutor {
 	public List<Map<IProgramVarOrConst, IConcreteValue>> execute(final UnmodifiableTransFormula tf,
 			final Map<IProgramVarOrConst, IConcreteValue> pre, final Map<IProgramVarOrConst, IConcreteValue> base,
 			final StepKind kind) {
+		return executeDetailed(tf, pre, base, kind).successors();
+	}
+
+	/**
+	 * The successors of a step, and whether they are all of them.
+	 *
+	 * @param successors
+	 *            the distinct valuations after the step, each a real execution of it
+	 * @param exhaustive
+	 *            whether {@code successors} are exactly the valuations after the step: no value had to be chosen, and
+	 *            nothing was unsupported or cut off. Only then does an empty list mean that the step cannot be taken.
+	 */
+	public record Execution(List<Map<IProgramVarOrConst, IConcreteValue>> successors, boolean exhaustive) {
+	}
+
+	/**
+	 * {@link #execute}, together with whether its successors are all there are.
+	 */
+	public Execution executeDetailed(final UnmodifiableTransFormula tf,
+			final Map<IProgramVarOrConst, IConcreteValue> pre, final Map<IProgramVarOrConst, IConcreteValue> base,
+			final StepKind kind) {
 		mSteps++;
 		final Plan plan = mPlans.computeIfAbsent(tf, Plan::new);
 		final Map<TermVariable, IConcreteValue> env = new HashMap<>();
@@ -159,7 +182,7 @@ public final class ConcreteTransFormulaExecutor {
 			}
 		}
 		final Set<Map<IProgramVarOrConst, IConcreteValue>> results = new LinkedHashSet<>();
-		final Search search = new Search();
+		final Search search = new Search(plan);
 		try {
 			final Map<IProgramVarOrConst, IConcreteValue> chosenConstants = new HashMap<>();
 			for (final IProgramConst constant : plan.mConstants) {
@@ -169,6 +192,7 @@ public final class ConcreteTransFormulaExecutor {
 					// choice is fixed here and kept in the valuation.
 					value = mPool.candidates(constant.getSort()).get(0);
 					chosenConstants.put(constant, value);
+					search.mChose = true;
 				}
 				search.mConstants.put(constant.getDefaultConstant().getFunction().getName(), value);
 			}
@@ -186,7 +210,8 @@ public final class ConcreteTransFormulaExecutor {
 		if (search.mTruncated) {
 			mTruncatedSteps++;
 		}
-		return new ArrayList<>(results);
+		return new Execution(new ArrayList<>(results),
+				!search.mUnsupported && !search.mTruncated && !search.mChose);
 	}
 
 	private static Map<IProgramVarOrConst, IConcreteValue> post(final UnmodifiableTransFormula tf,
@@ -240,11 +265,18 @@ public final class ConcreteTransFormulaExecutor {
 	 * The search for complete assignments of one step.
 	 */
 	private final class Search {
+		private final Plan mPlan;
 		private final Map<String, IConcreteValue> mConstants = new HashMap<>();
 		private int mSuccessorBudget = mMaxSuccessors;
 		private long mNodeBudget = (long) mMaxSuccessors * NODES_PER_SUCCESSOR;
 		private boolean mUnsupported;
 		private boolean mTruncated;
+		// Whether some value was chosen rather than computed, so that the successors need not be all there are
+		private boolean mChose;
+
+		Search(final Plan plan) {
+			mPlan = plan;
+		}
 
 		void solve(final Branch branch, final Map<TermVariable, IConcreteValue> partial,
 				final Consumer<Map<TermVariable, IConcreteValue>> sink) {
@@ -270,6 +302,7 @@ public final class ConcreteTransFormulaExecutor {
 				}
 				return;
 			}
+			mChose = true;
 			for (final IConcreteValue value : candidates(branch, open, env)) {
 				if (mSuccessorBudget <= 0 || mNodeBudget <= 0) {
 					mTruncated = true;
@@ -283,15 +316,17 @@ public final class ConcreteTransFormulaExecutor {
 		private List<IConcreteValue> candidates(final Branch branch, final TermVariable open,
 				final Map<TermVariable, IConcreteValue> env) {
 			final List<IConcreteValue> pool = mPool.candidates(open.getSort());
+			final List<IConcreteValue> preferred = mPool.preferred(mPlan.mProgramVars.get(open), open.getSort());
 			final List<ArrayFact> facts = branch.mArrayFacts.get(open);
 			final List<IConcreteValue> harvested = branch.mHarvested.get(open);
-			if (facts == null && harvested == null) {
+			if (facts == null && harvested == null && preferred.isEmpty()) {
 				return pool;
 			}
 			final Set<IConcreteValue> result = new LinkedHashSet<>();
 			if (facts != null) {
 				result.add(arrayFromFacts(pool.get(0), facts, env));
 			}
+			result.addAll(preferred);
 			if (harvested != null) {
 				result.addAll(harvested);
 			}
@@ -386,6 +421,17 @@ public final class ConcreteTransFormulaExecutor {
 		 *         early as possible; null if every variable of the branch has a value
 		 */
 		private TermVariable pickOpen(final Branch branch, final Map<TermVariable, IConcreteValue> env) {
+			// A variable the pool knows preferred values for comes first: whatever it is defined by (typically an
+			// auxiliary variable, e.g. the result of a nondeterministic call) can then be solved for instead of
+			// guessed.
+			for (final Conjunct conjunct : branch.mConjuncts) {
+				for (final TermVariable tv : conjunct.mVars) {
+					if (!env.containsKey(tv)
+							&& !mPool.preferred(mPlan.mProgramVars.get(tv), tv.getSort()).isEmpty()) {
+						return tv;
+					}
+				}
+			}
 			TermVariable best = null;
 			int fewestOpen = Integer.MAX_VALUE;
 			for (final Conjunct conjunct : branch.mConjuncts) {
@@ -414,12 +460,20 @@ public final class ConcreteTransFormulaExecutor {
 	private static final class Plan {
 		private final List<Branch> mBranches = new ArrayList<>();
 		private final List<IProgramConst> mConstants;
+		// The program variable behind each in- and out-variable, for NondeterminismPool#preferred
+		private final Map<TermVariable, IProgramVar> mProgramVars = new HashMap<>();
 
 		Plan(final UnmodifiableTransFormula tf) {
 			for (final Term disjunct : SmtUtils.getDisjuncts(tf.getFormula())) {
 				mBranches.add(new Branch(disjunct));
 			}
 			mConstants = List.copyOf(tf.getNonTheoryConsts());
+			for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
+				mProgramVars.put(entry.getValue(), entry.getKey());
+			}
+			for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
+				mProgramVars.put(entry.getValue(), entry.getKey());
+			}
 		}
 	}
 

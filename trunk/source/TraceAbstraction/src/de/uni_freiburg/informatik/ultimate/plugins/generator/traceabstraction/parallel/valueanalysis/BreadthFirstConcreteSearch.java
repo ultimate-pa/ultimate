@@ -35,6 +35,8 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.ConcreteConfiguration;
+import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.ConcreteNwaSemantics;
 
 /**
  * Explores the concrete configurations breadth-first, so the first violation it finds has a shortest run. It never
