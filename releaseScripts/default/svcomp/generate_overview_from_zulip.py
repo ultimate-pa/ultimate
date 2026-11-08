@@ -282,12 +282,13 @@ class SVCOMPResultDownloader:
         ]
 
 
-async def download_new_results(
+async def find_new_runs(
     downloader: SVCOMPResultDownloader,
     topic_name: str,
     message: dict,
     last_processed_ts: int | None,
-):
+) -> list[ToolRun]:
+    """The runs on the results page that belong to this message."""
     message_ts = int(message["timestamp"])
 
     def is_run_in_range(run: ToolRun) -> bool:
@@ -304,35 +305,39 @@ async def download_new_results(
             return False
         return True
 
-    # download all XMLs and logfiles for this tool run
-    runs = await downloader.get_verifier_runs(topic_name)
+    return [
+        run
+        for run in await downloader.get_verifier_runs(topic_name)
+        if is_run_in_range(run)
+    ]
+
+
+async def download_runs(
+    downloader: SVCOMPResultDownloader, topic_name: str, runs: list[ToolRun]
+) -> bool:
+    """
+    Download the XMLs and logfiles of runs (not empty, all of one tool).
+    Returns whether they are verifier runs.
+    """
     download_tasks = []
-    is_verifier = True
     with tqdm(
         unit="B",
         unit_scale=True,
         desc=f"Downloading result XMLs and logfiles for {topic_name}",
     ) as pbar:
-        first_valid_run = None
         # each date is a separate benchexec execution with its own logfiles .zip
         run_dates = []
         for run in runs:
-            if not is_run_in_range(run):
-                continue
             logging.debug(f"Downloading {run.tool} run from {run.date}")
-            if not first_valid_run:
-                first_valid_run = run
             if run.date not in run_dates:
                 run_dates.append(run.date)
             download_tasks.append(downloader.download_tool_run_xml(run, pbar))
-        if download_tasks:
-            is_verifier = not first_valid_run.validator
-            for date in run_dates:
-                download_tasks.append(
-                    downloader.download_tool_run_logs(first_valid_run.tool, date, pbar)
-                )
-            await asyncio.gather(*download_tasks)
-    return is_verifier, len(download_tasks) != 0
+        for date in run_dates:
+            download_tasks.append(
+                downloader.download_tool_run_logs(runs[0].tool, date, pbar)
+            )
+        await asyncio.gather(*download_tasks)
+    return not runs[0].validator
 
 
 def process_new_results(
@@ -391,11 +396,10 @@ def process_new_results(
         if entry.is_dir():
             shutil.rmtree(entry)
 
-    message_ts_str = datetime.fromtimestamp(message_ts).strftime("%Y%m%d-%H%M%S")
     output_dir = (
         output_base_dir
         / f"svcomp{svcomp_year}-{topic_name}"
-        / f"{message_ts_str}-svcomp{svcomp_year}-{topic_name}-no-git"
+        / result_dir_name(svcomp_year, topic_name, message_ts)
     )
     logging.info(f"Moving results to {output_dir}")
     output_dir.parent.mkdir(parents=True, exist_ok=True)
@@ -408,6 +412,11 @@ def process_new_results(
 
 
 RESULTS_BASE_URL = "https://srv.dietsch.xyz/ultimate-logs"
+
+
+def result_dir_name(svcomp_year: int, tool: str, message_ts: int) -> str:
+    message_ts_str = datetime.fromtimestamp(message_ts).strftime("%Y%m%d-%H%M%S")
+    return f"{message_ts_str}-svcomp{svcomp_year}-{tool}-no-git"
 
 
 def result_link(svcomp_year: int, tool: str, result_dir_name: str) -> str:
@@ -513,48 +522,63 @@ async def main(args: argparse.Namespace):
                 logging.info(
                     f"Processing message {message['id']} from topic {topic_name} ({datetime.fromtimestamp(message_ts)})"
                 )
-                is_verifier, has_new_results = await download_new_results(
+                runs = await find_new_runs(
                     downloader, topic_name, message, last_processed_ts
                 )
-                if has_new_results:
-                    new_link = process_new_results(
-                        args.tmp_dir,
-                        topic_name,
-                        is_verifier,
-                        args.other_scripts,
-                        args.output_base_dir,
-                        args.svcomp_year,
-                        message_ts,
-                    )
+                if runs:
+                    if args.dry_run:
+                        logging.info(
+                            f"Dry run: not downloading and processing {len(runs)} new result XML(s)"
+                        )
+                        new_link = result_link(
+                            args.svcomp_year,
+                            topic_name,
+                            result_dir_name(args.svcomp_year, topic_name, message_ts),
+                        )
+                    else:
+                        is_verifier = await download_runs(downloader, topic_name, runs)
+                        new_link = process_new_results(
+                            args.tmp_dir,
+                            topic_name,
+                            is_verifier,
+                            args.other_scripts,
+                            args.output_base_dir,
+                            args.svcomp_year,
+                            message_ts,
+                        )
                     new_links.append(new_link)
                     tools_with_new_results.add(topic_name)
                 # a run listed on the results page is attributed to the first message
                 # after it; later messages must not process it again
                 last_processed_ts = message_ts
 
-    monitor.save_state()
-    if args.tmp_dir.exists():
-        shutil.rmtree(args.tmp_dir)
+    if args.dry_run:
+        logging.info(f"Dry run: not saving state to {args.state_file}")
+    else:
+        monitor.save_state()
+        if args.tmp_dir.exists():
+            shutil.rmtree(args.tmp_dir)
     # without new results there is nothing to announce, not even the other tools' results
-    if new_links:
-        msg = "**New SV-COMP results found!**\n"
-        logging.info("New results available")
-        for new_link in new_links:
-            msg += f"- {new_link}\n"
-            logging.info(new_link)
-        other_links = latest_result_links(
-            args.output_base_dir,
-            args.svcomp_year,
-            [tool for tool in args.tools if tool not in tools_with_new_results],
-        )
-        if other_links:
-            msg += "\n**Latest results of the other tools**\n"
-            logging.info("Latest results of the other tools")
-            for other_link in other_links:
-                msg += f"- {other_link}\n"
-                logging.info(other_link)
-        if args.mm_token:
-            send_single_mattermost_message(args, msg)
+    if not new_links:
+        logging.info("No new results, no message to send")
+        return
+    msg = "**New SV-COMP results found!**\n"
+    for new_link in new_links:
+        msg += f"- {new_link}\n"
+    other_links = latest_result_links(
+        args.output_base_dir,
+        args.svcomp_year,
+        [tool for tool in args.tools if tool not in tools_with_new_results],
+    )
+    if other_links:
+        msg += "\n**Latest results of the other tools**\n"
+        for other_link in other_links:
+            msg += f"- {other_link}\n"
+    logging.info(msg)
+    if args.dry_run:
+        logging.info(f"Dry run: not sending the message to {args.mm_channel}")
+    elif args.mm_token:
+        send_single_mattermost_message(args, msg)
 
 
 def token_string_or_file(arg):
@@ -679,6 +703,12 @@ def parse_args():
         "--mm-channel",
         default="swt/ultimate",
         help="Channel name or team/channel format. Default: swt/ultimate",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Read Zulip and the results page, but download and process nothing, do not "
+        "save the state file, and print the Mattermost message instead of sending it.",
     )
 
     args = parser.parse_args()
