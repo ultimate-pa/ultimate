@@ -419,7 +419,36 @@ def process_new_results(
     shutil.copytree(tool_download_dir, output_dir, dirs_exist_ok=True)
     shutil.rmtree(tool_download_dir)
 
-    return f"https://srv.dietsch.xyz/ultimate-logs/svcomp{svcomp_year}-{topic_name}/{message_ts_str}-svcomp{svcomp_year}-{topic_name}-no-git"
+    return result_link(svcomp_year, topic_name, output_dir.name)
+
+
+RESULTS_BASE_URL = "https://srv.dietsch.xyz/ultimate-logs"
+
+
+def result_link(svcomp_year: int, tool: str, result_dir_name: str) -> str:
+    return f"{RESULTS_BASE_URL}/svcomp{svcomp_year}-{tool}/{result_dir_name}"
+
+
+def latest_result_links(
+    output_base_dir: Path, svcomp_year: int, tools: list[str]
+) -> list[str]:
+    """
+    Links to the newest result directory of each tool, in the order of tools.
+    Tools without any result directory are left out.
+    """
+    links = []
+    for tool in tools:
+        tool_dir = output_base_dir / f"svcomp{svcomp_year}-{tool}"
+        # names start with the message timestamp (YYYYmmdd-HHMMSS), so the
+        # lexicographic maximum is the newest result
+        result_dirs = [
+            d.name
+            for d in tool_dir.glob(f"????????-??????-svcomp{svcomp_year}-{tool}-no-git")
+            if d.is_dir()
+        ]
+        if result_dirs:
+            links.append(result_link(svcomp_year, tool, max(result_dirs)))
+    return links
 
 
 def get_mattermost_channel_id(server_url, token, team_name, channel_name):
@@ -474,6 +503,7 @@ async def main(args: argparse.Namespace):
 
     all_new_messages = []
     new_links = []
+    tools_with_new_results = set()
     async with SVCOMPResultDownloader(
         args.tmp_dir, 2000 + args.svcomp_year
     ) as downloader:
@@ -512,6 +542,7 @@ async def main(args: argparse.Namespace):
                         message_ts,
                     )
                     new_links.append(new_link)
+                    tools_with_new_results.add(topic_name)
                 # a run listed on the results page is attributed to the first message
                 # after it; later messages must not process it again
                 last_processed_ts = message_ts
@@ -519,12 +550,24 @@ async def main(args: argparse.Namespace):
     monitor.save_state()
     if args.tmp_dir.exists():
         shutil.rmtree(args.tmp_dir)
+    # without new results there is nothing to announce, not even the other tools' results
     if new_links:
         msg = "**New SV-COMP results found!**\n"
         logging.info("New results available")
         for new_link in new_links:
             msg += f"- {new_link}\n"
             logging.info(new_link)
+        other_links = latest_result_links(
+            args.output_base_dir,
+            args.svcomp_year,
+            [tool for tool in args.tools if tool not in tools_with_new_results],
+        )
+        if other_links:
+            msg += "\n**Latest results of the other tools**\n"
+            logging.info("Latest results of the other tools")
+            for other_link in other_links:
+                msg += f"- {other_link}\n"
+                logging.info(other_link)
         if args.mm_token:
             send_single_mattermost_message(args, msg)
 
@@ -644,7 +687,8 @@ def parse_args():
         type=token_string_or_file,
         help="Mattermost personal access token or bot token or a file containing it. "
         "If you supply it, the script will notify the specified Mattermost channel "
-        "when it found new results. Default: None",
+        "when it found new results; the message also links the latest results of "
+        "the other tools. Default: None",
     )
     parser.add_argument(
         "--mm-channel",
