@@ -188,25 +188,10 @@ class ToolRun:
     validator: bool
 
 
-@dataclass(frozen=True)
-class ValidatorRun:
-    verifier: str
-    kind: str
-    version: str
-    validator: str
-    date: str
-
-
 class SVCOMPResultDownloader:
     base_url = "https://sv-comp.sosy-lab.org"
     get_verifier_runs_re = re.compile(
         r"([\w%-]+)\.(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\.results\.(SV-COMP\d{2}_[\w-]+).([\w.-]+?).xml.bz2(.fixed.xml.bz2)?.table.html"
-    )
-    get_validator_runs_loose_re = re.compile(
-        r""""href": "..\/results-validated\/.*?.logfiles"""
-    )
-    get_validator_runs_re = re.compile(
-        r""""href": "..\/results-validated\/([\w%.-]+)-validate-(violation|correctness)-witnesses-([12].0)-([\w%.-]+).(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}).logfiles"""
     )
 
     def __init__(self, directory: Path, year: int):
@@ -305,7 +290,7 @@ async def download_new_results(
 ):
     message_ts = int(message["timestamp"])
 
-    def is_run_in_range(run: ValidatorRun) -> bool:
+    def is_run_in_range(run: ToolRun) -> bool:
         run_ts = int(datetime.strptime(run.date, "%Y-%m-%d_%H-%M-%S").timestamp())
         if last_processed_ts is not None and run_ts <= last_processed_ts:
             logging.info(
