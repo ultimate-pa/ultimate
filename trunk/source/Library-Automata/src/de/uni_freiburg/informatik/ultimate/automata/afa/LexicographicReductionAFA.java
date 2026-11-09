@@ -81,9 +81,11 @@ public class LexicographicReductionAFA<L, S1, S2> implements IAlternatingFiniteA
 		final Iterable<S1> independenceInitialStates = mIndependenceAutomaton.getInitialStates();
 		final S2 orderInitialState =
 				DataStructureUtils.getOneAndOnly(mOrderAutomaton.getInitialStates(), "initial state");
-		return Collections.unmodifiableSequencedSet(stream(independenceInitialStates)
+		final LinkedHashSet<ReductionState<L, S1, S2>> initialStates = stream(independenceInitialStates)
 				.map(independenceState -> unify(new ReductionState.Track<>(independenceState, orderInitialState)))
-				.collect(Collectors.toCollection(LinkedHashSet::new)));
+				.collect(Collectors.toCollection(LinkedHashSet::new));
+
+		return Collections.unmodifiableSequencedSet(initialStates);
 	}
 
 	@Override
