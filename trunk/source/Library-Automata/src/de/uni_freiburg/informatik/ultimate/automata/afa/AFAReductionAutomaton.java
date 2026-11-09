@@ -134,7 +134,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 			for (final L letter2 : mAlphabet) {
 				// TODO: use the Order from the orderState instead
 				if (mOrder.getOrder(orderState).compare(letter2, letter) < 0) {
-					// /\ { sleep(q', orderSucc, letter2) | independenceState --(letter)--> q' }
+					// /\ { sleep(q', letter2) | independenceState --(letter)--> q' }
 					final Bdd<AfaState<L, S1, S2>> putToSleepDisjunct = conjunction(
 							stream(independenceTransitions).map(t -> new AfaState.Sleep<>(t.getSucc(), letter2)));
 
@@ -158,7 +158,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 				return mBddManager.getFalse();
 			}
 
-			// /\ { sleep(q', orderSucc, sleepLetter) | independenceState --(letter)--> q' }
+			// /\ { sleep(q', sleepLetter) | independenceState --(letter)--> q' }
 			final Bdd<AfaState<L, S1, S2>> stayAsleepDisjunct = conjunction(
 					stream(independenceTransitions).map(t -> new AfaState.Sleep<>(t.getSucc(), sleepLetter)));
 
