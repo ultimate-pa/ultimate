@@ -146,8 +146,7 @@ public class LexicographicReductionAFA<L, S1, S2> implements IAlternatingFiniteA
 					final Bdd<ReductionState<L, S1, S2>> dependenceDisjunct = conjunction(
 							stream(specialSuccessors).map(t -> new ReductionState.Wait<>(t.getSucc(), letter2)));
 
-					smallerLetterConjunction =
-							smallerLetterConjunction.and(putToSleepDisjunct.or(dependenceDisjunct));
+					smallerLetterConjunction = smallerLetterConjunction.and(putToSleepDisjunct.or(dependenceDisjunct));
 				}
 			}
 			return trackConjunction.and(smallerLetterConjunction);
@@ -215,23 +214,45 @@ public class LexicographicReductionAFA<L, S1, S2> implements IAlternatingFiniteA
 		return successor;
 	}
 
+	// Note: The records below override hashCode such that different types of states with similar contents -- e.g. the
+	// states Sleep(q, a) and Wait(q, a) -- have (likely) different hash codes.
 	sealed interface ReductionState<L, S1, S2> {
 		S1 independenceState();
 
 		record Track<L, S1, S2>(S1 independenceState, S2 orderState) implements ReductionState<L, S1, S2> {
 			// simple record
+
+			@Override
+			public final int hashCode() {
+				return Objects.hash(457, independenceState, orderState);
+			}
 		}
 
 		record Sleep<L, S1, S2>(S1 independenceState, L sleepLetter) implements ReductionState<L, S1, S2> {
 			// simple record
+
+			@Override
+			public final int hashCode() {
+				return Objects.hash(659, independenceState, sleepLetter);
+			}
 		}
 
 		record Wait<L, S1, S2>(S1 independenceState, L waitLetter) implements ReductionState<L, S1, S2> {
 			// simple record
+
+			@Override
+			public final int hashCode() {
+				return Objects.hash(839, independenceState, waitLetter);
+			}
 		}
 
 		record Check<L, S1, S2>(S1 independenceState) implements ReductionState<L, S1, S2> {
 			// simple record
+
+			@Override
+			public final int hashCode() {
+				return Objects.hash(211, independenceState);
+			}
 		}
 	}
 }
