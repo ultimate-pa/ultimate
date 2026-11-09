@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -78,8 +77,8 @@ public class IndependenceAutomaton<L, S> implements IIndependenceAutomaton<L, S>
 	}
 
 	@Override
-	public Optional<IndependenceLetter<L>> getSpecialSymbol(final L letter1, final L letter2) {
-		return Optional.ofNullable(mSpecialSymbols.get(new Pair<>(letter1, letter2)));
+	public IndependenceLetter<L> getSpecialSymbol(final L letter1, final L letter2) {
+		return mSpecialSymbols.get(new Pair<>(letter1, letter2));
 	}
 
 	void addIndependence(final L letter1, final L letter2,

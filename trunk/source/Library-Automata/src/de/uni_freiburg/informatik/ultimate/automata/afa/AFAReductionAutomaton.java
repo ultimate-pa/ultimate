@@ -138,9 +138,8 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 							.map(t -> unify(new AfaState.Sleep<>(t.getSucc(), orderSucc, letter2)))
 							.map(mBddManager::variable).collect(mBddManager.toConjunction());
 
-					// TODO remove Optional from return type
 					final IndependenceLetter<L> specialSymbol =
-							mIndependenceAutomaton.getSpecialSymbol(letter, letter2).get();
+							mIndependenceAutomaton.getSpecialSymbol(letter, letter2);
 
 					// /\ { wait(q', letter2) | independenceState --(letter/letter2)--> q' }
 					final Bdd<AfaState<L, S1, S2>> bddDisjunct2 =
@@ -165,11 +164,9 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 					.map(t -> unify(new AfaState.Sleep<>(t.getSucc(), orderSucc, sleepLetter)))
 					.map(mBddManager::variable).collect(mBddManager.toConjunction());
 
-			// TODO remove Optional from return type
-			final IndependenceLetter<L> specialSymbol =
-					mIndependenceAutomaton.getSpecialSymbol(letter, sleepLetter).get();
+			final IndependenceLetter<L> specialSymbol = mIndependenceAutomaton.getSpecialSymbol(letter, sleepLetter);
 
-			// /\ { wait(q', sleepLetter) | independenceState --(letter)--> q' }
+			// /\ { wait(q', sleepLetter) | independenceState --(letter/sleepLetter)--> q' }
 			final Bdd<AfaState<L, S1, S2>> nonCommutativityDisjunct =
 					stream(mIndependenceAutomaton.internalSuccessors(independenceState, specialSymbol))
 							.map(t -> unify(new AfaState.Wait<>(t.getSucc(), sleepLetter))).map(mBddManager::variable)
