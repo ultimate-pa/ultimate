@@ -33,7 +33,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import de.uni_freiburg.informatik.ultimate.automata.afa.AFAReductionAutomaton.AfaState;
+import de.uni_freiburg.informatik.ultimate.automata.afa.LexicographicReductionAFA.ReductionState;
 import de.uni_freiburg.informatik.ultimate.automata.afa.IIndependenceAutomaton.IndependenceLetter;
 import de.uni_freiburg.informatik.ultimate.automata.afa.IIndependenceAutomaton.WrappedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -41,15 +41,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
 
-public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutomaton<L, AfaState<L, S1, S2>> {
+public class LexicographicReductionAFA<L, S1, S2> implements IAlternatingFiniteAutomaton<L, ReductionState<L, S1, S2>> {
 
 	private final IDfsOrder<L, S2> mOrder;
 	private final Set<L> mAlphabet;
-	private final Set<AfaState<L, S1, S2>> mStates = new HashSet<>();
-	private final Set<AfaState<L, S1, S2>> mInitialStates = new HashSet<>();
-	private final BddManager<AfaState<L, S1, S2>> mBddManager = new BddManager<>();
+	private final Set<ReductionState<L, S1, S2>> mStates = new HashSet<>();
+	private final Set<ReductionState<L, S1, S2>> mInitialStates = new HashSet<>();
+	private final BddManager<ReductionState<L, S1, S2>> mBddManager = new BddManager<>();
 
-	private final UnifyHash<AfaState<L, S1, S2>> mStateUnifier = new UnifyHash<>();
+	private final UnifyHash<ReductionState<L, S1, S2>> mStateUnifier = new UnifyHash<>();
 
 	// The independence automaton accepts words of the form "rho <ab> sigma" s.t. (rho,a,b,sigma) in I
 	private final IIndependenceAutomaton<L, S1> mIndependenceAutomaton;
@@ -59,7 +59,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 	private final INwaOutgoingLetterAndTransitionProvider<L, S2> mOrderAutomaton;
 
 	// before the search, do an intersection of the current abstraction (transformed to an AFA) with the reduction AFA
-	public AFAReductionAutomaton(final IDfsOrder<L, S2> order, final Set<L> alphabet,
+	public LexicographicReductionAFA(final IDfsOrder<L, S2> order, final Set<L> alphabet,
 			final IIndependenceAutomaton<L, S1> independenceAutomaton,
 			final INwaOutgoingLetterAndTransitionProvider<L, S2> orderAutomaton) {
 		mOrder = order;
@@ -74,7 +74,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 		final Iterable<S2> orderInitialStates = mOrderAutomaton.getInitialStates();
 		for (final S1 independenceState : independenceInitialStates) {
 			for (final S2 orderState : orderInitialStates) {
-				mInitialStates.add(unify(new AfaState.Track<>(independenceState, orderState)));
+				mInitialStates.add(unify(new ReductionState.Track<>(independenceState, orderState)));
 			}
 		}
 	}
@@ -90,22 +90,22 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 	}
 
 	@Override
-	public Iterable<AfaState<L, S1, S2>> getInitialStates() {
+	public Iterable<ReductionState<L, S1, S2>> getInitialStates() {
 		return mInitialStates;
 	}
 
 	@Override
-	public boolean isInitial(final AfaState<L, S1, S2> state) {
+	public boolean isInitial(final ReductionState<L, S1, S2> state) {
 		return mInitialStates.contains(state);
 	}
 
 	@Override
-	public boolean isFinal(final AfaState<L, S1, S2> state) {
+	public boolean isFinal(final ReductionState<L, S1, S2> state) {
 		return switch (state) {
-		case AfaState.Track(final S1 independenceState, final S2 orderState) -> true;
-		case AfaState.Sleep(final S1 independenceState, final L sleepLetter) -> true;
-		case AfaState.Wait(final S1 independenceState, final L waitLetter) -> false;
-		case AfaState.Check(final S1 independenceState) -> !mIndependenceAutomaton.isFinal(independenceState);
+		case ReductionState.Track(final S1 independenceState, final S2 orderState) -> true;
+		case ReductionState.Sleep(final S1 independenceState, final L sleepLetter) -> true;
+		case ReductionState.Wait(final S1 independenceState, final L waitLetter) -> false;
+		case ReductionState.Check(final S1 independenceState) -> !mIndependenceAutomaton.isFinal(independenceState);
 		};
 	}
 
@@ -113,30 +113,30 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 		return StreamSupport.stream(items.spliterator(), false);
 	}
 
-	private Bdd<AfaState<L, S1, S2>> conjunction(final Stream<? extends AfaState<L, S1, S2>> conjuncts) {
+	private Bdd<ReductionState<L, S1, S2>> conjunction(final Stream<? extends ReductionState<L, S1, S2>> conjuncts) {
 		return conjuncts.map(this::unify).map(mBddManager::variable).collect(mBddManager.toConjunction());
 	}
 
 	// this implementation follows the definition of the prefix-suffix AFA's transition function in our paper
 	@Override
-	public Bdd<AfaState<L, S1, S2>> getSuccessors(final AfaState<L, S1, S2> state, final L letter) {
+	public Bdd<ReductionState<L, S1, S2>> getSuccessors(final ReductionState<L, S1, S2> state, final L letter) {
 		final Iterable<OutgoingInternalTransition<IndependenceLetter<L>, S1>> independenceTransitions =
 				mIndependenceAutomaton.internalSuccessors(state.independenceState(), new WrappedLetter<>(letter));
 
 		switch (state) {
-		case AfaState.Track(final S1 independenceState, final S2 orderState):
+		case ReductionState.Track(final S1 independenceState, final S2 orderState):
 			// /\ { track(q', q'') | independenceState --(letter)--> q' /\ orderState --(letter)--> q'' }
 			final S2 orderSucc = getUniqueOrderSuccessor(orderState, letter);
 			final var trackConjunction =
-					conjunction(stream(independenceTransitions).map(t -> new AfaState.Track<>(t.getSucc(), orderSucc)));
+					conjunction(stream(independenceTransitions).map(t -> new ReductionState.Track<>(t.getSucc(), orderSucc)));
 
-			Bdd<AfaState<L, S1, S2>> smallerLetterConjunction = mBddManager.getTrue();
+			Bdd<ReductionState<L, S1, S2>> smallerLetterConjunction = mBddManager.getTrue();
 			for (final L letter2 : mAlphabet) {
 				// TODO: use the Order from the orderState instead
 				if (mOrder.getOrder(orderState).compare(letter2, letter) < 0) {
 					// /\ { sleep(q', letter2) | independenceState --(letter)--> q' }
-					final Bdd<AfaState<L, S1, S2>> putToSleepDisjunct = conjunction(
-							stream(independenceTransitions).map(t -> new AfaState.Sleep<>(t.getSucc(), letter2)));
+					final Bdd<ReductionState<L, S1, S2>> putToSleepDisjunct = conjunction(
+							stream(independenceTransitions).map(t -> new ReductionState.Sleep<>(t.getSucc(), letter2)));
 
 					final IndependenceLetter<L> specialSymbol =
 							mIndependenceAutomaton.getSpecialSymbol(letter, letter2);
@@ -144,8 +144,8 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 					// /\ { wait(q', letter2) | independenceState --(letter/letter2)--> q' }
 					final var specialSuccessors =
 							mIndependenceAutomaton.internalSuccessors(independenceState, specialSymbol);
-					final Bdd<AfaState<L, S1, S2>> nonCommutativityDisjunct =
-							conjunction(stream(specialSuccessors).map(t -> new AfaState.Wait<>(t.getSucc(), letter2)));
+					final Bdd<ReductionState<L, S1, S2>> nonCommutativityDisjunct =
+							conjunction(stream(specialSuccessors).map(t -> new ReductionState.Wait<>(t.getSucc(), letter2)));
 
 					smallerLetterConjunction =
 							smallerLetterConjunction.and(putToSleepDisjunct.or(nonCommutativityDisjunct));
@@ -153,56 +153,56 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 			}
 			return trackConjunction.and(smallerLetterConjunction);
 
-		case AfaState.Sleep(final S1 independenceState, final L sleepLetter):
+		case ReductionState.Sleep(final S1 independenceState, final L sleepLetter):
 			if (Objects.equals(sleepLetter, letter)) {
 				return mBddManager.getFalse();
 			}
 
 			// /\ { sleep(q', sleepLetter) | independenceState --(letter)--> q' }
-			final Bdd<AfaState<L, S1, S2>> stayAsleepDisjunct = conjunction(
-					stream(independenceTransitions).map(t -> new AfaState.Sleep<>(t.getSucc(), sleepLetter)));
+			final Bdd<ReductionState<L, S1, S2>> stayAsleepDisjunct = conjunction(
+					stream(independenceTransitions).map(t -> new ReductionState.Sleep<>(t.getSucc(), sleepLetter)));
 
 			// /\ { wait(q', sleepLetter) | independenceState --(letter/sleepLetter)--> q' }
 			final IndependenceLetter<L> specialSymbol = mIndependenceAutomaton.getSpecialSymbol(letter, sleepLetter);
 			final var specialSuccessors = mIndependenceAutomaton.internalSuccessors(independenceState, specialSymbol);
-			final Bdd<AfaState<L, S1, S2>> nonCommutativityDisjunct =
-					conjunction(stream(specialSuccessors).map(t -> new AfaState.Wait<>(t.getSucc(), sleepLetter)));
+			final Bdd<ReductionState<L, S1, S2>> nonCommutativityDisjunct =
+					conjunction(stream(specialSuccessors).map(t -> new ReductionState.Wait<>(t.getSucc(), sleepLetter)));
 
 			return stayAsleepDisjunct.or(nonCommutativityDisjunct);
 
-		case AfaState.Wait(final S1 independenceState, final L waitLetter):
+		case ReductionState.Wait(final S1 independenceState, final L waitLetter):
 			if (Objects.equals(waitLetter, letter)) {
-				return mBddManager.variable(unify(new AfaState.Check<>(independenceState)));
+				return mBddManager.variable(unify(new ReductionState.Check<>(independenceState)));
 			}
 			// /\ { wait(q', waitLetter) | independenceState --(letter)--> q' }
-			return conjunction(stream(independenceTransitions).map(t -> new AfaState.Wait<>(t.getSucc(), waitLetter)));
+			return conjunction(stream(independenceTransitions).map(t -> new ReductionState.Wait<>(t.getSucc(), waitLetter)));
 
-		case AfaState.Check(final S1 independenceState):
+		case ReductionState.Check(final S1 independenceState):
 			// /\ { check(q') | independenceState --(letter)--> q' }
-			return conjunction(stream(independenceTransitions).map(t -> new AfaState.Check<>(t.getSucc())));
+			return conjunction(stream(independenceTransitions).map(t -> new ReductionState.Check<>(t.getSucc())));
 		}
 	}
 
-	private AfaState<L, S1, S2> unify(final AfaState<L, S1, S2> state) {
+	private ReductionState<L, S1, S2> unify(final ReductionState<L, S1, S2> state) {
 		return mStateUnifier.unify(state);
 	}
 
-	sealed interface AfaState<L, S1, S2> {
+	sealed interface ReductionState<L, S1, S2> {
 		S1 independenceState();
 
-		record Track<L, S1, S2>(S1 independenceState, S2 orderState) implements AfaState<L, S1, S2> {
+		record Track<L, S1, S2>(S1 independenceState, S2 orderState) implements ReductionState<L, S1, S2> {
 			// simple record
 		}
 
-		record Sleep<L, S1, S2>(S1 independenceState, L sleepLetter) implements AfaState<L, S1, S2> {
+		record Sleep<L, S1, S2>(S1 independenceState, L sleepLetter) implements ReductionState<L, S1, S2> {
 			// simple record
 		}
 
-		record Wait<L, S1, S2>(S1 independenceState, L waitLetter) implements AfaState<L, S1, S2> {
+		record Wait<L, S1, S2>(S1 independenceState, L waitLetter) implements ReductionState<L, S1, S2> {
 			// simple record
 		}
 
-		record Check<L, S1, S2>(S1 independenceState) implements AfaState<L, S1, S2> {
+		record Check<L, S1, S2>(S1 independenceState) implements ReductionState<L, S1, S2> {
 			// simple record
 		}
 	}
