@@ -162,7 +162,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 
 			final String fname = getFieldName(parameter);
 			if (isArray(parameter.getType())) {
-				mWriter.println(String.format("        if (%s != null){", fname));
+				mWriter.println(String.format("        if (%s != null) {", fname));
 				mWriter.println(String.format("            children.addAll(Arrays.asList(%s));", fname));
 				mWriter.println("        }");
 			} else {
@@ -297,7 +297,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 		mWriter.println("    @Override");
 		mWriter.println("    public " + parent + " accept(" + getTransformerName() + " visitor) {");
 		mWriter.println("        " + parent + " node = visitor.transform(this);");
-		mWriter.println("        if (node != this){");
+		mWriter.println("        if (node != this) {");
 		mWriter.println("            return node;");
 		mWriter.println("        }");
 		mWriter.println();
@@ -334,9 +334,9 @@ public abstract class EmitAstWithVisitors extends Emit {
 			}
 
 			final String fname = getFieldName(p);
-			mWriter.println("        if (" + fname + " != null){");
+			mWriter.println("        if (" + fname + " != null) {");
 			if (isArrayType) {
-				mWriter.println("            for(" + type + " elem : " + fname + "){");
+				mWriter.println("            for(" + type + " elem : " + fname + ") {");
 				mWriter.println("                " + type + BLANK + newName + " = " + cast + "elem.accept(visitor);");
 				mWriter.println("                isChanged = isChanged || " + newName + " != elem;");
 				mWriter.println("                " + listName + ".add(" + newName + ");");
@@ -367,7 +367,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 			if (OR.equals(builder.substring(builder.length() - LENGTH_OF_OR, builder.length()))) {
 				builder.delete(builder.length() - LENGTH_OF_OR, builder.length());
 			}
-			builder.append("){");
+			builder.append(") {");
 			mWriter.println(builder.toString());
 			mWriter.println("            return new " + node.getName() + "(" + getNewCallParams(node)
 					+ CLOSE_PARENTHESIS_SEMICOLON);
@@ -458,7 +458,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 			mWriter.println("        if (visitor.visit(this)) {");
 			for (final Parameter p : allAcslParameters) {
 				final String fname = getFieldName(p);
-				mWriter.println("            if (" + fname + " != null){");
+				mWriter.println("            if (" + fname + " != null) {");
 				if (isArrayType(p)) {
 					mWriter.println("                for (" + getBaseType(p) + " elem : " + fname + ") {");
 					mWriter.println("                    elem.accept(visitor);");
