@@ -608,9 +608,9 @@ public class Emit {
 				formatComment(mWriter, "    ", setComment);
 				mWriter.println("    public void " + setName + OPEN_PARENTHESIS + ptype + BLANK + pname + ") {");
 				if (parameter.isWriteableOnce()) {
-					mWriter.println("        //Writeable only once");
-					mWriter.println("        if(" + fname + " != null && " + pname + " != " + fname + "){");
-					mWriter.println("                throw new AssertionError(\"Value is only writeable once\");");
+					mWriter.println("        // Writeable only once");
+					mWriter.println("        if (" + fname + " != null && " + pname + " != " + fname + "){");
+					mWriter.println("			throw new AssertionError(\"Value is only writeable once\");");
 					mWriter.println("        }");
 				}
 				mWriter.println("        " + fname + " = " + pname + SEMICOLON);

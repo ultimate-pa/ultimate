@@ -162,7 +162,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 
 			final String fname = getFieldName(parameter);
 			if (isArray(parameter.getType())) {
-				mWriter.println(String.format("        if(%s!=null){", fname));
+				mWriter.println(String.format("        if (%s != null){", fname));
 				mWriter.println(String.format("            children.addAll(Arrays.asList(%s));", fname));
 				mWriter.println("        }");
 			} else {
@@ -297,7 +297,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 		mWriter.println("    @Override");
 		mWriter.println("    public " + parent + " accept(" + getTransformerName() + " visitor) {");
 		mWriter.println("        " + parent + " node = visitor.transform(this);");
-		mWriter.println("        if(node != this){");
+		mWriter.println("        if (node != this){");
 		mWriter.println("            return node;");
 		mWriter.println("        }");
 		mWriter.println();
@@ -318,12 +318,12 @@ public abstract class EmitAstWithVisitors extends Emit {
 			// declarations
 			if (isArrayType) {
 				if (!isChangedPrinted) {
-					mWriter.println("        boolean isChanged=false;");
+					mWriter.println("        boolean isChanged = false;");
 					isChangedPrinted = true;
 				}
-				mWriter.println("            ArrayList<" + type + "> " + listName + " = new ArrayList<>();");
+				mWriter.println("        ArrayList<" + type + "> " + listName + " = new ArrayList<>();");
 			} else {
-				mWriter.println("            " + type + BLANK + newName + " = null;");
+				mWriter.println("        " + type + BLANK + newName + " = null;");
 			}
 
 			final String cast;
@@ -334,7 +334,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 			}
 
 			final String fname = getFieldName(p);
-			mWriter.println("        if(" + fname + " != null){");
+			mWriter.println("        if (" + fname + " != null){");
 			if (isArrayType) {
 				mWriter.println("            for(" + type + " elem : " + fname + "){");
 				mWriter.println("                " + type + BLANK + newName + " = " + cast + "elem.accept(visitor);");
@@ -350,7 +350,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 		if (!params.isEmpty()) {
 
 			final StringBuilder builder = new StringBuilder();
-			builder.append("        if(");
+			builder.append("        if (");
 
 			if (isChangedPrinted) {
 				builder.append("isChanged || ");
@@ -428,9 +428,9 @@ public abstract class EmitAstWithVisitors extends Emit {
 					localIndent = localIndent + indent;
 					index2--;
 				}
-				builder.append(localIndent).append(String.format("if (visitor.visit((%s)this)) {", parent.getName()))
+				builder.append(localIndent).append(String.format("if (visitor.visit((%s) this)) {", parent.getName()))
 						.append(lineSep);
-				builder.append(localIndent).append(indent).append("//visit parent types higher up if necessary")
+				builder.append(localIndent).append(indent).append("// visit parent types higher up if necessary")
 						.append(lineSep);
 				parent = parent.getParent();
 				index1++;
@@ -458,7 +458,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 			mWriter.println("        if (visitor.visit(this)) {");
 			for (final Parameter p : allAcslParameters) {
 				final String fname = getFieldName(p);
-				mWriter.println("            if(" + fname + "!=null){");
+				mWriter.println("            if (" + fname + " != null){");
 				if (isArrayType(p)) {
 					mWriter.println("                for (" + getBaseType(p) + " elem : " + fname + ") {");
 					mWriter.println("                    elem.accept(visitor);");
