@@ -31,6 +31,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collector;
+import java.util.stream.Collector.Characteristics;
 
 /**
  * Creates and manages reduced ordered binary decision diagrams (ROBDDs).
@@ -145,9 +148,17 @@ public final class BddManager<V> {
 		return new Bdd<>(this, apply(Operation.AND, left.mRoot, right.mRoot));
 	}
 
+	public Collector<Bdd<V>, ?, Bdd<V>> toConjunction() {
+		return Collector.of(this::getTrue, this::and, this::and, Function.identity(), Characteristics.IDENTITY_FINISH);
+	}
+
 	public Bdd<V> or(final Bdd<V> left, final Bdd<V> right) {
 		checkSameManager(left, right);
 		return new Bdd<>(this, apply(Operation.OR, left.mRoot, right.mRoot));
+	}
+
+	public Collector<Bdd<V>, ?, Bdd<V>> toDisjunction() {
+		return Collector.of(this::getFalse, this::or, this::or, Function.identity(), Characteristics.IDENTITY_FINISH);
 	}
 
 	public Bdd<V> not(final Bdd<V> operand) {

@@ -29,8 +29,9 @@ package de.uni_freiburg.informatik.ultimate.automata.afa;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.afa.AFAReductionAutomaton.AfaState;
 import de.uni_freiburg.informatik.ultimate.automata.afa.IIndependenceAutomaton.IndependenceLetter;
@@ -108,98 +109,87 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 		};
 	}
 
+	private <X> Stream<X> stream(final Iterable<X> items) {
+		return StreamSupport.stream(items.spliterator(), false);
+	}
+
 	// this implementation follows the definition of the prefix-suffix AFA's transition function in our paper
 	@Override
 	public Bdd<AfaState<L, S1, S2>> getSuccessors(final AfaState<L, S1, S2> state, final L letter) {
 		final Iterable<OutgoingInternalTransition<IndependenceLetter<L>, S1>> independenceTransitions =
 				mIndependenceAutomaton.internalSuccessors(state.independenceState(), new WrappedLetter<>(letter));
-
-		// dummy result so we can use Bdd.and and Bdd.or
-		Bdd<AfaState<L, S1, S2>> bddResult = mBddManager.getTrue();
-		AfaState<L, S1, S2> succ;
+		final S2 orderSucc;
 
 		switch (state) {
 		case AfaState.Track(final S1 independenceState, final S2 orderState):
-			final S2 orderSucc = getUniqueOrderSuccessor(orderState, letter);
-			for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : independenceTransitions) {
-				succ = unify(new AfaState.Track<>(t.getSucc(), orderSucc));
-				bddResult = bddResult.and(mBddManager.variable(succ));
-			}
-			Bdd<AfaState<L, S1, S2>> bddConjunction = mBddManager.getTrue();
+			orderSucc = getUniqueOrderSuccessor(orderState, letter);
+
+			// /\ { track(q', orderSucc) | independenceState --(letter)--> q' }
+			final var trackConjunction =
+					stream(independenceTransitions).map(t -> unify(new AfaState.Track<>(t.getSucc(), orderSucc)))
+							.map(mBddManager::variable).collect(mBddManager.toConjunction());
+
+			Bdd<AfaState<L, S1, S2>> smallerLetterConjunction = mBddManager.getTrue();
 			for (final L letter2 : mAlphabet) {
-				Bdd<AfaState<L, S1, S2>> bddDisjunct1 = mBddManager.getTrue();
-				Bdd<AfaState<L, S1, S2>> bddDisjunct2;
 				// TODO: use the Order from the orderState instead
 				if (mOrder.getOrder(orderState).compare(letter2, letter) < 0) {
-					for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : independenceTransitions) {
-						succ = unify(new AfaState.Sleep<>(t.getSucc(), orderSucc, letter2));
-						bddDisjunct1 = bddDisjunct1.and(mBddManager.variable(succ));
-					}
-					final Optional<IndependenceLetter<L>> specialSymbol =
-							mIndependenceAutomaton.getSpecialSymbol(letter, letter2);
-					if (specialSymbol.isPresent()) {
-						final IndependenceLetter<L> symbol = specialSymbol.get();
-						bddDisjunct2 = mBddManager.getTrue();
-						for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : mIndependenceAutomaton
-								.internalSuccessors(independenceState, symbol)) {
-							succ = unify(new AfaState.Wait<>(t.getSucc(), letter2));
-							bddDisjunct2 = bddDisjunct2.and(mBddManager.variable(succ));
-						}
-					} else {
-						bddDisjunct2 = mBddManager.getFalse();
-					}
-					bddConjunction = bddConjunction.and(bddDisjunct1.or(bddDisjunct2));
+					// /\ { sleep(q', orderSucc, letter2) | independenceState --(letter)--> q' }
+					final Bdd<AfaState<L, S1, S2>> bddDisjunct1 = stream(independenceTransitions)
+							.map(t -> unify(new AfaState.Sleep<>(t.getSucc(), orderSucc, letter2)))
+							.map(mBddManager::variable).collect(mBddManager.toConjunction());
+
+					// TODO remove Optional from return type
+					final IndependenceLetter<L> specialSymbol =
+							mIndependenceAutomaton.getSpecialSymbol(letter, letter2).get();
+
+					// /\ { wait(q', letter2) | independenceState --(letter/letter2)--> q' }
+					final Bdd<AfaState<L, S1, S2>> bddDisjunct2 =
+							stream(mIndependenceAutomaton.internalSuccessors(independenceState, specialSymbol))
+									.map(t -> unify(new AfaState.Wait<>(t.getSucc(), letter2)))
+									.map(mBddManager::variable).collect(mBddManager.toConjunction());
+
+					smallerLetterConjunction = smallerLetterConjunction.and(bddDisjunct1.or(bddDisjunct2));
 				}
 			}
-			bddResult = bddResult.and(bddConjunction);
-			break;
+			return trackConjunction.and(smallerLetterConjunction);
+
 		case AfaState.Sleep(final S1 independenceState, final S2 orderState, final L sleepLetter):
 			if (Objects.equals(sleepLetter, letter)) {
-				bddResult = mBddManager.getFalse();
-			} else {
-				Bdd<AfaState<L, S1, S2>> bddDisjunct1 = mBddManager.getTrue();
-				Bdd<AfaState<L, S1, S2>> bddDisjunct2;
-				for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : independenceTransitions) {
-					succ = unify(new AfaState.Sleep<>(t.getSucc(), getUniqueOrderSuccessor(orderState, letter),
-							sleepLetter));
-					bddDisjunct1 = bddDisjunct1.and(mBddManager.variable(succ));
-				}
-				final Optional<IndependenceLetter<L>> specialSymbol =
-						mIndependenceAutomaton.getSpecialSymbol(letter, sleepLetter);
-				if (specialSymbol.isPresent()) {
-					final IndependenceLetter<L> symbol = specialSymbol.get();
-					bddDisjunct2 = mBddManager.getTrue();
-					for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : mIndependenceAutomaton
-							.internalSuccessors(independenceState, symbol)) {
-						succ = unify(new AfaState.Wait<>(t.getSucc(), sleepLetter));
-						bddDisjunct2 = bddDisjunct2.and(mBddManager.variable(succ));
-					}
-				} else {
-					bddDisjunct2 = mBddManager.getFalse();
-				}
-				bddResult = bddResult.and(bddDisjunct1.or(bddDisjunct2));
+				return mBddManager.getFalse();
 			}
-			break;
+
+			orderSucc = getUniqueOrderSuccessor(orderState, letter);
+
+			// /\ { sleep(q', orderSucc, sleepLetter) | independenceState --(letter)--> q' }
+			final Bdd<AfaState<L, S1, S2>> stayAsleepDisjunct = stream(independenceTransitions)
+					.map(t -> unify(new AfaState.Sleep<>(t.getSucc(), orderSucc, sleepLetter)))
+					.map(mBddManager::variable).collect(mBddManager.toConjunction());
+
+			// TODO remove Optional from return type
+			final IndependenceLetter<L> specialSymbol =
+					mIndependenceAutomaton.getSpecialSymbol(letter, sleepLetter).get();
+
+			// /\ { wait(q', sleepLetter) | independenceState --(letter)--> q' }
+			final Bdd<AfaState<L, S1, S2>> nonCommutativityDisjunct =
+					stream(mIndependenceAutomaton.internalSuccessors(independenceState, specialSymbol))
+							.map(t -> unify(new AfaState.Wait<>(t.getSucc(), sleepLetter))).map(mBddManager::variable)
+							.collect(mBddManager.toConjunction());
+
+			return stayAsleepDisjunct.or(nonCommutativityDisjunct);
+
 		case AfaState.Wait(final S1 independenceState, final L waitLetter):
 			if (Objects.equals(waitLetter, letter)) {
-				succ = unify(new AfaState.Check<>(independenceState));
-				bddResult = mBddManager.variable(succ);
-			} else {
-				for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t : independenceTransitions) {
-					succ = unify(new AfaState.Wait<>(t.getSucc(), waitLetter));
-					bddResult = bddResult.and(mBddManager.variable(succ));
-				}
+				return mBddManager.variable(unify(new AfaState.Check<>(independenceState)));
 			}
-			break;
-		case AfaState.Check(final S1 independenceState):
-			for (final OutgoingInternalTransition<IndependenceLetter<L>, S1> t1 : independenceTransitions) {
-				succ = unify(new AfaState.Check<>(t1.getSucc()));
-				bddResult = bddResult.and(mBddManager.variable(succ));
-			}
-			break;
-		}
-		return bddResult;
+			// /\ { wait(q', waitLetter) | independenceState --(letter)--> q' }
+			return stream(independenceTransitions).map(t -> unify(new AfaState.Wait<>(t.getSucc(), waitLetter)))
+					.map(mBddManager::variable).collect(mBddManager.toConjunction());
 
+		case AfaState.Check(final S1 independenceState):
+			// /\ { check(q') | independenceState --(letter)--> q' }
+			return stream(independenceTransitions).map(t -> unify(new AfaState.Check<>(t.getSucc())))
+					.map(mBddManager::variable).collect(mBddManager.toConjunction());
+		}
 	}
 
 	private AfaState<L, S1, S2> unify(final AfaState<L, S1, S2> state) {
