@@ -202,11 +202,12 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 		for (final Entry<PrevVar, String> repl : replacements.entrySet()) {
 			final String variable = repl.getKey().variable();
 			final String type = findVariableType(node, variable);
+			final String replGhost = repl.getValue();
 			if (type == null) {
 				throw new UnsupportedOperationException("Unable to determine the type of variable " + variable);
 			}
 			// Introduce a ghost variable to track the previous values of x (any_prev_x or last_prev_x)
-			result.addGlobalDeclaration(new ExtractedGhostVariable(repl.getValue(), "0", type, mTranslationUnit));
+			result.addGlobalDeclaration(new ExtractedGhostVariable(replGhost, "0", type, mTranslationUnit));
 			if (repl.getKey().isAnyPrev()) {
 				if (nondet == null) {
 					// For AnyPrev, introduce another ghost variable for a non-deterministic choice. This
@@ -220,14 +221,14 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 				}
 				// Based on the value of this non-deterministic ghost variable, either set any_prev_x to x or keep its
 				// previous value.
-				result.addGhostUpdate(node, new ExtractedGhostUpdate(repl.getValue(),
-						nondet + " ? " + variable + " : " + repl.getValue(), node, false));
+				result.addGhostUpdate(node, new ExtractedGhostUpdate(replGhost,
+						nondet + " ? " + variable + " : " + replGhost, node, false));
 				// transition_invariant_should_hold := transition_invariant_should_hold || any_prev_nondet;
 				result.addGhostUpdate(node,
 						new ExtractedGhostUpdate(shouldHold, shouldHold + " || " + nondet, node, false));
 			} else {
 				// For LastPrev, just assign last_prev_x to x and transition_invariant_should_hold to 1.
-				result.addGhostUpdate(node, new ExtractedGhostUpdate(repl.getValue(), variable, node, false));
+				result.addGhostUpdate(node, new ExtractedGhostUpdate(replGhost, variable, node, false));
 				result.addGhostUpdate(node, new ExtractedGhostUpdate(shouldHold, "1", node, false));
 			}
 		}
