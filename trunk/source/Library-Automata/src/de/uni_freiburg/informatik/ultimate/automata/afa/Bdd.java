@@ -30,29 +30,26 @@ import java.util.Objects;
 
 /**
  * A Boolean formula represented by a reduced ordered binary decision diagram.
- *
- * @param <V>
- *            The type used to identify Boolean variables, e.g. AfaState.
  */
-public final class Bdd<V> {
+public final class Bdd {
 
-	final BddManager<V> mManager;
+	final BddManager mManager;
 	final BddManager.Node mRoot;
 
-	Bdd(final BddManager<V> manager, final BddManager.Node root) {
+	Bdd(final BddManager manager, final BddManager.Node root) {
 		mManager = Objects.requireNonNull(manager);
 		mRoot = Objects.requireNonNull(root);
 	}
 
-	public Bdd<V> and(final Bdd<V> other) {
+	public Bdd and(final Bdd other) {
 		return mManager.and(this, other);
 	}
 
-	public Bdd<V> or(final Bdd<V> other) {
+	public Bdd or(final Bdd other) {
 		return mManager.or(this, other);
 	}
 
-	public Bdd<V> not() {
+	public Bdd not() {
 		return mManager.not(this);
 	}
 
@@ -74,11 +71,11 @@ public final class Bdd<V> {
 	 * @throws IllegalStateException
 	 *             if this BDD is a terminal.
 	 */
-	public V getVariable() {
+	public int getVariable() {
 		if (isTerminal()) {
 			throw new IllegalStateException("A terminal has no variable");
 		}
-		return mManager.getVariableForIndex(mRoot.mVariable);
+		return mRoot.mVariable;
 	}
 
 	/**
@@ -87,9 +84,9 @@ public final class Bdd<V> {
 	 * @throws IllegalStateException
 	 *             if this BDD is a terminal.
 	 */
-	public Bdd<V> getLeft() {
+	public Bdd getLeft() {
 		ensureNonTerminal();
-		return new Bdd<>(mManager, mRoot.mLeft);
+		return new Bdd(mManager, mRoot.mLeft);
 	}
 
 	/**
@@ -98,9 +95,9 @@ public final class Bdd<V> {
 	 * @throws IllegalStateException
 	 *             if this BDD is a terminal.
 	 */
-	public Bdd<V> getRight() {
+	public Bdd getRight() {
 		ensureNonTerminal();
-		return new Bdd<>(mManager, mRoot.mRight);
+		return new Bdd(mManager, mRoot.mRight);
 	}
 
 	private void ensureNonTerminal() {
@@ -112,12 +109,12 @@ public final class Bdd<V> {
 	/**
 	 * Checks whether two BDDs represent the same canonical function. Both must belong to the same manager.
 	 */
-	public boolean equivalentTo(final Bdd<V> other) {
+	public boolean equivalentTo(final Bdd other) {
 		checkSameManager(other);
 		return mRoot == other.mRoot;
 	}
 
-	private void checkSameManager(final Bdd<V> other) {
+	private void checkSameManager(final Bdd other) {
 		Objects.requireNonNull(other);
 		if (mManager != other.mManager) {
 			throw new IllegalArgumentException("Cannot combine BDDs from different managers");
@@ -129,10 +126,7 @@ public final class Bdd<V> {
 		if (this == obj) {
 			return true;
 		}
-		if (!(obj instanceof final Bdd<?> other)) {
-			return false;
-		}
-		return mManager == other.mManager && mRoot == other.mRoot;
+		return obj instanceof final Bdd other && mManager == other.mManager && mRoot == other.mRoot;
 	}
 
 	@Override

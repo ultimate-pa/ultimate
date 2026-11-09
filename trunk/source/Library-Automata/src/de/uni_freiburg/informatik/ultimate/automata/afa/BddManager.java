@@ -26,22 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.afa;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collector;
 
 /**
  * Creates and manages reduced ordered binary decision diagrams (ROBDDs).
  *
- * Variables are ordered by the order in which they are registered.
- *
- * @param <V>
- *            The type used to identify Boolean variables.
+ * Variables are ordered by the order in which they are registered using {@link #getFreshVariable()}.
  */
-public final class BddManager<V> {
+public final class BddManager {
 
 	private static final int TERMINAL_VARIABLE = Integer.MAX_VALUE;
 
@@ -89,9 +83,7 @@ public final class BddManager<V> {
 	final Node mTrueNode = new Node(1, true);
 
 	private int mNextNodeId = 2;
-
-	private final Map<V, Integer> mVariableIndices = new HashMap<>();
-	private final List<V> mVariables = new ArrayList<>();
+	private int mVariableCounter = 0;
 
 	private final Map<NodeKey, Node> mUniqueTable = new HashMap<>();
 	private final Map<ApplyKey, Node> mApplyCache = new HashMap<>();
@@ -101,75 +93,44 @@ public final class BddManager<V> {
 		// The two terminal nodes are created once per manager.
 	}
 
-	public Bdd<V> getTrue() {
-		return new Bdd<>(this, mTrueNode);
+	public Bdd getTrue() {
+		return new Bdd(this, mTrueNode);
 	}
 
-	public Bdd<V> getFalse() {
-		return new Bdd<>(this, mFalseNode);
+	public Bdd getFalse() {
+		return new Bdd(this, mFalseNode);
 	}
 
-	/**
-	 * Returns the BDD variable for the given key, creating it if necessary.
-	 */
-	public Bdd<V> variable(final V variable) {
-		Objects.requireNonNull(variable, "Variable must not be null");
-
-		final int index = mVariableIndices.computeIfAbsent(variable, key -> {
-			final int newIndex = mVariables.size();
-			mVariables.add(key);
-			return newIndex;
-		});
-
-		return new Bdd<>(this, makeNode(index, mFalseNode, mTrueNode));
+	public int getFreshVariable() {
+		return mVariableCounter++;
 	}
 
-	/**
-	 * Registers variables in the supplied order. Call before constructing formulas if a deliberate ordering is desired.
-	 */
-	public void registerVariables(final Iterable<? extends V> variables) {
-		for (final V variable : variables) {
-			Objects.requireNonNull(variable, "Variable must not be null");
-			if (!mVariableIndices.containsKey(variable)) {
-				mVariableIndices.put(variable, mVariables.size());
-				mVariables.add(variable);
-			}
-		}
+	public Bdd variable(final int variableIndex) {
+		assert variableIndex < mVariableCounter : "unregistered variable";
+		return new Bdd(this, makeNode(variableIndex, mFalseNode, mTrueNode));
 	}
 
-	V getVariableForIndex(final int index) {
-		return mVariables.get(index);
-	}
-
-	public Bdd<V> and(final Bdd<V> left, final Bdd<V> right) {
+	public Bdd and(final Bdd left, final Bdd right) {
 		checkSameManager(left, right);
-		return new Bdd<>(this, apply(Operation.AND, left.mRoot, right.mRoot));
+		return new Bdd(this, apply(Operation.AND, left.mRoot, right.mRoot));
 	}
 
-	public Collector<Bdd<V>, ?, Bdd<V>> toConjunction() {
-		return Collector.of(this::getTrue, this::and, this::and);
-	}
-
-	public Bdd<V> or(final Bdd<V> left, final Bdd<V> right) {
+	public Bdd or(final Bdd left, final Bdd right) {
 		checkSameManager(left, right);
-		return new Bdd<>(this, apply(Operation.OR, left.mRoot, right.mRoot));
+		return new Bdd(this, apply(Operation.OR, left.mRoot, right.mRoot));
 	}
 
-	public Collector<Bdd<V>, ?, Bdd<V>> toDisjunction() {
-		return Collector.of(this::getFalse, this::or, this::or);
-	}
-
-	public Bdd<V> not(final Bdd<V> operand) {
+	public Bdd not(final Bdd operand) {
 		checkManager(operand);
-		return new Bdd<>(this, negate(operand.mRoot));
+		return new Bdd(this, negate(operand.mRoot));
 	}
 
-	private void checkSameManager(final Bdd<V> left, final Bdd<V> right) {
+	private void checkSameManager(final Bdd left, final Bdd right) {
 		checkManager(left);
 		checkManager(right);
 	}
 
-	private void checkManager(final Bdd<V> bdd) {
+	private void checkManager(final Bdd bdd) {
 		Objects.requireNonNull(bdd);
 		if (bdd.mManager != this) {
 			throw new IllegalArgumentException("BDD belongs to a different manager");
@@ -272,7 +233,7 @@ public final class BddManager<V> {
 		return result;
 	}
 
-	String toString(final Bdd<V> bdd) {
+	String toString(final Bdd bdd) {
 		checkManager(bdd);
 		final StringBuilder result = new StringBuilder();
 		appendNode(bdd.mRoot, result);
@@ -286,7 +247,7 @@ public final class BddManager<V> {
 			result.append("FALSE");
 		} else {
 			result.append('(');
-			result.append(mVariables.get(node.mVariable));
+			result.append(node.mVariable);
 			result.append(" ? ");
 			appendNode(node.mRight, result);
 			result.append(" : ");

@@ -40,6 +40,6 @@ public interface IAlternatingFiniteAutomaton<L, S> {
 
 	boolean isFinal(final S state);
 
-	Bdd<S> getSuccessors(final S state, final L letter);
+	Bdd getSuccessors(final S state, final L letter, final BddFactory<S> bddFactory);
 
 }

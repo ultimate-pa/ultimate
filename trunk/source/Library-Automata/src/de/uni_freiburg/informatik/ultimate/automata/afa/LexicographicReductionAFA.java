@@ -63,8 +63,6 @@ public class LexicographicReductionAFA<L, S1, S2> implements IAlternatingFiniteA
 	private final INwaOutgoingLetterAndTransitionProvider<IndependenceLetter<L>, S1> mIndependenceAutomaton;
 
 	private final SequencedSet<ReductionState<L, S1, S2>> mInitialStates;
-
-	private final BddManager<ReductionState<L, S1, S2>> mBddManager = new BddManager<>();
 	private final UnifyHash<ReductionState<L, S1, S2>> mStateUnifier = new UnifyHash<>();
 
 	// before the search, do an intersection of the current abstraction (transformed to an AFA) with the reduction AFA
@@ -121,7 +119,8 @@ public class LexicographicReductionAFA<L, S1, S2> implements IAlternatingFiniteA
 	}
 
 	@Override
-	public Bdd<ReductionState<L, S1, S2>> getSuccessors(final ReductionState<L, S1, S2> state, final L letter) {
+	public Bdd getSuccessors(final ReductionState<L, S1, S2> state, final L letter,
+			final BddFactory<ReductionState<L, S1, S2>> bddFactory) {
 		final Iterable<OutgoingInternalTransition<IndependenceLetter<L>, S1>> independenceTransitions =
 				mIndependenceAutomaton.internalSuccessors(state.independenceState(), new WrappedLetter<>(letter));
 
@@ -129,15 +128,15 @@ public class LexicographicReductionAFA<L, S1, S2> implements IAlternatingFiniteA
 		case ReductionState.Track(final S1 independenceState, final S2 orderState):
 			// /\ { track(q', q'') | independenceState --(letter)--> q' /\ orderState --(letter)--> q'' }
 			final S2 orderSucc = getUniqueOrderSuccessor(orderState, letter);
-			final var trackConjunction = conjunction(
+			final var trackConjunction = conjunction(bddFactory,
 					stream(independenceTransitions).map(t -> new ReductionState.Track<>(t.getSucc(), orderSucc)));
 
-			Bdd<ReductionState<L, S1, S2>> smallerLetterConjunction = mBddManager.getTrue();
+			Bdd smallerLetterConjunction = bddFactory.getTrue();
 			for (final L letter2 : mAlphabet) {
 				// TODO: use the Order from the orderState instead
 				if (mOrder.getOrder(orderState).compare(letter2, letter) < 0) {
 					// /\ { sleep(q', letter2) | independenceState --(letter)--> q' }
-					final Bdd<ReductionState<L, S1, S2>> putToSleepDisjunct = conjunction(
+					final Bdd putToSleepDisjunct = conjunction(bddFactory,
 							stream(independenceTransitions).map(t -> new ReductionState.Sleep<>(t.getSucc(), letter2)));
 
 					// TODO: Discuss if this change is sufficient
@@ -146,7 +145,7 @@ public class LexicographicReductionAFA<L, S1, S2> implements IAlternatingFiniteA
 					// /\ { wait(q', letter2) | independenceState --(letter/letter2)--> q' }
 					final var specialSuccessors =
 							mIndependenceAutomaton.internalSuccessors(independenceState, specialSymbol);
-					final Bdd<ReductionState<L, S1, S2>> dependenceDisjunct = conjunction(
+					final Bdd dependenceDisjunct = conjunction(bddFactory,
 							stream(specialSuccessors).map(t -> new ReductionState.Wait<>(t.getSucc(), letter2)));
 
 					smallerLetterConjunction = smallerLetterConjunction.and(putToSleepDisjunct.or(dependenceDisjunct));
@@ -156,32 +155,33 @@ public class LexicographicReductionAFA<L, S1, S2> implements IAlternatingFiniteA
 
 		case ReductionState.Sleep(final S1 independenceState, final L sleepLetter):
 			if (Objects.equals(sleepLetter, letter)) {
-				return mBddManager.getFalse();
+				return bddFactory.getFalse();
 			}
 
 			// /\ { sleep(q', sleepLetter) | independenceState --(letter)--> q' }
-			final Bdd<ReductionState<L, S1, S2>> stayAsleepDisjunct = conjunction(
+			final Bdd stayAsleepDisjunct = conjunction(bddFactory,
 					stream(independenceTransitions).map(t -> new ReductionState.Sleep<>(t.getSucc(), sleepLetter)));
 
 			// /\ { wait(q', sleepLetter) | independenceState --(letter/sleepLetter)--> q' }
 			final IndependenceLetter<L> specialSymbol = new IndependentPair<>(letter, sleepLetter);
 			final var specialSuccessors = mIndependenceAutomaton.internalSuccessors(independenceState, specialSymbol);
-			final Bdd<ReductionState<L, S1, S2>> dependenceDisjunct = conjunction(
+			final Bdd dependenceDisjunct = conjunction(bddFactory,
 					stream(specialSuccessors).map(t -> new ReductionState.Wait<>(t.getSucc(), sleepLetter)));
 
 			return stayAsleepDisjunct.or(dependenceDisjunct);
 
 		case ReductionState.Wait(final S1 independenceState, final L waitLetter):
 			if (Objects.equals(waitLetter, letter)) {
-				return mBddManager.variable(unify(new ReductionState.Check<>(independenceState)));
+				return bddFactory.variable(unify(new ReductionState.Check<>(independenceState)));
 			}
 			// /\ { wait(q', waitLetter) | independenceState --(letter)--> q' }
-			return conjunction(
+			return conjunction(bddFactory,
 					stream(independenceTransitions).map(t -> new ReductionState.Wait<>(t.getSucc(), waitLetter)));
 
 		case ReductionState.Check(final S1 independenceState):
 			// /\ { check(q') | independenceState --(letter)--> q' }
-			return conjunction(stream(independenceTransitions).map(t -> new ReductionState.Check<>(t.getSucc())));
+			return conjunction(bddFactory,
+					stream(independenceTransitions).map(t -> new ReductionState.Check<>(t.getSucc())));
 		}
 	}
 
@@ -193,8 +193,9 @@ public class LexicographicReductionAFA<L, S1, S2> implements IAlternatingFiniteA
 		return StreamSupport.stream(items.spliterator(), false);
 	}
 
-	private Bdd<ReductionState<L, S1, S2>> conjunction(final Stream<? extends ReductionState<L, S1, S2>> conjuncts) {
-		return conjuncts.map(this::unify).map(mBddManager::variable).collect(mBddManager.toConjunction());
+	private Bdd conjunction(final BddFactory<ReductionState<L, S1, S2>> bddFactory,
+			final Stream<? extends ReductionState<L, S1, S2>> conjuncts) {
+		return conjuncts.map(this::unify).map(bddFactory::variable).collect(bddFactory.toConjunction());
 	}
 
 	// method to ensure that the order automaton is total and deterministic
