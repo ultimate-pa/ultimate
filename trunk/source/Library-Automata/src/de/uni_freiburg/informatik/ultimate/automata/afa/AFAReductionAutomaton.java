@@ -103,14 +103,18 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 	public boolean isFinal(final AfaState<L, S1, S2> state) {
 		return switch (state) {
 		case AfaState.Track(final S1 independenceState, final S2 orderState) -> true;
-		case AfaState.Sleep(final S1 independenceState, final S2 orderState, final L sleepLetter) -> true;
+		case AfaState.Sleep(final S1 independenceState, final L sleepLetter) -> true;
 		case AfaState.Wait(final S1 independenceState, final L waitLetter) -> false;
 		case AfaState.Check(final S1 independenceState) -> !mIndependenceAutomaton.isFinal(independenceState);
 		};
 	}
 
-	private <X> Stream<X> stream(final Iterable<X> items) {
+	private static <X> Stream<X> stream(final Iterable<X> items) {
 		return StreamSupport.stream(items.spliterator(), false);
+	}
+
+	private Bdd<AfaState<L, S1, S2>> conjunction(final Stream<? extends AfaState<L, S1, S2>> conjuncts) {
+		return conjuncts.map(this::unify).map(mBddManager::variable).collect(mBddManager.toConjunction());
 	}
 
 	// this implementation follows the definition of the prefix-suffix AFA's transition function in our paper
@@ -118,59 +122,51 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 	public Bdd<AfaState<L, S1, S2>> getSuccessors(final AfaState<L, S1, S2> state, final L letter) {
 		final Iterable<OutgoingInternalTransition<IndependenceLetter<L>, S1>> independenceTransitions =
 				mIndependenceAutomaton.internalSuccessors(state.independenceState(), new WrappedLetter<>(letter));
-		final S2 orderSucc;
 
 		switch (state) {
 		case AfaState.Track(final S1 independenceState, final S2 orderState):
-			orderSucc = getUniqueOrderSuccessor(orderState, letter);
-
-			// /\ { track(q', orderSucc) | independenceState --(letter)--> q' }
+			// /\ { track(q', q'') | independenceState --(letter)--> q' /\ orderState --(letter)--> q'' }
+			final S2 orderSucc = getUniqueOrderSuccessor(orderState, letter);
 			final var trackConjunction =
-					stream(independenceTransitions).map(t -> unify(new AfaState.Track<>(t.getSucc(), orderSucc)))
-							.map(mBddManager::variable).collect(mBddManager.toConjunction());
+					conjunction(stream(independenceTransitions).map(t -> new AfaState.Track<>(t.getSucc(), orderSucc)));
 
 			Bdd<AfaState<L, S1, S2>> smallerLetterConjunction = mBddManager.getTrue();
 			for (final L letter2 : mAlphabet) {
 				// TODO: use the Order from the orderState instead
 				if (mOrder.getOrder(orderState).compare(letter2, letter) < 0) {
 					// /\ { sleep(q', orderSucc, letter2) | independenceState --(letter)--> q' }
-					final Bdd<AfaState<L, S1, S2>> bddDisjunct1 = stream(independenceTransitions)
-							.map(t -> unify(new AfaState.Sleep<>(t.getSucc(), orderSucc, letter2)))
-							.map(mBddManager::variable).collect(mBddManager.toConjunction());
+					final Bdd<AfaState<L, S1, S2>> putToSleepDisjunct = conjunction(
+							stream(independenceTransitions).map(t -> new AfaState.Sleep<>(t.getSucc(), letter2)));
 
 					final IndependenceLetter<L> specialSymbol =
 							mIndependenceAutomaton.getSpecialSymbol(letter, letter2);
 
 					// /\ { wait(q', letter2) | independenceState --(letter/letter2)--> q' }
-					final Bdd<AfaState<L, S1, S2>> bddDisjunct2 =
-							stream(mIndependenceAutomaton.internalSuccessors(independenceState, specialSymbol))
-									.map(t -> unify(new AfaState.Wait<>(t.getSucc(), letter2)))
-									.map(mBddManager::variable).collect(mBddManager.toConjunction());
+					final var specialSuccessors =
+							mIndependenceAutomaton.internalSuccessors(independenceState, specialSymbol);
+					final Bdd<AfaState<L, S1, S2>> nonCommutativityDisjunct =
+							conjunction(stream(specialSuccessors).map(t -> new AfaState.Wait<>(t.getSucc(), letter2)));
 
-					smallerLetterConjunction = smallerLetterConjunction.and(bddDisjunct1.or(bddDisjunct2));
+					smallerLetterConjunction =
+							smallerLetterConjunction.and(putToSleepDisjunct.or(nonCommutativityDisjunct));
 				}
 			}
 			return trackConjunction.and(smallerLetterConjunction);
 
-		case AfaState.Sleep(final S1 independenceState, final S2 orderState, final L sleepLetter):
+		case AfaState.Sleep(final S1 independenceState, final L sleepLetter):
 			if (Objects.equals(sleepLetter, letter)) {
 				return mBddManager.getFalse();
 			}
 
-			orderSucc = getUniqueOrderSuccessor(orderState, letter);
-
 			// /\ { sleep(q', orderSucc, sleepLetter) | independenceState --(letter)--> q' }
-			final Bdd<AfaState<L, S1, S2>> stayAsleepDisjunct = stream(independenceTransitions)
-					.map(t -> unify(new AfaState.Sleep<>(t.getSucc(), orderSucc, sleepLetter)))
-					.map(mBddManager::variable).collect(mBddManager.toConjunction());
-
-			final IndependenceLetter<L> specialSymbol = mIndependenceAutomaton.getSpecialSymbol(letter, sleepLetter);
+			final Bdd<AfaState<L, S1, S2>> stayAsleepDisjunct = conjunction(
+					stream(independenceTransitions).map(t -> new AfaState.Sleep<>(t.getSucc(), sleepLetter)));
 
 			// /\ { wait(q', sleepLetter) | independenceState --(letter/sleepLetter)--> q' }
+			final IndependenceLetter<L> specialSymbol = mIndependenceAutomaton.getSpecialSymbol(letter, sleepLetter);
+			final var specialSuccessors = mIndependenceAutomaton.internalSuccessors(independenceState, specialSymbol);
 			final Bdd<AfaState<L, S1, S2>> nonCommutativityDisjunct =
-					stream(mIndependenceAutomaton.internalSuccessors(independenceState, specialSymbol))
-							.map(t -> unify(new AfaState.Wait<>(t.getSucc(), sleepLetter))).map(mBddManager::variable)
-							.collect(mBddManager.toConjunction());
+					conjunction(stream(specialSuccessors).map(t -> new AfaState.Wait<>(t.getSucc(), sleepLetter)));
 
 			return stayAsleepDisjunct.or(nonCommutativityDisjunct);
 
@@ -179,13 +175,11 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 				return mBddManager.variable(unify(new AfaState.Check<>(independenceState)));
 			}
 			// /\ { wait(q', waitLetter) | independenceState --(letter)--> q' }
-			return stream(independenceTransitions).map(t -> unify(new AfaState.Wait<>(t.getSucc(), waitLetter)))
-					.map(mBddManager::variable).collect(mBddManager.toConjunction());
+			return conjunction(stream(independenceTransitions).map(t -> new AfaState.Wait<>(t.getSucc(), waitLetter)));
 
 		case AfaState.Check(final S1 independenceState):
 			// /\ { check(q') | independenceState --(letter)--> q' }
-			return stream(independenceTransitions).map(t -> unify(new AfaState.Check<>(t.getSucc())))
-					.map(mBddManager::variable).collect(mBddManager.toConjunction());
+			return conjunction(stream(independenceTransitions).map(t -> new AfaState.Check<>(t.getSucc())));
 		}
 	}
 
@@ -200,7 +194,7 @@ public class AFAReductionAutomaton<L, S1, S2> implements IAlternatingFiniteAutom
 			// simple record
 		}
 
-		record Sleep<L, S1, S2>(S1 independenceState, S2 orderState, L sleepLetter) implements AfaState<L, S1, S2> {
+		record Sleep<L, S1, S2>(S1 independenceState, L sleepLetter) implements AfaState<L, S1, S2> {
 			// simple record
 		}
 
