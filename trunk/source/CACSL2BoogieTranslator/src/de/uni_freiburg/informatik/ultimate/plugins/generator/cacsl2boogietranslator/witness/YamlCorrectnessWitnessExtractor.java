@@ -174,17 +174,32 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 	 */
 	private String instrumentTransitionInvariant(final String transitionInvariant, final IASTNode node,
 			final YamlExtractedCorrectnessWitness result) {
-		final var rewriteResult = rewritePrevExpressions(transitionInvariant);
-		if (rewriteResult.replacements.isEmpty()) {
+		// Search for \at(x, LastPrev) and \at(x, AnyPrev) in the transition invariant and replaces their occurrences
+		// with fresh ghost variables that are then collected in a map.
+		final Map<PrevVar, String> replacements = new HashMap<>();
+		final Pattern pattern =
+				Pattern.compile("\\\\at\\s*\\(\\s*([A-Za-z_][A-Za-z0-9_]*)\\s*,\\s*(LastPrev|AnyPrev)\\s*\\)");
+		final Matcher matcher = pattern.matcher(transitionInvariant);
+		final StringBuilder replacedInvariant = new StringBuilder();
+		while (matcher.find()) {
+			final String variable = matcher.group(1);
+			final boolean anyPrev = "AnyPrev".equals(matcher.group(2));
+			final PrevVar key = new PrevVar(variable, anyPrev);
+			final String repl = replacements.computeIfAbsent(key,
+					x -> freshVariableName((anyPrev ? "any_prev_" : "last_prev_") + variable));
+			matcher.appendReplacement(replacedInvariant, Matcher.quoteReplacement(repl));
+		}
+		matcher.appendTail(replacedInvariant);
+		if (replacements.isEmpty()) {
 			// There is no \at, nothing to do
-			return rewriteResult.result;
+			return transitionInvariant;
 		}
 		String nondet = null;
 		// Introduce a ghost variable to track, whether the invariant is supposed to hold. It should hold trivially in
 		// the first loop iteration.
 		final String shouldHold = freshVariableName("transition_invariant_should_hold");
 		result.addGlobalDeclaration(new ExtractedGhostVariable(shouldHold, "0", "int", mTranslationUnit));
-		for (final Entry<PrevVar, String> repl : rewriteResult.replacements.entrySet()) {
+		for (final Entry<PrevVar, String> repl : replacements.entrySet()) {
 			final String variable = repl.getKey().variable();
 			final String type = findVariableType(node, variable);
 			if (type == null) {
@@ -216,36 +231,11 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 				result.addGhostUpdate(node, new ExtractedGhostUpdate(shouldHold, "1", node, false));
 			}
 		}
-		return "!" + shouldHold + " || (" + rewriteResult.result + ")";
-	}
-
-	/**
-	 * Finds supported {@code \\at(x, LastPrev)} and {@code \\at(x, AnyPrev)} references and replaces each reference
-	 * with a fresh ghost-variable name.
-	 */
-	private TransitionInvariantRewriteResult rewritePrevExpressions(final String invariant) {
-		final Map<PrevVar, String> replacements = new HashMap<>();
-		final Pattern pattern =
-				Pattern.compile("\\\\at\\s*\\(\\s*([A-Za-z_][A-Za-z0-9_]*)\\s*,\\s*(LastPrev|AnyPrev)\\s*\\)");
-		final Matcher matcher = pattern.matcher(invariant);
-		final StringBuilder result = new StringBuilder();
-		while (matcher.find()) {
-			final String variable = matcher.group(1);
-			final boolean anyPrev = "AnyPrev".equals(matcher.group(2));
-			final PrevVar key = new PrevVar(variable, anyPrev);
-			final String repl = replacements.computeIfAbsent(key,
-					x -> freshVariableName((anyPrev ? "any_prev_" : "last_prev_") + variable));
-			matcher.appendReplacement(result, Matcher.quoteReplacement(repl));
-		}
-		matcher.appendTail(result);
-		return new TransitionInvariantRewriteResult(result.toString(), replacements);
+		return "!" + shouldHold + " || (" + replacedInvariant + ")";
 	}
 
 	private String freshVariableName(final String variable) {
 		return variable + "_" + mPrevVariableCounter++;
-	}
-
-	private record TransitionInvariantRewriteResult(String result, Map<PrevVar, String> replacements) {
 	}
 
 	private record PrevVar(String variable, boolean isAnyPrev) {
