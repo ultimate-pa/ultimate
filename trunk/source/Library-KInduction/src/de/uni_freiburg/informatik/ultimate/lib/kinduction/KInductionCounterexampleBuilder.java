@@ -109,7 +109,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * <li>a havoced variable stays without a value until it is read. The interpreter then chooses its value, one variable
  * at a time and dropping a choice as soon as a conjunct of the letter contradicts it: from what the letter's own
  * equalities say, for an array from the cells the letter fixes, and otherwise from the model's <b>candidates</b> for
- * this step - the values the variable has inside the step, then every other value of its sort there.
+ * this step - the values the variable has inside the step, then every other value of its sort there. A variable that
+ * the step cannot write again tries its pin first: that is exactly the value it has from here on, while most of the
+ * values inside the step belong to paths the model did not take.
  * </ul>
  * At the end of a step the run must have the pins of the next state. A step that misses one does not continue the way
  * the model did, and is not taken. A variable the run has no value for yet takes the pin's.
@@ -212,6 +214,9 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	/** The model's literals as values of the interpreter, empty for one it cannot read (e.g. floating point). */
 	private final Map<Term, Optional<IConcreteValue>> mValueOfLiteral = new HashMap<>();
 	private final Map<Pair<Integer, IProgramVar>, List<IConcreteValue>> mCandidateValues = new HashMap<>();
+	private final Map<Pair<Integer, IProgramVar>, List<IConcreteValue>> mPinFirstCandidates = new HashMap<>();
+	/** Per target pc and state, what a step towards that pc can still write from the state on. */
+	private final Map<Pair<Integer, STATE>, Set<IProgramVar>> mWrittenFrom = new HashMap<>();
 	/** The value of every program constant the model gave one. */
 	private final Map<IProgramConst, IConcreteValue> mConstantValues = new HashMap<>();
 
@@ -393,11 +398,17 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 
 	/** The values of a step's model candidates, for the variables a letter leaves open. */
 	private final class ModelCandidatePool extends NondeterminismPool {
-		private int mStep;
+		private Step mStep;
+		/** The state the letter being executed leads to. */
+		private STATE mSuccessor;
 
 		@Override
 		public List<IConcreteValue> preferred(final IProgramVar var, final Sort sort) {
-			return var == null ? List.of() : candidateValues(mStep, var);
+			if (var == null) {
+				return List.of();
+			}
+			return writtenFrom(mStep, mSuccessor).contains(var) ? candidateValues(mStep.mIndex, var)
+					: pinFirstCandidates(mStep.mIndex, var);
 		}
 	}
 
@@ -557,7 +568,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	 * symbolic ones, which are built only when they are tried.
 	 */
 	private List<Alternative> alternatives(final Step step, final STATE current) {
-		mPool.mStep = step.mIndex;
+		mPool.mStep = step;
 		final List<Alternative> concrete = new ArrayList<>();
 		final List<Alternative> symbolic = new ArrayList<>();
 		for (final OutgoingInternalTransition<LETTER, STATE> out : mAbstraction.internalSuccessors(current)) {
@@ -614,6 +625,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	 */
 	private void execute(final Step step, final Move move, final UnmodifiableTransFormula tf, final StepKind kind,
 			final List<Alternative> concrete, final List<Alternative> symbolic) {
+		mPool.mSuccessor = move.mSucc;
 		final Set<TermVariable> free = new HashSet<>(Arrays.asList(tf.getFormula().getFreeVars()));
 		final Map<IProgramVarOrConst, IConcreteValue> pre = new HashMap<>(mConstantValues);
 		boolean readsUnknown = false;
@@ -1211,6 +1223,58 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 			addValues(mWitness.getCandidates(step).get(pv), result);
 			addValues(mWitness.getStepValues(step).get(pv.getTermVariable().getSort()), result);
 			return List.copyOf(result);
+		});
+	}
+
+	/** {@link #candidateValues} with the pin of the variable at the end of the step, if it has a usable one, first. */
+	private List<IConcreteValue> pinFirstCandidates(final int step, final IProgramVar pv) {
+		return mPinFirstCandidates.computeIfAbsent(new Pair<>(step, pv), key -> {
+			final Set<IConcreteValue> result = new LinkedHashSet<>();
+			final Term pin = mWitness.getPins(step + 1).get(pv);
+			if (pin != null && valueOf(pin) != null) {
+				result.add(valueOf(pin));
+			}
+			result.addAll(candidateValues(step, pv));
+			return List.copyOf(result);
+		});
+	}
+
+	/**
+	 * What {@code step} can still write from {@code state} on: everything assigned behind it, up to the states the
+	 * step ends at. A call is followed into the callee, so what the callee writes is included.
+	 */
+	private Set<IProgramVar> writtenFrom(final Step step, final STATE state) {
+		final int targetPc = mWitness.getPc(step.mIndex + 1);
+		return mWrittenFrom.computeIfAbsent(new Pair<>(targetPc, state), key -> {
+			final Set<STATE> targets = statesOf(step.mTargets);
+			final Set<IProgramVar> written = new HashSet<>();
+			final Set<STATE> visited = new HashSet<>(Set.of(state));
+			final Deque<STATE> worklist = new ArrayDeque<>();
+			if (!targets.contains(state)) {
+				worklist.add(state);
+			}
+			while (!worklist.isEmpty()) {
+				final STATE current = worklist.poll();
+				final List<Pair<UnmodifiableTransFormula, STATE>> outgoing = new ArrayList<>();
+				for (final OutgoingInternalTransition<LETTER, STATE> out : mAbstraction.internalSuccessors(current)) {
+					outgoing.add(new Pair<>(out.getLetter().getTransformula(), out.getSucc()));
+				}
+				for (final OutgoingCallTransition<LETTER, STATE> out : mAbstraction.callSuccessors(current)) {
+					outgoing.add(new Pair<>(asCallAction(out.getLetter()).getLocalVarsAssignment(), out.getSucc()));
+				}
+				for (final OutgoingReturnTransition<LETTER, STATE> out : mAbstraction.returnSuccessors(current)) {
+					outgoing.add(new Pair<>(asReturnAction(out.getLetter()).getAssignmentOfReturn(), out.getSucc()));
+				}
+				for (final Pair<UnmodifiableTransFormula, STATE> out : outgoing) {
+					if (step.mUseful.contains(out.getSecond())) {
+						written.addAll(out.getFirst().getAssignedVars());
+						if (visited.add(out.getSecond()) && !targets.contains(out.getSecond())) {
+							worklist.add(out.getSecond());
+						}
+					}
+				}
+			}
+			return written;
 		});
 	}
 

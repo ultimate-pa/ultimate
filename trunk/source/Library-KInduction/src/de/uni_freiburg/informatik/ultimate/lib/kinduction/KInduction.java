@@ -617,11 +617,6 @@ public class KInduction<LETTER extends IAction, STATE> {
 		final List<Map<IProgramVar, List<Term>>> candidates = new ArrayList<>();
 		for (int j = 0; j < k; j++) {
 			final Map<IProgramVar, Set<Term>> distinct = new LinkedHashMap<>();
-			// What a variable holds at the end of the step comes first: a variable the step writes once ends up with
-			// that value, while most versions belong to paths the model did not take, where they are arbitrary.
-			for (final Map.Entry<IProgramVar, Term> pin : pins.get(j + 1).entrySet()) {
-				distinct.computeIfAbsent(pin.getKey(), x -> new LinkedHashSet<>()).add(pin.getValue());
-			}
 			for (final Map.Entry<IProgramVar, List<Term>> versions : versionConstants.get(j).entrySet()) {
 				for (final Term constant : versions.getValue()) {
 					final Term value = valueModel.get(constant);
@@ -629,6 +624,10 @@ public class KInduction<LETTER extends IAction, STATE> {
 						distinct.computeIfAbsent(versions.getKey(), x -> new LinkedHashSet<>()).add(value);
 					}
 				}
+			}
+			// What a variable holds at the end of the step is a value it had inside it, too.
+			for (final Map.Entry<IProgramVar, Term> pin : pins.get(j + 1).entrySet()) {
+				distinct.computeIfAbsent(pin.getKey(), x -> new LinkedHashSet<>()).add(pin.getValue());
 			}
 			final Map<IProgramVar, List<Term>> candidatesOfStep = new LinkedHashMap<>();
 			distinct.forEach((pv, terms) -> candidatesOfStep.put(pv, new ArrayList<>(terms)));
