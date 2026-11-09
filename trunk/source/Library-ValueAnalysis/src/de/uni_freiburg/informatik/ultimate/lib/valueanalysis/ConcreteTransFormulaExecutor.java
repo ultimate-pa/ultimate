@@ -151,19 +151,35 @@ public final class ConcreteTransFormulaExecutor {
 	public List<Map<IProgramVarOrConst, IConcreteValue>> execute(final UnmodifiableTransFormula tf,
 			final Map<IProgramVarOrConst, IConcreteValue> pre, final Map<IProgramVarOrConst, IConcreteValue> base,
 			final StepKind kind) {
-		return executeDetailed(tf, pre, base, kind).successors();
+		final Set<Map<IProgramVarOrConst, IConcreteValue>> valuations = new LinkedHashSet<>();
+		for (final Successor successor : executeDetailed(tf, pre, base, kind).successors()) {
+			valuations.add(successor.valuation());
+		}
+		return new ArrayList<>(valuations);
+	}
+
+	/**
+	 * One execution of a step.
+	 *
+	 * @param valuation
+	 *            the valuation after the step
+	 * @param chosenReads
+	 *            the value this execution chose for every in-variable the valuation before the step had none for
+	 */
+	public record Successor(Map<IProgramVarOrConst, IConcreteValue> valuation,
+			Map<IProgramVar, IConcreteValue> chosenReads) {
 	}
 
 	/**
 	 * The successors of a step, and whether they are all of them.
 	 *
 	 * @param successors
-	 *            the distinct valuations after the step, each a real execution of it
+	 *            the distinct executions of the step, each a real one
 	 * @param exhaustive
-	 *            whether {@code successors} are exactly the valuations after the step: no value had to be chosen, and
+	 *            whether {@code successors} are exactly the executions of the step: no value had to be chosen, and
 	 *            nothing was unsupported or cut off. Only then does an empty list mean that the step cannot be taken.
 	 */
-	public record Execution(List<Map<IProgramVarOrConst, IConcreteValue>> successors, boolean exhaustive) {
+	public record Execution(List<Successor> successors, boolean exhaustive) {
 	}
 
 	/**
@@ -181,7 +197,7 @@ public final class ConcreteTransFormulaExecutor {
 				env.put(entry.getValue(), value);
 			}
 		}
-		final Set<Map<IProgramVarOrConst, IConcreteValue>> results = new LinkedHashSet<>();
+		final Set<Successor> results = new LinkedHashSet<>();
 		final Search search = new Search(plan);
 		try {
 			final Map<IProgramVarOrConst, IConcreteValue> chosenConstants = new HashMap<>();
@@ -197,7 +213,8 @@ public final class ConcreteTransFormulaExecutor {
 				search.mConstants.put(constant.getDefaultConstant().getFunction().getName(), value);
 			}
 			final Consumer<Map<TermVariable, IConcreteValue>> sink =
-					assignment -> results.add(post(tf, assignment, base, chosenConstants, kind));
+					assignment -> results.add(new Successor(post(tf, assignment, base, chosenConstants, kind),
+							chosenReads(tf, assignment, pre)));
 			for (final Branch branch : plan.mBranches) {
 				search.solve(branch, env, sink);
 			}
@@ -212,6 +229,20 @@ public final class ConcreteTransFormulaExecutor {
 		}
 		return new Execution(new ArrayList<>(results),
 				!search.mUnsupported && !search.mTruncated && !search.mChose);
+	}
+
+	private static Map<IProgramVar, IConcreteValue> chosenReads(final UnmodifiableTransFormula tf,
+			final Map<TermVariable, IConcreteValue> assignment, final Map<IProgramVarOrConst, IConcreteValue> pre) {
+		final Map<IProgramVar, IConcreteValue> result = new HashMap<>();
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
+			if (!pre.containsKey(entry.getKey())) {
+				final IConcreteValue value = assignment.get(entry.getValue());
+				if (value != null) {
+					result.put(entry.getKey(), value);
+				}
+			}
+		}
+		return result;
 	}
 
 	private static Map<IProgramVarOrConst, IConcreteValue> post(final UnmodifiableTransFormula tf,

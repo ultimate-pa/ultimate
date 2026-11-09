@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.ConcreteTransFormulaExecutor;
 import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.ConcreteTransFormulaExecutor.Execution;
 import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.ConcreteTransFormulaExecutor.StepKind;
+import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.ConcreteTransFormulaExecutor.Successor;
 import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.IConcreteValue;
 import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.NondeterminismPool;
 import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.UnsupportedTermException;
@@ -105,9 +106,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * <li>a state with one useful outgoing transition simply takes it;
  * <li>at a state with several, the guards decide on the concrete values, so only the transitions that can be taken are
  * followed;
- * <li>a havoced variable stays without a value until it is read. Its value is then taken from the model's
- * <b>candidates</b> for this step - the values the variable has inside the step, then every other value of its sort
- * there - and the letter is executed with each of them in turn.
+ * <li>a havoced variable stays without a value until it is read. The interpreter then chooses its value, one variable
+ * at a time and dropping a choice as soon as a conjunct of the letter contradicts it: from what the letter's own
+ * equalities say, for an array from the cells the letter fixes, and otherwise from the model's <b>candidates</b> for
+ * this step - the values the variable has inside the step, then every other value of its sort there.
  * </ul>
  * At the end of a step the run must have the pins of the next state. A step that misses one does not continue the way
  * the model did, and is not taken. A variable the run has no value for yet takes the pin's.
@@ -255,6 +257,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	// state -> states reachable from it, computed lazily per target pc value
 	private final Map<Integer, Set<STATE>> mCanReachTarget = new HashMap<>();
 	private Map<STATE, List<STATE>> mPredecessors;
+	private Set<IProgramVar> mOldVarsRead;
 
 	/** What the run knows about a variable: a value, or a constant of the solver that stands for one. */
 	private sealed interface Slot permits Known, Symbolic {
@@ -613,7 +616,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 			final List<Alternative> concrete, final List<Alternative> symbolic) {
 		final Set<TermVariable> free = new HashSet<>(Arrays.asList(tf.getFormula().getFreeVars()));
 		final Map<IProgramVarOrConst, IConcreteValue> pre = new HashMap<>(mConstantValues);
-		final List<IProgramVar> unknownReads = new ArrayList<>();
+		boolean readsUnknown = false;
 		boolean executable = true;
 		for (final Map.Entry<IProgramVar, TermVariable> in : tf.getInVars().entrySet()) {
 			if (!free.contains(in.getValue())) {
@@ -624,7 +627,9 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 			if (slot instanceof final Known known && known.mValue != null) {
 				pre.put(pv, known.mValue);
 			} else if (slot == null && !pv.isOldvar() && !readCandidates(step.mIndex, pv).isEmpty()) {
-				unknownReads.add(pv);
+				// Left open, so that the interpreter chooses it. It has to be the interpreter: only it can build an
+				// array from the cells the letter fixes, and only it can drop a choice before all others are made.
+				readsUnknown = true;
 			} else {
 				// A constant of the solver, a literal the interpreter cannot read, an oldvar that only the default
 				// constant stands for, or a variable of a sort the interpreter has no values of: only the solver can
@@ -632,9 +637,9 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 				executable = false;
 			}
 		}
-		boolean exhaustive = executable && unknownReads.isEmpty();
+		boolean exhaustive = executable && !readsUnknown;
 		if (executable) {
-			exhaustive &= executeWithReads(step, move, tf, kind, pre, unknownReads, 0, new LinkedHashMap<>(), concrete);
+			exhaustive &= executeLetter(move, tf, kind, pre, concrete);
 		}
 		if (!exhaustive) {
 			symbolic.add(new Alternative(move, true));
@@ -642,30 +647,18 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	}
 
 	/**
-	 * Executes {@code tf} once per combination of candidate values for the variables in {@code unknownReads} from
-	 * position {@code next} on.
+	 * Executes {@code tf}, adding an alternative per execution to {@code concrete}.
 	 *
-	 * @return whether every execution's successors were all there are
+	 * @return whether the executions are all there are
 	 */
-	private boolean executeWithReads(final Step step, final Move move, final UnmodifiableTransFormula tf,
-			final StepKind kind, final Map<IProgramVarOrConst, IConcreteValue> pre, final List<IProgramVar> unknownReads,
-			final int next, final Map<IProgramVar, Slot> chosen, final List<Alternative> concrete) {
-		if (next < unknownReads.size()) {
-			final IProgramVar pv = unknownReads.get(next);
-			boolean exhaustive = true;
-			for (final IConcreteValue value : readCandidates(step.mIndex, pv)) {
-				pre.put(pv, value);
-				chosen.put(pv, new Known(value, pv.getTermVariable().getSort()));
-				exhaustive &= executeWithReads(step, move, tf, kind, pre, unknownReads, next + 1, chosen, concrete);
-			}
-			pre.remove(pv);
-			chosen.remove(pv);
-			return exhaustive;
-		}
+	private boolean executeLetter(final Move move, final UnmodifiableTransFormula tf, final StepKind kind,
+			final Map<IProgramVarOrConst, IConcreteValue> pre, final List<Alternative> concrete) {
 		final Execution execution = mExecutor.executeDetailed(tf, pre, pre, kind);
-		for (final Map<IProgramVarOrConst, IConcreteValue> post : execution.successors()) {
+		for (final Successor successor : execution.successors()) {
+			final Map<IProgramVarOrConst, IConcreteValue> post = successor.valuation();
 			final Alternative alternative = new Alternative(move, false);
-			alternative.mReads.putAll(chosen);
+			successor.chosenReads().forEach(
+					(pv, value) -> alternative.mReads.put(pv, new Known(value, pv.getTermVariable().getSort())));
 			final Map<IProgramVar, Slot> written = new LinkedHashMap<>();
 			if (kind == StepKind.INTERNAL) {
 				for (final IProgramVar pv : tf.getInVars().keySet()) {
@@ -716,8 +709,10 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 				final IProgramVar global = ((IProgramOldVar) assigned).getNonOldVar();
 				Slot value = alternative.mReads.containsKey(global) ? alternative.mReads.get(global)
 						: mCurrent.get(global);
-				if (value == null) {
+				if (value == null && oldVarsRead().contains(assigned)) {
 					// old(g) and g are the same value at the entry, which neither may lose when it is chosen later.
+					// A constant ties them together. Where no letter reads old(g), there is nothing to tie, and g
+					// stays open: a constant here would make everything that reads g symbolic.
 					value = new Symbolic(nextConstant(global));
 					alternative.mReads.put(global, value);
 				}
@@ -1363,6 +1358,34 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 			}
 			return result;
 		});
+	}
+
+	/** The old variables that some letter of the abstraction reads. */
+	private Set<IProgramVar> oldVarsRead() {
+		if (mOldVarsRead == null) {
+			mOldVarsRead = new HashSet<>();
+			for (final STATE state : mAbstraction.getStates()) {
+				for (final OutgoingInternalTransition<LETTER, STATE> out : mAbstraction.internalSuccessors(state)) {
+					addOldVarsRead(out.getLetter().getTransformula());
+				}
+				for (final OutgoingCallTransition<LETTER, STATE> out : mAbstraction.callSuccessors(state)) {
+					addOldVarsRead(asCallAction(out.getLetter()).getLocalVarsAssignment());
+				}
+				for (final OutgoingReturnTransition<LETTER, STATE> out : mAbstraction.returnSuccessors(state)) {
+					addOldVarsRead(asReturnAction(out.getLetter()).getAssignmentOfReturn());
+				}
+			}
+		}
+		return mOldVarsRead;
+	}
+
+	private void addOldVarsRead(final UnmodifiableTransFormula tf) {
+		final Set<TermVariable> free = new HashSet<>(Arrays.asList(tf.getFormula().getFreeVars()));
+		for (final Map.Entry<IProgramVar, TermVariable> in : tf.getInVars().entrySet()) {
+			if (in.getKey().isOldvar() && free.contains(in.getValue())) {
+				mOldVarsRead.add(in.getKey());
+			}
+		}
 	}
 
 	private Map<STATE, List<STATE>> predecessors() {
