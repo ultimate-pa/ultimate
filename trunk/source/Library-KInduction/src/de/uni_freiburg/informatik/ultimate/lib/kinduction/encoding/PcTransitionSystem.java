@@ -36,6 +36,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -43,6 +44,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.IntPredicate;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -128,6 +130,8 @@ public class PcTransitionSystem<STATE> {
 	private final List<DagNode> mSources;
 	private final Map<Integer, Set<STATE>> mSourceStates;
 	private final Map<Integer, Set<STATE>> mTargetStates;
+	/** The state of each node of a cut graph, and of each source that starts at one state. Others have none. */
+	private final Map<DagNode, STATE> mStateOfNode;
 	private int mNextDagId;
 
 	/** The formula of each edge, by {@link DagEdge#mFormulaIndex}. */
@@ -476,6 +480,7 @@ public class PcTransitionSystem<STATE> {
 		mSources = new ArrayList<>();
 		mSourceStates = new HashMap<>();
 		mTargetStates = new HashMap<>();
+		mStateOfNode = new HashMap<>();
 		final List<Scope<STATE>> scopes = new ArrayList<>();
 		scopes.add(root);
 		for (final Scope<STATE> loop : root.loops()) {
@@ -504,6 +509,7 @@ public class PcTransitionSystem<STATE> {
 		mSources = original.mSources;
 		mSourceStates = original.mSourceStates;
 		mTargetStates = original.mTargetStates;
+		mStateOfNode = original.mStateOfNode;
 		mHeadNodes.putAll(original.mHeadNodes);
 		mWaypointNodes.putAll(original.mWaypointNodes);
 		mNumNodes = original.mNumNodes;
@@ -543,11 +549,15 @@ public class PcTransitionSystem<STATE> {
 			sources.put(newSource(INIT, scope.programStarts()), starts);
 		}
 		for (final Map.Entry<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> source : scope.sources().entrySet()) {
-			sources.put(newSource(pcOf(source.getKey()), Collections.singleton(source.getKey())), source.getValue());
+			final DagNode sourceNode = newSource(pcOf(source.getKey()), Collections.singleton(source.getKey()));
+			mStateOfNode.put(sourceNode, source.getKey());
+			sources.put(sourceNode, source.getValue());
 		}
 		final Map<STATE, DagNode> nodes = new HashMap<>();
 		for (final STATE state : scope.cutGraph().keySet()) {
-			nodes.put(state, newDagNode(-1));
+			final DagNode node = newDagNode(-1);
+			mStateOfNode.put(node, state);
+			nodes.put(state, node);
 		}
 		for (final Map.Entry<DagNode, List<Pair<UnmodifiableTransFormula, STATE>>> source : sources.entrySet()) {
 			for (final Pair<UnmodifiableTransFormula, STATE> first : source.getValue()) {
@@ -690,6 +700,169 @@ public class PcTransitionSystem<STATE> {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * The chain of states a model of a query takes in the step from state {@code idx} to the next. The model satisfies
+	 * {@code F(source)} (see the class javadoc), so it has a chain of edges whose formulas all hold up to a target of
+	 * {@code toPc}, and every such chain is a path of the program. It is found by walking the cut graph and asking the
+	 * model about the edges one by one, so only the edges next to the chain are looked at. An edge that holds can still
+	 * lead to a node from which no chain goes on, since the versions off the model's path are arbitrary; the walk then
+	 * goes back and takes another edge.
+	 *
+	 * @param fromPc
+	 *            the pc value of state {@code idx} in the model
+	 * @param toPc
+	 *            the pc value of state {@code idx + 1} in the model
+	 * @param sv
+	 *            the constants of the query, see {@link IndexedConstantVars#declaredOnly()}
+	 * @param holdsInModel
+	 *            the value of a closed formula over these constants in the model
+	 * @return the states of the chain in order. It does not start with a state if the step starts at {@link #INIT}.
+	 * @throws IllegalStateException
+	 *             if there is no such chain, in which case the model does not satisfy the step
+	 */
+	public List<STATE> getChainOfStep(final int idx, final int fromPc, final int toPc, final StepVars sv,
+			final ManagedScript mgdScript, final Predicate<Term> holdsInModel) {
+		final StepVars declared = requireDeclared(sv);
+		final Encoding encoding = queryEncoding();
+		final boolean[] leadsToTarget = nodesThatLeadTo(toPc, encoding);
+		final Set<DagNode> dead = new HashSet<>();
+		for (int position = 0; position < leadsToTarget.length; position++) {
+			if (!leadsToTarget[position]) {
+				dead.add(mDagNodes.get(position));
+			}
+		}
+		for (final DagNode source : mSources) {
+			if (source.mSourcePc != fromPc) {
+				continue;
+			}
+			final List<DagNode> chain = walkFrom(source, encoding, idx, toPc, declared, mgdScript, holdsInModel, dead);
+			if (chain != null) {
+				final List<STATE> states = new ArrayList<>(chain.size());
+				for (final DagNode node : chain) {
+					final STATE state = mStateOfNode.get(node);
+					if (state != null) {
+						states.add(state);
+					}
+				}
+				return states;
+			}
+		}
+		throw new IllegalStateException("The model of the query has no chain of edges from pc value " + fromPc
+				+ " to pc value " + toPc + " in step " + idx + ", so it does not satisfy the step");
+	}
+
+	/**
+	 * @return by position in {@link #mDagNodes}, whether a path from the node can end in a target of {@code toPc}. Any
+	 *         other node has no place in a step that ends in {@code toPc}. A query may not even have encoded it, as
+	 *         {@link #encode} leaves out what leads only to pc values the step cannot end in, so that the constants of
+	 *         its edges do not exist.
+	 */
+	private boolean[] nodesThatLeadTo(final int toPc, final Encoding encoding) {
+		final boolean[] result = new boolean[mDagNodes.size()];
+		for (int position = mDagNodes.size() - 1; position >= 0; position--) {
+			final DagNode node = mDagNodes.get(position);
+			for (final TargetCode target : encoding.targetCode().getOrDefault(node, Collections.emptyList())) {
+				result[position] |= target.pc() == toPc;
+			}
+			for (final DagEdge edge : node.mOutgoing) {
+				result[position] |= result[edge.mTarget.mPosition];
+			}
+		}
+		return result;
+	}
+
+	/** @return the nodes of a chain from {@code source} that ends in a target of {@code toPc}, or null */
+	private List<DagNode> walkFrom(final DagNode source, final Encoding encoding, final int idx, final int toPc,
+			final StepVars sv, final ManagedScript mgdScript, final Predicate<Term> holdsInModel,
+			final Set<DagNode> dead) {
+		if (dead.contains(source)) {
+			return null;
+		}
+		final List<DagNode> chain = new ArrayList<>();
+		final Deque<Iterator<DagEdge>> pending = new ArrayDeque<>();
+		chain.add(source);
+		pending.addLast(source.mOutgoing.iterator());
+		while (!pending.isEmpty()) {
+			final Iterator<DagEdge> edges = pending.peekLast();
+			if (!edges.hasNext()) {
+				dead.add(chain.remove(chain.size() - 1));
+				pending.removeLast();
+				continue;
+			}
+			final DagEdge edge = edges.next();
+			if (dead.contains(edge.mTarget) || !holdsInModel.test(edgeGuard(edge, encoding, idx, sv, mgdScript))) {
+				continue;
+			}
+			chain.add(edge.mTarget);
+			if (endsAt(edge.mTarget, encoding, idx, toPc, sv, mgdScript, holdsInModel)) {
+				return chain;
+			}
+			pending.addLast(edge.mTarget.mOutgoing.iterator());
+		}
+		return null;
+	}
+
+	/** What {@link #encode} says about {@code edge} itself: its formula and its joins, without what comes after it. */
+	private Term edgeGuard(final DagEdge edge, final Encoding encoding, final int idx, final StepVars sv,
+			final ManagedScript mgdScript) {
+		final Script script = mgdScript.getScript();
+		final EdgeCode code = encoding.edgeCode().get(edge);
+		final List<Term> conjuncts = new ArrayList<>();
+		if (edge.mFormulaIndex >= 0) {
+			conjuncts.add(instantiate(edge, code, idx, sv, mgdScript));
+		}
+		for (final Join join : code.joins()) {
+			conjuncts.add(
+					SmtUtils.binaryEquality(script, termOf(join.atNode(), sv, idx), termOf(join.onEdge(), sv, idx)));
+		}
+		return and(script, conjuncts);
+	}
+
+	private boolean endsAt(final DagNode node, final Encoding encoding, final int idx, final int toPc, final StepVars sv,
+			final ManagedScript mgdScript, final Predicate<Term> holdsInModel) {
+		final Script script = mgdScript.getScript();
+		for (final TargetCode target : encoding.targetCode().getOrDefault(node, Collections.emptyList())) {
+			if (target.pc() != toPc) {
+				continue;
+			}
+			final List<Term> conjuncts = new ArrayList<>();
+			for (final Version output : target.outputs()) {
+				conjuncts.add(SmtUtils.binaryEquality(script, sv.var(output.var(), idx + 1), termOf(output, sv, idx)));
+			}
+			if (holdsInModel.test(and(script, conjuncts))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** {@code sv}, except that a constant it does not have is an error instead of {@code null}. */
+	private static StepVars requireDeclared(final StepVars sv) {
+		return new StepVars() {
+			@Override
+			public Term var(final IProgramVar pv, final int idx) {
+				return require(sv.var(pv, idx), pv);
+			}
+
+			@Override
+			public Term pc(final int idx) {
+				return require(sv.pc(idx), "pc");
+			}
+
+			@Override
+			public Term aux(final int id, final TermVariable auxVar, final int idx) {
+				return require(sv.aux(id, auxVar, idx), auxVar);
+			}
+
+			private Term require(final Term constant, final Object name) {
+				if (constant == null) {
+					throw new IllegalStateException("The query declared no constant for " + name);
+				}
+				return constant;
+			}
+		};
 	}
 
 	/** The pc value of each head of each loop. */

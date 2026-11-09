@@ -181,6 +181,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	private final Map<String, Set<STATE>> mEntryStates = new LinkedHashMap<>();
 	/** Per procedure whose states are nodes of the root graph, its own graph reduced to cut points, see reduce. */
 	private final Map<String, ReducedProcedure> mReduced = new LinkedHashMap<>();
+	/** See {@link #getComposedEdges()}. */
+	private final Map<STATE, Set<STATE>> mComposedEdges = new LinkedHashMap<>();
 
 	private final Set<CallNode<STATE>> mRootScopeStates = new LinkedHashSet<>();
 	private final Set<CallNode<STATE>> mRootInitStates = new LinkedHashSet<>();
@@ -389,6 +391,15 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		return Collections.unmodifiableSet(mRootSealedStates);
 	}
 
+	/**
+	 * The pairs of states whose edge in the graph stands for a chain through states that {@link #reduce} removed, by
+	 * first state. Such an edge is united with a transition that directly joins the two states, if there is one, so a
+	 * model that takes the edge does not say which of the two ways it took.
+	 */
+	public Map<STATE, Set<STATE>> getComposedEdges() {
+		return Collections.unmodifiableMap(mComposedEdges);
+	}
+
 	// ----------------------------------------------------------------------------------------------------------
 	// Deciding between a summary and an unfolding
 	// ----------------------------------------------------------------------------------------------------------
@@ -590,6 +601,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 				removed.add(inner);
 			}
 			addAlternative(succ, before, after, composed);
+			mComposedEdges.computeIfAbsent(before, k -> new LinkedHashSet<>()).add(after);
 			pred.computeIfAbsent(after, k -> new LinkedHashSet<>()).add(before);
 			// Both may have lost a neighbour, if they were already joined directly.
 			worklist.add(before);

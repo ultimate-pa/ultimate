@@ -113,6 +113,7 @@ public final class TAPreferences {
 	private final int mProbationFactor;
 	private final int mProbationMinimum;
 	private final boolean mKInductionSolverRestart;
+	private final TraceAbstractionPreferenceInitializer.KInductionCounterexample mKInductionCounterexample;
 	private final boolean mInterpolantInvariants;
 	private final boolean mValueAnalysisWorker;
 	private final ValueAnalysisSearch mValueAnalysisSearch;
@@ -247,6 +248,8 @@ public final class TAPreferences {
 		mProbationMinimum = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_PROBATION_MINIMUM);
 		mKInductionSolverRestart =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_SOLVER_RESTART);
+		mKInductionCounterexample = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_COUNTEREXAMPLE,
+				TraceAbstractionPreferenceInitializer.KInductionCounterexample.class);
 		mInterpolantInvariants =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_INVARIANTS);
 		mValueAnalysisWorker = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_VALUE_ANALYSIS_WORKER);
@@ -744,6 +747,13 @@ public final class TAPreferences {
 	 */
 	public boolean restartKInductionSolverAfterInterrupt() {
 		return mKInductionSolverRestart;
+	}
+
+	/**
+	 * @return whether k-induction reports a violation by the waypoints of the solver's model instead of a run
+	 */
+	public boolean kInductionWaypointsFromModel() {
+		return mKInductionCounterexample == TraceAbstractionPreferenceInitializer.KInductionCounterexample.MODEL_WAYPOINTS;
 	}
 
 	/**

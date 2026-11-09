@@ -28,10 +28,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.kinduction;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -40,6 +42,11 @@ import java.util.concurrent.TimeoutException;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.util.IcfgEdgeVisitor;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -250,7 +257,8 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 
 	private Verdict runKInduction() throws AutomataLibraryException, InterruptedException {
 		final KInduction<L, IPredicate> kInduction = new KInduction<>(mKInductionServices, mLogger, mCfgSmtToolkit,
-				mAbstraction, mInvariantSupplier, mPref.restartKInductionSolverAfterInterrupt());
+				mAbstraction, mInvariantSupplier, mPref.restartKInductionSolverAfterInterrupt(),
+				mPref.kInductionWaypointsFromModel());
 		if (kInduction.wasUnkown()) {
 			// Not a crash: the encoding is fine, the query was just not decided. Retiring this worker leaves the
 			// other workers - and, if there are none, the main thread's UNKNOWN result - to speak for the program.
@@ -262,6 +270,10 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 				mWitnessInvariants = computeWitnessInvariants(kInduction);
 			}
 			return Verdict.SAFE;
+		}
+		if (mPref.kInductionWaypointsFromModel()) {
+			reportWaypoints(kInduction.getWaypoints().getLetters());
+			return Verdict.UNSAFE;
 		}
 		// No transfer: the run is built over the worker's own abstraction with worker-script letters, and the
 		// refinement engine below runs on the worker toolkit, exactly as in CegarNwaWorkerThread.
@@ -365,6 +377,92 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Registers a violation as {@code Result.UNSAFE} that is known only by the letters a witness can name, see
+	 * {@link de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionWaypoints}. They are a subsequence of the letters
+	 * of the violation, as a program execution without values. Nothing here confirms the violation, the model of
+	 * k-induction is the only evidence.
+	 */
+	@SuppressWarnings("unchecked")
+	private void reportWaypoints(final List<L> allLetters) {
+		final List<L> letters = withoutInlinedCallBoundaries(allLetters);
+		final IcfgProgramExecution<L> programExecution =
+				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(
+						new Word<>((L[]) letters.toArray(new IIcfgTransition<?>[letters.size()])));
+		programExecution.setOriginCfgScript(mCfgSmtToolkit.getManagedScript());
+		mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
+		if (mPref.stopAfterFirstViolation()) {
+			mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
+		}
+		mLogger.info("KInduction: reported a violation with %d waypoint letter(s) of %d, no run was built",
+				letters.size(), allLetters.size());
+	}
+
+	/**
+	 * The backtranslation of the procedure inliner matches the start of an inlined call with its end, so it does not
+	 * accept one without the other, which the waypoint letters could have as they leave out arbitrary letters. Hence no
+	 * letter at the location of a letter with such a boundary is kept. As for all waypoints, it is every visit of a
+	 * location or none.
+	 *
+	 * @param letters
+	 *            the waypoint letters; the last one leads to the error
+	 * @throws KInductionCounterexampleException
+	 *             if the letter that leads to the error has such a boundary, since it cannot be left out
+	 */
+	private List<L> withoutInlinedCallBoundaries(final List<L> letters) {
+		final InlinedCallBoundaryFinder finder = new InlinedCallBoundaryFinder();
+		final L target = letters.get(letters.size() - 1);
+		if (finder.hasBoundary(target)) {
+			throw new KInductionCounterexampleException("k-induction refuted the program, but the letter that leads to "
+					+ "the error starts or ends an inlined call, so it cannot be named without the rest of the call: "
+					+ target);
+		}
+		final Set<IcfgLocation> withBoundary = new HashSet<>();
+		for (final L letter : letters) {
+			if (finder.hasBoundary(letter)) {
+				withBoundary.add(letter.getSource());
+			}
+		}
+		final List<L> result = new ArrayList<>();
+		for (final L letter : letters.subList(0, letters.size() - 1)) {
+			if (!withBoundary.contains(letter.getSource())) {
+				result.add(letter);
+			}
+		}
+		result.add(target);
+		return result;
+	}
+
+	/** Finds the statements where the procedure inliner has marked the start or the end of an inlined call. */
+	private static final class InlinedCallBoundaryFinder extends IcfgEdgeVisitor {
+		/**
+		 * The key of {@code InlinedCallAnnotation}. That class is in a bundle that exports nothing and requires the C
+		 * translator, which not every product with TraceAbstraction has, so it cannot be referred to from here.
+		 */
+		private static final String INLINED_CALL_ANNOTATION =
+				"de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.InlinedCallAnnotation";
+
+		private boolean mFound;
+
+		private boolean hasBoundary(final IIcfgTransition<?> letter) {
+			if (!(letter instanceof IcfgEdge)) {
+				throw new KInductionCounterexampleException("cannot look into the letter " + letter + " of type "
+						+ letter.getClass().getSimpleName());
+			}
+			mFound = false;
+			visit((IcfgEdge) letter);
+			return mFound;
+		}
+
+		@Override
+		protected void visit(final StatementSequence sequence) {
+			for (final Statement statement : sequence.getStatements()) {
+				mFound |= statement.hasPayload() && statement.getPayload().hasAnnotation()
+						&& statement.getPayload().getAnnotations().containsKey(INLINED_CALL_ANNOTATION);
+			}
+		}
 	}
 
 	/**

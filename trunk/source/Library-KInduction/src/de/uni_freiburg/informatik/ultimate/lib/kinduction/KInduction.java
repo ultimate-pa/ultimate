@@ -143,6 +143,11 @@ public class KInduction<LETTER extends IAction, STATE> {
 	NestedRun<LETTER, STATE> mCounterexample;
 	// What the model of the satisfiable base case said. Read in ask() before its pop, null unless UNSAFE.
 	private KInductionWitness mWitness;
+	// Instead of the two above if mWaypointsFromModel: what the model of the satisfiable base case took, per step, and
+	// the letters a witness can name from it
+	private final boolean mWaypointsFromModel;
+	private List<List<CallNode<STATE>>> mChains;
+	private KInductionWaypoints<LETTER, STATE> mWaypoints;
 
 	private final CfgSmtToolkit mCsToolkit;
 	private final ILogger mLogger;
@@ -164,6 +169,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 	private IProgramVar mStackPointer;
 	private CounterSort mStackPointerSort;
 	private Set<CallNode<STATE>> mSealedStates;
+	private Map<STATE, Set<STATE>> mComposedEdges;
 	private Set<IProgramVar> mSyntheticVars;
 	// Every program variable by its globally unique id, see programVarOfAux
 	private Map<String, IProgramVar> mProgramVarsById;
@@ -189,11 +195,13 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 *            whether a solver that an interrupt of the invariant supplier killed is restarted, see
 	 *            {@link #restartSolverAfterInterrupt(String)}; otherwise k-induction waits for the solver to notice the
 	 *            interrupt
+	 * @param waypointsFromModel
+	 *            whether a violation is reported as {@link #getWaypoints()} instead of {@link #getCounterexample()}
 	 */
 	public KInduction(final IUltimateServiceProvider services, final ILogger logger, final CfgSmtToolkit csToolkit,
 			final INestedWordAutomaton<LETTER, STATE> abstraction,
-			final IInvariantSupplier<CallNode<STATE>> invariantSupplier, final boolean restartSolverAfterInterrupt)
-			throws AutomataLibraryException, InterruptedException {
+			final IInvariantSupplier<CallNode<STATE>> invariantSupplier, final boolean restartSolverAfterInterrupt,
+			final boolean waypointsFromModel) throws AutomataLibraryException, InterruptedException {
 		mAbstraction = abstraction;
 		mCsToolkit = csToolkit;
 		mWorkerMgdScript = csToolkit.getManagedScript();
@@ -202,6 +210,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 		mInvariantSupplier = invariantSupplier;
 		mProbation = invariantSupplier.mayInterrupt();
 		mRestartSolver = restartSolverAfterInterrupt;
+		mWaypointsFromModel = waypointsFromModel;
 		run();
 	}
 
@@ -225,6 +234,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 		mSystem = encoding.system();
 		mStackPointer = encoding.stackPointer();
 		mSealedStates = encoding.sealedStates();
+		mComposedEdges = encoding.composedEdges();
 		mSyntheticVars = encoding.syntheticVars();
 		mInvariantSupplier.systemBuilt(mSystem, mWorkerMgdScript);
 		mLogger.info(
@@ -251,7 +261,11 @@ public class KInduction<LETTER extends IAction, STATE> {
 			final Verdict verdict = kInduction();
 			mSafe = verdict == Verdict.SAFE;
 			mSolverReturnedUnknown = verdict == Verdict.UNKNOWN;
-			if (verdict == Verdict.UNSAFE) {
+			if (verdict == Verdict.UNSAFE && mWaypointsFromModel) {
+				mWaypoints = new KInductionWaypoints<>(mAbstraction, mChains, mComposedEdges, mStackPointer != null);
+				mLogger.info("KInduction: %d waypoint letter(s) from the model, %d state(s) without one",
+						mWaypoints.getLetters().size(), mWaypoints.getNumSuppressedStates());
+			} else if (verdict == Verdict.UNSAFE) {
 				// Still under the lock, but after the base case's pop: reconstruction asserts terms, which would
 				// invalidate the model we are working from. mWitness already holds everything we need from it.
 				mCounterexample = new KInductionCounterexampleBuilder<>(mServices, mLogger, mWorkerMgdScript, mKILock,
@@ -352,8 +366,12 @@ public class KInduction<LETTER extends IAction, STATE> {
 		if (result == LBool.SAT && kind == Kind.BASE) {
 			// The model dies with this scope, so it has to be read now. The constants themselves were declared by
 			// prepare(k), i.e. outside the push, and survive the pop.
-			mWitness = extractWitness(k);
-			mLogger.info("KInduction: violation found, model says %s", mWitness);
+			if (mWaypointsFromModel) {
+				mChains = readChains(k);
+			} else {
+				mWitness = extractWitness(k);
+				mLogger.info("KInduction: violation found, model says %s", mWitness);
+			}
 		}
 		mWorkerMgdScript.pop(mKILock, 1);
 		return result;
@@ -403,6 +421,57 @@ public class KInduction<LETTER extends IAction, STATE> {
 		ExternalSolverRestarter.restartAndReplay(mWorkerMgdScript.getScript());
 		mQuery.solverRestarted();
 		return true;
+	}
+
+	/**
+	 * Reads the chain of cut-graph states that the model of a satisfiable base case takes in every step. Must be called
+	 * after {@code checkSat} returned {@code sat} and before the {@code pop} of that query. FINAL only stutters, so a step
+	 * that starts there has no chain.
+	 */
+	private List<List<CallNode<STATE>>> readChains(final int k) {
+		final Script script = mWorkerMgdScript.getScript();
+		final int[] pcValues = readPcValues(script, k);
+		mLogger.info("KInduction: violation found, pc sequence of the model: %s", Arrays.toString(pcValues));
+		final StepVars declared = mConstants.declaredOnly();
+		final List<List<CallNode<STATE>>> chains = new ArrayList<>(k);
+		for (int j = 0; j < k && pcValues[j] != PcTransitionSystem.FINAL; j++) {
+			chains.add(mSystem.getChainOfStep(j, pcValues[j], pcValues[j + 1], declared, mWorkerMgdScript,
+					term -> holdsInModel(script, term)));
+		}
+		return chains;
+	}
+
+	/**
+	 * The value of one closed formula in the current model. Asked for one formula at a time because a solver may print
+	 * the formulas of a {@code get-value} differently from how it got them, so that an answer about several compound
+	 * formulas cannot be told apart.
+	 */
+	private boolean holdsInModel(final Script script, final Term formula) {
+		if (SmtUtils.isTrueLiteral(formula) || SmtUtils.isFalseLiteral(formula)) {
+			return SmtUtils.isTrueLiteral(formula);
+		}
+		final Map<Term, Term> answer = getValues(script, List.of(formula));
+		if (answer.size() != 1) {
+			throw new IllegalStateException("The solver gave " + answer.size() + " values for one formula");
+		}
+		final Term value = answer.values().iterator().next();
+		if (!SmtUtils.isTrueLiteral(value) && !SmtUtils.isFalseLiteral(value)) {
+			throw new IllegalStateException("The solver gave the value " + value + " for a formula");
+		}
+		return SmtUtils.isTrueLiteral(value);
+	}
+
+	private int[] readPcValues(final Script script, final int k) {
+		final List<Term> queried = new ArrayList<>();
+		for (int j = 0; j <= k; j++) {
+			queried.add(mConstants.pc(j));
+		}
+		final Map<Term, Term> model = getValues(script, queried);
+		final int[] pcValues = new int[k + 1];
+		for (int j = 0; j <= k; j++) {
+			pcValues[j] = mSystem.getCounterSort().toInt(model.get(mConstants.pc(j)), "pc_" + j);
+		}
+		return pcValues;
 	}
 
 	/**
@@ -985,8 +1054,19 @@ public class KInduction<LETTER extends IAction, STATE> {
 	}
 
 	/**
+	 * @return the letters a violation witness can name. Only defined if k-induction refuted the program with waypoints
+	 *         from the model.
+	 */
+	public KInductionWaypoints<LETTER, STATE> getWaypoints() {
+		if (mWaypoints == null) {
+			throw new IllegalStateException("k-induction did not refute the program with waypoints from the model");
+		}
+		return mWaypoints;
+	}
+
+	/**
 	 * @return a run of the abstraction that reaches an accepting state and is feasible, i.e. a genuine counterexample.
-	 *         Only defined if k-induction refuted the program.
+	 *         Only defined if k-induction refuted the program without waypoints from the model.
 	 */
 	public NestedRun<LETTER, STATE> getCounterexample() {
 		if (mSafe || mSolverReturnedUnknown) {

@@ -190,6 +190,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_POR_COINFLIP_INCREMENT = "Coinflip probability increment";
 	private static final int DEF_POR_COINFLIP_INCREMENT = 0;
 
+	/** What k-induction reports for a violation, see {@link #LABEL_KINDUCTION_COUNTEREXAMPLE}. */
+	public enum KInductionCounterexample {
+		RECONSTRUCT_RUN, MODEL_WAYPOINTS
+	}
+
 	public enum CoinflipMode {
 		OFF, FALLBACK, PURE, COARSE
 	}
@@ -623,6 +628,14 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "k-induction crashes.";
 	private static final boolean DEF_KINDUCTION_SOLVER_RESTART = true;
 
+	public static final String LABEL_KINDUCTION_COUNTEREXAMPLE = "K-Induction counterexample";
+	private static final String DESC_KINDUCTION_COUNTEREXAMPLE =
+			"What k-induction reports for a violation. RECONSTRUCT_RUN rebuilds a run of the program, which the trace "
+					+ "check confirms. MODEL_WAYPOINTS builds no run: the violation witness only has the waypoints that "
+					+ "can be read off the solver's model, and nothing but that model confirms the violation.";
+	private static final KInductionCounterexample DEF_KINDUCTION_COUNTEREXAMPLE =
+			KInductionCounterexample.RECONSTRUCT_RUN;
+
 	public static final String LABEL_INTERPOLANT_INVARIANTS =
 			"Check interpolants of TA workers for invariants for k-induction";
 	private static final String DESC_INTERPOLANT_INVARIANTS =
@@ -1004,6 +1017,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Integer, IUltimatePreferenceItemValidator.ONLY_POSITIVE),
 				new UltimatePreferenceItem<>(LABEL_KINDUCTION_SOLVER_RESTART, DEF_KINDUCTION_SOLVER_RESTART,
 						DESC_KINDUCTION_SOLVER_RESTART, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_KINDUCTION_COUNTEREXAMPLE, DEF_KINDUCTION_COUNTEREXAMPLE,
+						DESC_KINDUCTION_COUNTEREXAMPLE, PreferenceType.Combo, KInductionCounterexample.values()),
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_INVARIANTS, DEF_INTERPOLANT_INVARIANTS,
 						DESC_INTERPOLANT_INVARIANTS, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_VALUE_ANALYSIS_WORKER, DEF_VALUE_ANALYSIS_WORKER,

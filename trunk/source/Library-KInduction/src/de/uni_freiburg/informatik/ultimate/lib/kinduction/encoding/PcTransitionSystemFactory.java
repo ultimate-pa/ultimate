@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -59,9 +60,11 @@ public final class PcTransitionSystemFactory {
 	 *            see {@link ProcedureSummaries#getSealedStates()}
 	 * @param syntheticVars
 	 *            see {@link ProcedureSummaries#getSyntheticVars()}
+	 * @param composedEdges
+	 *            see {@link ProcedureSummaries#getComposedEdges()}
 	 */
 	public record Result<STATE>(PcTransitionSystem<CallNode<STATE>> system, IProgramVar stackPointer,
-			Set<CallNode<STATE>> sealedStates, Set<IProgramVar> syntheticVars) {
+			Set<CallNode<STATE>> sealedStates, Set<IProgramVar> syntheticVars, Map<STATE, Set<STATE>> composedEdges) {
 	}
 
 	private PcTransitionSystemFactory() {
@@ -89,6 +92,6 @@ public final class PcTransitionSystemFactory {
 		final Set<IProgramVar> alwaysFramed =
 				stackPointer == null ? Collections.emptySet() : Collections.singleton(stackPointer);
 		return new Result<>(new PcTransitionSystem<>(mgdScript.getScript(), tree, counterSort, alwaysFramed), stackPointer,
-				summaries.getSealedStates(), summaries.getSyntheticVars());
+				summaries.getSealedStates(), summaries.getSyntheticVars(), summaries.getComposedEdges());
 	}
 }
