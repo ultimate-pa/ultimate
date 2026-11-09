@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 
+// TODO: I've implemented this class in the afa package for now, but we should move it later
 public class NaiveUnionNwa<L, S> implements INwaOutgoingLetterAndTransitionProvider<L, UnionState<S>> {
 
 	private final List<INwaOutgoingLetterAndTransitionProvider<L, S>> mAutomata;
