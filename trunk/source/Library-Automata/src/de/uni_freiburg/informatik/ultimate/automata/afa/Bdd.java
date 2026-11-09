@@ -53,6 +53,10 @@ public final class Bdd {
 		return mManager.not(this);
 	}
 
+	public Bdd dual() {
+		return mManager.dual(this);
+	}
+
 	public boolean isTrue() {
 		return mRoot == mManager.mTrueNode;
 	}

@@ -125,6 +125,11 @@ public final class BddManager {
 		return new Bdd(this, negate(operand.mRoot));
 	}
 
+	public Bdd dual(final Bdd operand) {
+		checkManager(operand);
+		return new Bdd(this, dualize(operand.mRoot));
+	}
+
 	private void checkSameManager(final Bdd left, final Bdd right) {
 		checkManager(left);
 		checkManager(right);
@@ -231,6 +236,18 @@ public final class BddManager {
 		mNotCache.put(node, result);
 		mNotCache.put(result, node);
 		return result;
+	}
+
+	private Node dualize(final Node node) {
+		if (node == mTrueNode) {
+			return mFalseNode;
+		}
+		if (node == mFalseNode) {
+			return mTrueNode;
+		}
+
+		// For dualization, left and right subtree must be switched (and each must be dualized).
+		return makeNode(node.mVariable, dualize(node.mRight), dualize(node.mLeft));
 	}
 
 	String toString(final Bdd bdd) {
