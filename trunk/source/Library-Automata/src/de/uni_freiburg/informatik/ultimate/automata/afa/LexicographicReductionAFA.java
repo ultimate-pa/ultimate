@@ -39,6 +39,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.afa.IIndependenceAutomaton.IndependenceLetter;
+import de.uni_freiburg.informatik.ultimate.automata.afa.IIndependenceAutomaton.IndependentPair;
 import de.uni_freiburg.informatik.ultimate.automata.afa.IIndependenceAutomaton.WrappedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.afa.LexicographicReductionAFA.ReductionState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
@@ -59,7 +60,7 @@ public class LexicographicReductionAFA<L, S1, S2> implements IAlternatingFiniteA
 	private final Set<L> mAlphabet;
 
 	// The independence automaton accepts words of the form "rho <ab> sigma" s.t. (rho,a,b,sigma) in I
-	private final IIndependenceAutomaton<L, S1> mIndependenceAutomaton;
+	private final INwaOutgoingLetterAndTransitionProvider<IndependenceLetter<L>, S1> mIndependenceAutomaton;
 
 	private final SequencedSet<ReductionState<L, S1, S2>> mInitialStates;
 
@@ -68,7 +69,7 @@ public class LexicographicReductionAFA<L, S1, S2> implements IAlternatingFiniteA
 
 	// before the search, do an intersection of the current abstraction (transformed to an AFA) with the reduction AFA
 	public LexicographicReductionAFA(final IDfsOrder<L, S2> order, final Set<L> alphabet,
-			final IIndependenceAutomaton<L, S1> independenceAutomaton,
+			final INwaOutgoingLetterAndTransitionProvider<IndependenceLetter<L>, S1> independenceAutomaton,
 			final INwaOutgoingLetterAndTransitionProvider<L, S2> orderAutomaton) {
 		mOrder = order;
 		mAlphabet = alphabet;
@@ -139,8 +140,8 @@ public class LexicographicReductionAFA<L, S1, S2> implements IAlternatingFiniteA
 					final Bdd<ReductionState<L, S1, S2>> putToSleepDisjunct = conjunction(
 							stream(independenceTransitions).map(t -> new ReductionState.Sleep<>(t.getSucc(), letter2)));
 
-					final IndependenceLetter<L> specialSymbol =
-							mIndependenceAutomaton.getSpecialSymbol(letter, letter2);
+					// TODO: Discuss if this change is sufficient
+					final IndependenceLetter<L> specialSymbol = new IndependentPair<>(letter, letter2);
 
 					// /\ { wait(q', letter2) | independenceState --(letter/letter2)--> q' }
 					final var specialSuccessors =
@@ -163,7 +164,7 @@ public class LexicographicReductionAFA<L, S1, S2> implements IAlternatingFiniteA
 					stream(independenceTransitions).map(t -> new ReductionState.Sleep<>(t.getSucc(), sleepLetter)));
 
 			// /\ { wait(q', sleepLetter) | independenceState --(letter/sleepLetter)--> q' }
-			final IndependenceLetter<L> specialSymbol = mIndependenceAutomaton.getSpecialSymbol(letter, sleepLetter);
+			final IndependenceLetter<L> specialSymbol = new IndependentPair<>(letter, sleepLetter);
 			final var specialSuccessors = mIndependenceAutomaton.internalSuccessors(independenceState, specialSymbol);
 			final Bdd<ReductionState<L, S1, S2>> dependenceDisjunct = conjunction(
 					stream(specialSuccessors).map(t -> new ReductionState.Wait<>(t.getSucc(), sleepLetter)));
