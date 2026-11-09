@@ -1,6 +1,8 @@
 /*
  * Copyright (C) 2026 Marcel Ebbinghaus
+ * Copyright (C) 2026 (klumpp@lix.polytechnique.fr)
  * Copyright (C) 2026 University of Freiburg
+ * Copyright (C) 2026 Ecole Polytechnique
  *
  * This file is part of the ULTIMATE Automata Library.
  *
@@ -26,16 +28,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.afa;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import java.util.HashSet;
+import java.util.Set;
 
-public interface IIndependenceAutomaton<L, S>
-		extends INwaOutgoingLetterAndTransitionProvider<IIndependenceAutomaton.IndependenceLetter<L>, S> {
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 
-	IndependenceLetter<L> getSpecialSymbol(final L letter1, final L letter2);
-
-	public sealed interface IndependenceLetter<L> permits WrappedLetter, IndependentPair {
-		// grouping interface only
-	}
+public sealed interface IndependenceLetter<L>
+		permits IndependenceLetter.WrappedLetter, IndependenceLetter.IndependentPair {
+	// grouping interface only
 
 	public record WrappedLetter<L>(L letter) implements IndependenceLetter<L> {
 		// simple record
@@ -43,5 +43,20 @@ public interface IIndependenceAutomaton<L, S>
 
 	public record IndependentPair<L>(L first, L second) implements IndependenceLetter<L> {
 		// simple record
+	}
+
+	static <L> VpAlphabet<IndependenceLetter<L>> constructAlphabet(final Set<L> alphabet) {
+		final var internalAlphabet = new HashSet<IndependenceLetter<L>>();
+
+		for (final L letter1 : alphabet) {
+			internalAlphabet.add(new WrappedLetter<>(letter1));
+
+			for (final L letter2 : alphabet) {
+				final IndependenceLetter<L> specialSymbol = new IndependentPair<>(letter1, letter2);
+				internalAlphabet.add(specialSymbol);
+			}
+		}
+
+		return new VpAlphabet<>(internalAlphabet);
 	}
 }

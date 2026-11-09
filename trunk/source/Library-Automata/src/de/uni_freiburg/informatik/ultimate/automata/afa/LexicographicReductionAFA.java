@@ -38,9 +38,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import de.uni_freiburg.informatik.ultimate.automata.afa.IIndependenceAutomaton.IndependenceLetter;
-import de.uni_freiburg.informatik.ultimate.automata.afa.IIndependenceAutomaton.IndependentPair;
-import de.uni_freiburg.informatik.ultimate.automata.afa.IIndependenceAutomaton.WrappedLetter;
+import de.uni_freiburg.informatik.ultimate.automata.afa.IndependenceLetter.IndependentPair;
+import de.uni_freiburg.informatik.ultimate.automata.afa.IndependenceLetter.WrappedLetter;
 import de.uni_freiburg.informatik.ultimate.automata.afa.LexicographicReductionAFA.ReductionState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
