@@ -634,7 +634,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "check confirms. MODEL_WAYPOINTS builds no run: the violation witness only has the waypoints that "
 					+ "can be read off the solver's model, and nothing but that model confirms the violation.";
 	private static final KInductionCounterexample DEF_KINDUCTION_COUNTEREXAMPLE =
-			KInductionCounterexample.RECONSTRUCT_RUN;
+			KInductionCounterexample.MODEL_WAYPOINTS;
 
 	public static final String LABEL_INTERPOLANT_INVARIANTS =
 			"Check interpolants of TA workers for invariants for k-induction";
