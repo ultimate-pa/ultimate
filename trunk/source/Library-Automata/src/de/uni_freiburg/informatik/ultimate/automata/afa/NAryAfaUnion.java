@@ -42,14 +42,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <S>
  * @param <U>
  */
-public class NAryAFAUnion<L, S, U> implements IAlternatingFiniteAutomaton<L, U> {
+public class NAryAfaUnion<L, S, U> implements IAlternatingFiniteAutomaton<L, U> {
 	private final List<IAlternatingFiniteAutomaton<L, S>> mOperands;
-	private final INAryAFAUnionStateFactory<S, U> mStateFactory;
+	private final INAryAfaUnionStateFactory<S, U> mStateFactory;
 
 	private final SequencedSet<U> mInitialStates;
 
-	public NAryAFAUnion(final List<IAlternatingFiniteAutomaton<L, S>> operands,
-			final INAryAFAUnionStateFactory<S, U> stateFactory) {
+	public NAryAfaUnion(final List<IAlternatingFiniteAutomaton<L, S>> operands,
+			final INAryAfaUnionStateFactory<S, U> stateFactory) {
 		mOperands = operands;
 		mStateFactory = stateFactory;
 
@@ -106,14 +106,14 @@ public class NAryAFAUnion<L, S, U> implements IAlternatingFiniteAutomaton<L, U> 
 		return mOperands.get(tag).getSuccessors(originalState, letter, renamingFactory);
 	}
 
-	public interface INAryAFAUnionStateFactory<S, U> {
+	public interface INAryAfaUnionStateFactory<S, U> {
 		U tagUnionState(S state, int operandIndex);
 
 		S getStateFromUnion(U taggedState);
 
 		int getTagFromUnion(U taggedState);
 
-		class Default<S> implements INAryAFAUnionStateFactory<S, Pair<S, Integer>> {
+		class Default<S> implements INAryAfaUnionStateFactory<S, Pair<S, Integer>> {
 			@Override
 			public Pair<S, Integer> tagUnionState(final S state, final int operandIndex) {
 				return new Pair<>(state, operandIndex);

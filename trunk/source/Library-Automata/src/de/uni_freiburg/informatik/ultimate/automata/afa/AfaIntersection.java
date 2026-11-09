@@ -43,17 +43,17 @@ import java.util.stream.StreamSupport;
  * @param <S>
  *            the type of states in the intersection automaton
  */
-public class AFAIntersection<L, S1, S2, S> implements IAlternatingFiniteAutomaton<L, S> {
+public class AfaIntersection<L, S1, S2, S> implements IAlternatingFiniteAutomaton<L, S> {
 	private final IAlternatingFiniteAutomaton<L, S1> mLeftOperand;
 	private final IAlternatingFiniteAutomaton<L, S2> mRightOperand;
-	private final IAFAIntersectionStateFactory<S1, S2, S> mStateFactory;
+	private final IAfaIntersectionStateFactory<S1, S2, S> mStateFactory;
 
 	private final S mInitialState;
 	private final boolean mAcceptsEmpty;
 
-	public AFAIntersection(final IAlternatingFiniteAutomaton<L, S1> leftOperand,
+	public AfaIntersection(final IAlternatingFiniteAutomaton<L, S1> leftOperand,
 			final IAlternatingFiniteAutomaton<L, S2> rightOperand,
-			final IAFAIntersectionStateFactory<S1, S2, S> stateFactory) {
+			final IAfaIntersectionStateFactory<S1, S2, S> stateFactory) {
 		mLeftOperand = leftOperand;
 		mRightOperand = rightOperand;
 		mStateFactory = stateFactory;
@@ -126,7 +126,7 @@ public class AFAIntersection<L, S1, S2, S> implements IAlternatingFiniteAutomato
 		return leftSuccessors.and(rightSuccessors);
 	}
 
-	public interface IAFAIntersectionStateFactory<S1, S2, S> {
+	public interface IAfaIntersectionStateFactory<S1, S2, S> {
 		S makeInitial();
 
 		S makeLeft(S1 state);
@@ -135,7 +135,7 @@ public class AFAIntersection<L, S1, S2, S> implements IAlternatingFiniteAutomato
 
 		IntersectionState<S1, S2> deconstruct(S state);
 
-		class Default<S1, S2> implements IAFAIntersectionStateFactory<S1, S2, IntersectionState<S1, S2>> {
+		class Default<S1, S2> implements IAfaIntersectionStateFactory<S1, S2, IntersectionState<S1, S2>> {
 			@Override
 			public IntersectionState<S1, S2> makeInitial() {
 				return new IntersectionState.Initial<>();

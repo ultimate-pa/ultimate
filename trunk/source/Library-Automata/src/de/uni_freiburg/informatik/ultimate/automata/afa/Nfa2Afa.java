@@ -14,10 +14,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
  * @param <S>
  *            the type of states in the automaton
  */
-public class NFA2AFA<L, S> implements IAlternatingFiniteAutomaton<L, S> {
+public class Nfa2Afa<L, S> implements IAlternatingFiniteAutomaton<L, S> {
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mNFA;
 
-	public NFA2AFA(final INwaOutgoingLetterAndTransitionProvider<L, S> nfa) {
+	public Nfa2Afa(final INwaOutgoingLetterAndTransitionProvider<L, S> nfa) {
 		mNFA = nfa;
 		assert NestedWordAutomataUtils.isFiniteAutomaton(nfa);
 	}
