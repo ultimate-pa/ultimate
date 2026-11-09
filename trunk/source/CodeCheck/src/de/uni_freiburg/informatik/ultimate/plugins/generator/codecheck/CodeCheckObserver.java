@@ -617,8 +617,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		for (final Entry<IcfgLocation, Set<AnnotatedProgramPoint>> kvp : pp2app.entrySet()) {
 			final List<Term> terms =
 					kvp.getValue().stream().map(a -> a.getPredicate().getFormula()).collect(Collectors.toList());
-			final Term orTerm =
-					SmtUtils.orWithExtendedLocalSimplification(mCsToolkit.getManagedScript().getScript(), terms);
+			final Term orTerm = SmtUtils.or(mCsToolkit.getManagedScript().getScript(), terms);
 			final Term simplifiedOrTerm = SmtUtils.simplify(mCsToolkit.getManagedScript(), orTerm, mServices,
 					SimplificationTechnique.SIMPLIFY_DDA);
 			pp2HoareAnnotation.put(kvp.getKey(), mPredicateUnifier.getOrConstructPredicate(simplifiedOrTerm));

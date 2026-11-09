@@ -1259,6 +1259,77 @@ public class SimplificationTest {
 	}
 
 	@Test
+	// If i equals k3 the select over nested store returns 103.
+	public void nestedSelectOverStore01() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "k1", "k2", "k3", "z"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
+		final String formulaAsString = "(and (= z (select (store (store (store a k1 101) k2 102) k3 103) i)) (= i k3))";
+		final String expectedResultAsString = "(and (= z 103) (= i k3))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.POLY_PAC,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	// If i is distinct from k3 we can omit the outermost store.
+	public void nestedSelectOverStore02() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "k1", "k2", "k3", "z"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
+		final String formulaAsString =
+				"(and (= z (select (store (store (store a k1 101) k2 102) k3 103) i)) (distinct i k3))";
+		final String expectedResultAsString = "(and (= z (select (store (store a k1 101) k2 102) i)) (distinct i k3))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.POLY_PAC,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	// We can omit all stores whose index is distinct from i.
+	public void nestedSelectOverStore03() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "k1", "k2", "k3", "z"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
+		final String formulaAsString =
+				"(and (= z (select (store (store (store a k1 101) k2 102) k3 103) i)) (distinct i k3) (distinct i k1))";
+		final String expectedResultAsString = "(and (= z (select (store a k2 102) i)) (distinct i k3) (distinct i k1))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.POLY_PAC,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	// If i equals a middle index, we can omit the store that are deeper inside.
+	public void nestedSelectOverStore04() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "k1", "k2", "k3", "z"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
+		final String formulaAsString = "(and (= z (select (store (store (store a k1 101) k2 102) k3 103) i)) (= i k2))";
+		final String expectedResultAsString = "(and (= z (select (store (store a k2 102) k3 103) i)) (= i k2))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.POLY_PAC,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	// If i equals the middle index, and the indices that are more outside are distinct, we return the middle value.
+	public void nestedSelectOverStore05() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "k1", "k2", "k3", "z"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
+		final String formulaAsString =
+				"(and (= z (select (store (store (store a k1 101) k2 102) k3 103) i)) (= i k2) (distinct i k3))";
+		final String expectedResultAsString = "(and (= z 102) (= i k2) (distinct i k3))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.POLY_PAC,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	// If all indices are distinct, we apply the select directly to the array.
+	public void nestedSelectOverStore06() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "k1", "k2", "k3", "z"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
+		final String formulaAsString =
+				"(and (= z (select (store (store (store a k1 101) k2 102) k3 103) i)) (distinct i k3) (distinct i k2) (distinct i k1))";
+		final String expectedResultAsString =
+				"(and (= z (select a i)) (distinct i k3) (distinct i k2) (distinct i k1))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.POLY_PAC,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
 	public void selectOverStore01PolyPac() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "k", "z"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };

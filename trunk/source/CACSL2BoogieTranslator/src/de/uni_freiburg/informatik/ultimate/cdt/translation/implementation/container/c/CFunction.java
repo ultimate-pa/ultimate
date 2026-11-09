@@ -242,6 +242,11 @@ public final class CFunction implements ICType {
 	}
 
 	@Override
+	public CFunction toAtomic() {
+		throw new UnsupportedOperationException("Function types cannot be atomic");
+	}
+
+	@Override
 	public boolean isIncomplete() {
 		// can a CFunction be incomplete? I never checked that carefully
 		return false;

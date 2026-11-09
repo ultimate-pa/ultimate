@@ -735,22 +735,16 @@ public class MemoryHandler {
 	 */
 	public List<Statement> getWriteCall(final ILocation loc, final HeapLValue hlv, final Expression value,
 			final ICType valueType, final boolean isStaticInitialization) {
-		final ICType realValueType = valueType.getUnderlyingType();
-
 		final HeapWriteMode writeMode =
 				isStaticInitialization ? HeapWriteMode.STORE_UNCHECKED : HeapWriteMode.STORE_CHECKED;
-		final List<Statement> result = getWriteCall(loc, hlv, value, realValueType, writeMode);
-		if (valueType.isAtomic()) {
-			return List.of(StatementFactory.constructAtomicStatement(loc, result));
-		}
-		return result;
+		return getWriteCall(loc, hlv, value, valueType, writeMode);
 	}
 
 	private List<Statement> getWriteCall(final ILocation loc, final HeapLValue hlv, final Expression value,
 			final ICType valueType, final HeapWriteMode writeMode) {
 		final ICType realValueType = valueType.getUnderlyingType();
 
-		return switch (realValueType) {
+		final List<Statement> result = switch (realValueType) {
 		case final CPrimitive primitive -> getWriteCallPrimitive(loc, hlv, value, primitive, writeMode);
 		case final CEnum enumType -> getWriteCallEnum(loc, hlv, value, writeMode);
 		case final CPointer pointer -> getWriteCallPointer(loc, hlv, value, writeMode);
@@ -760,6 +754,7 @@ public class MemoryHandler {
 		case final CFunction function ->
 				throw new UnsupportedSyntaxException(loc, "Write calls for function types unsupported: " + function);
 		};
+		return valueType.isAtomic() ? List.of(StatementFactory.constructAtomicStatement(loc, result)) : result;
 	}
 
 	/**

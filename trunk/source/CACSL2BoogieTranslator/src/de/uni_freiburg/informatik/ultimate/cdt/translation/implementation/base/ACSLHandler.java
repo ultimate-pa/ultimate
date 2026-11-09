@@ -110,6 +110,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ContractStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Ensures;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FieldAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FreeableExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IfThenElseExpression;
@@ -202,6 +203,39 @@ public class ACSLHandler implements IACSLHandler {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final String msg = "ACSLHandler: Not yet implemented: " + node.toString();
 		throw new UnsupportedSyntaxException(loc, msg);
+	}
+
+	@Override
+	public Result visit(final IDispatcher main, final FunctionApplication node) {
+		final ILocation loc = mLocationFactory.createACSLLocation(node);
+		switch (node.getIdentifier()) {
+		case "__VERIFIER_nondet_int":
+			return mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.INT));
+		case "__VERIFIER_nondet_uint":
+			return mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.UINT));
+		case "__VERIFIER_nondet_bool":
+		case "__VERIFIER_nondet__Bool":
+			return mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.BOOL));
+		case "__VERIFIER_nondet_char":
+			return mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.CHAR));
+		case "__VERIFIER_nondet_uchar":
+			return mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.UCHAR));
+		case "__VERIFIER_nondet_short":
+			return mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.SHORT));
+		case "__VERIFIER_nondet_ushort":
+			return mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.USHORT));
+		case "__VERIFIER_nondet_long":
+			return mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.LONG));
+		case "__VERIFIER_nondet_ulong":
+			return mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.ULONG));
+		case "__VERIFIER_nondet_longlong":
+			return mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.LONGLONG));
+		case "__VERIFIER_nondet_ulonglong":
+			return mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.ULONGLONG));
+		default:
+			throw new UnsupportedSyntaxException(loc, "Call to " + node.getIdentifier() + " cannot be handled yet.");
+		}
+
 	}
 
 	@Override

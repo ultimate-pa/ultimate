@@ -36,15 +36,20 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
+import org.eclipse.cdt.core.dom.ast.IASTName;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
+import org.eclipse.cdt.core.dom.ast.IBinding;
+import org.eclipse.cdt.core.dom.ast.IVariable;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
@@ -56,7 +61,9 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationTransitionInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopTransitionInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
 
@@ -68,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
  */
 public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor {
 	private Witness mWitness;
+	private int mPrevVariableCounter = 0;
 
 	public YamlCorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
 		super(service);
@@ -113,7 +121,13 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 				final GhostUpdate update = (GhostUpdate) entry;
 				location = update.getLocation();
 				addFunction = node -> rtr.addGhostUpdate(node,
-						new ExtractedGhostUpdate(update.getVariable(), update.getValue(), node));
+						new ExtractedGhostUpdate(update.getVariable(), update.getValue(), node, true));
+			} else if (entry instanceof LoopTransitionInvariant) {
+				location = ((LoopTransitionInvariant) entry).getLocation();
+				addFunction = node -> addLoopTransitionInvariant(((LoopTransitionInvariant) entry), node, rtr);
+			} else if (entry instanceof LocationTransitionInvariant) {
+				location = ((LocationTransitionInvariant) entry).getLocation();
+				addFunction = node -> addLocationTransitionInvariant((LocationTransitionInvariant) entry, node, rtr);
 			} else {
 				throw new UnsupportedOperationException("Unknown entry type " + entry.getClass().getSimpleName());
 			}
@@ -134,6 +148,126 @@ public class YamlCorrectnessWitnessExtractor extends CorrectnessWitnessExtractor
 		locationInvariants.forEach(rtr::addInvariant);
 		return rtr;
 
+	}
+
+	private void addLoopTransitionInvariant(final LoopTransitionInvariant loopTransitionInvariant, final IASTNode node,
+			final YamlExtractedCorrectnessWitness result) {
+		if (!(node instanceof IASTWhileStatement) && !(node instanceof IASTForStatement)
+				&& !(node instanceof IASTDoStatement)) {
+			throw new UnsupportedOperationException("Loop transition invariant is only allowed at loop (found "
+					+ node.getClass().getSimpleName() + ")");
+		}
+		result.addInvariant(node, new ExtractedLoopInvariant(
+				instrumentTransitionInvariant(loopTransitionInvariant.getInvariant(), node, result), node));
+	}
+
+	private void addLocationTransitionInvariant(final LocationTransitionInvariant locationTransitionInvariant,
+			final IASTNode node, final YamlExtractedCorrectnessWitness result) {
+		result.addInvariant(node, new ExtractedLocationInvariant(
+				instrumentTransitionInvariant(locationTransitionInvariant.getInvariant(), node, result), node, true));
+	}
+
+	/**
+	 * Rewrites the given {@code transitionInvariant} as a usual invariant by introducing ghost variables
+	 * {@code last_prev_x} and {@code any_prev_x} to reflect the effects of {@code \\at(x, LastPrev)} and
+	 * {@code \\at(x, AnyPrev)}.
+	 */
+	private String instrumentTransitionInvariant(final String transitionInvariant, final IASTNode node,
+			final YamlExtractedCorrectnessWitness result) {
+		// Search for \at(x, LastPrev) and \at(x, AnyPrev) in the transition invariant and replaces their occurrences
+		// with fresh ghost variables that are then collected in a map.
+		final Map<PrevVar, String> replacements = new HashMap<>();
+		final Pattern pattern =
+				Pattern.compile("\\\\at\\s*\\(\\s*([A-Za-z_][A-Za-z0-9_]*)\\s*,\\s*(LastPrev|AnyPrev)\\s*\\)");
+		final Matcher matcher = pattern.matcher(transitionInvariant);
+		final StringBuilder replacedInvariant = new StringBuilder();
+		while (matcher.find()) {
+			final String variable = matcher.group(1);
+			final boolean anyPrev = "AnyPrev".equals(matcher.group(2));
+			final PrevVar key = new PrevVar(variable, anyPrev);
+			final String repl = replacements.computeIfAbsent(key,
+					x -> freshVariableName((anyPrev ? "any_prev_" : "last_prev_") + variable));
+			matcher.appendReplacement(replacedInvariant, Matcher.quoteReplacement(repl));
+		}
+		matcher.appendTail(replacedInvariant);
+		if (replacements.isEmpty()) {
+			// There is no \at, nothing to do
+			return transitionInvariant;
+		}
+		String nondet = null;
+		// Introduce a ghost variable to track, whether the invariant is supposed to hold. It should hold trivially in
+		// the first loop iteration.
+		final String shouldHold = freshVariableName("transition_invariant_should_hold");
+		result.addGlobalDeclaration(new ExtractedGhostVariable(shouldHold, "0", "int", mTranslationUnit));
+		for (final Entry<PrevVar, String> repl : replacements.entrySet()) {
+			final String variable = repl.getKey().variable();
+			final String type = findVariableType(node, variable);
+			final String replGhost = repl.getValue();
+			if (type == null) {
+				throw new UnsupportedOperationException("Unable to determine the type of variable " + variable);
+			}
+			// Introduce a ghost variable to track the previous values of x (any_prev_x or last_prev_x)
+			result.addGlobalDeclaration(new ExtractedGhostVariable(replGhost, "0", type, mTranslationUnit));
+			if (repl.getKey().isAnyPrev()) {
+				if (nondet == null) {
+					// For AnyPrev, introduce another ghost variable for a non-deterministic choice. This
+					// non-determinism allows us to "access" all values of previous iterations.
+					// Note: It is important that all \at-expressions share their non-deterministic choice, as the
+					// result of \at should always refer to the same iteration.
+					nondet = freshVariableName("any_prev_nondet");
+					result.addGlobalDeclaration(new ExtractedGhostVariable(nondet, "0", "int", mTranslationUnit));
+					result.addGhostUpdate(node,
+							new ExtractedGhostUpdate(nondet, "__VERIFIER_nondet_int()", node, false));
+				}
+				// Based on the value of this non-deterministic ghost variable, either set any_prev_x to x or keep its
+				// previous value.
+				result.addGhostUpdate(node, new ExtractedGhostUpdate(replGhost,
+						nondet + " ? " + variable + " : " + replGhost, node, false));
+				// transition_invariant_should_hold := transition_invariant_should_hold || any_prev_nondet;
+				result.addGhostUpdate(node,
+						new ExtractedGhostUpdate(shouldHold, shouldHold + " || " + nondet, node, false));
+			} else {
+				// For LastPrev, just assign last_prev_x to x and transition_invariant_should_hold to 1.
+				result.addGhostUpdate(node, new ExtractedGhostUpdate(replGhost, variable, node, false));
+				result.addGhostUpdate(node, new ExtractedGhostUpdate(shouldHold, "1", node, false));
+			}
+		}
+		return "!" + shouldHold + " || (" + replacedInvariant + ")";
+	}
+
+	private String freshVariableName(final String variable) {
+		return variable + "_" + mPrevVariableCounter++;
+	}
+
+	private record PrevVar(String variable, boolean isAnyPrev) {
+	}
+
+	private String findVariableType(final IASTNode scope, final String variable) {
+		final class VariableTypeVisitor extends ASTGenericVisitor {
+			private String mType;
+
+			private VariableTypeVisitor() {
+				super(true);
+			}
+
+			@Override
+			protected int genericVisit(final IASTNode current) {
+				if (current instanceof final IASTName name && variable.equals(name.toString())) {
+					final IBinding binding = name.resolveBinding();
+					if (binding instanceof final IVariable variableBinding) {
+						mType = variableBinding.getType().toString();
+						return PROCESS_ABORT;
+					}
+				}
+				return PROCESS_CONTINUE;
+			}
+		}
+		final VariableTypeVisitor visitor = new VariableTypeVisitor();
+		scope.accept(visitor);
+		if (visitor.mType == null) {
+			mTranslationUnit.accept(visitor);
+		}
+		return visitor.mType;
 	}
 
 	private static void addFunctionContract(final FunctionContract functionContract, final IASTNode node,

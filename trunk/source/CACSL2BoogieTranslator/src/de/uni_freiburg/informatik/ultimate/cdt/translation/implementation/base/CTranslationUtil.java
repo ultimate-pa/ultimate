@@ -34,9 +34,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.cdt.core.dom.ast.IASTAttributeOwner;
+import org.eclipse.cdt.core.dom.ast.IASTAttributeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
-import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
+import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
+import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTPointerOperator;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 
@@ -496,12 +500,58 @@ public class CTranslationUtil {
 		return hook;
 	}
 
+	public static boolean hasAtomicQualifier(final IASTAttributeOwner owner) {
+		return hasAttribute(owner, "atomic") || hasQualifier(owner, "_Atomic");
+	}
+
+	public static boolean hasThreadLocalQualifier(final IASTAttributeOwner owner) {
+		return hasAttribute(owner, "thread") || hasQualifier(owner, "__thread") || hasQualifier(owner, "thread_local");
+	}
+
 	/**
-	 * Returns true iff the given {@code declSpec} has an attribute with the given {@code name}, i.e., is preceded by
-	 * {@code __attribute__((name))}.
+	 * Returns true iff the given {@code owner} has an attribute with the given {@code attributeName}, i.e., is preceded
+	 * by {@code __attribute__((attributeName))}.
 	 */
-	public static boolean hasAttribute(final IASTDeclSpecifier declSpec, final String attributeName) {
-		return Arrays.stream(declSpec.getAttributes()).map(x -> String.valueOf(x.getName()))
+	private static boolean hasAttribute(final IASTAttributeOwner owner, final String attributeName) {
+		return Arrays.stream(owner.getAttributes()).map(x -> String.valueOf(x.getName()))
 				.anyMatch(attributeName::equals);
+	}
+
+	private static boolean hasQualifier(final IASTAttributeOwner owner, final String qualifierName) {
+		// WORKAROUND: For pointer operators, CDT consumes attributes without attaching them to the AST.
+		// Therefore, we additionally check, whether the qualifier occurs in the raw signature of the parent declarator
+		// at the expected location. Note: This does not work, if the qualifier is in a macro!
+		if (!(owner instanceof final IASTPointerOperator pointerOp)
+				|| !(pointerOp.getParent() instanceof final IASTDeclarator declarator)) {
+			return false;
+		}
+		final IASTFileLocation pointerLoc = pointerOp.getFileLocation();
+		final IASTFileLocation declaratorLoc = declarator.getFileLocation();
+		if (pointerLoc == null || declaratorLoc == null) {
+			return false;
+		}
+		// Search after this pointer, but stop before the next declarator child (e.g., another pointer or the name).
+		// Attribute specifiers are not boundaries, since they may belong to this pointer.
+		final int start = pointerLoc.getNodeOffset() + pointerLoc.getNodeLength();
+		int end = declaratorLoc.getNodeOffset() + declaratorLoc.getNodeLength();
+		for (final IASTNode child : declarator.getChildren()) {
+			if (child == pointerOp || child instanceof IASTAttributeSpecifier) {
+				continue;
+			}
+			final IASTFileLocation childLoc = child.getFileLocation();
+			if (childLoc != null && childLoc.getNodeOffset() >= start && childLoc.getNodeOffset() < end) {
+				end = childLoc.getNodeOffset();
+			}
+		}
+		final String rawSignature = declarator.getRawSignature();
+		final int relativeStart = start - declaratorLoc.getNodeOffset();
+		final int relativeEnd = end - declaratorLoc.getNodeOffset();
+		if (start >= end || relativeStart < 0 || relativeEnd > rawSignature.length()) {
+			return false;
+		}
+		// Strip the comments to get the qualifiers and check whether the given qualifier is present
+		final String[] qualifiers = rawSignature.substring(relativeStart, relativeEnd)
+				.replaceAll("(?s)/\\*.*?\\*/|//[^\\r\\n]*", " ").split("\\s+");
+		return Arrays.stream(qualifiers).anyMatch(qualifierName::equals);
 	}
 }

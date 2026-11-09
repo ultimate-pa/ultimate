@@ -1,0 +1,32 @@
+#Safe
+- entry_type: invariant_set
+  metadata:
+    format_version: "2.1"
+    uuid: "a1ffb552-9892-43da-a83a-badd6e58181c"
+    creation_time: "2026-05-10T09:35:16+0000"
+    producer:
+      name: "Handcrafted"
+      version: ""
+    task:
+      input_files:
+      - "./countup-down-nested.c"
+      input_file_hashes:
+        "./countup-down-nested.c": "c53109e782031d680d309fe99ef7b0ef4c7b2d0c04264d872cfd76bd41970004"
+      specification: "F end"
+      data_model: "LP64"
+      language: "C"
+  content:
+  - invariant:
+      type: loop_transition_invariant
+      location:
+        line: 14
+        file_name: "countup-down-nested.c"
+      value: "x < \\at(x, LastPrev)"
+      format: ext_c_expression
+  - invariant:
+      type: loop_transition_invariant
+      location:
+        line: 16
+        file_name: "countup-down-nested.c"
+      value: "(x <= \\at(x, AnyPrev) && \\at(y, AnyPrev) + 1 <= y) || (x + 1 <= \\at(x, AnyPrev) && 1 <= x)"
+      format: ext_c_expression

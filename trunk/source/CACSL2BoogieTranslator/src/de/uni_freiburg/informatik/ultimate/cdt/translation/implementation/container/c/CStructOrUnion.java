@@ -95,19 +95,24 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 
 	private boolean mIsComplete;
 
+	private final boolean mIsAtomic;
+
 	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final List<Member> members) {
+		this(isStructOrUnion, name, members, true, false);
+	}
+
+	private CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final List<Member> members,
+			final boolean isComplete, final boolean isAtomic) {
 		mIsStructOrUnion = isStructOrUnion;
 		mMembers = members;
 		mStructName = Objects.requireNonNull(name);
-		mIsComplete = true;
+		mIsComplete = isComplete;
+		mIsAtomic = isAtomic;
 	}
 
 	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name) {
+		this(isStructOrUnion, name, List.of(), false, false);
 		assert name != null && !name.isEmpty();
-		mIsStructOrUnion = isStructOrUnion;
-		mMembers = List.of();
-		mStructName = Objects.requireNonNull(name);
-		mIsComplete = false;
 	}
 
 	@Override
@@ -252,7 +257,7 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 		if (!isIncomplete()) {
 			throw new AssertionError("only incomplete structs can be completed");
 		}
-		return new CStructOrUnion(cvar.isStructOrUnion(), mStructName, cvar.mMembers);
+		return new CStructOrUnion(cvar.isStructOrUnion(), mStructName, cvar.mMembers, true, mIsAtomic);
 	}
 
 	/**
@@ -311,6 +316,11 @@ public final class CStructOrUnion implements ICType, ICPossibleIncompleteType<CS
 
 	@Override
 	public boolean isAtomic() {
-		return false;
+		return mIsAtomic;
+	}
+
+	@Override
+	public ICType toAtomic() {
+		return new CStructOrUnion(mIsStructOrUnion, mStructName, mMembers, mIsComplete, true);
 	}
 }

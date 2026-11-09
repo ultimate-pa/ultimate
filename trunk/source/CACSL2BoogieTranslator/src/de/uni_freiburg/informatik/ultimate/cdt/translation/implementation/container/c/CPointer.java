@@ -43,6 +43,7 @@ public final class CPointer implements ICType {
 	 * The type, this pointer points to.
 	 */
 	private final ICType mPointsToType;
+	private final boolean mIsAtomic;
 
 	/**
 	 * Constructor.
@@ -51,7 +52,12 @@ public final class CPointer implements ICType {
 	 *            the type, this pointer points to.
 	 */
 	public CPointer(final ICType pointsToType) {
+		this(pointsToType, false);
+	}
+
+	public CPointer(final ICType pointsToType, final boolean isAtomic) {
 		mPointsToType = pointsToType;
+		mIsAtomic = isAtomic;
 	}
 
 	public ICType getPointsToType() {
@@ -87,7 +93,7 @@ public final class CPointer implements ICType {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mPointsToType);
+		return Objects.hash(mPointsToType, mIsAtomic);
 	}
 
 	@Override
@@ -98,12 +104,18 @@ public final class CPointer implements ICType {
 		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		return Objects.equals(mPointsToType, ((CPointer) obj).mPointsToType);
+		final CPointer other = (CPointer) obj;
+		return mIsAtomic == other.mIsAtomic && Objects.equals(mPointsToType, other.mPointsToType);
 	}
 
 	@Override
 	public boolean isAtomic() {
-		return false;
+		return mIsAtomic;
+	}
+
+	@Override
+	public CPointer toAtomic() {
+		return new CPointer(mPointsToType, true);
 	}
 
 	@Override

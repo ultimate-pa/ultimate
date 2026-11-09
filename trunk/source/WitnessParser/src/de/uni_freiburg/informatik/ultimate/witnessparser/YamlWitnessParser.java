@@ -47,7 +47,9 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.GhostVariable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationInvariant;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LocationTransitionInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopInvariant;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.LoopTransitionInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment.SegmentType;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.ViolationSequence;
@@ -195,6 +197,10 @@ public class YamlWitnessParser {
 			return new LoopInvariant(location, (String) map.get("value"), format);
 		case FunctionContract.NAME:
 			return new FunctionContract(location, (String) map.get("requires"), (String) map.get("ensures"), format);
+		case LocationTransitionInvariant.NAME:
+			return new LocationTransitionInvariant(location, (String) map.get("value"), format);
+		case LoopTransitionInvariant.NAME:
+			return new LoopTransitionInvariant(location, (String) map.get("value"), format);
 		default:
 			throw new UnsupportedOperationException("Invalid entry in content" + entry);
 		}

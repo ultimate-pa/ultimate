@@ -127,6 +127,11 @@ public sealed interface ICType permits CArray, CEnum, CFunction, CNamed, CPointe
 	 */
 	boolean isAtomic();
 
+	/**
+	 * Returns an atomic-qualified version of this type (without modifying the original type).
+	 */
+	ICType toAtomic();
+
 	@Override
 	int hashCode();
 
