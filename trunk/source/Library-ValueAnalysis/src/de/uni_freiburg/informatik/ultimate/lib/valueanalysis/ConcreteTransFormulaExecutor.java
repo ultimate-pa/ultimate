@@ -452,9 +452,18 @@ public final class ConcreteTransFormulaExecutor {
 		 *         early as possible; null if every variable of the branch has a value
 		 */
 		private TermVariable pickOpen(final Branch branch, final Map<TermVariable, IConcreteValue> env) {
-			// A variable the pool knows preferred values for comes first: whatever it is defined by (typically an
-			// auxiliary variable, e.g. the result of a nondeterministic call) can then be solved for instead of
-			// guessed.
+			// An in-variable the pool knows preferred values for comes first: what the step assigns from it is then
+			// computed, not guessed.
+			for (final Conjunct conjunct : branch.mConjuncts) {
+				for (final TermVariable tv : conjunct.mVars) {
+					if (!env.containsKey(tv) && mPlan.mInVars.contains(tv)
+							&& !mPool.preferred(mPlan.mProgramVars.get(tv), tv.getSort()).isEmpty()) {
+						return tv;
+					}
+				}
+			}
+			// Then any other variable with preferred values: whatever it is defined by (typically an auxiliary
+			// variable, e.g. the result of a nondeterministic call) can then be solved for instead of guessed.
 			for (final Conjunct conjunct : branch.mConjuncts) {
 				for (final TermVariable tv : conjunct.mVars) {
 					if (!env.containsKey(tv)
@@ -493,12 +502,14 @@ public final class ConcreteTransFormulaExecutor {
 		private final List<IProgramConst> mConstants;
 		// The program variable behind each in- and out-variable, for NondeterminismPool#preferred
 		private final Map<TermVariable, IProgramVar> mProgramVars = new HashMap<>();
+		private final Set<TermVariable> mInVars;
 
 		Plan(final UnmodifiableTransFormula tf) {
 			for (final Term disjunct : SmtUtils.getDisjuncts(tf.getFormula())) {
 				mBranches.add(new Branch(disjunct));
 			}
 			mConstants = List.copyOf(tf.getNonTheoryConsts());
+			mInVars = Set.copyOf(tf.getInVars().values());
 			for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
 				mProgramVars.put(entry.getValue(), entry.getKey());
 			}
