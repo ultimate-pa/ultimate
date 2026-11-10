@@ -40,6 +40,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 
@@ -724,6 +728,14 @@ public class KInduction<LETTER extends IAction, STATE> {
 	// Correctness witness
 	// ------------------------------------------------------------------------------------------------------------
 
+	/**
+	 * How long the quantifier elimination of {@code noErrorWithinK} may take for a witness, for all loop heads and
+	 * waypoints together, see {@link #strengthenWithNoErrorWithinK}.
+	 */
+	private static final long WITNESS_QE_TIMEOUT_MILLIS = 5_000;
+	/** How much longer it is waited for when it does not notice its timer. */
+	private static final long WITNESS_QE_GRACE_MILLIS = 500;
+
 	/** Name of the flags of {@link #houdini}, indexed by the position of their candidate in a round. */
 	private static final String WITNESS_FLAG_NAME = "kiwrefuted";
 
@@ -767,8 +779,9 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * quantifier elimination. From a state that satisfies {@code J && noErrorWithinK}, a successor and the next k - 1
 	 * states cannot be errors, since they are within k steps, the injected invariants J hold along the way, since they
 	 * are inductive themselves, and the step case says that the k-th state cannot be an error either. So together they
-	 * are 1-inductive, and {@link #houdini} checks it. If the timer runs out during this step, the result of step 2
-	 * stands.
+	 * are 1-inductive, and {@link #houdini} checks it. The quantifier elimination gets
+	 * {@link #WITNESS_QE_TIMEOUT_MILLIS}; if it does not end in time, or the timer runs out during this step, the result
+	 * of step 2 stands.
 	 * </ol>
 	 * The result of every step that is done is also kept for {@link #getBestWitnessInvariants()}, for a caller that stops
 	 * waiting: quantifier elimination does not always notice the timer.
@@ -833,16 +846,19 @@ public class KInduction<LETTER extends IAction, STATE> {
 		if (checked.safe() || mProvedK == 1) {
 			return Optional.of(result);
 		}
+		final Map<Integer, Set<Term>> strengthened =
+				strengthenWithNoErrorWithinK(services, simplificationTechnique, checked.invariants());
+		if (strengthened == null) {
+			return Optional.of(result);
+		}
 		try {
-			final Map<Integer, Set<Term>> strengthened = strengthenWithNoErrorWithinK(services,
-					simplificationTechnique, checked.invariants());
 			final InductiveAnnotation withNoError = houdini(services, strengthened, "with noErrorWithinK");
 			if (withNoError != null) {
 				result = publishWitness(withNoError.invariants(), withNoError.safe(), inScope, start);
 			}
 		} catch (final ToolchainCanceledException e) {
-			mLogger.warn("KInduction witness: the timer ran out while strengthening with noErrorWithinK after %d ms, "
-					+ "keeping the invariants without it", elapsedMillis(start));
+			mLogger.warn("KInduction witness: the timer ran out while checking noErrorWithinK after %d ms, keeping "
+					+ "the invariants without it", elapsedMillis(start));
 		}
 		return Optional.of(result);
 	}
@@ -914,39 +930,85 @@ public class KInduction<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * @return {@code annotation} with the conjuncts of {@code noErrorWithinK} added at every loop head and waypoint
-	 *         whose quantifiers could be eliminated
+	 * Adds the conjuncts of {@code noErrorWithinK} to {@code annotation} at every loop head and waypoint whose
+	 * quantifiers can be eliminated within {@link #WITNESS_QE_TIMEOUT_MILLIS}, for all of them together. If the timer
+	 * runs out, the nodes done so far keep what they got. Quantifier elimination does not always notice the timer (its
+	 * ite removal ran for minutes), so it runs on a thread of its own, and if it has not ended
+	 * {@link #WITNESS_QE_GRACE_MILLIS} after the timer, it is left behind.
+	 *
+	 * @return the strengthened annotation, or null if the quantifier elimination was left behind: it still uses the
+	 *         script, so nothing else may use it any more
 	 */
 	private Map<Integer, Set<Term>> strengthenWithNoErrorWithinK(final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final Map<Integer, Set<Term>> annotation) {
+		final IProgressMonitorService monitor = services.getProgressMonitorService();
+		final IUltimateServiceProvider qeServices =
+				monitor.registerChildTimer(services, monitor.getChildTimer(WITNESS_QE_TIMEOUT_MILLIS));
+		final FutureTask<Map<Integer, Set<Term>>> task =
+				new FutureTask<>(() -> eliminateNoErrorWithinK(qeServices, simplificationTechnique, annotation));
+		final Thread thread = new Thread(task, "KInduction witness quantifier elimination");
+		thread.setDaemon(true);
+		thread.start();
+		try {
+			return task.get(WITNESS_QE_TIMEOUT_MILLIS + WITNESS_QE_GRACE_MILLIS, TimeUnit.MILLISECONDS);
+		} catch (final TimeoutException e) {
+			thread.interrupt();
+			mLogger.warn("KInduction witness: the quantifier elimination of noErrorWithinK did not end within %d ms, "
+					+ "keeping the invariants without it", WITNESS_QE_TIMEOUT_MILLIS + WITNESS_QE_GRACE_MILLIS);
+			return null;
+		} catch (final InterruptedException e) {
+			thread.interrupt();
+			Thread.currentThread().interrupt();
+			throw new ToolchainCanceledException(getClass(), "waiting for the quantifier elimination of noErrorWithinK");
+		} catch (final ExecutionException e) {
+			if (e.getCause() instanceof final RuntimeException runtime) {
+				throw runtime;
+			}
+			if (e.getCause() instanceof final Error error) {
+				throw error;
+			}
+			throw new AssertionError("eliminateNoErrorWithinK threw a checked exception", e.getCause());
+		}
+	}
+
+	/**
+	 * The work of {@link #strengthenWithNoErrorWithinK}, on its thread.
+	 */
+	private Map<Integer, Set<Term>> eliminateNoErrorWithinK(final IUltimateServiceProvider services,
+			final SimplificationTechnique simplificationTechnique, final Map<Integer, Set<Term>> annotation) {
 		final Script script = mWorkerMgdScript.getScript();
-		final long composeStart = System.nanoTime();
-		// Not the formula of a query: over term variables every shared subformula would hold its free variables, and
-		// quantifier elimination does badly on the variables a step has inside.
-		final BiFunction<Integer, StepVars, Term> composedStep =
-				mSystem.composeSteps(services, mLogger, mWorkerMgdScript);
-		mLogger.info("KInduction witness: composed the steps in %d ms", elapsedMillis(composeStart));
+		final long phaseStart = System.nanoTime();
 		final Map<Integer, Set<Term>> result = new LinkedHashMap<>();
 		annotation.forEach((node, conjuncts) -> result.put(node, new LinkedHashSet<>(conjuncts)));
-		final Set<Integer> nodes = new LinkedHashSet<>(mSystem.getHeadNodes().values());
-		nodes.addAll(mSystem.getWaypointNodes().values());
-		for (final int node : nodes) {
-			final long start = System.nanoTime();
-			final Term noError = noErrorWithinK(node, composedStep);
-			final Set<Term> known = annotation.getOrDefault(node, Collections.emptySet());
-			// The known invariant is context for the simplification; its conjuncts come back and are already there.
-			final Term withQuantifiers = SmtUtils.and(script, SmtUtils.and(script, known), noError);
-			// Quantifier elimination expects its input in commuhash normal form.
-			final Term eliminated = PartialQuantifierElimination.eliminate(services, mWorkerMgdScript,
-					CommuhashNormalFormTransformer.apply(script, withQuantifiers), simplificationTechnique);
-			if (!QuantifierUtils.isQuantifierFree(eliminated)) {
-				mLogger.info("KInduction witness: node %d keeps its invariant, the quantifiers of noErrorWithinK could "
-						+ "not be eliminated (%d ms)", node, elapsedMillis(start));
-				continue;
+		try {
+			// Not the formula of a query: over term variables every shared subformula would hold its free variables,
+			// and quantifier elimination does badly on the variables a step has inside.
+			final BiFunction<Integer, StepVars, Term> composedStep =
+					mSystem.composeSteps(services, mLogger, mWorkerMgdScript);
+			mLogger.info("KInduction witness: composed the steps in %d ms", elapsedMillis(phaseStart));
+			final Set<Integer> nodes = new LinkedHashSet<>(mSystem.getHeadNodes().values());
+			nodes.addAll(mSystem.getWaypointNodes().values());
+			for (final int node : nodes) {
+				final long start = System.nanoTime();
+				final Term noError = noErrorWithinK(node, composedStep);
+				final Set<Term> known = annotation.getOrDefault(node, Collections.emptySet());
+				// The known invariant is context for the simplification; its conjuncts come back and are already there.
+				final Term withQuantifiers = SmtUtils.and(script, SmtUtils.and(script, known), noError);
+				// Quantifier elimination expects its input in commuhash normal form.
+				final Term eliminated = PartialQuantifierElimination.eliminate(services, mWorkerMgdScript,
+						CommuhashNormalFormTransformer.apply(script, withQuantifiers), simplificationTechnique);
+				if (!QuantifierUtils.isQuantifierFree(eliminated)) {
+					mLogger.info("KInduction witness: node %d keeps its invariant, the quantifiers of noErrorWithinK "
+							+ "could not be eliminated (%d ms)", node, elapsedMillis(start));
+					continue;
+				}
+				mLogger.info("KInduction witness: noErrorWithinK of node %d in %d ms, DAG size %d", node,
+						elapsedMillis(start), PcTransitionSystem.dagSize(eliminated));
+				addConjuncts(result, node, eliminated);
 			}
-			mLogger.info("KInduction witness: noErrorWithinK of node %d in %d ms, DAG size %d", node,
-					elapsedMillis(start), PcTransitionSystem.dagSize(eliminated));
-			addConjuncts(result, node, eliminated);
+		} catch (final ToolchainCanceledException e) {
+			mLogger.warn("KInduction witness: the quantifier elimination of noErrorWithinK ran out of its %d ms after "
+					+ "%d ms, keeping what it found so far", WITNESS_QE_TIMEOUT_MILLIS, elapsedMillis(phaseStart));
 		}
 		return result;
 	}
