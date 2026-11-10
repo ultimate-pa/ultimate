@@ -47,7 +47,6 @@ import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -57,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
@@ -339,45 +337,6 @@ public class CTranslationUtil {
 			throw new UnsupportedOperationException("todo: implement");
 		} else {
 			throw new IllegalArgumentException("expression cannot be converted to a LeftHandSide: " + expr);
-		}
-	}
-
-	/**
-	 * Takes an arithmetic expression that has integer value and can be computed at compile-time, i.e., that contains no
-	 * variables, and returns an IntegerLiteral containing the result.
-	 *
-	 * Matthias 2015-09-21: "premature optimization is the root of all evil" I think, by now we should not use this
-	 * method and better live with long expressions. However, I don't want to delete this method, we might want to use
-	 * it in the future.
-	 */
-	@Deprecated
-	public static BigInteger computeConstantValue(final Expression value) {
-		if (value instanceof IntegerLiteral) {
-			return new BigInteger(((IntegerLiteral) value).getValue());
-		} else if (value instanceof final UnaryExpression unaryExp) {
-			switch (unaryExp.getOperator()) {
-			case ARITHNEGATIVE:
-				return computeConstantValue(unaryExp.getExpr()).negate();
-			default:
-				throw new UnsupportedOperationException("could not compute constant value");
-			}
-		} else if (value instanceof final BinaryExpression binExp) {
-			switch (binExp.getOperator()) {
-			case ARITHDIV:
-				return computeConstantValue(binExp.getLeft()).divide(computeConstantValue(binExp.getRight()));
-			case ARITHMINUS:
-				return computeConstantValue(binExp.getLeft()).subtract(computeConstantValue(binExp.getRight()));
-			case ARITHMOD:
-				return computeConstantValue(binExp.getLeft()).mod(computeConstantValue(binExp.getRight()));
-			case ARITHMUL:
-				return computeConstantValue(binExp.getLeft()).multiply(computeConstantValue(binExp.getRight()));
-			case ARITHPLUS:
-				return computeConstantValue(binExp.getLeft()).add(computeConstantValue(binExp.getRight()));
-			default:
-				throw new UnsupportedOperationException("could not compute constant value");
-			}
-		} else {
-			throw new UnsupportedOperationException("could not compute constant value");
 		}
 	}
 
