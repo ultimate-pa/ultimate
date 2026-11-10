@@ -637,8 +637,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_KINDUCTION_COUNTEREXAMPLE = "K-Induction counterexample";
 	private static final String DESC_KINDUCTION_COUNTEREXAMPLE =
-			"What k-induction reports for a violation. RECONSTRUCT_RUN rebuilds a run of the program, which the trace "
-					+ "check confirms. MODEL_WAYPOINTS builds no run: the violation witness only has the waypoints that "
+			"What k-induction reports for a violation. RECONSTRUCT_RUN rebuilds a run of the program, which is found "
+					+ "feasible letter by letter while it is built; there is no trace check, and the run has no values. "
+					+ "MODEL_WAYPOINTS builds no run: the violation witness only has the waypoints that "
 					+ "can be read off the solver's model, and nothing but that model confirms the violation.";
 	private static final KInductionCounterexample DEF_KINDUCTION_COUNTEREXAMPLE =
 			KInductionCounterexample.MODEL_WAYPOINTS;

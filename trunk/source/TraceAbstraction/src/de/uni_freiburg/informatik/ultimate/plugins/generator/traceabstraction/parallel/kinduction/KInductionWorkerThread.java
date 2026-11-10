@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
@@ -60,13 +59,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -83,14 +77,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadResult.WorkerType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadTask;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInduction;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInduction.WitnessInvariants;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionCounterexampleException;
@@ -103,9 +89,9 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
  * Worker thread running {@link KInduction} inside {@link ParallelNwaCegarLoop}'s thread pool. It runs once (see
  * {@link #run()}) on the whole program and reports a {@link WorkerThreadResult} sentinel when the program is safe.
  * <p>
- * When k-induction refutes the program, {@link KInduction} reconstructs a concrete run from the solver's model and
- * this class reports it the same way {@code CegarNwaWorkerThread} reports a feasible counterexample: it runs the
- * counterexample through the refinement engine to obtain an {@code IcfgProgramExecution} with values, registers
+ * When k-induction refutes the program, {@link KInduction} reconstructs a feasible run from the solver's model and
+ * this class reports it: it makes an {@code IcfgProgramExecution} from the run, without a trace check and without
+ * values (see {@link #reportCounterexample}), registers
  * {@code Result.UNSAFE} on the shared result builder, and hands the main thread a result marked
  * {@link AutomatonType#ERROR} so that it terminates instead of refining. It carries no error-automaton scaffolding:
  * the whole program is refuted at once, so there is nothing left to refine.
@@ -118,21 +104,16 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	private final TAPreferences mPref;
 	private final CegarLoopResultBuilder mResultBuilder;
 	private final CfgSmtToolkit mCfgSmtToolkit;
-	private final PredicateFactory mPredicateFactory;
 	private final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
 	private int mIteration;
 	private final boolean mComputeHoareAnnotation;
-	private final TaCheckAndRefinementPreferences<L> mTaCheckAndRefinementPrefs;
 	public final ParallelNwaCegarLoop<L, A> mMainThread;
 	private final INestedWordAutomaton<L, IPredicate> mAbstraction;
 	// communication with controller
 	private final BlockingQueue<WorkerThreadResult<L, A>> mBlockingQueueForResults;
 	private final BlockingQueue<WorkerThreadTask<L>> mWorkerTaskQueue;
 	private final TransferBetweenMainAndWorker<L, IPredicate> mNwaCexTransferrer;
-	private final TaskIdentifier mTaskIdentifier;
 	private final IInvariantSupplier<CallNode<IPredicate>> mInvariantSupplier;
-	// Only used to build a refinement strategy for a counterexample; k-induction has no path-program history.
-	private final PathProgramCache<L> mProgramCache;
 	// k-induction has no memory limit: when the heap fills up, the other workers retire (see HeapWatchdog).
 	private final IUltimateServiceProvider mKInductionServices;
 	// The invariants of a proof for the main thread's correctness witness, see computeWitnessInvariants
@@ -145,22 +126,19 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 
 	public KInductionWorkerThread(final ILogger logger, final TAPreferences pref, final int id,
 			final CegarLoopResultBuilder resultBuilder, final IUltimateServiceProvider services,
-			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory,
-			final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs,
+			final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean computeHoareAnnotation,
 			final ParallelNwaCegarLoop<L, A> mainThread,
 			final BlockingQueue<WorkerThreadResult<L, A>> blockingQueueForResults,
 			final BlockingQueue<WorkerThreadTask<L>> workerTaskQueue,
-			final TransferBetweenMainAndWorker<L, IPredicate> transferWorkerUtils, final TaskIdentifier taskIdentifier,
+			final TransferBetweenMainAndWorker<L, IPredicate> transferWorkerUtils,
 			final IInvariantSupplier<CallNode<IPredicate>> invariantSupplier) throws InterruptedException {
 		mLogger = logger;
 		mPref = pref;
 		mIteration = id;
 		mResultBuilder = resultBuilder;
 		mCfgSmtToolkit = cfgSmtToolkit;
-		mTaCheckAndRefinementPrefs = taCheckAndRefinementPrefs;
-		mPredicateFactory = predicateFactory;
 		mPredicateFactoryInterpolantAutomata = predicateFactoryInterpolantAutomata;
 		mComputeHoareAnnotation = computeHoareAnnotation;
 		mMainThread = mainThread;
@@ -168,9 +146,7 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 		mWorkerTaskQueue = workerTaskQueue;
 		mNwaCexTransferrer = transferWorkerUtils;
 		mAbstraction = (INestedWordAutomaton<L, IPredicate>) getAndTransferAbstraction();
-		mTaskIdentifier = taskIdentifier;
 		mInvariantSupplier = invariantSupplier;
-		mProgramCache = new PathProgramCache<>(mLogger);
 		mKInductionServices = services;
 	}
 
@@ -275,8 +251,8 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 			reportWaypoints(kInduction.getWaypoints());
 			return Verdict.UNSAFE;
 		}
-		// No transfer: the run is built over the worker's own abstraction with worker-script letters, and the
-		// refinement engine below runs on the worker toolkit, exactly as in CegarNwaWorkerThread.
+		// The program is overapproximated (or waypoints are off), so the whole run is rebuilt: the result builder sees
+		// every Overapprox letter on it and turns a spurious violation into UNKNOWN. There is no trace check, see below.
 		reportCounterexample(kInduction.getCounterexample());
 		return Verdict.UNSAFE;
 	}
@@ -529,53 +505,22 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	}
 
 	/**
-	 * Registers a k-induction counterexample as {@code Result.UNSAFE}, going through the same refinement engine
-	 * {@code CegarNwaWorkerThread} uses, so that the reported program execution carries variable values and
-	 * backtranslates to the input program like any other counterexample.
+	 * Registers a k-induction counterexample as {@code Result.UNSAFE}, with a program execution made directly from the
+	 * run's nested word. The witness and the backtranslation to the input program come from that execution, as for
+	 * any other counterexample.
+	 * <p>
+	 * There is no trace check: the counterexample builder already found the run feasible letter by letter, by executing
+	 * the letters on concrete values and confirming the symbolic ones with the solver. Checking the whole run again
+	 * cost minutes on hardware tasks (bitwuzla) and floats, and the run often timed out before it reported the
+	 * verdict. As a consequence, the execution carries no variable values. Its branch encoders are all set to true,
+	 * which only matters for parallel compositions of letters; the SV-COMP settings create none. An overapproximated
+	 * letter still turns the result into UNKNOWN, since the result builder reads that from the letters of the
+	 * execution.
 	 */
 	private void reportCounterexample(final NestedRun<L, IPredicate> counterexample) {
-		final List<IcfgLocation> locations = new ArrayList<>();
-		for (final IPredicate state : counterexample.getStateSequence()) {
-			if (!(state instanceof ISLPredicate)) {
-				throw new KInductionCounterexampleException("abstraction state " + state + " is a "
-						+ state.getClass().getSimpleName() + ", not an ISLPredicate, so it has no program point");
-			}
-			locations.add(((ISLPredicate) state).getProgramPoint());
-		}
-		final Counterexample<L> cex = new Counterexample<>(counterexample.getWord(), locations);
-
-		final StrategyFactory<L> strategyFactory = new StrategyFactory<>(mLogger, mPref, mTaCheckAndRefinementPrefs,
-				mCfgSmtToolkit, mPredicateFactory, mPredicateFactoryInterpolantAutomata,
-				mMainThread.mTransitionClazz, mProgramCache);
-		final ITARefinementStrategy<L> strategy = strategyFactory.constructStrategy(mKInductionServices, cex,
-				mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, mIteration),
-				mPredicateFactoryInterpolantAutomata,
-				IPreconditionProvider.constructDefaultPreconditionProvider(),
-				IPostconditionProvider.constructDefaultPostconditionProvider(), mPref.getRefinementStrategy());
-		final IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> refinementResult =
-				new TraceAbstractionRefinementEngine<>(mKInductionServices, mLogger, strategy).getResult();
-
-		final LBool feasibility = refinementResult.getCounterexampleFeasibility();
-		if (feasibility == LBool.UNKNOWN) {
-			// The solvers of the trace check gave up, e.g. on floats; that says nothing about either encoding.
-			throw new KInductionCounterexampleException("k-induction refuted the program, but the trace check of the "
-					+ "reconstructed run answered unknown, so the violation cannot be confirmed");
-		}
-		if (feasibility != LBool.SAT) {
-			// Not an unsupported case: k-induction and the letter-level semantics of the very same abstraction
-			// cannot both be right here, so one of the two encodings is wrong.
-			throw new AssertionError("k-induction refuted the program, but the trace check of the reconstructed "
-					+ "run answered " + feasibility + " instead of sat. The k-induction encoding and the "
-					+ "letter-level semantics of the abstraction disagree. Run: " + counterexample.getWord());
-		}
-
-		final IProgramExecution<L, Term> programExecution;
-		if (refinementResult.providesIcfgProgramExecution()) {
-			programExecution = refinementResult.getIcfgProgramExecution();
-		} else {
-			programExecution = TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(counterexample.getWord());
-		}
-		((IcfgProgramExecution<L>) programExecution).setOriginCfgScript(mCfgSmtToolkit.getManagedScript());
+		final IcfgProgramExecution<L> programExecution =
+				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(counterexample.getWord());
+		programExecution.setOriginCfgScript(mCfgSmtToolkit.getManagedScript());
 
 		mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
 		if (mPref.stopAfterFirstViolation()) {

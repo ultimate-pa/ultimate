@@ -1021,9 +1021,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		switch (workerType) {
 		case KINDUCTION:
 			return new KInductionWorkerThread<>(mLogger, mPref, id, mResultBuilder, iterationServices, freshToolKit,
-					predicateFactory, taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata,
-					stateFactoryForRefinement, computeProof, this, mWorkerResultQueue, mWorkerTaskQueue,
-					transferUtils, mTaskIdentifier, mInvariantSupplier == null ? IInvariantSupplier.none()
+					predicateFactoryInterpolantAutomata, stateFactoryForRefinement, computeProof, this,
+					mWorkerResultQueue, mWorkerTaskQueue, transferUtils, mInvariantSupplier == null
+							? IInvariantSupplier.none()
 							: mInvariantSupplier.subscribe(freshToolKit.getManagedScript()));
 		case TA:
 			return new CegarNwaWorkerThread<>(mLogger, mPref, id, mResultBuilder, iterationServices, freshToolKit,
