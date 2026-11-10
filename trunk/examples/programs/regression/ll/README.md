@@ -17,7 +17,7 @@ The tests that fail:
 - IntegerCharacterConstantsRepresentationForSignedChar(_opt): Fails because it was translated on an aarch64 Linux system, where char is treated as unsigned char.
 - 6 builtin_(...)overflow(_opt): Fail because they use structType, which has not been implemented yet.
  
-#### not_yet_relevant_ll
+#### not_yet_relevant(_opt)_ll
 This folder contains optimized and unoptimized versions of all files that depend on features not yet implemented.
 The respective tests should be pass (and moved to the corresponding folder) once the relevant features are implemented.
 
