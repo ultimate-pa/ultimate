@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -294,12 +293,12 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 		// waits for the computation only until the timer has run out, and an unfinished one is left behind with the
 		// best invariants it has proven so far. It only uses this worker's own script, which nobody needs once there
 		// is a verdict.
-		final FutureTask<Map<CallNode<IPredicate>, Term>> task =
+		final FutureTask<Map<IPredicate, Term>> task =
 				new FutureTask<>(() -> computeWitnessInvariantsWithin(kInduction, timeout));
 		final Thread thread = new Thread(task, "KInduction witness");
 		thread.setDaemon(true);
 		thread.start();
-		Map<CallNode<IPredicate>, Term> invariants;
+		Map<IPredicate, Term> invariants;
 		try {
 			invariants = task.get(timeout + WITNESS_GRACE_MILLIS, TimeUnit.MILLISECONDS);
 		} catch (final TimeoutException e) {
@@ -318,21 +317,21 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 			mLogger.warn("KInduction: no correctness witness invariants for the proof at k=%d", kInduction.getProvedK());
 			return null;
 		}
-		return toWitnessInvariants(invariants);
+		return invariants;
 	}
 
 	/**
 	 * @return the invariants of {@link KInduction#computeWitnessInvariants}, or the best ones it found before it failed,
 	 *         or null if there are none
 	 */
-	private Map<CallNode<IPredicate>, Term> computeWitnessInvariantsWithin(final KInduction<L, IPredicate> kInduction,
+	private Map<IPredicate, Term> computeWitnessInvariantsWithin(final KInduction<L, IPredicate> kInduction,
 			final long timeout) {
 		final IProgressMonitorService progressMonitor = mKInductionServices.getProgressMonitorService();
 		final IUltimateServiceProvider witnessServices = progressMonitor.registerChildTimer(mKInductionServices,
 				progressMonitor.getChildTimer(timeout));
 		try {
-			return kInduction.computeWitnessInvariants(witnessServices, mPref.getSimplificationTechnique())
-					.orElse(null);
+			return kInduction.computeWitnessInvariants(witnessServices, mPref.getSimplificationTechnique(),
+					(state, tv) -> isInScope(tv, ((ISLPredicate) state).getProgramPoint().getProcedure())).orElse(null);
 		} catch (final ToolchainCanceledException | SMTLIBException e) {
 			if (!mWitnessAbandoned) {
 				mLogger.warn("KInduction: computing the correctness witness invariants stopped: " + e);
@@ -354,45 +353,14 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	}
 
 	/**
-	 * @return the invariants of k-induction's loop heads as invariants of the abstraction's states, or null if they do
-	 *         not fit the program
+	 * @return whether {@code tv} is a global variable or a local of {@code procedure}. The transition system is flat, so
+	 *         the invariant of a loop head in a callee may speak about its callers. A variable the symbol table does not
+	 *         know, such as the stack pointer of {@code CallStack}, does not exist in the program at all, so it is out
+	 *         of scope too.
 	 */
-	private Map<IPredicate, Term> toWitnessInvariants(final Map<CallNode<IPredicate>, Term> invariants) {
-		final Map<IPredicate, Term> result = new LinkedHashMap<>();
-		for (final Map.Entry<CallNode<IPredicate>, Term> entry : invariants.entrySet()) {
-			final IPredicate state = entry.getKey().getState();
-			final IcfgLocation loc = ((ISLPredicate) state).getProgramPoint();
-			// A callee unfolded at several call sites has a loop head per call site, but a location only one
-			// invariant.
-			if (result.put(state, entry.getValue()) != null) {
-				mLogger.warn("KInduction: no correctness witness invariants, %s is a loop head at several call "
-						+ "sites", loc);
-				return null;
-			}
-			final TermVariable outOfScope = findOutOfScopeVariable(entry.getValue(), loc.getProcedure());
-			if (outOfScope != null) {
-				mLogger.warn("KInduction: no correctness witness invariants, the invariant of %s mentions %s, "
-						+ "which is not in scope there", loc, outOfScope);
-				return null;
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * @return a variable of {@code invariant} that is neither global nor a local of {@code procedure}, or null. The
-	 *         transition system is flat, so the invariant of a loop head in a callee may speak about its callers. A
-	 *         variable the symbol table does not know, such as the stack pointer of {@code CallStack}, does not exist in
-	 *         the program at all, so it counts as out of scope too.
-	 */
-	private TermVariable findOutOfScopeVariable(final Term invariant, final String procedure) {
-		for (final TermVariable tv : invariant.getFreeVars()) {
-			final IProgramVar pv = mCfgSmtToolkit.getSymbolTable().getProgramVar(tv);
-			if (pv == null || !pv.isGlobal() && !procedure.equals(pv.getProcedure())) {
-				return tv;
-			}
-		}
-		return null;
+	private boolean isInScope(final TermVariable tv, final String procedure) {
+		final IProgramVar pv = mCfgSmtToolkit.getSymbolTable().getProgramVar(tv);
+		return pv != null && (pv.isGlobal() || procedure.equals(pv.getProcedure()));
 	}
 
 	/**

@@ -619,8 +619,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	/**
-	 * Makes the invariants of a k-induction proof the proof of this loop. Without them, or if they do not fit the ICFG,
-	 * the proof is an annotation without any invariant, i.e. a trivial correctness witness.
+	 * Makes the invariants of a k-induction proof the proof of this loop. Without them, or if none of them fits the
+	 * ICFG, the proof is an annotation without any invariant, i.e. a trivial correctness witness.
 	 * <p>
 	 * It must not be extracted from the abstraction: k-induction proves the program while the abstraction is still
 	 * being refined, so the Hoare annotation fragments of the refinements so far are incomplete, and extracting them
@@ -637,8 +637,13 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	/**
+	 * k-induction proved its whole annotation inductive, so each of its invariants holds at its loop head on its own,
+	 * and any subset of them is a valid witness. A loop head of k-induction that is no loop location of the ICFG is
+	 * left out, and so is a loop location without a loop head of k-induction (e.g. a loop from which no error is
+	 * reachable): the witness has no invariant there.
+	 *
 	 * @return the invariants of a k-induction proof as an annotation of the initial abstraction, or null if there are
-	 *         none or they do not fit the ICFG
+	 *         none or none of them fits the ICFG
 	 */
 	private Map<IPredicate, IPredicate> kInductionAnnotation(final WorkerThreadResult<L, A> workerResult) {
 		final Map<IPredicate, Term> invariants = workerResult.getProofInvariants();
@@ -653,15 +658,19 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			final IcfgLocation loc = ((ISLPredicate) entry.getKey()).getProgramPoint();
 			if (!loopLocations.remove(loc) || !mProofUpdater.getProgram().getStates().contains(entry.getKey())) {
 				mLogger.warn("Main: k-induction loop head %s is no loop location of the ICFG, the correctness witness "
-						+ "has no invariants", loc);
-				return null;
+						+ "has no invariant there", loc);
+				continue;
 			}
 			annotation.put(entry.getKey(), mPredicateFactory.newSPredicate(loc,
 					mStateTransferrer.transferTerm(entry.getValue(), workerResult.getWorkerMgdScript())));
 		}
 		if (!loopLocations.isEmpty()) {
-			mLogger.warn("Main: k-induction has no loop head at the loop location(s) %s, the correctness witness has "
-					+ "no invariants", loopLocations);
+			mLogger.info("Main: k-induction has no loop head at the loop location(s) %s, the correctness witness has "
+					+ "no invariant there", loopLocations);
+		}
+		if (annotation.isEmpty()) {
+			mLogger.warn("Main: no k-induction loop head is a loop location of the ICFG, the correctness witness has "
+					+ "no invariants");
 			return null;
 		}
 		return annotation;

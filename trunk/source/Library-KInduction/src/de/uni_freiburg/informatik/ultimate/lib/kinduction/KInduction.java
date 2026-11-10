@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.kinduction;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
@@ -40,6 +41,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -746,7 +748,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 	private Term mWitnessStep;
 	// The best invariants for a correctness witness found so far, by loop head; null until there are some. Written by
 	// the thread that computes them, read by the worker when it stops waiting for that thread.
-	private volatile Map<CallNode<STATE>, Term> mBestWitnessInvariants;
+	private volatile Map<STATE, Term> mBestWitnessInvariants;
 
 	/**
 	 * Invariants for a correctness witness, one per loop head, all proven inductive on the transition system.
@@ -774,20 +776,22 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * Must be called after the constructor, i.e. when the script is not locked: quantifier elimination uses it.
 	 * <p>
 	 * The system is flat: the invariant of a loop head of a callee may mention the variables of its callers, and a
-	 * callee that is unfolded at several call sites has one loop head per call site. Whether that fits the program is
-	 * for the caller to decide.
+	 * callee that is unfolded at several call sites has one loop head per call site. The result is by loop head state:
+	 * conjuncts out of scope there are left out, and the call nodes of a state get the disjunction of their invariants.
 	 *
 	 * @param services
 	 *            for the quantifier elimination and the inductiveness checks, whose timer bounds how long this may take:
 	 *            once it runs out, a running check-sat is interrupted, which needs an external solver
-	 * @return for every loop head its invariant, quantifier-free and native to the worker's {@link ManagedScript}, or
-	 *         empty if the program was not proven safe or the solver could not decide whether the candidates are
-	 *         inductive
+	 * @param inScope
+	 *            whether a variable may occur in the invariant of a loop head state, i.e. is in scope at its location
+	 * @return for every loop head state its invariant, quantifier-free and native to the worker's
+	 *         {@link ManagedScript}, or empty if the program was not proven safe or the solver could not decide whether
+	 *         the candidates are inductive
 	 * @throws ToolchainCanceledException
 	 *             if the timer ran out before any annotation was proven inductive
 	 */
-	public Optional<Map<CallNode<STATE>, Term>> computeWitnessInvariants(final IUltimateServiceProvider services,
-			final SimplificationTechnique simplificationTechnique) {
+	public Optional<Map<STATE, Term>> computeWitnessInvariants(final IUltimateServiceProvider services,
+			final SimplificationTechnique simplificationTechnique, final BiPredicate<STATE, TermVariable> inScope) {
 		if (!mSafe) {
 			return Optional.empty();
 		}
@@ -796,11 +800,11 @@ public class KInduction<LETTER extends IAction, STATE> {
 		final Map<Integer, Set<Term>> candidates = suppliedCandidates(injected);
 		mLogger.info("KInduction witness: proof at k=%d, %d injected and %d supplied candidate conjunct(s)", mProvedK,
 				countConjuncts(injected), countConjuncts(candidates) - countConjuncts(injected));
-		Map<CallNode<STATE>, Term> result = null;
+		Map<STATE, Term> result = null;
 		if (mProvedK == 1 && injected.isEmpty()) {
 			// The step case of k = 1 assumed nothing, so true at every loop head is inductive and proves the program.
 			mLogger.info("KInduction witness: k=1 without injected invariants, every loop head gets true");
-			result = publishWitness(Collections.emptyMap(), true, start);
+			result = publishWitness(Collections.emptyMap(), true, inScope, start);
 			if (candidates.isEmpty()) {
 				return Optional.of(result);
 			}
@@ -825,7 +829,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 		if (checked == null) {
 			return Optional.ofNullable(result);
 		}
-		result = publishWitness(checked.invariants(), checked.safe(), start);
+		result = publishWitness(checked.invariants(), checked.safe(), inScope, start);
 		if (checked.safe() || mProvedK == 1) {
 			return Optional.of(result);
 		}
@@ -834,7 +838,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 					simplificationTechnique, checked.invariants());
 			final InductiveAnnotation withNoError = houdini(services, strengthened, "with noErrorWithinK");
 			if (withNoError != null) {
-				result = publishWitness(withNoError.invariants(), withNoError.safe(), start);
+				result = publishWitness(withNoError.invariants(), withNoError.safe(), inScope, start);
 			}
 		} catch (final ToolchainCanceledException e) {
 			mLogger.warn("KInduction witness: the timer ran out while strengthening with noErrorWithinK after %d ms, "
@@ -847,7 +851,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * @return the best invariants for a correctness witness that {@link #computeWitnessInvariants} has found so far, by
 	 *         loop head; null if it has not proven any yet. Safe to call from another thread.
 	 */
-	public Map<CallNode<STATE>, Term> getBestWitnessInvariants() {
+	public Map<STATE, Term> getBestWitnessInvariants() {
 		return mBestWitnessInvariants;
 	}
 
@@ -1113,26 +1117,50 @@ public class KInduction<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * Makes {@code annotation} the best witness so far.
+	 * Makes {@code annotation} the best witness so far, by loop head state. Every invariant of an inductive annotation
+	 * holds on its own, and so does every conjunct of it, so the conjuncts that mention a variable out of scope at the
+	 * loop head are left out. A loop head with several call nodes (a callee unfolded at several call sites) gets the
+	 * disjunction of their invariants, since each of them holds whenever control is at that call node.
 	 *
-	 * @return its invariants by loop head, {@code true} where it has none
+	 * @param inScope
+	 *            whether a variable is in scope at a loop head state
+	 * @return its invariants by loop head state, {@code true} where it has none
 	 */
-	private Map<CallNode<STATE>, Term> publishWitness(final Map<Integer, Set<Term>> annotation, final boolean safe,
-			final long start) {
+	private Map<STATE, Term> publishWitness(final Map<Integer, Set<Term>> annotation, final boolean safe,
+			final BiPredicate<STATE, TermVariable> inScope, final long start) {
 		final Script script = mWorkerMgdScript.getScript();
-		final Map<CallNode<STATE>, Term> result = new LinkedHashMap<>();
-		int nonTrivial = 0;
+		final Map<STATE, List<Term>> byState = new LinkedHashMap<>();
+		int outOfScope = 0;
 		for (final Map.Entry<CallNode<STATE>, Integer> head : mSystem.getHeadNodes().entrySet()) {
-			final Set<Term> conjuncts = annotation.getOrDefault(head.getValue(), Collections.emptySet());
-			if (!conjuncts.isEmpty()) {
+			final STATE state = head.getKey().getState();
+			final List<Term> conjuncts = new ArrayList<>();
+			for (final Term conjunct : annotation.getOrDefault(head.getValue(), Collections.emptySet())) {
+				if (Arrays.stream(conjunct.getFreeVars()).allMatch(tv -> inScope.test(state, tv))) {
+					conjuncts.add(conjunct);
+				} else {
+					outOfScope++;
+				}
+			}
+			byState.computeIfAbsent(state, x -> new ArrayList<>()).add(SmtUtils.and(script, conjuncts));
+		}
+		final Map<STATE, Term> result = new LinkedHashMap<>();
+		int nonTrivial = 0;
+		int severalCallNodes = 0;
+		for (final Map.Entry<STATE, List<Term>> entry : byState.entrySet()) {
+			if (entry.getValue().size() > 1) {
+				severalCallNodes++;
+			}
+			final Term invariant = SmtUtils.or(script, entry.getValue());
+			if (!SmtUtils.isTrueLiteral(invariant)) {
 				nonTrivial++;
 			}
-			result.put(head.getKey(), SmtUtils.and(script, conjuncts));
+			result.put(entry.getKey(), invariant);
 		}
 		mBestWitnessInvariants = Collections.unmodifiableMap(result);
-		mLogger.info("KInduction witness: %d of %d loop head(s) non-trivial, from k=%d, %s, after %d ms", nonTrivial,
-				result.size(), mProvedK, safe ? "proving the program" : "not proving the program",
-				elapsedMillis(start));
+		mLogger.info("KInduction witness: %d of %d loop head(s) non-trivial, from k=%d, %s, after %d ms "
+				+ "(%d conjunct(s) out of scope left out, %d loop head(s) with several call nodes)", nonTrivial,
+				result.size(), mProvedK, safe ? "proving the program" : "not proving the program", elapsedMillis(start),
+				outOfScope, severalCallNodes);
 		return mBestWitnessInvariants;
 	}
 
