@@ -591,6 +591,13 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "external solver command says instead. Supported for z3, cvc4, cvc5 and bitwuzla.";
 	private static final Integer DEF_KINDUCTION_SOLVER_TIMEOUT = 60 * 60 * 1000;
 
+	public static final String LABEL_KINDUCTION_WITNESS_TIMEOUT = "Timeout in ms for the invariants of a k-induction proof";
+	private static final String DESC_KINDUCTION_WITNESS_TIMEOUT =
+			"How long the k-induction worker may spend, after it proved the program, on the invariants of its proof for "
+					+ "the correctness witness. The verdict waits for them at most this long (plus a short grace); "
+					+ "after that it is reported with the invariants found so far, possibly none.";
+	private static final Integer DEF_KINDUCTION_WITNESS_TIMEOUT = 20 * 1000;
+
 	public static final String LABEL_TA_RETIREMENT_HEAP = "Live heap at which a TA worker retires (% of max heap)";
 	private static final String DESC_TA_RETIREMENT_HEAP =
 			"When what is still in use after a garbage collection reaches this share of the JVM's maximum heap, a TA "
@@ -1006,6 +1013,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_KINDUCTION_SOLVER_TIMEOUT, DEF_KINDUCTION_SOLVER_TIMEOUT,
 						DESC_KINDUCTION_SOLVER_TIMEOUT, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_KINDUCTION_WITNESS_TIMEOUT, DEF_KINDUCTION_WITNESS_TIMEOUT,
+						DESC_KINDUCTION_WITNESS_TIMEOUT, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
 				new UltimatePreferenceItem<>(LABEL_TA_RETIREMENT_HEAP, DEF_TA_RETIREMENT_HEAP,
 						DESC_TA_RETIREMENT_HEAP, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(1, 100)),

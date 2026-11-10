@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.lib.kinduction;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -52,9 +52,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
@@ -720,139 +722,389 @@ public class KInduction<LETTER extends IAction, STATE> {
 	// Correctness witness
 	// ------------------------------------------------------------------------------------------------------------
 
+	/** Name of the flags of {@link #houdini}, indexed by the position of their candidate in a round. */
+	private static final String WITNESS_FLAG_NAME = "kiwrefuted";
+
 	/**
-	 * Invariants for a correctness witness: for every loop head {@code h}, {@code J_h && noErrorWithinK(h)}, where
-	 * {@code J_h} is the injected invariant the deciding step case assumed.
+	 * An annotation of the pc nodes of loop heads and waypoints that {@link #houdini} proved inductive, with
+	 * {@code true} at INIT and at every node without an entry.
+	 *
+	 * @param invariants
+	 *            the conjuncts of the invariant of each node, over the program variables' term variables
+	 * @param safe
+	 *            whether the annotation also proves the program: no step from a node other than FINAL that satisfies
+	 *            its invariant reaches FINAL
+	 */
+	private record InductiveAnnotation(Map<Integer, Set<Term>> invariants, boolean safe) {
+	}
+
+	/** {@code flag} is true iff the step ends at the pc node {@code node} and violates {@code candidate}. */
+	private record WitnessFlag(int node, Term candidate, Term flag) {
+	}
+
+	// The full-frame step of the inductiveness checks over mConstants, built on the first use
+	private Term mWitnessStep;
+	// The best invariants for a correctness witness found so far, by loop head; null until there are some. Written by
+	// the thread that computes them, read by the worker when it stops waiting for that thread.
+	private volatile Map<CallNode<STATE>, Term> mBestWitnessInvariants;
+
+	/**
+	 * Invariants for a correctness witness, one per loop head, all proven inductive on the transition system.
 	 * <p>
-	 * {@code noErrorWithinK(h)} alone is not inductive if the step case relied on injected invariants. With them
-	 * it is 1-inductive: from a state that satisfies it, a successor and the next k - 1 states cannot be errors, since
-	 * they are within k steps, the injected invariants hold along the way, since they are inductive themselves, and
-	 * then the step case says that the k-th state cannot be an error either. Rather than trusting this argument, the
-	 * invariants are checked: every transition of the system must preserve them, with {@code true} at INIT and
-	 * {@code false} at FINAL. The waypoints get {@code noErrorWithinK} for that check, but no witness invariant.
-	 * <p>
-	 * For k = 1, {@code noErrorWithinK(h)} follows from {@code J_h} by the step case, so the invariant is just
-	 * {@code J_h}, or {@code true}, and needs no quantifier elimination.
+	 * Every annotation this returns is inductive: INIT has {@code true}, and every step from a node whose invariant
+	 * holds leads to a node whose invariant holds. Each invariant therefore holds in every reachable state at its loop
+	 * head, whether or not the annotation also proves the program, and any subset of them is a valid witness.
+	 * <ol>
+	 * <li>For k = 1 without injected invariants, the step case assumed nothing: {@code true} at every loop head is
+	 * inductive and proves the program. Nothing is checked.
+	 * <li>Otherwise the candidates are the conjuncts of the injected invariants the deciding step case assumed.
+	 * {@link #houdini} keeps the largest inductive subset. For k = 1 they prove the program.
+	 * <li>For k &gt; 1 they usually do not. Then each node gets {@code noErrorWithinK} as further candidates, computed by
+	 * quantifier elimination. From a state that satisfies {@code J && noErrorWithinK}, a successor and the next k - 1
+	 * states cannot be errors, since they are within k steps, the injected invariants J hold along the way, since they
+	 * are inductive themselves, and the step case says that the k-th state cannot be an error either. So together they
+	 * are 1-inductive, and {@link #houdini} checks it. If the timer runs out during this step, the result of step 2
+	 * stands.
+	 * </ol>
+	 * The result of every step that is done is also kept for {@link #getBestWitnessInvariants()}, for a caller that stops
+	 * waiting: quantifier elimination does not always notice the timer.
 	 * <p>
 	 * Must be called after the constructor, i.e. when the script is not locked: quantifier elimination uses it.
-	 *
-	 * @param services
-	 *            for the quantifier elimination and the check of the invariants, whose timer bounds how long this may
-	 *            take: once it runs out, a running check-sat is interrupted, which needs an external solver
+	 * <p>
 	 * The system is flat: the invariant of a loop head of a callee may mention the variables of its callers, and a
 	 * callee that is unfolded at several call sites has one loop head per call site. Whether that fits the program is
 	 * for the caller to decide.
 	 *
+	 * @param services
+	 *            for the quantifier elimination and the inductiveness checks, whose timer bounds how long this may take:
+	 *            once it runs out, a running check-sat is interrupted, which needs an external solver
 	 * @return for every loop head its invariant, quantifier-free and native to the worker's {@link ManagedScript}, or
-	 *         empty if the program was not proven safe or the invariants cannot be put into a witness: a quantifier
-	 *         that could not be eliminated, an old variable, or a failed check. All or nothing, since a partial
-	 *         annotation is not inductive.
+	 *         empty if the program was not proven safe or the solver could not decide whether the candidates are
+	 *         inductive
+	 * @throws ToolchainCanceledException
+	 *             if the timer ran out before any annotation was proven inductive
 	 */
 	public Optional<Map<CallNode<STATE>, Term>> computeWitnessInvariants(final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique) {
 		if (!mSafe) {
 			return Optional.empty();
 		}
-		final Script script = mWorkerMgdScript.getScript();
-		// Throws unless the solver is an external process, the only kind whose check-sat isInductive can interrupt.
-		ExternalSolverInterrupter.findScriptor(script);
-		final Set<Term> oldVarConstants = new LinkedHashSet<>();
-		mSystem.getOldVars().forEach(pv -> oldVarConstants.add(pv.getDefaultConstant()));
-		final SubtermPropertyChecker mentionsOldVar = new SubtermPropertyChecker(oldVarConstants::contains);
-
-		// Not the formula of a query: over term variables every shared subformula would hold its free variables, and
-		// quantifier elimination does badly on the variables a step has inside.
-		final BiFunction<Integer, StepVars, Term> composedStep = mSystem.composeSteps(services, mLogger, mWorkerMgdScript);
-		final Map<Integer, Term> invariants = new LinkedHashMap<>();
-		invariants.put(PcTransitionSystem.INIT, script.term("true"));
-		invariants.put(PcTransitionSystem.FINAL, script.term("false"));
-		final Map<Integer, CallNode<STATE>> nodes = new LinkedHashMap<>();
-		mSystem.getHeadNodes().forEach((head, node) -> nodes.put(node, head));
-		mSystem.getWaypointNodes().forEach((waypoint, node) -> nodes.put(node, waypoint));
-		for (final Map.Entry<Integer, CallNode<STATE>> entry : nodes.entrySet()) {
-			final int node = entry.getKey();
-			final Invariant injected = mProofInvariants.get(node);
-			final Term invariant;
-			if (mProvedK == 1) {
-				// The step case of k = 1 says that no transition leads from a state that is neither INIT nor FINAL and
-				// satisfies the injected invariants to FINAL, so noErrorWithinK(node) follows from J_node, or holds
-				// outright. Eliminating its quantifiers - the whole loop body, whose ite removal ran for minutes - would
-				// only give back an equivalent of J_node.
-				invariant = injected == null ? script.term("true") : injected.term();
-			} else {
-				final Term noError = noErrorWithinK(node, composedStep);
-				final Term withQuantifiers = injected == null ? noError : SmtUtils.and(script, injected.term(), noError);
-				// Quantifier elimination expects its input in commuhash normal form.
-				invariant = PartialQuantifierElimination.eliminate(services, mWorkerMgdScript,
-						CommuhashNormalFormTransformer.apply(script, withQuantifiers), simplificationTechnique);
-				if (!QuantifierUtils.isQuantifierFree(invariant)) {
-					return noWitness("could not eliminate the quantifiers of the invariant of %s", entry.getValue());
-				}
-			}
-			if (mentionsOldVar.isSatisfiedBySomeSubterm(invariant)) {
-				return noWitness("the invariant of %s mentions an old variable", entry.getValue());
-			}
-			invariants.put(node, invariant);
+		final long start = System.nanoTime();
+		final Map<Integer, Set<Term>> candidates = witnessCandidates();
+		mLogger.info("KInduction witness: proof at k=%d, %d candidate conjunct(s) at %d pc node(s)", mProvedK,
+				countConjuncts(candidates), candidates.size());
+		if (mProvedK == 1 && candidates.isEmpty()) {
+			mLogger.info("KInduction witness: k=1 without injected invariants, every loop head gets true");
+			return Optional.of(publishWitness(Collections.emptyMap(), true, start));
 		}
-		if (!isInductive(services, invariants, composedStep)) {
+		// Throws unless the solver is an external process, the only kind whose check-sat houdini can interrupt.
+		ExternalSolverInterrupter.findScriptor(mWorkerMgdScript.getScript());
+
+		// Without candidates there is nothing to check: true everywhere is inductive, and for k > 1 it does not prove
+		// the program, or the step case of k = 1 would have.
+		final InductiveAnnotation injected = candidates.isEmpty() ? new InductiveAnnotation(Collections.emptyMap(), false)
+				: houdini(services, candidates, "injected invariants");
+		if (injected == null) {
 			return Optional.empty();
 		}
-		final Map<CallNode<STATE>, Term> result = new LinkedHashMap<>();
-		mSystem.getHeadNodes().forEach((head, node) -> result.put(head, invariants.get(node)));
-		mLogger.info("KInduction: invariants for a correctness witness at %d loop head(s), from k=%d", result.size(),
-				mProvedK);
+		Map<CallNode<STATE>, Term> result = publishWitness(injected.invariants(), injected.safe(), start);
+		if (injected.safe() || mProvedK == 1) {
+			return Optional.of(result);
+		}
+		try {
+			final Map<Integer, Set<Term>> strengthened = strengthenWithNoErrorWithinK(services,
+					simplificationTechnique, injected.invariants());
+			final InductiveAnnotation withNoError = houdini(services, strengthened, "with noErrorWithinK");
+			if (withNoError != null) {
+				result = publishWitness(withNoError.invariants(), withNoError.safe(), start);
+			}
+		} catch (final ToolchainCanceledException e) {
+			mLogger.warn("KInduction witness: the timer ran out while strengthening with noErrorWithinK after %d ms, "
+					+ "keeping the invariants without it", elapsedMillis(start));
+		}
 		return Optional.of(result);
 	}
 
-	private <T> Optional<T> noWitness(final String reason, final Object... args) {
-		mLogger.warn("KInduction: no correctness witness invariants, " + reason, args);
-		return Optional.empty();
+	/**
+	 * @return the best invariants for a correctness witness that {@link #computeWitnessInvariants} has found so far, by
+	 *         loop head; null if it has not proven any yet. Safe to call from another thread.
+	 */
+	public Map<CallNode<STATE>, Term> getBestWitnessInvariants() {
+		return mBestWitnessInvariants;
+	}
+
+	/** @return the k of the deciding step case, -1 unless the program was proven safe */
+	public int getProvedK() {
+		return mProvedK;
 	}
 
 	/**
-	 * @return whether every transition of the system leads from a state that satisfies the invariant of its source
-	 *         to one that satisfies the invariant of its target
+	 * @return the conjuncts of the injected invariants the deciding step case assumed, per pc node, without {@code true}
+	 *         and without those that mention an old variable, which a witness cannot express at a loop head
 	 */
-	private boolean isInductive(final IUltimateServiceProvider services, final Map<Integer, Term> invariants,
-			final BiFunction<Integer, StepVars, Term> step) {
+	private Map<Integer, Set<Term>> witnessCandidates() {
+		final Map<Integer, Set<Term>> candidates = new LinkedHashMap<>();
+		for (final Map.Entry<Integer, Invariant> entry : mProofInvariants.entrySet()) {
+			addConjuncts(candidates, entry.getKey(), entry.getValue().term());
+		}
+		return candidates;
+	}
+
+	private void addConjuncts(final Map<Integer, Set<Term>> candidates, final int node, final Term invariant) {
+		final Set<Term> oldVarConstants = new LinkedHashSet<>();
+		mSystem.getOldVars().forEach(pv -> oldVarConstants.add(pv.getDefaultConstant()));
+		final SubtermPropertyChecker mentionsOldVar = new SubtermPropertyChecker(oldVarConstants::contains);
+		for (final Term conjunct : SmtUtils.getConjuncts(invariant)) {
+			if (SmtUtils.isTrueLiteral(conjunct)) {
+				continue;
+			}
+			if (mentionsOldVar.isSatisfiedBySomeSubterm(conjunct)) {
+				mLogger.info("KInduction witness: dropping the candidate %s of node %d, it mentions an old variable",
+						conjunct, node);
+				continue;
+			}
+			if (mQuery.variablesOf(conjunct) == null) {
+				mLogger.info("KInduction witness: dropping the candidate %s of node %d, it mentions a variable "
+						+ "which occurs in no transition", conjunct, node);
+				continue;
+			}
+			candidates.computeIfAbsent(node, x -> new LinkedHashSet<>()).add(conjunct);
+		}
+	}
+
+	/**
+	 * @return {@code annotation} with the conjuncts of {@code noErrorWithinK} added at every loop head and waypoint
+	 *         whose quantifiers could be eliminated
+	 */
+	private Map<Integer, Set<Term>> strengthenWithNoErrorWithinK(final IUltimateServiceProvider services,
+			final SimplificationTechnique simplificationTechnique, final Map<Integer, Set<Term>> annotation) {
 		final Script script = mWorkerMgdScript.getScript();
+		final long composeStart = System.nanoTime();
+		// Not the formula of a query: over term variables every shared subformula would hold its free variables, and
+		// quantifier elimination does badly on the variables a step has inside.
+		final BiFunction<Integer, StepVars, Term> composedStep =
+				mSystem.composeSteps(services, mLogger, mWorkerMgdScript);
+		mLogger.info("KInduction witness: composed the steps in %d ms", elapsedMillis(composeStart));
+		final Map<Integer, Set<Term>> result = new LinkedHashMap<>();
+		annotation.forEach((node, conjuncts) -> result.put(node, new LinkedHashSet<>(conjuncts)));
+		final Set<Integer> nodes = new LinkedHashSet<>(mSystem.getHeadNodes().values());
+		nodes.addAll(mSystem.getWaypointNodes().values());
+		for (final int node : nodes) {
+			final long start = System.nanoTime();
+			final Term noError = noErrorWithinK(node, composedStep);
+			final Set<Term> known = annotation.getOrDefault(node, Collections.emptySet());
+			// The known invariant is context for the simplification; its conjuncts come back and are already there.
+			final Term withQuantifiers = SmtUtils.and(script, SmtUtils.and(script, known), noError);
+			// Quantifier elimination expects its input in commuhash normal form.
+			final Term eliminated = PartialQuantifierElimination.eliminate(services, mWorkerMgdScript,
+					CommuhashNormalFormTransformer.apply(script, withQuantifiers), simplificationTechnique);
+			if (!QuantifierUtils.isQuantifierFree(eliminated)) {
+				mLogger.info("KInduction witness: node %d keeps its invariant, the quantifiers of noErrorWithinK could "
+						+ "not be eliminated (%d ms)", node, elapsedMillis(start));
+				continue;
+			}
+			mLogger.info("KInduction witness: noErrorWithinK of node %d in %d ms, DAG size %d", node,
+					elapsedMillis(start), PcTransitionSystem.dagSize(eliminated));
+			addConjuncts(result, node, eliminated);
+		}
+		return result;
+	}
+
+	/**
+	 * Houdini: the largest subset of {@code candidates} that is inductive, with {@code true} at INIT. One query checks
+	 * all remaining candidates at once:
+	 *
+	 * <pre>
+	 *   AND_node (pc_0 = node  ->  candidates(node))  at step 0
+	 *   and step(0)
+	 *   and AND_(node,c) (b_(node,c) = (pc_1 = node and not c))  at step 1
+	 *   and OR_(node,c) b_(node,c)
+	 * </pre>
+	 *
+	 * If it is satisfiable, the candidates whose flag is true in the model are dropped and the query is repeated; each
+	 * round drops at least one. The model is only asked for the flags, which parse back as themselves, see
+	 * {@code InductivenessChecker}. A last query asks whether a step from a node other than FINAL leads to FINAL.
+	 * <p>
+	 * Every query is quantifier-free: the variables of the two states are the constants of k-induction's steps 0 and 1.
+	 *
+	 * @param phase
+	 *            what the candidates are, for the log
+	 * @return the inductive subset, or null if the solver could not decide a query
+	 */
+	private InductiveAnnotation houdini(final IUltimateServiceProvider services,
+			final Map<Integer, Set<Term>> candidates, final String phase) {
+		final long start = System.nanoTime();
+		final Script script = mWorkerMgdScript.getScript();
+		final Map<Integer, Set<Term>> remaining = new LinkedHashMap<>();
+		candidates.forEach((node, conjuncts) -> remaining.put(node, new LinkedHashSet<>(conjuncts)));
+		final int numCandidates = countConjuncts(remaining);
+		final Term pc0 = mConstants.pc(0);
+		final Term pc1 = mConstants.pc(1);
+		final Term fin = mSystem.pcValue(script, PcTransitionSystem.FINAL);
+		int rounds = 0;
 		mWorkerMgdScript.lock(mKILock);
 		try {
-			for (final List<Integer> pair : mSystem.getStepPairs()) {
-				final int from = pair.get(0);
-				final int to = pair.get(1);
-				if (!invariants.containsKey(from) || !invariants.containsKey(to)) {
-					mLogger.warn("KInduction: no correctness witness invariants, the step from node %d to %d has a node "
-							+ "without one", from, to);
-					return false;
+			// Everything that declares a constant has to happen before the push, see IndexedConstantVars.
+			if (mWitnessStep == null) {
+				mWitnessStep = mSystem.step(0, mConstants, mWorkerMgdScript);
+			}
+			while (true) {
+				final List<Term> pre = witnessPreconditions(remaining);
+				final List<WitnessFlag> flags = new ArrayList<>();
+				final List<Term> definitions = new ArrayList<>();
+				for (final Map.Entry<Integer, Set<Term>> entry : remaining.entrySet()) {
+					final Term atNode = SmtUtils.binaryEquality(script, pc1, mSystem.pcValue(script, entry.getKey()));
+					for (final Term candidate : entry.getValue()) {
+						final Term flag = PredicateUtils.getIndexedConstant(WITNESS_FLAG_NAME,
+								SmtSortUtils.getBoolSort(script), flags.size(), mIndexedConstantsWorkerScript, script);
+						flags.add(new WitnessFlag(entry.getKey(), candidate, flag));
+						definitions.add(SmtUtils.binaryEquality(script, flag,
+								SmtUtils.and(script, atNode, SmtUtils.not(script, instantiate(candidate, 1)))));
+					}
 				}
-				final ConsecutionVars vars = new ConsecutionVars(from, to);
-				final Map<Term, Term> toSuccessor = new HashMap<>();
-				for (final IProgramVar pv : mSystem.getVars()) {
-					toSuccessor.put(pv.getTermVariable(), vars.var(pv, 1));
+				if (flags.isEmpty()) {
+					break;
 				}
-				final Term post = PureSubstitution.apply(mWorkerMgdScript, toSuccessor, invariants.get(to));
-				final Term violation = SmtUtils.and(script, invariants.get(from),
-						step.apply(0, vars), SmtUtils.not(script, post));
-				mWorkerMgdScript.push(mKILock, 1);
+				rounds++;
 				final LBool result;
+				mWorkerMgdScript.push(mKILock, 1);
 				try {
-					mWorkerMgdScript.assertTerm(mKILock, SmtUtils.quantifier(script, QuantifiedFormula.EXISTS,
-							Arrays.asList(violation.getFreeVars()), violation));
+					mWorkerMgdScript.assertTerm(mKILock, mWitnessStep);
+					for (final Term term : pre) {
+						mWorkerMgdScript.assertTerm(mKILock, term);
+					}
+					for (final Term term : definitions) {
+						mWorkerMgdScript.assertTerm(mKILock, term);
+					}
+					mWorkerMgdScript.assertTerm(mKILock,
+							SmtUtils.or(script, flags.stream().map(WitnessFlag::flag).toList()));
 					result = checkSatWithin(services, "checking that the witness invariants are inductive");
+					if (result == LBool.SAT) {
+						dropRefuted(remaining, flags);
+					}
 				} finally {
 					mWorkerMgdScript.pop(mKILock, 1);
 				}
-				if (result != LBool.UNSAT) {
-					mLogger.warn("KInduction: no correctness witness invariants, the transition from node %d to %d "
-							+ "does not preserve them (%s)", from, to, result);
-					return false;
+				if (result == LBool.UNSAT) {
+					break;
+				}
+				if (result == LBool.UNKNOWN) {
+					mLogger.warn("KInduction witness: the solver could not decide whether the %s are inductive", phase);
+					return null;
 				}
 			}
+			remaining.values().removeIf(Set::isEmpty);
+
+			final List<Term> pre = witnessPreconditions(remaining);
+			final LBool safety;
+			mWorkerMgdScript.push(mKILock, 1);
+			try {
+				mWorkerMgdScript.assertTerm(mKILock, mWitnessStep);
+				for (final Term term : pre) {
+					mWorkerMgdScript.assertTerm(mKILock, term);
+				}
+				mWorkerMgdScript.assertTerm(mKILock, SmtUtils.not(script, SmtUtils.binaryEquality(script, pc0, fin)));
+				mWorkerMgdScript.assertTerm(mKILock, SmtUtils.binaryEquality(script, pc1, fin));
+				safety = checkSatWithin(services, "checking that the witness invariants exclude errors");
+			} finally {
+				mWorkerMgdScript.pop(mKILock, 1);
+			}
+			final boolean safe = safety == LBool.UNSAT;
+			mLogger.info("KInduction witness: %s: %d of %d candidate conjunct(s) inductive after %d round(s), %s, %d ms",
+					phase, countConjuncts(remaining), numCandidates, rounds,
+					safe ? "they prove the program" : "they do not prove the program (" + safety + ")",
+					elapsedMillis(start));
+			return new InductiveAnnotation(remaining, safe);
 		} finally {
 			mWorkerMgdScript.unlock(mKILock);
 		}
-		return true;
+	}
+
+	/** @return for every node of {@code annotation}: at step 0, if pc is that node, its invariant holds */
+	private List<Term> witnessPreconditions(final Map<Integer, Set<Term>> annotation) {
+		final Script script = mWorkerMgdScript.getScript();
+		final List<Term> result = new ArrayList<>();
+		for (final Map.Entry<Integer, Set<Term>> entry : annotation.entrySet()) {
+			if (entry.getValue().isEmpty()) {
+				continue;
+			}
+			final List<Term> instantiated = new ArrayList<>();
+			for (final Term conjunct : entry.getValue()) {
+				instantiated.add(instantiate(conjunct, 0));
+			}
+			result.add(SmtUtils.implies(script,
+					SmtUtils.binaryEquality(script, mConstants.pc(0), mSystem.pcValue(script, entry.getKey())),
+					SmtUtils.and(script, instantiated)));
+		}
+		return result;
+	}
+
+	/** {@code term} over the program variables' term variables, as a term over the constants of step {@code idx}. */
+	private Term instantiate(final Term term, final int idx) {
+		final Map<IProgramVar, TermVariable> vars = mQuery.variablesOf(term);
+		if (vars == null) {
+			throw new IllegalArgumentException(term + " mentions a variable that is no variable of the system");
+		}
+		final Map<Term, Term> substitution = new HashMap<>();
+		vars.forEach((pv, tv) -> substitution.put(tv, mConstants.var(pv, idx)));
+		return PureSubstitution.apply(mWorkerMgdScript, substitution, term);
+	}
+
+	/** Reads the model of a satisfiable round of {@link #houdini}: drops the candidates whose flag is true. */
+	private void dropRefuted(final Map<Integer, Set<Term>> remaining, final List<WitnessFlag> flags) {
+		final Map<Term, Term> values =
+				SmtUtils.getValues(mWorkerMgdScript.getScript(), flags.stream().map(WitnessFlag::flag).toList());
+		boolean dropped = false;
+		for (final WitnessFlag flag : flags) {
+			final Term value = values.get(flag.flag());
+			if (value == null) {
+				throw new AssertionError("the model has no value for the flag " + flag.flag() + " of "
+						+ flag.candidate() + " at node " + flag.node() + ", only for " + values.keySet());
+			}
+			if (SmtUtils.isTrueLiteral(value)) {
+				remaining.get(flag.node()).remove(flag.candidate());
+				dropped = true;
+			} else if (!SmtUtils.isFalseLiteral(value)) {
+				throw new AssertionError("the model gives " + value + " for the flag " + flag.flag() + " of "
+						+ flag.candidate() + " at node " + flag.node() + ", not a Boolean literal");
+			}
+		}
+		if (!dropped) {
+			throw new AssertionError("the model satisfies the query, but gives the flag of every candidate the value "
+					+ "false");
+		}
+	}
+
+	/**
+	 * Makes {@code annotation} the best witness so far.
+	 *
+	 * @return its invariants by loop head, {@code true} where it has none
+	 */
+	private Map<CallNode<STATE>, Term> publishWitness(final Map<Integer, Set<Term>> annotation, final boolean safe,
+			final long start) {
+		final Script script = mWorkerMgdScript.getScript();
+		final Map<CallNode<STATE>, Term> result = new LinkedHashMap<>();
+		int nonTrivial = 0;
+		for (final Map.Entry<CallNode<STATE>, Integer> head : mSystem.getHeadNodes().entrySet()) {
+			final Set<Term> conjuncts = annotation.getOrDefault(head.getValue(), Collections.emptySet());
+			if (!conjuncts.isEmpty()) {
+				nonTrivial++;
+			}
+			result.put(head.getKey(), SmtUtils.and(script, conjuncts));
+		}
+		mBestWitnessInvariants = Collections.unmodifiableMap(result);
+		mLogger.info("KInduction witness: %d of %d loop head(s) non-trivial, from k=%d, %s, after %d ms", nonTrivial,
+				result.size(), mProvedK, safe ? "proving the program" : "not proving the program",
+				elapsedMillis(start));
+		return mBestWitnessInvariants;
+	}
+
+	private static int countConjuncts(final Map<Integer, Set<Term>> annotation) {
+		return annotation.values().stream().mapToInt(Set::size).sum();
+	}
+
+	private static long elapsedMillis(final long startNanos) {
+		return (System.nanoTime() - startNanos) / 1_000_000;
 	}
 
 	/**
@@ -918,41 +1170,6 @@ public class KInduction<LETTER extends IAction, STATE> {
 		}
 		if (interrupted) {
 			Thread.currentThread().interrupt();
-		}
-	}
-
-	/**
-	 * One step from the node {@code from} to the node {@code to}: step 0 has the program variables' own term
-	 * variables, step 1 and the auxiliary variables are fresh.
-	 */
-	private final class ConsecutionVars implements StepVars {
-		private final int mFrom;
-		private final int mTo;
-		private final Map<String, TermVariable> mFresh = new LinkedHashMap<>();
-
-		ConsecutionVars(final int from, final int to) {
-			mFrom = from;
-			mTo = to;
-		}
-
-		private TermVariable fresh(final String key, final Sort sort) {
-			return mFresh.computeIfAbsent(key, k -> mWorkerMgdScript.constructFreshTermVariable("kiw", sort));
-		}
-
-		@Override
-		public Term var(final IProgramVar pv, final int idx) {
-			return idx == 0 ? pv.getTermVariable()
-					: fresh("v_" + pv.getGloballyUniqueId(), pv.getTermVariable().getSort());
-		}
-
-		@Override
-		public Term pc(final int idx) {
-			return mSystem.pcValue(mWorkerMgdScript.getScript(), idx == 0 ? mFrom : mTo);
-		}
-
-		@Override
-		public Term aux(final int id, final TermVariable auxVar, final int idx) {
-			return fresh("aux_" + id + "_" + auxVar.getName(), auxVar.getSort());
 		}
 	}
 
