@@ -27,7 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.kinduction;
 
+import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -59,6 +61,20 @@ public interface IInvariantSupplier<STATE> {
 	 *         reaches {@code loopHead}, or {@link Optional#empty()} if none is available.
 	 */
 	Optional<Term> getInvariant(STATE loopHead, ManagedScript targetScript);
+
+	/**
+	 * Candidates for the invariants of a correctness witness at {@code node}, a loop head or waypoint: conjuncts that
+	 * may or may not be invariants, e.g. those the supplier knows but does not give k-induction, or could not prove
+	 * yet. Unlike {@link #getInvariant}, nothing here needs to be sound: k-induction checks every candidate before it
+	 * puts one into a witness. Answers from what the supplier has learned so far, without waiting.
+	 *
+	 * @param targetScript
+	 *            the {@link ManagedScript} the returned terms must be native to
+	 * @return conjuncts over {@code node}'s own {@code IProgramVar}s
+	 */
+	default Set<Term> getWitnessCandidates(final STATE node, final ManagedScript targetScript) {
+		return Collections.emptySet();
+	}
 
 	/**
 	 * Takes whatever the supplier has learned since the last call, without waiting. {@link #getInvariant} answers from

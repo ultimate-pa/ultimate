@@ -756,9 +756,11 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * head, whether or not the annotation also proves the program, and any subset of them is a valid witness.
 	 * <ol>
 	 * <li>For k = 1 without injected invariants, the step case assumed nothing: {@code true} at every loop head is
-	 * inductive and proves the program. Nothing is checked.
-	 * <li>Otherwise the candidates are the conjuncts of the injected invariants the deciding step case assumed.
-	 * {@link #houdini} keeps the largest inductive subset. For k = 1 they prove the program.
+	 * inductive and proves the program. Without supplied candidates (step 2), that is the result.
+	 * <li>The candidates are the conjuncts of the injected invariants the deciding step case assumed, and the invariant
+	 * supplier's candidates for witness invariants ({@link IInvariantSupplier#getWitnessCandidates}), which the proof did
+	 * not need but make the witness stronger. {@link #houdini} keeps the largest inductive subset, which contains the
+	 * injected invariants if they are inductive on their own. For k = 1 they prove the program.
 	 * <li>For k &gt; 1 they usually do not. Then each node gets {@code noErrorWithinK} as further candidates, computed by
 	 * quantifier elimination. From a state that satisfies {@code J && noErrorWithinK}, a successor and the next k - 1
 	 * states cannot be errors, since they are within k steps, the injected invariants J hold along the way, since they
@@ -790,30 +792,46 @@ public class KInduction<LETTER extends IAction, STATE> {
 			return Optional.empty();
 		}
 		final long start = System.nanoTime();
-		final Map<Integer, Set<Term>> candidates = witnessCandidates();
-		mLogger.info("KInduction witness: proof at k=%d, %d candidate conjunct(s) at %d pc node(s)", mProvedK,
-				countConjuncts(candidates), candidates.size());
-		if (mProvedK == 1 && candidates.isEmpty()) {
+		final Map<Integer, Set<Term>> injected = injectedCandidates();
+		final Map<Integer, Set<Term>> candidates = suppliedCandidates(injected);
+		mLogger.info("KInduction witness: proof at k=%d, %d injected and %d supplied candidate conjunct(s)", mProvedK,
+				countConjuncts(injected), countConjuncts(candidates) - countConjuncts(injected));
+		Map<CallNode<STATE>, Term> result = null;
+		if (mProvedK == 1 && injected.isEmpty()) {
+			// The step case of k = 1 assumed nothing, so true at every loop head is inductive and proves the program.
 			mLogger.info("KInduction witness: k=1 without injected invariants, every loop head gets true");
-			return Optional.of(publishWitness(Collections.emptyMap(), true, start));
+			result = publishWitness(Collections.emptyMap(), true, start);
+			if (candidates.isEmpty()) {
+				return Optional.of(result);
+			}
 		}
 		// Throws unless the solver is an external process, the only kind whose check-sat houdini can interrupt.
 		ExternalSolverInterrupter.findScriptor(mWorkerMgdScript.getScript());
 
 		// Without candidates there is nothing to check: true everywhere is inductive, and for k > 1 it does not prove
 		// the program, or the step case of k = 1 would have.
-		final InductiveAnnotation injected = candidates.isEmpty() ? new InductiveAnnotation(Collections.emptyMap(), false)
-				: houdini(services, candidates, "injected invariants");
-		if (injected == null) {
-			return Optional.empty();
+		final InductiveAnnotation checked;
+		try {
+			checked = candidates.isEmpty() ? new InductiveAnnotation(Collections.emptyMap(), false)
+					: houdini(services, candidates, "injected and supplied invariants");
+		} catch (final ToolchainCanceledException e) {
+			if (result == null) {
+				throw e;
+			}
+			mLogger.warn("KInduction witness: the timer ran out while checking the supplied invariants after %d ms, "
+					+ "keeping true", elapsedMillis(start));
+			return Optional.of(result);
 		}
-		Map<CallNode<STATE>, Term> result = publishWitness(injected.invariants(), injected.safe(), start);
-		if (injected.safe() || mProvedK == 1) {
+		if (checked == null) {
+			return Optional.ofNullable(result);
+		}
+		result = publishWitness(checked.invariants(), checked.safe(), start);
+		if (checked.safe() || mProvedK == 1) {
 			return Optional.of(result);
 		}
 		try {
 			final Map<Integer, Set<Term>> strengthened = strengthenWithNoErrorWithinK(services,
-					simplificationTechnique, injected.invariants());
+					simplificationTechnique, checked.invariants());
 			final InductiveAnnotation withNoError = houdini(services, strengthened, "with noErrorWithinK");
 			if (withNoError != null) {
 				result = publishWitness(withNoError.invariants(), withNoError.safe(), start);
@@ -842,10 +860,29 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * @return the conjuncts of the injected invariants the deciding step case assumed, per pc node, without {@code true}
 	 *         and without those that mention an old variable, which a witness cannot express at a loop head
 	 */
-	private Map<Integer, Set<Term>> witnessCandidates() {
+	private Map<Integer, Set<Term>> injectedCandidates() {
 		final Map<Integer, Set<Term>> candidates = new LinkedHashMap<>();
 		for (final Map.Entry<Integer, Invariant> entry : mProofInvariants.entrySet()) {
 			addConjuncts(candidates, entry.getKey(), entry.getValue().term());
+		}
+		return candidates;
+	}
+
+	/**
+	 * @return {@code injected} together with the invariant supplier's candidates for witness invariants at every loop
+	 *         head and waypoint, which the proof did not need: what the supplier learned after the proof, what it
+	 *         withheld from k-induction, and what it could not prove yet. None of them is trusted, {@link #houdini}
+	 *         checks them.
+	 */
+	private Map<Integer, Set<Term>> suppliedCandidates(final Map<Integer, Set<Term>> injected) {
+		final Map<Integer, Set<Term>> candidates = new LinkedHashMap<>();
+		injected.forEach((node, conjuncts) -> candidates.put(node, new LinkedHashSet<>(conjuncts)));
+		final Map<CallNode<STATE>, Integer> nodes = new LinkedHashMap<>(mSystem.getHeadNodes());
+		nodes.putAll(mSystem.getWaypointNodes());
+		for (final Map.Entry<CallNode<STATE>, Integer> entry : nodes.entrySet()) {
+			for (final Term supplied : mInvariantSupplier.getWitnessCandidates(entry.getKey(), mWorkerMgdScript)) {
+				addConjuncts(candidates, entry.getValue(), supplied);
+			}
 		}
 		return candidates;
 	}

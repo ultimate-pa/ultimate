@@ -29,8 +29,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -94,6 +96,8 @@ public final class InvariantSubscription implements IInvariantSupplier<CallNode<
 	private final Map<IcfgLocation, Term> mInvariants = new HashMap<>();
 	// term of mSource -> its copy in mTarget, so that an unchanged invariant is always the very same object
 	private final Map<Term, Term> mTransferred = new HashMap<>();
+	// The supplier's latest candidates for witness invariants, per location, as terms of mSource; replaced as a whole
+	private volatile Map<IcfgLocation, Set<Term>> mWitnessCandidates = Map.of();
 	private TermTransferrer mTransferrer;
 	// Where the transition system of k-induction goes, shared by every subscription of the supplier: the first one
 	// built is the supplier's, see InvariantSupplier#getChecker.
@@ -136,6 +140,33 @@ public final class InvariantSubscription implements IInvariantSupplier<CallNode<
 	 */
 	void offer(final int version, final Map<IcfgLocation, Term> invariants) {
 		mQueue.add(new Update(version, invariants));
+	}
+
+	/**
+	 * Called by the supplier.
+	 *
+	 * @param candidates
+	 *            all its current candidates for witness invariants, per location, immutable
+	 */
+	void offerWitnessCandidates(final Map<IcfgLocation, Set<Term>> candidates) {
+		mWitnessCandidates = candidates;
+	}
+
+	@Override
+	public Set<Term> getWitnessCandidates(final CallNode<IPredicate> node, final ManagedScript targetScript) {
+		if (targetScript != mTarget) {
+			throw new IllegalArgumentException(
+					"this subscription delivers terms of " + mTarget + ", but they were asked for " + targetScript);
+		}
+		final Set<Term> candidates = mWitnessCandidates.get(InvariantSupplier.locationOf(node.getState()));
+		if (candidates == null) {
+			return Set.of();
+		}
+		final Set<Term> result = new LinkedHashSet<>();
+		for (final Term candidate : candidates) {
+			result.add(mTransferred.computeIfAbsent(candidate, this::transfer));
+		}
+		return result;
 	}
 
 	@Override

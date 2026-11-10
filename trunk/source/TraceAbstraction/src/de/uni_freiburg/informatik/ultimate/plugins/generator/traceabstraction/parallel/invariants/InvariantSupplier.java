@@ -156,6 +156,8 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 	private final List<InvariantSubscription> mSubscriptions = new ArrayList<>();
 	private final Map<IcfgLocation, Term> mPublished = new HashMap<>();
 	private int mPublishedVersion;
+	// What every subscription got last from offerWitnessCandidates
+	private Map<IcfgLocation, Set<Term>> mWitnessCandidates = Map.of();
 
 	// Everything below is only touched by the supplier thread.
 	private final Map<ManagedScript, TermTransferrer> mTransferrers = new IdentityHashMap<>();
@@ -260,6 +262,7 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 			if (!mPublished.isEmpty()) {
 				subscription.offer(mPublishedVersion, Map.copyOf(mPublished));
 			}
+			subscription.offerWitnessCandidates(mWitnessCandidates);
 			mSubscriptions.add(subscription);
 		}
 		return subscription;
@@ -371,6 +374,27 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 					+ "%d waiting for a retry", sequences, checked, proven, mRetryPool.size());
 		}
 		publish(changed);
+		offerWitnessCandidates();
+	}
+
+	/**
+	 * Gives every subscription all candidates for the invariants of a correctness witness: everything known, also what
+	 * {@link #publish} withholds or a rollback dropped (both for the speed of k-induction, not because it might not
+	 * hold), and the candidates waiting for a retry. k-induction checks them before it uses any.
+	 */
+	private void offerWitnessCandidates() {
+		final Map<IcfgLocation, Set<Term>> candidates = new HashMap<>(known());
+		for (final Candidate candidate : mRetryPool) {
+			candidates.computeIfAbsent(candidate.location(), x -> new LinkedHashSet<>()).add(candidate.term());
+		}
+		final Map<IcfgLocation, Set<Term>> frozen = new HashMap<>();
+		candidates.forEach((location, terms) -> frozen.put(location, Collections.unmodifiableSet(terms)));
+		synchronized (mSubscriptions) {
+			mWitnessCandidates = Collections.unmodifiableMap(frozen);
+			for (final InvariantSubscription subscription : mSubscriptions) {
+				subscription.offerWitnessCandidates(mWitnessCandidates);
+			}
+		}
 	}
 
 	private void takeTrusted(final TrustedInvariants message, final Set<IcfgLocation> changed) {
