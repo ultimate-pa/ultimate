@@ -155,6 +155,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 	// the letters a witness can name from it
 	private final boolean mWaypointsFromModel;
 	private List<List<CallNode<STATE>>> mChains;
+	// Why the chains, or some of them (null in mChains), could not be read; null if they all could
+	private RuntimeException mChainFailure;
 	private KInductionWaypoints<LETTER, STATE> mWaypoints;
 
 	private final CfgSmtToolkit mCsToolkit;
@@ -270,7 +272,16 @@ public class KInduction<LETTER extends IAction, STATE> {
 			mSafe = verdict == Verdict.SAFE;
 			mSolverReturnedUnknown = verdict == Verdict.UNKNOWN;
 			if (verdict == Verdict.UNSAFE && mWaypointsFromModel) {
-				mWaypoints = new KInductionWaypoints<>(mAbstraction, mChains, mComposedEdges, mStackPointer != null);
+				mWaypoints = new KInductionWaypoints<>(mAbstraction, mChains, mChainFailure, mComposedEdges,
+						mStackPointer != null);
+				if (mWaypoints.getLevel() != KInductionWaypoints.Level.FULL) {
+					mLogger.warn("KInduction: the waypoints of the model are only good for a witness at level %s (%s)",
+							mWaypoints.getLevel(), mWaypoints.getDegradeCause());
+				}
+				if (mWaypoints.isErrorStateGuessed()) {
+					mLogger.warn("KInduction: the model does not say which error state it reaches, reporting %s",
+							mWaypoints.getErrorState());
+				}
 				mLogger.info("KInduction: %d waypoint letter(s) from the model, %d state(s) without one",
 						mWaypoints.getLetters().size(), mWaypoints.getNumSuppressedStates());
 			} else if (verdict == Verdict.UNSAFE) {
@@ -435,16 +446,41 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * Reads the chain of cut-graph states that the model of a satisfiable base case takes in every step. Must be called
 	 * after {@code checkSat} returned {@code sat} and before the {@code pop} of that query. FINAL only stutters, so a step
 	 * that starts there has no chain.
+	 * <p>
+	 * The violation is proved by the {@code sat} alone, the chains only make its witness. So a chain that cannot be read
+	 * is null in the result, and none at all is null, with the first reason in {@link #mChainFailure}: the witness then
+	 * says less (see {@link KInductionWaypoints.Level}), but the verdict stands. A timeout still ends k-induction.
 	 */
 	private List<List<CallNode<STATE>>> readChains(final int k) {
 		final Script script = mWorkerMgdScript.getScript();
-		final int[] pcValues = readPcValues(script, k);
+		final int[] pcValues;
+		try {
+			pcValues = readPcValues(script, k);
+		} catch (final ToolchainCanceledException e) {
+			throw e;
+		} catch (final RuntimeException e) {
+			mLogger.warn("KInduction: violation found, but the pc values of the model cannot be read (%s), the witness "
+					+ "names no waypoint", e);
+			mChainFailure = e;
+			return null;
+		}
 		mLogger.info("KInduction: violation found, pc sequence of the model: %s", Arrays.toString(pcValues));
 		final StepVars declared = mConstants.declaredOnly();
 		final List<List<CallNode<STATE>>> chains = new ArrayList<>(k);
 		for (int j = 0; j < k && pcValues[j] != PcTransitionSystem.FINAL; j++) {
-			chains.add(mSystem.getChainOfStep(j, pcValues[j], pcValues[j + 1], declared, mWorkerMgdScript,
-					term -> holdsInModel(script, term)));
+			try {
+				chains.add(mSystem.getChainOfStep(j, pcValues[j], pcValues[j + 1], declared, mWorkerMgdScript,
+						term -> holdsInModel(script, term)));
+			} catch (final ToolchainCanceledException e) {
+				throw e;
+			} catch (final RuntimeException e) {
+				mLogger.warn("KInduction: could not read the chain of step %d (%s), the witness names at most the "
+						+ "target", j, e);
+				if (mChainFailure == null) {
+					mChainFailure = e;
+				}
+				chains.add(null);
+			}
 		}
 		return chains;
 	}

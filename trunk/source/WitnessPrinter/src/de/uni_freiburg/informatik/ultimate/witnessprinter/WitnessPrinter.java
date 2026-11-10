@@ -210,6 +210,17 @@ public class WitnessPrinter implements IOutput {
 
 		for (final IResultWithFiniteTrace<?, ?> cex : cexResults) {
 			final IProgramExecution<?, ?> backtransPe = backtrans.translateProgramExecution(cex.getProgramExecution());
+			if (backtransPe.getLength() == 0) {
+				// The verifier knows that the error is reachable, but not how (k-induction, when it cannot name the
+				// target): a violation witness without waypoints, which says just that.
+				mLogger.warn("The counterexample \"%s\" has no steps, writing a violation witness without waypoints",
+						cex.getShortDescription());
+				if (createYaml) {
+					suppliers.add(new ResultWitness(filename, YAML,
+							new YamlViolationWitnessGenerator(mLogger, mServices).makeEmptyYamlString(filename), cex));
+				}
+				continue;
+			}
 			if (createGraphML) {
 				final String witness =
 						new GraphMLViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeGraphMLString();

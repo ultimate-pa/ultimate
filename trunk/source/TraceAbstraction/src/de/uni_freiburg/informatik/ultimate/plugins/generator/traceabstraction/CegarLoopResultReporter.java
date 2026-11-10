@@ -140,7 +140,8 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 			reportUnproveableResult(errorLoc, pe, upreasons);
 			return;
 		}
-		assert pe == null || errorLoc == getErrorPP(pe);
+		// An empty execution says only that the error is reachable, e.g. k-induction's when its witness cannot be built
+		assert pe == null || pe.getLength() == 0 || errorLoc == getErrorPP(pe);
 		if (isAngelicallySafe(pe)) {
 			mLogger.info("Ignoring angelically safe counterexample for %s", errorLoc);
 			return;

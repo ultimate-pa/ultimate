@@ -93,6 +93,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IP
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInduction;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionCounterexampleException;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionWaypoints;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionWaypoints.Level;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
 
@@ -268,7 +270,7 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 			return Verdict.SAFE;
 		}
 		if (mPref.kInductionWaypointsFromModel()) {
-			reportWaypoints(kInduction.getWaypoints().getLetters());
+			reportWaypoints(kInduction.getWaypoints());
 			return Verdict.UNSAFE;
 		}
 		// No transfer: the run is built over the worker's own abstraction with worker-script letters, and the
@@ -365,23 +367,77 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 
 	/**
 	 * Registers a violation as {@code Result.UNSAFE} that is known only by the letters a witness can name, see
-	 * {@link de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionWaypoints}. They are a subsequence of the letters
-	 * of the violation, as a program execution without values. Nothing here confirms the violation, the model of
-	 * k-induction is the only evidence.
+	 * {@link KInductionWaypoints}. They are a subsequence of the letters of the violation, as a program execution
+	 * without values. Nothing here confirms the violation, the model of k-induction is the only evidence.
+	 * <p>
+	 * The model proves the violation by itself, so the verdict never depends on the witness: if the letters cannot be
+	 * backtranslated, only the target is reported, and if that fails too, or the target is not known, an empty execution
+	 * at the error location. Each step down is logged with its reason.
 	 */
-	@SuppressWarnings("unchecked")
-	private void reportWaypoints(final List<L> allLetters) {
-		final List<L> letters = withoutInlinedCallBoundaries(allLetters);
-		final IcfgProgramExecution<L> programExecution =
-				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(
-						new Word<>((L[]) letters.toArray(new IIcfgTransition<?>[letters.size()])));
-		programExecution.setOriginCfgScript(mCfgSmtToolkit.getManagedScript());
-		mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
+	private void reportWaypoints(final KInductionWaypoints<L, IPredicate> waypoints) {
+		final List<L> allLetters = waypoints.getLetters();
+		final L target = waypoints.getTargetLetter();
+		IcfgProgramExecution<L> programExecution = null;
+		Level level = waypoints.getLevel();
+		if (level == Level.FULL) {
+			try {
+				programExecution = backtranslatableExecution(withoutInlinedCallBoundaries(allLetters));
+			} catch (final ToolchainCanceledException e) {
+				throw e;
+			} catch (final RuntimeException e) {
+				mLogger.warn("KInduction: the waypoint letters cannot be reported (%s), reporting only the target", e);
+				level = Level.TARGET_ONLY;
+			}
+		}
+		if (level == Level.TARGET_ONLY) {
+			try {
+				programExecution = backtranslatableExecution(withoutInlinedCallBoundaries(List.of(target)));
+			} catch (final ToolchainCanceledException e) {
+				throw e;
+			} catch (final RuntimeException e) {
+				mLogger.warn("KInduction: the target %s cannot be reported (%s), reporting the violation without a "
+						+ "waypoint", target, e);
+				level = Level.EMPTY;
+			}
+		}
+		if (level == Level.EMPTY) {
+			final IcfgLocation errorLocation = programPoint(waypoints.getErrorState());
+			mResultBuilder.addResult(errorLocation, Result.UNSAFE, emptyExecution(), null, null);
+		} else {
+			mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
+		}
 		if (mPref.stopAfterFirstViolation()) {
 			mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
 		}
-		mLogger.info("KInduction: reported a violation with %d waypoint letter(s) of %d, no run was built",
-				letters.size(), allLetters.size());
+		mLogger.info("KInduction: reported a violation with %d waypoint letter(s) of %d (witness level %s), no run was "
+				+ "built", programExecution == null ? 0 : programExecution.getLength(), allLetters.size(), level);
+	}
+
+	/**
+	 * @return the letters as a program execution without values, which the backtranslation has been tried on: the main
+	 *         thread backtranslates it again for the result and the witness, and a failure there would cost the verdict
+	 */
+	@SuppressWarnings("unchecked")
+	private IcfgProgramExecution<L> backtranslatableExecution(final List<L> letters) {
+		final IcfgProgramExecution<L> programExecution = TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(
+				new Word<>((L[]) letters.toArray(new IIcfgTransition<?>[letters.size()])));
+		programExecution.setOriginCfgScript(mCfgSmtToolkit.getManagedScript());
+		mKInductionServices.getBacktranslationService().translateProgramExecution(programExecution);
+		return programExecution;
+	}
+
+	/** An execution of no letters, as Sifa reports one: the backtranslation accepts only an IcfgProgramExecution. */
+	@SuppressWarnings("unchecked")
+	private IProgramExecution<L, Term> emptyExecution() {
+		return (IProgramExecution<L, Term>) (IProgramExecution<?, Term>) IcfgProgramExecution.create(IcfgEdge.class);
+	}
+
+	private static IcfgLocation programPoint(final IPredicate state) {
+		if (!(state instanceof ISLPredicate)) {
+			throw new KInductionCounterexampleException("abstraction state " + state + " is a "
+					+ state.getClass().getSimpleName() + ", not an ISLPredicate, so it has no program point");
+		}
+		return ((ISLPredicate) state).getProgramPoint();
 	}
 
 	/**
