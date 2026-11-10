@@ -13,7 +13,7 @@ All implemented features work correctly without these variables.
 These folders contain the files that test all currently implemented features.
 All but eight tests should be successful.
 The tests that fail:
-- array10_pattern_simplified(_opt): Uses a library function that is not yet supported.
+- array10_pattern_simplified(_opt): Times out with the default limit of 10 seconds, but passes for instance with a limit of 30 seconds.
 - IntegerCharacterConstantsRepresentationForSignedChar(_opt): Fails because it was translated on an aarch64 Linux system, where char is treated as unsigned char.
 - 6 builtin_(...)overflow(_opt): Fail because they use structType, which has not been implemented yet.
  

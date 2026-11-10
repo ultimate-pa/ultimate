@@ -167,7 +167,9 @@ public final class CallInstructionHandler {
 		final LLVMIRParser.TypeContext typeContext = getCallResultType(callInst);
 		result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, location));
 		final String callIdentifier = callInst.value().constant().getText();
-		if (callIdentifier.equals("@printf")) {
+		if (callIdentifier.equals("@reach_error")) {
+			result.addFuncBlock(constructAssertFalse(location));
+		} else if (callIdentifier.equals("@printf")) {
 			result.addFuncBlock(constructHavocStatement(identifier, location));
 		} else if (NONDET_FUNCTIONS.contains(callIdentifier)) {
 			addNondetStatements(result, typeContext, identifier, location);
@@ -216,8 +218,10 @@ public final class CallInstructionHandler {
 		final Result result = new Result();
 
 		final String callIdentifier = ctx.value().constant().getText();
-		if (callIdentifier.equals("@__assert_fail") || callIdentifier.equals("@__VERIFIER_error")) {
+		if (callIdentifier.equals("@__assert_fail") || callIdentifier.equals("@__VERIFIER_error") || callIdentifier.equals("@__VERIFIER_error")) {
 			result.addFuncBlock(constructAssertFalse(location));
+		} else if (callIdentifier.equals("@abort") || callIdentifier.equals("@exit")) {
+			result.addFuncBlock(constructAssumeFalse(location));
 		} else if (callIdentifier.equals("@printf")) {
 			// This call can be ignored as it is not relevant for the Boogie translation
 		} else {
@@ -440,5 +444,17 @@ public final class CallInstructionHandler {
 		final Check chk = new Check(Spec.ASSERT);
 		chk.annotate(assertStmt);
 		return assertStmt;
+	}
+	
+	/**
+	 * Constructs an assume false statement, which ends the execution, f.ex. for a call of abort or exit.
+	 *
+	 * @param location
+	 *            The location in the source code where the instruction is defined.
+	 * @return The assume statement.
+	 */
+	private static AssumeStatement constructAssumeFalse (final LlvmirLocation location) {
+		final BooleanLiteral boolLit = new BooleanLiteral (location,false);
+		return new AssumeStatement(location, new NamedAttribute[] {}, boolLit);
 	}
 }
