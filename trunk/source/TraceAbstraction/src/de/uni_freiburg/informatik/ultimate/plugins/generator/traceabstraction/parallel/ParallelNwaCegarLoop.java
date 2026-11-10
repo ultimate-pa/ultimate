@@ -179,7 +179,11 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 	// private final CompletionService<WorkerThreadResult<L, A>> mECS;
 	BlockingQueue<WorkerThreadTask<L>> mWorkerTaskQueue = new LinkedBlockingQueue<>();
-	BlockingQueue<WorkerThreadResult<L, A>> mWorkerResultQueue = new LinkedBlockingQueue<>();
+	BlockingQueue<WorkerThreadResult<L, A>> mWorkerResultQueue = new VerdictQueue();
+	// Every automaton operation and search of the main thread polls this timer, see iterateWithWorkers. The
+	// VerdictQueue retires it when a worker delivers a verdict, so that the main thread drops what it is computing
+	// and reports the verdict. Null until the workers are set up.
+	private volatile RetirementTimer mMainOperationTimer;
 
 	// need global program cache, but worker need to get copy otherwise we
 	// synchronize
@@ -309,9 +313,27 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	private void iterateWithWorkers() throws AutomataLibraryException {
+		setUpWorkerThreads();
+		// The workers keep the services they were set up with. Only what the main thread computes from now on - the
+		// difference, minimization, emptiness checks and searches - polls the timer that a verdict retires.
+		final RetirementTimer mainOperationTimer = retirementTimer(mServices);
+		mServices = mServices.getProgressMonitorService().registerChildTimer(mServices, mainOperationTimer);
+		mMainOperationTimer = mainOperationTimer;
+		try {
+			iterateMain();
+		} catch (AutomataOperationCanceledException | ToolchainCanceledException e) {
+			if (!mainOperationTimer.isRetired()) {
+				throw e;
+			}
+			if (!handleVerdictAfterCancellation()) {
+				throw new AssertionError("A worker verdict stopped the main thread, but it did not end the loop", e);
+			}
+		}
+	}
+
+	private void iterateMain() throws AutomataLibraryException {
 		// TODO manage time and timeout
 		boolean didntFindCexLastIteration = false;
-		setUpWorkerThreads();
 		if (noTaWorkerLeft()) {
 			// Configured without TA workers: nobody would take a counterexample, and the abstraction is never refined.
 			// Must come after the setup, which still reads the initial counterexample.
@@ -485,6 +507,96 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mLogger.info("No more worker results to process");
 		assert workerResult == null;
 		return false;
+	}
+
+	/**
+	 * @return whether {@link #handleWorkerResults} ends the loop on this result without refining the abstraction: a
+	 *         refutation by k-induction, the value analysis or (if we stop after the first violation) a TA worker, or
+	 *         a proof by k-induction. Each worker registers its violation itself or carries everything the main
+	 *         thread needs, so none of them depends on the operation of the main thread that it interrupts.
+	 */
+	private boolean isVerdict(final WorkerThreadResult<L, A> result) {
+		if (result.workerCrashed() || result.workerRetired() || result.noVerdict()) {
+			return false;
+		}
+		switch (result.getWorkerType()) {
+		case VALUE_ANALYSIS:
+			return true;
+		case KINDUCTION:
+			return result.getAutomatonType() == AutomatonType.ERROR
+					|| result.getSubtrahend() == null && result.getAutomatonType() == null;
+		case TA:
+			return mPref.stopAfterFirstViolation() && result.getAutomatonType() == AutomatonType.ERROR;
+		default:
+			return false;
+		}
+	}
+
+	/**
+	 * A worker delivered a verdict while the main thread was busy, and {@link VerdictQueue} stopped the main thread's
+	 * operation. Without this, the main thread only took the verdict from the queue once it was done with its
+	 * operation, and on large abstractions (millions of states) a minimization, difference or emptiness check took
+	 * long enough for the run to time out with the verdict in the queue. The abstraction may be half refined, but the
+	 * loop ends here: the results queued before the verdict are dropped.
+	 *
+	 * @return true if the loop has to terminate, which a verdict always does
+	 */
+	private boolean handleVerdictAfterCancellation() throws AutomataLibraryException {
+		int dropped = 0;
+		for (WorkerThreadResult<L, A> result = mWorkerResultQueue.poll(); result != null; result =
+				mWorkerResultQueue.poll()) {
+			if (isVerdict(result)) {
+				mLogger.info("Main: stopped its current operation for the verdict of %s (%d earlier result(s) dropped)",
+						result.getWorkerType(), dropped);
+				return handleWorkerResults(result);
+			}
+			dropped++;
+		}
+		throw new AssertionError("A worker verdict stopped the main thread, but the verdict is not in the queue");
+	}
+
+	/**
+	 * The queue the workers put their results into. Once a verdict (see {@link #isVerdict}) is in the queue, it
+	 * retires {@link #mMainOperationTimer}, so that whatever the main thread computes stops and the main thread reports
+	 * the verdict, see {@link #handleVerdictAfterCancellation()}. Every worker uses {@link #put}.
+	 */
+	private final class VerdictQueue extends LinkedBlockingQueue<WorkerThreadResult<L, A>> {
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public void put(final WorkerThreadResult<L, A> result) throws InterruptedException {
+			super.put(result);
+			stopMainIfVerdict(result);
+		}
+
+		@Override
+		public boolean offer(final WorkerThreadResult<L, A> result) {
+			final boolean added = super.offer(result);
+			if (added) {
+				stopMainIfVerdict(result);
+			}
+			return added;
+		}
+
+		@Override
+		public boolean offer(final WorkerThreadResult<L, A> result, final long timeout, final TimeUnit unit)
+				throws InterruptedException {
+			final boolean added = super.offer(result, timeout, unit);
+			if (added) {
+				stopMainIfVerdict(result);
+			}
+			return added;
+		}
+
+		private void stopMainIfVerdict(final WorkerThreadResult<L, A> result) {
+			// Only after the result is in the queue: the main thread looks for it as soon as its operation stops.
+			final RetirementTimer timer = mMainOperationTimer;
+			if (timer != null && !timer.isRetired() && isVerdict(result)) {
+				mLogger.info("Main: %s delivered a verdict, the main thread stops its current operation",
+						result.getWorkerType());
+				timer.retire("a worker delivered a verdict");
+			}
+		}
 	}
 
 	/**
