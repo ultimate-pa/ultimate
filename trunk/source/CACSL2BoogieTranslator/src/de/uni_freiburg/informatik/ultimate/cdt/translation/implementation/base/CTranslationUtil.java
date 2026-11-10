@@ -390,15 +390,11 @@ public class CTranslationUtil {
 	 *
 	 */
 	public static BigInteger extractIntegerValue(final Expression expr) {
-		BigInteger result;
-		if (expr instanceof IntegerLiteral) {
-			result = new BigInteger(((IntegerLiteral) expr).getValue());
-		} else if (expr instanceof BitvecLiteral) {
-			result = new BigInteger(((BitvecLiteral) expr).getValue());
-		} else {
-			result = null;
-		}
-		return result;
+		return switch (expr) {
+		case final IntegerLiteral intLit -> new BigInteger(intLit.getValue());
+		case final BitvecLiteral bvLit -> new BigInteger(bvLit.getValue());
+		default -> null;
+		};
 	}
 
 	public static ICType getValueTypeOfNestedArray(final CArray arrayType) {
