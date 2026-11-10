@@ -281,15 +281,6 @@ public class CTranslationUtil {
 	/**
 	 * Returns true iff all auxvars in decls are contained in auxVars
 	 */
-	public static boolean isAuxVarMapComplete(final INameHandler nameHandler,
-			final ExpressionResultBuilder resultBuilder) {
-		return CTranslationUtil.isAuxVarMapComplete(nameHandler, resultBuilder.getDeclarations(),
-				resultBuilder.getAuxVars());
-	}
-
-	/**
-	 * Returns true iff all auxvars in decls are contained in auxVars
-	 */
 	public static boolean isAuxVarMapComplete(final INameHandler nameHandler, final List<Declaration> decls,
 			// final Map<VariableDeclaration, ILocation> auxVars) {
 			final Set<AuxVarInfo> auxVars) {
