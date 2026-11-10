@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 public class PolyPoNeTwoSidedTest {
 
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
-	private static final String SOLVER_COMMAND = "cvc4 --incremental --lang smt";
+	private static final String SOLVER_COMMAND = "cvc5 --incremental --lang smt";
 	private static final long TEST_TIMEOUT_MILLISECONDS = 20_000;
 
 	private IUltimateServiceProvider mServices;
