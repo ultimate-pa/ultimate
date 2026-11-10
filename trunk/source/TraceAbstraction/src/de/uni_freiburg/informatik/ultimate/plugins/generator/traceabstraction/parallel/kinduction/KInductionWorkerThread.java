@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -254,9 +255,9 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	}
 
 	private Verdict runKInduction() throws AutomataLibraryException, InterruptedException {
+		final boolean waypointsFromModel = mPref.kInductionWaypointsFromModel() && !hasOverapproximation();
 		final KInduction<L, IPredicate> kInduction = new KInduction<>(mKInductionServices, mLogger, mCfgSmtToolkit,
-				mAbstraction, mInvariantSupplier, mPref.restartKInductionSolverAfterInterrupt(),
-				mPref.kInductionWaypointsFromModel());
+				mAbstraction, mInvariantSupplier, mPref.restartKInductionSolverAfterInterrupt(), waypointsFromModel);
 		if (kInduction.wasUnkown()) {
 			// Not a crash: the encoding is fine, the query was just not decided. Retiring this worker leaves the
 			// other workers - and, if there are none, the main thread's UNKNOWN result - to speak for the program.
@@ -269,7 +270,7 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 			}
 			return Verdict.SAFE;
 		}
-		if (mPref.kInductionWaypointsFromModel()) {
+		if (waypointsFromModel) {
 			reportWaypoints(kInduction.getWaypoints());
 			return Verdict.UNSAFE;
 		}
@@ -277,6 +278,27 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 		// refinement engine below runs on the worker toolkit, exactly as in CegarNwaWorkerThread.
 		reportCounterexample(kInduction.getCounterexample());
 		return Verdict.UNSAFE;
+	}
+
+	/**
+	 * Whether a letter of {@link #mAbstraction} overapproximates the program, e.g. a bitwise operator or a float
+	 * comparison in the integer translation, or a math function. A model of the base case can then be spurious, and
+	 * only a run says so: the reporter turns UNSAFE into "unable to determine feasibility" by the Overapprox annotations
+	 * of the reported letters. The waypoint letters are only a subsequence of the run and miss them (11-10 run: 1,377
+	 * of the 1,383 wrong FALSE, nearly all in the integer run), so such a program has its counterexample rebuilt.
+	 */
+	private boolean hasOverapproximation() {
+		final List<L> letters = new ArrayList<>(mAbstraction.getVpAlphabet().getInternalAlphabet());
+		letters.addAll(mAbstraction.getVpAlphabet().getCallAlphabet());
+		letters.addAll(mAbstraction.getVpAlphabet().getReturnAlphabet());
+		final var overapproximations = Overapprox.getOverapproximations(letters);
+		if (overapproximations.isEmpty()) {
+			return false;
+		}
+		mLogger.info("KInduction: the program has %d overapproximation(s), e.g. %s, so a violation is rebuilt as a run "
+				+ "instead of reported by waypoints from the model", overapproximations.size(),
+				overapproximations.getDomain().iterator().next());
+		return true;
 	}
 
 	/**
