@@ -232,12 +232,14 @@ public class WitnessPrinter implements IOutput {
 			return Set.of(backtransPe.getLength() - 1);
 		}
 		final Set<Integer> involvedThreadIds = dataRace.getInvolvedThreadIds();
-		// Extract the last two indices, where a data race can occur
+		// Extract the last two indices, where a data race can occur (with different thread IDs)
 		// TODO: What if we are unsure about the statements that occur in a data race?
 		final Set<Integer> result = new HashSet<>();
+		final Set<Integer> foundThreadIds = new HashSet<>();
 		for (int i = backtransPe.getLength() - 1; i >= 0 && result.size() < 2; i--) {
 			final AtomicTraceElement<?> ate = backtransPe.getTraceElement(i);
-			if (ate.hasThreadId() && involvedThreadIds.contains(ate.getThreadId())) {
+			if (ate.hasThreadId() && involvedThreadIds.contains(ate.getThreadId())
+					&& foundThreadIds.add(ate.getThreadId())) {
 				result.add(i);
 			}
 		}
