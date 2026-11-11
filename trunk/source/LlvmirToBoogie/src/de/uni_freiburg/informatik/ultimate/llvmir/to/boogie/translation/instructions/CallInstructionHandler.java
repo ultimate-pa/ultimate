@@ -172,7 +172,7 @@ public final class CallInstructionHandler {
 		} else if (callIdentifier.equals("@printf")) {
 			result.addFuncBlock(constructHavocStatement(identifier, location));
 		} else if (NONDET_FUNCTIONS.contains(callIdentifier)) {
-			addNondetStatements(result, typeContext, identifier, location);
+			addNondetStatements(result, typeContext, callIdentifier, identifier, location);
 		} else if (callIdentifier.equals("@llvm.abs.i32")) {
 			result.addFuncBlock(constructAbsAssignment(callInst.args().arg(0), identifier, location));
 		} else if (callIdentifier.startsWith("@llvm.sadd.with.overflow")) {
@@ -218,7 +218,8 @@ public final class CallInstructionHandler {
 		final Result result = new Result();
 
 		final String callIdentifier = ctx.value().constant().getText();
-		if (callIdentifier.equals("@__assert_fail") || callIdentifier.equals("@__VERIFIER_error") || callIdentifier.equals("@__VERIFIER_error")) {
+		if (callIdentifier.equals("@__assert_fail") || callIdentifier.equals("@__VERIFIER_error")
+				|| callIdentifier.equals("@__VERIFIER_error")) {
 			result.addFuncBlock(constructAssertFalse(location));
 		} else if (callIdentifier.equals("@abort") || callIdentifier.equals("@exit")) {
 			result.addFuncBlock(constructAssumeFalse(location));
@@ -277,17 +278,24 @@ public final class CallInstructionHandler {
 	 *            The result to which the statements are added.
 	 * @param typeContext
 	 *            The type of the variable that receives the result.
+	 * @param callIdentifier
+	 *            The identifier of the called procedure.
 	 * @param identifier
 	 *            The identifier of the variable that receives the result.
 	 * @param location
 	 *            The location in the source code where the instruction is defined.
 	 */
 	private static void addNondetStatements(final Result result, final LLVMIRParser.TypeContext typeContext,
-			final String identifier, final LlvmirLocation location) {
+			final String callIdentifier, final String identifier, final LlvmirLocation location) {
 		result.addFuncBlock(constructHavocStatement(identifier, location));
+		final String maxValue;
 
-		final int bitLength = getBitLengthFromType(typeContext);
-		final String maxValue = BigInteger.ONE.shiftLeft(bitLength).subtract(BigInteger.ONE).toString();
+		if (callIdentifier.equals("@__VERIFIER_nondet_bool")) {
+			maxValue = "1";
+		} else {
+			final int bitLength = getBitLengthFromType(typeContext);
+			maxValue = BigInteger.ONE.shiftLeft(bitLength).subtract(BigInteger.ONE).toString();
+		}
 		result.addFuncBlock(constructBoundAssumption(Operator.COMPLEQ, identifier, maxValue, location));
 		result.addFuncBlock(constructBoundAssumption(Operator.COMPGEQ, identifier, "0", location));
 	}
@@ -445,7 +453,7 @@ public final class CallInstructionHandler {
 		chk.annotate(assertStmt);
 		return assertStmt;
 	}
-	
+
 	/**
 	 * Constructs an assume false statement, which ends the execution, f.ex. for a call of abort or exit.
 	 *
@@ -453,8 +461,8 @@ public final class CallInstructionHandler {
 	 *            The location in the source code where the instruction is defined.
 	 * @return The assume statement.
 	 */
-	private static AssumeStatement constructAssumeFalse (final LlvmirLocation location) {
-		final BooleanLiteral boolLit = new BooleanLiteral (location,false);
+	private static AssumeStatement constructAssumeFalse(final LlvmirLocation location) {
+		final BooleanLiteral boolLit = new BooleanLiteral(location, false);
 		return new AssumeStatement(location, new NamedAttribute[] {}, boolLit);
 	}
 }
