@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.ConcreteTransFormulaExecutor;
 import de.uni_freiburg.informatik.ultimate.lib.valueanalysis.ConcreteTransFormulaExecutor.Execution;
@@ -122,9 +123,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * fresh constant, its formula is asserted over the values and constants of what it reads, and the solver - the one
  * k-induction used, so it handles every theory the encoding has - decides. That happens if a havoced value the letter
  * reads is not among the candidates (or no candidate makes the run reach the pins), if the letter reads such a constant,
- * and if the interpreter cannot evaluate the formula (floating point, say). The symbolic way is always tried after the
- * concrete ones, so the search is complete. The solver is only asked to check satisfiability where the run branches and
- * at the end of a step, never for a state with a single useful transition.
+ * and if the interpreter cannot evaluate the formula (floating point, say). The symbolic way is tried after the
+ * concrete ones. The solver is only asked to check satisfiability where the run branches and at the end of a step,
+ * never for a state with a single useful transition.
+ * <p>
+ * One thing the solver is bad at: a letter taken symbolically that reads an array the run has a value for asserts that
+ * value as a literal, for a memory array one of hundreds of {@code store}s, and z3 then needs seconds for a check that
+ * takes milliseconds over a constant (aws-c-common, 2026-11-09). So the search runs in two <b>phases</b>. The first
+ * does not take a letter symbolically that reads an array with a value. Only if it finds no run does the second
+ * start over and take every letter symbolically, as a trace check would, so that an array is only ever a constant.
+ * The second phase is complete; the first is what makes most runs cheap.
  * <p>
  * Once a step has reached the pins, the run is <b>committed</b> to them: every constant still open takes the value of
  * the solver's model (if it has a sort the solver reports values of, see {@link KInductionWitness}; an array stays
@@ -135,8 +143,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * of letters does not have. There the constants stay open and the search may backtrack into earlier steps.
  * <p>
  * Every run that comes back was executed or checked by the solver letter for letter, so it is feasible as a whole and
- * ends in an accepting state. {@link #assemble} re-checks it with {@code Accepts}, and
- * {@code KInductionWorkerThread.reportCounterexample} independently confirms it with the ordinary trace check. If
+ * ends in an accepting state. {@link #assemble} re-checks it with {@code Accepts}; no trace check follows
+ * ({@code KInductionWorkerThread.reportCounterexample} reports the run as it is), so the run has to be right here. If
  * the encoding were ever to report a violation that does not exist, no run would be found and this class would throw
  * rather than invent one.
  *
@@ -253,6 +261,8 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	private boolean mUnchecked;
 
 	private int mExpansions;
+	/** Whether the search is in its second phase, which takes every letter symbolically; see the class javadoc. */
+	private boolean mSymbolicOnly;
 	private int mCheckSats;
 	private int mCommits;
 
@@ -447,23 +457,30 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 		push();
 		try {
 			final Set<STATE> starts = statesOf(mSystem.getSourceStates(mWitness.getPc(0)));
-			for (final STATE start : starts) {
-				if (!mAbstraction.isInitial(start)) {
-					continue;
+			for (final boolean symbolicOnly : new boolean[] { false, true }) {
+				mSymbolicOnly = symbolicOnly;
+				for (final STATE start : starts) {
+					if (!mAbstraction.isInitial(start)) {
+						continue;
+					}
+					mStates.add(start);
+					mCurrent.clear();
+					for (final Map.Entry<IProgramVar, Term> pin : mWitness.getPins(0).entrySet()) {
+						mCurrent.put(pin.getKey(), known(pin.getValue()));
+					}
+					if (solveFrom(0, start)) {
+						return assemble();
+					}
+					mLetters.clear();
+					mStates.clear();
+					mNesting.clear();
+					mTakenSymbolically.clear();
+					mStack.clear();
 				}
-				mStates.add(start);
-				mCurrent.clear();
-				for (final Map.Entry<IProgramVar, Term> pin : mWitness.getPins(0).entrySet()) {
-					mCurrent.put(pin.getKey(), known(pin.getValue()));
+				if (!symbolicOnly) {
+					mLogger.info("KInduction: replaying the model found no run after %d expansion(s) and %d "
+							+ "check-sat(s), taking every letter symbolically now", mExpansions, mCheckSats);
 				}
-				if (solveFrom(0, start)) {
-					return assemble();
-				}
-				mLetters.clear();
-				mStates.clear();
-				mNesting.clear();
-				mTakenSymbolically.clear();
-				mStack.clear();
 			}
 			throw noRunFound("no counterexample run starts in any of the initial states " + starts
 					+ ", although k-induction reported a violation at k=" + mWitness.getK() + " (" + mWitness + ")");
@@ -625,11 +642,17 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 	 */
 	private void execute(final Step step, final Move move, final UnmodifiableTransFormula tf, final StepKind kind,
 			final List<Alternative> concrete, final List<Alternative> symbolic) {
+		if (mSymbolicOnly) {
+			symbolic.add(new Alternative(move, true));
+			return;
+		}
 		mPool.mSuccessor = move.mSucc;
 		final Set<TermVariable> free = new HashSet<>(Arrays.asList(tf.getFormula().getFreeVars()));
 		final Map<IProgramVarOrConst, IConcreteValue> pre = new HashMap<>(mConstantValues);
 		boolean readsUnknown = false;
 		boolean executable = true;
+		// Taken symbolically, the letter would hand the solver the array's value as a literal, see the class javadoc.
+		boolean readsKnownArray = false;
 		for (final Map.Entry<IProgramVar, TermVariable> in : tf.getInVars().entrySet()) {
 			if (!free.contains(in.getValue())) {
 				continue;
@@ -638,6 +661,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 			final Slot slot = mCurrent.get(pv);
 			if (slot instanceof final Known known && known.mValue != null) {
 				pre.put(pv, known.mValue);
+				readsKnownArray |= SmtSortUtils.isArraySort(pv.getTermVariable().getSort());
 			} else if (slot == null && !pv.isOldvar() && !readCandidates(step.mIndex, pv).isEmpty()) {
 				// Left open, so that the interpreter chooses it. It has to be the interpreter: only it can build an
 				// array from the cells the letter fixes, and only it can drop a choice before all others are made.
@@ -653,7 +677,7 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 		if (executable) {
 			exhaustive &= executeLetter(move, tf, kind, pre, concrete);
 		}
-		if (!exhaustive) {
+		if (!exhaustive && !readsKnownArray) {
 			symbolic.add(new Alternative(move, true));
 		}
 	}
@@ -1515,9 +1539,9 @@ public final class KInductionCounterexampleBuilder<LETTER extends IAction, STATE
 		final long symbolic = mTakenSymbolically.stream().filter(Boolean::booleanValue).count();
 		mLogger.info("KInduction: reconstructed a counterexample of %d letter(s), %d of them call(s), after %d "
 				+ "expansion(s): %d letter(s) executed, %d taken symbolically, %d check-sat(s), %d commit(s) to the "
-				+ "model, %d interpreted step(s) of which %d unsupported", mLetters.size(), countCalls(), mExpansions,
+				+ "model, %d interpreted step(s) of which %d unsupported%s", mLetters.size(), countCalls(), mExpansions,
 				mLetters.size() - symbolic, symbolic, mCheckSats, mCommits, mExecutor.getSteps(),
-				mExecutor.getUnsupportedSteps());
+				mExecutor.getUnsupportedSteps(), mSymbolicOnly ? ", all symbolic after the replay found none" : "");
 		return run;
 	}
 

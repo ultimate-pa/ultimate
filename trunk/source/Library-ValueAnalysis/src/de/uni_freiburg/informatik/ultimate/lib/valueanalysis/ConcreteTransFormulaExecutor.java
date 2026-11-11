@@ -117,6 +117,8 @@ public final class ConcreteTransFormulaExecutor {
 	 * on choices that the formula rejects.
 	 */
 	private static final int NODES_PER_SUCCESSOR = 64;
+	// How many branches a disjunct may be split into by its top-level disjunctions, see Plan#cases
+	private static final int MAX_CASES = 64;
 
 	private final NondeterminismPool mPool;
 	private final int mMaxSuccessors;
@@ -425,6 +427,21 @@ public final class ConcreteTransFormulaExecutor {
 						// Another definition or a choice may still give the variable a value.
 					}
 				}
+				for (final StoreFixpoint fixpoint : branch.mStoreFixpoints) {
+					if (env.containsKey(fixpoint.mTarget) || !env.keySet().containsAll(fixpoint.mNeeded)) {
+						continue;
+					}
+					try {
+						final Map<TermVariable, IConcreteValue> withBase = new HashMap<>(env);
+						withBase.put(fixpoint.mTarget, GroundTermEvaluator.evaluate(fixpoint.mBase, env, mConstants));
+						env.put(fixpoint.mTarget, GroundTermEvaluator.evaluate(fixpoint.mChain, withBase, mConstants));
+						// The cells the chain reads back could have other values as well.
+						mChose = true;
+						changed = true;
+					} catch (final UnsupportedTermException e) {
+						// A choice may still give the variable a value.
+					}
+				}
 			}
 		}
 
@@ -456,7 +473,7 @@ public final class ConcreteTransFormulaExecutor {
 			// computed, not guessed.
 			for (final Conjunct conjunct : branch.mConjuncts) {
 				for (final TermVariable tv : conjunct.mVars) {
-					if (!env.containsKey(tv) && mPlan.mInVars.contains(tv)
+					if (!env.containsKey(tv) && !branch.mFixpointTargets.contains(tv) && mPlan.mInVars.contains(tv)
 							&& !mPool.preferred(mPlan.mProgramVars.get(tv), tv.getSort()).isEmpty()) {
 						return tv;
 					}
@@ -466,19 +483,26 @@ public final class ConcreteTransFormulaExecutor {
 			// variable, e.g. the result of a nondeterministic call) can then be solved for instead of guessed.
 			for (final Conjunct conjunct : branch.mConjuncts) {
 				for (final TermVariable tv : conjunct.mVars) {
-					if (!env.containsKey(tv)
+					if (!env.containsKey(tv) && !branch.mFixpointTargets.contains(tv)
 							&& !mPool.preferred(mPlan.mProgramVars.get(tv), tv.getSort()).isEmpty()) {
 						return tv;
 					}
 				}
 			}
+			// A store fixpoint's target comes last: propagate computes it once its base has a value, which a guess
+			// almost never matches.
 			TermVariable best = null;
 			int fewestOpen = Integer.MAX_VALUE;
+			TermVariable fixpointTarget = null;
 			for (final Conjunct conjunct : branch.mConjuncts) {
 				int open = 0;
 				TermVariable first = null;
 				for (final TermVariable tv : conjunct.mVars) {
 					if (!env.containsKey(tv)) {
+						if (branch.mFixpointTargets.contains(tv)) {
+							fixpointTarget = tv;
+							continue;
+						}
 						open++;
 						if (first == null) {
 							first = tv;
@@ -490,7 +514,7 @@ public final class ConcreteTransFormulaExecutor {
 					best = first;
 				}
 			}
-			return best;
+			return best != null ? best : fixpointTarget;
 		}
 	}
 
@@ -506,7 +530,9 @@ public final class ConcreteTransFormulaExecutor {
 
 		Plan(final UnmodifiableTransFormula tf) {
 			for (final Term disjunct : SmtUtils.getDisjuncts(tf.getFormula())) {
-				mBranches.add(new Branch(disjunct));
+				for (final List<Term> conjuncts : cases(disjunct)) {
+					mBranches.add(new Branch(disjunct, conjuncts));
+				}
 			}
 			mConstants = List.copyOf(tf.getNonTheoryConsts());
 			mInVars = Set.copyOf(tf.getInVars().values());
@@ -517,11 +543,49 @@ public final class ConcreteTransFormulaExecutor {
 				mProgramVars.put(entry.getValue(), entry.getKey());
 			}
 		}
+
+		/**
+		 * The conjuncts of {@code disjunct}, once for every way of picking one disjunct of each of its top-level
+		 * disjunctions, unless that makes more than {@link #MAX_CASES} cases. A definition inside a disjunction, e.g.
+		 * {@code (or (= p 0) (= p heap))} for what an allocation returns, is then a definition of its case rather than
+		 * something to guess. A case whose picks contradict each other dies at the first check of its conjuncts.
+		 */
+		private static List<List<Term>> cases(final Term disjunct) {
+			final Term[] conjuncts = SmtUtils.getConjuncts(disjunct);
+			long count = 1;
+			for (final Term conjunct : conjuncts) {
+				if (isOr(conjunct)) {
+					count *= ((ApplicationTerm) conjunct).getParameters().length;
+					if (count > MAX_CASES) {
+						return List.of(Arrays.asList(conjuncts));
+					}
+				}
+			}
+			List<List<Term>> result = List.of(List.of());
+			for (final Term conjunct : conjuncts) {
+				final List<List<Term>> next = new ArrayList<>();
+				final Term[] picks =
+						isOr(conjunct) ? ((ApplicationTerm) conjunct).getParameters() : new Term[] { conjunct };
+				for (final List<Term> partial : result) {
+					for (final Term pick : picks) {
+						final List<Term> extended = new ArrayList<>(partial);
+						extended.addAll(Arrays.asList(SmtUtils.getConjuncts(pick)));
+						next.add(extended);
+					}
+				}
+				result = next;
+			}
+			return result;
+		}
+
+		private static boolean isOr(final Term term) {
+			return term instanceof final ApplicationTerm app && "or".equals(app.getFunction().getName());
+		}
 	}
 
 	/**
-	 * A disjunct of a formula: its top-level conjuncts, the equalities among them that define a variable, and the
-	 * literals that occur together with each variable.
+	 * A disjunct of a formula, or one case of it (see Plan#cases): its conjuncts, the equalities among them that define
+	 * a variable, and the literals that occur together with each variable.
 	 */
 	private static final class Branch {
 		private final Term mFormula;
@@ -529,10 +593,18 @@ public final class ConcreteTransFormulaExecutor {
 		private final List<Definition> mDefinitions = new ArrayList<>();
 		private final Map<TermVariable, List<ArrayFact>> mArrayFacts = new HashMap<>();
 		private final Map<TermVariable, List<IConcreteValue>> mHarvested = new HashMap<>();
+		private final List<StoreFixpoint> mStoreFixpoints = new ArrayList<>();
+		private final Set<TermVariable> mFixpointTargets = new HashSet<>();
 
-		Branch(final Term formula) {
+		/**
+		 * @param formula
+		 *            what a successor of the branch has to satisfy
+		 * @param conjuncts
+		 *            conjuncts that imply {@code formula}, which the search works with
+		 */
+		Branch(final Term formula, final List<Term> conjuncts) {
 			mFormula = formula;
-			for (final Term conjunct : SmtUtils.getConjuncts(formula)) {
+			for (final Term conjunct : conjuncts) {
 				final Conjunct c = new Conjunct(conjunct);
 				mConjuncts.add(c);
 				addDefinitions(conjunct);
@@ -557,7 +629,31 @@ public final class ConcreteTransFormulaExecutor {
 				addEquality(params[1], params[0]);
 				addArrayFact(params[0], params[1]);
 				addArrayFact(params[1], params[0]);
+				addStoreFixpoint(params[0], params[1]);
+				addStoreFixpoint(params[1], params[0]);
 			}
+		}
+
+		/**
+		 * Remembers {@code array = (store ... (store base i1 v1) ... in vn)} where the values read {@code array}
+		 * itself, as the havoc of a memory cell does: {@code a' = (store a i (select a' i))}. No definition covers it,
+		 * since {@code array} occurs on both sides, and a guess of the whole array would almost never fit.
+		 */
+		private void addStoreFixpoint(final Term lhs, final Term rhs) {
+			if (!(lhs instanceof final TermVariable array) || !(rhs instanceof final ApplicationTerm app)
+					|| !"store".equals(app.getFunction().getName())
+					|| !Arrays.asList(rhs.getFreeVars()).contains(array)) {
+				return;
+			}
+			Term base = rhs;
+			while (base instanceof final ApplicationTerm store && "store".equals(store.getFunction().getName())) {
+				base = store.getParameters()[0];
+			}
+			if (Arrays.asList(base.getFreeVars()).contains(array)) {
+				return;
+			}
+			mStoreFixpoints.add(new StoreFixpoint(array, rhs, base));
+			mFixpointTargets.add(array);
 		}
 
 		/**
@@ -734,6 +830,27 @@ public final class ConcreteTransFormulaExecutor {
 		ArrayFact(final List<Term> indices, final Term value) {
 			mIndices = List.copyOf(indices);
 			mValue = value;
+		}
+	}
+
+	/**
+	 * {@code target = chain}, a store chain on {@code base} whose values read {@code target}. One solution is the
+	 * chain evaluated with {@code target} bound to the value of {@code base}: every cell keeps the value it has in the
+	 * base, except where a value reads something else. The check of the whole formula confirms it.
+	 */
+	private static final class StoreFixpoint {
+		private final TermVariable mTarget;
+		private final Term mChain;
+		private final Term mBase;
+		// The variables other than the target that must have values first.
+		private final Set<TermVariable> mNeeded;
+
+		StoreFixpoint(final TermVariable target, final Term chain, final Term base) {
+			mTarget = target;
+			mChain = chain;
+			mBase = base;
+			mNeeded = new HashSet<>(Arrays.asList(chain.getFreeVars()));
+			mNeeded.remove(target);
 		}
 	}
 
