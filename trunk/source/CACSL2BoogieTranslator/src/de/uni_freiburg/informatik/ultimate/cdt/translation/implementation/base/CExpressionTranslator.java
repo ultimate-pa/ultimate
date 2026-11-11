@@ -377,7 +377,7 @@ public class CExpressionTranslator {
 			}
 			operand = mExprResultTransformer.rexBoolToInt(operand, loc);
 			operand = mExprResultTransformer.promoteToIntegerIfNecessary(loc, operand);
-			final CPrimitive resultType = (CPrimitive) operand.getLrValue().getCType();
+			final CPrimitive resultType = (CPrimitive) operand.getLrValue().getCType().getUnderlyingType();
 			final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(operand);
 			if (op == IASTUnaryExpression.op_minus && resultType.isIntegerType()) {
 				addIntegerBoundsCheck(loc, result, resultType, op, operand.getLrValue().getValue());
@@ -912,7 +912,7 @@ public class CExpressionTranslator {
 	 */
 	private ExpressionResult addDivisionByZeroCheck(final ILocation loc, final ExpressionResult divisorExpRes) {
 		final Expression divisor = divisorExpRes.getLrValue().getValue();
-		final CPrimitive divisorType = (CPrimitive) divisorExpRes.getLrValue().getCType();
+		final CPrimitive divisorType = (CPrimitive) divisorExpRes.getLrValue().getCType().getUnderlyingType();
 
 		final CheckMode checkMode;
 		if (divisorType.isIntegerType()) {
