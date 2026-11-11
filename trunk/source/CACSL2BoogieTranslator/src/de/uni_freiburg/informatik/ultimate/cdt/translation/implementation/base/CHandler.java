@@ -131,6 +131,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
@@ -290,6 +291,14 @@ public class CHandler {
 	 * the size from which a string is "large".
 	 */
 	private static final boolean OVERAPPROX_FLAG_LARGE_STRING_LITERAL = false;
+
+	/**
+	 * If we construct an auxvar that models a nondeterministic input, we havoc that auxvar afterwards to ensure that we
+	 * get a new nondeterministic value even if the variable occurs in a loop. If this constant is set, we havoc the
+	 * variable also before the nondeterministic assignment. If the auxvar is also havoced before, it is only
+	 * backward-live to the havoc, otherwise it would be backward-live until the beginning of the procedure.
+	 */
+	private static final boolean HAVOC_NONDET_AUXVARS_ALSO_BEFORE = true;
 
 	private final MemoryHandler mMemoryHandler;
 
@@ -662,6 +671,34 @@ public class CHandler {
 
 	public CExpressionTranslator getCExpressionTranslator() {
 		return mCExpressionTranslator;
+	}
+
+	/**
+	 * Translates a nondeterministic value of the given C type into an auxiliary variable.
+	 */
+	public ExpressionResult handleNondet(final ILocation loc, final ICType cType) {
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
+		if (HAVOC_NONDET_AUXVARS_ALSO_BEFORE) {
+			resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
+		}
+		final LRValue returnValue = new RValue(auxvarinfo.getExp(), cType);
+		resultBuilder.setLrValue(returnValue);
+		if (cType.equals(new CPrimitive(CPrimitives.BOOL))) {
+			final Expression isZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, auxvarinfo.getExp(),
+					mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) cType, BigInteger.ZERO));
+			final Expression isOne = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, auxvarinfo.getExp(),
+					mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) cType, BigInteger.ONE));
+			resultBuilder.addStatement(new AssumeStatement(loc, ExpressionFactory.or(loc, List.of(isZero, isOne))));
+		} else {
+			mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(),
+					resultBuilder);
+		}
+
+		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder.getDeclarations(),
+				resultBuilder.getAuxVars());
+		return resultBuilder.build();
 	}
 
 	private void
@@ -1334,7 +1371,7 @@ public class CHandler {
 		final boolean isOnHeap = isOnHeap(node);
 
 		final IASTPointerOperator[] pointerOps = node.getPointerOperators();
-		final ICType nestedPointerType = getPointerType(pointerOps.length, pendingResType.getCType());
+		final ICType nestedPointerType = getPointerType(pointerOps, pendingResType.getCType());
 		final TypesResult resType = TypesResult.create(pendingResType, nestedPointerType);
 
 		// Adapt the name for multiparse input
@@ -1551,19 +1588,18 @@ public class CHandler {
 	}
 
 	/**
-	 * Create a nested {@link CPointer} type that ultimately points to the supplied type. If length is smaller or equal
-	 * zero, the supplied type is returned.
+	 * Create a nested {@link CPointer} type that ultimately points to the supplied type.
 	 *
-	 * @param length
-	 *            The nesting depth
+	 * @param pointerOps
+	 *            The pointer operators in declaration order
 	 * @param cType
 	 *            The underlying type
 	 * @return The new CPointer.
 	 */
-	private static ICType getPointerType(int length, final ICType cType) {
+	private static ICType getPointerType(final IASTPointerOperator[] pointerOps, final ICType cType) {
 		ICType type = cType;
-		for (; length > 0; --length) {
-			type = new CPointer(type);
+		for (final IASTPointerOperator pointerOp : pointerOps) {
+			type = new CPointer(type, CTranslationUtil.hasAtomicQualifier(pointerOp));
 		}
 		return type;
 	}
@@ -2337,7 +2373,7 @@ public class CHandler {
 			return new SkipResult();
 		}
 		// TODO: This is just a workaround for now to crash when thread local variables are used in a concurrent program
-		if (CTranslationUtil.hasAttribute(node.getDeclSpecifier(), "thread")) {
+		if (CTranslationUtil.hasThreadLocalQualifier(node.getDeclSpecifier())) {
 			mHasThreadLocalVars = true;
 			// Only crash for thread local variable in concurrent programs
 			if (mIsConcurrent) {
@@ -2995,8 +3031,7 @@ public class CHandler {
 				resultRhs = auxVar.getExp();
 			}
 			// MemoryHandler::getWriteCall already handles atomic types properly, so there is nothing to do here.
-			builder.addStatements(mMemoryHandler.getWriteCall(loc, hlv, resultRhs,
-					rightHandSideValueWithConversionsApplied.getCType(), false));
+			builder.addStatements(mMemoryHandler.getWriteCall(loc, hlv, resultRhs, leftHandSide.getCType(), false));
 
 			// the value of an assignment statement expression is the right hand side of the
 			// assignment

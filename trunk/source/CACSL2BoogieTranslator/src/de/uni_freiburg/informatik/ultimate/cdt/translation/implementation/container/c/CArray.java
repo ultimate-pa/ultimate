@@ -147,4 +147,9 @@ public final class CArray implements ICType {
 	public boolean isAtomic() {
 		return false;
 	}
+
+	@Override
+	public CArray toAtomic() {
+		throw new UnsupportedOperationException("Arrays cannot be atomic");
+	}
 }

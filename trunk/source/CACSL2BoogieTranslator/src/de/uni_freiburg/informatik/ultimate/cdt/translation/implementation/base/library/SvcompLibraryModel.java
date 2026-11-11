@@ -44,7 +44,6 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
@@ -69,8 +68,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
@@ -84,14 +81,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
  * blocks (__VERIFIER_atomic_*). Note: These functions do not occur in the C standard or any of the libraries!
  */
 public class SvcompLibraryModel implements ILibraryModel {
-	/**
-	 * If we construct an auxvar that models a nondeterministic input, we havoc that auxvar afterwards to ensure that we
-	 * get a new nondeterministic value even if the variable occurs in a loop. If this constant is set, we havoc the
-	 * variable also before the nondeterministic assignment. If the auxvar is also havoced before, it is only
-	 * backward-live to the havoc, otherwise it would be backward-live until the beginning of the procedure.
-	 */
-	private static final boolean HAVOC_NONDET_AUXVARS_ALSO_BEFORE = true;
-
 	private final FunctionModelHelper mHelper;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final ExpressionTranslation mExpressionTranslation;
@@ -128,63 +117,63 @@ public class SvcompLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("__VERIFIER_nondet_memory", this::handleVerifierNondetMemory));
 
 		result.add(new FunctionModel("__VERIFIER_nondet_bool",
-				(main, node, loc, name) -> handleVerifierNondetBool(main, loc)));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.BOOL))));
 		result.add(new FunctionModel("__VERIFIER_nondet__Bool",
-				(main, node, loc, name) -> handleVerifierNondetBool(main, loc)));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.BOOL))));
 		result.add(new FunctionModel("__VERIFIER_nondet_char",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.CHAR))));
-		result.add(new FunctionModel("__VERIFIER_nondet_pchar", (main, node, loc, name) -> handleVerifierNonDet(main,
-				loc, new CPointer(new CPrimitive(CPrimitives.CHAR)))));
-		result.add(new FunctionModel("__VERIFIER_nondet_charp", (main, node, loc, name) -> handleVerifierNonDet(main,
-				loc, new CPointer(new CPrimitive(CPrimitives.CHAR)))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.CHAR))));
+		result.add(new FunctionModel("__VERIFIER_nondet_pchar", (main, node, loc, name) -> mCHandler.handleNondet(loc,
+				new CPointer(new CPrimitive(CPrimitives.CHAR)))));
+		result.add(new FunctionModel("__VERIFIER_nondet_charp", (main, node, loc, name) -> mCHandler.handleNondet(loc,
+				new CPointer(new CPrimitive(CPrimitives.CHAR)))));
 		result.add(new FunctionModel("__VERIFIER_nondet_float",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.FLOAT))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.FLOAT))));
 		result.add(new FunctionModel("__VERIFIER_nondet_double",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.DOUBLE))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.DOUBLE))));
 		result.add(new FunctionModel("__VERIFIER_nondet_int",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.INT))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.INT))));
 		result.add(new FunctionModel("__VERIFIER_nondet_long",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.LONG))));
 		result.add(new FunctionModel("__VERIFIER_nondet_longlong",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONGLONG))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.LONGLONG))));
 		result.add(new FunctionModel("__VERIFIER_nondet_int128",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.INT128))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.INT128))));
 		result.add(new FunctionModel("__VERIFIER_nondet_short",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.SHORT))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.SHORT))));
 		result.add(new FunctionModel("__VERIFIER_nondet_uchar",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UCHAR))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.UCHAR))));
 		result.add(new FunctionModel("__VERIFIER_nondet_unsigned_char",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UCHAR))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.UCHAR))));
 		result.add(new FunctionModel("__VERIFIER_nondet_unsigned",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.UINT))));
 		result.add(new FunctionModel("__VERIFIER_nondet_unsigned_int",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.UINT))));
 		result.add(new FunctionModel("__VERIFIER_nondet_uint",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.UINT))));
 		result.add(new FunctionModel("__VERIFIER_nondet_ulong",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONG))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.ULONG))));
 		result.add(new FunctionModel("__VERIFIER_nondet_ulonglong",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONGLONG))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.ULONGLONG))));
 		result.add(new FunctionModel("__VERIFIER_nondet_uint128",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT128))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.UINT128))));
 		result.add(new FunctionModel("__VERIFIER_nondet_ushort",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.USHORT))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.USHORT))));
 
 		// TODO: These are no predefined types, thus the return value may depend on the benchmark
 		result.add(new FunctionModel("__VERIFIER_nondet_loff_t",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.LONG))));
 		result.add(new FunctionModel("__VERIFIER_nondet_size_t",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONG))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.ULONG))));
 		result.add(new FunctionModel("__VERIFIER_nondet_pthread_t",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONG))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.ULONG))));
 		result.add(new FunctionModel("__VERIFIER_nondet_sector_t",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.ULONG))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.ULONG))));
 		result.add(new FunctionModel("__VERIFIER_nondet_u8",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UCHAR))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.UCHAR))));
 		result.add(new FunctionModel("__VERIFIER_nondet_u16",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.USHORT))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.USHORT))));
 		result.add(new FunctionModel("__VERIFIER_nondet_u32",
-				(main, node, loc, name) -> handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.UINT))));
+				(main, node, loc, name) -> mCHandler.handleNondet(loc, new CPrimitive(CPrimitives.UINT))));
 
 		result.add(new FunctionModel("__VERIFIER_atomic_begin", (main, node, loc, name) -> handleByFunctionCall(main,
 				node, loc, name, new CPrimitive(CPrimitives.VOID))));
@@ -249,43 +238,6 @@ public class SvcompLibraryModel implements ILibraryModel {
 
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, builder.getDeclarations(), builder.getAuxVars());
 		return builder.build();
-	}
-
-	private ExpressionResult handleVerifierNondetBool(final IDispatcher main, final ILocation loc) {
-		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		final CPrimitive cType = new CPrimitive(CPrimitives.BOOL);
-		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
-		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
-		if (HAVOC_NONDET_AUXVARS_ALSO_BEFORE) {
-			resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
-		}
-		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), cType));
-		final Expression isZero = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, auxvarinfo.getExp(),
-				mExpressionTranslation.constructLiteralForIntegerType(loc, cType, BigInteger.ZERO));
-		final Expression isOne = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, auxvarinfo.getExp(),
-				mExpressionTranslation.constructLiteralForIntegerType(loc, cType, BigInteger.ONE));
-		resultBuilder.addStatement(new AssumeStatement(loc, ExpressionFactory.or(loc, List.of(isZero, isOne))));
-
-		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder.getDeclarations(),
-				resultBuilder.getAuxVars());
-		return resultBuilder.build();
-	}
-
-	private ExpressionResult handleVerifierNonDet(final IDispatcher main, final ILocation loc, final ICType cType) {
-		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
-		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
-		if (HAVOC_NONDET_AUXVARS_ALSO_BEFORE) {
-			resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
-		}
-		final LRValue returnValue = new RValue(auxvarinfo.getExp(), cType);
-		resultBuilder.setLrValue(returnValue);
-		mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(),
-				resultBuilder);
-
-		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder.getDeclarations(),
-				resultBuilder.getAuxVars());
-		return resultBuilder.build();
 	}
 
 	private Result handleErrorFunction(final IDispatcher main, final IASTFunctionCallExpression node,

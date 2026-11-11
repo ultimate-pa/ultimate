@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -1074,47 +1075,64 @@ public final class SmtUtils {
 		return freeVars;
 	}
 
+	public static Term booleanConnective(final Script script, final boolean pullOutCommonInnerJuncts,
+			final String connective, final Collection<Term> terms) {
+		if (connective.equals("and")) {
+			return andWithExtendedLocalSimplification(script, pullOutCommonInnerJuncts, terms);
+		}
+		if (connective.equals("or")) {
+			return orWithExtendedLocalSimplification(script, pullOutCommonInnerJuncts, terms);
+		}
+		throw new UnsupportedOperationException("unsupported boolean connective " + connective);
+	}
+
 	public static Term and(final Script script, final Term... terms) {
 		if (EXTENDED_LOCAL_SIMPLIFICATION) {
-			return andWithExtendedLocalSimplification(script, Arrays.asList(terms));
+			return andWithExtendedLocalSimplification(script, false, Arrays.asList(terms));
 		}
 		return Util.and(script, terms);
 	}
 
 	public static Term and(final Script script, final Collection<Term> terms) {
 		if (EXTENDED_LOCAL_SIMPLIFICATION) {
-			return andWithExtendedLocalSimplification(script, terms);
+			return andWithExtendedLocalSimplification(script, false, terms);
 		}
 		return Util.and(script, terms.toArray(new Term[terms.size()]));
 	}
 
 	public static Term or(final Script script, final Term... terms) {
 		if (EXTENDED_LOCAL_SIMPLIFICATION) {
-			return orWithExtendedLocalSimplification(script, Arrays.asList(terms));
+			return orWithExtendedLocalSimplification(script, false, Arrays.asList(terms));
 		}
 		return Util.or(script, terms);
 	}
 
 	public static Term or(final Script script, final Collection<Term> terms) {
 		if (EXTENDED_LOCAL_SIMPLIFICATION) {
-			return orWithExtendedLocalSimplification(script, terms);
+			return orWithExtendedLocalSimplification(script, false, terms);
 		}
 		return Util.or(script, terms.toArray(new Term[terms.size()]));
 	}
 
-	public static Term andWithExtendedLocalSimplification(final Script script, final Term... terms) {
-		return andWithExtendedLocalSimplification(script, Arrays.asList(terms));
+	public static Term andWithExtendedLocalSimplification(final Script script, final boolean pullOutCommonInnerJuncts,
+			final Term... terms) {
+		return andWithExtendedLocalSimplification(script, pullOutCommonInnerJuncts, Arrays.asList(terms));
 	}
 
-	public static Term andWithExtendedLocalSimplification(final Script script, final Collection<Term> terms) {
+	/**
+	 * @param pullOutCommonInnerJuncts
+	 *            If true, common disjuncts are pulled out of the conjunctions and disjunctions. E.g., (and (or a b) (or
+	 *            a c)) becomes (or a (and b c)).
+	 */
+	public static Term andWithExtendedLocalSimplification(final Script script, final boolean pullOutCommonInnerJuncts,
+			final Collection<Term> terms) {
 		final Set<Term> resultJuncts = new HashSet<>();
 		final Set<Term> negativeJuncts = new HashSet<>();
-		final InnerDualJunctTracker idjt = new InnerDualJunctTracker();
 		final String connective = "and";
 		final Predicate<Term> isNeutral = SmtUtils::isTrueLiteral;
 		final Predicate<Term> isAbsorbing = SmtUtils::isFalseLiteral;
 		final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective, isNeutral,
-				isAbsorbing, terms, resultJuncts, negativeJuncts, idjt);
+				isAbsorbing, terms, resultJuncts, negativeJuncts);
 		if (resultIsAbsorbingElement) {
 			return script.term("false");
 		}
@@ -1124,57 +1142,79 @@ public final class SmtUtils {
 		if (resultJuncts.size() == 1) {
 			return resultJuncts.iterator().next();
 		}
-		final boolean applyDistributivity = false;
-		if (applyDistributivity && idjt.getInnerDualJuncts() != null && !idjt.getInnerDualJuncts().isEmpty()) {
-			return applyDistributivity(script, resultJuncts, connective, idjt.getInnerDualJuncts());
+		if (pullOutCommonInnerJuncts) {
+			final Set<Term> commonDisjuncts = getCommomInnerJuncts(resultJuncts, "or");
+			if (!commonDisjuncts.isEmpty()) {
+				return applyDistributivity(script, resultJuncts, connective, commonDisjuncts);
+			}
 		}
 		return script.term(connective,
 				CommuhashUtils.sortByHashCode(resultJuncts.toArray(new Term[resultJuncts.size()])));
 	}
 
 	private static Term applyDistributivity(final Script script, final Set<Term> dualJunctions,
-			final String outerConnective, final Set<Term> omnipresentInnerDualJuncts) {
+			final String outerConnective, final Set<Term> commonInnerDualJuncts) {
 		final String innerConnective = QuantifierUtils.getDualBooleanConnective(outerConnective);
-		final Term[] resultDualJunctions = new Term[dualJunctions.size()];
-		int outerOffset = 0;
+		final List<Term> resultDualJunctions = new ArrayList<>(dualJunctions.size());
 		for (final Term dualJunction : dualJunctions) {
 			final Term[] innerDualJuncts = QuantifierUtils
 					.getDualFiniteJuncts(QuantifierUtils.getCorrespondingQuantifier(outerConnective), dualJunction);
-			final Term[] remainingInnerDualJuncts =
-					new Term[innerDualJuncts.length - omnipresentInnerDualJuncts.size()];
+			final Term[] remainingInnerDualJuncts = new Term[innerDualJuncts.length - commonInnerDualJuncts.size()];
+			if (remainingInnerDualJuncts.length == 0) {
+				return booleanConnective(script, false, innerConnective, commonInnerDualJuncts);
+			}
 			int offset = 0;
 			for (final Term innerDualJunct : innerDualJuncts) {
-				if (!omnipresentInnerDualJuncts.contains(innerDualJunct)) {
+				if (!commonInnerDualJuncts.contains(innerDualJunct)) {
 					remainingInnerDualJuncts[offset] = innerDualJunct;
 					offset++;
 				}
 			}
-			if (remainingInnerDualJuncts.length == 0) {
-				throw new AssertionError("optimization!!");
-			}
 			if (remainingInnerDualJuncts.length == 1) {
-				resultDualJunctions[outerOffset] = remainingInnerDualJuncts[0];
+				resultDualJunctions.add(remainingInnerDualJuncts[0]);
 			} else {
-				resultDualJunctions[outerOffset] = script.term(innerConnective, remainingInnerDualJuncts);
+				resultDualJunctions.add(script.term(innerConnective, remainingInnerDualJuncts));
 			}
-			outerOffset++;
 		}
-		final Term resultInnerDistributed = script.term(outerConnective, resultDualJunctions);
-		final List<Term> resultOuter = new ArrayList<>(omnipresentInnerDualJuncts.size() + 1);
-		resultOuter.addAll(omnipresentInnerDualJuncts);
+		final Term resultInnerDistributed = booleanConnective(script, false, outerConnective, resultDualJunctions);
+		final List<Term> resultOuter = new ArrayList<>(commonInnerDualJuncts.size() + 1);
+		resultOuter.addAll(commonInnerDualJuncts);
 		resultOuter.add(resultInnerDistributed);
-		return script.term(innerConnective, resultOuter.toArray(new Term[resultOuter.size()]));
+		return booleanConnective(script, false, innerConnective, resultOuter);
 	}
 
-	public static Term orWithExtendedLocalSimplification(final Script script, final Collection<Term> terms) {
+	private static Set<Term> getCommomInnerJuncts(final Set<Term> outJuncts, final String innerConnective) {
+		assert outJuncts.size() >= 2;
+		final int correspondingQuantifier = QuantifierUtils.getCorrespondingQuantifier(innerConnective);
+		final Iterator<Term> it = outJuncts.iterator();
+		final Set<Term> commonOuterJuncts = new HashSet<>(
+				Arrays.asList(QuantifierUtils.getCorrespondingFiniteJuncts(correspondingQuantifier, it.next())));
+		while (it.hasNext()) {
+			final Term innerJunction = it.next();
+			final Term[] innerJuncts =
+					QuantifierUtils.getCorrespondingFiniteJuncts(correspondingQuantifier, innerJunction);
+			commonOuterJuncts.retainAll(Arrays.asList(innerJuncts));
+			if (commonOuterJuncts.isEmpty()) {
+				return Collections.emptySet();
+			}
+		}
+		return commonOuterJuncts;
+	}
+
+	/**
+	 * @param pullOutCommonInnerJuncts
+	 *            If true, common disjuncts are pulled out of the conjunctions and disjunctions. E.g., (or (and a b) (and
+	 *            a c)) becomes (and a (or b c)).
+	 */
+	public static Term orWithExtendedLocalSimplification(final Script script, final boolean pullOutCommonInnerJuncts,
+			final Collection<Term> terms) {
 		final Set<Term> resultJuncts = new HashSet<>();
 		final Set<Term> negativeJuncts = new HashSet<>();
-		final InnerDualJunctTracker idjt = new InnerDualJunctTracker();
 		final String connective = "or";
 		final Predicate<Term> isNeutral = SmtUtils::isFalseLiteral;
 		final Predicate<Term> isAbsorbing = SmtUtils::isTrueLiteral;
 		final boolean resultIsAbsorbingElement = recursiveAndOrSimplificationHelper(script, connective, isNeutral,
-				isAbsorbing, terms, resultJuncts, negativeJuncts, idjt);
+				isAbsorbing, terms, resultJuncts, negativeJuncts);
 		if (resultIsAbsorbingElement) {
 			return script.term("true");
 		}
@@ -1183,6 +1223,12 @@ public final class SmtUtils {
 		}
 		if (resultJuncts.size() == 1) {
 			return resultJuncts.iterator().next();
+		}
+		if (pullOutCommonInnerJuncts) {
+			final Set<Term> commonDisjuncts = getCommomInnerJuncts(resultJuncts, "and");
+			if (!commonDisjuncts.isEmpty()) {
+				return applyDistributivity(script, resultJuncts, connective, commonDisjuncts);
+			}
 		}
 		return script.term(connective,
 				CommuhashUtils.sortByHashCode(resultJuncts.toArray(new Term[resultJuncts.size()])));
@@ -1220,7 +1266,7 @@ public final class SmtUtils {
 	 */
 	private static boolean recursiveAndOrSimplificationHelper(final Script script, final String connective,
 			final Predicate<Term> isNeutral, final Predicate<Term> isAbsorbing, final Collection<Term> inputJuncts,
-			final Set<Term> resultJuncts, final Set<Term> negatedJuncts, final InnerDualJunctTracker idjt) {
+			final Set<Term> resultJuncts, final Set<Term> negatedJuncts) {
 		for (final Term junct : inputJuncts) {
 			if (isNeutral.test(junct)) {
 				// do nothing, junct will not contribute to result
@@ -1237,7 +1283,7 @@ public final class SmtUtils {
 					// descend recusively to check and add its subjuncts
 					final boolean resultIsAbsorbingElement =
 							recursiveAndOrSimplificationHelper(script, connective, isNeutral, isAbsorbing,
-									Arrays.asList(appTerm.getParameters()), resultJuncts, negatedJuncts, idjt);
+									Arrays.asList(appTerm.getParameters()), resultJuncts, negatedJuncts);
 					if (resultIsAbsorbingElement) {
 						return true;
 					}
@@ -1260,7 +1306,6 @@ public final class SmtUtils {
 				return true;
 			}
 			resultJuncts.add(junct);
-			idjt.addOuterJunct(junct, connective);
 		}
 		return false;
 	}
@@ -2661,25 +2706,6 @@ public final class SmtUtils {
 			strIndices[i] = indices[i].toString();
 		}
 		return strIndices;
-	}
-
-	private static class InnerDualJunctTracker {
-
-		private Set<Term> mInnerDualJuncts;
-
-		public void addOuterJunct(final Term outerJunct, final String outerConnective) {
-			final Term[] innerDualJuncts = QuantifierUtils
-					.getDualFiniteJuncts(QuantifierUtils.getCorrespondingQuantifier(outerConnective), outerJunct);
-			if (mInnerDualJuncts == null) {
-				mInnerDualJuncts = new HashSet<>(Arrays.asList(innerDualJuncts));
-			} else {
-				mInnerDualJuncts.retainAll(Arrays.asList(innerDualJuncts));
-			}
-		}
-
-		public Set<Term> getInnerDualJuncts() {
-			return mInnerDualJuncts;
-		}
 	}
 
 	public static double approximateAsDouble(final Rational rat) {

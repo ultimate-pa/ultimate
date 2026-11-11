@@ -160,6 +160,11 @@ public final class CEnum implements ICType, ICPossibleIncompleteType<CEnum> {
 	}
 
 	@Override
+	public ICType toAtomic() {
+		throw new UnsupportedOperationException("Atomic enums are not supported yet.");
+	}
+
+	@Override
 	public boolean isIntegerType() {
 		return true;
 	}

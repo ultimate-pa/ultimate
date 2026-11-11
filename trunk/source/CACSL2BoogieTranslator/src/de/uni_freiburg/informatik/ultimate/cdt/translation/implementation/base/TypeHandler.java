@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
+import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTElaboratedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier;
@@ -240,14 +241,14 @@ public class TypeHandler implements ITypeHandler {
 			 */
 			final Result opRes = main.dispatch(node.getDeclTypeExpression());
 			if (opRes instanceof ExpressionResult) {
-				final ICType cType = ((ExpressionResult) opRes).getLrValue().getCType();
+				final ICType cType = qualifyAtomic(node, ((ExpressionResult) opRes).getLrValue().getCType());
 				return new TypesResult(cType2AstType(loc, cType), node.isConst(), false, cType);
 			} else if (opRes instanceof DeclaratorResult) {
 				final var declResult = (DeclaratorResult) opRes;
 				if (!declResult.hasNoSideEffects()) {
 					throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
 				}
-				final ICType cType = declResult.getDeclaration().getType();
+				final ICType cType = qualifyAtomic(node, declResult.getDeclaration().getType());
 				return new TypesResult(cType2AstType(loc, cType), node.isConst(), false, cType);
 			}
 		}
@@ -274,8 +275,8 @@ public class TypeHandler implements ITypeHandler {
 		if (stv == null) {
 			final ICType libraryType = mLibraryTypes.get(cId);
 			if (libraryType != null) {
-				return new TypesResult(cType2AstType(loc, libraryType), node.isConst(), libraryType.isVoidType(),
-						libraryType);
+				final ICType cType = qualifyAtomic(node, libraryType);
+				return new TypesResult(cType2AstType(loc, cType), node.isConst(), cType.isVoidType(), cType);
 			}
 			final String msg = "Undefined type " + cId;
 			throw new UnsupportedSyntaxException(loc, msg);
@@ -287,7 +288,7 @@ public class TypeHandler implements ITypeHandler {
 		final boolean isConstant = false;
 		final boolean isVoid = false;
 		return new TypesResult(new NamedType(loc, boogieType, bId, new ASTType[0]), isConstant, isVoid,
-				new CNamed(bId, cType));
+				qualifyAtomic(node, new CNamed(bId, cType)));
 	}
 
 	@Override
@@ -348,7 +349,7 @@ public class TypeHandler implements ITypeHandler {
 			mDefinedTypes.put(rslvName, result);
 		}
 
-		return result;
+		return TypesResult.create(result, qualifyAtomic(node, cEnum));
 	}
 
 	@Override
@@ -363,8 +364,7 @@ public class TypeHandler implements ITypeHandler {
 			final TypesResult originalType = mDefinedTypes.get(rslvName);
 			if (originalType != null) {
 				// --> we have a normal struct, union or enum declaration
-				return new TypesResult(originalType.getAstType(), originalType.isConst(), originalType.isVoid(),
-						originalType.getCType());
+				return TypesResult.create(originalType, qualifyAtomic(node, originalType.getCType()));
 			}
 			// --> This is a definition of an incomplete struct, enum or union.
 			String incompleteTypeName;
@@ -394,7 +394,7 @@ public class TypeHandler implements ITypeHandler {
 
 			mDefinedTypes.put(rslvName, r);
 
-			return r;
+			return TypesResult.create(r, qualifyAtomic(node, ctype));
 		}
 		final String msg = "Not yet implemented: Spec [" + node.getKind() + "] of " + node.getClass();
 		throw new UnsupportedSyntaxException(loc, msg);
@@ -489,7 +489,11 @@ public class TypeHandler implements ITypeHandler {
 		if (!cId.equals(SFO.EMPTY)) {
 			mDefinedTypes.put(rslvName, result);
 		}
-		return result;
+		return TypesResult.create(result, qualifyAtomic(node, cvar));
+	}
+
+	private static ICType qualifyAtomic(final IASTDeclSpecifier node, final ICType type) {
+		return CTranslationUtil.hasAtomicQualifier(node) ? type.toAtomic() : type;
 	}
 
 	private static boolean isAnonymousMember(final IASTDeclaration dec) {
