@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -68,7 +69,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -90,9 +93,11 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverB
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TransferBetweenMainAndWorker.TransferMode;
@@ -755,6 +760,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * and any subset of them is a valid witness. A loop head of k-induction that is no loop location of the ICFG is
 	 * left out, and so is a loop location without a loop head of k-induction (e.g. a loop from which no error is
 	 * reachable): the witness has no invariant there.
+	 * <p>
+	 * An invariant is also weakened to what can be backtranslated to C, see {@link #weakenToBacktranslatable}: a weaker
+	 * invariant still holds at its loop head.
 	 *
 	 * @return the invariants of a k-induction proof as an annotation of the initial abstraction, or null if there are
 	 *         none or none of them fits the ICFG
@@ -782,7 +790,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				continue;
 			}
 			final Term transferred = mStateTransferrer.transferTerm(entry.getValue(), workerResult.getWorkerMgdScript());
-			annotation.put(entry.getKey(), mPredicateFactory.newSPredicate(loc, transferred));
+			final Term translatable = weakenToBacktranslatable(transferred, loc);
+			annotation.put(entry.getKey(), mPredicateFactory.newSPredicate(loc, translatable));
+			// Only an invariant that is true by itself gets the explicit 1: one weakened to true need not prove anything.
 			if (proving && SmtUtils.isTrueLiteral(transferred)) {
 				new WitnessInvariant<>("1").annotate(loc);
 				explicitTrue++;
@@ -802,6 +812,63 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			return null;
 		}
 		return annotation;
+	}
+
+	/**
+	 * FloydHoareUtils.createInvariantResults leaves out the whole invariant of a location if a part of it cannot be
+	 * backtranslated to C: variables without a C counterpart (#memory_int, the !base of an array, currentRoundingMode),
+	 * a variable out of the C block scope at the loop head, bit-vector extracts or quantifiers. In the 11-10 run 50
+	 * k-induction proofs lost invariants that way, 36 of them all. Instead, every literal of the and/or structure that
+	 * cannot be backtranslated is replaced by true. This weakens the invariant, so it still holds at its location, and
+	 * since the backtranslation is compositional over and/or, the rest translates as a whole.
+	 * <p>
+	 * Each literal that cannot be backtranslated reports one "Unfinished Backtranslation" result, as the whole invariant
+	 * did before.
+	 *
+	 * @return {@code invariant} with every literal that cannot be backtranslated at {@code loc} replaced by true
+	 */
+	private Term weakenToBacktranslatable(final Term invariant, final IcfgLocation loc) {
+		final ILocation context = ILocation.getAnnotation(loc);
+		final Map<Term, Boolean> translatable = new HashMap<>();
+		final Term result = weakenToBacktranslatable(invariant, context, translatable);
+		final long dropped = translatable.values().stream().filter(ok -> !ok).count();
+		if (dropped > 0) {
+			mLogger.info("Main: k-induction invariant at %s: %d of %d literal(s) cannot be backtranslated, replaced by "
+					+ "true", loc, dropped, translatable.size());
+		}
+		return result;
+	}
+
+	private Term weakenToBacktranslatable(final Term term, final ILocation context,
+			final Map<Term, Boolean> translatable) {
+		final Script script = mCsToolkit.getManagedScript().getScript();
+		if (term instanceof final ApplicationTerm appTerm) {
+			final String connective = appTerm.getFunction().getName();
+			if ("and".equals(connective) || "or".equals(connective)) {
+				final List<Term> weakened = new ArrayList<>();
+				for (final Term param : appTerm.getParameters()) {
+					weakened.add(weakenToBacktranslatable(param, context, translatable));
+				}
+				return "and".equals(connective) ? SmtUtils.and(script, weakened) : SmtUtils.or(script, weakened);
+			}
+		}
+		if (SmtUtils.isTrueLiteral(term) || SmtUtils.isFalseLiteral(term)) {
+			return term;
+		}
+		return translatable.computeIfAbsent(term, literal -> canBacktranslate(literal, context)) ? term
+				: script.term("true");
+	}
+
+	/** The same backtranslation as FloydHoareUtils.createInvariantResults, which reports and returns null on failure. */
+	private boolean canBacktranslate(final Term literal, final ILocation context) {
+		final IBacktranslationService backtranslation = mServices.getBacktranslationService();
+		try {
+			final var translated = backtranslation.translateExpressionWithContext(literal, context, Term.class);
+			return translated != null && backtranslation.targetExpressionToString(translated) != null;
+		} catch (final RuntimeException e) {
+			mLogger.warn("Main: backtranslating the k-induction invariant literal %s failed: %s", literal, e);
+			return false;
+		}
 	}
 
 	private void setUpWorkerThreads() {
