@@ -157,12 +157,15 @@ public final class CallInstructionHandler {
 	 *            The location in the source code where this instruction is defined.
 	 * @param declarations
 	 *            The declarations of the translation so far.
+	 * @param onlyDeclaredFunctions
+	 *            The identifiers of the functions that are only declared and not defined.
 	 * @throws AssertionError
 	 *             if the call instruction has no type or the called procedure is not declared.
 	 */
 	public static void handleCallInstWithResult(final Result result,
 			final LLVMIRParser.ValueInstructionContext instructionType, final String identifier,
-			final LlvmirLocation location, final ArrayList<Declaration> declarations) {
+			final LlvmirLocation location, final ArrayList<Declaration> declarations,
+			final Set<String> onlyDeclaredFunctions) {
 		final LLVMIRParser.CallInstContext callInst = instructionType.callInst();
 		final LLVMIRParser.TypeContext typeContext = getCallResultType(callInst);
 		result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, location));
@@ -187,6 +190,8 @@ public final class CallInstructionHandler {
 			addOperationWithOverflow(result, callInst, Operator.ARITHMUL, true, identifier, location, declarations);
 		} else if (callIdentifier.startsWith("@llvm.umul.with.overflow")) {
 			addOperationWithOverflow(result, callInst, Operator.ARITHMUL, false, identifier, location, declarations);
+		} else if (onlyDeclaredFunctions.contains(callIdentifier) && !callIdentifier.startsWith("@llvm.")) {
+			addNondetStatements(result, typeContext, callIdentifier, identifier, location);
 		} else {
 			addModifiedGlobalVars(result, callIdentifier, location, declarations);
 			final ArrayList<Expression> args = new ArrayList<>();

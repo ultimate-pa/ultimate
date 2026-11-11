@@ -69,7 +69,9 @@ import static de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.u
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -100,6 +102,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	private Unit mResult;
 	private final String mFilename;
 	private LlvmirLocation mLocation;
+	private final Set<String> mOnlyDeclaredFunctions = new HashSet<>();
 
 	private final ArrayList<Declaration> mDeclarations = new ArrayList<>();
 	private final HashMap<String, Pair<Declaration, Statement>> mGlobalVars = new HashMap<>();
@@ -154,6 +157,13 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		mDeclarations.add(constructRemainderFunction(mLocation));
 
 		ParseTree mainFunc = null;
+		
+		for (final ParseTree child: ctx.children) {
+			if (child.getChild(0) instanceof LLVMIRParser.FuncDeclContext) {
+				final LLVMIRParser.FuncDeclContext funcDecl = (LLVMIRParser.FuncDeclContext) child.getChild(0);
+				mOnlyDeclaredFunctions.add(funcDecl.funcHeader().GlobalIdent().getText());
+			}
+		}
 
 		for (final ParseTree child : ctx.children) {
 			if (!(child.getChild(0) instanceof LLVMIRParser.FuncDefContext)) {
@@ -382,7 +392,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		} else if (instructionType.allocaInst() != null) {
 			handleAllocaInst(result, instructionType, identifier, location);
 		} else if (instructionType.callInst() != null) {
-			handleCallInstWithResult(result, instructionType, identifier, location, mDeclarations);
+			handleCallInstWithResult(result, instructionType, identifier, location, mDeclarations, mOnlyDeclaredFunctions);
 		} else if (instructionType.selectInst() != null) {
 			handleSelectInst(result, instructionType, identifier, location);
 		} else if (instructionType.truncInst() != null) {
