@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -83,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
@@ -766,6 +768,12 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		// The witness reports invariants at the ICFG's loop locations; k-induction finds its loop heads itself.
 		final Set<IcfgLocation> loopLocations = new HashSet<>(mIcfg.getLoopLocations());
 		final Map<IPredicate, IPredicate> annotation = new HashMap<>();
+		// FloydHoareUtils.createInvariantResults leaves out every invariant that is true, so a proof with true at a
+		// loop head gives an empty witness there. Validators such as LIV then cannot cut the loop and verify the whole
+		// program (SV-COMP 2027: 2,047 k=1 proofs unconfirmed). If the invariants prove the program, true is enough at
+		// such a loop head, and the witness states it explicitly, as CPAchecker's witnesses do.
+		final boolean proving = workerResult.proofInvariantsProve();
+		int explicitTrue = 0;
 		for (final Map.Entry<IPredicate, Term> entry : invariants.entrySet()) {
 			final IcfgLocation loc = ((ISLPredicate) entry.getKey()).getProgramPoint();
 			if (!loopLocations.remove(loc) || !mProofUpdater.getProgram().getStates().contains(entry.getKey())) {
@@ -773,8 +781,16 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 						+ "has no invariant there", loc);
 				continue;
 			}
-			annotation.put(entry.getKey(), mPredicateFactory.newSPredicate(loc,
-					mStateTransferrer.transferTerm(entry.getValue(), workerResult.getWorkerMgdScript())));
+			final Term transferred = mStateTransferrer.transferTerm(entry.getValue(), workerResult.getWorkerMgdScript());
+			annotation.put(entry.getKey(), mPredicateFactory.newSPredicate(loc, transferred));
+			if (proving && SmtUtils.isTrueLiteral(transferred)) {
+				new WitnessInvariant<>("1").annotate(loc);
+				explicitTrue++;
+			}
+		}
+		if (explicitTrue > 0) {
+			mLogger.info("Main: k-induction proof with true at %d loop head(s), the correctness witness states 1 there",
+					explicitTrue);
 		}
 		if (!loopLocations.isEmpty()) {
 			mLogger.info("Main: k-induction has no loop head at the loop location(s) %s, the correctness witness has "

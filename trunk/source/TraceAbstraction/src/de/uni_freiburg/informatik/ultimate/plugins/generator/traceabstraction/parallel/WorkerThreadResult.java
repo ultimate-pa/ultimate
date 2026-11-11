@@ -58,6 +58,7 @@ public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IA
 	private IProgramExecution<L, Term> mProgramExecution;
 	// Only set by kInductionSafe(..), see there.
 	private Map<IPredicate, Term> mProofInvariants;
+	private boolean mProofInvariantsProve;
 	WorkerType mWorkerType;
 
 	public enum WorkerType
@@ -122,12 +123,16 @@ public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IA
 	 * @param proofInvariants
 	 *            for every loop head, a state of the initial abstraction, its invariant for a correctness witness,
 	 *            terms of {@code mgdScript}; null if there are none
+	 * @param proofInvariantsProve
+	 *            whether {@code proofInvariants} together prove the program
 	 */
 	public static <L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> WorkerThreadResult<L, A>
-			kInductionSafe(final Map<IPredicate, Term> proofInvariants, final ManagedScript mgdScript) {
+			kInductionSafe(final Map<IPredicate, Term> proofInvariants, final boolean proofInvariantsProve,
+					final ManagedScript mgdScript) {
 		final WorkerThreadResult<L, A> result =
 				new WorkerThreadResult<>(WorkerType.KINDUCTION, null, null, mgdScript, null, null, false, false);
 		result.mProofInvariants = proofInvariants;
+		result.mProofInvariantsProve = proofInvariantsProve;
 		return result;
 	}
 
@@ -170,6 +175,14 @@ public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IA
 	 */
 	public Map<IPredicate, Term> getProofInvariants() {
 		return mProofInvariants;
+	}
+
+	/**
+	 * @return whether the invariants of {@link #getProofInvariants()} together prove the program, so that a loop head
+	 *         whose invariant is {@code true} needs nothing more; false if there are none
+	 */
+	public boolean proofInvariantsProve() {
+		return mProofInvariantsProve;
 	}
 
 	public WorkerType getWorkerType() {

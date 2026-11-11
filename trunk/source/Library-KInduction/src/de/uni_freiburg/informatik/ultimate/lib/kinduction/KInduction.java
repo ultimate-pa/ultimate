@@ -792,11 +792,24 @@ public class KInduction<LETTER extends IAction, STATE> {
 	private record WitnessFlag(int node, Term candidate, Term flag) {
 	}
 
+	/**
+	 * Invariants for a correctness witness, see {@link KInduction#computeWitnessInvariants}.
+	 *
+	 * @param invariants
+	 *            for every loop head state its invariant, {@code true} where it has none
+	 * @param proving
+	 *            whether the invariants together prove the program: then a loop head whose invariant is {@code true}
+	 *            needs nothing more, and a witness may state {@code true} there explicitly
+	 */
+	public record WitnessInvariants<STATE>(Map<STATE, Term> invariants, boolean proving) {
+	}
+
 	// The full-frame step of the inductiveness checks over mConstants, built on the first use
 	private Term mWitnessStep;
-	// The best invariants for a correctness witness found so far, by loop head; null until there are some. Written by
-	// the thread that computes them, read by the worker when it stops waiting for that thread.
-	private volatile Map<STATE, Term> mBestWitnessInvariants;
+	// The best invariants for a correctness witness found so far, by loop head, with whether they prove the program,
+	// published together; null until there are some. Written by the thread that computes them, read by the worker when
+	// it stops waiting for that thread.
+	private volatile WitnessInvariants<STATE> mBestWitnessInvariants;
 
 	/**
 	 * Invariants for a correctness witness, one per loop head, all proven inductive on the transition system.
@@ -834,12 +847,12 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * @param inScope
 	 *            whether a variable may occur in the invariant of a loop head state, i.e. is in scope at its location
 	 * @return for every loop head state its invariant, quantifier-free and native to the worker's
-	 *         {@link ManagedScript}, or empty if the program was not proven safe or the solver could not decide whether
-	 *         the candidates are inductive
+	 *         {@link ManagedScript}, with whether they prove the program, or empty if the program was not proven safe or
+	 *         the solver could not decide whether the candidates are inductive
 	 * @throws ToolchainCanceledException
 	 *             if the timer ran out before any annotation was proven inductive
 	 */
-	public Optional<Map<STATE, Term>> computeWitnessInvariants(final IUltimateServiceProvider services,
+	public Optional<WitnessInvariants<STATE>> computeWitnessInvariants(final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final BiPredicate<STATE, TermVariable> inScope) {
 		if (!mSafe) {
 			return Optional.empty();
@@ -849,7 +862,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 		final Map<Integer, Set<Term>> candidates = suppliedCandidates(injected);
 		mLogger.info("KInduction witness: proof at k=%d, %d injected and %d supplied candidate conjunct(s)", mProvedK,
 				countConjuncts(injected), countConjuncts(candidates) - countConjuncts(injected));
-		Map<STATE, Term> result = null;
+		WitnessInvariants<STATE> result = null;
 		if (mProvedK == 1 && injected.isEmpty()) {
 			// The step case of k = 1 assumed nothing, so true at every loop head is inductive and proves the program.
 			mLogger.info("KInduction witness: k=1 without injected invariants, every loop head gets true");
@@ -901,9 +914,10 @@ public class KInduction<LETTER extends IAction, STATE> {
 
 	/**
 	 * @return the best invariants for a correctness witness that {@link #computeWitnessInvariants} has found so far, by
-	 *         loop head; null if it has not proven any yet. Safe to call from another thread.
+	 *         loop head, with whether they prove the program; null if it has not proven any yet. Safe to call from
+	 *         another thread.
 	 */
-	public Map<STATE, Term> getBestWitnessInvariants() {
+	public WitnessInvariants<STATE> getBestWitnessInvariants() {
 		return mBestWitnessInvariants;
 	}
 
@@ -1222,9 +1236,9 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 *
 	 * @param inScope
 	 *            whether a variable is in scope at a loop head state
-	 * @return its invariants by loop head state, {@code true} where it has none
+	 * @return its invariants by loop head state, {@code true} where it has none, with whether they prove the program
 	 */
-	private Map<STATE, Term> publishWitness(final Map<Integer, Set<Term>> annotation, final boolean safe,
+	private WitnessInvariants<STATE> publishWitness(final Map<Integer, Set<Term>> annotation, final boolean safe,
 			final BiPredicate<STATE, TermVariable> inScope, final long start) {
 		final Script script = mWorkerMgdScript.getScript();
 		final Map<STATE, List<Term>> byState = new LinkedHashMap<>();
@@ -1254,10 +1268,19 @@ public class KInduction<LETTER extends IAction, STATE> {
 			}
 			result.put(entry.getKey(), invariant);
 		}
-		mBestWitnessInvariants = Collections.unmodifiableMap(result);
+		// Leaving out a conjunct or joining the invariants of several call nodes weakens the published invariants, and
+		// then they need not prove the program any more, even if the annotation did. Without any conjunct, every loop
+		// head gets true either way, which proves the program if the annotation did.
+		final boolean proving = safe && (annotation.values().stream().allMatch(Set::isEmpty)
+				|| outOfScope == 0 && severalCallNodes == 0);
+		mBestWitnessInvariants = new WitnessInvariants<>(Collections.unmodifiableMap(result), proving);
 		mLogger.info("KInduction witness: %d of %d loop head(s) non-trivial, from k=%d, %s, after %d ms "
 				+ "(%d conjunct(s) out of scope left out, %d loop head(s) with several call nodes)", nonTrivial,
-				result.size(), mProvedK, safe ? "proving the program" : "not proving the program", elapsedMillis(start),
+				result.size(), mProvedK,
+				proving ? "proving the program"
+						: safe ? "proving the program before the out-of-scope and call-node weakening"
+								: "not proving the program",
+				elapsedMillis(start),
 				outOfScope, severalCallNodes);
 		return mBestWitnessInvariants;
 	}
