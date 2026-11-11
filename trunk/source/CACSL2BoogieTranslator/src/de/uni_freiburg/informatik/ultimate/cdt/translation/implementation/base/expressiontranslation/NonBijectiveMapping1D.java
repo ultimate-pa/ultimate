@@ -47,8 +47,7 @@ public class NonBijectiveMapping1D implements IPointerIntegerConversion {
 	private final ExpressionTranslation mExpressionTranslation;
 	private final MemoryPointer1D mMemoryPointer;
 
-	public NonBijectiveMapping1D(final ExpressionTranslation expressionTranslation,
-			final MemoryPointer1D pointer) {
+	public NonBijectiveMapping1D(final ExpressionTranslation expressionTranslation, final MemoryPointer1D pointer) {
 		mExpressionTranslation = expressionTranslation;
 		mMemoryPointer = pointer;
 	}

@@ -32,8 +32,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
- * Implementation of {@link IFloatingPointHandler} that throws {@link UnsupportedOperationException} whenever any method is invoked, which can be used when
- * floating-point operations are not supported (e.g., in {@link IntegerTranslation}).
+ * Implementation of {@link IFloatingPointHandler} that throws {@link UnsupportedOperationException} whenever any method
+ * is invoked, which can be used when floating-point operations are not supported (e.g., in {@link IntegerTranslation}).
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
