@@ -106,6 +106,7 @@ package_product() {
       TOOLCHAINS=(
         "RefereeCInline.xml:RefereeReach.xml"
         "RefereeCInline.xml:RefereeReachWitnessValidation.xml"
+        "BuchiAutomizerCInline.xml:RefereeTerminationWitnessValidation.xml"
       )
       ;;
     ReqCheck)
