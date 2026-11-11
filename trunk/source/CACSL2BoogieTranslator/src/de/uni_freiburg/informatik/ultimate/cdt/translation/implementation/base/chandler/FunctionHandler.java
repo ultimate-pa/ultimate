@@ -94,6 +94,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -626,10 +627,10 @@ public class FunctionHandler {
 		// frees are inserted in handleReturnStm
 		for (final Entry<LocalLValueILocationPair, Integer> entry : memoryHandler.getVariablesToBeFreed().entrySet()) {
 			if (entry.getValue() >= 1) {
-				resultBuilder.addStatement(memoryHandler.getDeallocCall(entry.getKey().mLlv, entry.getKey().mLoc));
+				resultBuilder.addStatement(memoryHandler.getDeallocCall(entry.getKey().llv(), entry.getKey().loc()));
 
 				resultBuilder.addStatement(
-						new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().mLlv.getLhs() }));
+						new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().llv().getLhs() }));
 			}
 		}
 
