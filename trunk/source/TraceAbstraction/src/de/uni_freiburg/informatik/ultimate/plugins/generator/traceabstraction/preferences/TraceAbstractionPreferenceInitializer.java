@@ -630,6 +630,34 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "k-induction crashes.";
 	private static final boolean DEF_KINDUCTION_SOLVER_RESTART = true;
 
+	public static final String LABEL_SEQUENTIAL_KINDUCTION_CEGAR_LOOP = "Use sequential CEGAR loop with k-induction";
+	private static final String DESC_SEQUENTIAL_KINDUCTION_CEGAR_LOOP =
+			"Runs trace abstraction for a limited time, then checks its interpolants for inductive invariants, then "
+					+ "runs k-induction with those invariants on the abstraction that trace abstraction refined so far. "
+					+ "All three run one after the other on the main thread. Takes precedence over the parallel CEGAR "
+					+ "loop.";
+	private static final boolean DEF_SEQUENTIAL_KINDUCTION_CEGAR_LOOP = false;
+
+	public static final String LABEL_SEQUENTIAL_TA_TIME_LIMIT =
+			"Time limit of trace abstraction before k-induction (s)";
+	private static final String DESC_SEQUENTIAL_TA_TIME_LIMIT =
+			"How long the sequential CEGAR loop with k-induction runs trace abstraction before it goes on to the "
+					+ "invariant synthesis and k-induction.";
+	private static final int DEF_SEQUENTIAL_TA_TIME_LIMIT = 450;
+
+	public static final String LABEL_SEQUENTIAL_INVARIANT_TIME_LIMIT =
+			"Time limit of invariant synthesis before k-induction (s)";
+	private static final String DESC_SEQUENTIAL_INVARIANT_TIME_LIMIT =
+			"How long the sequential CEGAR loop with k-induction checks the interpolants of trace abstraction for "
+					+ "inductive invariants before it starts k-induction. 0 skips the invariant synthesis.";
+	private static final int DEF_SEQUENTIAL_INVARIANT_TIME_LIMIT = 50;
+
+	public static final String LABEL_SEQUENTIAL_KINDUCTION_TIME_LIMIT = "Time limit of k-induction (s)";
+	private static final String DESC_SEQUENTIAL_KINDUCTION_TIME_LIMIT =
+			"How long the sequential CEGAR loop with k-induction runs k-induction. 0 means no limit but the time "
+					+ "limit of the whole toolchain.";
+	private static final int DEF_SEQUENTIAL_KINDUCTION_TIME_LIMIT = 0;
+
 	public static final String LABEL_INTERPOLANT_INVARIANTS =
 			"Check interpolants of TA workers for invariants for k-induction";
 	private static final String DESC_INTERPOLANT_INVARIANTS =
@@ -983,6 +1011,18 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						DESC_KINDUCTION_SOLVER_RESTART, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_INVARIANTS, DEF_INTERPOLANT_INVARIANTS,
 						DESC_INTERPOLANT_INVARIANTS, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SEQUENTIAL_KINDUCTION_CEGAR_LOOP,
+						DEF_SEQUENTIAL_KINDUCTION_CEGAR_LOOP, DESC_SEQUENTIAL_KINDUCTION_CEGAR_LOOP,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SEQUENTIAL_TA_TIME_LIMIT, DEF_SEQUENTIAL_TA_TIME_LIMIT,
+						DESC_SEQUENTIAL_TA_TIME_LIMIT, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, Integer.MAX_VALUE)),
+				new UltimatePreferenceItem<>(LABEL_SEQUENTIAL_INVARIANT_TIME_LIMIT, DEF_SEQUENTIAL_INVARIANT_TIME_LIMIT,
+						DESC_SEQUENTIAL_INVARIANT_TIME_LIMIT, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, Integer.MAX_VALUE)),
+				new UltimatePreferenceItem<>(LABEL_SEQUENTIAL_KINDUCTION_TIME_LIMIT,
+						DEF_SEQUENTIAL_KINDUCTION_TIME_LIMIT, DESC_SEQUENTIAL_KINDUCTION_TIME_LIMIT,
+						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(0, Integer.MAX_VALUE)),
 				new UltimatePreferenceItem<>(LABEL_SEARCH_LOOP_BOUND, DEF_SEARCH_LOOP_BOUND, DESC_SEARCH_LOOP_BOUND,
 						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
 				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY, DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY,

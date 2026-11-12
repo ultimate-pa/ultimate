@@ -44,7 +44,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -72,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInv
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -176,7 +180,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	private ExecutorService mInvariantExec;
 	// Computed on first use, see bitwuzlaRejectsProgram()
 	private Boolean mBitwuzlaRejectsProgram;
-	private boolean mLoggedZ3InsteadOfBitwuzla;
+	private final AtomicBoolean mLoggedZ3InsteadOfBitwuzla = new AtomicBoolean();
 	// Set before the workers are shut down and their solvers destroyed: a query failing from then on is no crash.
 	private volatile boolean mShuttingDown;
 
@@ -265,9 +269,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			mStateTransferrer = null;
 		}
 		mOriginalLocations = collectLocations(rootNode);
-		// By identity: a transferred copy keeps the serial number, i.e., the hash code, of its original.
-		mOriginalEdges = Collections.newSetFromMap(new IdentityHashMap<>());
-		mOriginalLocations.forEach(loc -> mOriginalEdges.addAll(loc.getOutgoingEdges()));
+		mOriginalEdges = outgoingEdges(mOriginalLocations);
 
 		mExec = Executors.newFixedThreadPool(mThreadLimit, workerThreadFactory("Cegar Worker"));
 		Thread.currentThread().setName("Main Cegar Thread");
@@ -759,7 +761,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				continue;
 			}
 			final Term transferred = mStateTransferrer.transferTerm(entry.getValue(), workerResult.getWorkerMgdScript());
-			final Term translatable = weakenToBacktranslatable(transferred, loc);
+			final Term translatable = weakenToBacktranslatable(transferred, loc, mCsToolkit.getManagedScript().getScript(),
+					mServices.getBacktranslationService(), mLogger);
 			annotation.put(entry.getKey(), mPredicateFactory.newSPredicate(loc, translatable));
 			// Only an invariant that is true by itself gets the explicit 1: one weakened to true need not prove anything.
 			if (proving && SmtUtils.isTrueLiteral(transferred)) {
@@ -796,27 +799,29 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 *
 	 * @return {@code invariant} with every literal that cannot be backtranslated at {@code loc} replaced by true
 	 */
-	private Term weakenToBacktranslatable(final Term invariant, final IcfgLocation loc) {
+	static Term weakenToBacktranslatable(final Term invariant, final IcfgLocation loc, final Script script,
+			final IBacktranslationService backtranslation, final ILogger logger) {
 		final ILocation context = ILocation.getAnnotation(loc);
 		final Map<Term, Boolean> translatable = new HashMap<>();
-		final Term result = weakenToBacktranslatable(invariant, context, translatable);
+		final Term result =
+				weakenToBacktranslatable(invariant, context, translatable, script, backtranslation, logger);
 		final long dropped = translatable.values().stream().filter(ok -> !ok).count();
 		if (dropped > 0) {
-			mLogger.info("Main: k-induction invariant at %s: %d of %d literal(s) cannot be backtranslated, replaced by "
+			logger.info("Main: k-induction invariant at %s: %d of %d literal(s) cannot be backtranslated, replaced by "
 					+ "true", loc, dropped, translatable.size());
 		}
 		return result;
 	}
 
-	private Term weakenToBacktranslatable(final Term term, final ILocation context,
-			final Map<Term, Boolean> translatable) {
-		final Script script = mCsToolkit.getManagedScript().getScript();
+	private static Term weakenToBacktranslatable(final Term term, final ILocation context,
+			final Map<Term, Boolean> translatable, final Script script, final IBacktranslationService backtranslation,
+			final ILogger logger) {
 		if (term instanceof final ApplicationTerm appTerm) {
 			final String connective = appTerm.getFunction().getName();
 			if ("and".equals(connective) || "or".equals(connective)) {
 				final List<Term> weakened = new ArrayList<>();
 				for (final Term param : appTerm.getParameters()) {
-					weakened.add(weakenToBacktranslatable(param, context, translatable));
+					weakened.add(weakenToBacktranslatable(param, context, translatable, script, backtranslation, logger));
 				}
 				return "and".equals(connective) ? SmtUtils.and(script, weakened) : SmtUtils.or(script, weakened);
 			}
@@ -824,18 +829,19 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		if (SmtUtils.isTrueLiteral(term) || SmtUtils.isFalseLiteral(term)) {
 			return term;
 		}
-		return translatable.computeIfAbsent(term, literal -> canBacktranslate(literal, context)) ? term
+		return translatable.computeIfAbsent(term, literal -> canBacktranslate(literal, context, backtranslation, logger))
+				? term
 				: script.term("true");
 	}
 
 	/** The same backtranslation as FloydHoareUtils.createInvariantResults, which reports and returns null on failure. */
-	private boolean canBacktranslate(final Term literal, final ILocation context) {
-		final IBacktranslationService backtranslation = mServices.getBacktranslationService();
+	private static boolean canBacktranslate(final Term literal, final ILocation context,
+			final IBacktranslationService backtranslation, final ILogger logger) {
 		try {
 			final var translated = backtranslation.translateExpressionWithContext(literal, context, Term.class);
 			return translated != null && backtranslation.targetExpressionToString(translated) != null;
 		} catch (final RuntimeException e) {
-			mLogger.warn("Main: backtranslating the k-induction invariant literal %s failed: %s", literal, e);
+			logger.warn("Main: backtranslating the k-induction invariant literal %s failed: %s", literal, e);
 			return false;
 		}
 	}
@@ -1327,10 +1333,22 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 *            base name for a dumped SMT script
 	 */
 	private SolverSettings getSolverSettings(final WorkerType workerType, final String filename) {
+		return getSolverSettings(mServices, mPref, workerType, () -> externalSolverCommand(workerType), filename);
+	}
+
+	/**
+	 * See {@link #getSolverSettings(WorkerType, String)}.
+	 *
+	 * @param externalSolverCommand
+	 *            the solver command of a worker that is no TA worker, see
+	 *            {@link #externalSolverCommand(TAPreferences, ILogger, WorkerType, BooleanSupplier, AtomicBoolean)}
+	 */
+	static SolverSettings getSolverSettings(final IUltimateServiceProvider services, final TAPreferences pref,
+			final WorkerType workerType, final Supplier<String> externalSolverCommand, final String filename) {
 
 		// The two benchmark-dump flags exist only on IcfgBuilder's page, so every worker reads them there.
-		final IPreferenceProvider taPrefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		final IPreferenceProvider icfgPrefs = mServices.getPreferenceProvider(
+		final IPreferenceProvider taPrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
+		final IPreferenceProvider icfgPrefs = services.getPreferenceProvider(
 				de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.Activator.PLUGIN_ID);
 		final IPreferenceProvider solverPrefs = workerType == WorkerType.TA ? icfgPrefs : taPrefs;
 
@@ -1343,17 +1361,17 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			logicForExternalSolver =
 					Logics.valueOf(icfgPrefs.getString(IcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
 		} else {
-			solverMode = solverMode(workerType);
-			commandExternalSolver = externalSolverCommand(workerType);
-			logicForExternalSolver = mPref.logicForExternalSolver();
+			solverMode = solverMode(pref, workerType);
+			commandExternalSolver = externalSolverCommand.get();
+			logicForExternalSolver = pref.logicForExternalSolver();
 		}
 
 		final boolean fakeNonIncrementalScript =
 				solverPrefs.getBoolean(IcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
 
-		final boolean dumpSmtScriptToFile = mPref.dumpSmtScriptToFile();
-		final boolean compressSmtScript = mPref.compressDumpedSmtScript();
-		final String pathOfDumpedScript = mPref.pathOfDumpedScript();
+		final boolean dumpSmtScriptToFile = pref.dumpSmtScriptToFile();
+		final boolean compressSmtScript = pref.compressDumpedSmtScript();
+		final String pathOfDumpedScript = pref.pathOfDumpedScript();
 
 		final boolean dumpUnsatCoreTrackBenchmark =
 				icfgPrefs.getBoolean(IcfgPreferenceInitializer.LABEL_DUMP_UNSAT_CORE_BENCHMARK);
@@ -1382,8 +1400,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * core, so its solver does not produce them: cvc4 1.8 in incremental mode segfaults on the counterexample
 	 * reconstruction's queries when unsat cores are enabled, and without them answers the very same script.
 	 */
-	private SolverMode solverMode(final WorkerType workerType) {
-		final SolverMode configured = mPref.solverMode();
+	private static SolverMode solverMode(final TAPreferences pref, final WorkerType workerType) {
+		final SolverMode configured = pref.solverMode();
 		if (workerType == WorkerType.KINDUCTION && configured == SolverMode.External_ModelsAndUnsatCoreMode) {
 			return SolverMode.External_ModelsMode;
 		}
@@ -1432,14 +1450,20 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 */
 	private boolean bitwuzlaRejectsProgram() {
 		if (mBitwuzlaRejectsProgram == null) {
-			final VpAlphabet<L> alphabet = mAbstraction.getVpAlphabet();
-			mBitwuzlaRejectsProgram = Stream
-					.of(alphabet.getInternalAlphabet(), alphabet.getCallAlphabet(), alphabet.getReturnAlphabet())
-					.flatMap(Set::stream).map(letter -> letter.getTransformula().getFormula())
-					.anyMatch(formula -> !SubTermFinder.find(formula, ParallelNwaCegarLoop::bitwuzlaRejects, true)
-							.isEmpty());
+			mBitwuzlaRejectsProgram = bitwuzlaRejectsProgram(mAbstraction.getVpAlphabet());
 		}
 		return mBitwuzlaRejectsProgram;
+	}
+
+	/**
+	 * @return whether some letter of {@code alphabet} has a term that bitwuzla rejects, see
+	 *         {@link #bitwuzlaRejects(Term)}
+	 */
+	static boolean bitwuzlaRejectsProgram(final VpAlphabet<? extends IIcfgTransition<?>> alphabet) {
+		return Stream.of(alphabet.getInternalAlphabet(), alphabet.getCallAlphabet(), alphabet.getReturnAlphabet())
+				.flatMap(Set::stream).map(letter -> letter.getTransformula().getFormula())
+				.anyMatch(formula -> !SubTermFinder.find(formula, ParallelNwaCegarLoop::bitwuzlaRejects, true)
+						.isEmpty());
 	}
 
 	/**
@@ -1473,20 +1497,33 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * and this is a k-induction worker.
 	 */
 	private String externalSolverCommand(final WorkerType workerType) {
-		String command = mPref.commandExternalSolver().trim();
+		return externalSolverCommand(mPref, mLogger, workerType, this::bitwuzlaRejectsProgram,
+				mLoggedZ3InsteadOfBitwuzla);
+	}
+
+	/**
+	 * See {@link #externalSolverCommand(WorkerType)}.
+	 *
+	 * @param bitwuzlaRejectsProgram
+	 *            whether the program has a term bitwuzla rejects, only asked if bitwuzla is the configured solver
+	 * @param loggedZ3InsteadOfBitwuzla
+	 *            whether the replacement of bitwuzla by z3 was logged already; set when it is logged
+	 */
+	static String externalSolverCommand(final TAPreferences pref, final ILogger logger, final WorkerType workerType,
+			final BooleanSupplier bitwuzlaRejectsProgram, final AtomicBoolean loggedZ3InsteadOfBitwuzla) {
+		String command = pref.commandExternalSolver().trim();
 		// k-induction and the invariant supplier ask every query on this one solver. Unlike a trace check, which falls
 		// back to the next solver of its strategy, they crash on the first query bitwuzla rejects.
 		if ((workerType == WorkerType.KINDUCTION || workerType == WorkerType.INVARIANT)
-				&& "bitwuzla".equals(executableName(command)) && bitwuzlaRejectsProgram()) {
-			if (!mLoggedZ3InsteadOfBitwuzla) {
-				mLogger.info("The program has Int or Real terms that bitwuzla does not support, e.g. a negative "
+				&& "bitwuzla".equals(executableName(command)) && bitwuzlaRejectsProgram.getAsBoolean()) {
+			if (!loggedZ3InsteadOfBitwuzla.getAndSet(true)) {
+				logger.info("The program has Int or Real terms that bitwuzla does not support, e.g. a negative "
 						+ "floating-point constant; k-induction and the invariant supplier use \"%s\" instead of "
 						+ "\"%s\"", Z3_FOR_INT_AND_REAL, command);
-				mLoggedZ3InsteadOfBitwuzla = true;
 			}
 			command = Z3_FOR_INT_AND_REAL;
 		}
-		final int timeout = mPref.getKInductionSolverTimeout();
+		final int timeout = pref.getKInductionSolverTimeout();
 		if (workerType != WorkerType.KINDUCTION || timeout < 0) {
 			// Inherit whatever the configured command says.
 			return command;
@@ -1516,7 +1553,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		} catch (final InterruptedException e) {
 			Thread.currentThread().interrupt();
 		}
-		detachTransferredEdges();
+		detachTransferredEdges(mOriginalLocations, mOriginalEdges, mLogger);
 		super.finish();
 	}
 
@@ -1527,25 +1564,36 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * whoever walks the ICFG after the loop (e.g. the check of the Hoare annotation) trips over it. Remove all edges
 	 * that were not there before the loop.
 	 */
-	private void detachTransferredEdges() {
+	static void detachTransferredEdges(final Set<IcfgLocation> originalLocations, final Set<IcfgEdge> originalEdges,
+			final ILogger logger) {
 		int removed = 0;
-		for (final IcfgLocation loc : mOriginalLocations) {
+		for (final IcfgLocation loc : originalLocations) {
 			final List<IcfgEdge> outgoing = loc.getOutgoingEdges().stream()
-					.filter(e -> !mOriginalEdges.contains(e)).collect(Collectors.toList());
+					.filter(e -> !originalEdges.contains(e)).collect(Collectors.toList());
 			final List<IcfgEdge> incoming = loc.getIncomingEdges().stream()
-					.filter(e -> !mOriginalEdges.contains(e)).collect(Collectors.toList());
+					.filter(e -> !originalEdges.contains(e)).collect(Collectors.toList());
 			loc.removeAllOutgoing(outgoing);
 			loc.removeAllIncoming(incoming);
 			removed += outgoing.size();
 		}
 		if (removed > 0) {
-			mLogger.info("Detached %s transferred edges from the ICFG", removed);
+			logger.info("Detached %s transferred edges from the ICFG", removed);
 		}
 	}
 
-	private static Set<IcfgLocation> collectLocations(final IIcfg<?> icfg) {
+	static Set<IcfgLocation> collectLocations(final IIcfg<?> icfg) {
 		return icfg.getProgramPoints().values().stream().flatMap(m -> m.values().stream())
 				.collect(Collectors.toSet());
+	}
+
+	/**
+	 * @return the outgoing edges of {@code locations}, by identity: a transferred copy keeps the serial number, i.e.,
+	 *         the hash code, of its original
+	 */
+	static Set<IcfgEdge> outgoingEdges(final Set<IcfgLocation> locations) {
+		final Set<IcfgEdge> edges = Collections.newSetFromMap(new IdentityHashMap<>());
+		locations.forEach(loc -> edges.addAll(loc.getOutgoingEdges()));
+		return edges;
 	}
 
 	// worker use this method to access the programcache shared across all workers + main

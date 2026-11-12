@@ -114,6 +114,10 @@ public final class TAPreferences {
 	private final int mProbationMinimum;
 	private final boolean mKInductionSolverRestart;
 	private final boolean mInterpolantInvariants;
+	private final boolean mSequentialKInductionCegarLoop;
+	private final int mSequentialTaTimeLimit;
+	private final int mSequentialInvariantTimeLimit;
+	private final int mSequentialKInductionTimeLimit;
 	private final boolean mConsiderOnlyActiveCounterexamplesInIsEmptyParallel;
 	private final boolean mMinimizeAbstractionPerWorker;
 	private final int mSearchLoopBound;
@@ -246,6 +250,13 @@ public final class TAPreferences {
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_SOLVER_RESTART);
 		mInterpolantInvariants =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_INVARIANTS);
+		mSequentialKInductionCegarLoop =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEQUENTIAL_KINDUCTION_CEGAR_LOOP);
+		mSequentialTaTimeLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_SEQUENTIAL_TA_TIME_LIMIT);
+		mSequentialInvariantTimeLimit =
+				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_SEQUENTIAL_INVARIANT_TIME_LIMIT);
+		mSequentialKInductionTimeLimit =
+				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_SEQUENTIAL_KINDUCTION_TIME_LIMIT);
 		mConsiderOnlyActiveCounterexamplesInIsEmptyParallel =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY);
 		mMinimizeAbstractionPerWorker =
@@ -747,6 +758,35 @@ public final class TAPreferences {
 	 */
 	public boolean submitInterpolantInvariants() {
 		return mInterpolantInvariants;
+	}
+
+	/**
+	 * @return whether the CEGAR loop runs trace abstraction, the invariant synthesis and k-induction one after the
+	 *         other, see {@code NwaCegarLoopWithKInduction}
+	 */
+	public boolean isSequentialKInductionCegarLoop() {
+		return mSequentialKInductionCegarLoop;
+	}
+
+	/**
+	 * @return how many seconds the sequential CEGAR loop with k-induction runs trace abstraction
+	 */
+	public int getSequentialTaTimeLimit() {
+		return mSequentialTaTimeLimit;
+	}
+
+	/**
+	 * @return how many seconds the sequential CEGAR loop with k-induction runs the invariant synthesis; 0 skips it
+	 */
+	public int getSequentialInvariantTimeLimit() {
+		return mSequentialInvariantTimeLimit;
+	}
+
+	/**
+	 * @return how many seconds the sequential CEGAR loop with k-induction runs k-induction; 0 means no limit of its own
+	 */
+	public int getSequentialKInductionTimeLimit() {
+		return mSequentialKInductionTimeLimit;
 	}
 
 	public boolean minimizeAbstractionPerWorker() {

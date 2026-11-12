@@ -36,6 +36,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
@@ -58,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -88,12 +91,12 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
  * Worker thread running {@link KInduction} inside {@link ParallelNwaCegarLoop}'s thread pool. It runs once (see
  * {@link #run()}) on the whole program and reports a {@link WorkerThreadResult} sentinel when the program is safe.
  * <p>
- * When k-induction refutes the program, {@link KInduction} reconstructs a feasible run from the solver's model and
- * this class reports it: it makes an {@code IcfgProgramExecution} from the run, without a trace check and without
- * values (see {@link #reportCounterexample}), registers
- * {@code Result.UNSAFE} on the shared result builder, and hands the main thread a result marked
- * {@link AutomatonType#ERROR} so that it terminates instead of refining. It carries no error-automaton scaffolding:
- * the whole program is refuted at once, so there is nothing left to refine.
+ * When k-induction refutes the program, this class reports the letters a witness can name from the solver's model (see
+ * {@link #reportWaypoints}), registers {@code Result.UNSAFE} on the shared result builder, and hands the main thread a
+ * result marked {@link AutomatonType#ERROR} so that it terminates instead of refining. It carries no error-automaton
+ * scaffolding: the whole program is refuted at once, so there is nothing left to refine.
+ * <p>
+ * The static methods are shared with {@code NwaCegarLoopWithKInduction}, which runs k-induction on the main thread.
  *
  * @author Max Barth (max.barth@lmu.de)
  */
@@ -120,8 +123,6 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	// How much longer than its timer (TAPreferences.getKInductionWitnessTimeout) the verdict waits for a computation
 	// that has not noticed the timer yet
 	private static final long WITNESS_GRACE_MILLIS = 500;
-	// Set when the verdict went without the computation, which may still be running
-	private volatile boolean mWitnessAbandoned;
 
 	public KInductionWorkerThread(final ILogger logger, final TAPreferences pref, final int id,
 			final CegarLoopResultBuilder resultBuilder, final IUltimateServiceProvider services,
@@ -214,7 +215,7 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	 *         crashed, or rejected the query), it could not express a violation as a run, or the program uses something
 	 *         k-induction does not support. A crash still only retires the worker; this decides how it is logged.
 	 */
-	private static boolean isLimit(final Throwable t) {
+	public static boolean isLimit(final Throwable t) {
 		if (t instanceof UnsupportedOperationException) {
 			return true;
 		}
@@ -231,7 +232,7 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	}
 
 	private Verdict runKInduction() throws AutomataLibraryException, InterruptedException {
-		final boolean overapproximated = hasOverapproximation();
+		final boolean overapproximated = hasOverapproximation(mAbstraction, mLogger);
 		final KInduction<L, IPredicate> kInduction = new KInduction<>(mKInductionServices, mLogger, mCfgSmtToolkit,
 				mAbstraction, mInvariantSupplier, mPref.restartKInductionSolverAfterInterrupt());
 		if (kInduction.wasUnkown()) {
@@ -242,7 +243,8 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 		}
 		if (kInduction.isSafe()) {
 			if (mComputeHoareAnnotation) {
-				mWitnessInvariants = computeWitnessInvariants(kInduction);
+				mWitnessInvariants = computeWitnessInvariants(kInduction, mKInductionServices, mPref, mCfgSmtToolkit,
+						mMainThread::isShuttingDown, mLogger);
 			}
 			return Verdict.SAFE;
 		}
@@ -251,49 +253,62 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 					+ "the k-induction worker retires without a verdict");
 			return Verdict.NO_VERDICT;
 		}
-		reportWaypoints(kInduction.getWaypoints());
+		reportWaypoints(kInduction.getWaypoints(), mResultBuilder, mKInductionServices,
+				mCfgSmtToolkit.getManagedScript(), mPref.stopAfterFirstViolation(), mLogger);
 		return Verdict.UNSAFE;
 	}
 
 	/**
-	 * Whether a letter of {@link #mAbstraction} overapproximates the program, e.g. a bitwise operator or a float
+	 * Whether a letter of {@code abstraction} overapproximates the program, e.g. a bitwise operator or a float
 	 * comparison in the integer translation, or a math function. A model of the base case can then be spurious, and
 	 * the waypoint letters, only a subsequence of the run, miss the Overapprox annotations by which the reporter would
 	 * turn UNSAFE into "unable to determine feasibility" (11-10 run: 1,377 of the 1,383 wrong FALSE, nearly all in the
 	 * integer run). So a violation of such a program is no verdict.
 	 */
-	private boolean hasOverapproximation() {
-		final List<L> letters = new ArrayList<>(mAbstraction.getVpAlphabet().getInternalAlphabet());
-		letters.addAll(mAbstraction.getVpAlphabet().getCallAlphabet());
-		letters.addAll(mAbstraction.getVpAlphabet().getReturnAlphabet());
+	public static <L extends IIcfgTransition<?>> boolean hasOverapproximation(
+			final INestedWordAutomaton<L, IPredicate> abstraction, final ILogger logger) {
+		final List<L> letters = new ArrayList<>(abstraction.getVpAlphabet().getInternalAlphabet());
+		letters.addAll(abstraction.getVpAlphabet().getCallAlphabet());
+		letters.addAll(abstraction.getVpAlphabet().getReturnAlphabet());
 		final var overapproximations = Overapprox.getOverapproximations(letters);
 		if (overapproximations.isEmpty()) {
 			return false;
 		}
-		mLogger.info("KInduction: the program has %d overapproximation(s), e.g. %s, so a violation is no verdict",
+		logger.info("KInduction: the program has %d overapproximation(s), e.g. %s, so a violation is no verdict",
 				overapproximations.size(),
 				overapproximations.getDomain().iterator().next());
 		return true;
 	}
 
 	/**
-	 * The invariants of the proof for a correctness witness, by loop head. A loop head is a state of
-	 * {@link #mAbstraction}, which shares its states with the main thread's initial abstraction, see
+	 * The invariants of the proof for a correctness witness, by loop head. A loop head is a state of the abstraction
+	 * k-induction ran on, which shares its states with the abstraction of the main thread it was transferred from, see
 	 * {@link TransferBetweenMainAndWorker#transferAutomaton}.
 	 *
-	 * @return the invariants, worker-script terms, or null if there are none; throws only when interrupted, since the
-	 *         proof stands without a witness
+	 * @param services
+	 *            the services k-induction ran with
+	 * @param toolkit
+	 *            the toolkit of k-induction's script
+	 * @param shuttingDown
+	 *            whether the CEGAR loop is done, which is why the computation may fail
+	 * @return the invariants, terms of k-induction's script, or null if there are none; throws only when interrupted,
+	 *         since the proof stands without a witness
 	 */
-	private WitnessInvariants<IPredicate> computeWitnessInvariants(final KInduction<L, IPredicate> kInduction)
-			throws InterruptedException {
-		final long timeout = mPref.getKInductionWitnessTimeout();
+	public static <L extends IIcfgTransition<?>> WitnessInvariants<IPredicate> computeWitnessInvariants(
+			final KInduction<L, IPredicate> kInduction, final IUltimateServiceProvider services,
+			final TAPreferences pref, final CfgSmtToolkit toolkit, final BooleanSupplier shuttingDown,
+			final ILogger logger) throws InterruptedException {
+		final long timeout = pref.getKInductionWitnessTimeout();
+		// Set when the verdict went without the computation, which may still be running
+		final AtomicBoolean abandoned = new AtomicBoolean();
 		// The timer of computeWitnessInvariantsWithin only ends the computation where it looks at it, and the ite
 		// removal of the quantifier elimination does not: it ran for minutes and the verdict never came. So the verdict
 		// waits for the computation only until the timer has run out, and an unfinished one is left behind with the
-		// best invariants it has proven so far. It only uses this worker's own script, which nobody needs once there
+		// best invariants it has proven so far. It only uses k-induction's own script, which nobody needs once there
 		// is a verdict.
-		final FutureTask<WitnessInvariants<IPredicate>> task =
-				new FutureTask<>(() -> computeWitnessInvariantsWithin(kInduction, timeout));
+		final FutureTask<WitnessInvariants<IPredicate>> task = new FutureTask<>(() -> computeWitnessInvariantsWithin(
+				kInduction, services, pref, toolkit, timeout, () -> abandoned.get() || shuttingDown.getAsBoolean(),
+				abandoned, logger));
 		final Thread thread = new Thread(task, "KInduction witness");
 		thread.setDaemon(true);
 		thread.start();
@@ -301,51 +316,58 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 		try {
 			invariants = task.get(timeout + WITNESS_GRACE_MILLIS, TimeUnit.MILLISECONDS);
 		} catch (final TimeoutException e) {
-			mWitnessAbandoned = true;
+			abandoned.set(true);
 			thread.interrupt();
 			invariants = kInduction.getBestWitnessInvariants();
-			mLogger.warn("KInduction: computing the correctness witness invariants did not end within %d ms, %s",
+			logger.warn("KInduction: computing the correctness witness invariants did not end within %d ms, %s",
 					timeout + WITNESS_GRACE_MILLIS,
 					invariants == null ? "there are none" : "using the best ones found so far");
 		} catch (final ExecutionException e) {
 			// computeWitnessInvariantsWithin catches everything but errors such as running out of memory
-			mLogger.error("KInduction: computing the correctness witness invariants failed: " + e.getCause());
+			logger.error("KInduction: computing the correctness witness invariants failed: " + e.getCause());
 			invariants = kInduction.getBestWitnessInvariants();
 		}
 		if (invariants == null) {
-			mLogger.warn("KInduction: no correctness witness invariants for the proof at k=%d", kInduction.getProvedK());
+			logger.warn("KInduction: no correctness witness invariants for the proof at k=%d", kInduction.getProvedK());
 			return null;
 		}
 		return invariants;
 	}
 
 	/**
+	 * @param quiet
+	 *            whether a failure is expected: the verdict went without the computation, or the CEGAR loop is done
 	 * @return the invariants of {@link KInduction#computeWitnessInvariants}, or the best ones it found before it failed,
 	 *         or null if there are none
 	 */
-	private WitnessInvariants<IPredicate> computeWitnessInvariantsWithin(final KInduction<L, IPredicate> kInduction,
-			final long timeout) {
-		final IProgressMonitorService progressMonitor = mKInductionServices.getProgressMonitorService();
-		final IUltimateServiceProvider witnessServices = progressMonitor.registerChildTimer(mKInductionServices,
-				progressMonitor.getChildTimer(timeout));
+	private static <L extends IIcfgTransition<?>> WitnessInvariants<IPredicate> computeWitnessInvariantsWithin(
+			final KInduction<L, IPredicate> kInduction, final IUltimateServiceProvider services,
+			final TAPreferences pref, final CfgSmtToolkit toolkit, final long timeout, final BooleanSupplier quiet,
+			final AtomicBoolean abandoned, final ILogger logger) {
+		final IProgressMonitorService progressMonitor = services.getProgressMonitorService();
+		final IUltimateServiceProvider witnessServices =
+				progressMonitor.registerChildTimer(services, progressMonitor.getChildTimer(timeout));
 		try {
-			return kInduction.computeWitnessInvariants(witnessServices, mPref.getSimplificationTechnique(),
-					(state, tv) -> isInScope(tv, ((ISLPredicate) state).getProgramPoint().getProcedure())).orElse(null);
+			return kInduction
+					.computeWitnessInvariants(witnessServices, pref.getSimplificationTechnique(),
+							(state, tv) -> isInScope(toolkit, tv,
+									((ISLPredicate) state).getProgramPoint().getProcedure()))
+					.orElse(null);
 		} catch (final ToolchainCanceledException | SMTLIBException e) {
-			if (!mWitnessAbandoned) {
-				mLogger.warn("KInduction: computing the correctness witness invariants stopped: " + e);
+			if (!abandoned.get()) {
+				logger.warn("KInduction: computing the correctness witness invariants stopped: " + e);
 			}
 			return kInduction.getBestWitnessInvariants();
 		} catch (final RuntimeException | AssertionError e) {
-			if (mWitnessAbandoned || mMainThread.isShuttingDown()) {
-				// Left behind, the main thread may have destroyed the solver under it.
+			if (quiet.getAsBoolean()) {
+				// Left behind, the CEGAR loop may have destroyed the solver under it.
 				return null;
 			}
 			// A bug in the witness computation must not cost the verdict, but it should be visible. What was proven
 			// before it is still proven.
-			mLogger.error("KInduction: computing the correctness witness invariants crashed: " + e);
+			logger.error("KInduction: computing the correctness witness invariants crashed: " + e);
 			for (final StackTraceElement element : e.getStackTrace()) {
-				mLogger.error("\tat " + element);
+				logger.error("\tat " + element);
 			}
 			return kInduction.getBestWitnessInvariants();
 		}
@@ -357,8 +379,8 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	 *         know, such as the stack pointer of {@code CallStack}, does not exist in the program at all, so it is out
 	 *         of scope too.
 	 */
-	private boolean isInScope(final TermVariable tv, final String procedure) {
-		final IProgramVar pv = mCfgSmtToolkit.getSymbolTable().getProgramVar(tv);
+	private static boolean isInScope(final CfgSmtToolkit toolkit, final TermVariable tv, final String procedure) {
+		final IProgramVar pv = toolkit.getSymbolTable().getProgramVar(tv);
 		return pv != null && (pv.isGlobal() || procedure.equals(pv.getProcedure()));
 	}
 
@@ -370,43 +392,52 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	 * The model proves the violation by itself, so the verdict never depends on the witness: if the letters cannot be
 	 * backtranslated, only the target is reported, and if that fails too, or the target is not known, an empty execution
 	 * at the error location. Each step down is logged with its reason.
+	 *
+	 * @param services
+	 *            the services k-induction ran with, for the trial backtranslation
+	 * @param script
+	 *            the script of the letters' transition formulas
 	 */
-	private void reportWaypoints(final KInductionWaypoints<L, IPredicate> waypoints) {
+	public static <L extends IIcfgTransition<?>> void reportWaypoints(final KInductionWaypoints<L, IPredicate> waypoints,
+			final CegarLoopResultBuilder resultBuilder, final IUltimateServiceProvider services,
+			final ManagedScript script, final boolean stopAfterFirstViolation, final ILogger logger) {
 		final List<L> allLetters = waypoints.getLetters();
 		final L target = waypoints.getTargetLetter();
 		IcfgProgramExecution<L> programExecution = null;
 		Level level = waypoints.getLevel();
 		if (level == Level.FULL) {
 			try {
-				programExecution = backtranslatableExecution(withoutInlinedCallBoundaries(allLetters));
+				programExecution =
+						backtranslatableExecution(withoutInlinedCallBoundaries(allLetters), services, script);
 			} catch (final ToolchainCanceledException e) {
 				throw e;
 			} catch (final RuntimeException e) {
-				mLogger.warn("KInduction: the waypoint letters cannot be reported (%s), reporting only the target", e);
+				logger.warn("KInduction: the waypoint letters cannot be reported (%s), reporting only the target", e);
 				level = Level.TARGET_ONLY;
 			}
 		}
 		if (level == Level.TARGET_ONLY) {
 			try {
-				programExecution = backtranslatableExecution(withoutInlinedCallBoundaries(List.of(target)));
+				programExecution =
+						backtranslatableExecution(withoutInlinedCallBoundaries(List.of(target)), services, script);
 			} catch (final ToolchainCanceledException e) {
 				throw e;
 			} catch (final RuntimeException e) {
-				mLogger.warn("KInduction: the target %s cannot be reported (%s), reporting the violation without a "
+				logger.warn("KInduction: the target %s cannot be reported (%s), reporting the violation without a "
 						+ "waypoint", target, e);
 				level = Level.EMPTY;
 			}
 		}
 		if (level == Level.EMPTY) {
 			final IcfgLocation errorLocation = programPoint(waypoints.getErrorState());
-			mResultBuilder.addResult(errorLocation, Result.UNSAFE, emptyExecution(), null, null);
+			resultBuilder.addResult(errorLocation, Result.UNSAFE, emptyExecution(), null, null);
 		} else {
-			mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
+			resultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
 		}
-		if (mPref.stopAfterFirstViolation()) {
-			mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
+		if (stopAfterFirstViolation) {
+			resultBuilder.addResultForAllRemaining(Result.UNKNOWN);
 		}
-		mLogger.info("KInduction: reported a violation with %d waypoint letter(s) of %d (witness level %s), no run was "
+		logger.info("KInduction: reported a violation with %d waypoint letter(s) of %d (witness level %s), no run was "
 				+ "built", programExecution == null ? 0 : programExecution.getLength(), allLetters.size(), level);
 	}
 
@@ -415,17 +446,18 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	 *         thread backtranslates it again for the result and the witness, and a failure there would cost the verdict
 	 */
 	@SuppressWarnings("unchecked")
-	private IcfgProgramExecution<L> backtranslatableExecution(final List<L> letters) {
+	private static <L extends IIcfgTransition<?>> IcfgProgramExecution<L> backtranslatableExecution(
+			final List<L> letters, final IUltimateServiceProvider services, final ManagedScript script) {
 		final IcfgProgramExecution<L> programExecution = TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(
 				new Word<>((L[]) letters.toArray(new IIcfgTransition<?>[letters.size()])));
-		programExecution.setOriginCfgScript(mCfgSmtToolkit.getManagedScript());
-		mKInductionServices.getBacktranslationService().translateProgramExecution(programExecution);
+		programExecution.setOriginCfgScript(script);
+		services.getBacktranslationService().translateProgramExecution(programExecution);
 		return programExecution;
 	}
 
 	/** An execution of no letters, as Sifa reports one: the backtranslation accepts only an IcfgProgramExecution. */
 	@SuppressWarnings("unchecked")
-	private IProgramExecution<L, Term> emptyExecution() {
+	private static <L extends IIcfgTransition<?>> IProgramExecution<L, Term> emptyExecution() {
 		return (IProgramExecution<L, Term>) (IProgramExecution<?, Term>) IcfgProgramExecution.create(IcfgEdge.class);
 	}
 
@@ -448,7 +480,7 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	 * @throws KInductionCounterexampleException
 	 *             if the letter that leads to the error has such a boundary, since it cannot be left out
 	 */
-	private List<L> withoutInlinedCallBoundaries(final List<L> letters) {
+	private static <L extends IIcfgTransition<?>> List<L> withoutInlinedCallBoundaries(final List<L> letters) {
 		final InlinedCallBoundaryFinder finder = new InlinedCallBoundaryFinder();
 		final L target = letters.get(letters.size() - 1);
 		if (finder.hasBoundary(target)) {

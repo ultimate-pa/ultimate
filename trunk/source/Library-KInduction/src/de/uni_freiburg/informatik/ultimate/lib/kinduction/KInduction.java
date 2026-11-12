@@ -193,6 +193,24 @@ public class KInduction<LETTER extends IAction, STATE> {
 			final INestedWordAutomaton<LETTER, STATE> abstraction,
 			final IInvariantSupplier<CallNode<STATE>> invariantSupplier, final boolean restartSolverAfterInterrupt)
 			throws AutomataLibraryException, InterruptedException {
+		this(services, logger, csToolkit, abstraction, null, invariantSupplier, restartSolverAfterInterrupt);
+	}
+
+	/**
+	 * Runs k-induction on {@code abstraction} with the solver of {@code csToolkit}, on a transition system that was
+	 * built before, e.g. so that the invariant supplier could work on it before k-induction starts.
+	 *
+	 * @param encoding
+	 *            the transition system of {@code abstraction} on the script of {@code csToolkit}, see
+	 *            {@link #buildTransitionSystem}, or {@code null} to build it here
+	 * @param restartSolverAfterInterrupt
+	 *            see {@link #KInduction(IUltimateServiceProvider, ILogger, CfgSmtToolkit, INestedWordAutomaton,
+	 *            IInvariantSupplier, boolean)}
+	 */
+	public KInduction(final IUltimateServiceProvider services, final ILogger logger, final CfgSmtToolkit csToolkit,
+			final INestedWordAutomaton<LETTER, STATE> abstraction, final PcTransitionSystemFactory.Result<STATE> encoding,
+			final IInvariantSupplier<CallNode<STATE>> invariantSupplier, final boolean restartSolverAfterInterrupt)
+			throws AutomataLibraryException, InterruptedException {
 		mAbstraction = abstraction;
 		mCsToolkit = csToolkit;
 		mWorkerMgdScript = csToolkit.getManagedScript();
@@ -201,26 +219,43 @@ public class KInduction<LETTER extends IAction, STATE> {
 		mInvariantSupplier = invariantSupplier;
 		mProbation = invariantSupplier.mayInterrupt();
 		mRestartSolver = restartSolverAfterInterrupt;
-		run();
+		run(encoding);
+	}
+
+	/**
+	 * Builds the transition system k-induction runs on, see
+	 * {@link #KInduction(IUltimateServiceProvider, ILogger, CfgSmtToolkit, INestedWordAutomaton, PcTransitionSystemFactory.Result, IInvariantSupplier, boolean)}.
+	 * Building the loop tree composes transition formulas, which locks the script of {@code csToolkit} itself, so it
+	 * must not be locked.
+	 */
+	public static <LETTER extends IAction, STATE> PcTransitionSystemFactory.Result<STATE> buildTransitionSystem(
+			final IUltimateServiceProvider services, final ILogger logger, final CfgSmtToolkit csToolkit,
+			final INestedWordAutomaton<LETTER, STATE> abstraction) {
+		final ManagedScript mgdScript = csToolkit.getManagedScript();
+		return PcTransitionSystemFactory.build(services, logger, csToolkit, mgdScript, abstraction,
+				CounterSort.forProgram(mgdScript.getScript(), csToolkit));
 	}
 
 	private enum Verdict {
 		SAFE, UNSAFE, UNKNOWN
 	}
 
-	private void run() throws AutomataLibraryException {
+	private void run(final PcTransitionSystemFactory.Result<STATE> prebuilt) throws AutomataLibraryException {
 		mLogger.info("KInduction: starting k-induction");
 		// Building the loop tree composes transition formulas, which declares constants for their aux vars and thus
 		// locks the script itself. So the tree has to be complete before we take the lock for the solver queries.
-		mStackPointerSort = CounterSort.forProgram(mWorkerMgdScript.getScript(), mCsToolkit);
 		final PcTransitionSystemFactory.Result<STATE> encoding;
-		try {
-			encoding = PcTransitionSystemFactory.build(mServices, mLogger, mCsToolkit, mWorkerMgdScript, mAbstraction,
-					mStackPointerSort);
-		} catch (final RuntimeException | Error e) {
-			mInvariantSupplier.systemFailed(e);
-			throw e;
+		if (prebuilt != null) {
+			encoding = prebuilt;
+		} else {
+			try {
+				encoding = buildTransitionSystem(mServices, mLogger, mCsToolkit, mAbstraction);
+			} catch (final RuntimeException | Error e) {
+				mInvariantSupplier.systemFailed(e);
+				throw e;
+			}
 		}
+		mStackPointerSort = encoding.system().getCounterSort();
 		mSystem = encoding.system();
 		mStackPointer = encoding.stackPointer();
 		mComposedEdges = encoding.composedEdges();

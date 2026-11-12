@@ -77,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.NwaCegarLoopWithKInduction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.ParallelNwaCegarLoop;
 
 /**
@@ -230,6 +231,10 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				errorLocs, proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile,
 				mTransitionClazz, stateFactoryForRefinement);
 		case NONE -> {
+			if (mPrefs.isSequentialKInductionCegarLoop() && !IcfgUtils.isConcurrent(root)) {
+				yield new NwaCegarLoopWithKInduction<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
+						errorLocs, proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
+			}
 			if (mPrefs.isParallelCegarLoop() && !IcfgUtils.isConcurrent(root)) {
 				yield new ParallelNwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
 						errorLocs, proofProducer, services, mTransitionClazz, stateFactoryForRefinement);

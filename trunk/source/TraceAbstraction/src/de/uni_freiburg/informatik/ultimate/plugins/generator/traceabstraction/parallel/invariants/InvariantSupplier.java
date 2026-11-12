@@ -114,6 +114,8 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 	private static final long WATCH_INTERVAL_MILLIS = 1000;
 	/** How many earlier versions a probation tries, newest first. */
 	private static final int PROBED_VERSIONS = 3;
+	/** How many messages {@link #processPending()} processes, and publishes the result of, at a time. */
+	private static final int PENDING_BATCH_SIZE = 64;
 
 	/**
 	 * The settings of the probation.
@@ -318,6 +320,47 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 			} catch (final InterruptedException e) {
 				Thread.currentThread().interrupt();
 			}
+		} finally {
+			mStopped = true;
+			mInbox.clear();
+		}
+	}
+
+	/**
+	 * Processes the messages in the inbox and returns once it is empty, instead of waiting for more as {@link #run()}
+	 * does: for a CEGAR loop that runs the supplier after TA has produced all of its interpolants and before
+	 * k-induction starts, see {@code NwaCegarLoopWithKInduction}. The messages are processed in batches, each of which
+	 * publishes what it proved, so when the timer of the supplier's services runs out, what was proven before stays
+	 * published. Afterwards the supplier is stopped. Without probation only, which watches k-induction while it runs.
+	 */
+	public void processPending() {
+		if (mAbstraction == null) {
+			throw new IllegalStateException("the invariant supplier was started without an abstraction");
+		}
+		if (mProbation != null) {
+			throw new IllegalStateException("the probation needs k-induction to run alongside the invariant supplier");
+		}
+		try {
+			while (!mInbox.isEmpty()) {
+				if (mStopped || !mServices.getProgressMonitorService().continueProcessing()) {
+					mLogger.info("InvariantSupplier: stopping, the time is up, %d message(s) left unprocessed",
+							mInbox.size());
+					return;
+				}
+				final List<InvariantMessage> batch = new ArrayList<>();
+				mInbox.drainTo(batch, PENDING_BATCH_SIZE);
+				process(batch);
+			}
+			mLogger.info("InvariantSupplier: processed every message");
+		} catch (final ToolchainCanceledException e) {
+			mLogger.info("InvariantSupplier: stopping, " + e.getMessage());
+		} catch (final RuntimeException e) {
+			if (mShuttingDown.getAsBoolean()) {
+				// The CEGAR loop destroyed the solver under a query that did not end in time.
+				mLogger.info("InvariantSupplier: stopping, shut down during a query (" + e + ")");
+				return;
+			}
+			throw e;
 		} finally {
 			mStopped = true;
 			mInbox.clear();
