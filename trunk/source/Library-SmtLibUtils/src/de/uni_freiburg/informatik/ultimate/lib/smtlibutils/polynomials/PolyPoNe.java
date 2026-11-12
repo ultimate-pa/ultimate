@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class PolyPoNe {
 
-	protected enum Check {
+	public enum Check {
 		REDUNDANT, INCONSISTENT, MAYBE_USEFUL
 	}
 
@@ -72,7 +72,7 @@ public class PolyPoNe {
 	private final HashRelation<Map<?, Rational>, PolynomialRelation> mPolyRels = new HashRelation<>();
 	private boolean mInconsistent = false;
 
-	PolyPoNe(final Script script, final Junction junction) {
+	public PolyPoNe(final Script script, final Junction junction) {
 		mScript = script;
 		mJunction = junction;
 	}
@@ -81,7 +81,7 @@ public class PolyPoNe {
 		return mInconsistent;
 	}
 
-	void add(final Collection<Term> params, final boolean negate) {
+	public void add(final Collection<Term> params, final boolean negate) {
 		for (final Term param : params) {
 			// TODO 20201123 Matthias: For bitvectors distinct and equality are polynomial,
 			// the other inequalities not, hence distinct and equality should also be added
@@ -120,7 +120,7 @@ public class PolyPoNe {
 		return or();
 	}
 
-	protected final Check checkPolyRel(final Script script, final PolynomialRelation newPolyRel,
+	public final Check checkPolyRel(final Script script, final PolynomialRelation newPolyRel,
 			final boolean removeExpliedPolyRels) {
 		final Check res1 = compareToExistingRepresentations(newPolyRel, removeExpliedPolyRels);
 		if (res1 == Check.INCONSISTENT || res1 == Check.REDUNDANT) {
