@@ -54,11 +54,11 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/SMT\ solver=External_ModelsAndUnsatCoreMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:5120 -smt2 -in
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Positions\ where\ we\ compute\ the\ Hoare\ Annotation=LoopHeads
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ CEGAR\ loop\ for\ Parallel\ Trace\ Abstraction=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Number\ of\ TA\ workers\ in\ Parallel\ Trace\ Abstraction=1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Number\ of\ K-Induction\ workers\ in\ Parallel\ Trace\ Abstraction=1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ sequential\ CEGAR\ loop\ with\ k-induction=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Time\ limit\ of\ trace\ abstraction\ before\ k-induction\ (s)=450
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Time\ limit\ of\ invariant\ synthesis\ before\ k-induction\ (s)=50
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Time\ limit\ of\ k-induction\ (s)=0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Timeout\ in\ ms\ for\ the\ invariants\ of\ a\ k-induction\ proof=20000
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Minimize\ Abstraction\ every\ time\ a\ worker\ is\ done=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ procedure\ contracts=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=CAMEL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ exception\ blacklist=DEPENDING
