@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -47,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -70,7 +72,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
@@ -89,6 +93,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantSupplier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.kinduction.KInductionWorkerThread;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -134,6 +139,11 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 	private final Set<IcfgLocation> mTaRefutedLocations = new HashSet<>();
 	// Whether one of those counterexamples has an overapproximated letter, which makes the result UNKNOWN
 	private boolean mTaViolationOverapproximated;
+	// Whether trace abstraction is computing a difference, see computeAutomataDifference
+	private boolean mInDifference;
+	// Whether the Hoare annotation fragments of mProofUpdater may not fit mAbstraction any more, see
+	// computeAutomataDifference
+	private boolean mProofOutOfSync;
 	private final AtomicBoolean mLoggedZ3InsteadOfBitwuzla = new AtomicBoolean();
 
 	public NwaCegarLoopWithKInduction(final DebugIdentifier name,
@@ -182,6 +192,12 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 			}
 			mLogger.info("NwaCegarLoopWithKInduction: phase TA ends at its time limit after %d iteration(s)",
 					getIteration());
+			if (mInDifference && mProofUpdater != null) {
+				mProofOutOfSync = true;
+				mLogger.warn("NwaCegarLoopWithKInduction: the time limit stopped a difference, so the Hoare annotation "
+						+ "fragments may not fit the abstraction; a proof of k-induction gets a witness without "
+						+ "invariants");
+			}
 			return mTaViolationOverapproximated;
 		} finally {
 			mServices = services;
@@ -223,6 +239,26 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 			collectInterpolants();
 		}
 		return result;
+	}
+
+	/**
+	 * Marks the difference while it runs. It updates the Hoare annotation fragments to its states before it removes the
+	 * dead ends, and replaces {@link #mAbstraction} by its result only after that. If the time limit of trace abstraction
+	 * stops it in between, the abstraction is still the previous one and fine for k-induction, but the fragments
+	 * describe states it does not have, and a proof extracted from them could miss the states of the abstraction.
+	 */
+	@Override
+	protected void computeAutomataDifference(final INestedWordAutomaton<L, IPredicate> minuend,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahendBeforeEnhancement,
+			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
+			final IHoareTripleChecker htc, final InterpolantAutomatonEnhancement enhanceMode,
+			final boolean useErrorAutomaton, final AutomatonType automatonType)
+			throws AutomataLibraryException, AssertionError {
+		mInDifference = true;
+		super.computeAutomataDifference(minuend, subtrahend, subtrahendBeforeEnhancement, predicateUnifier,
+				explointSigmaStarConcatOfIA, htc, enhanceMode, useErrorAutomaton, automatonType);
+		mInDifference = false;
 	}
 
 	@Override
@@ -444,11 +480,18 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 	 * is extracted from that abstraction as if trace abstraction had proven the program.
 	 * <p>
 	 * Invariants k-induction could not compute in time, or the parts of them that cannot be backtranslated, are left out,
-	 * which only weakens the annotation.
+	 * which only weakens the annotation. If the fragments may not fit the abstraction (see
+	 * {@link #computeAutomataDifference}), the proof has no invariants at all, i.e. the correctness witness is trivial.
 	 */
 	private void useKInductionProof(final KInduction<L, IPredicate> kInduction,
 			final IUltimateServiceProvider services, final CfgSmtToolkit kiToolkit) throws AutomataLibraryException {
 		if (mProofUpdater == null) {
+			return;
+		}
+		if (mProofOutOfSync) {
+			mLogger.warn("NwaCegarLoopWithKInduction: the proof of k-induction has no invariants, the Hoare annotation "
+					+ "fragments may not fit the abstraction");
+			mProofUpdater.setProof(Collections.emptyMap());
 			return;
 		}
 		WitnessInvariants<IPredicate> witness;
