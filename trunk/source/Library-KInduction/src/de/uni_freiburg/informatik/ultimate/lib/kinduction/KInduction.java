@@ -27,12 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.kinduction;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -49,14 +47,12 @@ import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalFormTransformer;
@@ -70,8 +66,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQua
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.ExternalSolverInterrupter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.ExternalSolverRestarter;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -146,14 +140,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 	private final ManagedScript mWorkerMgdScript;
 	private final KILock mKILock = new KILock();
 
-	// Set by run() when the base case is satisfiable, reconstructed from mWitness by
-	// KInductionCounterexampleBuilder.
-	NestedRun<LETTER, STATE> mCounterexample;
-	// What the model of the satisfiable base case said. Read in ask() before its pop, null unless UNSAFE.
-	private KInductionWitness mWitness;
-	// Instead of the two above if mWaypointsFromModel: what the model of the satisfiable base case took, per step, and
-	// the letters a witness can name from it
-	private final boolean mWaypointsFromModel;
+	// What the model of the satisfiable base case took, per step, and the letters a witness can name from it
 	private List<List<CallNode<STATE>>> mChains;
 	// Why the chains, or some of them (null in mChains), could not be read; null if they all could
 	private RuntimeException mChainFailure;
@@ -178,11 +165,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 	// See PcTransitionSystemFactory.Result. Nothing else of the encoding is kept beyond the system.
 	private IProgramVar mStackPointer;
 	private CounterSort mStackPointerSort;
-	private Set<CallNode<STATE>> mSealedStates;
 	private Map<STATE, Set<STATE>> mComposedEdges;
-	private Set<IProgramVar> mSyntheticVars;
-	// Every program variable by its globally unique id, see programVarOfAux
-	private Map<String, IProgramVar> mProgramVarsById;
 	private IndexedConstantVars mConstants;
 	private KInductionQuery<CallNode<STATE>> mQuery;
 	// pc node of a loop head -> its invariant, over the program variables' term variables
@@ -205,13 +188,11 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 *            whether a solver that an interrupt of the invariant supplier killed is restarted, see
 	 *            {@link #restartSolverAfterInterrupt(String)}; otherwise k-induction waits for the solver to notice the
 	 *            interrupt
-	 * @param waypointsFromModel
-	 *            whether a violation is reported as {@link #getWaypoints()} instead of {@link #getCounterexample()}
 	 */
 	public KInduction(final IUltimateServiceProvider services, final ILogger logger, final CfgSmtToolkit csToolkit,
 			final INestedWordAutomaton<LETTER, STATE> abstraction,
-			final IInvariantSupplier<CallNode<STATE>> invariantSupplier, final boolean restartSolverAfterInterrupt,
-			final boolean waypointsFromModel) throws AutomataLibraryException, InterruptedException {
+			final IInvariantSupplier<CallNode<STATE>> invariantSupplier, final boolean restartSolverAfterInterrupt)
+			throws AutomataLibraryException, InterruptedException {
 		mAbstraction = abstraction;
 		mCsToolkit = csToolkit;
 		mWorkerMgdScript = csToolkit.getManagedScript();
@@ -220,7 +201,6 @@ public class KInduction<LETTER extends IAction, STATE> {
 		mInvariantSupplier = invariantSupplier;
 		mProbation = invariantSupplier.mayInterrupt();
 		mRestartSolver = restartSolverAfterInterrupt;
-		mWaypointsFromModel = waypointsFromModel;
 		run();
 	}
 
@@ -243,9 +223,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 		}
 		mSystem = encoding.system();
 		mStackPointer = encoding.stackPointer();
-		mSealedStates = encoding.sealedStates();
 		mComposedEdges = encoding.composedEdges();
-		mSyntheticVars = encoding.syntheticVars();
 		mInvariantSupplier.systemBuilt(mSystem, mWorkerMgdScript);
 		mLogger.info(
 				"KInduction: transition system with %d pc value(s), %d edge(s), %d variable(s), %d loop head(s), "
@@ -271,7 +249,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 			final Verdict verdict = kInduction();
 			mSafe = verdict == Verdict.SAFE;
 			mSolverReturnedUnknown = verdict == Verdict.UNKNOWN;
-			if (verdict == Verdict.UNSAFE && mWaypointsFromModel) {
+			if (verdict == Verdict.UNSAFE) {
 				mWaypoints = new KInductionWaypoints<>(mAbstraction, mChains, mChainFailure, mComposedEdges,
 						mStackPointer != null);
 				if (mWaypoints.getLevel() != KInductionWaypoints.Level.FULL) {
@@ -284,11 +262,6 @@ public class KInduction<LETTER extends IAction, STATE> {
 				}
 				mLogger.info("KInduction: %d waypoint letter(s) from the model, %d state(s) without one",
 						mWaypoints.getLetters().size(), mWaypoints.getNumSuppressedStates());
-			} else if (verdict == Verdict.UNSAFE) {
-				// Still under the lock, but after the base case's pop: reconstruction asserts terms, which would
-				// invalidate the model we are working from. mWitness already holds everything we need from it.
-				mCounterexample = new KInductionCounterexampleBuilder<>(mServices, mLogger, mWorkerMgdScript, mKILock,
-						mCsToolkit, mAbstraction, mSystem, mWitness, mSealedStates).build();
 			}
 		} finally {
 			mWorkerMgdScript.unlock(mKILock);
@@ -385,12 +358,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 		if (result == LBool.SAT && kind == Kind.BASE) {
 			// The model dies with this scope, so it has to be read now. The constants themselves were declared by
 			// prepare(k), i.e. outside the push, and survive the pop.
-			if (mWaypointsFromModel) {
-				mChains = readChains(k);
-			} else {
-				mWitness = extractWitness(k);
-				mLogger.info("KInduction: violation found, model says %s", mWitness);
-			}
+			mChains = readChains(k);
 		}
 		mWorkerMgdScript.pop(mKILock, 1);
 		return result;
@@ -518,157 +486,6 @@ public class KInduction<LETTER extends IAction, STATE> {
 		return pcValues;
 	}
 
-	/**
-	 * Reads the model of a satisfiable base case: the pc and the stack pointer of every state, and the values
-	 * {@link KInductionWitness} describes. Must be called after {@code checkSat} returned {@code sat} and before the
-	 * {@code pop} of that query. Asks for the values of constants the query declared only, see
-	 * {@link IndexedConstantVars#declaredOnly()}.
-	 */
-	private KInductionWitness extractWitness(final int k) {
-		final Script script = mWorkerMgdScript.getScript();
-		final List<Term> queried = new ArrayList<>();
-		for (int j = 0; j <= k; j++) {
-			queried.add(mConstants.pc(j));
-		}
-		if (mStackPointer != null) {
-			for (int j = 0; j <= k; j++) {
-				queried.add(mConstants.var(mStackPointer, j));
-			}
-		}
-		final Map<Term, Term> model = getValues(script, queried);
-
-		final int[] pcValues = new int[k + 1];
-		for (int j = 0; j <= k; j++) {
-			pcValues[j] = mSystem.getCounterSort().toInt(model.get(mConstants.pc(j)), "pc_" + j);
-		}
-		int[] stackPointers = null;
-		if (mStackPointer != null) {
-			stackPointers = new int[k + 1];
-			for (int j = 0; j <= k; j++) {
-				stackPointers[j] = mStackPointerSort.toInt(model.get(mConstants.var(mStackPointer, j)),
-						mStackPointer + "_" + j);
-			}
-		}
-
-		// The values the counterexample is replayed with. Now that the pc is known, only what is live is asked for.
-		// Only sorts whose values a solver reports as literals; arrays, which z3 may report as a function of its model
-		// (as-array), are left out, as everywhere in Ultimate (see SmtUtils.isSortForWhichWeCanGetValues).
-		final StepVars declared = mConstants.declaredOnly();
-		final boolean[] fullyPinned = new boolean[k + 1];
-		final List<Map<IProgramVar, Term>> pinConstants = new ArrayList<>();
-		final List<Map<IProgramVar, List<Term>>> versionConstants = new ArrayList<>();
-		final Set<Term> values = new LinkedHashSet<>();
-		for (int j = 0; j <= k; j++) {
-			final Map<IProgramVar, Term> pins = new LinkedHashMap<>();
-			fullyPinned[j] = true;
-			for (final IProgramVar pv : mSystem.getLiveVars(pcValues[j])) {
-				final Term constant = declared.var(pv, j);
-				if (constant == null || mSyntheticVars.contains(pv)) {
-					// No constant: no query mentions it, so nothing constrains it. Synthetic: no run of letters has it.
-					continue;
-				}
-				if (!SmtUtils.isSortForWhichWeCanGetValues(constant.getSort())) {
-					fullyPinned[j] = false;
-					continue;
-				}
-				pins.put(pv, constant);
-				values.add(constant);
-			}
-			pinConstants.add(pins);
-			if (j < k) {
-				final Map<IProgramVar, List<Term>> versions = new LinkedHashMap<>();
-				mSystem.getVersionConstants(j, declared).forEach((pv, terms) -> versions.put(pv, new ArrayList<>(terms)));
-				for (final Map.Entry<TermVariable, List<Term>> aux : mSystem.getAuxConstants(j, declared).entrySet()) {
-					final IProgramVar pv = programVarOfAux(aux.getKey());
-					if (pv != null) {
-						versions.computeIfAbsent(pv, x -> new ArrayList<>()).addAll(aux.getValue());
-					}
-				}
-				versions.keySet().removeAll(mSyntheticVars);
-				versions.keySet().removeIf(pv -> !SmtUtils.isSortForWhichWeCanGetValues(pv.getTermVariable().getSort()));
-				versions.values().forEach(values::addAll);
-				versionConstants.add(versions);
-			}
-		}
-		final Map<IProgramConst, Term> constantTerms = new LinkedHashMap<>();
-		for (final IProgramConst constant : mCsToolkit.getSymbolTable().getConstants()) {
-			if (!SmtUtils.isSortForWhichWeCanGetValues(constant.getDefaultConstant().getSort())) {
-				continue;
-			}
-			constantTerms.put(constant, constant.getDefaultConstant());
-			values.add(constant.getDefaultConstant());
-		}
-		final Map<Term, Term> valueModel = getValues(script, values);
-
-		final List<Map<IProgramVar, Term>> pins = new ArrayList<>();
-		for (int j = 0; j <= k; j++) {
-			final Map<IProgramVar, Term> pinned = new LinkedHashMap<>();
-			for (final Map.Entry<IProgramVar, Term> pin : pinConstants.get(j).entrySet()) {
-				final Term value = valueModel.get(pin.getValue());
-				if (isClosedLiteral(value)) {
-					pinned.put(pin.getKey(), value);
-				} else {
-					fullyPinned[j] = false;
-				}
-			}
-			// A variable live here that the query never mentions has no constant at all; nothing constrains it.
-			pins.add(pinned);
-		}
-		final List<Map<IProgramVar, List<Term>>> candidates = new ArrayList<>();
-		for (int j = 0; j < k; j++) {
-			final Map<IProgramVar, Set<Term>> distinct = new LinkedHashMap<>();
-			for (final Map.Entry<IProgramVar, List<Term>> versions : versionConstants.get(j).entrySet()) {
-				for (final Term constant : versions.getValue()) {
-					final Term value = valueModel.get(constant);
-					if (isClosedLiteral(value)) {
-						distinct.computeIfAbsent(versions.getKey(), x -> new LinkedHashSet<>()).add(value);
-					}
-				}
-			}
-			// What a variable holds at the end of the step is a value it had inside it, too.
-			for (final Map.Entry<IProgramVar, Term> pin : pins.get(j + 1).entrySet()) {
-				distinct.computeIfAbsent(pin.getKey(), x -> new LinkedHashSet<>()).add(pin.getValue());
-			}
-			final Map<IProgramVar, List<Term>> candidatesOfStep = new LinkedHashMap<>();
-			distinct.forEach((pv, terms) -> candidatesOfStep.put(pv, new ArrayList<>(terms)));
-			candidates.add(candidatesOfStep);
-		}
-		final Map<IProgramConst, Term> constants = new LinkedHashMap<>();
-		for (final Map.Entry<IProgramConst, Term> constant : constantTerms.entrySet()) {
-			final Term value = valueModel.get(constant.getValue());
-			if (isClosedLiteral(value)) {
-				constants.put(constant.getKey(), value);
-			}
-		}
-		return new KInductionWitness(k, pcValues, stackPointers, pins, fullyPinned, candidates, constants);
-	}
-
-	/**
-	 * The program variable an auxiliary variable of a composed transition formula stands for: composing names the
-	 * value a variable has in between {@code v_<globally unique id>_<n>}, see
-	 * {@code ManagedScript.constructFreshTermVariable}. {@code null} for any other auxiliary variable. Only used to
-	 * guess values, so a wrong match costs a try, nothing else.
-	 */
-	private IProgramVar programVarOfAux(final TermVariable aux) {
-		if (mProgramVarsById == null) {
-			mProgramVarsById = new HashMap<>();
-			for (final IProgramVar pv : mCsToolkit.getSymbolTable().getGlobals()) {
-				mProgramVarsById.put(pv.getGloballyUniqueId(), pv);
-			}
-			for (final String procedure : mCsToolkit.getProcedures()) {
-				for (final IProgramVar pv : mCsToolkit.getSymbolTable().getLocals(procedure)) {
-					mProgramVarsById.put(pv.getGloballyUniqueId(), pv);
-				}
-			}
-		}
-		final String name = aux.getName();
-		final int index = name.lastIndexOf('_');
-		if (!name.startsWith("v_") || index <= 2 || !name.substring(index + 1).chars().allMatch(Character::isDigit)) {
-			return null;
-		}
-		return mProgramVarsById.get(name.substring(2, index));
-	}
-
 	private Map<Term, Term> getValues(final Script script, final Collection<Term> terms) {
 		try {
 			// Not ManagedScript.getValue: SmtUtils normalizes what the solver returns, e.g. z3's (- 1) to -1.
@@ -678,31 +495,6 @@ public class KInduction<LETTER extends IAction, STATE> {
 					+ "model, so no counterexample can be extracted. The worker's solver needs a mode that sets "
 					+ ":produce-models (e.g. External_ModelsAndUnsatCoreMode, the default).", e);
 		}
-	}
-
-	/**
-	 * Whether a value from a model means the same outside it: a term without variables that only uses the functions of
-	 * the theories. z3's {@code (_ as-array k!0)}, for example, names a function of its model and is no such term.
-	 */
-	private static boolean isClosedLiteral(final Term value) {
-		if (value == null || value.getFreeVars().length > 0) {
-			return false;
-		}
-		final Deque<Term> todo = new ArrayDeque<>();
-		todo.push(value);
-		while (!todo.isEmpty()) {
-			final Term current = todo.pop();
-			if (current instanceof ConstantTerm) {
-				continue;
-			}
-			if (!(current instanceof final ApplicationTerm app) || !app.getFunction().isIntern()) {
-				return false;
-			}
-			for (final Term param : app.getParameters()) {
-				todo.push(param);
-			}
-		}
-		return true;
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -1457,30 +1249,13 @@ public class KInduction<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * @return the letters a violation witness can name. Only defined if k-induction refuted the program with waypoints
-	 *         from the model.
+	 * @return the letters a violation witness can name. Only defined if k-induction refuted the program.
 	 */
 	public KInductionWaypoints<LETTER, STATE> getWaypoints() {
 		if (mWaypoints == null) {
-			throw new IllegalStateException("k-induction did not refute the program with waypoints from the model");
+			throw new IllegalStateException("k-induction did not refute the program");
 		}
 		return mWaypoints;
-	}
-
-	/**
-	 * @return a run of the abstraction that reaches an accepting state and is feasible, i.e. a genuine counterexample.
-	 *         Only defined if k-induction refuted the program without waypoints from the model.
-	 */
-	public NestedRun<LETTER, STATE> getCounterexample() {
-		if (mSafe || mSolverReturnedUnknown) {
-			throw new UnsupportedOperationException(
-					"k-induction did not refute the program, so there is no " + "counterexample");
-		}
-		if (mCounterexample == null) {
-			throw new IllegalStateException("k-induction refuted the program but no counterexample was built; "
-					+ "KInductionCounterexampleBuilder must either return a run or throw");
-		}
-		return mCounterexample;
 	}
 
 	/**

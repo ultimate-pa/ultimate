@@ -74,8 +74,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * <li>every "waypoint": a state outside a loop that a {@code break} out of the loop can jump to.
  * </ul>
  * One step goes from one pc value to the next along a path of one scope's cut graph. Every program execution is a
- * sequence of such steps, because it is cut at each visit of a loop head. {@link KInductionCounterexampleBuilder} is
- * what turns a step back into letters.
+ * sequence of such steps, because it is cut at each visit of a loop head. {@link #getChainOfStep} reads the states
+ * of a step back off a model.
  *
  * <h2>The formula of a step</h2>
  *

@@ -31,8 +31,8 @@ package de.uni_freiburg.informatik.ultimate.lib.kinduction;
  * Thrown when k-induction proved the program unsafe but no concrete run over the abstraction could be produced for
  * it. The verdict itself is not in doubt when this is thrown - only our ability to express it as a counterexample.
  * <p>
- * Kept apart from {@link AssertionError}, which {@link KInductionCounterexampleBuilder} and its caller use for the
- * genuinely impossible: a model that does not fit the encoding, or a trace check that contradicts k-induction.
+ * Kept apart from {@link AssertionError}, which is for the genuinely impossible, e.g. a model that does not fit the
+ * encoding.
  *
  * @author Max Barth (max.barth@lmu.de)
  */

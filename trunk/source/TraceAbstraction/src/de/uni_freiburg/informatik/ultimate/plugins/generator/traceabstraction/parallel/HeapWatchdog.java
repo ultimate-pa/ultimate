@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Retires workers of {@link ParallelNwaCegarLoop} when the heap fills up, so that k-induction, the one worker that
- * never retires, gets the memory. When the live heap reaches the value analysis threshold, the value analysis worker
- * retires; when it reaches the TA threshold, a TA worker retires, and so on until no TA worker is left. Every worker
+ * never retires, gets the memory. When the live heap reaches the TA threshold, a TA worker retires, and so on until no
+ * TA worker is left. Every worker
  * the watchdog may retire runs under a {@link RetirementTimer}, which stops whatever it runs.
  * <p>
  * The live heap is what a full garbage collection leaves. Forcing one is expensive, so the watchdog first looks at the
@@ -64,27 +64,21 @@ public final class HeapWatchdog {
 	private static final long MIN_GC_INTERVAL_NANOS = 5_000_000_000L;
 
 	private final ILogger mLogger;
-	private final int mValueAnalysisPercent;
 	private final int mTaPercent;
 	// The old generation: the heap pools that support a usage threshold, which young generation pools never do
 	private final List<MemoryPoolMXBean> mOldPools = new ArrayList<>();
 	private final ScheduledExecutorService mExec;
-	// Only touched by the watchdog's own thread once it started
-	private RetirementTimer mValueAnalysis;
 	private final List<RetirementTimer> mTaWorkers = new ArrayList<>();
 	private long mLastGcNanos;
 	private boolean mCollectedBefore;
 	private int mCollections;
 
 	/**
-	 * @param valueAnalysisPercent
-	 *            the live heap, in % of the maximum heap, at which the value analysis worker retires
 	 * @param taPercent
 	 *            the live heap, in % of the maximum heap, at which a TA worker retires
 	 */
-	public HeapWatchdog(final ILogger logger, final int valueAnalysisPercent, final int taPercent) {
+	public HeapWatchdog(final ILogger logger, final int taPercent) {
 		mLogger = logger;
-		mValueAnalysisPercent = valueAnalysisPercent;
 		mTaPercent = taPercent;
 		for (final MemoryPoolMXBean pool : ManagementFactory.getMemoryPoolMXBeans()) {
 			if (pool.getType() == MemoryType.HEAP && pool.isUsageThresholdSupported()) {
@@ -100,14 +94,6 @@ public final class HeapWatchdog {
 
 	/**
 	 * @param timer
-	 *            the timer of the value analysis worker, retired when the live heap reaches its threshold
-	 */
-	public void watchValueAnalysis(final RetirementTimer timer) {
-		mValueAnalysis = timer;
-	}
-
-	/**
-	 * @param timer
 	 *            the timer of a TA worker; the TA worker added last retires first
 	 */
 	public void watchTaWorker(final RetirementTimer timer) {
@@ -115,8 +101,8 @@ public final class HeapWatchdog {
 	}
 
 	public void start() {
-		mLogger.info("Heap watchdog: the value analysis retires at %d%%, a TA worker at %d%% of the %d MB max heap",
-				mValueAnalysisPercent, mTaPercent, Runtime.getRuntime().maxMemory() >> 20);
+		mLogger.info("Heap watchdog: a TA worker retires at %d%% of the %d MB max heap", mTaPercent,
+				Runtime.getRuntime().maxMemory() >> 20);
 		mExec.scheduleWithFixedDelay(this::check, POLL_INTERVAL_MILLIS, POLL_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
 	}
 
@@ -126,20 +112,16 @@ public final class HeapWatchdog {
 
 	private void check() {
 		try {
-			final boolean valueAnalysisRunning = mValueAnalysis != null && !mValueAnalysis.hasStopped()
-					&& !mValueAnalysis.isRetired();
 			final RetirementTimer nextTaWorker = nextTaWorker();
-			if (!valueAnalysisRunning && nextTaWorker == null && !taRetirementPending()) {
+			if (nextTaWorker == null && !taRetirementPending()) {
 				mLogger.info("Heap watchdog: nothing left to retire, it stops after %d garbage collection(s)",
 						mCollections);
 				mExec.shutdown();
 				return;
 			}
 			final long maxHeap = Runtime.getRuntime().maxMemory();
-			final long valueAnalysisLimit =
-					valueAnalysisRunning ? maxHeap / 100 * mValueAnalysisPercent : Long.MAX_VALUE;
 			final long taLimit = nextTaWorker != null ? maxHeap / 100 * mTaPercent : Long.MAX_VALUE;
-			if (oldGenerationUsed() < Math.min(valueAnalysisLimit, taLimit)) {
+			if (oldGenerationUsed() < taLimit) {
 				return;
 			}
 			final long now = System.nanoTime();
@@ -151,10 +133,6 @@ public final class HeapWatchdog {
 			mCollectedBefore = true;
 			mLastGcNanos = System.nanoTime();
 			final long live = usedHeap();
-			if (live >= valueAnalysisLimit) {
-				mValueAnalysis.retire(reason(live, maxHeap, mValueAnalysisPercent));
-				mLogger.warn("Heap watchdog: retiring the value analysis worker, %s", mValueAnalysis.getReason());
-			}
 			if (live >= taLimit) {
 				nextTaWorker.retire(reason(live, maxHeap, mTaPercent));
 				// The retired worker no longer counts as active.

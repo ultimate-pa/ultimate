@@ -190,11 +190,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_POR_COINFLIP_INCREMENT = "Coinflip probability increment";
 	private static final int DEF_POR_COINFLIP_INCREMENT = 0;
 
-	/** What k-induction reports for a violation, see {@link #LABEL_KINDUCTION_COUNTEREXAMPLE}. */
-	public enum KInductionCounterexample {
-		RECONSTRUCT_RUN, MODEL_WAYPOINTS
-	}
-
 	public enum CoinflipMode {
 		OFF, FALLBACK, PURE, COARSE
 	}
@@ -575,7 +570,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_NUM_TA_WORKERS = "Number of TA workers in Parallel Trace Abstraction";
 	private static final String DESC_NUM_TA_WORKERS =
-			"How many TA workers check counterexamples. With 0, only k-induction (and the value analysis) run, which "
+			"How many TA workers check counterexamples. With 0, only k-induction runs, which "
 					+ "needs at least one k-induction worker. The parallel loop uses one thread per worker of any kind.";
 	private static final Integer DEF_NUM_TA_WORKERS = 1;
 
@@ -635,15 +630,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "k-induction crashes.";
 	private static final boolean DEF_KINDUCTION_SOLVER_RESTART = true;
 
-	public static final String LABEL_KINDUCTION_COUNTEREXAMPLE = "K-Induction counterexample";
-	private static final String DESC_KINDUCTION_COUNTEREXAMPLE =
-			"What k-induction reports for a violation. RECONSTRUCT_RUN rebuilds a run of the program, which is found "
-					+ "feasible letter by letter while it is built; there is no trace check, and the run has no values. "
-					+ "MODEL_WAYPOINTS builds no run: the violation witness only has the waypoints that "
-					+ "can be read off the solver's model, and nothing but that model confirms the violation.";
-	private static final KInductionCounterexample DEF_KINDUCTION_COUNTEREXAMPLE =
-			KInductionCounterexample.MODEL_WAYPOINTS;
-
 	public static final String LABEL_INTERPOLANT_INVARIANTS =
 			"Check interpolants of TA workers for invariants for k-induction";
 	private static final String DESC_INTERPOLANT_INVARIANTS =
@@ -651,39 +637,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "to the invariant supplier. It checks which of them are inductive invariants of the program and "
 					+ "gives those to the k-induction workers while they run.";
 	private static final boolean DEF_INTERPOLANT_INVARIANTS = true;
-
-	public static final String LABEL_VALUE_ANALYSIS_WORKER = "Value analysis worker in Parallel Trace Abstraction";
-	private static final String DESC_VALUE_ANALYSIS_WORKER =
-			"Runs an additional worker that executes the program concretely, without SMT solver calls, to find "
-					+ "violations cheaply. It under-approximates: it can only report a program as unsafe, after one "
-					+ "trace check confirmed the violation, and never decides that a program is safe. It runs outside "
-					+ "the thread limit.";
-	private static final boolean DEF_VALUE_ANALYSIS_WORKER = false;
-
-	public static final String LABEL_VALUE_ANALYSIS_SEARCH = "Search strategy of the value analysis worker";
-	private static final ValueAnalysisSearch DEF_VALUE_ANALYSIS_SEARCH = ValueAnalysisSearch.BFS;
-
-	public static final String LABEL_VALUE_ANALYSIS_MAX_CHOICES =
-			"Nondeterministic successors per step of the value analysis worker";
-	private static final String DESC_VALUE_ANALYSIS_MAX_CHOICES =
-			"How many successors the value analysis worker computes at most for a single program step whose "
-					+ "variables are not all determined, e.g. by a nondeterministic input or an uninitialized read.";
-	private static final int DEF_VALUE_ANALYSIS_MAX_CHOICES = 64;
-
-	public static final String LABEL_VALUE_ANALYSIS_RETIREMENT_HEAP =
-			"Live heap at which the value analysis worker retires (% of max heap)";
-	private static final String DESC_VALUE_ANALYSIS_RETIREMENT_HEAP =
-			"When what is still in use after a garbage collection reaches this share of the JVM's maximum heap, the "
-					+ "value analysis worker stops with the result UNKNOWN, so that the other workers get the memory.";
-	private static final int DEF_VALUE_ANALYSIS_RETIREMENT_HEAP = 60;
-
-	public static final String LABEL_VALUE_ANALYSIS_TIME_LIMIT = "Time limit of the value analysis worker (s)";
-	private static final String DESC_VALUE_ANALYSIS_TIME_LIMIT =
-			"How long the value analysis worker may run, counted from its start and including the trace check that "
-					+ "confirms a violation. When the time is up it stops with the result UNKNOWN; the other workers "
-					+ "go on. Apart from its retirement when the heap fills up and the successors per step, this is the "
-					+ "only bound of the worker: it explores as many configurations as it reaches in this time.";
-	private static final int DEF_VALUE_ANALYSIS_TIME_LIMIT = 20;
 
 	public static final String LABEL_MINIMIZE_ABSTRACTION_PER_WORKER =
 			"Minimize Abstraction every time a worker is done";
@@ -1028,23 +981,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Integer, IUltimatePreferenceItemValidator.ONLY_POSITIVE),
 				new UltimatePreferenceItem<>(LABEL_KINDUCTION_SOLVER_RESTART, DEF_KINDUCTION_SOLVER_RESTART,
 						DESC_KINDUCTION_SOLVER_RESTART, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_KINDUCTION_COUNTEREXAMPLE, DEF_KINDUCTION_COUNTEREXAMPLE,
-						DESC_KINDUCTION_COUNTEREXAMPLE, PreferenceType.Combo, KInductionCounterexample.values()),
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_INVARIANTS, DEF_INTERPOLANT_INVARIANTS,
 						DESC_INTERPOLANT_INVARIANTS, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_VALUE_ANALYSIS_WORKER, DEF_VALUE_ANALYSIS_WORKER,
-						DESC_VALUE_ANALYSIS_WORKER, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_VALUE_ANALYSIS_SEARCH, DEF_VALUE_ANALYSIS_SEARCH,
-						PreferenceType.Combo, ValueAnalysisSearch.values()),
-				new UltimatePreferenceItem<>(LABEL_VALUE_ANALYSIS_MAX_CHOICES, DEF_VALUE_ANALYSIS_MAX_CHOICES,
-						DESC_VALUE_ANALYSIS_MAX_CHOICES, PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(1, 1_000_000)),
-				new UltimatePreferenceItem<>(LABEL_VALUE_ANALYSIS_RETIREMENT_HEAP, DEF_VALUE_ANALYSIS_RETIREMENT_HEAP,
-						DESC_VALUE_ANALYSIS_RETIREMENT_HEAP, PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(1, 100)),
-				new UltimatePreferenceItem<>(LABEL_VALUE_ANALYSIS_TIME_LIMIT, DEF_VALUE_ANALYSIS_TIME_LIMIT,
-						DESC_VALUE_ANALYSIS_TIME_LIMIT, PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(1, Integer.MAX_VALUE)),
 				new UltimatePreferenceItem<>(LABEL_SEARCH_LOOP_BOUND, DEF_SEARCH_LOOP_BOUND, DESC_SEARCH_LOOP_BOUND,
 						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
 				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY, DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY,
@@ -1328,15 +1266,5 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public enum PathProgramDumpStop {
 		NEVER, AFTER_FIRST_DUMP, BEFORE_FIRST_DUPLICATE
-	}
-
-	/**
-	 * How the value analysis worker of the parallel CEGAR loop explores the concrete states of the program.
-	 */
-	public enum ValueAnalysisSearch {
-		/**
-		 * Breadth-first, which finds a shortest violation first.
-		 */
-		BFS
 	}
 }

@@ -106,7 +106,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantSupplier;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.kinduction.KInductionWorkerThread;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.valueanalysis.ValueAnalysisWorkerThread;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
@@ -163,7 +162,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	private int mRetiredWorkers = 0;
 	// TA workers that crashed or retired. They take no more counterexamples.
 	private int mGoneTaWorkers = 0;
-	// Retires the value analysis and the TA workers when the heap fills up, see HeapWatchdog. Null until the workers
+	// Retires the TA workers when the heap fills up, see HeapWatchdog. Null until the workers
 	// are set up.
 	private HeapWatchdog mHeapWatchdog;
 	// Stops the invariant supplier once no TA worker is left to feed it, see releaseForKInduction()
@@ -175,9 +174,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	// decides the program.
 	private InvariantSupplier<L, A> mInvariantSupplier;
 	private ExecutorService mInvariantExec;
-	// Runs the value analysis worker, outside the worker pool and the thread limit: it can only refute the program
-	// (or end with UNKNOWN), so it must not take a slot from the workers that decide it. Null unless enabled.
-	private ExecutorService mValueAnalysisExec;
 	// Computed on first use, see bitwuzlaRejectsProgram()
 	private Boolean mBitwuzlaRejectsProgram;
 	private boolean mLoggedZ3InsteadOfBitwuzla;
@@ -235,8 +231,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * threads. Executes each tracecheck in a new thread called worker. This loop, only searches for counterexamples and
 	 * updates the abstraction. The feasiblity check and generalization of interpolant automata is done by the workers.
 	 * <p>
-	 * No worker has a memory budget of its own. When the heap fills up, the {@link HeapWatchdog} retires the value
-	 * analysis first and then the TA workers one by one. Once the last TA worker retired, the loop gives up its
+	 * No worker has a memory budget of its own. When the heap fills up, the {@link HeapWatchdog} retires the TA
+	 * workers one by one. Once the last TA worker retired, the loop gives up its
 	 * abstraction and the invariant supplier, and only k-induction runs on, with the memory they held.
 	 *
 	 * @author Max Barth (max.barth@lmu.de)
@@ -250,12 +246,11 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			final PredicateFactoryRefinement stateFactoryForRefinement) {
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, proofProducer,
 				services, transitionClazz, stateFactoryForRefinement);
-		// Start thread pool: one thread per TA and k-induction worker (the value analysis has its own executor)
+		// Start thread pool: one thread per TA and k-induction worker
 		mNumTaWorkers = mPref.getNumTaWorkers();
 		mNumKInductionWorkers = mPref.getNumKInductionWorkers();
 		mThreadLimit = mNumTaWorkers + mNumKInductionWorkers;
 		if (mThreadLimit == 0) {
-			// The value analysis alone can never prove a program.
 			throw new IllegalArgumentException(
 					"The parallel CEGAR loop needs at least one TA worker or one k-induction worker");
 		}
@@ -305,9 +300,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			}
 			if (mInvariantExec != null) {
 				mInvariantExec.shutdownNow();
-			}
-			if (mValueAnalysisExec != null) {
-				mValueAnalysisExec.shutdownNow();
 			}
 		}
 	}
@@ -426,24 +418,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				workerResult = mWorkerResultQueue.poll();
 				continue;
 			}
-			// The value analysis worker reports either a confirmed violation, which it leaves to us to register, or
-			// UNKNOWN. It runs outside the thread limit and can never prove the program, so its UNKNOWN retires none
-			// of the workers that decide it: they go on.
-			if (workerResult.getWorkerType() == WorkerType.VALUE_ANALYSIS && workerResult.noVerdict()) {
-				mLogger.info("Main: %s ended with UNKNOWN, the other workers go on", workerResult.getWorkerType());
-				workerResult = mWorkerResultQueue.poll();
-				continue;
-			}
-			if (workerResult.getWorkerType() == WorkerType.VALUE_ANALYSIS) {
-				mLogger.info("Main: %s refuted the program", workerResult.getWorkerType());
-				// Keeps an UNSAFE that a TA worker already registered for the same location.
-				mResultBuilder.addResultForProgramExecution(Result.UNSAFE, workerResult.getProgramExecution(), null,
-						null);
-				mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
-				shutDownAndDestroy(mDestroyEverything);
-				updateAndPrintStatistics(true);
-				return true;
-			}
 			// A worker that ran to completion without deciding the program (the solver answered unknown). It has
 			// nothing to refine with, so the only thing to do is retire it and let the remaining workers finish.
 			// If it was the last one, nobody is left to decide and the honest answer is UNKNOWN - not a crash.
@@ -518,7 +492,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 	/**
 	 * @return whether {@link #handleWorkerResults} ends the loop on this result without refining the abstraction: a
-	 *         refutation by k-induction, the value analysis or (if we stop after the first violation) a TA worker, or
+	 *         refutation by k-induction or (if we stop after the first violation) a TA worker, or
 	 *         a proof by k-induction. Each worker registers its violation itself or carries everything the main
 	 *         thread needs, so none of them depends on the operation of the main thread that it interrupts.
 	 */
@@ -527,8 +501,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			return false;
 		}
 		switch (result.getWorkerType()) {
-		case VALUE_ANALYSIS:
-			return true;
 		case KINDUCTION:
 			return result.getAutomatonType() == AutomatonType.ERROR
 					|| result.getSubtrahend() == null && result.getAutomatonType() == null;
@@ -614,7 +586,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * <li>k-induction retires like a worker without a verdict.</li>
 	 * <li>A TA worker: in the integer translation (any strategy but FOX), the run ends with UNKNOWN at once, so that
 	 * Ultimate.py still has the time for the bit-precise run, which may succeed where the integer run failed. In the
-	 * bit-precise run nothing comes after us, so the worker retires and k-induction and the value analysis may still
+	 * bit-precise run nothing comes after us, so the worker retires and k-induction may still
 	 * decide the program.</li>
 	 * </ul>
 	 *
@@ -627,9 +599,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		case INVARIANT:
 			mLogger.warn("Main: the invariant supplier crashed (%s), k-induction goes on with the invariants it has",
 					cause);
-			return false;
-		case VALUE_ANALYSIS:
-			mLogger.warn("Main: %s crashed (%s), the other workers go on", workerType, cause);
 			return false;
 		case TA:
 			// The counterexample it was checking never comes back.
@@ -875,7 +844,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
 		final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
 		int id = 0;
-		mHeapWatchdog = new HeapWatchdog(mLogger, mPref.getValueAnalysisRetirementHeap(), mPref.getTaRetirementHeap());
+		mHeapWatchdog = new HeapWatchdog(mLogger, mPref.getTaRetirementHeap());
 		try {
 			// The supplier's channels must exist before any worker that feeds or reads them.
 			final TransferBetweenMainAndWorker<L, IPredicate> invariantTransfer;
@@ -910,14 +879,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				mExec.submit(setUpWorkerThread(iterationServices, id, WorkerType.KINDUCTION, null));
 				id++;
 			}
-			if (mPref.useValueAnalysisWorker()) {
-				final RetirementTimer timer = retirementTimer(iterationServices);
-				mHeapWatchdog.watchValueAnalysis(timer);
-				mValueAnalysisExec = Executors.newSingleThreadExecutor(workerThreadFactory("Value Analysis"));
-				mValueAnalysisExec
-						.submit(setUpWorkerThread(iterationServices, id, WorkerType.VALUE_ANALYSIS, timer));
-				id++;
-			}
 		} catch (final InterruptedException e) {
 			throw new AssertionError("Interrupted during worker setup " + e);
 		}
@@ -948,9 +909,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		case INVARIANT:
 			// Builds the same loop tree as k-induction, so it is exposed to the same collision.
 			return "inv_";
-		case VALUE_ANALYSIS:
-			// Mints few variables, but costs nothing and keeps it apart from the main thread for sure.
-			return "va_";
 		default:
 			return "";
 		}
@@ -1030,10 +988,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 					predicateFactory, taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata,
 					stateFactoryForRefinement, computeProof, this, mWorkerResultQueue, mWorkerTaskQueue,
 					transferUtils, invariantSink(interpolantsFeedInvariantSupplier()), retirementTimer);
-		case VALUE_ANALYSIS:
-			return new ValueAnalysisWorkerThread<>(mLogger, mPref, iterationServices, freshToolKit, predicateFactory,
-					taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata, this, mWorkerResultQueue,
-					transferUtils, mTaskIdentifier, retirementTimer);
 		default:
 			throw new AssertionError("Unknown worker type " + workerType);
 		}
@@ -1109,7 +1063,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	private WorkerThreadResult<L, A> getWorkerResult(final boolean didntFindCexLastIteration) {
 		WorkerThreadResult<L, A> doneFuture = null;
 
-		// Without a TA worker, only k-induction and the value analysis can still answer, and nothing else is to do.
+		// Without a TA worker, only k-induction can still answer, and nothing else is to do.
 		if (noTaWorkerLeft() || mRunningThreads >= dispatchLimit() || didntFindCexLastIteration) {
 			assert mRunningThreads > 0 || noTaWorkerLeft();
 			mLogger.info("All threads busy, going to sleep.");
@@ -1136,9 +1090,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mExec.shutdownNow();
 		if (mInvariantExec != null) {
 			mInvariantExec.shutdownNow();
-		}
-		if (mValueAnalysisExec != null) {
-			mValueAnalysisExec.shutdownNow();
 		}
 		final Set<String> destroyedStorables = getServices().getStorage().destroyMarker(marker);
 		if (!destroyedStorables.isEmpty()) {

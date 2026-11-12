@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.OrderOfErrorLocations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.ValueAnalysisSearch;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
 
 public final class TAPreferences {
@@ -114,13 +113,7 @@ public final class TAPreferences {
 	private final int mProbationFactor;
 	private final int mProbationMinimum;
 	private final boolean mKInductionSolverRestart;
-	private final TraceAbstractionPreferenceInitializer.KInductionCounterexample mKInductionCounterexample;
 	private final boolean mInterpolantInvariants;
-	private final boolean mValueAnalysisWorker;
-	private final ValueAnalysisSearch mValueAnalysisSearch;
-	private final int mValueAnalysisMaxChoices;
-	private final int mValueAnalysisRetirementHeap;
-	private final int mValueAnalysisTimeLimit;
 	private final boolean mConsiderOnlyActiveCounterexamplesInIsEmptyParallel;
 	private final boolean mMinimizeAbstractionPerWorker;
 	private final int mSearchLoopBound;
@@ -251,18 +244,8 @@ public final class TAPreferences {
 		mProbationMinimum = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_PROBATION_MINIMUM);
 		mKInductionSolverRestart =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_SOLVER_RESTART);
-		mKInductionCounterexample = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_COUNTEREXAMPLE,
-				TraceAbstractionPreferenceInitializer.KInductionCounterexample.class);
 		mInterpolantInvariants =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_INVARIANTS);
-		mValueAnalysisWorker = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_VALUE_ANALYSIS_WORKER);
-		mValueAnalysisSearch = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_VALUE_ANALYSIS_SEARCH,
-				ValueAnalysisSearch.class);
-		mValueAnalysisMaxChoices =
-				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_VALUE_ANALYSIS_MAX_CHOICES);
-		mValueAnalysisRetirementHeap =
-				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_VALUE_ANALYSIS_RETIREMENT_HEAP);
-		mValueAnalysisTimeLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_VALUE_ANALYSIS_TIME_LIMIT);
 		mConsiderOnlyActiveCounterexamplesInIsEmptyParallel =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY);
 		mMinimizeAbstractionPerWorker =
@@ -760,53 +743,10 @@ public final class TAPreferences {
 	}
 
 	/**
-	 * @return whether k-induction reports a violation by the waypoints of the solver's model instead of a run
-	 */
-	public boolean kInductionWaypointsFromModel() {
-		return mKInductionCounterexample == TraceAbstractionPreferenceInitializer.KInductionCounterexample.MODEL_WAYPOINTS;
-	}
-
-	/**
 	 * @return whether TA workers hand their interpolants to the invariant supplier
 	 */
 	public boolean submitInterpolantInvariants() {
 		return mInterpolantInvariants;
-	}
-
-	/**
-	 * @return whether the parallel CEGAR loop runs the value analysis worker, which can only find violations
-	 */
-	public boolean useValueAnalysisWorker() {
-		return mValueAnalysisWorker;
-	}
-
-	/**
-	 * @return how the value analysis worker explores the concrete states of the program
-	 */
-	public ValueAnalysisSearch getValueAnalysisSearch() {
-		return mValueAnalysisSearch;
-	}
-
-	/**
-	 * @return how many successors the value analysis worker computes at most for one step
-	 */
-	public int getValueAnalysisMaxChoices() {
-		return mValueAnalysisMaxChoices;
-	}
-
-	/**
-	 * @return at how many percent of the JVM's maximum heap in use after a garbage collection the value analysis
-	 *         worker retires
-	 */
-	public int getValueAnalysisRetirementHeap() {
-		return mValueAnalysisRetirementHeap;
-	}
-
-	/**
-	 * @return how many seconds the value analysis worker may run before it stops with the result UNKNOWN
-	 */
-	public int getValueAnalysisTimeLimit() {
-		return mValueAnalysisTimeLimit;
 	}
 
 	public boolean minimizeAbstractionPerWorker() {

@@ -88,7 +88,7 @@ public final class PcTransitionSystemFactory {
 		final Scope<CallNode<STATE>> tree = new LoopTreeFormulaBuilder<>(services, logger, mgdScript,
 				summaries.getEdges(), summaries.getInitStates(), summaries.getFinalStates()).build();
 		final IProgramVar stackPointer = summaries.getStackPointer();
-		// KInductionCounterexampleBuilder reads the stack pointer off a model.
+		// The base case fixes the stack pointer of the first state, see KInduction.ask.
 		final Set<IProgramVar> alwaysFramed =
 				stackPointer == null ? Collections.emptySet() : Collections.singleton(stackPointer);
 		return new Result<>(new PcTransitionSystem<>(mgdScript.getScript(), tree, counterSort, alwaysFramed), stackPointer,

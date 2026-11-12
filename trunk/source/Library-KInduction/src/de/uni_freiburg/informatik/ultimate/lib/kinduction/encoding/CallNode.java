@@ -48,8 +48,7 @@ import java.util.Objects;
  * The chain is always finite because nothing on a call cycle is ever unfolded: a recursive procedure's activations
  * are told apart by {@link CallStack} in the state rather than by copies of its states, so its own nodes are
  * {@link #root} nodes and a node reached through one carries only the part of the chain the graph still
- * distinguishes. That is why a node does <b>not</b> determine how many calls are open at it, which
- * {@link KInductionCounterexampleBuilder} has to allow for when it cuts a run into pc steps.
+ * distinguishes. That is why a node does <b>not</b> determine how many calls are open at it.
  *
  * <pre>{@code
  * CallNode<STATE> callSite = ...;                  // a state of the caller with an outgoing call transition
@@ -105,7 +104,6 @@ public final class CallNode<STATE> {
 
 	/**
 	 * The states of the pending call sites, innermost first. Empty for a node of the procedure the analysis starts in.
-	 * This is the shape {@link KInductionCounterexampleBuilder} keeps its own call stack in, so the two can be compared.
 	 */
 	public List<STATE> getCallSites() {
 		if (mFrame == null) {

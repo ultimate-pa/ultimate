@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.lib.icfg.util.IcfgEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
@@ -232,9 +231,9 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	}
 
 	private Verdict runKInduction() throws AutomataLibraryException, InterruptedException {
-		final boolean waypointsFromModel = mPref.kInductionWaypointsFromModel() && !hasOverapproximation();
+		final boolean overapproximated = hasOverapproximation();
 		final KInduction<L, IPredicate> kInduction = new KInduction<>(mKInductionServices, mLogger, mCfgSmtToolkit,
-				mAbstraction, mInvariantSupplier, mPref.restartKInductionSolverAfterInterrupt(), waypointsFromModel);
+				mAbstraction, mInvariantSupplier, mPref.restartKInductionSolverAfterInterrupt());
 		if (kInduction.wasUnkown()) {
 			// Not a crash: the encoding is fine, the query was just not decided. Retiring this worker leaves the
 			// other workers - and, if there are none, the main thread's UNKNOWN result - to speak for the program.
@@ -247,22 +246,21 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 			}
 			return Verdict.SAFE;
 		}
-		if (waypointsFromModel) {
-			reportWaypoints(kInduction.getWaypoints());
-			return Verdict.UNSAFE;
+		if (overapproximated) {
+			mLogger.warn("KInduction: found a violation, but the program is overapproximated, so it may be spurious; "
+					+ "the k-induction worker retires without a verdict");
+			return Verdict.NO_VERDICT;
 		}
-		// The program is overapproximated (or waypoints are off), so the whole run is rebuilt: the result builder sees
-		// every Overapprox letter on it and turns a spurious violation into UNKNOWN. There is no trace check, see below.
-		reportCounterexample(kInduction.getCounterexample());
+		reportWaypoints(kInduction.getWaypoints());
 		return Verdict.UNSAFE;
 	}
 
 	/**
 	 * Whether a letter of {@link #mAbstraction} overapproximates the program, e.g. a bitwise operator or a float
 	 * comparison in the integer translation, or a math function. A model of the base case can then be spurious, and
-	 * only a run says so: the reporter turns UNSAFE into "unable to determine feasibility" by the Overapprox annotations
-	 * of the reported letters. The waypoint letters are only a subsequence of the run and miss them (11-10 run: 1,377
-	 * of the 1,383 wrong FALSE, nearly all in the integer run), so such a program has its counterexample rebuilt.
+	 * the waypoint letters, only a subsequence of the run, miss the Overapprox annotations by which the reporter would
+	 * turn UNSAFE into "unable to determine feasibility" (11-10 run: 1,377 of the 1,383 wrong FALSE, nearly all in the
+	 * integer run). So a violation of such a program is no verdict.
 	 */
 	private boolean hasOverapproximation() {
 		final List<L> letters = new ArrayList<>(mAbstraction.getVpAlphabet().getInternalAlphabet());
@@ -272,8 +270,8 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 		if (overapproximations.isEmpty()) {
 			return false;
 		}
-		mLogger.info("KInduction: the program has %d overapproximation(s), e.g. %s, so a violation is rebuilt as a run "
-				+ "instead of reported by waypoints from the model", overapproximations.size(),
+		mLogger.info("KInduction: the program has %d overapproximation(s), e.g. %s, so a violation is no verdict",
+				overapproximations.size(),
 				overapproximations.getDomain().iterator().next());
 		return true;
 	}
@@ -502,32 +500,6 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 						&& statement.getPayload().getAnnotations().containsKey(INLINED_CALL_ANNOTATION);
 			}
 		}
-	}
-
-	/**
-	 * Registers a k-induction counterexample as {@code Result.UNSAFE}, with a program execution made directly from the
-	 * run's nested word. The witness and the backtranslation to the input program come from that execution, as for
-	 * any other counterexample.
-	 * <p>
-	 * There is no trace check: the counterexample builder already found the run feasible letter by letter, by executing
-	 * the letters on concrete values and confirming the symbolic ones with the solver. Checking the whole run again
-	 * cost minutes on hardware tasks (bitwuzla) and floats, and the run often timed out before it reported the
-	 * verdict. As a consequence, the execution carries no variable values. Its branch encoders are all set to true,
-	 * which only matters for parallel compositions of letters; the SV-COMP settings create none. An overapproximated
-	 * letter still turns the result into UNKNOWN, since the result builder reads that from the letters of the
-	 * execution.
-	 */
-	private void reportCounterexample(final NestedRun<L, IPredicate> counterexample) {
-		final IcfgProgramExecution<L> programExecution =
-				TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(counterexample.getWord());
-		programExecution.setOriginCfgScript(mCfgSmtToolkit.getManagedScript());
-
-		mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
-		if (mPref.stopAfterFirstViolation()) {
-			mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
-		}
-		mLogger.info("KInduction: reported a counterexample of %d letter(s) as UNSAFE",
-				counterexample.getWord().length());
 	}
 
 	/**

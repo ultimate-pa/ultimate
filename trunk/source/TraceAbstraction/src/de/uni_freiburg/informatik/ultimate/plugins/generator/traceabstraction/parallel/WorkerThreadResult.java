@@ -33,7 +33,6 @@ import java.util.Objects;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -54,8 +53,6 @@ public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IA
 	private boolean mRetired;
 	// Only set by crashed(..), see there.
 	private Throwable mCrashCause;
-	// Only set by violation(..), see there.
-	private IProgramExecution<L, Term> mProgramExecution;
 	// Only set by kInductionSafe(..), see there.
 	private Map<IPredicate, Term> mProofInvariants;
 	private boolean mProofInvariantsProve;
@@ -64,7 +61,7 @@ public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IA
 	public enum WorkerType
 
 	{
-		TA, KINDUCTION, INVARIANT, VALUE_ANALYSIS
+		TA, KINDUCTION, INVARIANT
 	}
 
 	/**
@@ -151,25 +148,6 @@ public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IA
 	}
 
 	/**
-	 * A worker that found a feasible violation and leaves registering it to the main thread. It carries the program
-	 * execution to register, nothing to refine with.
-	 */
-	public static <L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> WorkerThreadResult<L, A>
-			violation(final WorkerType workerType, final IProgramExecution<L, Term> programExecution) {
-		final WorkerThreadResult<L, A> result =
-				new WorkerThreadResult<>(workerType, null, AutomatonType.ERROR, null, null, null, false, false);
-		result.mProgramExecution = Objects.requireNonNull(programExecution);
-		return result;
-	}
-
-	/**
-	 * @return the violation of a result made by {@link #violation(WorkerType, IProgramExecution)}, null otherwise
-	 */
-	public IProgramExecution<L, Term> getProgramExecution() {
-		return mProgramExecution;
-	}
-
-	/**
 	 * @return for a k-induction proof the invariants for a correctness witness, see {@link #kInductionSafe}; null if
 	 *         there are none
 	 */
@@ -240,6 +218,5 @@ public final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IA
 		mMgdScript = null;
 		mCounterexample = null;
 		mPredicateFactory = null;
-		mProgramExecution = null;
 	}
 }
