@@ -174,8 +174,8 @@ public class Elim1Store {
 		final List<MultiDimensionalNestedStore> stores = aoa.getNestedArrayStores();
 
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation =
-				ArrayIndexEqualityUtils.collectComplimentaryEqualityInformation(mMgdScript.getScript(), quantifier,
-						polarizedContext, selectTerms, stores);
+				ArrayIndexEqualityUtils.collectComplimentaryEqualityInformation(mMgdScript.getScript(),
+						input.getContext().getCriticalConstraint(), selectTerms, stores);
 		if (equalityInformation == null) {
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
