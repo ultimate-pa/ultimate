@@ -47,9 +47,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -333,7 +333,9 @@ public class GccBuiltinLibraryModel implements ILibraryModel {
 		// DD 2020-12-02: Not entirely accurate, because it is actually architecture dependent.
 		// see https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format and
 		// https://gcc.gnu.org/onlinedocs/gcc/Floating-Types.html
-		return List.of(new TypeModel("__float128", new CPrimitive(CPrimitives.LONGDOUBLE)));
+		return List.of(new TypeModel("__float128", new CPrimitive(CPrimitives.LONGDOUBLE)),
+				new TypeModel("__uint128_t", new CPrimitive(CPrimitives.UINT128)),
+				new TypeModel("__int128_t", new CPrimitive(CPrimitives.INT128)));
 	}
 
 	private ExpressionResult handleFunction(final ILocation loc) {

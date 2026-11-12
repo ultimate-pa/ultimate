@@ -651,7 +651,8 @@ public class MemoryHandler {
 		} else {
 			resultBuilder.addStatement(call);
 		}
-		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder);
+		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder.getDeclarations(),
+				resultBuilder.getAuxVars());
 		// TODO Frank 2022-12-16: We should add an in-range assumption here, but this could be problematic if we cast
 		// e.g. unsigned to signed pointers and read from them
 		// mExpressionTranslation.addAssumeValueInRangeStatements(loc, auxvar.getExp(), resultType, resultBuilder);
@@ -784,13 +785,13 @@ public class MemoryHandler {
 	public List<Statement> insertMallocs(final List<Statement> block) {
 		final List<Statement> mallocs = new ArrayList<>();
 		for (final LocalLValueILocationPair llvp : mVariablesToBeMalloced.currentScopeKeys()) {
-			mallocs.add(this.getUltimateMemAllocCall(llvp.mLlv, llvp.mLoc, MemoryArea.STACK));
+			mallocs.add(this.getUltimateMemAllocCall(llvp.llv(), llvp.loc(), MemoryArea.STACK));
 		}
 		final List<Statement> frees = new ArrayList<>();
 		for (final LocalLValueILocationPair llvp : mVariablesToBeFreed.currentScopeKeys()) {
 			// frees are inserted in handleReturnStm
-			frees.add(getDeallocCall(llvp.mLlv, llvp.mLoc));
-			frees.add(new HavocStatement(llvp.mLoc, new VariableLHS[] { (VariableLHS) llvp.mLlv.getLhs() }));
+			frees.add(getDeallocCall(llvp.llv(), llvp.loc()));
+			frees.add(new HavocStatement(llvp.loc(), new VariableLHS[] { (VariableLHS) llvp.llv().getLhs() }));
 		}
 		final List<Statement> newBlockAL = new ArrayList<>(mallocs);
 		newBlockAL.addAll(block);
@@ -808,6 +809,9 @@ public class MemoryHandler {
 
 	public Map<LocalLValueILocationPair, Integer> getVariablesToBeFreed() {
 		return Collections.unmodifiableMap(mVariablesToBeFreed);
+	}
+
+	public static record LocalLValueILocationPair(LocalLValue llv, ILocation loc) {
 	}
 
 	public IBooleanArrayHelper getBooleanArrayHelper() {

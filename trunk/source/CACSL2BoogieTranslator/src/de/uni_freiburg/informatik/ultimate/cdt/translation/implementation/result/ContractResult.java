@@ -53,7 +53,7 @@ public class ContractResult extends Result {
 	 */
 	public ContractResult(final Specification[] specs) {
 		super(null);
-		this.mSpecs = specs;
+		mSpecs = specs;
 	}
 
 	public Specification[] getSpecs() {

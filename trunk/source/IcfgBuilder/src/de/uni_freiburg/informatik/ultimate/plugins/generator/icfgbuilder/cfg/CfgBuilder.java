@@ -1098,9 +1098,11 @@ public class CfgBuilder {
 				// might be a the successor of an if-then-else. If we replace currentElement
 				// here, we also would have to replace it for the other branches.
 				// For the ILocation of the resulting node, we take the ILocation of the currentElement,
-				// because there might be more incoming edges to currentElement that don't go through the label
-				// (e.g., a while loop) and this
-				mergeLocNodes(newLoc, (BoogieIcfgLocation) currentElement, false);
+				// if there might be more incoming edges to currentElement that don't go through the label
+				// (for while loop or a nested label).
+				final boolean mayHaveIncomingEdge = mLabel2LocNodes.containsValue(currentElement)
+						|| mIcfg.getLoopLocations().contains(currentElement);
+				mergeLocNodes(newLoc, (BoogieIcfgLocation) currentElement, !mayHaveIncomingEdge);
 				resultLoc = (BoogieIcfgLocation) currentElement;
 			} else {
 				endStatementSequence((StatementSequence) currentElement, newLoc);

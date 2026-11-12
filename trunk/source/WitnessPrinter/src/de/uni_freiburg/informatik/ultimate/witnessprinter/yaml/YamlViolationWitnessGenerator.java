@@ -152,9 +152,6 @@ public class YamlViolationWitnessGenerator {
 		if (!mAddThreadIds || !ate.hasThreadId()) {
 			return null;
 		}
-		if (ate.hasAnyStepInfo(StepInfo.FORK)) {
-			return ate.getForkedThreadId();
-		}
 		return ate.getThreadId();
 	}
 

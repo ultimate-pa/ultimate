@@ -47,7 +47,6 @@ import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -57,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
@@ -283,15 +281,6 @@ public class CTranslationUtil {
 	/**
 	 * Returns true iff all auxvars in decls are contained in auxVars
 	 */
-	public static boolean isAuxVarMapComplete(final INameHandler nameHandler,
-			final ExpressionResultBuilder resultBuilder) {
-		return CTranslationUtil.isAuxVarMapComplete(nameHandler, resultBuilder.getDeclarations(),
-				resultBuilder.getAuxVars());
-	}
-
-	/**
-	 * Returns true iff all auxvars in decls are contained in auxVars
-	 */
 	public static boolean isAuxVarMapComplete(final INameHandler nameHandler, final List<Declaration> decls,
 			// final Map<VariableDeclaration, ILocation> auxVars) {
 			final Set<AuxVarInfo> auxVars) {
@@ -343,45 +332,6 @@ public class CTranslationUtil {
 	}
 
 	/**
-	 * Takes an arithmetic expression that has integer value and can be computed at compile-time, i.e., that contains no
-	 * variables, and returns an IntegerLiteral containing the result.
-	 *
-	 * Matthias 2015-09-21: "premature optimization is the root of all evil" I think, by now we should not use this
-	 * method and better live with long expressions. However, I don't want to delete this method, we might want to use
-	 * it in the future.
-	 */
-	@Deprecated
-	public static BigInteger computeConstantValue(final Expression value) {
-		if (value instanceof IntegerLiteral) {
-			return new BigInteger(((IntegerLiteral) value).getValue());
-		} else if (value instanceof final UnaryExpression unaryExp) {
-			switch (unaryExp.getOperator()) {
-			case ARITHNEGATIVE:
-				return computeConstantValue(unaryExp.getExpr()).negate();
-			default:
-				throw new UnsupportedOperationException("could not compute constant value");
-			}
-		} else if (value instanceof final BinaryExpression binExp) {
-			switch (binExp.getOperator()) {
-			case ARITHDIV:
-				return computeConstantValue(binExp.getLeft()).divide(computeConstantValue(binExp.getRight()));
-			case ARITHMINUS:
-				return computeConstantValue(binExp.getLeft()).subtract(computeConstantValue(binExp.getRight()));
-			case ARITHMOD:
-				return computeConstantValue(binExp.getLeft()).mod(computeConstantValue(binExp.getRight()));
-			case ARITHMUL:
-				return computeConstantValue(binExp.getLeft()).multiply(computeConstantValue(binExp.getRight()));
-			case ARITHPLUS:
-				return computeConstantValue(binExp.getLeft()).add(computeConstantValue(binExp.getRight()));
-			default:
-				throw new UnsupportedOperationException("could not compute constant value");
-			}
-		} else {
-			throw new UnsupportedOperationException("could not compute constant value");
-		}
-	}
-
-	/**
 	 * Returns the value of an expression in case the expression is a literal.
 	 * </p>
 	 * Warning: This method is not suitable for obtaining the value of C expressions. If you also want to get integer
@@ -390,15 +340,11 @@ public class CTranslationUtil {
 	 *
 	 */
 	public static BigInteger extractIntegerValue(final Expression expr) {
-		BigInteger result;
-		if (expr instanceof IntegerLiteral) {
-			result = new BigInteger(((IntegerLiteral) expr).getValue());
-		} else if (expr instanceof BitvecLiteral) {
-			result = new BigInteger(((BitvecLiteral) expr).getValue());
-		} else {
-			result = null;
-		}
-		return result;
+		return switch (expr) {
+		case final IntegerLiteral intLit -> new BigInteger(intLit.getValue());
+		case final BitvecLiteral bvLit -> new BigInteger(bvLit.getValue());
+		default -> null;
+		};
 	}
 
 	public static ICType getValueTypeOfNestedArray(final CArray arrayType) {

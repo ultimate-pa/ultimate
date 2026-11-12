@@ -10,37 +10,37 @@ public final class Node {
     /**
      * The name of this node.
      */
-    String name;
+    String mName;
 
     /**
      * The parent of this node.
      */
-    Node parent;
+    Node mParent;
 
     /**
      * The interfaces of this node.
      */
-    String interfaces;
+    String mInterfaces;
 
     /**
      * The comment of this node.
      */
-    String comment;
+    String mComment;
 
     /**
      * The used types of this node.
      */
-    HashSet<String> usedTypes;
+    HashSet<String> mUsedTypes;
 
     /**
      * True iff this node is abstract.
      */
-    boolean isAbstract;
+    boolean mIsAbstract;
 
     /**
      * The parameters of this node.
      */
-    Parameter[] parameters;
+    Parameter[] mParameters;
 
     /**
      * The constructor taking initial values.
@@ -52,11 +52,11 @@ public final class Node {
      */
     public Node(String name, Node parent, String interfaces, String comment, HashSet<String> usedTypes) {
         super();
-        this.name = name;
-        this.parent = parent;
-        this.interfaces = interfaces;
-        this.comment = comment;
-        this.usedTypes = usedTypes;
+        mName = name;
+        mParent = parent;
+        mInterfaces = interfaces;
+        mComment = comment;
+        mUsedTypes = usedTypes;
     }
 
     /**
@@ -71,35 +71,36 @@ public final class Node {
      */
     public Node(String name, Node parent, String interfaces, String comment, HashSet<String> usedTypes, boolean isAbstract, Parameter[] parameters) {
         super();
-        this.name = name;
-        this.parent = parent;
-        this.interfaces = interfaces;
-        this.comment = comment;
-        this.usedTypes = usedTypes;
-        this.isAbstract = isAbstract;
-        this.parameters = parameters;
+        mName = name;
+        mParent = parent;
+        mInterfaces = interfaces;
+        mComment = comment;
+        mUsedTypes = usedTypes;
+        mIsAbstract = isAbstract;
+        mParameters = parameters;
     }
 
     /**
      * Returns a textual description of this object.
      */
+    @Override
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("Node").append('[');
-        sb.append(name);
-        sb.append(',').append(parent);
-        sb.append(',').append(interfaces);
-        sb.append(',').append(comment);
-        sb.append(',').append(usedTypes);
-        sb.append(',').append(isAbstract);
+        sb.append(mName);
+        sb.append(',').append(mParent);
+        sb.append(',').append(mInterfaces);
+        sb.append(',').append(mComment);
+        sb.append(',').append(mUsedTypes);
+        sb.append(',').append(mIsAbstract);
         sb.append(',');
-        if (parameters == null) {
+        if (mParameters == null) {
             sb.append("null");
         } else {
             sb.append('[');
-            for(int i1 = 0; i1 < parameters.length; i1++) {
+            for(int i1 = 0; i1 < mParameters.length; i1++) {
                 if (i1 > 0) sb.append(',');
-                    sb.append(parameters[i1]);
+                    sb.append(mParameters[i1]);
             }
             sb.append(']');
         }
@@ -111,7 +112,7 @@ public final class Node {
      * @return the name of this node.
      */
     public String getName() {
-        return name;
+        return mName;
     }
 
     /**
@@ -119,7 +120,7 @@ public final class Node {
      * @return the parent of this node.
      */
     public Node getParent() {
-        return parent;
+        return mParent;
     }
 
     /**
@@ -127,7 +128,7 @@ public final class Node {
      * @return the interfaces of this node.
      */
     public String getInterfaces() {
-        return interfaces;
+        return mInterfaces;
     }
 
     /**
@@ -135,7 +136,7 @@ public final class Node {
      * @return the comment of this node.
      */
     public String getComment() {
-        return comment;
+        return mComment;
     }
 
     /**
@@ -143,7 +144,7 @@ public final class Node {
      * @return the used types of this node.
      */
     public HashSet<String> getUsedTypes() {
-        return usedTypes;
+        return mUsedTypes;
     }
 
     /**
@@ -151,7 +152,7 @@ public final class Node {
      * @return true iff this node is abstract.
      */
     public boolean isAbstract() {
-        return isAbstract;
+        return mIsAbstract;
     }
 
     /**
@@ -159,7 +160,7 @@ public final class Node {
      * @param isAbstract true iff this node is abstract.
      */
     public void setAbstract(boolean isAbstract) {
-        this.isAbstract = isAbstract;
+        mIsAbstract = isAbstract;
     }
 
     /**
@@ -167,7 +168,7 @@ public final class Node {
      * @return the parameters of this node.
      */
     public Parameter[] getParameters() {
-        return parameters;
+        return mParameters;
     }
 
     /**
@@ -175,6 +176,6 @@ public final class Node {
      * @param parameters the parameters of this node.
      */
     public void setParameters(Parameter[] parameters) {
-        this.parameters = parameters;
+        mParameters = parameters;
     }
 }
