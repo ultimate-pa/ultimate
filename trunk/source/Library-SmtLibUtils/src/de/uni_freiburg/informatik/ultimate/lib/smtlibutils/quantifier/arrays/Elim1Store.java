@@ -553,19 +553,24 @@ public class Elim1Store {
 			final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation,
 			final Map<ArrayIndex, ArrayIndex> indexMapping, final ArrayIndex selectIndexRepresentative,
 			final Script script) {
+		for (final Entry<MultiDimensionalNestedStore, Term> entry : newArrayMapping.entrySet()) {
+			final MultiDimensionalNestedStore store = entry.getKey();
+			boolean disjointFromAllStoreIndices = true;
+			for (final ArrayIndex storeIndex : store.getIndices()) {
+				final ArrayIndex storeIndexRep = indexEqualityInformation.getRepresentative(storeIndex);
+				final EqualityStatus eq =
+						indexEqualityInformation.getEqualityStatus(selectIndexRepresentative, storeIndexRep);
+				if (eq != EqualityStatus.NOT_EQUAL) {
+					disjointFromAllStoreIndices = false;
+					break;
+				}
+			}
+			if (disjointFromAllStoreIndices) {
+				final ArrayIndex replacementSelectIndex = indexMapping.get(selectIndexRepresentative);
+				return new MultiDimensionalSelect(entry.getValue(), replacementSelectIndex).toTerm(script);
+			}
+		}
 		return null;
-		// for (final Entry<MultiDimensionalNestedStore, Term> entry : newArrayMapping.entrySet()) {
-		// final ArrayIndex storeIndex = entry.getKey().getIndex();
-		// if (indexEqualityInformation.getEqualityStatus(selectIndexRepresentative,
-		// storeIndex) == EqualityStatus.NOT_EQUAL) {
-		// final ArrayIndex replacementSelectIndex = indexMapping.get(selectIndexRepresentative);
-		// final Term newAuxArray = entry.getValue();
-		// final Term newSelect = new MultiDimensionalSelect(newAuxArray, replacementSelectIndex, script)
-		// .toTerm(script);
-		// return newSelect;
-		// }
-		// }
-		// return null;
 	}
 
 	private static Term constructOldCellValue(final ThreeValuedEquivalenceRelation<Term> equalityInformation,
