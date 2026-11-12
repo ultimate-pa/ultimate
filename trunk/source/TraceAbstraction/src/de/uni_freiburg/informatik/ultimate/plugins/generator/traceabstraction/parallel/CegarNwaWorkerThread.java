@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
@@ -69,23 +70,29 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopResultBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop.AutomatonType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TransferBetweenMainAndWorker.TransferMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadResult.WorkerType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.IInvariantSink;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantMessage.InterpolantSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TransferBetweenMainAndWorker.TransferMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadResult.WorkerType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.IInvariantSink;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantMessage.InterpolantSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IpTcStrategyModuleAcceleratedTraceCheck;
@@ -94,13 +101,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 
 public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		implements ICegarNwaWorkerThread<L, A> {
@@ -170,7 +170,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 			final BlockingQueue<WorkerThreadResult<L, A>> blockingQueueForResults,
 			final BlockingQueue<WorkerThreadTask<L>> workerTaskQueue,
 			final TransferBetweenMainAndWorker<L, IPredicate> transferWorkerUtils, final IInvariantSink invariantSink,
-			final RetirementTimer retirementTimer) throws InterruptedException {
+			final RetirementTimer retirementTimer) {
 
 		mLogger = logger;
 		mPref = pref;
@@ -298,8 +298,8 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	private boolean retire() {
 		mLogger.info("WorkerThread: retired, %s", mRetirementTimer.getReason());
 		try {
-			mBlockingQueueForResults.put(
-					WorkerThreadResult.retired(WorkerType.TA, mTask == null ? null : mTask.getCounterexample()));
+			mBlockingQueueForResults
+					.put(WorkerThreadResult.retired(WorkerType.TA, mTask == null ? null : mTask.getCounterexample()));
 		} catch (final InterruptedException e) {
 			Thread.currentThread().interrupt();
 		}
@@ -313,8 +313,8 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 			throws AutomataLibraryException, InterruptedException {
 		final IRun<L, ?> mainThreadCounterexample = task.getCounterexample();
 		mProgramCache.copyProgramCache(mMainThread.getCurrentProgramCache());
-		mCounterexample = mNwaCexTransferrer.transferRun((NestedRun<L, ?>) mainThreadCounterexample,
-				TransferMode.MAIN2WORKER);
+		mCounterexample =
+				mNwaCexTransferrer.transferRun((NestedRun<L, ?>) mainThreadCounterexample, TransferMode.MAIN2WORKER);
 		updateAbstractionIfSmaller();
 
 		// set the programCount to x-1, because we will report it again later
@@ -322,7 +322,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 		final List<L> trace = mCounterexample.getWord().asList();
 		mCurrentErrorLoc = mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
 		final int traceHash = trace.hashCode();
-		mLogger.info("Starting Thread: " + Thread.currentThread().getId() + "# for Trace Check: " + traceHash);
+		mLogger.info("Starting Thread: " + Thread.currentThread().threadId() + "# for Trace Check: " + traceHash);
 		Thread.currentThread().setName("Worker for " + traceHash);
 		final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
 		final Counterexample<L> counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
@@ -340,7 +340,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 				isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
 		constructRefinementAutomaton(automatonType);
 		mThreadResult = refineAbstractionInternally();
-		mLogger.info("Done with Thread: " + Thread.currentThread().getId() + "#");
+		mLogger.info("Done with Thread: " + Thread.currentThread().threadId() + "#");
 		mBlockingQueueForResults.put(mThreadResult);
 	}
 

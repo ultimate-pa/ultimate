@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils;
  * after the solver had answered, and brings the new process back to the declarations and the stack of the script.
  * <p>
  * The declarations come from the {@link HistoryRecordingScript} that {@link SolverBuilder} wraps around every script.
- * Assertions are not restored: the caller has to send them again, like k-induction, which repeats an interrupted
- * query from scratch and sends the steps it keeps in the solver again.
+ * Assertions are not restored: the caller has to send them again, like k-induction, which repeats an interrupted query
+ * from scratch and sends the steps it keeps in the solver again.
  *
  * @author Max Barth (Max.Barth@lmu.de)
  */
@@ -66,9 +66,8 @@ public final class ExternalSolverRestarter {
 	public static void restartAndReplay(final Script script) {
 		final HistoryRecordingScript history = HistoryRecordingScript.extractHistoryRecordingScript(script);
 		if (history == null) {
-			throw new UnsupportedOperationException(
-					"cannot restart the solver: " + script + " has no " + HistoryRecordingScript.class.getSimpleName()
-							+ ", so its declarations are unknown");
+			throw new UnsupportedOperationException("cannot restart the solver: " + script + " has no "
+					+ HistoryRecordingScript.class.getSimpleName() + ", so its declarations are unknown");
 		}
 		final Scriptor scriptor = ExternalSolverInterrupter.findScriptor(script);
 		final CommandRecorder recorder = new CommandRecorder();

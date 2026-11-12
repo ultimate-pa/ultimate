@@ -29,23 +29,23 @@ package de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -67,12 +67,12 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * Resolves every procedure call of a nested word automaton, so that the graph {@link LoopTreeFormulaBuilder} builds -
  * and therefore the {@link PcTransitionSystem} built from it - contains no call and no return transition.
  * <p>
- * Why this is needed rather than convenient: a flat graph has no call stack. Putting a call and a return into it
- * as ordinary edges makes a callee that is called from two sites look like a <em>loop</em> (site1 -&gt; entry,
- * exit -&gt; after-site1, ... -&gt; site2 -&gt; entry) and admits paths that enter at one call site and return to
- * another, splicing away everything in between. On top of that, a call's transition formula is only the parameter
- * assignment and a return's only the assignment of the result, so the scoping of oldvars, modifiable globals and
- * the callee's locals would be wrong as well.
+ * Why this is needed rather than convenient: a flat graph has no call stack. Putting a call and a return into it as
+ * ordinary edges makes a callee that is called from two sites look like a <em>loop</em> (site1 -&gt; entry, exit -&gt;
+ * after-site1, ... -&gt; site2 -&gt; entry) and admits paths that enter at one call site and return to another,
+ * splicing away everything in between. On top of that, a call's transition formula is only the parameter assignment and
+ * a return's only the assignment of the result, so the scoping of oldvars, modifiable globals and the callee's locals
+ * would be wrong as well.
  *
  * <h2>Summarizing or unfolding</h2>
  *
@@ -80,54 +80,53 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * <ul>
  * <li>A <b>summarizable</b> procedure - its own graph is loop-free and every procedure it calls is summarizable -
  * becomes a single <b>summary edge</b> per call transition and per exit state of the callee,
- * {@code callSite -> post-return state}, with the callee's entry-to-exit formula composed with the call and the
- * return by {@link ProcedureCallGraph#computeVirtualEdge}. No state of the callee enters the caller's graph.
+ * {@code callSite -> post-return state}, with the callee's entry-to-exit formula composed with the call and the return
+ * by {@link ProcedureCallGraph#computeVirtualEdge}. No state of the callee enters the caller's graph.
  * <li>Any other procedure - one that contains a loop, or that calls such a procedure - has no single loop-free
- * entry-to-exit formula, so it is <b>unfolded</b> instead: its states are copied into the caller's graph, one copy
- * per call site (that is what a {@link CallNode}'s call site chain distinguishes), with a virtual edge into the
- * copy for the call and one out of it for the return. Its loops then are ordinary nested loops of the caller's
- * loop tree, which {@code LoopTreeFormulaBuilder} and {@code PcTransitionSystem} already support at any depth.
+ * entry-to-exit formula, so it is <b>unfolded</b> instead: its states are copied into the caller's graph, one copy per
+ * call site (that is what a {@link CallNode}'s call site chain distinguishes), with a virtual edge into the copy for
+ * the call and one out of it for the return. Its loops then are ordinary nested loops of the caller's loop tree, which
+ * {@code LoopTreeFormulaBuilder} and {@code PcTransitionSystem} already support at any depth.
  * </ul>
  * Summarizing is kept for the procedures it fits because it is much cheaper: one formula instead of a copy of the
  * callee's whole graph, and no extra {@code pc} value per loop head per call site.
  *
  * <h2>Dead states</h2>
  *
- * Only the states that can reach an error or return are encoded, see {@link LiveStates}; a call into any other state
- * is a dead end. An infinite loop that only cuts off a path, like {@code ldv_stop}, therefore makes no procedure
+ * Only the states that can reach an error or return are encoded, see {@link LiveStates}; a call into any other state is
+ * a dead end. An infinite loop that only cuts off a path, like {@code ldv_stop}, therefore makes no procedure
  * unsummarizable.
  *
  * <h2>Cut points</h2>
  *
- * The procedures whose states are nodes of the root graph - the entry procedures and every unfolded or stacked
- * one - are first reduced to their cut points, once each (see {@code reduce}): chains of states with one predecessor
- * and one successor are composed into single edges, and so are the summarized calls on them. Every copy of a
- * procedure then costs its cut points rather than all of its states.
+ * The procedures whose states are nodes of the root graph - the entry procedures and every unfolded or stacked one -
+ * are first reduced to their cut points, once each (see {@code reduce}): chains of states with one predecessor and one
+ * successor are composed into single edges, and so are the summarized calls on them. Every copy of a procedure then
+ * costs its cut points rather than all of its states.
  *
  * <h2>Errors inside a callee</h2>
  *
- * An error state of a <b>summarized</b> callee becomes an <b>error edge</b> {@code callSite -> that error state},
- * built with {@link TransFormulaUtils#sequentialCompositionWithPendingCall}. The error state becomes a state (and a
- * final state) of the caller's graph, sealed so that its own transitions are not edges there. Error states are carried
- * up this way through any number of levels. In an <b>unfolded</b> callee the error state is simply a node of the copy, and needs no edge of
- * its own. Either way the call stays pending, so a violation ends with an unmatched call.
+ * An error state of a <b>summarized</b> callee becomes an <b>error edge</b> {@code callSite -> that error state}, built
+ * with {@link TransFormulaUtils#sequentialCompositionWithPendingCall}. The error state becomes a state (and a final
+ * state) of the caller's graph, sealed so that its own transitions are not edges there. Error states are carried up
+ * this way through any number of levels. In an <b>unfolded</b> callee the error state is simply a node of the copy, and
+ * needs no edge of its own. Either way the call stays pending, so a violation ends with an unmatched call.
  * <p>
- * Every summary formula is built for <b>one</b> call transition and <b>one</b> exit resp. error state, never for
- * the union of all of them: the union would let a path that reaches one exit leave through another exit's return
+ * Every summary formula is built for <b>one</b> call transition and <b>one</b> exit resp. error state, never for the
+ * union of all of them: the union would let a path that reaches one exit leave through another exit's return
  * transition, which the abstraction does not admit, and k-induction would answer UNSAFE on a path that no
  * counterexample can realise.
  *
  * <h2>What is not supported</h2>
  *
- * A procedure that reads an {@code old(g)} and calls a procedure that is unfolded or stack-encoded and may
- * overwrite that snapshot, see {@code rejectOldVarReadsAcrossStackFreeCalls}: neither an unfolded nor a stacked
- * activation gets its own copy of the oldvars, because {@link PcTransitionSystem} does not keep oldvars in the
- * state at all.
+ * A procedure that reads an {@code old(g)} and calls a procedure that is unfolded or stack-encoded and may overwrite
+ * that snapshot, see {@code rejectOldVarReadsAcrossStackFreeCalls}: neither an unfolded nor a stacked activation gets
+ * its own copy of the oldvars, because {@link PcTransitionSystem} does not keep oldvars in the state at all.
  * <p>
- * Recursion and an unfolding too big to build are <b>not</b> in this list any more. A procedure on a call cycle,
- * and any procedure whose unfolding would not fit into {@link #UNFOLDING_BUDGET}, is given an activation record
- * instead - see {@link CallStack} - so its states occur exactly once in the graph and its recursive call is an
- * ordinary loop of it.
+ * Recursion and an unfolding too big to build are <b>not</b> in this list any more. A procedure on a call cycle, and
+ * any procedure whose unfolding would not fit into {@link #UNFOLDING_BUDGET}, is given an activation record instead -
+ * see {@link CallStack} - so its states occur exactly once in the graph and its recursive call is an ordinary loop of
+ * it.
  *
  * @param <LETTER>
  *            letter type
@@ -140,10 +139,10 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 
 	/**
 	 * How many nodes unfolding may cost before procedures get an activation record instead, see
-	 * {@link #stackUnfoldingsThatDoNotFit}. Unfolding is exponential in the depth of the call graph times the number
-	 * of call sites per procedure, so a program can ask for arbitrarily many nodes. This is a budget for that choice,
-	 * not a limit on the graph: a graph that is bigger anyway, because the procedures themselves are big or because
-	 * the estimate was low, is built all the same. This is a constant rather than a preference so far.
+	 * {@link #stackUnfoldingsThatDoNotFit}. Unfolding is exponential in the depth of the call graph times the number of
+	 * call sites per procedure, so a program can ask for arbitrarily many nodes. This is a budget for that choice, not
+	 * a limit on the graph: a graph that is bigger anyway, because the procedures themselves are big or because the
+	 * estimate was low, is built all the same. This is a constant rather than a preference so far.
 	 */
 	public static final int UNFOLDING_BUDGET = 50_000;
 
@@ -161,9 +160,9 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	/** The procedures that are unfolded at their call sites rather than summarized, see the class javadoc. */
 	private final Set<String> mUnfolded = new LinkedHashSet<>();
 	/**
-	 * The procedures whose activations are told apart by {@link CallStack} rather than by copies of their states:
-	 * every procedure on a call cycle, plus any procedure whose unfolding would not fit into
-	 * {@link #UNFOLDING_BUDGET}. Their states occur exactly once in the graph.
+	 * The procedures whose activations are told apart by {@link CallStack} rather than by copies of their states: every
+	 * procedure on a call cycle, plus any procedure whose unfolding would not fit into {@link #UNFOLDING_BUDGET}. Their
+	 * states occur exactly once in the graph.
 	 */
 	private final Set<String> mStacked = new LinkedHashSet<>();
 	/**
@@ -304,8 +303,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		for (final Set<String> scc : callGraph.getSccsCalleeFirst(reachable)) {
 			order.addAll(scc);
 		}
-		mLogger.info("KInduction: call graph ready, %d of %d procedure(s) reachable, processing order %s",
-				order.size(), mStatesByProcedure.size(), order);
+		mLogger.info("KInduction: call graph ready, %d of %d procedure(s) reachable, processing order %s", order.size(),
+				mStatesByProcedure.size(), order);
 
 		for (final String procedure : order) {
 			if (entryProcedures.contains(procedure) || mStacked.contains(procedure)) {
@@ -354,10 +353,10 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * Every edge of the graph: the reduced edges of each procedure copy, which include the summaries of its
-	 * error-free summarized calls, the error edges of the other summarized calls, and the call and return edges of
-	 * unfolded and stacked callees. Its nodes are the entry procedures' cut points, those of every unfolded or stacked
-	 * callee, and every imported error node.
+	 * Every edge of the graph: the reduced edges of each procedure copy, which include the summaries of its error-free
+	 * summarized calls, the error edges of the other summarized calls, and the call and return edges of unfolded and
+	 * stacked callees. Its nodes are the entry procedures' cut points, those of every unfolded or stacked callee, and
+	 * every imported error node.
 	 */
 	public Map<CallNode<STATE>, Map<CallNode<STATE>, UnmodifiableTransFormula>> getEdges() {
 		return Collections.unmodifiableMap(mRootEdges);
@@ -365,8 +364,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 
 	/**
 	 * The variable that counts the activations {@link CallStack} keeps, or {@code null} if this program needed no
-	 * activation record at all. How many calls are open at a node is exactly its chain of call sites plus how far
-	 * this has moved since the start.
+	 * activation record at all. How many calls are open at a node is exactly its chain of call sites plus how far this
+	 * has moved since the start.
 	 */
 	public IProgramVar getStackPointer() {
 		return mCallStack == null ? null : mCallStack.getStackPointer();
@@ -381,9 +380,9 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * The nodes that are dead ends of this graph because their own transitions belong to a procedure that is not
-	 * in it: the error states imported from a summarized callee. An unfolded callee's states are all in the graph,
-	 * so none of them is sealed.
+	 * The nodes that are dead ends of this graph because their own transitions belong to a procedure that is not in it:
+	 * the error states imported from a summarized callee. An unfolded callee's states are all in the graph, so none of
+	 * them is sealed.
 	 */
 	public Set<CallNode<STATE>> getSealedStates() {
 		return Collections.unmodifiableSet(mRootSealedStates);
@@ -430,13 +429,13 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	 * Refuses an unfolded procedure that reads an {@code old(g)} and calls another unfolded procedure.
 	 * <p>
 	 * {@code oldVarsAssignment} writes {@code old(g) := g}, and an {@link IProgramOldVar} belongs to the global
-	 * variable, not to a procedure activation. In an unfolded graph the snapshot is therefore a single state
-	 * variable that a nested unfolded call overwrites, so the caller would read the callee's snapshot after the
-	 * call returned. A summarized call cannot do this:
-	 * {@link TransFormulaUtils#sequentialCompositionWithCallAndReturn} removes the oldvars the callee may modify
-	 * from the summary's interface, so the snapshot never escapes it. Giving every activation its own copy of the
-	 * oldvars would mean minting fresh program variables, which is out of proportion here - C programs translated
-	 * to Boogie do not read {@code old(...)} in a procedure body at all - so this is refused instead.
+	 * variable, not to a procedure activation. In an unfolded graph the snapshot is therefore a single state variable
+	 * that a nested unfolded call overwrites, so the caller would read the callee's snapshot after the call returned. A
+	 * summarized call cannot do this: {@link TransFormulaUtils#sequentialCompositionWithCallAndReturn} removes the
+	 * oldvars the callee may modify from the summary's interface, so the snapshot never escapes it. Giving every
+	 * activation its own copy of the oldvars would mean minting fresh program variables, which is out of proportion
+	 * here - C programs translated to Boogie do not read {@code old(...)} in a procedure body at all - so this is
+	 * refused instead.
 	 */
 	private void rejectOldVarReadsAcrossStackFreeCalls(final Set<String> entryProcedures,
 			final ProcedureCallGraph callGraph) {
@@ -485,16 +484,15 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	// ----------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Reduces every procedure whose states become nodes of the root graph: the entry procedures and every unfolded
-	 * or stacked one. A reduction only depends on which callees are summarized, and that is decided by now; whether
-	 * an unsummarized callee is unfolded or stacked later makes no difference to its callers' cut points.
+	 * Reduces every procedure whose states become nodes of the root graph: the entry procedures and every unfolded or
+	 * stacked one. A reduction only depends on which callees are summarized, and that is decided by now; whether an
+	 * unsummarized callee is unfolded or stacked later makes no difference to its callers' cut points.
 	 */
 	private void reduceRootProcedures(final List<String> order, final Set<String> entryProcedures) {
 		long states = 0;
 		long nodes = 0;
 		for (final String procedure : order) {
-			if (entryProcedures.contains(procedure) || mUnfolded.contains(procedure)
-					|| mStacked.contains(procedure)) {
+			if (entryProcedures.contains(procedure) || mUnfolded.contains(procedure) || mStacked.contains(procedure)) {
 				final ReducedProcedure reduced = reduce(procedure);
 				mReduced.put(procedure, reduced);
 				states += ownStates(procedure).size();
@@ -508,20 +506,20 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	/**
 	 * {@code procedure}'s own graph, reduced to the states that have to be nodes of the root graph.
 	 * <p>
-	 * {@link PcTransitionSystem} encodes every state of the graph per step, so a state that is no cut
-	 * point only costs: one node per copy of the procedure, and one more step of every composition through it. Large
-	 * block encoding has merged what it could, but it stops at every call, so on a program with many calls nearly
-	 * every state starts or ends one. Once a callee is summarized, its call site and its return site are two states
-	 * joined by a single summary edge, and the chain around it can be composed like any other.
+	 * {@link PcTransitionSystem} encodes every state of the graph per step, so a state that is no cut point only costs:
+	 * one node per copy of the procedure, and one more step of every composition through it. Large block encoding has
+	 * merged what it could, but it stops at every call, so on a program with many calls nearly every state starts or
+	 * ends one. Once a callee is summarized, its call site and its return site are two states joined by a single
+	 * summary edge, and the chain around it can be composed like any other.
 	 * <p>
-	 * The edges are the internal transitions and the summary edges of the calls whose callees are summarized and
-	 * cannot reach an error. A state is removed if it has exactly one predecessor and one successor, both other than
-	 * itself, and is none of these:
+	 * The edges are the internal transitions and the summary edges of the calls whose callees are summarized and cannot
+	 * reach an error. A state is removed if it has exactly one predecessor and one successor, both other than itself,
+	 * and is none of these:
 	 * <ul>
 	 * <li>an initial state, a state a call enters, an error state, or a state a return leaves from;
-	 * <li>a call site that is not entirely folded into the edges - one with a call to an unfolded or stacked callee,
-	 * or to a summarized callee that can reach an error - which {@link #unfold} resolves per copy and therefore needs
-	 * as a node, and every return site of such a call.
+	 * <li>a call site that is not entirely folded into the edges - one with a call to an unfolded or stacked callee, or
+	 * to a summarized callee that can reach an error - which {@link #unfold} resolves per copy and therefore needs as a
+	 * node, and every return site of such a call.
 	 * </ul>
 	 * A maximal chain of removable states becomes one edge, the sequential composition of its edges, from the state
 	 * before it to the state after it; edges between the same two states are united. Each formula is composed into
@@ -612,9 +610,9 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * The internal transitions of {@code state}, which stay in its procedure {@code own}. A transition into a dead state
-	 * is left out. An internal transition into a live state of another procedure would be lost here, which could prove
-	 * an unsafe program safe, so it is refused.
+	 * The internal transitions of {@code state}, which stay in its procedure {@code own}. A transition into a dead
+	 * state is left out. An internal transition into a live state of another procedure would be lost here, which could
+	 * prove an unsafe program safe, so it is refused.
 	 */
 	private void addInternalTransitions(final STATE state, final Set<STATE> own,
 			final Map<STATE, Map<STATE, List<UnmodifiableTransFormula>>> edges) {
@@ -635,8 +633,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		}
 		final Set<STATE> before = pred.get(state);
 		final Map<STATE, List<UnmodifiableTransFormula>> after = succ.get(state);
-		return before != null && before.size() == 1 && !before.contains(state) && after != null
-				&& after.size() == 1 && !after.containsKey(state);
+		return before != null && before.size() == 1 && !before.contains(state) && after != null && after.size() == 1
+				&& !after.containsKey(state);
 	}
 
 	/**
@@ -697,17 +695,16 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	// ----------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Walks the entry procedures from their initial states, resolving every call site on the way: by a summary
-	 * edge if the callee is summarizable, by unfolding a fresh copy of the callee otherwise. Unfolded copies are
-	 * walked as well, so a call inside a copy is resolved in that copy's own context.
+	 * Walks the entry procedures from their initial states, resolving every call site on the way: by a summary edge if
+	 * the callee is summarizable, by unfolding a fresh copy of the callee otherwise. Unfolded copies are walked as
+	 * well, so a call inside a copy is resolved in that copy's own context.
 	 */
 	private void unfold(final Set<String> entryProcedures) {
 		final Map<CallNode<STATE>, Map<CallNode<STATE>, List<UnmodifiableTransFormula>>> alternatives =
 				new LinkedHashMap<>();
 		final Deque<CallNode<STATE>> worklist = new ArrayDeque<>();
 		for (final String entry : entryProcedures) {
-			for (final STATE init : ProcedureCallGraph.intersect(mAbstraction.getInitialStates(),
-					ownStates(entry))) {
+			for (final STATE init : ProcedureCallGraph.intersect(mAbstraction.getInitialStates(), ownStates(entry))) {
 				final CallNode<STATE> node = CallNode.root(init);
 				mRootInitStates.add(node);
 				if (mRootScopeStates.add(node)) {
@@ -762,9 +759,9 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 
 	/**
 	 * Resolves one call site into a copy of the callee: a virtual edge carrying the call (see
-	 * {@link #callEntryFormula}) into the copy's entry node, and one carrying the return out of each of its exit
-	 * nodes. The copy's own states are reached from its entry node by the ordinary traversal, so its loops become
-	 * nested loops of the graph being built.
+	 * {@link #callEntryFormula}) into the copy's entry node, and one carrying the return out of each of its exit nodes.
+	 * The copy's own states are reached from its entry node by the ordinary traversal, so its loops become nested loops
+	 * of the graph being built.
 	 */
 	private void unfoldCallee(final Deque<CallNode<STATE>> worklist,
 			final Map<CallNode<STATE>, Map<CallNode<STATE>, List<UnmodifiableTransFormula>>> alternatives,
@@ -778,8 +775,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		int returns = 0;
 		for (final STATE exit : ProcedureCallGraph.computeExitStates(mAbstraction, ownStates(callee),
 				Collections.singleton(callSite.getState()))) {
-			for (final OutgoingReturnTransition<LETTER, STATE> ret : liveReturns(exit,
-					callSite.getState())) {
+			for (final OutgoingReturnTransition<LETTER, STATE> ret : liveReturns(exit, callSite.getState())) {
 				final CallNode<STATE> afterReturn = callSite.sibling(ret.getSucc());
 				addAlternative(alternatives, callSite.enter(exit), afterReturn,
 						asReturnAction(ret.getLetter()).getAssignmentOfReturn());
@@ -788,9 +784,10 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			}
 		}
 		if (returns == 0) {
-			mLogger.info("KInduction: the unfolded call %s -> %s at %s never returns; only a violation inside the "
-					+ "callee can be reached through it", ProcedureCallGraph.procedureOf(callSite.getState()),
-					callee, callSite.getState());
+			mLogger.info(
+					"KInduction: the unfolded call %s -> %s at %s never returns; only a violation inside the "
+							+ "callee can be reached through it",
+					ProcedureCallGraph.procedureOf(callSite.getState()), callee, callSite.getState());
 		}
 		mNumUnfoldedCallSites++;
 	}
@@ -800,15 +797,15 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	 * entry node, and one that pops it again out of each of the callee's exit nodes.
 	 * <p>
 	 * Unlike {@link #unfoldCallee} this does <b>not</b> copy the callee: its states enter the graph as
-	 * {@link CallNode#root} nodes, once, however many call sites reach them and however deep the recursion goes.
-	 * Which activation the graph is in is a matter of {@code ki_sp}, not of which node it is at, and a recursive call
-	 * is therefore an ordinary cycle of the graph that {@link LoopTreeFormulaBuilder} turns into an ordinary loop.
+	 * {@link CallNode#root} nodes, once, however many call sites reach them and however deep the recursion goes. Which
+	 * activation the graph is in is a matter of {@code ki_sp}, not of which node it is at, and a recursive call is
+	 * therefore an ordinary cycle of the graph that {@link LoopTreeFormulaBuilder} turns into an ordinary loop.
 	 * <p>
-	 * The return edges are what the id is for: every call site that can enter this callee reaches the same exit
-	 * nodes, so the graph alone does not say where to go back to. The push records the id of <em>this</em> call site
-	 * and the pop checks it, which makes the return deterministic without duplicating anything. The id is per call
-	 * site <em>node</em>, not per call transition of the automaton, so a call from inside an unfolded copy returns
-	 * into that copy rather than into one of its siblings.
+	 * The return edges are what the id is for: every call site that can enter this callee reaches the same exit nodes,
+	 * so the graph alone does not say where to go back to. The push records the id of <em>this</em> call site and the
+	 * pop checks it, which makes the return deterministic without duplicating anything. The id is per call site
+	 * <em>node</em>, not per call transition of the automaton, so a call from inside an unfolded copy returns into that
+	 * copy rather than into one of its siblings.
 	 */
 	private void stackCallee(final Deque<CallNode<STATE>> worklist,
 			final Map<CallNode<STATE>, Map<CallNode<STATE>, List<UnmodifiableTransFormula>>> alternatives,
@@ -822,21 +819,21 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		// a caller on a call cycle with the callee. A caller that cannot be re-entered still needs the return site
 		// pushed, or the callee would not know where to go back to.
 		final Set<String> cycle = mCycleOf.get(caller);
-		final Collection<IProgramVar> toSave = cycle != null && cycle.contains(callee)
-				? localsOf(Collections.singleton(caller))
-				: Collections.emptyList();
+		final Collection<IProgramVar> toSave =
+				cycle != null && cycle.contains(callee) ? localsOf(Collections.singleton(caller))
+						: Collections.emptyList();
 
 		final CallNode<STATE> entryNode = CallNode.root(call.getSucc());
-		addAlternative(alternatives, callSite, entryNode, TransFormulaUtils.sequentialComposition(mLogger, mServices,
-				mMgdScript, false, false, false, SimplificationTechnique.NONE,
-				Arrays.asList(mCallStack.push(callee, returnSiteId, toSave), callEntryFormula(callAction, callee, true))));
+		addAlternative(alternatives, callSite, entryNode,
+				TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, false, false, false,
+						SimplificationTechnique.NONE, Arrays.asList(mCallStack.push(callee, returnSiteId, toSave),
+								callEntryFormula(callAction, callee, true))));
 		enqueue(worklist, entryNode);
 
 		int returns = 0;
 		for (final STATE exit : ProcedureCallGraph.computeExitStates(mAbstraction, ownStates(callee),
 				Collections.singleton(callSite.getState()))) {
-			for (final OutgoingReturnTransition<LETTER, STATE> ret : liveReturns(exit,
-					callSite.getState())) {
+			for (final OutgoingReturnTransition<LETTER, STATE> ret : liveReturns(exit, callSite.getState())) {
 				final UnmodifiableTransFormula returnTf = asReturnAction(ret.getLetter()).getAssignmentOfReturn();
 				// The return assignment carries the result out of the activation that is being left, so it has to
 				// read the callee's outparams before the pop overwrites them - in direct recursion they are the very
@@ -845,8 +842,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 				toRestore.removeAll(returnTf.getAssignedVars());
 				addAlternative(alternatives, CallNode.root(exit), callSite.sibling(ret.getSucc()),
 						TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, false, false, false,
-								SimplificationTechnique.NONE,
-								Arrays.asList(returnTf, mCallStack.pop(callee, returnSiteId, toRestore, calleeIsEntry))));
+								SimplificationTechnique.NONE, Arrays.asList(returnTf,
+										mCallStack.pop(callee, returnSiteId, toRestore, calleeIsEntry))));
 				enqueue(worklist, callSite.sibling(ret.getSucc()));
 				returns++;
 			}
@@ -868,14 +865,14 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * Moves unfolded procedures to {@link #mStacked} until the unfolding fits into {@link #UNFOLDING_BUDGET}, or
-	 * until no unfolded procedure is left to move.
+	 * Moves unfolded procedures to {@link #mStacked} until the unfolding fits into {@link #UNFOLDING_BUDGET}, or until
+	 * no unfolded procedure is left to move.
 	 * <p>
 	 * Unfolding is exponential in the depth of the call graph times the number of call sites per procedure, so a
-	 * program can ask for arbitrarily many nodes. How many it asks for does not have to be found out by unfolding
-	 * until it is too late: a procedure gets one copy per copy of each of its callers, which is one pass over the
-	 * call graph from the entry procedures downwards. A procedure that is stack-encoded instead contributes its
-	 * states once, so stacking the worst offender and recomputing converges.
+	 * program can ask for arbitrarily many nodes. How many it asks for does not have to be found out by unfolding until
+	 * it is too late: a procedure gets one copy per copy of each of its callers, which is one pass over the call graph
+	 * from the entry procedures downwards. A procedure that is stack-encoded instead contributes its states once, so
+	 * stacking the worst offender and recomputing converges.
 	 */
 	private void stackUnfoldingsThatDoNotFit(final List<String> order, final Set<String> entryProcedures) {
 		while (true) {
@@ -897,9 +894,10 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			if (worst == null) {
 				// Nothing left to stack: the graph is this big because the procedures themselves are, not because
 				// they are copied. An activation record would not shrink it, so it is built as it is.
-				mLogger.info("KInduction: the root graph has about %d node(s), past the unfolding budget of %d, "
-						+ "but none of that is unfolding that an activation record could replace", total,
-						UNFOLDING_BUDGET);
+				mLogger.info(
+						"KInduction: the root graph has about %d node(s), past the unfolding budget of %d, "
+								+ "but none of that is unfolding that an activation record could replace",
+						total, UNFOLDING_BUDGET);
 				return;
 			}
 			mLogger.info("KInduction: unfolding %s would take about %d node(s) of an estimated %d; giving it an "
@@ -910,9 +908,9 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * How many copies of each procedure the unfolded graph would hold. An entry procedure and a stack-encoded
-	 * procedure occur once; an unfolded procedure occurs once per call site in each copy of each of its callers; a
-	 * summarized procedure does not occur at all, its states stay in its own scope.
+	 * How many copies of each procedure the unfolded graph would hold. An entry procedure and a stack-encoded procedure
+	 * occur once; an unfolded procedure occurs once per call site in each copy of each of its callers; a summarized
+	 * procedure does not occur at all, its states stay in its own scope.
 	 */
 	private Map<String, Long> estimateCopies(final List<String> order, final Set<String> entryProcedures) {
 		final Map<String, Long> copies = new LinkedHashMap<>();
@@ -1039,8 +1037,9 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	/**
 	 * Every edge of {@code caller}, in its own state space: its internal transitions, and for its calls one edge per
 	 * (call transition, exit state of the callee) pair for the normal return, and one per (call transition, error state
-	 * inside the callee) pair for a violation that never returns. Fills {@code imported} with the error states the edges
-	 * point at, which have no edges themselves. Only called for a summarizable procedure, so every callee has a summary.
+	 * inside the callee) pair for a violation that never returns. Fills {@code imported} with the error states the
+	 * edges point at, which have no edges themselves. Only called for a summarizable procedure, so every callee has a
+	 * summary.
 	 */
 	private Map<STATE, Map<STATE, UnmodifiableTransFormula>> buildScopeEdges(final String caller,
 			final Set<STATE> imported) {
@@ -1072,8 +1071,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 
 	/**
 	 * The edges of one call transition, composed once. A caller's scope and each copy of it in the root graph ask for
-	 * the same ones, and they can all use the same formulas: composing a formula renames its variables, and a transition
-	 * system gives the auxiliary variables of each of its edges constants of their own.
+	 * the same ones, and they can all use the same formulas: composing a formula renames its variables, and a
+	 * transition system gives the auxiliary variables of each of its edges constants of their own.
 	 */
 	private List<SummaryEdge<STATE>> summaryEdges(final String caller, final STATE callSite,
 			final OutgoingCallTransition<LETTER, STATE> call) {
@@ -1103,8 +1102,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			}
 			for (final OutgoingReturnTransition<LETTER, STATE> ret : liveReturns(exit, callSite)) {
 				edges.add(new SummaryEdge<>(ret.getSucc(), false,
-						ProcedureCallGraph.computeVirtualEdge(mServices, mLogger, mCsToolkit, mMgdScript, callAction, callee,
-								summary, asReturnAction(ret.getLetter()).getAssignmentOfReturn())));
+						ProcedureCallGraph.computeVirtualEdge(mServices, mLogger, mCsToolkit, mMgdScript, callAction,
+								callee, summary, asReturnAction(ret.getLetter()).getAssignmentOfReturn())));
 			}
 		}
 		for (final STATE error : calleeData.mErrorStates) {
@@ -1113,7 +1112,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			}
 			final UnmodifiableTransFormula toError = formulaBetween(calleeData, entry, error);
 			if (toError != null) {
-				edges.add(new SummaryEdge<>(error, true, pendingCallToError(caller, callAction, callee, error, toError)));
+				edges.add(
+						new SummaryEdge<>(error, true, pendingCallToError(caller, callAction, callee, error, toError)));
 			}
 		}
 		if (edges.isEmpty()) {
@@ -1126,8 +1126,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		return edges;
 	}
 
-	private <N> Map<N, Map<N, UnmodifiableTransFormula>> combine(
-			final Map<N, Map<N, List<UnmodifiableTransFormula>>> alternatives) {
+	private <N> Map<N, Map<N, UnmodifiableTransFormula>>
+			combine(final Map<N, Map<N, List<UnmodifiableTransFormula>>> alternatives) {
 		final Map<N, Map<N, UnmodifiableTransFormula>> result = new LinkedHashMap<>();
 		for (final Map.Entry<N, Map<N, List<UnmodifiableTransFormula>>> from : alternatives.entrySet()) {
 			final Map<N, UnmodifiableTransFormula> combined = new LinkedHashMap<>();
@@ -1142,16 +1142,16 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		return result;
 	}
 
-	private <N> void addAlternative(final Map<N, Map<N, List<UnmodifiableTransFormula>>> alternatives, final N from,
-			final N to, final UnmodifiableTransFormula formula) {
+	private static <N> void addAlternative(final Map<N, Map<N, List<UnmodifiableTransFormula>>> alternatives,
+			final N from, final N to, final UnmodifiableTransFormula formula) {
 		alternatives.computeIfAbsent(from, k -> new LinkedHashMap<>()).computeIfAbsent(to, k -> new ArrayList<>())
 				.add(formula);
 	}
 
 	/**
-	 * The formula of every path through {@code data}'s procedure from {@code entry} to {@code target}, or
-	 * {@code null} if there is none. Only called for a summarizable procedure, whose graph has no loop. Built once,
-	 * since all call sites of a procedure usually enter it at the same state.
+	 * The formula of every path through {@code data}'s procedure from {@code entry} to {@code target}, or {@code null}
+	 * if there is none. Only called for a summarizable procedure, whose graph has no loop. Built once, since all call
+	 * sites of a procedure usually enter it at the same state.
 	 */
 	private UnmodifiableTransFormula formulaBetween(final ScopeData data, final STATE entry, final STATE target) {
 		final List<STATE> key = List.of(entry, target);
@@ -1163,17 +1163,17 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			rejectUnresolvedCallsAndReturns(data);
 			data.mCallsChecked = true;
 		}
-		final UnmodifiableTransFormula result = new LoopTreeFormulaBuilder<>(mServices, mLogger, mMgdScript, data.mEdges,
-				Collections.singleton(entry), Collections.singleton(target)).buildLoopFreeFormula();
+		final UnmodifiableTransFormula result = new LoopTreeFormulaBuilder<>(mServices, mLogger, mMgdScript,
+				data.mEdges, Collections.singleton(entry), Collections.singleton(target)).buildLoopFreeFormula();
 		data.mFormulas.put(key, result);
 		return result;
 	}
 
 	/**
 	 * Refuses every call and return transition whose target is in {@code data}'s scope: the scope's edges would not
-	 * describe it, since it has no call stack (see {@link LoopTreeFormulaBuilder}). A call or return that leaves the scope
-	 * is not refused: it is what an edge of {@link #buildScopeEdges} stands for. A sealed state has no edges at all, so its
-	 * transitions are not refused either.
+	 * describe it, since it has no call stack (see {@link LoopTreeFormulaBuilder}). A call or return that leaves the
+	 * scope is not refused: it is what an edge of {@link #buildScopeEdges} stands for. A sealed state has no edges at
+	 * all, so its transitions are not refused either.
 	 * <p>
 	 * The cost is the states times the call sites, so this is run once per scope.
 	 */
@@ -1212,8 +1212,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	/**
 	 * The formula of a call that never returns because the callee (or something it calls) reaches the error state
 	 * {@code error}. The call stays pending, which is what
-	 * {@link TransFormulaUtils#sequentialCompositionWithPendingCall} describes; {@code error} may lie deeper than
-	 * the direct callee, so the procedure at the end is the one {@code error} belongs to.
+	 * {@link TransFormulaUtils#sequentialCompositionWithPendingCall} describes; {@code error} may lie deeper than the
+	 * direct callee, so the procedure at the end is the one {@code error} belongs to.
 	 */
 	private UnmodifiableTransFormula pendingCallToError(final String caller, final ICallAction callAction,
 			final String callee, final STATE error, final UnmodifiableTransFormula toError) {
@@ -1232,24 +1232,24 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * {@code toError} with the locals of every procedure other than {@code caller} and {@code callee} dropped from
-	 * its interface.
+	 * {@code toError} with the locals of every procedure other than {@code caller} and {@code callee} dropped from its
+	 * interface.
 	 * <p>
 	 * {@link TransFormulaUtils#sequentialCompositionWithPendingCall} classifies each variable of the formula it is
-	 * given as belonging to the caller, to the callee, or to neither - and the third case is an
-	 * {@link AssertionError} ("local var neither from caller nor callee"), because the primitive knows only those two
-	 * procedures. The error this call runs into may lie deeper than the direct callee, though, and then
-	 * {@code toError} spans several activations and mentions the locals of all of them.
+	 * given as belonging to the caller, to the callee, or to neither - and the third case is an {@link AssertionError}
+	 * ("local var neither from caller nor callee"), because the primitive knows only those two procedures. The error
+	 * this call runs into may lie deeper than the direct callee, though, and then {@code toError} spans several
+	 * activations and mentions the locals of all of them.
 	 * <p>
 	 * Dropping them is what the formula means anyway, not an approximation of it. An inVar stands for the value the
-	 * variable has where the composed formula starts, which is the callee's entry - at that point the deeper
-	 * activation does not exist and its locals hold nothing, so leaving the inVar in would claim a relationship
-	 * between two values that never coexist; removing it turns the variable into an existentially quantified aux var,
-	 * which is what "unconstrained" is. An outVar stands for a value at the error state, and an error node is a dead
-	 * end of the graph ({@code unfold} stops at a sealed state), so nothing ever reads it.
+	 * variable has where the composed formula starts, which is the callee's entry - at that point the deeper activation
+	 * does not exist and its locals hold nothing, so leaving the inVar in would claim a relationship between two values
+	 * that never coexist; removing it turns the variable into an existentially quantified aux var, which is what
+	 * "unconstrained" is. An outVar stands for a value at the error state, and an error node is a dead end of the graph
+	 * ({@code unfold} stops at a sealed state), so nothing ever reads it.
 	 */
-	private UnmodifiableTransFormula scopeToCallerAndCallee(final UnmodifiableTransFormula toError,
-			final String caller, final String callee) {
+	private UnmodifiableTransFormula scopeToCallerAndCallee(final UnmodifiableTransFormula toError, final String caller,
+			final String callee) {
 		final List<IProgramVar> inVarsToRemove = new ArrayList<>();
 		for (final IProgramVar pv : toError.getInVars().keySet()) {
 			if (isLocalOfOtherProcedure(pv, caller, callee)) {
@@ -1277,25 +1277,25 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 
 	/**
 	 * What entering {@code callee} does to the state of the flat graph, i.e. the first half of what
-	 * {@link TransFormulaUtils#sequentialCompositionWithCallAndReturn} composes for a summarized call: the
-	 * parameter assignment, the snapshot of the oldvars of the globals the callee may modify, and the globals
-	 * assignment. The matching second half is the return's own assignment, which is the formula of the virtual
-	 * edge leaving the unfolded copy.
+	 * {@link TransFormulaUtils#sequentialCompositionWithCallAndReturn} composes for a summarized call: the parameter
+	 * assignment, the snapshot of the oldvars of the globals the callee may modify, and the globals assignment. The
+	 * matching second half is the return's own assignment, which is the formula of the virtual edge leaving the
+	 * unfolded copy.
 	 * <p>
-	 * The callee's locals are havoced first. In an unfolded graph they are ordinary state variables that outlive
-	 * the activation, so without this they would still hold the values of the previous call to the same procedure
-	 * - an under-approximation, which could prove an unsafe program safe. A summarized call needs no such step
-	 * because {@code sequentialCompositionWithCallAndReturn} projects the callee's locals out of the summary,
-	 * which has the same effect.
+	 * The callee's locals are havoced first. In an unfolded graph they are ordinary state variables that outlive the
+	 * activation, so without this they would still hold the values of the previous call to the same procedure - an
+	 * under-approximation, which could prove an unsafe program safe. A summarized call needs no such step because
+	 * {@code sequentialCompositionWithCallAndReturn} projects the callee's locals out of the summary, which has the
+	 * same effect.
 	 * <p>
-	 * Whether the havoc comes before or after the parameter assignment only matters when the caller and the callee
-	 * are the same procedure, which is to say for a directly recursive call: then the actual parameters the call
-	 * reads <em>are</em> locals of the callee, and havocing first would destroy them before they are passed. For a
-	 * call between two different procedures the two steps write disjoint variables and commute, so
+	 * Whether the havoc comes before or after the parameter assignment only matters when the caller and the callee are
+	 * the same procedure, which is to say for a directly recursive call: then the actual parameters the call reads
+	 * <em>are</em> locals of the callee, and havocing first would destroy them before they are passed. For a call
+	 * between two different procedures the two steps write disjoint variables and commute, so
 	 * {@code havocAfterParameters} only has to be set where recursion is possible.
 	 * <p>
-	 * The parameter assignment is composed as the intraprocedural formula {@link #keepReadVariables} makes of it,
-	 * so the caller's arguments keep their values across the call.
+	 * The parameter assignment is composed as the intraprocedural formula {@link #keepReadVariables} makes of it, so
+	 * the caller's arguments keep their values across the call.
 	 */
 	private UnmodifiableTransFormula callEntryFormula(final ICallAction callAction, final String callee,
 			final boolean havocAfterParameters) {
@@ -1311,9 +1311,9 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 			}
 		}
 		final UnmodifiableTransFormula havoc = TransFormulaUtils.constructHavoc(havoced, mMgdScript);
-		final List<UnmodifiableTransFormula> parts = havocAfterParameters
-				? Arrays.asList(callTf, havoc, oldVarsAssignment, globalVarsAssignment)
-				: Arrays.asList(havoc, callTf, oldVarsAssignment, globalVarsAssignment);
+		final List<UnmodifiableTransFormula> parts =
+				havocAfterParameters ? Arrays.asList(callTf, havoc, oldVarsAssignment, globalVarsAssignment)
+						: Arrays.asList(havoc, callTf, oldVarsAssignment, globalVarsAssignment);
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, false, false, false,
 				SimplificationTechnique.NONE, parts);
 	}
@@ -1327,9 +1327,9 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	 * {@link TransFormulaUtils#sequentialComposition}, however, an inVar without an outVar is havoced
 	 * ({@link TransFormulaUtils#computeAssignedVars}), and in the flat graph the caller's variables live on after the
 	 * call - so every argument would lose its value at the call, an over-approximation under which the base case
-	 * reports violations that no run has. It also keeps a read-only local of the callee (the argument of a
-	 * recursive call) out of {@link UnmodifiableTransFormula#getAssignedVars()}, so the activation havocs it as it
-	 * havocs every other local.
+	 * reports violations that no run has. It also keeps a read-only local of the callee (the argument of a recursive
+	 * call) out of {@link UnmodifiableTransFormula#getAssignedVars()}, so the activation havocs it as it havocs every
+	 * other local.
 	 */
 	private UnmodifiableTransFormula keepReadVariables(final UnmodifiableTransFormula callTf) {
 		final Map<IProgramVar, TermVariable> kept = new LinkedHashMap<>();
@@ -1354,8 +1354,8 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * The states of {@code data}'s scope reachable from {@code entry}. Only used to skip exit and error states
-	 * that no path can reach, so that nothing is composed for them.
+	 * The states of {@code data}'s scope reachable from {@code entry}. Only used to skip exit and error states that no
+	 * path can reach, so that nothing is composed for them.
 	 */
 	private Set<STATE> reachableInScope(final ScopeData data, final STATE entry) {
 		return data.mReachable.computeIfAbsent(entry, start -> {
@@ -1375,10 +1375,10 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * Whether {@code data}'s scope has a cycle reachable from {@code inits}, i.e. whether the procedure contains a
-	 * loop and therefore has no single loop-free entry-to-exit formula. Iterative depth-first search, because a
-	 * deep program must not overflow the stack; this only has to answer yes or no, so unlike
-	 * {@link LoopTreeFormulaBuilder} it composes no formula.
+	 * Whether {@code data}'s scope has a cycle reachable from {@code inits}, i.e. whether the procedure contains a loop
+	 * and therefore has no single loop-free entry-to-exit formula. Iterative depth-first search, because a deep program
+	 * must not overflow the stack; this only has to answer yes or no, so unlike {@link LoopTreeFormulaBuilder} it
+	 * composes no formula.
 	 */
 	private boolean hasCycleInScope(final ScopeData data, final Set<STATE> inits) {
 		final Set<STATE> finished = new LinkedHashSet<>();

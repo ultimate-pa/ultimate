@@ -71,8 +71,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
@@ -104,16 +104,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * {@link TAPreferences#getSequentialTaTimeLimit()} seconds. If it proves or refutes the program, that is the result,
  * with the proof or counterexample of trace abstraction for the witness.</li>
  * <li><b>Invariant synthesis</b>: the {@link InvariantSupplier} checks the interpolants trace abstraction produced for
- * inductive invariants, for at most {@link TAPreferences#getSequentialInvariantTimeLimit()} seconds, on a thread of
- * its own that the main thread waits for.</li>
+ * inductive invariants, for at most {@link TAPreferences#getSequentialInvariantTimeLimit()} seconds, on a thread of its
+ * own that the main thread waits for.</li>
  * <li><b>k-induction</b> on the abstraction trace abstraction refined so far, with the invariants of the synthesis,
- * without a time limit of its own unless {@link TAPreferences#getSequentialKInductionTimeLimit()} sets one. A
- * violation is reported by the waypoints of its model, see {@link KInductionWorkerThread#reportWaypoints}; a proof
- * gives the correctness witness, see {@link #useKInductionProof}.</li>
+ * without a time limit of its own unless {@link TAPreferences#getSequentialKInductionTimeLimit()} sets one. A violation
+ * is reported by the waypoints of its model, see {@link KInductionWorkerThread#reportWaypoints}; a proof gives the
+ * correctness witness, see {@link #useKInductionProof}.</li>
  * </ol>
- * Unlike {@link ParallelNwaCegarLoop}, nothing runs alongside trace abstraction, so the abstraction is copied only once,
- * into the script of k-induction, when trace abstraction is done with it. k-induction and the invariant synthesis each
- * get a solver of their own, as in the parallel loop (see
+ * Unlike {@link ParallelNwaCegarLoop}, nothing runs alongside trace abstraction, so the abstraction is copied only
+ * once, into the script of k-induction, when trace abstraction is done with it. k-induction and the invariant synthesis
+ * each get a solver of their own, as in the parallel loop (see
  * {@link ParallelNwaCegarLoop#getSolverSettings(IUltimateServiceProvider, TAPreferences, WorkerType, java.util.function.Supplier, String)}):
  * the main script's solver usually neither produces models nor runs without a per-query timeout.
  *
@@ -243,9 +243,10 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 
 	/**
 	 * Marks the difference while it runs. It updates the Hoare annotation fragments to its states before it removes the
-	 * dead ends, and replaces {@link #mAbstraction} by its result only after that. If the time limit of trace abstraction
-	 * stops it in between, the abstraction is still the previous one and fine for k-induction, but the fragments
-	 * describe states it does not have, and a proof extracted from them could miss the states of the abstraction.
+	 * dead ends, and replaces {@link #mAbstraction} by its result only after that. If the time limit of trace
+	 * abstraction stops it in between, the abstraction is still the previous one and fine for k-induction, but the
+	 * fragments describe states it does not have, and a proof extracted from them could miss the states of the
+	 * abstraction.
 	 */
 	@Override
 	protected void computeAutomataDifference(final INestedWordAutomaton<L, IPredicate> minuend,
@@ -292,7 +293,7 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 	// k-induction, with the invariant synthesis before it
 	// ------------------------------------------------------------------------------------------------------------
 
-	private void runKInduction() throws AutomataLibraryException {
+	private void runKInduction() {
 		// The solvers of k-induction and of the invariant synthesis are destroyed with these services.
 		final TaskScopedServices kiServices = new TaskScopedServices(mServices);
 		final TaskScopedServices invServices = new TaskScopedServices(mServices);
@@ -304,9 +305,8 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 			final ManagedScript kiScript = kiToolkit.getManagedScript();
 			final PredicateFactory kiPredicateFactory =
 					new PredicateFactory(mServices, kiScript, kiToolkit.getSymbolTable());
-			// The only copy of the abstraction. It has the same states, so it is a copy of the letters only. From here on
-			// it is the only abstraction there is, see releaseTraceAbstraction.
-			@SuppressWarnings("unchecked")
+			// The only copy of the abstraction. It has the same states, so it is a copy of the letters only. From here
+			// on it is the only abstraction there is, see releaseTraceAbstraction.
 			final INestedWordAutomaton<L, IPredicate> kiAbstraction =
 					(INestedWordAutomaton<L, IPredicate>) kiTransfer.transferAutomaton(mAbstraction,
 							new PredicateFactoryForInterpolantAutomata(kiScript, kiPredicateFactory, false),
@@ -332,10 +332,10 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 	}
 
 	/**
-	 * Drops what trace abstraction leaves behind and k-induction does not need, as
-	 * {@link ParallelNwaCegarLoop}'s {@code releaseForKInduction} does when the heap fills up, but always: the main
-	 * thread's abstraction, of which k-induction has its copy, and the last counterexample. The empty abstraction keeps
-	 * the alphabet, which the solver settings look at.
+	 * Drops what trace abstraction leaves behind and k-induction does not need, as {@link ParallelNwaCegarLoop}'s
+	 * {@code releaseForKInduction} does when the heap fills up, but always: the main thread's abstraction, of which
+	 * k-induction has its copy, and the last counterexample. The empty abstraction keeps the alphabet, which the solver
+	 * settings look at.
 	 */
 	private void releaseTraceAbstraction() {
 		final int size = mAbstraction.size();
@@ -368,9 +368,9 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 				new AutomataLibraryServices(mServices), mLogger, mCsToolkit.getManagedScript(), invServices,
 				solverSettings(WorkerType.INVARIANT, "InvariantSupplier"), mCsToolkit, "inv_");
 		final AtomicBoolean phaseOver = new AtomicBoolean();
-		final InvariantSupplier<L, INestedWordAutomaton<L, IPredicate>> supplier = new InvariantSupplier<>(mLogger,
-				withTimeLimit(invServices, limit), invTransfer.getWorkerCfgSmtToolKit(), new LinkedBlockingQueue<>(),
-				phaseOver::get, null);
+		final InvariantSupplier<L, INestedWordAutomaton<L, IPredicate>> supplier =
+				new InvariantSupplier<>(mLogger, withTimeLimit(invServices, limit),
+						invTransfer.getWorkerCfgSmtToolKit(), new LinkedBlockingQueue<>(), phaseOver::get, null);
 		// Only looks at the transition formulas, which k-induction's copy has as well.
 		supplier.setAbstraction(kiAbstraction);
 		final IInvariantSupplier<CallNode<IPredicate>> subscription = supplier.subscribe(kiScript);
@@ -389,7 +389,8 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 			mLogger.info("NwaCegarLoopWithKInduction: phase INV ends");
 		} catch (final TimeoutException e) {
 			// A query that does not notice the time limit: destroying its solver below ends it.
-			mLogger.warn("NwaCegarLoopWithKInduction: phase INV did not end within its time limit, stopping its solver");
+			mLogger.warn(
+					"NwaCegarLoopWithKInduction: phase INV did not end within its time limit, stopping its solver");
 		} catch (final ExecutionException e) {
 			// It only feeds k-induction, which can do without.
 			mLogger.warn("NwaCegarLoopWithKInduction: phase INV crashed, k-induction goes on with what it published: "
@@ -410,7 +411,7 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 	private void runKInduction(final IUltimateServiceProvider services, final CfgSmtToolkit kiToolkit,
 			final INestedWordAutomaton<L, IPredicate> kiAbstraction,
 			final PcTransitionSystemFactory.Result<IPredicate> system,
-			final IInvariantSupplier<CallNode<IPredicate>> invariants) throws AutomataLibraryException {
+			final IInvariantSupplier<CallNode<IPredicate>> invariants) {
 		final HashRelation<String, ILocation> overapproximations =
 				KInductionWorkerThread.overapproximations(kiAbstraction);
 		final KInduction<L, IPredicate> kInduction;
@@ -424,9 +425,6 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 			mLogger.info("NwaCegarLoopWithKInduction: phase KI ends at its time limit");
 			addResultForUndecided(Result.USER_LIMIT_TIME, e, null);
 			return;
-		} catch (final InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new ToolchainCanceledException(getClass(), "k-induction");
 		} catch (final RuntimeException e) {
 			if (!KInductionWorkerThread.isLimit(e)) {
 				throw e;
@@ -436,7 +434,8 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 			return;
 		}
 		if (kInduction.wasUnkown()) {
-			mLogger.warn("NwaCegarLoopWithKInduction: phase KI ends without a verdict: " + kInduction.getInconclusive());
+			mLogger.warn(
+					"NwaCegarLoopWithKInduction: phase KI ends without a verdict: " + kInduction.getInconclusive());
 			addResultForUndecided(Result.UNKNOWN, null, null);
 			return;
 		}
@@ -454,8 +453,9 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 			final Entry<String, ILocation> first = overapproximations.iterator().next();
 			final UnprovabilityReason reason =
 					new UnprovabilityReason("overapproximation of " + first.getKey(), first.getValue());
-			mLogger.warn("NwaCegarLoopWithKInduction: phase KI found a violation, but the program has %d "
-					+ "overapproximation(s), so it may be spurious; UNKNOWN because of the %s",
+			mLogger.warn(
+					"NwaCegarLoopWithKInduction: phase KI found a violation, but the program has %d "
+							+ "overapproximation(s), so it may be spurious; UNKNOWN because of the %s",
 					overapproximations.size(), reason);
 			addResultForUndecided(Result.UNKNOWN, null, reason);
 			return;
@@ -494,21 +494,20 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 	 * k-induction ran on the abstraction that trace abstraction refined, whose states are products of a program
 	 * location with interpolants, and it found its invariants per such state. The invariant of a location must hold for
 	 * every execution that reaches it, also for those that end in a state trace abstraction already removed from the
-	 * abstraction as a dead end. The Hoare annotation of trace abstraction ({@link NwaHoareProofProducer}) covers those:
-	 * it is the disjunction of the formulas of all states of a location, removed or not, and the formula of a state holds
-	 * after every execution that ends in it. So each state of the abstraction is replaced by one whose formula is the
-	 * conjunction of its own formula and the invariant k-induction found for it, and the Hoare annotation of the proof
-	 * is extracted from that abstraction as if trace abstraction had proven the program. The abstraction is k-induction's
-	 * copy, the only one left (see {@link #releaseTraceAbstraction()}); its letters belong to k-induction's script, but
-	 * the extraction only follows its transitions and never looks at a letter's formula.
+	 * abstraction as a dead end. The Hoare annotation of trace abstraction ({@link NwaHoareProofProducer}) covers
+	 * those: it is the disjunction of the formulas of all states of a location, removed or not, and the formula of a
+	 * state holds after every execution that ends in it. So each state of the abstraction is replaced by one whose
+	 * formula is the conjunction of its own formula and the invariant k-induction found for it, and the Hoare
+	 * annotation of the proof is extracted from that abstraction as if trace abstraction had proven the program. The
+	 * abstraction is k-induction's copy, the only one left (see {@link #releaseTraceAbstraction()}); its letters belong
+	 * to k-induction's script, but the extraction only follows its transitions and never looks at a letter's formula.
 	 * <p>
-	 * Invariants k-induction could not compute in time, or the parts of them that cannot be backtranslated, are left out,
-	 * which only weakens the annotation. If the fragments may not fit the abstraction (see
+	 * Invariants k-induction could not compute in time, or the parts of them that cannot be backtranslated, are left
+	 * out, which only weakens the annotation. If the fragments may not fit the abstraction (see
 	 * {@link #computeAutomataDifference}), the proof has no invariants at all, i.e. the correctness witness is trivial.
 	 */
-	private void useKInductionProof(final KInduction<L, IPredicate> kInduction,
-			final IUltimateServiceProvider services, final CfgSmtToolkit kiToolkit,
-			final INestedWordAutomaton<L, IPredicate> kiAbstraction) throws AutomataLibraryException {
+	private void useKInductionProof(final KInduction<L, IPredicate> kInduction, final IUltimateServiceProvider services,
+			final CfgSmtToolkit kiToolkit, final INestedWordAutomaton<L, IPredicate> kiAbstraction) {
 		if (mProofUpdater == null) {
 			return;
 		}
@@ -531,8 +530,9 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 				new AutomataLibraryServices(mServices), mCsToolkit.getManagedScript(), mPredicateFactory);
 		final Set<IcfgLocation> loopLocations = new HashSet<>(mIcfg.getLoopLocations());
 		if (!kiAbstraction.getStates().stream().allMatch(ISLPredicate.class::isInstance)) {
-			mLogger.warn("NwaCegarLoopWithKInduction: a state of the abstraction has no single location, the proof does "
-					+ "without the invariants of k-induction");
+			mLogger.warn(
+					"NwaCegarLoopWithKInduction: a state of the abstraction has no single location, the proof does "
+							+ "without the invariants of k-induction");
 			return;
 		}
 		// A new state for each one, also those that stay as they are: the Hoare annotation fragments forget the
@@ -567,8 +567,8 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 			old2New.put(state, mPredicateFactory.newSPredicate(loc, conjunction.getFormula()));
 			strengthened++;
 		}
-		// FloydHoareUtils.createInvariantResults leaves out every invariant that is true, so a proof with true at a loop
-		// head gives an empty witness there, which validators such as LIV cannot use, see
+		// FloydHoareUtils.createInvariantResults leaves out every invariant that is true, so a proof with true at a
+		// loop head gives an empty witness there, which validators such as LIV cannot use, see
 		// ParallelNwaCegarLoop.kInductionAnnotation. If the invariants prove the program and the annotation of a loop
 		// head may well be true, the witness states it explicitly. An annotation that is not true replaces it.
 		if (witness != null && witness.proving()) {
@@ -615,8 +615,7 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 	// Helpers
 	// ------------------------------------------------------------------------------------------------------------
 
-	private static IUltimateServiceProvider withTimeLimit(final IUltimateServiceProvider services,
-			final long millis) {
+	private static IUltimateServiceProvider withTimeLimit(final IUltimateServiceProvider services, final long millis) {
 		final IProgressMonitorService progressMonitor = services.getProgressMonitorService();
 		return progressMonitor.registerChildTimer(services, progressMonitor.getChildTimer(millis));
 	}

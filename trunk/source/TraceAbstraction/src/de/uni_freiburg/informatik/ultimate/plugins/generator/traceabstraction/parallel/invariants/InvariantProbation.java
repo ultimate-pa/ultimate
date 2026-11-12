@@ -34,7 +34,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery.Invariant;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery.Kind;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -44,11 +48,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantSubscription.RunningQuery;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery.Invariant;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery.Kind;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 
 /**
  * The probation of the {@link InvariantSupplier}: finds out whether an invariant makes a query of k-induction slow.
@@ -65,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionS
  */
 final class InvariantProbation {
 
-	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final int mFactor;
 	private final long mMinimumMillis;
@@ -82,13 +80,12 @@ final class InvariantProbation {
 	 * @param solverTimeoutMillis
 	 *            the per-query timeout the supplier's solver has otherwise
 	 */
-	InvariantProbation(final ILogger logger, final ManagedScript script, final int factor, final long minimumMillis,
+	InvariantProbation(final ManagedScript script, final int factor, final long minimumMillis,
 			final long solverTimeoutMillis) {
 		if (factor < 1 || minimumMillis <= 0 || solverTimeoutMillis <= 0) {
 			throw new IllegalArgumentException("invalid probation limit: factor " + factor + ", minimum "
 					+ minimumMillis + " ms, solver timeout " + solverTimeoutMillis + " ms");
 		}
-		mLogger = logger;
 		mScript = script;
 		mFactor = factor;
 		mMinimumMillis = minimumMillis;

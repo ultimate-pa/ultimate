@@ -36,8 +36,8 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
@@ -52,27 +52,27 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 /**
  * The activation records of the recursive procedures, as ordinary program variables.
  * <p>
- * {@link ProcedureSummaries} resolves a call either into a summary - which needs the callee's summary to exist
- * already - or by unfolding a copy of the callee's states per call site. A call cycle defeats both: there is no order
- * in which the summaries exist, and the unfolding does not terminate. Both are really the same missing thing. The
- * unfolding distinguishes two activations of a procedure <em>in the graph</em>, so the graph has to be as big as the
- * call tree; a cycle makes that tree infinite. Distinguishing them <em>in the state</em> instead costs a fixed number
- * of variables, whatever the depth:
+ * {@link ProcedureSummaries} resolves a call either into a summary - which needs the callee's summary to exist already
+ * - or by unfolding a copy of the callee's states per call site. A call cycle defeats both: there is no order in which
+ * the summaries exist, and the unfolding does not terminate. Both are really the same missing thing. The unfolding
+ * distinguishes two activations of a procedure <em>in the graph</em>, so the graph has to be as big as the call tree; a
+ * cycle makes that tree infinite. Distinguishing them <em>in the state</em> instead costs a fixed number of variables,
+ * whatever the depth:
  * <ul>
  * <li>{@code ki_sp}, the stack pointer,
  * <li>{@code ki_ret}, an array mapping a stack index to the call site the activation at that index must return to,
  * <li>{@code ki_ret_p} per procedure {@code p} that is on no call cycle, the call site its activation must return to.
  * Such a procedure has at most one activation at a time, so it needs neither an index nor an array, whose frame is an
  * extensional equality the solver pays for in every step,
- * <li>one array {@code ki_stack_l} per local variable {@code l} of a recursive procedure, mapping a stack index to
- * the value {@code l} had in the activation at that index.
+ * <li>one array {@code ki_stack_l} per local variable {@code l} of a recursive procedure, mapping a stack index to the
+ * value {@code l} had in the activation at that index.
  * </ul>
- * A call pushes (the caller's locals, the return site, {@code sp+1}), a return pops. The procedure's states then
- * occur exactly once in the graph, and its recursive call is an ordinary loop of it.
+ * A call pushes (the caller's locals, the return site, {@code sp+1}), a return pops. The procedure's states then occur
+ * exactly once in the graph, and its recursive call is an ordinary loop of it.
  * <p>
- * Nothing else in the encoding has to know: {@link PcTransitionSystem} takes its state vector from the in- and
- * outvars of the edge formulas it is given ({@code collectVars}) and frames whatever an edge does not assign, so
- * these variables behave like any other program variable of the analysed program.
+ * Nothing else in the encoding has to know: {@link PcTransitionSystem} takes its state vector from the in- and outvars
+ * of the edge formulas it is given ({@code collectVars}) and frames whatever an edge does not assign, so these
+ * variables behave like any other program variable of the analysed program.
  * <p>
  * The arrays are indexed by the {@link CounterSort} of the program and are never constrained to be empty at the start.
  * They do not have to be: a call's activation can only reach its exit node after the call edge that pushed, so its
@@ -80,10 +80,10 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * around, which changes nothing: no unrolling comes close to 2^32 activations.
  * <p>
  * The exception is the activation a run starts in. In library mode every procedure is an entry, so a stacked procedure
- * can also be running with nothing pushed, and its return must then end the run instead of reading a return site
- * nobody stored. So a run starts at {@code ki_sp = 0}, which the base case asserts, and the pop of an entry procedure
- * requires {@code ki_sp != 0}. A procedure that is no entry never runs at the bottom of the stack and needs no check,
- * so with a {@code main} the transitions do not change. The step case starts anywhere, with any {@code ki_sp}.
+ * can also be running with nothing pushed, and its return must then end the run instead of reading a return site nobody
+ * stored. So a run starts at {@code ki_sp = 0}, which the base case asserts, and the pop of an entry procedure requires
+ * {@code ki_sp != 0}. A procedure that is no entry never runs at the bottom of the stack and needs no check, so with a
+ * {@code main} the transitions do not change. The step case starts anywhere, with any {@code ki_sp}.
  *
  * @author Max Barth (max.barth@lmu.de)
  */
@@ -106,9 +106,9 @@ public final class CallStack {
 
 	/**
 	 * @param locals
-	 *            every local variable of every recursive procedure. Minting the variables takes the script's
-	 *            lock, so this has to happen while the loop tree is being built - before {@code KInduction.run} takes
-	 *            it for the solver queries.
+	 *            every local variable of every recursive procedure. Minting the variables takes the script's lock, so
+	 *            this has to happen while the loop tree is being built - before {@code KInduction.run} takes it for the
+	 *            solver queries.
 	 * @param notRecursive
 	 *            the procedures with an activation record that are on no call cycle
 	 * @param counterSort
@@ -133,8 +133,7 @@ public final class CallStack {
 						mIndexSort, mMgdScript, this));
 			}
 			for (final IProgramVar local : locals) {
-				final Sort slotSort =
-						SmtSortUtils.getArraySort(mScript, mIndexSort, local.getTermVariable().getSort());
+				final Sort slotSort = SmtSortUtils.getArraySort(mScript, mIndexSort, local.getTermVariable().getSort());
 				mSlots.put(local, ProgramVarUtils.constructGlobalProgramVarPair(
 						SLOT_PREFIX + local.getGloballyUniqueId(), slotSort, mMgdScript, this));
 			}
@@ -173,8 +172,7 @@ public final class CallStack {
 
 		final TermVariable sp = in(inVars, outVars, mStackPointer, false);
 		final TermVariable spOut = out(outVars, mStackPointer);
-		conjuncts.add(SmtUtils.binaryEquality(mScript, spOut,
-				SmtUtils.sum(mScript, mIndexSort, sp, index(1))));
+		conjuncts.add(SmtUtils.binaryEquality(mScript, spOut, SmtUtils.sum(mScript, mIndexSort, sp, index(1))));
 
 		final IProgramNonOldVar singleReturnSite = mSingleReturnSites.get(callee);
 		if (singleReturnSite != null) {
@@ -190,8 +188,8 @@ public final class CallStack {
 			// The local itself is only read, so its invar is its outvar and the frame keeps it unchanged.
 			final TermVariable value = in(inVars, outVars, local, true);
 			final TermVariable slotIn = in(inVars, outVars, slot, false);
-			conjuncts.add(SmtUtils.binaryEquality(mScript, out(outVars, slot),
-					SmtUtils.store(mScript, slotIn, sp, value)));
+			conjuncts.add(
+					SmtUtils.binaryEquality(mScript, out(outVars, slot), SmtUtils.store(mScript, slotIn, sp, value)));
 		}
 		return build(inVars, outVars, SmtUtils.and(mScript, conjuncts));
 	}
@@ -200,9 +198,9 @@ public final class CallStack {
 	 * Leaving an activation of {@code callee}: check that it is the one that was entered from {@code returnSiteId},
 	 * move the stack pointer down and give {@code toRestore} back the values the caller left them with.
 	 * <p>
-	 * {@code toRestore} must not contain a variable the return statement itself assigns - that one carries the
-	 * result out of the activation being left, and the composition puts the return assignment before this formula
-	 * for exactly that reason.
+	 * {@code toRestore} must not contain a variable the return statement itself assigns - that one carries the result
+	 * out of the activation being left, and the composition puts the return assignment before this formula for exactly
+	 * that reason.
 	 *
 	 * @param calleeIsEntry
 	 *            whether {@code callee} is also an entry procedure, so that this could be a return with nothing pushed
@@ -215,27 +213,25 @@ public final class CallStack {
 
 		final TermVariable sp = in(inVars, outVars, mStackPointer, false);
 		final TermVariable spOut = out(outVars, mStackPointer);
-		conjuncts.add(SmtUtils.binaryEquality(mScript, spOut,
-				SmtUtils.minus(mScript, sp, index(1))));
+		conjuncts.add(SmtUtils.binaryEquality(mScript, spOut, SmtUtils.minus(mScript, sp, index(1))));
 		if (calleeIsEntry) {
 			conjuncts.add(SmtUtils.not(mScript, SmtUtils.binaryEquality(mScript, sp, index(0))));
 		}
 
 		final IProgramNonOldVar singleReturnSite = mSingleReturnSites.get(callee);
 		if (singleReturnSite != null) {
-			conjuncts.add(SmtUtils.binaryEquality(mScript, in(inVars, outVars, singleReturnSite, true),
-					index(returnSiteId)));
+			conjuncts.add(
+					SmtUtils.binaryEquality(mScript, in(inVars, outVars, singleReturnSite, true), index(returnSiteId)));
 		} else {
 			final TermVariable ret = in(inVars, outVars, mReturnSites, true);
-			conjuncts.add(SmtUtils.binaryEquality(mScript, SmtUtils.select(mScript, ret, spOut),
-					index(returnSiteId)));
+			conjuncts.add(SmtUtils.binaryEquality(mScript, SmtUtils.select(mScript, ret, spOut), index(returnSiteId)));
 		}
 
 		for (final IProgramVar local : toRestore) {
 			final IProgramNonOldVar slot = slotOf(local);
 			final TermVariable slotIn = in(inVars, outVars, slot, true);
-			conjuncts.add(SmtUtils.binaryEquality(mScript, out(outVars, local),
-					SmtUtils.select(mScript, slotIn, spOut)));
+			conjuncts.add(
+					SmtUtils.binaryEquality(mScript, out(outVars, local), SmtUtils.select(mScript, slotIn, spOut)));
 		}
 		return build(inVars, outVars, SmtUtils.and(mScript, conjuncts));
 	}
@@ -250,11 +246,11 @@ public final class CallStack {
 	}
 
 	/**
-	 * An invar for {@code pv}. With {@code unchanged}, the same {@link TermVariable} also becomes its outvar, which
-	 * is how a {@link UnmodifiableTransFormula} says "read but not written".
+	 * An invar for {@code pv}. With {@code unchanged}, the same {@link TermVariable} also becomes its outvar, which is
+	 * how a {@link UnmodifiableTransFormula} says "read but not written".
 	 */
-	private TermVariable in(final Map<IProgramVar, TermVariable> inVars,
-			final Map<IProgramVar, TermVariable> outVars, final IProgramVar pv, final boolean unchanged) {
+	private TermVariable in(final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
+			final IProgramVar pv, final boolean unchanged) {
 		final TermVariable tv = mMgdScript.constructFreshCopy(pv.getTermVariable());
 		inVars.put(pv, tv);
 		if (unchanged) {
@@ -271,8 +267,7 @@ public final class CallStack {
 
 	private UnmodifiableTransFormula build(final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars, final Term formula) {
-		final TransFormulaBuilder tfb =
-				new TransFormulaBuilder(inVars, outVars, true, null, true, null, true);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, true, null, true, null, true);
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		return tfb.finishConstruction(mMgdScript);

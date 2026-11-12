@@ -118,8 +118,8 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	 * @param worker
 	 * @param mainCfgToolKit
 	 * @param freshVarPrefix
-	 *            carried by every variable the worker {@link ManagedScript} mints, so that its names cannot clash
-	 *            with the main script's, whose whole declaration history is replayed onto the worker script; see
+	 *            carried by every variable the worker {@link ManagedScript} mints, so that its names cannot clash with
+	 *            the main script's, whose whole declaration history is replayed onto the worker script; see
 	 *            {@link CfgSmtToolkit#createFreshManagedScript(IUltimateServiceProvider, SolverSettings, String, String)}.
 	 *            Pass {@code ""} to keep the names a worker produced before this existed.
 	 *
@@ -162,8 +162,8 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 			case final SequentialComposition seqComp -> nestingOperation = NestedWord.INTERNAL_POSITION;
 			case final Summary sum -> nestingOperation = NestedWord.INTERNAL_POSITION;
 			case final GotoEdge gotoEdge -> nestingOperation = NestedWord.INTERNAL_POSITION;
-			default -> throw new UnsupportedOperationException("Cannot transfer the letter " + letter + ", which is a "
-					+ letter.getClass().getSimpleName());
+			default -> throw new UnsupportedOperationException(
+					"Cannot transfer the letter " + letter + ", which is a " + letter.getClass().getSimpleName());
 			}
 			final NestedWord<LETTER> singleWord = new NestedWord<>(transferEdge(letter), nestingOperation);
 			currentWord = currentWord.concatenate(singleWord);
@@ -202,8 +202,8 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 		if (transferredLetter == null) {
 			// Never a mere assertion: a null letter is accepted by the automaton being built and only surfaces much
 			// later, as a NullPointerException in whoever first asks that transition for its transition formula.
-			throw new AssertionError("Transferring the " + letter.getClass().getSimpleName() + " " + letter
-					+ " produced no letter");
+			throw new AssertionError(
+					"Transferring the " + letter.getClass().getSimpleName() + " " + letter + " produced no letter");
 		}
 		mEdgeCache.put(letter, transferredLetter);
 		mEdgeCache.put(transferredLetter, letter);
@@ -259,8 +259,8 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 
 	/**
 	 * A {@link GotoEdge} carries no statements, but it does carry a transition formula and it does survive into the
-	 * ICFG: removing goto edges is off by default (see {@code IcfgPreferenceInitializer#LABEL_REMOVE_GOTO_EDGES}),
-	 * and a goto that cannot be merged away is kept as an ordinary internal edge.
+	 * ICFG: removing goto edges is off by default (see {@code IcfgPreferenceInitializer#LABEL_REMOVE_GOTO_EDGES}), and
+	 * a goto that cannot be merged away is kept as an ordinary internal edge.
 	 */
 	private GotoEdge getTransferGoto(final GotoEdge gotoEdge) {
 		final GotoEdge newGoto = new GotoEdge(gotoEdge.getSerialNumber(), (BoogieIcfgLocation) gotoEdge.getSource(),

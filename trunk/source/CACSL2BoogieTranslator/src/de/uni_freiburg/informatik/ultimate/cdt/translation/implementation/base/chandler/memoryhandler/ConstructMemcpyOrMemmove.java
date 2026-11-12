@@ -192,9 +192,9 @@ public final class ConstructMemcpyOrMemmove {
 	 * pointers are on the heap, the pointer array).
 	 *
 	 * The arrays are assigned directly, as in memset, instead of through the write procedures: a write procedure havocs
-	 * the other heap arrays at the address it writes. With one loop for the data arrays and a second one for the pointer
-	 * array, the second loop havocked the data that the first one had copied to every pointer-aligned address, so a
-	 * byte read after memcpy could differ from the source.
+	 * the other heap arrays at the address it writes. With one loop for the data arrays and a second one for the
+	 * pointer array, the second loop havocked the data that the first one had copied to every pointer-aligned address,
+	 * so a byte read after memcpy could differ from the source.
 	 */
 	private ExpressionResult constructMemcpyOrMemmoveLoopBody(final AuxVarInfo loopCtrAux, final String destPtrName,
 			final String srcPtrName, final String surroundingProcedure) {
@@ -218,8 +218,8 @@ public final class ConstructMemcpyOrMemmove {
 				charCType, mExpressionTranslation.getCTypeOfPointerComponents());
 
 		// sorted, so that the translation does not depend on the iteration order of a hash set
-		final List<HeapDataArray> heapDataArrays = new ArrayList<>(
-				mMemoryHandler.getDataHeapArrays(mMemoryHandler.getRequiredMemoryStructureFeatures()));
+		final List<HeapDataArray> heapDataArrays =
+				new ArrayList<>(mMemoryHandler.getDataHeapArrays(mMemoryHandler.getRequiredMemoryStructureFeatures()));
 		heapDataArrays.sort(Comparator.comparing(HeapDataArray::getVariableName));
 		for (final HeapDataArray hda : heapDataArrays) {
 			final Expression srcAcc = MemoryModelExpressionHelper.constructOneDimensionalArrayAccess(ignoreLoc,

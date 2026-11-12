@@ -35,10 +35,11 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * What a producer hands to the {@link InvariantSupplier}. The terms belong to the producer's own script {@link #source()};
- * the supplier copies them into its script on its own thread, so the producer never builds a term in a script it does
- * not own. The producer may keep using its script afterwards: terms are immutable, it only must not submit terms that
- * mention a function symbol it declared itself (program variables and constants are declared in every script).
+ * What a producer hands to the {@link InvariantSupplier}. The terms belong to the producer's own script
+ * {@link #source()}; the supplier copies them into its script on its own thread, so the producer never builds a term in
+ * a script it does not own. The producer may keep using its script afterwards: terms are immutable, it only must not
+ * submit terms that mention a function symbol it declared itself (program variables and constants are declared in every
+ * script).
  *
  * @author Max Barth (max.barth@lmu.de)
  */

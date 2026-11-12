@@ -256,9 +256,9 @@ public class Executor {
 	 * state; z3 does. Nothing is sent unless a check-sat is running. A solver that has answered just before the signal
 	 * arrives may die of it, see {@link #isAlive()}.
 	 * <p>
-	 * A solver may take long to notice the signal, z3 did take minutes on nonlinear arithmetic. If the check-sat has not
-	 * ended {@code graceMillis} after the signal, the solver is killed, and the check-sat fails; the caller has to be
-	 * able to restart the solver.
+	 * A solver may take long to notice the signal, z3 did take minutes on nonlinear arithmetic. If the check-sat has
+	 * not ended {@code graceMillis} after the signal, the solver is killed, and the check-sat fails; the caller has to
+	 * be able to restart the solver.
 	 *
 	 * @param graceMillis
 	 *            how long to wait for the check-sat to end before killing the solver, or negative to never kill it
@@ -271,8 +271,8 @@ public class Executor {
 			}
 			final long query = mQueryCount;
 			if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-				throw new UnsupportedOperationException(
-						getLogStringPrefix() + " cannot be interrupted: this needs SIGINT, which Windows does not have");
+				throw new UnsupportedOperationException(getLogStringPrefix()
+						+ " cannot be interrupted: this needs SIGINT, which Windows does not have");
 			}
 			final int exitCode;
 			try {

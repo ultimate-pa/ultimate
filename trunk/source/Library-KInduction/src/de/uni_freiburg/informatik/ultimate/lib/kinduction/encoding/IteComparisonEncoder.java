@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
  * Boolean type, so its conditions reach us as e.g. {@code (= (ite phi 1 0) 0)}, which is just {@code (not phi)}, and
  * {@code (= 0 (ite c (ite p 1 0) 1))}, which is {@code (and c (not p))}.
  * <p>
- * Without this, a condition like {@code phi} stays hidden inside a non-Boolean equality, which is one atom for everybody
- * who splits a formula along its Boolean structure. IteRemover, which the quantifier elimination uses, doubles an atom
- * per ite in it, so a whole C condition in one atom makes it run into its timeout.
+ * Without this, a condition like {@code phi} stays hidden inside a non-Boolean equality, which is one atom for
+ * everybody who splits a formula along its Boolean structure. IteRemover, which the quantifier elimination uses,
+ * doubles an atom per ite in it, so a whole C condition in one atom makes it run into its timeout.
  *
  * @author Max Barth (max.barth@lmu.de)
  */

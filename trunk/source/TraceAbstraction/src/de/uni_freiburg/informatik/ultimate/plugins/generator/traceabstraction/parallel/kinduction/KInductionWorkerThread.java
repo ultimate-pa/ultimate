@@ -39,54 +39,53 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.lib.icfg.util.IcfgEdgeVisitor;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopResultBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop.AutomatonType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.ICegarNwaWorkerThread;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.ParallelNwaCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TransferBetweenMainAndWorker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TransferBetweenMainAndWorker.TransferMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadResult;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadResult.WorkerType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadTask;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.lib.icfg.util.IcfgEdgeVisitor;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInduction;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInduction.WitnessInvariants;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionCounterexampleException;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionWaypoints;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionWaypoints.Level;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopResultBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop.AutomatonType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.ICegarNwaWorkerThread;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.ParallelNwaCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TransferBetweenMainAndWorker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TransferBetweenMainAndWorker.TransferMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadResult.WorkerType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadTask;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -109,13 +108,11 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	private final CegarLoopResultBuilder mResultBuilder;
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
-	private int mIteration;
 	private final boolean mComputeHoareAnnotation;
 	public final ParallelNwaCegarLoop<L, A> mMainThread;
 	private final INestedWordAutomaton<L, IPredicate> mAbstraction;
 	// communication with controller
 	private final BlockingQueue<WorkerThreadResult<L, A>> mBlockingQueueForResults;
-	private final BlockingQueue<WorkerThreadTask<L>> mWorkerTaskQueue;
 	private final TransferBetweenMainAndWorker<L, IPredicate> mNwaCexTransferrer;
 	private final IInvariantSupplier<CallNode<IPredicate>> mInvariantSupplier;
 	// k-induction has no memory limit: when the heap fills up, the other workers retire (see HeapWatchdog).
@@ -135,17 +132,15 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 			final BlockingQueue<WorkerThreadResult<L, A>> blockingQueueForResults,
 			final BlockingQueue<WorkerThreadTask<L>> workerTaskQueue,
 			final TransferBetweenMainAndWorker<L, IPredicate> transferWorkerUtils,
-			final IInvariantSupplier<CallNode<IPredicate>> invariantSupplier) throws InterruptedException {
+			final IInvariantSupplier<CallNode<IPredicate>> invariantSupplier) {
 		mLogger = logger;
 		mPref = pref;
-		mIteration = id;
 		mResultBuilder = resultBuilder;
 		mCfgSmtToolkit = cfgSmtToolkit;
 		mPredicateFactoryInterpolantAutomata = predicateFactoryInterpolantAutomata;
 		mComputeHoareAnnotation = computeHoareAnnotation;
 		mMainThread = mainThread;
 		mBlockingQueueForResults = blockingQueueForResults;
-		mWorkerTaskQueue = workerTaskQueue;
 		mNwaCexTransferrer = transferWorkerUtils;
 		mAbstraction = (INestedWordAutomaton<L, IPredicate>) getAndTransferAbstraction();
 		mInvariantSupplier = invariantSupplier;
@@ -157,7 +152,6 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 		Thread.currentThread().setName("KInduction Thread");
 		try {
 			mLogger.info("WorkerThread for KInduction Starts");
-			mIteration = 1;
 			switch (runKInduction()) {
 			case SAFE:
 				mBlockingQueueForResults.put(WorkerThreadResult.kInductionSafe(
@@ -168,8 +162,8 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 				// The violation is already registered on the shared result builder. AutomatonType.ERROR is what
 				// tells the main thread that this is a refutation and not the "safe" sentinel, which carries a
 				// null automaton type; no subtrahend, because there is nothing left to refine.
-				mBlockingQueueForResults.put(new WorkerThreadResult<>(WorkerType.KINDUCTION, null,
-						AutomatonType.ERROR, null, null, null, false));
+				mBlockingQueueForResults.put(new WorkerThreadResult<>(WorkerType.KINDUCTION, null, AutomatonType.ERROR,
+						null, null, null, false));
 				break;
 			case NO_VERDICT:
 				mBlockingQueueForResults.put(WorkerThreadResult.noVerdict(WorkerType.KINDUCTION));
@@ -213,8 +207,8 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	}
 
 	/**
-	 * @return whether k-induction stopped at a limit rather than at a bug: its solver failed (out of memory,
-	 *         crashed, or rejected the query), it could not express a violation as a run, or the program uses something
+	 * @return whether k-induction stopped at a limit rather than at a bug: its solver failed (out of memory, crashed,
+	 *         or rejected the query), it could not express a violation as a run, or the program uses something
 	 *         k-induction does not support. A crash still only retires the worker; this decides how it is logged.
 	 */
 	public static boolean isLimit(final Throwable t) {
@@ -233,7 +227,7 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 		SAFE, UNSAFE, NO_VERDICT
 	}
 
-	private Verdict runKInduction() throws AutomataLibraryException, InterruptedException {
+	private Verdict runKInduction() throws InterruptedException {
 		final boolean overapproximated = hasOverapproximation(mAbstraction, mLogger);
 		final KInduction<L, IPredicate> kInduction = new KInduction<>(mKInductionServices, mLogger, mCfgSmtToolkit,
 				mAbstraction, mInvariantSupplier, mPref.restartKInductionSolverAfterInterrupt());
@@ -262,26 +256,25 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 
 	/**
 	 * Whether a letter of {@code abstraction} overapproximates the program, e.g. a bitwise operator or a float
-	 * comparison in the integer translation, or a math function. A model of the base case can then be spurious, and
-	 * the waypoint letters, only a subsequence of the run, miss the Overapprox annotations by which the reporter would
-	 * turn UNSAFE into "unable to determine feasibility" (11-10 run: 1,377 of the 1,383 wrong FALSE, nearly all in the
+	 * comparison in the integer translation, or a math function. A model of the base case can then be spurious, and the
+	 * waypoint letters, only a subsequence of the run, miss the Overapprox annotations by which the reporter would turn
+	 * UNSAFE into "unable to determine feasibility" (11-10 run: 1,377 of the 1,383 wrong FALSE, nearly all in the
 	 * integer run). So a violation of such a program is no verdict.
 	 */
-	public static <L extends IIcfgTransition<?>> boolean hasOverapproximation(
-			final INestedWordAutomaton<L, IPredicate> abstraction, final ILogger logger) {
+	public static <L extends IIcfgTransition<?>> boolean
+			hasOverapproximation(final INestedWordAutomaton<L, IPredicate> abstraction, final ILogger logger) {
 		final HashRelation<String, ILocation> overapproximations = overapproximations(abstraction);
 		if (overapproximations.isEmpty()) {
 			return false;
 		}
 		logger.info("KInduction: the program has %d overapproximation(s), e.g. %s, so a violation is no verdict",
-				overapproximations.size(),
-				overapproximations.getDomain().iterator().next());
+				overapproximations.size(), overapproximations.getDomain().iterator().next());
 		return true;
 	}
 
 	/**
-	 * @return what the letters of {@code abstraction} overapproximate, see {@link #hasOverapproximation}, by the name of
-	 *         the operation
+	 * @return what the letters of {@code abstraction} overapproximate, see {@link #hasOverapproximation}, by the name
+	 *         of the operation
 	 */
 	public static <L extends IIcfgTransition<?>> HashRelation<String, ILocation>
 			overapproximations(final INestedWordAutomaton<L, IPredicate> abstraction) {
@@ -317,9 +310,9 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 		// waits for the computation only until the timer has run out, and an unfinished one is left behind with the
 		// best invariants it has proven so far. It only uses k-induction's own script, which nobody needs once there
 		// is a verdict.
-		final FutureTask<WitnessInvariants<IPredicate>> task = new FutureTask<>(() -> computeWitnessInvariantsWithin(
-				kInduction, services, pref, toolkit, timeout, () -> abandoned.get() || shuttingDown.getAsBoolean(),
-				abandoned, logger));
+		final FutureTask<WitnessInvariants<IPredicate>> task =
+				new FutureTask<>(() -> computeWitnessInvariantsWithin(kInduction, services, pref, toolkit, timeout,
+						() -> abandoned.get() || shuttingDown.getAsBoolean(), abandoned, logger));
 		final Thread thread = new Thread(task, "KInduction witness");
 		thread.setDaemon(true);
 		thread.start();
@@ -348,8 +341,8 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	/**
 	 * @param quiet
 	 *            whether a failure is expected: the verdict went without the computation, or the CEGAR loop is done
-	 * @return the invariants of {@link KInduction#computeWitnessInvariants}, or the best ones it found before it failed,
-	 *         or null if there are none
+	 * @return the invariants of {@link KInduction#computeWitnessInvariants}, or the best ones it found before it
+	 *         failed, or null if there are none
 	 */
 	private static <L extends IIcfgTransition<?>> WitnessInvariants<IPredicate> computeWitnessInvariantsWithin(
 			final KInduction<L, IPredicate> kInduction, final IUltimateServiceProvider services,
@@ -359,10 +352,8 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 		final IUltimateServiceProvider witnessServices =
 				progressMonitor.registerChildTimer(services, progressMonitor.getChildTimer(timeout));
 		try {
-			return kInduction
-					.computeWitnessInvariants(witnessServices, pref.getSimplificationTechnique(),
-							(state, tv) -> isInScope(toolkit, tv,
-									((ISLPredicate) state).getProgramPoint().getProcedure()))
+			return kInduction.computeWitnessInvariants(witnessServices, pref.getSimplificationTechnique(),
+					(state, tv) -> isInScope(toolkit, tv, ((ISLPredicate) state).getProgramPoint().getProcedure()))
 					.orElse(null);
 		} catch (final ToolchainCanceledException | SMTLIBException e) {
 			if (!abandoned.get()) {
@@ -385,10 +376,10 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	}
 
 	/**
-	 * @return whether {@code tv} is a global variable or a local of {@code procedure}. The transition system is flat, so
-	 *         the invariant of a loop head in a callee may speak about its callers. A variable the symbol table does not
-	 *         know, such as the stack pointer of {@code CallStack}, does not exist in the program at all, so it is out
-	 *         of scope too.
+	 * @return whether {@code tv} is a global variable or a local of {@code procedure}. The transition system is flat,
+	 *         so the invariant of a loop head in a callee may speak about its callers. A variable the symbol table does
+	 *         not know, such as the stack pointer of {@code CallStack}, does not exist in the program at all, so it is
+	 *         out of scope too.
 	 */
 	private static boolean isInScope(final CfgSmtToolkit toolkit, final TermVariable tv, final String procedure) {
 		final IProgramVar pv = toolkit.getSymbolTable().getProgramVar(tv);
@@ -401,17 +392,18 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	 * without values. Nothing here confirms the violation, the model of k-induction is the only evidence.
 	 * <p>
 	 * The model proves the violation by itself, so the verdict never depends on the witness: if the letters cannot be
-	 * backtranslated, only the target is reported, and if that fails too, or the target is not known, an empty execution
-	 * at the error location. Each step down is logged with its reason.
+	 * backtranslated, only the target is reported, and if that fails too, or the target is not known, an empty
+	 * execution at the error location. Each step down is logged with its reason.
 	 *
 	 * @param services
 	 *            the services k-induction ran with, for the trial backtranslation
 	 * @param script
 	 *            the script of the letters' transition formulas
 	 */
-	public static <L extends IIcfgTransition<?>> void reportWaypoints(final KInductionWaypoints<L, IPredicate> waypoints,
-			final CegarLoopResultBuilder resultBuilder, final IUltimateServiceProvider services,
-			final ManagedScript script, final boolean stopAfterFirstViolation, final ILogger logger) {
+	public static <L extends IIcfgTransition<?>> void reportWaypoints(
+			final KInductionWaypoints<L, IPredicate> waypoints, final CegarLoopResultBuilder resultBuilder,
+			final IUltimateServiceProvider services, final ManagedScript script, final boolean stopAfterFirstViolation,
+			final ILogger logger) {
 		final List<L> allLetters = waypoints.getLetters();
 		final L target = waypoints.getTargetLetter();
 		IcfgProgramExecution<L> programExecution = null;
@@ -448,8 +440,10 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 		if (stopAfterFirstViolation) {
 			resultBuilder.addResultForAllRemaining(Result.UNKNOWN);
 		}
-		logger.info("KInduction: reported a violation with %d waypoint letter(s) of %d (witness level %s), no run was "
-				+ "built", programExecution == null ? 0 : programExecution.getLength(), allLetters.size(), level);
+		logger.info(
+				"KInduction: reported a violation with %d waypoint letter(s) of %d (witness level %s), no run was "
+						+ "built",
+				programExecution == null ? 0 : programExecution.getLength(), allLetters.size(), level);
 	}
 
 	/**
@@ -528,8 +522,8 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 
 		private boolean hasBoundary(final IIcfgTransition<?> letter) {
 			if (!(letter instanceof IcfgEdge)) {
-				throw new KInductionCounterexampleException("cannot look into the letter " + letter + " of type "
-						+ letter.getClass().getSimpleName());
+				throw new KInductionCounterexampleException(
+						"cannot look into the letter " + letter + " of type " + letter.getClass().getSimpleName());
 			}
 			mFound = false;
 			visit((IcfgEdge) letter);

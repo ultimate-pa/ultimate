@@ -28,8 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.kinduction;
 
 /**
- * Thrown when k-induction proved the program unsafe but no concrete run over the abstraction could be produced for
- * it. The verdict itself is not in doubt when this is thrown - only our ability to express it as a counterexample.
+ * Thrown when k-induction proved the program unsafe but no concrete run over the abstraction could be produced for it.
+ * The verdict itself is not in doubt when this is thrown - only our ability to express it as a counterexample.
  * <p>
  * Kept apart from {@link AssertionError}, which is for the genuinely impossible, e.g. a model that does not fit the
  * encoding.

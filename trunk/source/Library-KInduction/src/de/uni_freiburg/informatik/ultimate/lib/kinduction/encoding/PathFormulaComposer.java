@@ -76,8 +76,9 @@ final class PathFormulaComposer<N> {
 
 	/**
 	 * @param edges
-	 *            every node with its outgoing edges, each node before its successors. The script must not be locked while
-	 *            this composes, since composing declares constants for auxiliary variables and takes the lock itself.
+	 *            every node with its outgoing edges, each node before its successors. The script must not be locked
+	 *            while this composes, since composing declares constants for auxiliary variables and takes the lock
+	 *            itself.
 	 */
 	PathFormulaComposer(final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
 			final Map<N, List<Pair<UnmodifiableTransFormula, N>>> edges) {
@@ -89,6 +90,7 @@ final class PathFormulaComposer<N> {
 		// P(u,w) is just the union of the edges u -> w. That is the shape RegexToTransFormula factors completely.
 		final GenericLabeledGraph<N, UnmodifiableTransFormula> graph =
 				new GenericLabeledGraph<>(new LinkedHashSet<>(), new LinkedHashSet<>()) {
+					// anonymous subclass, since the constructor is protected
 				};
 		for (final N node : edges.keySet()) {
 			graph.addNode(node);
@@ -131,30 +133,31 @@ final class PathFormulaComposer<N> {
 	}
 
 	/**
-	 * Evaluates a path expression into one relational {@link UnmodifiableTransFormula}, or {@code null} if it
-	 * describes no path ({@code null} is the algebraic zero). The cut graphs are acyclic, so {@link Star} cannot
-	 * occur.
+	 * Evaluates a path expression into one relational {@link UnmodifiableTransFormula}, or {@code null} if it describes
+	 * no path ({@code null} is the algebraic zero). The cut graphs are acyclic, so {@link Star} cannot occur.
 	 * <p>
-	 * {@link PathExpressionComputer} builds its expressions with shared sub-objects: it extends the expression of
-	 * every predecessor u of a node w by the edges u -> w, {@code F(w) = F(u1)·e1 ∪ F(u2)·e2}. Behind an
-	 * if-then-else both alternatives start with the same object F(fork), so evaluating the expression as a tree
-	 * composes F(fork) once per branch, and the work and the size of the formula double with every if-then-else in
-	 * sequence. This visitor therefore never evaluates a union or a concatenation as a tree. It flattens a union into
-	 * its alternatives and each alternative into its sequence of factors, and merges the alternatives into a
-	 * {@link PrefixTrie} on their factors. Each common prefix is then evaluated once, followed by the union of what
-	 * comes after it: {@code X·A ∪ X·B = X·(A ∪ B)}, which holds for the relational composition of transition
-	 * formulas. The prefixes are spliced into one sequential composition rather than composed level by level, see
+	 * {@link PathExpressionComputer} builds its expressions with shared sub-objects: it extends the expression of every
+	 * predecessor u of a node w by the edges u -> w, {@code F(w) = F(u1)·e1 ∪ F(u2)·e2}. Behind an if-then-else both
+	 * alternatives start with the same object F(fork), so evaluating the expression as a tree composes F(fork) once per
+	 * branch, and the work and the size of the formula double with every if-then-else in sequence. This visitor
+	 * therefore never evaluates a union or a concatenation as a tree. It flattens a union into its alternatives and
+	 * each alternative into its sequence of factors, and merges the alternatives into a {@link PrefixTrie} on their
+	 * factors. Each common prefix is then evaluated once, followed by the union of what comes after it:
+	 * {@code X·A ∪ X·B = X·(A ∪ B)}, which holds for the relational composition of transition formulas. The prefixes
+	 * are spliced into one sequential composition rather than composed level by level, see
 	 * {@link #appendSequence(PrefixTrie, List)}. For the series-parallel control flow of structured code this is
 	 * linear. Sharing that is not a common prefix (e.g. a {@code goto} into a branch) is still evaluated once per path
 	 * through it.
 	 * <p>
-	 * Do <b>not</b> memoize results on the regex object: the constructor of {@link UnmodifiableTransFormula} declares
-	 * a constant per auxiliary variable, so handing the same composed formula to two compositions makes the second
-	 * one declare those constants again and the solver rejects it ("Function c_aux_... is already defined").
+	 * Do <b>not</b> memoize results on the regex object: the constructor of {@link UnmodifiableTransFormula} declares a
+	 * constant per auxiliary variable, so handing the same composed formula to two compositions makes the second one
+	 * declare those constants again and the solver rejects it ("Function c_aux_... is already defined").
 	 */
-	private final class RegexToTransFormula implements IRegexVisitor<UnmodifiableTransFormula, UnmodifiableTransFormula, Void> {
+	private final class RegexToTransFormula
+			implements IRegexVisitor<UnmodifiableTransFormula, UnmodifiableTransFormula, Void> {
 
-		private final Map<Union<UnmodifiableTransFormula>, List<IRegex<UnmodifiableTransFormula>>> mHeadExpansions = new IdentityHashMap<>();
+		private final Map<Union<UnmodifiableTransFormula>, List<IRegex<UnmodifiableTransFormula>>> mHeadExpansions =
+				new IdentityHashMap<>();
 
 		UnmodifiableTransFormula evaluate(final IRegex<UnmodifiableTransFormula> regex) {
 			final List<UnmodifiableTransFormula> sequence = new ArrayList<>();
@@ -165,8 +168,8 @@ final class PathFormulaComposer<N> {
 		}
 
 		/**
-		 * Appends formulas whose sequential composition is {@code regex}. A union or a concatenation is factored
-		 * into a {@link PrefixTrie} first.
+		 * Appends formulas whose sequential composition is {@code regex}. A union or a concatenation is factored into a
+		 * {@link PrefixTrie} first.
 		 *
 		 * @return {@code false} if {@code regex} describes no path; {@code sequence} is then incomplete
 		 */
@@ -188,9 +191,9 @@ final class PathFormulaComposer<N> {
 		/**
 		 * Appends the formulas of a trie. The common prefix is spliced into {@code sequence}, recursively, so a union
 		 * that starts with the union of the preceding if-then-else does not compose that one again: a whole chain of
-		 * if-then-elses becomes one sequential composition of its statements and its small branch unions. Composing
-		 * the chain level by level instead would rename and declare the auxiliary variables of everything before a
-		 * level again at every level, which is quadratic in the length of the chain.
+		 * if-then-elses becomes one sequential composition of its statements and its small branch unions. Composing the
+		 * chain level by level instead would rename and declare the auxiliary variables of everything before a level
+		 * again at every level, which is quadratic in the length of the chain.
 		 *
 		 * @return {@code false} if the trie describes no path; {@code sequence} is then incomplete
 		 */
@@ -271,7 +274,8 @@ final class PathFormulaComposer<N> {
 			while (!worklist.isEmpty()) {
 				final IRegex<UnmodifiableTransFormula> current = worklist.pop();
 				if (current instanceof Concatenation) {
-					final Concatenation<UnmodifiableTransFormula> concatenation = (Concatenation<UnmodifiableTransFormula>) current;
+					final Concatenation<UnmodifiableTransFormula> concatenation =
+							(Concatenation<UnmodifiableTransFormula>) current;
 					worklist.push(concatenation.getSecond());
 					worklist.push(concatenation.getFirst());
 				} else if (!(current instanceof Epsilon)) {
@@ -326,8 +330,8 @@ final class PathFormulaComposer<N> {
 			IRegex<UnmodifiableTransFormula> result = node.mEndsHere ? Regex.epsilon() : null;
 			for (final Pair<IRegex<UnmodifiableTransFormula>, PrefixTrie> child : node.mChildren) {
 				final PrefixTrie rest = child.getSecond();
-				final IRegex<UnmodifiableTransFormula> alternative = rest.mChildren.isEmpty() ? child.getFirst()
-						: Regex.concat(child.getFirst(), toRegex(rest));
+				final IRegex<UnmodifiableTransFormula> alternative =
+						rest.mChildren.isEmpty() ? child.getFirst() : Regex.concat(child.getFirst(), toRegex(rest));
 				result = result == null ? alternative : Regex.union(result, alternative);
 			}
 			return result;
@@ -339,7 +343,8 @@ final class PathFormulaComposer<N> {
 		}
 
 		@Override
-		public UnmodifiableTransFormula visit(final Concatenation<UnmodifiableTransFormula> concatenation, final Void argument) {
+		public UnmodifiableTransFormula visit(final Concatenation<UnmodifiableTransFormula> concatenation,
+				final Void argument) {
 			return evaluate(concatenation);
 		}
 

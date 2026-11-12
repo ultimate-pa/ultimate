@@ -37,6 +37,9 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.IndexedConstantVars;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -49,9 +52,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.IndexedConstantVars;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 
 /**
  * Finds the largest subset of candidate invariants that is inductive relative to invariants already known, on the
@@ -73,10 +73,10 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionS
  * execution all of them are invariants - provided the known ones are. If it is satisfiable, the candidates whose flag
  * {@code b} is true in the model are dropped and the query is repeated; each round drops at least one, so this ends.
  * <p>
- * The model is only asked for the flags, never for a candidate itself: an external solver's answer to
- * {@code get-value} is keyed by the term as it parses back, and a candidate may parse back to a different
- * {@link Term} than the one asked for (seen with bitvector literals; {@code let} and negative literals print differently
- * too). A 0-ary constant parses back to itself.
+ * The model is only asked for the flags, never for a candidate itself: an external solver's answer to {@code get-value}
+ * is keyed by the term as it parses back, and a candidate may parse back to a different {@link Term} than the one asked
+ * for (seen with bitvector literals; {@code let} and negative literals print differently too). A 0-ary constant parses
+ * back to itself.
  *
  * @author Max Barth (max.barth@lmu.de)
  */
@@ -152,8 +152,7 @@ final class InductivenessChecker {
 	 * @param known
 	 *            invariants that are known to hold, per location
 	 * @param candidates
-	 *            candidate conjuncts per location, every one {@link #isExpressible} at a location that
-	 *            {@link #hasNode}
+	 *            candidate conjuncts per location, every one {@link #isExpressible} at a location that {@link #hasNode}
 	 * @return the candidates that are inductive relative to {@code known}, per location, or {@code null} if the solver
 	 *         could not decide a query
 	 */
@@ -284,8 +283,8 @@ final class InductivenessChecker {
 			}
 		}
 		if (!dropped) {
-			throw new AssertionError("the model satisfies the query, but gives the flag of every candidate the value "
-					+ "false");
+			throw new AssertionError(
+					"the model satisfies the query, but gives the flag of every candidate the value " + "false");
 		}
 	}
 

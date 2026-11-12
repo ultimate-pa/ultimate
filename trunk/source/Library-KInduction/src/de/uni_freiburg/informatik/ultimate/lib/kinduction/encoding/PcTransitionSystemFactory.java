@@ -31,14 +31,14 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormulaBuilder.Scope;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormulaBuilder.Scope;
 
 /**
  * Builds the {@link PcTransitionSystem} of a nested word automaton, so that {@link KInduction} and everyone else who
@@ -91,7 +91,7 @@ public final class PcTransitionSystemFactory {
 		// The base case fixes the stack pointer of the first state, see KInduction.ask.
 		final Set<IProgramVar> alwaysFramed =
 				stackPointer == null ? Collections.emptySet() : Collections.singleton(stackPointer);
-		return new Result<>(new PcTransitionSystem<>(mgdScript.getScript(), tree, counterSort, alwaysFramed), stackPointer,
-				summaries.getSealedStates(), summaries.getSyntheticVars(), summaries.getComposedEdges());
+		return new Result<>(new PcTransitionSystem<>(mgdScript.getScript(), tree, counterSort, alwaysFramed),
+				stackPointer, summaries.getSealedStates(), summaries.getSyntheticVars(), summaries.getComposedEdges());
 	}
 }

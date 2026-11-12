@@ -41,17 +41,17 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 /**
  * Retires workers of {@link ParallelNwaCegarLoop} when the heap fills up, so that k-induction, the one worker that
  * never retires, gets the memory. When the live heap reaches the TA threshold, a TA worker retires, and so on until no
- * TA worker is left. Every worker
- * the watchdog may retire runs under a {@link RetirementTimer}, which stops whatever it runs.
+ * TA worker is left. Every worker the watchdog may retire runs under a {@link RetirementTimer}, which stops whatever it
+ * runs.
  * <p>
  * The live heap is what a full garbage collection leaves. Forcing one is expensive, so the watchdog first looks at the
- * old generation, which only grows when objects survive young collections (or are too large for them): the garbage
- * that the workers churn through in the young generation does not count there. As long as the old generation is below
- * a threshold, nothing is to be done; only above it does the watchdog collect to confirm, at most once every
- * {@link #MIN_GC_INTERVAL_NANOS}. A collection that finds less live heap than the threshold empties the old
- * generation of its garbage, so the next one comes only once enough objects survived again. (What the memory pools
- * report as left by the last collection is no help: G1 updates it for the old generation only after a mixed or full
- * collection, which does not happen while the old generation is small.)
+ * old generation, which only grows when objects survive young collections (or are too large for them): the garbage that
+ * the workers churn through in the young generation does not count there. As long as the old generation is below a
+ * threshold, nothing is to be done; only above it does the watchdog collect to confirm, at most once every
+ * {@link #MIN_GC_INTERVAL_NANOS}. A collection that finds less live heap than the threshold empties the old generation
+ * of its garbage, so the next one comes only once enough objects survived again. (What the memory pools report as left
+ * by the last collection is no help: G1 updates it for the old generation only after a mixed or full collection, which
+ * does not happen while the old generation is small.)
  * <p>
  * After a TA worker retires, the next one retires only once the first has stopped, so that the memory it frees counts
  * first.

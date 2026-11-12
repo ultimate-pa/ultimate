@@ -77,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -104,23 +105,22 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.preferences.IcfgPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IsEmptyParallel;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TransferBetweenMainAndWorker.TransferMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadResult.WorkerType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.IInvariantSink;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantSupplier;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.kinduction.KInductionWorkerThread;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IsEmptyParallel;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 
 public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		extends NwaCegarLoop<L> {
@@ -148,13 +148,13 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * pattern matches the option as it may already appear in the configured command, the format string writes a new
 	 * one. Mirrors {@link SolverBuilder.ExternalSolver}, which spells the same options for its built-in commands.
 	 */
-	private static final Map<String, Entry<Pattern, String>> SOLVER_TIMEOUT_OPTION = Map.of(
-			"z3", Map.entry(Pattern.compile("\\s*-t:\\d+"), " -t:%d"),
-			"cvc4", Map.entry(Pattern.compile("\\s*--tlimit-per=\\d+"), " --tlimit-per=%d"),
-			"cvc5", Map.entry(Pattern.compile("\\s*--tlimit-per=\\d+"), " --tlimit-per=%d"),
-			// -t and --time-limit are bitwuzla's limit for the whole run, not per check, so they stay.
-			"bitwuzla", Map.entry(Pattern.compile("\\s*(?:-T\\s*|--time-limit-per[=\\s]+)\\d+"),
-					" --time-limit-per=%d"));
+	private static final Map<String, Entry<Pattern, String>> SOLVER_TIMEOUT_OPTION =
+			Map.of("z3", Map.entry(Pattern.compile("\\s*-t:\\d+"), " -t:%d"), "cvc4",
+					Map.entry(Pattern.compile("\\s*--tlimit-per=\\d+"), " --tlimit-per=%d"), "cvc5",
+					Map.entry(Pattern.compile("\\s*--tlimit-per=\\d+"), " --tlimit-per=%d"),
+					// -t and --time-limit are bitwuzla's limit for the whole run, not per check, so they stay.
+					"bitwuzla",
+					Map.entry(Pattern.compile("\\s*(?:-T\\s*|--time-limit-per[=\\s]+)\\d+"), " --time-limit-per=%d"));
 
 	// Parallel Setup
 	private final ExecutorService mExec;
@@ -235,9 +235,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * threads. Executes each tracecheck in a new thread called worker. This loop, only searches for counterexamples and
 	 * updates the abstraction. The feasiblity check and generalization of interpolant automata is done by the workers.
 	 * <p>
-	 * No worker has a memory budget of its own. When the heap fills up, the {@link HeapWatchdog} retires the TA
-	 * workers one by one. Once the last TA worker retired, the loop gives up its
-	 * abstraction and the invariant supplier, and only k-induction runs on, with the memory they held.
+	 * No worker has a memory budget of its own. When the heap fills up, the {@link HeapWatchdog} retires the TA workers
+	 * one by one. Once the last TA worker retired, the loop gives up its abstraction and the invariant supplier, and
+	 * only k-induction runs on, with the memory they held.
 	 *
 	 * @author Max Barth (max.barth@lmu.de)
 	 */
@@ -261,7 +261,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		if (mProofUpdater != null) {
 			if (mPref.differenceSenwa()) {
 				throw new UnsupportedOperationException(
-						"Computing a Hoare annotation in the parallel CEGAR loop requires the NWA difference, not SENWA");
+						"Computing a Hoare annotation in the parallel CEGAR loop requires the NWA difference, "
+								+ "not SENWA");
 			}
 			mStateTransferrer = new WorkerStateTransferrer<>(new AutomataLibraryServices(services),
 					csToolkit.getManagedScript(), predicateFactory);
@@ -278,8 +279,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 	private static ThreadFactory workerThreadFactory(final String name) {
 		final AtomicInteger counter = new AtomicInteger();
-		return runnable -> new Thread(null, runnable, name + " " + counter.incrementAndGet(),
-				WORKER_STACK_SIZE_BYTES);
+		return runnable -> new Thread(null, runnable, name + " " + counter.incrementAndGet(), WORKER_STACK_SIZE_BYTES);
 	}
 
 	/*
@@ -449,12 +449,12 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			}
 			// K-induction proves the whole program safe at once, it has no subtrahend to
 			// refine with. The null automaton type is what distinguishes that sentinel from the refutation above.
-			if (workerResult.mWorkerType.equals(WorkerType.KINDUCTION)
-					&& (workerResult.getSubtrahend() == null) && (workerResult.getAutomatonType() == null)) {
+			if (workerResult.mWorkerType.equals(WorkerType.KINDUCTION) && (workerResult.getSubtrahend() == null)
+					&& (workerResult.getAutomatonType() == null)) {
 				if (mProofUpdater != null) {
 					useKInductionProof(workerResult);
 				}
-				mAbstraction = new NestedWordAutomaton(new AutomataLibraryServices(getServices()),
+				mAbstraction = new NestedWordAutomaton<>(new AutomataLibraryServices(getServices()),
 						mAbstraction.getVpAlphabet(), mPredicateFactoryInterpolantAutomata);
 				mResultBuilder.addResultForAllRemaining(Result.SAFE);
 				updateAndPrintStatistics(true);
@@ -494,9 +494,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 	/**
 	 * @return whether {@link #handleWorkerResults} ends the loop on this result without refining the abstraction: a
-	 *         refutation by k-induction or (if we stop after the first violation) a TA worker, or
-	 *         a proof by k-induction. Each worker registers its violation itself or carries everything the main
-	 *         thread needs, so none of them depends on the operation of the main thread that it interrupts.
+	 *         refutation by k-induction or (if we stop after the first violation) a TA worker, or a proof by
+	 *         k-induction. Each worker registers its violation itself or carries everything the main thread needs, so
+	 *         none of them depends on the operation of the main thread that it interrupts.
 	 */
 	private boolean isVerdict(final WorkerThreadResult<L, A> result) {
 		if (result.workerCrashed() || result.workerRetired() || result.noVerdict()) {
@@ -516,16 +516,16 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	/**
 	 * A worker delivered a verdict while the main thread was busy, and {@link VerdictQueue} stopped the main thread's
 	 * operation. Without this, the main thread only took the verdict from the queue once it was done with its
-	 * operation, and on large abstractions (millions of states) a minimization, difference or emptiness check took
-	 * long enough for the run to time out with the verdict in the queue. The abstraction may be half refined, but the
-	 * loop ends here: the results queued before the verdict are dropped.
+	 * operation, and on large abstractions (millions of states) a minimization, difference or emptiness check took long
+	 * enough for the run to time out with the verdict in the queue. The abstraction may be half refined, but the loop
+	 * ends here: the results queued before the verdict are dropped.
 	 *
 	 * @return true if the loop has to terminate, which a verdict always does
 	 */
 	private boolean handleVerdictAfterCancellation() throws AutomataLibraryException {
 		int dropped = 0;
-		for (WorkerThreadResult<L, A> result = mWorkerResultQueue.poll(); result != null; result =
-				mWorkerResultQueue.poll()) {
+		for (WorkerThreadResult<L, A> result = mWorkerResultQueue.poll(); result != null;
+				result = mWorkerResultQueue.poll()) {
 			if (isVerdict(result)) {
 				mLogger.info("Main: stopped its current operation for the verdict of %s (%d earlier result(s) dropped)",
 						result.getWorkerType(), dropped);
@@ -537,9 +537,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	/**
-	 * The queue the workers put their results into. Once a verdict (see {@link #isVerdict}) is in the queue, it
-	 * retires {@link #mMainOperationTimer}, so that whatever the main thread computes stops and the main thread reports
-	 * the verdict, see {@link #handleVerdictAfterCancellation()}. Every worker uses {@link #put}.
+	 * The queue the workers put their results into. Once a verdict (see {@link #isVerdict}) is in the queue, it retires
+	 * {@link #mMainOperationTimer}, so that whatever the main thread computes stops and the main thread reports the
+	 * verdict, see {@link #handleVerdictAfterCancellation()}. Every worker uses {@link #put}.
 	 */
 	private final class VerdictQueue extends LinkedBlockingQueue<WorkerThreadResult<L, A>> {
 		private static final long serialVersionUID = 1L;
@@ -581,15 +581,14 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	/**
-	 * A worker failed with an exception. That is no reason to give up the program: as long as a worker that can
-	 * decide it is left, the run goes on without the failed one, which has already logged its stack trace.
+	 * A worker failed with an exception. That is no reason to give up the program: as long as a worker that can decide
+	 * it is left, the run goes on without the failed one, which has already logged its stack trace.
 	 * <ul>
 	 * <li>The invariant supplier only feeds k-induction, which goes on with the invariants it already has.</li>
 	 * <li>k-induction retires like a worker without a verdict.</li>
 	 * <li>A TA worker: in the integer translation (any strategy but FOX), the run ends with UNKNOWN at once, so that
 	 * Ultimate.py still has the time for the bit-precise run, which may succeed where the integer run failed. In the
-	 * bit-precise run nothing comes after us, so the worker retires and k-induction may still
-	 * decide the program.</li>
+	 * bit-precise run nothing comes after us, so the worker retires and k-induction may still decide the program.</li>
 	 * </ul>
 	 *
 	 * @return true if the CEGAR loop has to terminate
@@ -628,8 +627,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	/**
-	 * A TA worker that the {@link HeapWatchdog} retired. The counterexample it was checking goes back to the search,
-	 * so that a remaining TA worker may check it. Once no TA worker is left, the loop gives up its abstraction and the
+	 * A TA worker that the {@link HeapWatchdog} retired. The counterexample it was checking goes back to the search, so
+	 * that a remaining TA worker may check it. Once no TA worker is left, the loop gives up its abstraction and the
 	 * invariant supplier for k-induction, see {@link #releaseForKInduction()}.
 	 *
 	 * @return true if the CEGAR loop has to terminate
@@ -678,9 +677,10 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mAbstraction = new NestedWordAutomaton<>(new AutomataLibraryServices(getServices()),
 				mAbstraction.getVpAlphabet(), mPredicateFactoryInterpolantAutomata);
 		System.gc();
-		mLogger.warn("Main: no TA worker is left, released the abstraction (%d states) and stopped the invariant "
-				+ "supplier for k-induction; the used heap went from %d MB to %d MB live", abstractionSize,
-				before >> 20, (runtime.totalMemory() - runtime.freeMemory()) >> 20);
+		mLogger.warn(
+				"Main: no TA worker is left, released the abstraction (%d states) and stopped the invariant "
+						+ "supplier for k-induction; the used heap went from %d MB to %d MB live",
+				abstractionSize, before >> 20, (runtime.totalMemory() - runtime.freeMemory()) >> 20);
 	}
 
 	private boolean reportUnknownAndTerminate() {
@@ -760,11 +760,13 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 						+ "has no invariant there", loc);
 				continue;
 			}
-			final Term transferred = mStateTransferrer.transferTerm(entry.getValue(), workerResult.getWorkerMgdScript());
-			final Term translatable = weakenToBacktranslatable(transferred, loc, mCsToolkit.getManagedScript().getScript(),
-					mServices.getBacktranslationService(), mLogger);
+			final Term transferred =
+					mStateTransferrer.transferTerm(entry.getValue(), workerResult.getWorkerMgdScript());
+			final Term translatable = weakenToBacktranslatable(transferred, loc,
+					mCsToolkit.getManagedScript().getScript(), mServices.getBacktranslationService(), mLogger);
 			annotation.put(entry.getKey(), mPredicateFactory.newSPredicate(loc, translatable));
-			// Only an invariant that is true by itself gets the explicit 1: one weakened to true need not prove anything.
+			// Only an invariant that is true by itself gets the explicit 1: one weakened to true need not prove
+			// anything.
 			if (proving && SmtUtils.isTrueLiteral(transferred)) {
 				new WitnessInvariant<>("1").annotate(loc);
 				explicitTrue++;
@@ -794,8 +796,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * cannot be backtranslated is replaced by true. This weakens the invariant, so it still holds at its location, and
 	 * since the backtranslation is compositional over and/or, the rest translates as a whole.
 	 * <p>
-	 * Each literal that cannot be backtranslated reports one "Unfinished Backtranslation" result, as the whole invariant
-	 * did before.
+	 * Each literal that cannot be backtranslated reports one "Unfinished Backtranslation" result, as the whole
+	 * invariant did before.
 	 *
 	 * @return {@code invariant} with every literal that cannot be backtranslated at {@code loc} replaced by true
 	 */
@@ -803,8 +805,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			final IBacktranslationService backtranslation, final ILogger logger) {
 		final ILocation context = ILocation.getAnnotation(loc);
 		final Map<Term, Boolean> translatable = new HashMap<>();
-		final Term result =
-				weakenToBacktranslatable(invariant, context, translatable, script, backtranslation, logger);
+		final Term result = weakenToBacktranslatable(invariant, context, translatable, script, backtranslation, logger);
 		final long dropped = translatable.values().stream().filter(ok -> !ok).count();
 		if (dropped > 0) {
 			logger.info("Main: k-induction invariant at %s: %d of %d literal(s) cannot be backtranslated, replaced by "
@@ -821,7 +822,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			if ("and".equals(connective) || "or".equals(connective)) {
 				final List<Term> weakened = new ArrayList<>();
 				for (final Term param : appTerm.getParameters()) {
-					weakened.add(weakenToBacktranslatable(param, context, translatable, script, backtranslation, logger));
+					weakened.add(
+							weakenToBacktranslatable(param, context, translatable, script, backtranslation, logger));
 				}
 				return "and".equals(connective) ? SmtUtils.and(script, weakened) : SmtUtils.or(script, weakened);
 			}
@@ -829,12 +831,13 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		if (SmtUtils.isTrueLiteral(term) || SmtUtils.isFalseLiteral(term)) {
 			return term;
 		}
-		return translatable.computeIfAbsent(term, literal -> canBacktranslate(literal, context, backtranslation, logger))
-				? term
-				: script.term("true");
+		return translatable.computeIfAbsent(term,
+				literal -> canBacktranslate(literal, context, backtranslation, logger)) ? term : script.term("true");
 	}
 
-	/** The same backtranslation as FloydHoareUtils.createInvariantResults, which reports and returns null on failure. */
+	/**
+	 * The same backtranslation as FloydHoareUtils.createInvariantResults, which reports and returns null on failure.
+	 */
 	private static boolean canBacktranslate(final Term literal, final ILocation context,
 			final IBacktranslationService backtranslation, final ILogger logger) {
 		try {
@@ -901,9 +904,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * {@code CfgSmtToolkit#createFreshManagedScript} replays the main script's whole declaration history onto the
 	 * worker script, including the constants the main thread declared for its own auxiliary variables, while the
 	 * worker's {@link ManagedScript} starts its per-basename counter at zero. The k-induction worker composes tens of
-	 * thousands of transition formulas while it builds its loop tree, so its counter reliably reaches an index the
-	 * main thread already used and the aux-var constant is rejected as "already defined". A prefix that is unique per
-	 * worker keeps the two name spaces apart.
+	 * thousands of transition formulas while it builds its loop tree, so its counter reliably reaches an index the main
+	 * thread already used and the aux-var constant is rejected as "already defined". A prefix that is unique per worker
+	 * keeps the two name spaces apart.
 	 * <p>
 	 * Only k-induction gets one: the other worker types never came close to the collision, and an empty prefix keeps
 	 * their variable names exactly as they were.
@@ -986,14 +989,14 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		case KINDUCTION:
 			return new KInductionWorkerThread<>(mLogger, mPref, id, mResultBuilder, iterationServices, freshToolKit,
 					predicateFactoryInterpolantAutomata, stateFactoryForRefinement, computeProof, this,
-					mWorkerResultQueue, mWorkerTaskQueue, transferUtils, mInvariantSupplier == null
-							? IInvariantSupplier.none()
+					mWorkerResultQueue, mWorkerTaskQueue, transferUtils,
+					mInvariantSupplier == null ? IInvariantSupplier.none()
 							: mInvariantSupplier.subscribe(freshToolKit.getManagedScript()));
 		case TA:
 			return new CegarNwaWorkerThread<>(mLogger, mPref, id, mResultBuilder, iterationServices, freshToolKit,
 					predicateFactory, taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata,
-					stateFactoryForRefinement, computeProof, this, mWorkerResultQueue, mWorkerTaskQueue,
-					transferUtils, invariantSink(interpolantsFeedInvariantSupplier()), retirementTimer);
+					stateFactoryForRefinement, computeProof, this, mWorkerResultQueue, mWorkerTaskQueue, transferUtils,
+					invariantSink(interpolantsFeedInvariantSupplier()), retirementTimer);
 		default:
 			throw new AssertionError("Unknown worker type " + workerType);
 		}
@@ -1124,8 +1127,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 					threadResult.getWorkerMgdScript(), mPredicateFactoryInterpolantAutomata);
 		}
 		mLogger.info("Difference in Main");
-		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff = computeAutomataDifference(mAbstraction, subtrahend,
-				threadResult, stateFactoryForRefinement);
+		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff =
+				computeAutomataDifference(mAbstraction, subtrahend, threadResult, stateFactoryForRefinement);
 
 		mAbstraction = diff.getResult();
 
@@ -1272,9 +1275,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			final PowersetDeterminizer<L, IPredicate> psd =
 					new PowersetDeterminizer<>(subtrahend, true, mPredicateFactoryInterpolantAutomata);
 			// As in NwaCegarLoop: a proof needs the states that the sigma-star exploitation would skip.
-			final boolean exploitSigmaStarConcatOfIa =
-					workerResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE)
-							&& (mProofUpdater == null || mProofUpdater.exploitSigmaStarConcatOfIa());
+			final boolean exploitSigmaStarConcatOfIa = workerResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE)
+					&& (mProofUpdater == null || mProofUpdater.exploitSigmaStarConcatOfIa());
 			IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
 			try {
 				if (mPref.differenceSenwa()) {
@@ -1317,9 +1319,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * <ul>
 	 * <li>A TA worker's script plays the part of the main thread's CFG script: weakest preconditions, quantifier
 	 * elimination, the predicate unifier and the Hoare triple checks run on it, while its trace checks get their own
-	 * solver from the TraceAbstraction page via {@link TaCheckAndRefinementPreferences}. So it reads IcfgBuilder's page,
-	 * like the CFG script of the sequential loop. (With the TraceAbstraction page, the SV-COMP bitvector settings ran
-	 * all of that on bitwuzla without a per-query timeout, and computing backward predicates took about 20 times as
+	 * solver from the TraceAbstraction page via {@link TaCheckAndRefinementPreferences}. So it reads IcfgBuilder's
+	 * page, like the CFG script of the sequential loop. (With the TraceAbstraction page, the SV-COMP bitvector settings
+	 * ran all of that on bitwuzla without a per-query timeout, and computing backward predicates took about 20 times as
 	 * long as in the sequential loop.)</li>
 	 * <li>k-induction and the invariant supplier ask every query on their script, so they read the TraceAbstraction
 	 * page: a user who configures a solver for TraceAbstraction expects that solver there. (IcfgBuilder's per-query
@@ -1425,8 +1427,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		// z3's :timeout option for its probes.
 		final String supplierCommand = externalSolverCommand(WorkerType.INVARIANT);
 		if (!isZ3(externalSolverCommand(WorkerType.KINDUCTION)) || !isZ3(supplierCommand)) {
-			mLogger.warn("The probation of invariants needs z3 as the solver of k-induction and of the invariant "
-					+ "supplier, but the solver command is \"%s\"; k-induction runs without probation",
+			mLogger.warn(
+					"The probation of invariants needs z3 as the solver of k-induction and of the invariant "
+							+ "supplier, but the solver command is \"%s\"; k-induction runs without probation",
 					mPref.commandExternalSolver());
 			return null;
 		}
@@ -1461,15 +1464,14 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 */
 	static boolean bitwuzlaRejectsProgram(final VpAlphabet<? extends IIcfgTransition<?>> alphabet) {
 		return Stream.of(alphabet.getInternalAlphabet(), alphabet.getCallAlphabet(), alphabet.getReturnAlphabet())
-				.flatMap(Set::stream).map(letter -> letter.getTransformula().getFormula())
-				.anyMatch(formula -> !SubTermFinder.find(formula, ParallelNwaCegarLoop::bitwuzlaRejects, true)
-						.isEmpty());
+				.flatMap(Set::stream).map(letter -> letter.getTransformula().getFormula()).anyMatch(
+						formula -> !SubTermFinder.find(formula, ParallelNwaCegarLoop::bitwuzlaRejects, true).isEmpty());
 	}
 
 	/**
-	 * Bitwuzla knows neither Int nor Real. It only reads a non-negative number as the argument of {@code to_fp},
-	 * which is how the C translation writes a floating-point constant, even in a bit-precise program. A negative one
-	 * is printed as {@code ((_ to_fp 11 53) rm (- 1.0))}, and bitwuzla answers "undefined symbol '-'".
+	 * Bitwuzla knows neither Int nor Real. It only reads a non-negative number as the argument of {@code to_fp}, which
+	 * is how the C translation writes a floating-point constant, even in a bit-precise program. A negative one is
+	 * printed as {@code ((_ to_fp 11 53) rm (- 1.0))}, and bitwuzla answers "undefined symbol '-'".
 	 */
 	private static boolean bitwuzlaRejects(final Term term) {
 		final String sort = term.getSort().getName();
@@ -1493,8 +1495,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	/**
-	 * The external solver command for a worker, with the k-induction per-query timeout applied if one is configured
-	 * and this is a k-induction worker.
+	 * The external solver command for a worker, with the k-induction per-query timeout applied if one is configured and
+	 * this is a k-induction worker.
 	 */
 	private String externalSolverCommand(final WorkerType workerType) {
 		return externalSolverCommand(mPref, mLogger, workerType, this::bitwuzlaRejectsProgram,
@@ -1568,10 +1570,10 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			final ILogger logger) {
 		int removed = 0;
 		for (final IcfgLocation loc : originalLocations) {
-			final List<IcfgEdge> outgoing = loc.getOutgoingEdges().stream()
-					.filter(e -> !originalEdges.contains(e)).collect(Collectors.toList());
-			final List<IcfgEdge> incoming = loc.getIncomingEdges().stream()
-					.filter(e -> !originalEdges.contains(e)).collect(Collectors.toList());
+			final List<IcfgEdge> outgoing = loc.getOutgoingEdges().stream().filter(e -> !originalEdges.contains(e))
+					.collect(Collectors.toList());
+			final List<IcfgEdge> incoming = loc.getIncomingEdges().stream().filter(e -> !originalEdges.contains(e))
+					.collect(Collectors.toList());
 			loc.removeAllOutgoing(outgoing);
 			loc.removeAllIncoming(incoming);
 			removed += outgoing.size();
@@ -1582,8 +1584,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	static Set<IcfgLocation> collectLocations(final IIcfg<?> icfg) {
-		return icfg.getProgramPoints().values().stream().flatMap(m -> m.values().stream())
-				.collect(Collectors.toSet());
+		return icfg.getProgramPoints().values().stream().flatMap(m -> m.values().stream()).collect(Collectors.toSet());
 	}
 
 	/**

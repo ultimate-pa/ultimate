@@ -29,13 +29,13 @@ package de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding;
 
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem.StepVars;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem.StepVars;
 
 /**
  * Unrolling of a {@link PcTransitionSystem} with constants, for solver queries. Auxiliary variables are separate
@@ -89,8 +89,8 @@ public final class IndexedConstantVars implements StepVars {
 
 	/**
 	 * The same constants, but only those that have already been declared: a constant that has not is {@code null}
-	 * rather than declared now. For reading a model, which must not declare anything - a declaration inside the
-	 * query's scope would be forgotten by its pop while the cache kept it.
+	 * rather than declared now. For reading a model, which must not declare anything - a declaration inside the query's
+	 * scope would be forgotten by its pop while the cache kept it.
 	 */
 	public StepVars declaredOnly() {
 		return new StepVars() {

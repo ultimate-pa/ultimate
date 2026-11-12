@@ -37,18 +37,18 @@ import java.util.Objects;
  * graph {@link LoopTreeFormulaBuilder} works on once calls are resolved.
  * <p>
  * The flat graph has no call stack, so a callee that is called from two sites and is not summarized but
- * <em>unfolded</em> must contribute two disjoint copies of its states - otherwise the two call sites look like a
- * loop and a path may enter at one of them and return to the other, splicing away everything in between (see the
+ * <em>unfolded</em> must contribute two disjoint copies of its states - otherwise the two call sites look like a loop
+ * and a path may enter at one of them and return to the other, splicing away everything in between (see the
  * {@link ProcedureSummaries} class javadoc). The call site chain is what makes those copies distinct: two nodes are
  * equal only if they carry the same state and were reached through the same sequence of call sites.
  * <p>
  * The chain is stored as a link to the <b>call site node</b> in the caller, which is itself a {@code CallNode} and
  * therefore carries the rest of the chain. A node of the procedure the analysis starts in has no such frame.
  * <p>
- * The chain is always finite because nothing on a call cycle is ever unfolded: a recursive procedure's activations
- * are told apart by {@link CallStack} in the state rather than by copies of its states, so its own nodes are
- * {@link #root} nodes and a node reached through one carries only the part of the chain the graph still
- * distinguishes. That is why a node does <b>not</b> determine how many calls are open at it.
+ * The chain is always finite because nothing on a call cycle is ever unfolded: a recursive procedure's activations are
+ * told apart by {@link CallStack} in the state rather than by copies of its states, so its own nodes are {@link #root}
+ * nodes and a node reached through one carries only the part of the chain the graph still distinguishes. That is why a
+ * node does <b>not</b> determine how many calls are open at it.
  *
  * <pre>{@code
  * CallNode<STATE> callSite = ...;                  // a state of the caller with an outgoing call transition
@@ -86,8 +86,8 @@ public final class CallNode<STATE> {
 	}
 
 	/**
-	 * The callee state {@code calleeState} reached by taking a call at <b>this</b> node, which therefore becomes
-	 * the new frame.
+	 * The callee state {@code calleeState} reached by taking a call at <b>this</b> node, which therefore becomes the
+	 * new frame.
 	 */
 	public CallNode<STATE> enter(final STATE calleeState) {
 		return new CallNode<>(calleeState, this);

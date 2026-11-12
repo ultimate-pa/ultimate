@@ -38,16 +38,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.BooleanSupplier;
 
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery.Kind;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery.Kind;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantSupplier.BuiltSystem;
 
 /**
@@ -66,6 +66,7 @@ public final class InvariantSubscription implements IInvariantSupplier<CallNode<
 
 	private final ManagedScript mSource;
 	private final ManagedScript mTarget;
+
 	/**
 	 * A query k-induction is asking.
 	 *
@@ -86,6 +87,7 @@ public final class InvariantSubscription implements IInvariantSupplier<CallNode<
 	private volatile RunningQuery mRunning;
 	private final Map<Kind, Long> mPreviousMillis = new EnumMap<>(Kind.class);
 	private volatile BooleanSupplier mInterrupter;
+
 	// The answer of the supplier's probe for the query it interrupted, until k-induction takes it.
 	private record ProbeAnswer(Kind kind, int k, LBool answer) {
 	}

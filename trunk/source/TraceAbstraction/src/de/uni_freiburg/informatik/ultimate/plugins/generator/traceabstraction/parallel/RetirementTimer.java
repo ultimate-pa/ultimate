@@ -30,11 +30,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
 /**
- * A timer that also expires when its worker is retired. Everything the worker runs polls
- * {@link #continueProcessing()} through the progress monitor of its services, so a retirement stops a running solver
- * query, automaton operation or search the way a timeout does. The {@link HeapWatchdog} retires workers when the heap
- * fills up. Once retired, the timer stays expired. The worker tells the timer when it {@link #stopped()}, so that the
- * watchdog knows when the memory of a retired worker is free.
+ * A timer that also expires when its worker is retired. Everything the worker runs polls {@link #continueProcessing()}
+ * through the progress monitor of its services, so a retirement stops a running solver query, automaton operation or
+ * search the way a timeout does. The {@link HeapWatchdog} retires workers when the heap fills up. Once retired, the
+ * timer stays expired. The worker tells the timer when it {@link #stopped()}, so that the watchdog knows when the
+ * memory of a retired worker is free.
  *
  * @author Max Barth (Max.Barth@lmu.de)
  */

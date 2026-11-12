@@ -571,7 +571,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_NUM_TA_WORKERS = "Number of TA workers in Parallel Trace Abstraction";
 	private static final String DESC_NUM_TA_WORKERS =
 			"How many TA workers check counterexamples. With 0, only k-induction runs, which "
-					+ "needs at least one k-induction worker. The parallel loop uses one thread per worker of any kind.";
+					+ "needs at least one k-induction worker. The parallel loop uses one thread per worker of any "
+					+ "kind.";
 	private static final Integer DEF_NUM_TA_WORKERS = 1;
 
 	public static final String LABEL_NUM_KINDUCTION_WORKERS =
@@ -586,10 +587,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "external solver command says instead. Supported for z3, cvc4, cvc5 and bitwuzla.";
 	private static final Integer DEF_KINDUCTION_SOLVER_TIMEOUT = 60 * 60 * 1000;
 
-	public static final String LABEL_KINDUCTION_WITNESS_TIMEOUT = "Timeout in ms for the invariants of a k-induction proof";
+	public static final String LABEL_KINDUCTION_WITNESS_TIMEOUT =
+			"Timeout in ms for the invariants of a k-induction proof";
 	private static final String DESC_KINDUCTION_WITNESS_TIMEOUT =
-			"How long the k-induction worker may spend, after it proved the program, on the invariants of its proof for "
-					+ "the correctness witness. The verdict waits for them at most this long (plus a short grace); "
+			"How long the k-induction worker may spend, after it proved the program, on the invariants of its proof "
+					+ "for the correctness witness. The verdict waits for them at most this long (plus a short grace); "
 					+ "after that it is reported with the invariants found so far, possibly none.";
 	private static final Integer DEF_KINDUCTION_WITNESS_TIMEOUT = 20 * 1000;
 
@@ -633,9 +635,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_SEQUENTIAL_KINDUCTION_CEGAR_LOOP = "Use sequential CEGAR loop with k-induction";
 	private static final String DESC_SEQUENTIAL_KINDUCTION_CEGAR_LOOP =
 			"Runs trace abstraction for a limited time, then checks its interpolants for inductive invariants, then "
-					+ "runs k-induction with those invariants on the abstraction that trace abstraction refined so far. "
-					+ "All three run one after the other on the main thread. Takes precedence over the parallel CEGAR "
-					+ "loop.";
+					+ "runs k-induction with those invariants on the abstraction that trace abstraction refined so "
+					+ "far. All three run one after the other on the main thread. Takes precedence over the parallel "
+					+ "CEGAR loop.";
 	private static final boolean DEF_SEQUENTIAL_KINDUCTION_CEGAR_LOOP = false;
 
 	public static final String LABEL_SEQUENTIAL_TA_TIME_LIMIT =
@@ -661,9 +663,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_INTERPOLANT_INVARIANTS =
 			"Check interpolants of TA workers for invariants for k-induction";
 	private static final String DESC_INTERPOLANT_INVARIANTS =
-			"If there is a k-induction worker, every TA worker hands the interpolants of each infeasible counterexample "
-					+ "to the invariant supplier. It checks which of them are inductive invariants of the program and "
-					+ "gives those to the k-induction workers while they run.";
+			"If there is a k-induction worker, every TA worker hands the interpolants of each infeasible "
+					+ "counterexample to the invariant supplier. It checks which of them are inductive invariants of "
+					+ "the program and gives those to the k-induction workers while they run.";
 	private static final boolean DEF_INTERPOLANT_INVARIANTS = true;
 
 	public static final String LABEL_MINIMIZE_ABSTRACTION_PER_WORKER =
@@ -998,9 +1000,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_KINDUCTION_WITNESS_TIMEOUT, DEF_KINDUCTION_WITNESS_TIMEOUT,
 						DESC_KINDUCTION_WITNESS_TIMEOUT, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
-				new UltimatePreferenceItem<>(LABEL_TA_RETIREMENT_HEAP, DEF_TA_RETIREMENT_HEAP,
-						DESC_TA_RETIREMENT_HEAP, PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(1, 100)),
+				new UltimatePreferenceItem<>(LABEL_TA_RETIREMENT_HEAP, DEF_TA_RETIREMENT_HEAP, DESC_TA_RETIREMENT_HEAP,
+						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100)),
 				new UltimatePreferenceItem<>(LABEL_INVARIANT_PROBATION, DEF_INVARIANT_PROBATION,
 						DESC_INVARIANT_PROBATION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_PROBATION_FACTOR, DEF_PROBATION_FACTOR, DESC_PROBATION_FACTOR,
@@ -1022,7 +1023,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, Integer.MAX_VALUE)),
 				new UltimatePreferenceItem<>(LABEL_SEQUENTIAL_KINDUCTION_TIME_LIMIT,
 						DEF_SEQUENTIAL_KINDUCTION_TIME_LIMIT, DESC_SEQUENTIAL_KINDUCTION_TIME_LIMIT,
-						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(0, Integer.MAX_VALUE)),
+						PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, Integer.MAX_VALUE)),
 				new UltimatePreferenceItem<>(LABEL_SEARCH_LOOP_BOUND, DEF_SEARCH_LOOP_BOUND, DESC_SEARCH_LOOP_BOUND,
 						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
 				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY, DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY,

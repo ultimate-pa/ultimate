@@ -44,13 +44,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant;
 
 /**
- * The sort of the integers the encoding adds itself: the pc and the index of the
- * {@link CallStack}. It is {@code Int} unless the program is bit-precise, i.e. none of its variables involves
- * {@code Int} or {@code Real}. Then it is a bitvector, because the solver of a bit-precise analysis (e.g. bitwuzla)
- * need not support {@code Int} at all.
+ * The sort of the integers the encoding adds itself: the pc and the index of the {@link CallStack}. It is {@code Int}
+ * unless the program is bit-precise, i.e. none of its variables involves {@code Int} or {@code Real}. Then it is a
+ * bitvector, because the solver of a bit-precise analysis (e.g. bitwuzla) need not support {@code Int} at all.
  * <p>
- * Bitvector values are read as two's complement: a stack pointer may start anywhere, and only the differences of
- * stack pointers matter, which Java's {@code int} arithmetic wraps exactly like {@code bvadd} at this width.
+ * Bitvector values are read as two's complement: a stack pointer may start anywhere, and only the differences of stack
+ * pointers matter, which Java's {@code int} arithmetic wraps exactly like {@code bvadd} at this width.
  *
  * @author Max Barth (max.barth@lmu.de)
  */
@@ -105,8 +104,8 @@ public final class CounterSort {
 
 	/** The same counter sort, over {@code script}. */
 	public CounterSort in(final Script script) {
-		return new CounterSort(isBitvector() ? SmtSortUtils.getBitvectorSort(script, width())
-				: SmtSortUtils.getIntSort(script));
+		return new CounterSort(
+				isBitvector() ? SmtSortUtils.getBitvectorSort(script, width()) : SmtSortUtils.getIntSort(script));
 	}
 
 	/**
@@ -171,8 +170,8 @@ public final class CounterSort {
 	}
 
 	/**
-	 * The pc and the stack pointer are literals of this sort by construction, so anything
-	 * else means the model does not fit the encoding, which is a bug rather than an unsupported case.
+	 * The pc and the stack pointer are literals of this sort by construction, so anything else means the model does not
+	 * fit the encoding, which is a bug rather than an unsupported case.
 	 */
 	private AssertionError notALiteral(final Term literal, final String description) {
 		return new AssertionError("the k-induction model gives " + literal + " for " + description

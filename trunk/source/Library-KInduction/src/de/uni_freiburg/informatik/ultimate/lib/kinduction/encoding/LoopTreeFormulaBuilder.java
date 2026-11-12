@@ -53,29 +53,29 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Given a graph whose edges are transition formulas, cuts it into the graphs {@link PcTransitionSystem} needs, for
  * programs with no loop, any number of sequential loops, and arbitrarily <b>nested</b> loops.
  * <p>
- * The result is a tree of {@link Scope}s. The root scope is the whole program, every other scope is one loop. A
- * scope's <em>cut graph</em> is acyclic and holds all loop-free paths between the places a step through the scope can
- * start and end: the program's start in the root and the scope's own heads in a loop, the heads of its directly nested
- * loops, the error/accepting states, and every state the scope can leave to (e.g. by a {@code break} out of a loop). The
- * root scope of a program without a loop has only paths from the start to an error. The parts before and after a loop
- * are paths to and from its heads in the scope around it, and the body of a loop is the cut graph of its own scope. The
+ * The result is a tree of {@link Scope}s. The root scope is the whole program, every other scope is one loop. A scope's
+ * <em>cut graph</em> is acyclic and holds all loop-free paths between the places a step through the scope can start and
+ * end: the program's start in the root and the scope's own heads in a loop, the heads of its directly nested loops, the
+ * error/accepting states, and every state the scope can leave to (e.g. by a {@code break} out of a loop). The root
+ * scope of a program without a loop has only paths from the start to an error. The parts before and after a loop are
+ * paths to and from its heads in the scope around it, and the body of a loop is the cut graph of its own scope. The
  * paths are not composed: {@link PcTransitionSystem} encodes the graph as it is, so its size is what a step costs.
  * <p>
- * Loops are found structurally (strongly connected components, recursively with the heads removed), so no annotation
- * is required. Several entry and exit transitions per head are supported.
+ * Loops are found structurally (strongly connected components, recursively with the heads removed), so no annotation is
+ * required. Several entry and exit transitions per head are supported.
  *
  * <h2>Loops with several heads</h2>
  *
- * The heads of a loop are <b>all</b> the states it is entered at from outside it. A reducible loop has one;
- * irreducible control flow (a {@code goto} into the middle of a loop, or an abstraction in which one loop head
- * location has split into several states) has more, and is supported rather than rejected. An iteration can start at
- * every head and come back round to every head, so a scope with the heads {@code h1, h2} has steps from {@code h1} to
- * {@code h1}, from {@code h1} to {@code h2}, from {@code h2} to {@code h1} and from {@code h2} to {@code h2}.
+ * The heads of a loop are <b>all</b> the states it is entered at from outside it. A reducible loop has one; irreducible
+ * control flow (a {@code goto} into the middle of a loop, or an abstraction in which one loop head location has split
+ * into several states) has more, and is supported rather than rejected. An iteration can start at every head and come
+ * back round to every head, so a scope with the heads {@code h1, h2} has steps from {@code h1} to {@code h1}, from
+ * {@code h1} to {@code h2}, from {@code h2} to {@code h1} and from {@code h2} to {@code h2}.
  * <p>
- * The cross steps are not an extra. An iteration from {@code h1} to {@code h2} has no other representation, because
- * in the enclosing scope both heads are sealed (they are nodes with no outgoing edges) and everything between them
- * is an interior state that is not a node there at all. Taking every entry state as a head is also what keeps the
- * recursion correct, see invariant (I1) at {@code findHeads}.
+ * The cross steps are not an extra. An iteration from {@code h1} to {@code h2} has no other representation, because in
+ * the enclosing scope both heads are sealed (they are nodes with no outgoing edges) and everything between them is an
+ * interior state that is not a node there at all. Taking every entry state as a head is also what keeps the recursion
+ * correct, see invariant (I1) at {@code findHeads}.
  * <p>
  * <h2>Procedure calls</h2>
  *
@@ -90,12 +90,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  * <h2>How to use</h2>
  *
- * Construct the builder, call {@link #build()} once, and read the graphs off the resulting tree of {@link Scope}s,
- * or, for a graph without a loop, call {@link #buildLoopFreeFormula()} for the formula of all its
- * paths. All formulas live in the {@link ManagedScript} passed to the constructor. That script must
- * <b>not</b> be locked while {@link #buildLoopFreeFormula()} runs: composing transition formulas declares constants for their aux
- * vars and therefore acquires the lock itself. Lock the script afterwards, once all formulas exist, to use them in a
- * solver.
+ * Construct the builder, call {@link #build()} once, and read the graphs off the resulting tree of {@link Scope}s, or,
+ * for a graph without a loop, call {@link #buildLoopFreeFormula()} for the formula of all its paths. All formulas live
+ * in the {@link ManagedScript} passed to the constructor. That script must <b>not</b> be locked while
+ * {@link #buildLoopFreeFormula()} runs: composing transition formulas declares constants for their aux vars and
+ * therefore acquires the lock itself. Lock the script afterwards, once all formulas exist, to use them in a solver.
  *
  * @param <STATE>
  *            node type of the graph
@@ -254,21 +253,21 @@ public class LoopTreeFormulaBuilder<STATE> {
 	}
 
 	/**
-	 * The heads of the loop {@code loop} (a strongly connected component inside {@code enclosing}): <b>every</b>
-	 * state that is entered from outside the loop. A loop with more than one head is irreducible control flow,
-	 * which is supported: each head has a pc value of its own, so an iteration that enters the loop at one head and
-	 * comes back round to another is a step from {@code h1} to {@code h2}.
+	 * The heads of the loop {@code loop} (a strongly connected component inside {@code enclosing}): <b>every</b> state
+	 * that is entered from outside the loop. A loop with more than one head is irreducible control flow, which is
+	 * supported: each head has a pc value of its own, so an iteration that enters the loop at one head and comes back
+	 * round to another is a step from {@code h1} to {@code h2}.
 	 * <p>
-	 * Returning <em>all</em> entry states, rather than picking one, is what keeps the rest of the construction
-	 * correct. It establishes the invariant
+	 * Returning <em>all</em> entry states, rather than picking one, is what keeps the rest of the construction correct.
+	 * It establishes the invariant
 	 * <ul>
-	 * <li><b>(I1)</b> every state of a region that has a predecessor outside the region, or that is an initial
-	 * state, is a head of that region.
+	 * <li><b>(I1)</b> every state of a region that has a predecessor outside the region, or that is an initial state,
+	 * is a head of that region.
 	 * </ul>
-	 * (I1) is why the "entered from outside the enclosing loop" case below cannot happen, why the initial-state
-	 * test only has to look at the root (deeper down, an initial state is already a head of every enclosing
-	 * region, so it never reaches an inner strongly connected component), and why a path that leaves a region can
-	 * only come back into it through a head - which that scope's own steps from {@code h} describe.
+	 * (I1) is why the "entered from outside the enclosing loop" case below cannot happen, why the initial-state test
+	 * only has to look at the root (deeper down, an initial state is already a head of every enclosing region, so it
+	 * never reaches an inner strongly connected component), and why a path that leaves a region can only come back into
+	 * it through a head - which that scope's own steps from {@code h} describe.
 	 */
 	private Set<STATE> findHeads(final Set<STATE> loop, final Set<STATE> enclosing, final boolean enclosingIsRoot) {
 		final Set<STATE> entries = new LinkedHashSet<>();
@@ -291,8 +290,8 @@ public class LoopTreeFormulaBuilder<STATE> {
 		}
 		if (entries.isEmpty()) {
 			// buildScope recurses on the region without its heads, so an empty head set would not make progress.
-			throw new UnsupportedOperationException("Loop with " + loop.size()
-					+ " state(s) has no entry state, so it cannot be reachable: " + loop);
+			throw new UnsupportedOperationException(
+					"Loop with " + loop.size() + " state(s) has no entry state, so it cannot be reachable: " + loop);
 		}
 		if (entries.size() > 1) {
 			mLogger.info("LoopTree: irreducible loop with %d state(s) is entered at %d states: %s", loop.size(),
@@ -307,8 +306,8 @@ public class LoopTreeFormulaBuilder<STATE> {
 
 	/**
 	 * Builds the scope of the loop with heads {@code heads} and states {@code region}, or the root scope if
-	 * {@code heads} is empty. Inner loops are built first (bottom-up), and a step through this scope can start and
-	 * end at every head of an inner loop.
+	 * {@code heads} is empty. Inner loops are built first (bottom-up), and a step through this scope can start and end
+	 * at every head of an inner loop.
 	 */
 	private Scope<STATE> buildScope(final Set<STATE> heads, final Set<STATE> region) {
 		final boolean isRoot = heads.isEmpty();
@@ -409,8 +408,8 @@ public class LoopTreeFormulaBuilder<STATE> {
 			}
 		}
 		// A plain state of this scope that an inner loop can jump to (e.g. by break) is a "waypoint". The inner loop's
-		// scope only knows how to get to it, the way on from there starts here. A jump out of several loops is an escape
-		// of every loop it leaves, so the scope that holds the state is the one that makes it a waypoint.
+		// scope only knows how to get to it, the way on from there starts here. A jump out of several loops is an
+		// escape of every loop it leaves, so the scope that holds the state is the one that makes it a waypoint.
 		for (final Scope<STATE> child : children) {
 			for (final STATE w : child.escapes()) {
 				if (nodes.contains(w) && !childHeads.contains(w) && !heads.contains(w) && !escapes.contains(w)
@@ -445,8 +444,8 @@ public class LoopTreeFormulaBuilder<STATE> {
 	}
 
 	/**
-	 * The formula of every path of a graph without a loop, from the initial to the final states, or {@code null} if there
-	 * is none. All formulas are native to the {@link ManagedScript} passed to the constructor.
+	 * The formula of every path of a graph without a loop, from the initial to the final states, or {@code null} if
+	 * there is none. All formulas are native to the {@link ManagedScript} passed to the constructor.
 	 *
 	 * @throws IllegalStateException
 	 *             if the part of the graph reachable from the initial states has a loop
@@ -482,8 +481,8 @@ public class LoopTreeFormulaBuilder<STATE> {
 
 	/**
 	 * Throws if the progress monitor of k-induction says stop, e.g. because the toolchain's deadline has passed. Polled
-	 * before a composition of formulas, since evaluating a path expression is still exponential in the worst case
-	 * (see {@link PathFormulaComposer}). A pathological abstraction must not run past the deadline uninterrupted.
+	 * before a composition of formulas, since evaluating a path expression is still exponential in the worst case (see
+	 * {@link PathFormulaComposer}). A pathological abstraction must not run past the deadline uninterrupted.
 	 */
 	private void checkCanceled(final String task) {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -544,10 +543,9 @@ public class LoopTreeFormulaBuilder<STATE> {
 				alternatives.toArray(new UnmodifiableTransFormula[0]));
 	}
 
-
 	/**
-	 * The program (no heads) or one loop: its cut graph, and where a step through it can start and end. A step can start
-	 * at {@code programStarts} and {@code sources}, and end at the heads of this scope and of its children, at
+	 * The program (no heads) or one loop: its cut graph, and where a step through it can start and end. A step can
+	 * start at {@code programStarts} and {@code sources}, and end at the heads of this scope and of its children, at
 	 * {@code finals} and at {@code escapes}.
 	 *
 	 * @param heads
@@ -558,8 +556,8 @@ public class LoopTreeFormulaBuilder<STATE> {
 	 * @param children
 	 *            the loops directly nested in this scope
 	 * @param cutGraph
-	 *            the acyclic graph of this scope, every node before its successors: no interiors of inner loops, and the
-	 *            heads of the scope and of its inner loops have no outgoing edges
+	 *            the acyclic graph of this scope, every node before its successors: no interiors of inner loops, and
+	 *            the heads of the scope and of its inner loops have no outgoing edges
 	 * @param programStarts
 	 *            the initial states inside this scope, empty for a loop
 	 * @param sources
@@ -568,9 +566,9 @@ public class LoopTreeFormulaBuilder<STATE> {
 	 * @param finals
 	 *            the accepting states inside this scope
 	 * @param escapes
-	 *            the states a run inside this loop can jump to, other than accepting ones. A jump out of several loops is
-	 *            one of each of them, since it counts as an escape of a loop wherever inside the loop it starts. The scope
-	 *            that holds the state makes it a waypoint, see {@link LoopTreeFormulaBuilder#buildScope}.
+	 *            the states a run inside this loop can jump to, other than accepting ones. A jump out of several loops
+	 *            is one of each of them, since it counts as an escape of a loop wherever inside the loop it starts. The
+	 *            scope that holds the state makes it a waypoint, see {@link LoopTreeFormulaBuilder#buildScope}.
 	 */
 	public record Scope<STATE>(Set<STATE> heads, Set<STATE> region, List<Scope<STATE>> children,
 			Map<STATE, List<Pair<UnmodifiableTransFormula, STATE>>> cutGraph, Set<STATE> programStarts,

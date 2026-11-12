@@ -49,6 +49,7 @@ import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormulaBuilder.Scope;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -59,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.LoopTreeFormulaBuilder.Scope;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -69,13 +69,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * <li>{@link #INIT}: program start, has no incoming transition,
  * <li>{@link #FINAL}: the error/accepting states, has only a self loop (stutter), so "an error is reachable within at
  * most k steps" is the same as "{@code pc = FINAL} after exactly k steps",
- * <li>every head of every loop (all nesting depths): a reducible loop contributes one, a loop with irreducible
- * control flow one per entry state,
+ * <li>every head of every loop (all nesting depths): a reducible loop contributes one, a loop with irreducible control
+ * flow one per entry state,
  * <li>every "waypoint": a state outside a loop that a {@code break} out of the loop can jump to.
  * </ul>
  * One step goes from one pc value to the next along a path of one scope's cut graph. Every program execution is a
- * sequence of such steps, because it is cut at each visit of a loop head. {@link #getChainOfStep} reads the states
- * of a step back off a model.
+ * sequence of such steps, because it is cut at each visit of a loop head. {@link #getChainOfStep} reads the states of a
+ * step back off a model.
  *
  * <h2>The formula of a step</h2>
  *
@@ -99,8 +99,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * A variable only has to keep its value where that value can still be read. Where it cannot, {@link #step} for a query
  * leaves it unconstrained, see {@link Encoding}. This cannot change a query's answer, since such a value has no
  * influence on the rest of a run. The one exception is an injected invariant that mentions it, which then assumes less
- * than it could. The full-frame {@link #step(int, StepVars, ManagedScript)} is for everyone who needs the exact relation
- * between two states.
+ * than it could. The full-frame {@link #step(int, StepVars, ManagedScript)} is for everyone who needs the exact
+ * relation between two states.
  * <p>
  * An old variable is not part of the state: a step starts with {@link IProgramVar#getDefaultConstant()}, and a call
  * inside the step gives it a version of its own.
@@ -124,8 +124,8 @@ public class PcTransitionSystem<STATE> {
 	private final CounterSort mCounterSort;
 	private int mNumNodes = 2;
 
-	// The cut graphs of all scopes, shared with every transferred copy of this system: only the formulas differ. An edge
-	// always leads to a later node of mDagNodes.
+	// The cut graphs of all scopes, shared with every transferred copy of this system: only the formulas differ. An
+	// edge always leads to a later node of mDagNodes.
 	private final List<DagNode> mDagNodes;
 	private final List<DagNode> mSources;
 	private final Map<Integer, Set<STATE>> mSourceStates;
@@ -142,8 +142,8 @@ public class PcTransitionSystem<STATE> {
 	private Encoding mFullFrameEncoding;
 
 	/**
-	 * Supplies the terms for one unrolling of the system, either constants (for a solver query) or term variables
-	 * (to build a formula with quantifiers).
+	 * Supplies the terms for one unrolling of the system, either constants (for a solver query) or term variables (to
+	 * build a formula with quantifiers).
 	 */
 	public interface StepVars {
 		/** The value of the program variable in step {@code idx}. */
@@ -213,8 +213,8 @@ public class PcTransitionSystem<STATE> {
 	}
 
 	/**
-	 * How the edges and targets are instantiated, see {@link EncodingBuilder}. There is one for the queries, in which only
-	 * live variables are kept, and one with the full frame.
+	 * How the edges and targets are instantiated, see {@link EncodingBuilder}. There is one for the queries, in which
+	 * only live variables are kept, and one with the full frame.
 	 */
 	private record Encoding(Map<DagEdge, EdgeCode> edgeCode, Map<DagNode, List<TargetCode>> targetCode,
 			List<Set<IProgramVar>> liveAtPc, Set<Version> innerVersions) {
@@ -233,8 +233,8 @@ public class PcTransitionSystem<STATE> {
 	}
 
 	/**
-	 * Computes the versions of all variables at all nodes, and what follows from them for the edges and targets. What it
-	 * holds besides the result is only needed for that, so it does not stay on the heap during the queries.
+	 * Computes the versions of all variables at all nodes, and what follows from them for the edges and targets. What
+	 * it holds besides the result is only needed for that, so it does not stay on the heap during the queries.
 	 * <p>
 	 * A variable is live at a node if a path from there reads it before writing it. For an edge {@code e} from n to m,
 	 * {@code live(n)} contains {@code reads(e) + (live(m) - writes(e))}. A node that is a target of a pc value has what
@@ -446,10 +446,10 @@ public class PcTransitionSystem<STATE> {
 	}
 
 	/**
-	 * What a formula writes: what it has an outVar of that is not its inVar, and what it only has an inVar of. The latter
-	 * means the variable is havoced, see {@code TransFormulaUtils#computeAssignedVars}: {@code TransFormulaBuilder} drops
-	 * the outVar of an assigned variable whose new value the formula does not constrain. An old variable that is only an
-	 * inVar is only read, since only a call changes the snapshot.
+	 * What a formula writes: what it has an outVar of that is not its inVar, and what it only has an inVar of. The
+	 * latter means the variable is havoced, see {@code TransFormulaUtils#computeAssignedVars}:
+	 * {@code TransFormulaBuilder} drops the outVar of an assigned variable whose new value the formula does not
+	 * constrain. An old variable that is only an inVar is only read, since only a call changes the snapshot.
 	 */
 	private static Set<IProgramVar> assignedVars(final UnmodifiableTransFormula tf) {
 		final Set<IProgramVar> result = new LinkedHashSet<>();
@@ -516,9 +516,9 @@ public class PcTransitionSystem<STATE> {
 	}
 
 	/**
-	 * This system for another script, so that whoever reasons about the same program there need not build it again:
-	 * the same pc nodes and cut graphs, with every formula replaced by its copy. The states are this system's, they
-	 * only serve to reconstruct a counterexample.
+	 * This system for another script, so that whoever reasons about the same program there need not build it again: the
+	 * same pc nodes and cut graphs, with every formula replaced by its copy. The states are this system's, they only
+	 * serve to reconstruct a counterexample.
 	 *
 	 * @param transferFormula
 	 *            copies a formula of this system to the other script, together with its program variables
@@ -639,8 +639,8 @@ public class PcTransitionSystem<STATE> {
 	}
 
 	/**
-	 * The pc value of a state a step starts or ends at: its own if it is a head of a loop, otherwise that of a waypoint.
-	 * The constructor has numbered the heads of all loops of the tree by now.
+	 * The pc value of a state a step starts or ends at: its own if it is a head of a loop, otherwise that of a
+	 * waypoint. The constructor has numbered the heads of all loops of the tree by now.
 	 */
 	private int pcOf(final STATE state) {
 		final Integer head = mHeadNodes.get(state);
@@ -677,9 +677,9 @@ public class PcTransitionSystem<STATE> {
 
 	/**
 	 * The constants that hold the auxiliary variables of the edges inside step {@code idx} of a query, by auxiliary
-	 * variable. Where an edge was composed from several transitions, these are the values its variables had in
-	 * between, e.g. a variable that a chain assigns and havocs again. Like {@link #getVersionConstants}, they are the
-	 * path's values on the path a model takes and arbitrary elsewhere.
+	 * variable. Where an edge was composed from several transitions, these are the values its variables had in between,
+	 * e.g. a variable that a chain assigns and havocs again. Like {@link #getVersionConstants}, they are the path's
+	 * values on the path a model takes and arbitrary elsewhere.
 	 *
 	 * @param sv
 	 *            the constants of the query; an auxiliary variable it has no constant for ({@code null}) is skipped
@@ -820,8 +820,8 @@ public class PcTransitionSystem<STATE> {
 		return and(script, conjuncts);
 	}
 
-	private boolean endsAt(final DagNode node, final Encoding encoding, final int idx, final int toPc, final StepVars sv,
-			final ManagedScript mgdScript, final Predicate<Term> holdsInModel) {
+	private boolean endsAt(final DagNode node, final Encoding encoding, final int idx, final int toPc,
+			final StepVars sv, final ManagedScript mgdScript, final Predicate<Term> holdsInModel) {
 		final Script script = mgdScript.getScript();
 		for (final TargetCode target : encoding.targetCode().getOrDefault(node, Collections.emptyList())) {
 			if (target.pc() != toPc) {
@@ -935,11 +935,11 @@ public class PcTransitionSystem<STATE> {
 	}
 
 	/**
-	 * The relation between step {@code idx} and step {@code idx + 1}: some path is taken, i.e. pc and variables of the two
-	 * steps fit to it, and every variable the path does not assign keeps its value.
+	 * The relation between step {@code idx} and step {@code idx + 1}: some path is taken, i.e. pc and variables of the
+	 * two steps fit to it, and every variable the path does not assign keeps its value.
 	 * <p>
-	 * For constants only: over term variables every shared subformula would hold its free variables, which is the number
-	 * of nodes times the number of variables. See {@link #composeSteps} for that.
+	 * For constants only: over term variables every shared subformula would hold its free variables, which is the
+	 * number of nodes times the number of variables. See {@link #composeSteps} for that.
 	 */
 	public Term step(final int idx, final StepVars sv, final ManagedScript mgdScript) {
 		if (mFullFrameEncoding == null) {
@@ -962,10 +962,10 @@ public class PcTransitionSystem<STATE> {
 	}
 
 	/**
-	 * The relation between step {@code idx} and step {@code idx + 1} on a run that reaches {@link #FINAL} exactly at its
-	 * end: only the paths of this kind, and never the stutter. A path from {@link #INIT} can only be a run's first, since
-	 * INIT has no incoming path, and a path into FINAL only its last. A variable that nothing reads any more is left
-	 * unconstrained, see the class javadoc.
+	 * The relation between step {@code idx} and step {@code idx + 1} on a run that reaches {@link #FINAL} exactly at
+	 * its end: only the paths of this kind, and never the stutter. A path from {@link #INIT} can only be a run's first,
+	 * since INIT has no incoming path, and a path into FINAL only its last. A variable that nothing reads any more is
+	 * left unconstrained, see the class javadoc.
 	 *
 	 * @param fromInit
 	 *            whether these are the paths that leave INIT or those that do not
@@ -1082,7 +1082,8 @@ public class PcTransitionSystem<STATE> {
 		for (final DagNode node : mDagNodes) {
 			final List<Pair<UnmodifiableTransFormula, DagNode>> outgoing = new ArrayList<>();
 			for (final DagEdge edge : node.mOutgoing) {
-				outgoing.add(new Pair<>(edge.mFormulaIndex < 0 ? empty : mFormulas.get(edge.mFormulaIndex), edge.mTarget));
+				outgoing.add(
+						new Pair<>(edge.mFormulaIndex < 0 ? empty : mFormulas.get(edge.mFormulaIndex), edge.mTarget));
 			}
 			edges.put(node, outgoing);
 			for (final int pc : node.mTargetPcs) {
@@ -1213,8 +1214,8 @@ public class PcTransitionSystem<STATE> {
 	}
 
 	/**
-	 * What one unrolled step costs, for the log: the frame equalities and auxiliary variables a query's step has, and the
-	 * size of the edges' formulas, each counted on its own.
+	 * What one unrolled step costs, for the log: the frame equalities and auxiliary variables a query's step has, and
+	 * the size of the edges' formulas, each counted on its own.
 	 */
 	public String getStatistics() {
 		long auxVars = 0;

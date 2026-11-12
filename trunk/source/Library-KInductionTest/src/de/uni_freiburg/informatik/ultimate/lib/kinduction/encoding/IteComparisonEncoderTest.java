@@ -109,13 +109,15 @@ public class IteComparisonEncoderTest {
 
 	@Test
 	public void nestedIteBecomesConjunction() {
-		final Term encoded = assertEquivalentWithoutIte(String.format("(= %s (ite p (ite q %s %s) %s))", ZERO, ONE, ZERO, ONE));
+		final Term encoded =
+				assertEquivalentWithoutIte(String.format("(= %s (ite p (ite q %s %s) %s))", ZERO, ONE, ZERO, ONE));
 		Assert.assertEquals(SmtUtils.and(mScript, parse("p"), parse("(not q)")), encoded);
 	}
 
 	@Test
 	public void conditionIsEncodedToo() {
-		assertEquivalentWithoutIte(String.format("(= (ite (= (ite p %s %s) %s) %s %s) %s)", ONE, ZERO, ZERO, ONE, ZERO, ZERO));
+		assertEquivalentWithoutIte(
+				String.format("(= (ite (= (ite p %s %s) %s) %s %s) %s)", ONE, ZERO, ZERO, ONE, ZERO, ZERO));
 	}
 
 	@Test
@@ -164,7 +166,8 @@ public class IteComparisonEncoderTest {
 			final String max = String.format("(ite (bvsgt v%d y) v%d y)", i, i);
 			conjuncts.add(String.format("(not (= %s (ite (= x %s) %s %s)))", ZERO, max, ONE, ZERO));
 		}
-		final Term input = parse(String.format("(= (ite (and %s) %s %s) %s)", String.join(" ", conjuncts), ONE, ZERO, ZERO));
+		final Term input =
+				parse(String.format("(= (ite (and %s) %s %s) %s)", String.join(" ", conjuncts), ONE, ZERO, ZERO));
 		final Term encoded = IteComparisonEncoder.apply(mScript, input);
 		final Term withoutIte = IteRemover.apply(mMgdScript, encoded);
 		Assert.assertTrue(SmtUtils.extractApplicationTerms("ite", withoutIte, false).isEmpty());

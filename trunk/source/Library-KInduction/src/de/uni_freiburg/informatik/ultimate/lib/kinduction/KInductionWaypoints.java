@@ -46,13 +46,13 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.ProcedureSumm
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 
 /**
- * The letters a violation witness can name, read off the chains of cut-graph states that the model of a satisfiable base
- * case takes, see {@link PcTransitionSystem#getChainOfStep}. They are a <em>subsequence</em> of the letters of the
+ * The letters a violation witness can name, read off the chains of cut-graph states that the model of a satisfiable
+ * base case takes, see {@link PcTransitionSystem#getChainOfStep}. They are a <em>subsequence</em> of the letters of the
  * violation: this is neither a nested word nor a run of the abstraction, and consecutive letters need not be connected.
  * <p>
- * A witness stands for all executions that pass its waypoints, so that a waypoint may be left out, but a follow waypoint
- * has to be passed whenever it is evaluated. A location therefore has a waypoint either at <b>every</b> visit or at
- * none. Hence the rules for two consecutive states {@code u, v} of a chain:
+ * A witness stands for all executions that pass its waypoints, so that a waypoint may be left out, but a follow
+ * waypoint has to be passed whenever it is evaluated. A location therefore has a waypoint either at <b>every</b> visit
+ * or at none. Hence the rules for two consecutive states {@code u, v} of a chain:
  * <ul>
  * <li>If exactly one internal letter leads from {@code u} to {@code v}, and the edge in the graph stands for nothing
  * else, this letter was taken, and it is kept.
@@ -62,8 +62,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
  * </ul>
  * What a gap hides cannot clash with a letter that is kept: {@link ProcedureSummaries} summarizes a procedure at all of
  * its call sites or at none, and it removes a state for good, so their letters are never kept. Call and return letters
- * are always left out. Without values, a {@code function_return} waypoint would say nothing, and leaving out all of them
- * cannot leave a call without its return.
+ * are always left out. Without values, a {@code function_return} waypoint would say nothing, and leaving out all of
+ * them cannot leave a call without its return.
  * <p>
  * The last letter leads to the error state of the violation, which is the target of the witness. In a program with a
  * {@code CallStack} a node does not say which activation it belongs to, so there the target is the only letter.
@@ -80,15 +80,20 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 public final class KInductionWaypoints<LETTER extends IAction, STATE> {
 
 	/**
-	 * How much of the violation the waypoint letters name. The violation is proved by the model alone, so a witness that
-	 * cannot be built in full is built with less, never not at all.
+	 * How much of the violation the waypoint letters name. The violation is proved by the model alone, so a witness
+	 * that cannot be built in full is built with less, never not at all.
 	 */
 	public enum Level {
 		/** The letters as the rules above give them. */
 		FULL,
-		/** Only the target: a chain could not be read or its letters not be named, so no other letter is known to be safe. */
+		/**
+		 * Only the target: a chain could not be read or its letters not be named, so no other letter is known to be
+		 * safe.
+		 */
 		TARGET_ONLY,
-		/** No letter: the target is not known. The violation is reported at {@link #getErrorState()} without a waypoint. */
+		/**
+		 * No letter: the target is not known. The violation is reported at {@link #getErrorState()} without a waypoint.
+		 */
 		EMPTY
 	}
 
@@ -104,8 +109,8 @@ public final class KInductionWaypoints<LETTER extends IAction, STATE> {
 
 	/**
 	 * @param chains
-	 *            the chain of every step of the violation, in order, null for a step whose chain could not be read; null
-	 *            if no chain could be read. The last state of the last one is the error state.
+	 *            the chain of every step of the violation, in order, null for a step whose chain could not be read;
+	 *            null if no chain could be read. The last state of the last one is the error state.
 	 * @param chainFailure
 	 *            why a chain could not be read, null if all could
 	 * @param composedEdges
@@ -126,8 +131,8 @@ public final class KInductionWaypoints<LETTER extends IAction, STATE> {
 		LETTER target = null;
 		if (lastChain == null) {
 			if (cause == null) {
-				cause = new KInductionCounterexampleException("k-induction refuted the program, but the model has no "
-						+ "chain");
+				cause = new KInductionCounterexampleException(
+						"k-induction refuted the program, but the model has no " + "chain");
 			}
 		} else {
 			error = lastChain.get(lastChain.size() - 1);
@@ -200,8 +205,8 @@ public final class KInductionWaypoints<LETTER extends IAction, STATE> {
 		for (final STATE state : mAbstraction.getFinalStates()) {
 			return state;
 		}
-		throw new KInductionCounterexampleException("k-induction refuted the program, but its abstraction has no error "
-				+ "state");
+		throw new KInductionCounterexampleException(
+				"k-induction refuted the program, but its abstraction has no error " + "state");
 	}
 
 	private record StateAndLetter<LETTER, STATE>(STATE state, LETTER letter) {
@@ -244,8 +249,8 @@ public final class KInductionWaypoints<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * The letter that names the error: the one the last step took, or, if that is not known (an error inside a summarized
-	 * callee, say), any letter into the error state, as long as all of them have the same location.
+	 * The letter that names the error: the one the last step took, or, if that is not known (an error inside a
+	 * summarized callee, say), any letter into the error state, as long as all of them have the same location.
 	 */
 	private LETTER targetLetter(final List<CallNode<STATE>> lastChain, final CallNode<STATE> error) {
 		if (!mAbstraction.isFinal(error.getState())) {
@@ -270,8 +275,9 @@ public final class KInductionWaypoints<LETTER extends IAction, STATE> {
 					"k-induction refuted the program, but no internal letter leads to the error state " + error);
 		}
 		if (locations.size() != 1) {
-			throw new KInductionCounterexampleException("k-induction refuted the program, but the letters into the error "
-					+ "state " + error + " have the locations " + locations + ", so a target cannot be named");
+			throw new KInductionCounterexampleException(
+					"k-induction refuted the program, but the letters into the error " + "state " + error
+							+ " have the locations " + locations + ", so a target cannot be named");
 		}
 		return result;
 	}

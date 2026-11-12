@@ -201,9 +201,9 @@ public abstract class CodeBlock extends IcfgEdge implements IActionWithBranchEnc
 	}
 
 	/**
-	 * Takes over the preceding and succeeding procedure of {@code original}, for a copy of it that could not learn
-	 * them from its source and target: the inner CodeBlocks of a composition are disconnected, but they keep the
-	 * procedures they had while connected.
+	 * Takes over the preceding and succeeding procedure of {@code original}, for a copy of it that could not learn them
+	 * from its source and target: the inner CodeBlocks of a composition are disconnected, but they keep the procedures
+	 * they had while connected.
 	 */
 	public void copyProceduresFrom(final CodeBlock original) {
 		mPrecedingProcedure = mergeProcedure(mPrecedingProcedure, original.mPrecedingProcedure);

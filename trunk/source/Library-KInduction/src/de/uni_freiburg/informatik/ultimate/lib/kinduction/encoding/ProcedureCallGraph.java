@@ -55,12 +55,12 @@ import de.uni_freiburg.informatik.ultimate.util.scc.DefaultSccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
- * Builds the procedure call graph of a nested word automaton (nodes = procedure names, edges = "caller calls
- * callee", derived from the automaton's call transitions) and answers the two questions its interprocedural
- * consumers ask of it: in which order to process the procedures, and which of them lie on a call cycle.
+ * Builds the procedure call graph of a nested word automaton (nodes = procedure names, edges = "caller calls callee",
+ * derived from the automaton's call transitions) and answers the two questions its interprocedural consumers ask of it:
+ * in which order to process the procedures, and which of them lie on a call cycle.
  * <p>
- * A call cycle matters because the edge of a summarized call (see {@link ProcedureSummaries}) needs
- * its callee's summary to already exist as a finished formula, which is undefined for a cycle.
+ * A call cycle matters because the edge of a summarized call (see {@link ProcedureSummaries}) needs its callee's
+ * summary to already exist as a finished formula, which is undefined for a cycle.
  * {@link #getSccsCalleeFirst(java.util.Collection)} keeps the procedures of a cycle together in one component, and
  * {@link #getRecursiveSccs(java.util.Collection)} names them - {@link ProcedureSummaries} gives those an activation
  * record instead of a summary, see {@link CallStack}.
@@ -76,8 +76,8 @@ public final class ProcedureCallGraph {
 	private final HashRelation<String, String> mCalls = new HashRelation<>();
 
 	/**
-	 * The call graph of the part of {@code abstraction} made of {@code states}: their procedures, and the calls
-	 * from one of them into another. A procedure with no state there is not in it, and neither is a call into one.
+	 * The call graph of the part of {@code abstraction} made of {@code states}: their procedures, and the calls from
+	 * one of them into another. A procedure with no state there is not in it, and neither is a call into one.
 	 */
 	public <LETTER extends IAction, STATE> ProcedureCallGraph(final ILogger logger,
 			final INestedWordAutomaton<LETTER, STATE> abstraction, final Set<STATE> states) {
@@ -97,8 +97,8 @@ public final class ProcedureCallGraph {
 	}
 
 	/**
-	 * The procedure a state belongs to. Only an {@link ISLPredicate} names a program point and therefore a
-	 * procedure; anything else is refused here rather than further down as a {@link ClassCastException}.
+	 * The procedure a state belongs to. Only an {@link ISLPredicate} names a program point and therefore a procedure;
+	 * anything else is refused here rather than further down as a {@link ClassCastException}.
 	 */
 	public static <STATE> String procedureOf(final STATE state) {
 		if (!(state instanceof ISLPredicate)) {
@@ -123,16 +123,15 @@ public final class ProcedureCallGraph {
 	 * component occurs before every component that calls into it.
 	 * <p>
 	 * A component with more than one procedure, or a single procedure that calls itself, is a call cycle: its
-	 * procedures have no summary, because a summary of one of them would need the summaries of all of them. Every
-	 * other component is a single procedure and the order is the plain callee-first order. Restricting to
-	 * {@code scope} matters: a call cycle among procedures that no entry procedure can reach says nothing about the
-	 * program being analysed, and grouping it in anyway would encode procedures that are never executed.
+	 * procedures have no summary, because a summary of one of them would need the summaries of all of them. Every other
+	 * component is a single procedure and the order is the plain callee-first order. Restricting to {@code scope}
+	 * matters: a call cycle among procedures that no entry procedure can reach says nothing about the program being
+	 * analysed, and grouping it in anyway would encode procedures that are never executed.
 	 */
 	public List<Set<String>> getSccsCalleeFirst(final Collection<String> scope) {
 		final Set<String> inScope = new LinkedHashSet<>(scope);
-		final DefaultSccComputation<String> sccComputation =
-				new DefaultSccComputation<>(mLogger, node -> calleesInside(node, inScope).iterator(), inScope.size(),
-						inScope);
+		final DefaultSccComputation<String> sccComputation = new DefaultSccComputation<>(mLogger,
+				node -> calleesInside(node, inScope).iterator(), inScope.size(), inScope);
 		final List<Set<String>> result = new ArrayList<>();
 		for (final StronglyConnectedComponent<String> comp : sccComputation.getSCCs()) {
 			result.add(comp.getNodes());
@@ -146,9 +145,8 @@ public final class ProcedureCallGraph {
 	 */
 	public List<Set<String>> getRecursiveSccs(final Collection<String> scope) {
 		final Set<String> inScope = new LinkedHashSet<>(scope);
-		final DefaultSccComputation<String> sccComputation =
-				new DefaultSccComputation<>(mLogger, node -> calleesInside(node, inScope).iterator(), inScope.size(),
-						inScope);
+		final DefaultSccComputation<String> sccComputation = new DefaultSccComputation<>(mLogger,
+				node -> calleesInside(node, inScope).iterator(), inScope.size(), inScope);
 		final List<Set<String>> result = new ArrayList<>();
 		for (final StronglyConnectedComponent<String> ball : sccComputation.getBalls()) {
 			result.add(ball.getNodes());
@@ -195,10 +193,10 @@ public final class ProcedureCallGraph {
 
 	/**
 	 * States in {@code scopeStates} with an outgoing return transition to at least one of {@code callSites} - a
-	 * procedure's own normal-return points, call-site-agnostic (reused as the FINAL set for every caller's virtual
-	 * edge into this procedure). {@code callSites} is every call site anywhere in the automaton that is known to
-	 * call this procedure, so this is sound and complete without needing to query the automaton for "any return
-	 * transition regardless of hier", which its API does not expose directly.
+	 * procedure's own normal-return points, call-site-agnostic (reused as the FINAL set for every caller's virtual edge
+	 * into this procedure). {@code callSites} is every call site anywhere in the automaton that is known to call this
+	 * procedure, so this is sound and complete without needing to query the automaton for "any return transition
+	 * regardless of hier", which its API does not expose directly.
 	 */
 	public static <LETTER extends IAction, STATE> Set<STATE> computeExitStates(
 			final INestedWordAutomaton<LETTER, STATE> abstraction, final Set<STATE> scopeStates,
@@ -227,8 +225,8 @@ public final class ProcedureCallGraph {
 	}
 
 	/**
-	 * The formula of a virtual call edge: the whole call-to-return span of one call site, i.e. the parameter
-	 * assignment of the call, the callee's summary and the assignment of the return, composed by
+	 * The formula of a virtual call edge: the whole call-to-return span of one call site, i.e. the parameter assignment
+	 * of the call, the callee's summary and the assignment of the return, composed by
 	 * {@link TransFormulaUtils#sequentialCompositionWithCallAndReturn} - the primitive that gets the scoping of
 	 * oldvars, modifiable globals and the callee's locals right, and the same one the rest of this codebase (e.g.
 	 * {@code IcfgEdgeBuilder}) uses for this composition.

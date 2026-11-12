@@ -44,27 +44,27 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 
 /**
- * The states of a nested word automaton that can still matter for reachability: those from which an error
- * (accepting) state is reachable, those from which their procedure can return, and the initial states.
+ * The states of a nested word automaton that can still matter for reachability: those from which an error (accepting)
+ * state is reachable, those from which their procedure can return, and the initial states.
  * <p>
- * Every other state is a dead end. No path to an error runs through it, and none through a call that returns,
- * so leaving it out of the encoding changes no verdict. What it saves is structure: an infinite loop that only
- * cuts off a path - {@code ldv_stop}, the {@code while(1);} of {@code ldv_assume} or {@code abort} - is a loop of
- * the procedure, so the procedure had no loop-free summary and was unfolded at every call site, and so was every
- * procedure that calls it. Without its dead states such a procedure is loop-free, or has no state at all if it
- * never returns, and a call to it is a dead end as well.
+ * Every other state is a dead end. No path to an error runs through it, and none through a call that returns, so
+ * leaving it out of the encoding changes no verdict. What it saves is structure: an infinite loop that only cuts off a
+ * path - {@code ldv_stop}, the {@code while(1);} of {@code ldv_assume} or {@code abort} - is a loop of the procedure,
+ * so the procedure had no loop-free summary and was unfolded at every call site, and so was every procedure that calls
+ * it. Without its dead states such a procedure is loop-free, or has no state at all if it never returns, and a call to
+ * it is a dead end as well.
  * <p>
- * The analysis is interprocedural and over-approximates both properties, which keeps more states than necessary
- * but never too few:
+ * The analysis is interprocedural and over-approximates both properties, which keeps more states than necessary but
+ * never too few:
  * <ul>
- * <li><b>returns</b>: a state with a return transition; an internal predecessor of one that returns; a call site
- * whose callee returns from its entry state and that has a return successor that returns.
+ * <li><b>returns</b>: a state with a return transition; an internal predecessor of one that returns; a call site whose
+ * callee returns from its entry state and that has a return successor that returns.
  * <li><b>reaches an error</b>: an accepting state; an internal predecessor of one that reaches an error; a call site
- * whose callee reaches an error from its entry state; a call site whose callee returns and that has a return
- * successor that reaches an error.
+ * whose callee reaches an error from its entry state; a call site whose callee returns and that has a return successor
+ * that reaches an error.
  * </ul>
- * Whether a callee that returns from its entry state returns through the very exit a return transition leaves from
- * is not checked, so a call site may be kept although that one return is impossible.
+ * Whether a callee that returns from its entry state returns through the very exit a return transition leaves from is
+ * not checked, so a call site may be kept although that one return is impossible.
  *
  * @author Max Barth (max.barth@lmu.de)
  */
@@ -75,8 +75,8 @@ public final class LiveStates {
 	}
 
 	/** @return the live states of {@code abstraction}, see the class javadoc */
-	public static <LETTER extends IAction, STATE> Set<STATE> compute(
-			final INestedWordAutomaton<LETTER, STATE> abstraction) {
+	public static <LETTER extends IAction, STATE> Set<STATE>
+			compute(final INestedWordAutomaton<LETTER, STATE> abstraction) {
 		final Map<STATE, List<STATE>> callSitesByEntry = new HashMap<>();
 		final Map<STATE, List<STATE>> entriesByCallSite = new HashMap<>();
 		final Map<STATE, List<STATE>> callSitesByReturnSite = new HashMap<>();

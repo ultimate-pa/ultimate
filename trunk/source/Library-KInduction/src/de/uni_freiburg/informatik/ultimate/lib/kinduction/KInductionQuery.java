@@ -33,6 +33,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem.StepVars;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
@@ -42,8 +44,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem.StepVars;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 
 /**
  * The queries of k-induction on a {@link PcTransitionSystem}: the base and the step case for some {@code k},
@@ -114,7 +114,9 @@ public final class KInductionQuery<STATE> {
 			mAssertedDagSize += step.dagSize();
 		}
 
-		/** Asserts the first {@code count} steps of this group. With the steps in the solver, that means all of them. */
+		/**
+		 * Asserts the first {@code count} steps of this group. With the steps in the solver, that means all of them.
+		 */
 		private void assertSteps(final int count) {
 			if (mKeepStepsInSolver) {
 				if (mGuard != null) {
@@ -201,8 +203,8 @@ public final class KInductionQuery<STATE> {
 	}
 
 	/**
-	 * Declares everything the query for {@code k} needs: the steps up to {@code k}, the pc constants and the invariants.
-	 * Must be called before the {@code push} of the query.
+	 * Declares everything the query for {@code k} needs: the steps up to {@code k}, the pc constants and the
+	 * invariants. Must be called before the {@code push} of the query.
 	 *
 	 * @param invariants
 	 *            pc node of a loop head -> its invariant
@@ -241,8 +243,8 @@ public final class KInductionQuery<STATE> {
 					substitution.put(var.getValue(), mConstants.var(var.getKey(), j));
 				}
 				final Term instantiated = PureSubstitution.apply(mMgdScript, substitution, entry.getValue().term());
-				final Term atHead = SmtUtils.binaryEquality(script, mConstants.pc(j),
-						mSystem.pcValue(script, entry.getKey()));
+				final Term atHead =
+						SmtUtils.binaryEquality(script, mConstants.pc(j), mSystem.pcValue(script, entry.getKey()));
 				result.add(SmtUtils.implies(script, atHead, instantiated));
 			}
 		}

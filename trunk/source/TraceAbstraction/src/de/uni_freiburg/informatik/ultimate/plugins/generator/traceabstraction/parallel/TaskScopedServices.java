@@ -52,9 +52,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * that once the task is done: above all the solvers of the task's trace checks, each of which is an external process.
  * <p>
  * The sequential CEGAR loop does the same with one marker of the toolchain storage per iteration
- * ({@link IToolchainStorage#pushMarker(Object)}). The workers cannot use markers: the marker stack belongs to the
- * whole toolchain, and the main thread and the other workers put storables into it at the same time. Without this,
- * every checked counterexample left a solver process running until the end of the CEGAR loop.
+ * ({@link IToolchainStorage#pushMarker(Object)}). The workers cannot use markers: the marker stack belongs to the whole
+ * toolchain, and the main thread and the other workers put storables into it at the same time. Without this, every
+ * checked counterexample left a solver process running until the end of the CEGAR loop.
  *
  * @author Max Barth (max.barth@lmu.de)
  */
@@ -129,8 +129,8 @@ public final class TaskScopedServices implements IUltimateServiceProvider {
 	}
 
 	/**
-	 * The toolchain storage, which in addition records the keys put through it. Solver processes remove themselves
-	 * from their own threads when they end, so the record is synchronized.
+	 * The toolchain storage, which in addition records the keys put through it. Solver processes remove themselves from
+	 * their own threads when they end, so the record is synchronized.
 	 */
 	private static final class TaskStorage implements IToolchainStorage {
 

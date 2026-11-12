@@ -238,8 +238,7 @@ public final class TAPreferences {
 		mParallelCegarLoop = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLEL_CEGAR_LOOP);
 		mNumTaWorkers = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_NUM_TA_WORKERS);
 		mNumKInductionWorkers = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_NUM_KINDUCTION_WORKERS);
-		mKInductionSolverTimeout =
-				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_SOLVER_TIMEOUT);
+		mKInductionSolverTimeout = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_SOLVER_TIMEOUT);
 		mKInductionWitnessTimeout =
 				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_WITNESS_TIMEOUT);
 		mTaRetirementHeap = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_TA_RETIREMENT_HEAP);
@@ -248,8 +247,7 @@ public final class TAPreferences {
 		mProbationMinimum = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_PROBATION_MINIMUM);
 		mKInductionSolverRestart =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_SOLVER_RESTART);
-		mInterpolantInvariants =
-				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_INVARIANTS);
+		mInterpolantInvariants = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_INVARIANTS);
 		mSequentialKInductionCegarLoop =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEQUENTIAL_KINDUCTION_CEGAR_LOOP);
 		mSequentialTaTimeLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_SEQUENTIAL_TA_TIME_LIMIT);
@@ -732,8 +730,8 @@ public final class TAPreferences {
 	}
 
 	/**
-	 * @return how many times longer than the previous query of its kind a query of k-induction may run before it is
-	 *         on probation
+	 * @return how many times longer than the previous query of its kind a query of k-induction may run before it is on
+	 *         probation
 	 */
 	public int getProbationFactor() {
 		return mProbationFactor;

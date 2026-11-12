@@ -32,10 +32,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -104,8 +103,8 @@ public interface IInvariantSupplier<STATE> {
 	}
 
 	/**
-	 * Called by k-induction once its transition system is built, before its first query, so that a supplier that
-	 * checks its candidates on the same encoding can take a copy instead of building it again.
+	 * Called by k-induction once its transition system is built, before its first query, so that a supplier that checks
+	 * its candidates on the same encoding can take a copy instead of building it again.
 	 *
 	 * @param system
 	 *            the transition system; its formulas belong to {@code script}, so k-induction keeps using them

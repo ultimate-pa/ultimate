@@ -45,12 +45,20 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery.Invariant;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery.Kind;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CounterSort;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.IndexedConstantVars;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem.StepVars;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystemFactory;
+import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.ProcedureSummaries;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -73,15 +81,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery.Invariant;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionQuery.Kind;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem.StepVars;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.ProcedureSummaries;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystemFactory;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CounterSort;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.PcTransitionSystem;
-import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.IndexedConstantVars;
 
 /**
  * k-induction on a nested word automaton (path program or abstraction) that represents a program with any number of
@@ -116,9 +115,9 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.IndexedConsta
  * nested one. It is assumed in every unrolled state where {@code pc} is that loop head, in the base and the step case.
  * This only prunes the search and can make a loop inductive that is not k-inductive on its own, but a wrong invariant
  * makes the result wrong. An invariant that mentions a variable that occurs in no transition is dropped, which is
- * always sound. With probation, the supplier watches how long the queries take and may interrupt one that an
- * invariant made slow, after publishing a better invariant. k-induction then takes the answer of the supplier's
- * probe, or asks the query again for a violation (see {@link #answer}).
+ * always sound. With probation, the supplier watches how long the queries take and may interrupt one that an invariant
+ * made slow, after publishing a better invariant. k-induction then takes the answer of the supplier's probe, or asks
+ * the query again for a violation (see {@link #answer}).
  *
  * @param <LETTER>
  *            letter type
@@ -191,8 +190,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 */
 	public KInduction(final IUltimateServiceProvider services, final ILogger logger, final CfgSmtToolkit csToolkit,
 			final INestedWordAutomaton<LETTER, STATE> abstraction,
-			final IInvariantSupplier<CallNode<STATE>> invariantSupplier, final boolean restartSolverAfterInterrupt)
-			throws AutomataLibraryException, InterruptedException {
+			final IInvariantSupplier<CallNode<STATE>> invariantSupplier, final boolean restartSolverAfterInterrupt) {
 		this(services, logger, csToolkit, abstraction, null, invariantSupplier, restartSolverAfterInterrupt);
 	}
 
@@ -204,13 +202,13 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 *            the transition system of {@code abstraction} on the script of {@code csToolkit}, see
 	 *            {@link #buildTransitionSystem}, or {@code null} to build it here
 	 * @param restartSolverAfterInterrupt
-	 *            see {@link #KInduction(IUltimateServiceProvider, ILogger, CfgSmtToolkit, INestedWordAutomaton,
-	 *            IInvariantSupplier, boolean)}
+	 *            see
+	 *            {@link #KInduction(IUltimateServiceProvider, ILogger, CfgSmtToolkit, INestedWordAutomaton, IInvariantSupplier, boolean)}
 	 */
 	public KInduction(final IUltimateServiceProvider services, final ILogger logger, final CfgSmtToolkit csToolkit,
-			final INestedWordAutomaton<LETTER, STATE> abstraction, final PcTransitionSystemFactory.Result<STATE> encoding,
-			final IInvariantSupplier<CallNode<STATE>> invariantSupplier, final boolean restartSolverAfterInterrupt)
-			throws AutomataLibraryException, InterruptedException {
+			final INestedWordAutomaton<LETTER, STATE> abstraction,
+			final PcTransitionSystemFactory.Result<STATE> encoding,
+			final IInvariantSupplier<CallNode<STATE>> invariantSupplier, final boolean restartSolverAfterInterrupt) {
 		mAbstraction = abstraction;
 		mCsToolkit = csToolkit;
 		mWorkerMgdScript = csToolkit.getManagedScript();
@@ -240,7 +238,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 		SAFE, UNSAFE, UNKNOWN
 	}
 
-	private void run(final PcTransitionSystemFactory.Result<STATE> prebuilt) throws AutomataLibraryException {
+	private void run(final PcTransitionSystemFactory.Result<STATE> prebuilt) {
 		mLogger.info("KInduction: starting k-induction");
 		// Building the loop tree composes transition formulas, which declares constants for their aux vars and thus
 		// locks the script itself. So the tree has to be complete before we take the lock for the solver queries.
@@ -263,14 +261,14 @@ public class KInduction<LETTER extends IAction, STATE> {
 		mLogger.info(
 				"KInduction: transition system with %d pc value(s), %d edge(s), %d variable(s), %d loop head(s), "
 						+ "counters of sort %s",
-				mSystem.getNumNodes(), mSystem.getNumEdges(), mSystem.getVars().size(),
-				mSystem.getHeadNodes().size(), mSystem.getCounterSort());
+				mSystem.getNumNodes(), mSystem.getNumEdges(), mSystem.getVars().size(), mSystem.getHeadNodes().size(),
+				mSystem.getCounterSort());
 		mLogger.info("KInduction: encoding statistics: %s", mSystem.getStatistics());
 
 		mWorkerMgdScript.lock(mKILock);
 		try {
-			mConstants = new IndexedConstantVars(mWorkerMgdScript.getScript(), mIndexedConstantsWorkerScript,
-					"ki", mSystem.getCounterSort());
+			mConstants = new IndexedConstantVars(mWorkerMgdScript.getScript(), mIndexedConstantsWorkerScript, "ki",
+					mSystem.getCounterSort());
 			mQuery = new KInductionQuery<>(mSystem, mWorkerMgdScript, mKILock, mConstants, true);
 			if (mProbation) {
 				final Script script = mWorkerMgdScript.getScript();
@@ -364,8 +362,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 			// them, and a step case that is unsat with weaker invariants is unsat with stronger ones; sat only means
 			// to go on with k + 1. Only a violation is asked again, since its witness is read from this solver's model.
 			if (probed.isPresent() && !(kind == Kind.BASE && probed.get() == LBool.SAT)) {
-				mLogger.info("KInduction: the invariant supplier aborted the %s case at k=%d and answered it: %s",
-						kind, k, probed.get());
+				mLogger.info("KInduction: the invariant supplier aborted the %s case at k=%d and answered it: %s", kind,
+						k, probed.get());
 				return probed.get();
 			}
 			mLogger.info("KInduction: the invariant supplier aborted the %s case at k=%d, asking it again", kind, k);
@@ -417,8 +415,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 			// The solver may have answered the interrupt just before it was killed for being too slow.
 			if (ExternalSolverInterrupter.wasKilled(mWorkerMgdScript.getScript())
 					&& !restartSolverAfterInterrupt("killed after answering the interrupt")) {
-				throw new SMTLIBException("the solver of k-induction was killed after an interrupt, but it may not "
-						+ "be restarted");
+				throw new SMTLIBException(
+						"the solver of k-induction was killed after an interrupt, but it may not " + "be restarted");
 			}
 			return null;
 		}
@@ -447,12 +445,12 @@ public class KInduction<LETTER extends IAction, STATE> {
 
 	/**
 	 * Reads the chain of cut-graph states that the model of a satisfiable base case takes in every step. Must be called
-	 * after {@code checkSat} returned {@code sat} and before the {@code pop} of that query. FINAL only stutters, so a step
-	 * that starts there has no chain.
+	 * after {@code checkSat} returned {@code sat} and before the {@code pop} of that query. FINAL only stutters, so a
+	 * step that starts there has no chain.
 	 * <p>
-	 * The violation is proved by the {@code sat} alone, the chains only make its witness. So a chain that cannot be read
-	 * is null in the result, and none at all is null, with the first reason in {@link #mChainFailure}: the witness then
-	 * says less (see {@link KInductionWaypoints.Level}), but the verdict stands. A timeout still ends k-induction.
+	 * The violation is proved by the {@code sat} alone, the chains only make its witness. So a chain that cannot be
+	 * read is null in the result, and none at all is null, with the first reason in {@link #mChainFailure}: the witness
+	 * then says less (see {@link KInductionWaypoints.Level}), but the verdict stands. A timeout still ends k-induction.
 	 */
 	private List<List<CallNode<STATE>>> readChains(final int k) {
 		final Script script = mWorkerMgdScript.getScript();
@@ -493,7 +491,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * the formulas of a {@code get-value} differently from how it got them, so that an answer about several compound
 	 * formulas cannot be told apart.
 	 */
-	private boolean holdsInModel(final Script script, final Term formula) {
+	private static boolean holdsInModel(final Script script, final Term formula) {
 		if (SmtUtils.isTrueLiteral(formula) || SmtUtils.isFalseLiteral(formula)) {
 			return SmtUtils.isTrueLiteral(formula);
 		}
@@ -521,7 +519,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 		return pcValues;
 	}
 
-	private Map<Term, Term> getValues(final Script script, final Collection<Term> terms) {
+	private static Map<Term, Term> getValues(final Script script, final Collection<Term> terms) {
 		try {
 			// Not ManagedScript.getValue: SmtUtils normalizes what the solver returns, e.g. z3's (- 1) to -1.
 			return SmtUtils.getValues(script, terms);
@@ -580,8 +578,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 		for (int j = 0; j < mProvedK; j++) {
 			conjuncts.add(step.apply(j, vars));
 		}
-		conjuncts.add(SmtUtils.binaryEquality(script, vars.pc(mProvedK),
-				mSystem.pcValue(script, PcTransitionSystem.FINAL)));
+		conjuncts.add(
+				SmtUtils.binaryEquality(script, vars.pc(mProvedK), mSystem.pcValue(script, PcTransitionSystem.FINAL)));
 		final Term reachError = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, vars.getFreshVariables(),
 				SmtUtils.and(script, conjuncts));
 		return SmtUtils.not(script, reachError);
@@ -648,19 +646,19 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * <li>For k = 1 without injected invariants, the step case assumed nothing: {@code true} at every loop head is
 	 * inductive and proves the program. Without supplied candidates (step 2), that is the result.
 	 * <li>The candidates are the conjuncts of the injected invariants the deciding step case assumed, and the invariant
-	 * supplier's candidates for witness invariants ({@link IInvariantSupplier#getWitnessCandidates}), which the proof did
-	 * not need but make the witness stronger. {@link #houdini} keeps the largest inductive subset, which contains the
-	 * injected invariants if they are inductive on their own. For k = 1 they prove the program.
-	 * <li>For k &gt; 1 they usually do not. Then each node gets {@code noErrorWithinK} as further candidates, computed by
-	 * quantifier elimination. From a state that satisfies {@code J && noErrorWithinK}, a successor and the next k - 1
-	 * states cannot be errors, since they are within k steps, the injected invariants J hold along the way, since they
-	 * are inductive themselves, and the step case says that the k-th state cannot be an error either. So together they
-	 * are 1-inductive, and {@link #houdini} checks it. The quantifier elimination gets
-	 * {@link #WITNESS_QE_TIMEOUT_MILLIS}; if it does not end in time, or the timer runs out during this step, the result
-	 * of step 2 stands.
+	 * supplier's candidates for witness invariants ({@link IInvariantSupplier#getWitnessCandidates}), which the proof
+	 * did not need but make the witness stronger. {@link #houdini} keeps the largest inductive subset, which contains
+	 * the injected invariants if they are inductive on their own. For k = 1 they prove the program.
+	 * <li>For k &gt; 1 they usually do not. Then each node gets {@code noErrorWithinK} as further candidates, computed
+	 * by quantifier elimination. From a state that satisfies {@code J && noErrorWithinK}, a successor and the next k -
+	 * 1 states cannot be errors, since they are within k steps, the injected invariants J hold along the way, since
+	 * they are inductive themselves, and the step case says that the k-th state cannot be an error either. So together
+	 * they are 1-inductive, and {@link #houdini} checks it. The quantifier elimination gets
+	 * {@link #WITNESS_QE_TIMEOUT_MILLIS}; if it does not end in time, or the timer runs out during this step, the
+	 * result of step 2 stands.
 	 * </ol>
-	 * The result of every step that is done is also kept for {@link #getBestWitnessInvariants()}, for a caller that stops
-	 * waiting: quantifier elimination does not always notice the timer.
+	 * The result of every step that is done is also kept for {@link #getBestWitnessInvariants()}, for a caller that
+	 * stops waiting: quantifier elimination does not always notice the timer.
 	 * <p>
 	 * Must be called after the constructor, i.e. when the script is not locked: quantifier elimination uses it.
 	 * <p>
@@ -669,13 +667,13 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * conjuncts out of scope there are left out, and the call nodes of a state get the disjunction of their invariants.
 	 *
 	 * @param services
-	 *            for the quantifier elimination and the inductiveness checks, whose timer bounds how long this may take:
-	 *            once it runs out, a running check-sat is interrupted, which needs an external solver
+	 *            for the quantifier elimination and the inductiveness checks, whose timer bounds how long this may
+	 *            take: once it runs out, a running check-sat is interrupted, which needs an external solver
 	 * @param inScope
 	 *            whether a variable may occur in the invariant of a loop head state, i.e. is in scope at its location
 	 * @return for every loop head state its invariant, quantifier-free and native to the worker's
-	 *         {@link ManagedScript}, with whether they prove the program, or empty if the program was not proven safe or
-	 *         the solver could not decide whether the candidates are inductive
+	 *         {@link ManagedScript}, with whether they prove the program, or empty if the program was not proven safe
+	 *         or the solver could not decide whether the candidates are inductive
 	 * @throws ToolchainCanceledException
 	 *             if the timer ran out before any annotation was proven inductive
 	 */
@@ -754,8 +752,9 @@ public class KInduction<LETTER extends IAction, STATE> {
 	}
 
 	/**
-	 * @return the conjuncts of the injected invariants the deciding step case assumed, per pc node, without {@code true}
-	 *         and without those that mention an old variable, which a witness cannot express at a loop head
+	 * @return the conjuncts of the injected invariants the deciding step case assumed, per pc node, without
+	 *         {@code true} and without those that mention an old variable, which a witness cannot express at a loop
+	 *         head
 	 */
 	private Map<Integer, Set<Term>> injectedCandidates() {
 		final Map<Integer, Set<Term>> candidates = new LinkedHashMap<>();
@@ -836,7 +835,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 		} catch (final InterruptedException e) {
 			thread.interrupt();
 			Thread.currentThread().interrupt();
-			throw new ToolchainCanceledException(getClass(), "waiting for the quantifier elimination of noErrorWithinK");
+			throw new ToolchainCanceledException(getClass(),
+					"waiting for the quantifier elimination of noErrorWithinK");
 		} catch (final ExecutionException e) {
 			if (e.getCause() instanceof final RuntimeException runtime) {
 				throw runtime;
@@ -884,8 +884,10 @@ public class KInduction<LETTER extends IAction, STATE> {
 				addConjuncts(result, node, eliminated);
 			}
 		} catch (final ToolchainCanceledException e) {
-			mLogger.warn("KInduction witness: the quantifier elimination of noErrorWithinK ran out of its %d ms after "
-					+ "%d ms, keeping what it found so far", WITNESS_QE_TIMEOUT_MILLIS, elapsedMillis(phaseStart));
+			mLogger.warn(
+					"KInduction witness: the quantifier elimination of noErrorWithinK ran out of its %d ms after "
+							+ "%d ms, keeping what it found so far",
+					WITNESS_QE_TIMEOUT_MILLIS, elapsedMillis(phaseStart));
 		}
 		return result;
 	}
@@ -990,7 +992,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 				mWorkerMgdScript.pop(mKILock, 1);
 			}
 			final boolean safe = safety == LBool.UNSAT;
-			mLogger.info("KInduction witness: %s: %d of %d candidate conjunct(s) inductive after %d round(s), %s, %d ms",
+			mLogger.info(
+					"KInduction witness: %s: %d of %d candidate conjunct(s) inductive after %d round(s), %s, %d ms",
 					phase, countConjuncts(remaining), numCandidates, rounds,
 					safe ? "they prove the program" : "they do not prove the program (" + safety + ")",
 					elapsedMillis(start));
@@ -1050,8 +1053,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 			}
 		}
 		if (!dropped) {
-			throw new AssertionError("the model satisfies the query, but gives the flag of every candidate the value "
-					+ "false");
+			throw new AssertionError(
+					"the model satisfies the query, but gives the flag of every candidate the value " + "false");
 		}
 	}
 
@@ -1098,17 +1101,17 @@ public class KInduction<LETTER extends IAction, STATE> {
 		// Leaving out a conjunct or joining the invariants of several call nodes weakens the published invariants, and
 		// then they need not prove the program any more, even if the annotation did. Without any conjunct, every loop
 		// head gets true either way, which proves the program if the annotation did.
-		final boolean proving = safe && (annotation.values().stream().allMatch(Set::isEmpty)
-				|| outOfScope == 0 && severalCallNodes == 0);
+		final boolean proving = safe
+				&& (annotation.values().stream().allMatch(Set::isEmpty) || outOfScope == 0 && severalCallNodes == 0);
 		mBestWitnessInvariants = new WitnessInvariants<>(Collections.unmodifiableMap(result), proving);
-		mLogger.info("KInduction witness: %d of %d loop head(s) non-trivial, from k=%d, %s, after %d ms "
-				+ "(%d conjunct(s) out of scope left out, %d loop head(s) with several call nodes)", nonTrivial,
-				result.size(), mProvedK,
+		mLogger.info(
+				"KInduction witness: %d of %d loop head(s) non-trivial, from k=%d, %s, after %d ms "
+						+ "(%d conjunct(s) out of scope left out, %d loop head(s) with several call nodes)",
+				nonTrivial, result.size(), mProvedK,
 				proving ? "proving the program"
 						: safe ? "proving the program before the out-of-scope and call-node weakening"
 								: "not proving the program",
-				elapsedMillis(start),
-				outOfScope, severalCallNodes);
+				elapsedMillis(start), outOfScope, severalCallNodes);
 		return mBestWitnessInvariants;
 	}
 
@@ -1122,8 +1125,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 
 	/**
 	 * A check-sat that ends with the timer of {@code services}. The solver's own per-query timeout is that of
-	 * k-induction, up to an hour, and a running check-sat never looks at the timer, so a watchdog thread interrupts
-	 * it once the timer runs out. Must be called with the lock held.
+	 * k-induction, up to an hour, and a running check-sat never looks at the timer, so a watchdog thread interrupts it
+	 * once the timer runs out. Must be called with the lock held.
 	 *
 	 * @param task
 	 *            what the check is for, reported if the timer ran out
@@ -1297,5 +1300,6 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * Package private class used by KInduction to lock the {@link ManagedScript}.
 	 */
 	static class KILock {
+		// only its identity is used
 	}
 }

@@ -479,12 +479,12 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		mVisitedPairs.clear(); // reset visited Pairs, then add start of subsearch
 		if (counterexamples.isEmpty()) {
 			// Only from the start being explored: no active counterexample begins there. An automaton with several
-			// initial states, e.g. a library without an entry procedure, has other starts that active ones begin at, and
-			// the shortest run from those would be one of them.
+			// initial states, e.g. a library without an entry procedure, has other starts that active ones begin at,
+			// and the shortest run from those would be one of them.
 			final Predicate<STATE> goals = mGoalStates != null ? mGoalStates::contains : mOperand::isFinal;
-			final IsEmptyHeuristic<LETTER, STATE> runsearch = new IsEmptyHeuristic<>(mServices, mOperand,
-					Collections.singleton(mCurrentStart), a -> false, goals,
-					IHeuristic.getHeuristic(AStarHeuristic.ZERO, null, 0), new ArrayList<>(mCurrentPrefix));
+			final IsEmptyHeuristic<LETTER, STATE> runsearch =
+					new IsEmptyHeuristic<>(mServices, mOperand, Collections.singleton(mCurrentStart), a -> false, goals,
+							IHeuristic.getHeuristic(AStarHeuristic.ZERO, null, 0), new ArrayList<>(mCurrentPrefix));
 			final NestedRun<LETTER, STATE> run = runsearch.getNestedRun();
 			if (run == null) {
 				return run;
