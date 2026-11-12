@@ -209,7 +209,7 @@ public class Elim1Store {
 		// might be part of an index
 		inferCellEqualitiesViaCongruence(mMgdScript, eliminatee, indexEqualityInformation, equalityInformation);
 
-		final List<ArrayIndex> selectIndexRepresentatives = new ArrayList<>();
+		final Set<ArrayIndex> selectIndexRepresentatives = new HashSet<>();
 		for (final ArrayIndex selectIndex : selectIndices) {
 			final ArrayIndex selectIndexRepresentative = indexEqualityInformation.getRepresentative(selectIndex);
 			selectIndexRepresentatives.add(selectIndexRepresentative);
@@ -260,8 +260,8 @@ public class Elim1Store {
 		doubleCaseJuncts.addAll(wc.getSecond());
 
 		final Pair<List<Term>, List<Term>> cc =
-				constructIndexValueConnection(selectIndexRepresentatives, indexEqualityInformation, mMgdScript,
-						indexMapping, oldCellMapping, eliminatee, quantifier, equalityInformation, aiem);
+				constructIndexValueConnection(new ArrayList<>(selectIndexRepresentatives), indexEqualityInformation,
+						mMgdScript, indexMapping, oldCellMapping, eliminatee, quantifier, equalityInformation, aiem);
 		singleCaseJuncts.addAll(cc.getFirst());
 		doubleCaseJuncts.addAll(cc.getSecond());
 
@@ -521,7 +521,7 @@ public class Elim1Store {
 	 * @param quantifier
 	 * @param script
 	 */
-	private static Map<ArrayIndex, Term> constructOldCellValueMapping(final List<ArrayIndex> selectIndexRepresentatives,
+	private static Map<ArrayIndex, Term> constructOldCellValueMapping(final Set<ArrayIndex> selectIndexRepresentatives,
 			final Map<MultiDimensionalNestedStore, Term> newArrayMapping,
 			final ThreeValuedEquivalenceRelation<Term> equalityInformation,
 			final Map<ArrayIndex, ArrayIndex> indexMapping, final AuxVarConstructor auxVarConstructor,
@@ -909,7 +909,7 @@ public class Elim1Store {
 	 * @param aiem
 	 */
 	private static Pair<List<Term>, List<Term>> constructWriteConstraints2(
-			final List<ArrayIndex> selectIndexRepresentatives,
+			final Set<ArrayIndex> selectIndexRepresentatives,
 			final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation, final ManagedScript mgdScript,
 			final Map<ArrayIndex, ArrayIndex> indexMapping, final Map<ArrayIndex, Term> oldCellMapping,
 			final TermVariable eliminatee, final int quantifier,
