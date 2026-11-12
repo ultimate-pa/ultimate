@@ -112,8 +112,6 @@ public class ElimStorePlain {
 		} else {
 			eliminatee = eTask.getEliminatees().iterator().next();
 		}
-		final Term polarizedContext = QuantifierUtils.negateIfUniversal(services, mgdScript, eTask.getQuantifier(),
-				eTask.getContext().getCriticalConstraint());
 		final ArrayOccurrenceAnalysis aoa =
 				new ArrayOccurrenceAnalysis(mgdScript.getScript(), eTask.getTerm(), eliminatee);
 		if (!aoa.getValueOfStore().isEmpty() || !aoa.getOtherFunctionApplications().isEmpty()) {
@@ -144,8 +142,8 @@ public class ElimStorePlain {
 			final DerPreprocessor de;
 			{
 				final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
-				final ArrayIndexEqualityManager aiem =
-						new ArrayIndexEqualityManager(tver, polarizedContext, eTask.getQuantifier(), logger, mgdScript);
+				final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(tver,
+						eTask.getContext().getCriticalConstraint(), logger, mgdScript);
 				try {
 					de = new DerPreprocessor(services, mgdScript, eTask.getQuantifier(), eliminatee, eTask.getTerm(),
 							aoa.getDerRelations(eTask.getQuantifier()), aiem);
@@ -197,7 +195,7 @@ public class ElimStorePlain {
 		// Step 3: select-over-store preprocessing
 		final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
 		final ArrayIndexEqualityManager aiem =
-				new ArrayIndexEqualityManager(tver, polarizedContext, eTask.getQuantifier(), logger, mgdScript);
+				new ArrayIndexEqualityManager(tver, eTask.getContext().getCriticalConstraint(), logger, mgdScript);
 		ArrayOccurrenceAnalysis sosAoa = aoaAfterAntiDerPreprocessing;
 		Term sosTerm = termAfterAntiDerPreprocessing;
 		while (!sosAoa.getArraySelectOverStores().isEmpty()) {
