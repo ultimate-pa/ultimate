@@ -107,8 +107,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * inductive invariants, for at most {@link TAPreferences#getSequentialInvariantTimeLimit()} seconds, on a thread of its
  * own that the main thread waits for.</li>
  * <li><b>k-induction</b> on the abstraction trace abstraction refined so far, with the invariants of the synthesis,
- * or on the initial abstraction if the time limit ended trace abstraction with an abstraction of more states than the
- * initial one,
+ * or on the initial abstraction if the time limit ended trace abstraction with an abstraction of at least as many
+ * states as the initial one,
  * without a time limit of its own unless {@link TAPreferences#getSequentialKInductionTimeLimit()} sets one. A violation
  * is reported by the waypoints of its model, see {@link KInductionWorkerThread#reportWaypoints}; a proof gives the
  * correctness witness, see {@link #useKInductionProof}.</li>
@@ -133,7 +133,7 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 	// k-induction has its copy.
 	private INestedWordAutomaton<L, IPredicate> mInitialAbstraction;
 	// Whether k-induction runs on the initial abstraction, because the time limit of trace abstraction ended it with
-	// an abstraction of more states than the initial one
+	// an abstraction of at least as many states as the initial one
 	private boolean mKInductionOnInitialAbstraction;
 
 	// The ICFG as it was before k-induction's copy of the abstraction attached copies of its edges, see finish()
@@ -182,8 +182,10 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 
 	/**
 	 * Runs the loop of {@link NwaCegarLoop} until it decides the program or its limit of CPU time is up. If the limit
-	 * ends it with an abstraction of more states than the initial abstraction, k-induction runs on the initial
-	 * abstraction: the refinements so far made the encoding of k-induction larger, not smaller.
+	 * ends it with an abstraction of at least as many states as the initial abstraction, k-induction runs on the
+	 * initial abstraction: the refinements so far did not make the encoding of k-induction smaller, and a proof on the
+	 * initial abstraction gives a witness with invariants even if the limit stopped a difference, see
+	 * {@link #useKInductionProof}.
 	 *
 	 * @return whether trace abstraction decided the program, so that its result stands
 	 */
@@ -206,7 +208,7 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 			}
 			mLogger.info("NwaCegarLoopWithKInduction: phase TA ends at its time limit after %d iteration(s) and %d ms "
 					+ "of CPU time", getIteration(), timer.getUsedMillis());
-			mKInductionOnInitialAbstraction = mAbstraction.size() > mInitialAbstraction.size();
+			mKInductionOnInitialAbstraction = mAbstraction.size() >= mInitialAbstraction.size();
 			mLogger.info("NwaCegarLoopWithKInduction: the abstraction of trace abstraction has %d states, the initial "
 					+ "one %d, so k-induction runs on the %s abstraction", mAbstraction.size(),
 					mInitialAbstraction.size(), mKInductionOnInitialAbstraction ? "initial" : "refined");
