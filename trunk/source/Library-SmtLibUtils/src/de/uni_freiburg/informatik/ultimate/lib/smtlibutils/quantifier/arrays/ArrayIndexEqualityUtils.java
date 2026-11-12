@@ -65,7 +65,6 @@ public class ArrayIndexEqualityUtils {
 			if (inconsistencyDetected) {
 				return null;
 			}
-
 		}
 		for (final MultiDimensionalNestedStore arrayStore : stores) {
 			for (final ArrayIndex ai : arrayStore.getIndices()) {
