@@ -1089,7 +1089,7 @@ public class Elim1Store {
 			final Term select1 = SmtUtils.select(mMgdScript.getScript(), mEliminatee, index1);
 			final Term select2 = SmtUtils.select(mMgdScript.getScript(), mEliminatee, index2);
 			final Term eq = SmtUtils.binaryEquality(mMgdScript.getScript(), select1, select2);
-			final Validity cellEqVal = mIncrementalPlicationChecker.checkPlication(eq);
+			final Validity cellEqVal = mIncrementalPlicationChecker.checkImplication(eq);
 			if (cellEqVal == Validity.VALID) {
 				final boolean distinguishworthy1 = processStoreIndex(index1, index2, select2);
 				final boolean distinguishworthy2 = processStoreIndex(index2, index1, select1);
@@ -1110,7 +1110,7 @@ public class Elim1Store {
 				final Term otherSelect) {
 			if (isStoreIndex(storeIndexCandidate)) {
 				final Term storeEq = SmtUtils.binaryEquality(mMgdScript.getScript(), mStoreValue, otherSelect);
-				final Validity storeEqVal = mIncrementalPlicationChecker.checkPlication(storeEq);
+				final Validity storeEqVal = mIncrementalPlicationChecker.checkImplication(storeEq);
 				if (storeEqVal == Validity.VALID) {
 					final Term storeCellEq = SmtUtils.binaryEquality(mMgdScript.getScript(), mStoreValue,
 							mOldCellMapping.get(otherIndex));

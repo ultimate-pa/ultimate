@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 /**
  * Check validity of an implication between two formulas antecedent ==> succedent The check is done incrementally in the
  * sense that we can do it for several succedents. We presume that the succedent may have only variables that occurred
- * in the antecedent (because we have to replace variables by fresh constants and these constants and determined when
+ * in the antecedent (because we have to replace variables by fresh constants and these constants are determined when
  * asserting the antecedent.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -75,18 +75,12 @@ public class IncrementalPlicationChecker {
 		};
 	}
 
-	public enum Plication {
-		IMPLICATION, EXPLICATION
-	}
-
 	private final ManagedScript mMgdScript;
 	private final Term mLhs;
 	private boolean mLhsIsAsserted;
 	private Map<TermVariable, Term> mVar2ConstSubstitution;
-	private final Plication mPlication;
 
-	public IncrementalPlicationChecker(final Plication plication, final ManagedScript mgdScript, final Term lhs) {
-		mPlication = plication;
+	public IncrementalPlicationChecker(final ManagedScript mgdScript, final Term lhs) {
 		mMgdScript = mgdScript;
 		mLhs = lhs;
 		mLhsIsAsserted = false;
@@ -97,12 +91,7 @@ public class IncrementalPlicationChecker {
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
 		mVar2ConstSubstitution = constructVar2ConstSubstitution(lhs);
-
-		final Term assertTerm = switch (mPlication) {
-		case EXPLICATION -> SmtUtils.not(mMgdScript.getScript(), lhs);
-		case IMPLICATION -> lhs;
-		};
-		mMgdScript.assertTerm(this, Substitution.apply(mMgdScript, mVar2ConstSubstitution, assertTerm));
+		mMgdScript.assertTerm(this, Substitution.apply(mMgdScript, mVar2ConstSubstitution, lhs));
 		mLhsIsAsserted = true;
 	}
 
@@ -116,36 +105,20 @@ public class IncrementalPlicationChecker {
 		return substitutionMapping;
 	}
 
-	public Validity checkPlication(final Term rhs) {
+	/**
+	 * Check if the lhs that was passed to the constructor implies rhs.
+	 */
+	public Validity checkImplication(final Term rhs) {
 		if (!mLhsIsAsserted) {
 			assertLhs(mLhs);
 		}
 		mMgdScript.push(this, 1);
 
-		final Term assertTerm = switch (mPlication) {
-		case EXPLICATION -> rhs;
-		case IMPLICATION -> SmtUtils.not(mMgdScript.getScript(), rhs);
-		};
+		final Term assertTerm = SmtUtils.not(mMgdScript.getScript(), rhs);
 		mMgdScript.assertTerm(this, Substitution.apply(mMgdScript, mVar2ConstSubstitution, assertTerm));
 		final LBool isSat = mMgdScript.checkSat(this);
 		mMgdScript.pop(this, 1);
 		return IncrementalPlicationChecker.convertLBool2Validity(isSat);
-	}
-
-	public LBool checkSat(final Term additionalTerm) {
-		if (!mLhsIsAsserted) {
-			assertLhs(mLhs);
-		}
-		mMgdScript.push(this, 1);
-		final Term assertTerm = switch (mPlication) {
-		case EXPLICATION -> additionalTerm;
-		case IMPLICATION -> additionalTerm;
-		// assertTerm = SmtUtils.not(mMgdScript.getScript(), additionalTerm);
-		};
-		mMgdScript.assertTerm(this, Substitution.apply(mMgdScript, mVar2ConstSubstitution, assertTerm));
-		final LBool isSat = mMgdScript.checkSat(this);
-		mMgdScript.pop(this, 1);
-		return isSat;
 	}
 
 	public void unlockSolver() {
