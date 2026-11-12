@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -86,6 +87,7 @@ import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionWaypoints;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.KInductionWaypoints.Level;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding.CallNode;
 import de.uni_freiburg.informatik.ultimate.lib.kinduction.IInvariantSupplier;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Worker thread running {@link KInduction} inside {@link ParallelNwaCegarLoop}'s thread pool. It runs once (see
@@ -267,10 +269,7 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	 */
 	public static <L extends IIcfgTransition<?>> boolean hasOverapproximation(
 			final INestedWordAutomaton<L, IPredicate> abstraction, final ILogger logger) {
-		final List<L> letters = new ArrayList<>(abstraction.getVpAlphabet().getInternalAlphabet());
-		letters.addAll(abstraction.getVpAlphabet().getCallAlphabet());
-		letters.addAll(abstraction.getVpAlphabet().getReturnAlphabet());
-		final var overapproximations = Overapprox.getOverapproximations(letters);
+		final HashRelation<String, ILocation> overapproximations = overapproximations(abstraction);
 		if (overapproximations.isEmpty()) {
 			return false;
 		}
@@ -278,6 +277,18 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 				overapproximations.size(),
 				overapproximations.getDomain().iterator().next());
 		return true;
+	}
+
+	/**
+	 * @return what the letters of {@code abstraction} overapproximate, see {@link #hasOverapproximation}, by the name of
+	 *         the operation
+	 */
+	public static <L extends IIcfgTransition<?>> HashRelation<String, ILocation>
+			overapproximations(final INestedWordAutomaton<L, IPredicate> abstraction) {
+		final List<L> letters = new ArrayList<>(abstraction.getVpAlphabet().getInternalAlphabet());
+		letters.addAll(abstraction.getVpAlphabet().getCallAlphabet());
+		letters.addAll(abstraction.getVpAlphabet().getReturnAlphabet());
+		return Overapprox.getOverapproximations(letters);
 	}
 
 	/**

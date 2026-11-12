@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -53,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -87,6 +89,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantSupplier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.kinduction.KInductionWorkerThread;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -351,7 +354,8 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 			final INestedWordAutomaton<L, IPredicate> kiAbstraction,
 			final PcTransitionSystemFactory.Result<IPredicate> system,
 			final IInvariantSupplier<CallNode<IPredicate>> invariants) throws AutomataLibraryException {
-		final boolean overapproximated = KInductionWorkerThread.hasOverapproximation(kiAbstraction, mLogger);
+		final HashRelation<String, ILocation> overapproximations =
+				KInductionWorkerThread.overapproximations(kiAbstraction);
 		final KInduction<L, IPredicate> kInduction;
 		try {
 			kInduction = new KInduction<>(services, mLogger, kiToolkit, kiAbstraction, system, invariants,
@@ -361,7 +365,7 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 				throw e;
 			}
 			mLogger.info("NwaCegarLoopWithKInduction: phase KI ends at its time limit");
-			addResultForUndecided(Result.USER_LIMIT_TIME, e);
+			addResultForUndecided(Result.USER_LIMIT_TIME, e, null);
 			return;
 		} catch (final InterruptedException e) {
 			Thread.currentThread().interrupt();
@@ -371,24 +375,32 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 				throw e;
 			}
 			mLogger.warn("NwaCegarLoopWithKInduction: phase KI stopped by %s, no verdict", e);
-			addResultForUndecided(Result.UNKNOWN, null);
+			addResultForUndecided(Result.UNKNOWN, null, null);
 			return;
 		}
 		if (kInduction.wasUnkown()) {
 			mLogger.warn("NwaCegarLoopWithKInduction: phase KI ends without a verdict: " + kInduction.getInconclusive());
-			addResultForUndecided(Result.UNKNOWN, null);
+			addResultForUndecided(Result.UNKNOWN, null, null);
 			return;
 		}
 		if (kInduction.isSafe()) {
 			mLogger.info("NwaCegarLoopWithKInduction: phase KI proved the program at k=%d", kInduction.getProvedK());
 			useKInductionProof(kInduction, services, kiToolkit);
-			addResultForUndecided(Result.SAFE, null);
+			addResultForUndecided(Result.SAFE, null, null);
 			return;
 		}
-		if (overapproximated) {
-			mLogger.warn("NwaCegarLoopWithKInduction: phase KI found a violation, but the program is "
-					+ "overapproximated, so it may be spurious; no verdict");
-			addResultForUndecided(Result.UNKNOWN, null);
+		if (!overapproximations.isEmpty()) {
+			// The waypoints miss the Overapprox annotations by which a counterexample would be reported as UNKNOWN,
+			// see KInductionWorkerThread.hasOverapproximation. So the overapproximation is the reason of the UNKNOWN
+			// here, reported as for such a counterexample of trace abstraction: Ultimate.py then retries with the
+			// bit-precise settings, which are precise where these overapproximate.
+			final Entry<String, ILocation> first = overapproximations.iterator().next();
+			final UnprovabilityReason reason =
+					new UnprovabilityReason("overapproximation of " + first.getKey(), first.getValue());
+			mLogger.warn("NwaCegarLoopWithKInduction: phase KI found a violation, but the program has %d "
+					+ "overapproximation(s), so it may be spurious; UNKNOWN because of the %s",
+					overapproximations.size(), reason);
+			addResultForUndecided(Result.UNKNOWN, null, reason);
 			return;
 		}
 		mLogger.info("NwaCegarLoopWithKInduction: phase KI refuted the program");
@@ -400,11 +412,17 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 	/**
 	 * Registers {@code result} for every error location that trace abstraction did not refute. A location whose
 	 * iteration trace abstraction ended at its time limit has TIMEOUT already, which a verdict overrides.
+	 *
+	 * @param limit
+	 *            the limit that was reached, only for a limit result
+	 * @param reasonUnknown
+	 *            why the result is UNKNOWN, only for that result
 	 */
-	private void addResultForUndecided(final Result result, final ToolchainCanceledException limit) {
+	private void addResultForUndecided(final Result result, final ToolchainCanceledException limit,
+			final UnprovabilityReason reasonUnknown) {
 		for (final IcfgLocation errorLoc : mErrorLocs) {
 			if (!mTaRefutedLocations.contains(errorLoc)) {
-				mResultBuilder.addResult(errorLoc, result, null, result.isLimit() ? limit : null, null);
+				mResultBuilder.addResult(errorLoc, result, null, result.isLimit() ? limit : null, reasonUnknown);
 			}
 		}
 	}
