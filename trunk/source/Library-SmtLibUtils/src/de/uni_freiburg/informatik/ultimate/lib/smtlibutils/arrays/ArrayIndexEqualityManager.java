@@ -317,7 +317,7 @@ public class ArrayIndexEqualityManager {
 			result = QuantifierUtils.getAbsorbingElement(script, quantifier);
 			break;
 		case UNKNOWN:
-			result = QuantifierUtils.applyDerOperator(script, quantifier, t1, t2);
+			result = QuantifierUtils.applyAntiDerOperator(script, quantifier, t1, t2);
 			break;
 		default:
 			throw new AssertionError();
