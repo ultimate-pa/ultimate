@@ -199,6 +199,8 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 			if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesWaypoint(letter, x))) {
 				return -1;
 			}
+			// TODO: We should check all the the waypoints (there might be multiple for the target of data-race
+			// witnesses). Then, we should also make getUnmatchedFollowWaypoints stricter again.
 			final Waypoint currentFollowWaypoint = currentSegment.getFollowOrCycleWaypoints().getFirst();
 			// check follow assumption waypoints separately because they can match simultaneously with other waypoints
 			if (currentFollowWaypoint instanceof WaypointAssumption
@@ -286,9 +288,8 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	}
 
 	public List<Waypoint> getUnmatchedFollowWaypoints() {
-		return mWitness.getEntries().stream()
-				.flatMap(x -> ((ViolationSequence) x).getSegments().stream()
-						.flatMap(y -> y.getFollowOrCycleWaypoints().stream()))
+		return mWitness.getEntries().stream().flatMap(
+				x -> ((ViolationSequence) x).getSegments().stream().map(y -> y.getFollowOrCycleWaypoints().getFirst()))
 				.filter(x -> !mMatchedFollowWaypoints.contains(x)).toList();
 	}
 
