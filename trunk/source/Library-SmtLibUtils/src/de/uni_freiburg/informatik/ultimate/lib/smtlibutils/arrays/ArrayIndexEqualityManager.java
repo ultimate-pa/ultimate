@@ -39,6 +39,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Junction;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNe;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -61,6 +64,7 @@ public class ArrayIndexEqualityManager {
 	private final ManagedScript mMgdScript;
 	private final ILogger mLogger;
 	private final HashRelation<Term, Term> mAlreadyCheckedBySolver;
+	private final PolyPoNe mPolyPoNe;
 	final IncrementalPlicationChecker mIea;
 
 	public ArrayIndexEqualityManager(final ThreeValuedEquivalenceRelation<Term> tver, final Term critConstr,
@@ -71,6 +75,14 @@ public class ArrayIndexEqualityManager {
 		mFreeVarsOfContext = Arrays.stream(critConstr.getFreeVars()).collect(Collectors.toSet());
 		mCheckEqualityStatusOnDemand = true;
 		mAlreadyCheckedBySolver = new HashRelation<>();
+
+		mPolyPoNe = new PolyPoNe(mgdScript.getScript(), Junction.AND);
+		mPolyPoNe.add(Arrays.asList(SmtUtils.getConjuncts(critConstr)), false);
+		if (mPolyPoNe.isInconsistent()) {
+			mCritConstrEquivalentToFalse = true;
+			mIea = null;
+			return;
+		}
 
 		mIea = new IncrementalPlicationChecker(mMgdScript, critConstr);
 		final Validity validity = mIea.checkImplication(mMgdScript.getScript().term("false"));
@@ -135,32 +147,48 @@ public class ArrayIndexEqualityManager {
 		if (SmtUtils.isTrueLiteral(eq)) {
 			reportEquality(index1, index2);
 			assert !tver.isInconsistent() : "inconsistent equality information";
-		} else if (SmtUtils.isFalseLiteral(eq)) {
+			return;
+		}
+		if (SmtUtils.isFalseLiteral(eq)) {
 			tver.reportDisequality(index1, index2);
 			assert !tver.isInconsistent() : "inconsistent equality information";
-		} else {
-			final Term neq = SmtUtils.not(mMgdScript.getScript(), eq);
-			final Validity isEqual = iea.checkImplication(eq);
-			if (isEqual == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
-				mLogger.warn("solver failed to check if following equality is implied: " + eq);
+			return;
+		}
+		final PolynomialRelation polyRel = PolynomialRelation.of(mMgdScript.getScript(), eq);
+		if (polyRel != null) {
+			final PolyPoNe.Check check = mPolyPoNe.checkPolyRel(mMgdScript.getScript(), polyRel, false);
+			if (check == PolyPoNe.Check.INCONSISTENT) {
+				tver.reportDisequality(index1, index2);
+				assert !tver.isInconsistent() : "inconsistent equality information";
+				return;
 			}
-			if (isEqual == Validity.VALID) {
+			if (check == PolyPoNe.Check.REDUNDANT) {
 				reportEquality(index1, index2);
 				assert !tver.isInconsistent() : "inconsistent equality information";
-				mLogger.info("detected equality via solver");
-			} else {
-				final Validity notEqualsHolds = iea.checkImplication(neq);
-				if (notEqualsHolds == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
-					mLogger.warn("solver failed to check if following not equals relation is implied: " + eq);
-				}
-
-				if (notEqualsHolds == Validity.VALID) {
-					tver.reportDisequality(index1, index2);
-					assert !tver.isInconsistent() : "inconsistent equality information";
-					mLogger.info("detected not equals via solver");
-				}
+				return;
 			}
 		}
+		final Validity isEqual = iea.checkImplication(eq);
+		if (isEqual == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
+			mLogger.warn("solver failed to check if following equality is implied: " + eq);
+		}
+		if (isEqual == Validity.VALID) {
+			reportEquality(index1, index2);
+			assert !tver.isInconsistent() : "inconsistent equality information";
+			mLogger.info("detected equality via solver");
+			return;
+		}
+		final Term neq = SmtUtils.not(mMgdScript.getScript(), eq);
+		final Validity notEqualsHolds = iea.checkImplication(neq);
+		if (notEqualsHolds == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
+			mLogger.warn("solver failed to check if following not equals relation is implied: " + eq);
+		}
+		if (notEqualsHolds == Validity.VALID) {
+			tver.reportDisequality(index1, index2);
+			assert !tver.isInconsistent() : "inconsistent equality information";
+			mLogger.info("detected not equals via solver");
+		}
+
 	}
 
 	/**
