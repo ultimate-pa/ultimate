@@ -767,7 +767,7 @@ public final class TAPreferences {
 	}
 
 	/**
-	 * @return how many seconds the sequential CEGAR loop with k-induction runs trace abstraction
+	 * @return how many seconds of CPU time the sequential CEGAR loop with k-induction gives trace abstraction
 	 */
 	public int getSequentialTaTimeLimit() {
 		return mSequentialTaTimeLimit;
