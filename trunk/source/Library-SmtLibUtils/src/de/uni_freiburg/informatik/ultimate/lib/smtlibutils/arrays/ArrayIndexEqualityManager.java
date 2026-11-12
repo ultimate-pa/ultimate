@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Plication;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -73,8 +72,8 @@ public class ArrayIndexEqualityManager {
 		mCheckEqualityStatusOnDemand = true;
 		mAlreadyCheckedBySolver = new HashRelation<>();
 
-		mIea = new IncrementalPlicationChecker(Plication.IMPLICATION, mMgdScript, critConstr);
-		final Validity validity = mIea.checkPlication(mMgdScript.getScript().term("false"));
+		mIea = new IncrementalPlicationChecker(mMgdScript, critConstr);
+		final Validity validity = mIea.checkImplication(mMgdScript.getScript().term("false"));
 		if (validity == Validity.VALID) {
 			mCritConstrEquivalentToFalse = true;
 		} else {
@@ -141,7 +140,7 @@ public class ArrayIndexEqualityManager {
 			assert !tver.isInconsistent() : "inconsistent equality information";
 		} else {
 			final Term neq = SmtUtils.not(mMgdScript.getScript(), eq);
-			final Validity isEqual = iea.checkPlication(eq);
+			final Validity isEqual = iea.checkImplication(eq);
 			if (isEqual == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
 				mLogger.warn("solver failed to check if following equality is implied: " + eq);
 			}
@@ -150,7 +149,7 @@ public class ArrayIndexEqualityManager {
 				assert !tver.isInconsistent() : "inconsistent equality information";
 				mLogger.info("detected equality via solver");
 			} else {
-				final Validity notEqualsHolds = iea.checkPlication(neq);
+				final Validity notEqualsHolds = iea.checkImplication(neq);
 				if (notEqualsHolds == Validity.UNKNOWN && mLogger.isWarnEnabled()) {
 					mLogger.warn("solver failed to check if following not equals relation is implied: " + eq);
 				}
