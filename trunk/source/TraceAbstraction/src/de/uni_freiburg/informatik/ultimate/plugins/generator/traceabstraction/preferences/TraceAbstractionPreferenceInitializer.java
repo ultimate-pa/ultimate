@@ -643,7 +643,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final String DESC_SEQUENTIAL_TA_TIME_LIMIT =
 			"How long the sequential CEGAR loop with k-induction runs trace abstraction before it goes on to the "
 					+ "invariant synthesis and k-induction.";
-	private static final int DEF_SEQUENTIAL_TA_TIME_LIMIT = 450;
+	private static final int DEF_SEQUENTIAL_TA_TIME_LIMIT = 400;
 
 	public static final String LABEL_SEQUENTIAL_INVARIANT_TIME_LIMIT =
 			"Time limit of invariant synthesis before k-induction (s)";
