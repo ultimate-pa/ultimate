@@ -162,8 +162,6 @@ public class Elim1Store {
 		}
 		final int quantifier = input.getQuantifier();
 		final TermVariable eliminatee = input.getEliminatees().iterator().next();
-		final Term polarizedContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier,
-				input.getContext().getCriticalConstraint());
 
 		final ArrayOccurrenceAnalysis aoa =
 				new ArrayOccurrenceAnalysis(mMgdScript.getScript(), input.getTerm(), eliminatee)
@@ -187,8 +185,8 @@ public class Elim1Store {
 			selectIndices.add(selectTerm.getIndex());
 		}
 
-		final ArrayIndexEqualityManager aiem =
-				new ArrayIndexEqualityManager(equalityInformation, polarizedContext, quantifier, mLogger, mMgdScript);
+		final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(equalityInformation,
+				input.getContext().getCriticalConstraint(), mLogger, mMgdScript);
 		if (aiem.contextIsAbsorbingElement()) {
 			aiem.unlockSolver();
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
@@ -197,8 +195,9 @@ public class Elim1Store {
 		}
 
 		final long startTime = System.nanoTime();
-		final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation = analyzeIndexEqualities(quantifier,
-				selectIndices, stores, polarizedContext, equalityInformation, eliminatee, mMgdScript, aiem);
+		final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation =
+				analyzeIndexEqualities(quantifier, selectIndices, stores, input.getContext().getCriticalConstraint(),
+						equalityInformation, eliminatee, mMgdScript, aiem);
 		final long durationMs = (System.nanoTime() - startTime) / 1_000_000;
 		if (durationMs > 100) {
 			mLogger.info("Index analysis took " + durationMs + " ms");

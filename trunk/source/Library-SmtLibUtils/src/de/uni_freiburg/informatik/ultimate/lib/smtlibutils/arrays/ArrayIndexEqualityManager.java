@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -57,42 +56,29 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class ArrayIndexEqualityManager {
 
 	private final ThreeValuedEquivalenceRelation<Term> mTver;
-	private final Term mContext;
-	private final boolean mContextIsAbsorbingElement;
+	private final boolean mCritConstrEquivalentToFalse;
 	private final Set<TermVariable> mFreeVarsOfContext;
 	private final boolean mCheckEqualityStatusOnDemand;
-	private final int mQuantifier;
 	private final ManagedScript mMgdScript;
 	private final ILogger mLogger;
 	private final HashRelation<Term, Term> mAlreadyCheckedBySolver;
 	final IncrementalPlicationChecker mIea;
 
-	public ArrayIndexEqualityManager(final ThreeValuedEquivalenceRelation<Term> tver, final Term context,
-			final int quantifier, final ILogger logger, final ManagedScript mgdScript) {
+	public ArrayIndexEqualityManager(final ThreeValuedEquivalenceRelation<Term> tver, final Term critConstr,
+			final ILogger logger, final ManagedScript mgdScript) {
 		mTver = tver;
-		mContext = context;
-		mQuantifier = quantifier;
 		mLogger = logger;
 		mMgdScript = mgdScript;
-		mFreeVarsOfContext = Arrays.stream(mContext.getFreeVars()).collect(Collectors.toSet());
+		mFreeVarsOfContext = Arrays.stream(critConstr.getFreeVars()).collect(Collectors.toSet());
 		mCheckEqualityStatusOnDemand = true;
 		mAlreadyCheckedBySolver = new HashRelation<>();
 
-		final Plication plication;
-		if (mQuantifier == QuantifiedFormula.EXISTS) {
-			plication = Plication.IMPLICATION;
-		} else if (mQuantifier == QuantifiedFormula.FORALL) {
-			plication = Plication.EXPLICATION;
-		} else {
-			throw new AssertionError("unknown quantifier");
-		}
-		mIea = new IncrementalPlicationChecker(plication, mMgdScript, mContext);
-		final Term absorbingElement = QuantifierUtils.getNeutralElement(mMgdScript.getScript(), mQuantifier);
-		final Validity validity = mIea.checkPlication(absorbingElement);
+		mIea = new IncrementalPlicationChecker(Plication.IMPLICATION, mMgdScript, critConstr);
+		final Validity validity = mIea.checkPlication(mMgdScript.getScript().term("false"));
 		if (validity == Validity.VALID) {
-			mContextIsAbsorbingElement = true;
+			mCritConstrEquivalentToFalse = true;
 		} else {
-			mContextIsAbsorbingElement = false;
+			mCritConstrEquivalentToFalse = false;
 		}
 	}
 
@@ -128,7 +114,7 @@ public class ArrayIndexEqualityManager {
 			}
 			mAlreadyCheckedBySolver.addPair(elem1Rep, elem2Rep);
 			mAlreadyCheckedBySolver.addPair(elem2Rep, elem1Rep);
-			checkEqualityStatusViaSolver(mQuantifier, mTver, mIea, elem1Rep, elem2Rep);
+			checkEqualityStatusViaSolver(mTver, mIea, elem1Rep, elem2Rep);
 			assert alreadyCheckedUsesRepresenatives() : "the mAlreadyCheckedBySolver relation is outdated";
 			return mTver.getEqualityStatus(elem1Rep, elem2Rep);
 		}
@@ -144,7 +130,7 @@ public class ArrayIndexEqualityManager {
 		return true;
 	}
 
-	private void checkEqualityStatusViaSolver(final int mQuantifier, final ThreeValuedEquivalenceRelation<Term> tver,
+	private void checkEqualityStatusViaSolver(final ThreeValuedEquivalenceRelation<Term> tver,
 			final IncrementalPlicationChecker iea, final Term index1, final Term index2) throws AssertionError {
 		final Term eq = SmtUtils.binaryEquality(mMgdScript.getScript(), index1, index2);
 		if (SmtUtils.isTrueLiteral(eq)) {
@@ -160,15 +146,8 @@ public class ArrayIndexEqualityManager {
 				mLogger.warn("solver failed to check if following equality is implied: " + eq);
 			}
 			if (isEqual == Validity.VALID) {
-				if (mQuantifier == QuantifiedFormula.EXISTS) {
-					reportEquality(index1, index2);
-					assert !tver.isInconsistent() : "inconsistent equality information";
-				} else if (mQuantifier == QuantifiedFormula.FORALL) {
-					tver.reportDisequality(index1, index2);
-					assert !tver.isInconsistent() : "inconsistent equality information";
-				} else {
-					throw new AssertionError("unknown quantifier");
-				}
+				reportEquality(index1, index2);
+				assert !tver.isInconsistent() : "inconsistent equality information";
 				mLogger.info("detected equality via solver");
 			} else {
 				final Validity notEqualsHolds = iea.checkPlication(neq);
@@ -177,15 +156,8 @@ public class ArrayIndexEqualityManager {
 				}
 
 				if (notEqualsHolds == Validity.VALID) {
-					if (mQuantifier == QuantifiedFormula.EXISTS) {
-						tver.reportDisequality(index1, index2);
-						assert !tver.isInconsistent() : "inconsistent equality information";
-					} else if (mQuantifier == QuantifiedFormula.FORALL) {
-						reportEquality(index1, index2);
-						assert !tver.isInconsistent() : "inconsistent equality information";
-					} else {
-						throw new AssertionError("unknown quantifier");
-					}
+					tver.reportDisequality(index1, index2);
+					assert !tver.isInconsistent() : "inconsistent equality information";
 					mLogger.info("detected not equals via solver");
 				}
 			}
@@ -242,7 +214,7 @@ public class ArrayIndexEqualityManager {
 	}
 
 	public boolean contextIsAbsorbingElement() {
-		return mContextIsAbsorbingElement;
+		return mCritConstrEquivalentToFalse;
 	}
 
 	public EqualityStatus checkIndexEquality(final ArrayIndex selectIndex, final ArrayIndex storeIndex) {
