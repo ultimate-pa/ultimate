@@ -90,7 +90,7 @@ public class ArrayIndexEqualityUtils {
 	/**
 	 * Add equality information for term that are obtained from context by only looking at (dis)eqality terms.
 	 *
-	 * @return true if an inconsitency was detected
+	 * @return true if an inconsistency was detected
 	 */
 	private static boolean addComplimentaryEqualityInformation(final Script script, final Term[] critConstr,
 			final Term term, final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
