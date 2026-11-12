@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -134,6 +135,10 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 	private final Set<IcfgLocation> mTaRefutedLocations = new HashSet<>();
 	// Whether one of those counterexamples has an overapproximated letter, which makes the result UNKNOWN
 	private boolean mTaViolationOverapproximated;
+	// Whether trace abstraction is refining the abstraction, see refineAbstraction()
+	private boolean mRefining;
+	// Whether the Hoare annotation fragments of mProofUpdater may not fit mAbstraction any more, see refineAbstraction()
+	private boolean mProofOutOfSync;
 	private final AtomicBoolean mLoggedZ3InsteadOfBitwuzla = new AtomicBoolean();
 
 	public NwaCegarLoopWithKInduction(final DebugIdentifier name,
@@ -182,6 +187,12 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 			}
 			mLogger.info("NwaCegarLoopWithKInduction: phase TA ends at its time limit after %d iteration(s)",
 					getIteration());
+			if (mRefining && mProofUpdater != null) {
+				mProofOutOfSync = true;
+				mLogger.warn("NwaCegarLoopWithKInduction: the time limit stopped a refinement, so the Hoare annotation "
+						+ "fragments may not fit the abstraction; a proof of k-induction gets a witness without "
+						+ "invariants");
+			}
 			return mTaViolationOverapproximated;
 		} finally {
 			mServices = services;
@@ -223,6 +234,22 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 			collectInterpolants();
 		}
 		return result;
+	}
+
+	/**
+	 * Marks the refinement while it runs. {@code NwaCegarLoop.computeAutomataDifference} updates the Hoare annotation
+	 * fragments to the states of the difference before it removes the dead ends, and replaces {@link #mAbstraction} by
+	 * the difference only after that. If the time limit of trace abstraction stops it in between, the abstraction is
+	 * still the previous one and fine for k-induction, but the fragments describe states it does not have, and a proof
+	 * extracted from them could miss the states of the abstraction. Without access to that window, the whole refinement
+	 * counts.
+	 */
+	@Override
+	protected boolean refineAbstraction() throws AutomataLibraryException {
+		mRefining = true;
+		final boolean progress = super.refineAbstraction();
+		mRefining = false;
+		return progress;
 	}
 
 	@Override
@@ -444,11 +471,18 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 	 * is extracted from that abstraction as if trace abstraction had proven the program.
 	 * <p>
 	 * Invariants k-induction could not compute in time, or the parts of them that cannot be backtranslated, are left out,
-	 * which only weakens the annotation.
+	 * which only weakens the annotation. If the fragments may not fit the abstraction (see {@link #refineAbstraction()}),
+	 * the proof has no invariants at all, i.e. the correctness witness is trivial.
 	 */
 	private void useKInductionProof(final KInduction<L, IPredicate> kInduction,
 			final IUltimateServiceProvider services, final CfgSmtToolkit kiToolkit) throws AutomataLibraryException {
 		if (mProofUpdater == null) {
+			return;
+		}
+		if (mProofOutOfSync) {
+			mLogger.warn("NwaCegarLoopWithKInduction: the proof of k-induction has no invariants, the Hoare annotation "
+					+ "fragments may not fit the abstraction");
+			mProofUpdater.setProof(Collections.emptyMap());
 			return;
 		}
 		WitnessInvariants<IPredicate> witness;
