@@ -886,7 +886,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_IF_ANALYZED_TOO_OFTEN, 0, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_STOP_MODE, PathProgramDumpStop.AFTER_FIRST_DUMP,
 						PreferenceType.Combo, PathProgramDumpStop.values()),
-				getConcurrencySettings(), getParallelCegarSettings() };
+				getConcurrencySettings(), getParallelCegarSettings(), getSequentialKInductionSettings() };
 	}
 
 	private static UltimatePreferenceItemContainer getConcurrencySettings() {
@@ -1013,6 +1013,22 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						DESC_KINDUCTION_SOLVER_RESTART, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_INVARIANTS, DEF_INTERPOLANT_INVARIANTS,
 						DESC_INTERPOLANT_INVARIANTS, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SEARCH_LOOP_BOUND, DEF_SEARCH_LOOP_BOUND, DESC_SEARCH_LOOP_BOUND,
+						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY, DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY,
+						DESC_PARALLELSEARCH_ACTIVE_CEX_ONLY, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_MINIMIZE_ABSTRACTION_PER_WORKER, DEF_MINIMIZE_ABSTRACTION_PER_WORKER,
+						DESC_MINIMIZE_ABSTRACTION_PER_WORKER, PreferenceType.Boolean));
+
+	}
+
+	/**
+	 * The settings of the sequential CEGAR loop with k-induction, which runs trace abstraction, invariant synthesis and
+	 * k-induction one after the other. k-induction itself takes its other settings from
+	 * {@link #getParallelCegarSettings()}.
+	 */
+	private static UltimatePreferenceItemContainer getSequentialKInductionSettings() {
+		return new UltimatePreferenceItemContainer("Trace Abstraction with K-Induction",
 				new UltimatePreferenceItem<>(LABEL_SEQUENTIAL_KINDUCTION_CEGAR_LOOP,
 						DEF_SEQUENTIAL_KINDUCTION_CEGAR_LOOP, DESC_SEQUENTIAL_KINDUCTION_CEGAR_LOOP,
 						PreferenceType.Boolean),
@@ -1025,14 +1041,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_SEQUENTIAL_KINDUCTION_TIME_LIMIT,
 						DEF_SEQUENTIAL_KINDUCTION_TIME_LIMIT, DESC_SEQUENTIAL_KINDUCTION_TIME_LIMIT,
 						PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(0, Integer.MAX_VALUE)),
-				new UltimatePreferenceItem<>(LABEL_SEARCH_LOOP_BOUND, DEF_SEARCH_LOOP_BOUND, DESC_SEARCH_LOOP_BOUND,
-						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
-				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY, DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY,
-						DESC_PARALLELSEARCH_ACTIVE_CEX_ONLY, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_MINIMIZE_ABSTRACTION_PER_WORKER, DEF_MINIMIZE_ABSTRACTION_PER_WORKER,
-						DESC_MINIMIZE_ABSTRACTION_PER_WORKER, PreferenceType.Boolean));
-
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, Integer.MAX_VALUE)));
 	}
 
 	public static String getSuffixedLabel(final String label, final int index) {
