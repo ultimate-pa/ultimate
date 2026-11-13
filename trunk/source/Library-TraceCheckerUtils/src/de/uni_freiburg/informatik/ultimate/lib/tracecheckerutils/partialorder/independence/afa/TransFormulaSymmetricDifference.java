@@ -82,7 +82,6 @@ public class TransFormulaSymmetricDifference<L extends IAction> {
 
 	private final UnmodifiableTransFormula compose(final UnmodifiableTransFormula first,
 			final UnmodifiableTransFormula second) {
-		// no need to do simplification, result is only used in one implication check
 		final boolean simplify = false;
 
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, simplify, false, false,
