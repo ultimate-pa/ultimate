@@ -29,8 +29,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -63,6 +65,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfg
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
@@ -569,6 +574,45 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 
 	public CfgSmtToolkit getWorkerCfgSmtToolKit() {
 		return mWorkerCsToolkit;
+	}
+
+	/**
+	 * Every letter this class transfers becomes a new {@code CodeBlock}, and the constructor
+	 * of a {@code CodeBlock} connects it to its source and target - which are locations of the main ICFG. So the main
+	 * ICFG ends up with a copy of each transferred edge whose transition formula belongs to a worker's script, and
+	 * whoever walks the ICFG after the loop (e.g. the check of the Hoare annotation) trips over it. Remove all edges
+	 * that were not there before the loop.
+	 */
+	public static void detachTransferredEdges(final Set<IcfgLocation> originalLocations,
+			final Set<IcfgEdge> originalEdges, final ILogger logger) {
+		int removed = 0;
+		for (final IcfgLocation loc : originalLocations) {
+			final List<IcfgEdge> outgoing = loc.getOutgoingEdges().stream().filter(e -> !originalEdges.contains(e))
+					.collect(Collectors.toList());
+			final List<IcfgEdge> incoming = loc.getIncomingEdges().stream().filter(e -> !originalEdges.contains(e))
+					.collect(Collectors.toList());
+			loc.removeAllOutgoing(outgoing);
+			loc.removeAllIncoming(incoming);
+			removed += outgoing.size();
+		}
+		if (removed > 0) {
+			logger.info("Detached %s transferred edges from the ICFG", removed);
+		}
+	}
+
+	/** @return all locations of {@code icfg}, see {@link #detachTransferredEdges(Set, Set, ILogger)} */
+	public static Set<IcfgLocation> collectLocations(final IIcfg<?> icfg) {
+		return icfg.getProgramPoints().values().stream().flatMap(m -> m.values().stream()).collect(Collectors.toSet());
+	}
+
+	/**
+	 * @return the outgoing edges of {@code locations}, by identity: a transferred copy keeps the serial number, i.e.,
+	 *         the hash code, of its original
+	 */
+	public static Set<IcfgEdge> outgoingEdges(final Set<IcfgLocation> locations) {
+		final Set<IcfgEdge> edges = Collections.newSetFromMap(new IdentityHashMap<>());
+		locations.forEach(loc -> edges.addAll(loc.getOutgoingEdges()));
+		return edges;
 	}
 
 }

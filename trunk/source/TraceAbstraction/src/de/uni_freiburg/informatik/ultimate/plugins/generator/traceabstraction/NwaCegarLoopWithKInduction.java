@@ -23,7 +23,7 @@
  * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -83,11 +83,15 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.CpuTimeTimer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.ParallelNwaCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TaskScopedServices;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TransferBetweenMainAndWorker.TransferMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TransferBetweenMainAndWorker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerSolverSettings;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerStateTransferrer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadResult.WorkerType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantBacktranslation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantMessage;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantMessage.InterpolantSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantSupplier;
@@ -117,7 +121,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Unlike {@link ParallelNwaCegarLoop}, nothing runs alongside trace abstraction, so the abstraction is copied only
  * once, into the script of k-induction, when trace abstraction is done with it. k-induction and the invariant synthesis
  * each get a solver of their own, as in the parallel loop (see
- * {@link ParallelNwaCegarLoop#getSolverSettings(IUltimateServiceProvider, TAPreferences, WorkerType, java.util.function.Supplier, String)}):
+ * {@link WorkerSolverSettings#getSolverSettings(IUltimateServiceProvider, TAPreferences, WorkerType, java.util.function.Supplier, String)}):
  * the main script's solver usually neither produces models nor runs without a per-query timeout.
  *
  * @param <L>
@@ -165,8 +169,8 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, proofProducer,
 				services, transitionClazz, stateFactoryForRefinement);
 		mInitialAbstraction = initialAbstraction;
-		mOriginalLocations = ParallelNwaCegarLoop.collectLocations(rootNode);
-		mOriginalEdges = ParallelNwaCegarLoop.outgoingEdges(mOriginalLocations);
+		mOriginalLocations = TransferBetweenMainAndWorker.collectLocations(rootNode);
+		mOriginalEdges = TransferBetweenMainAndWorker.outgoingEdges(mOriginalLocations);
 	}
 
 	@Override
@@ -583,7 +587,7 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 			}
 			Term translatable = null;
 			if (invariant != null && !SmtUtils.isTrueLiteral(invariant)) {
-				translatable = ParallelNwaCegarLoop.weakenToBacktranslatable(
+				translatable = InvariantBacktranslation.weakenToBacktranslatable(
 						transferrer.transferTerm(invariant, kiToolkit.getManagedScript()), loc,
 						mCsToolkit.getManagedScript().getScript(), mServices.getBacktranslationService(), mLogger);
 			}
@@ -643,7 +647,7 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 				continue;
 			}
 			final Term transferred = transferrer.transferTerm(entry.getValue(), kiToolkit.getManagedScript());
-			final Term translatable = ParallelNwaCegarLoop.weakenToBacktranslatable(transferred, loc,
+			final Term translatable = InvariantBacktranslation.weakenToBacktranslatable(transferred, loc,
 					mCsToolkit.getManagedScript().getScript(), mServices.getBacktranslationService(), mLogger);
 			annotation.put(entry.getKey(), mPredicateFactory.newSPredicate(loc, translatable));
 			// FloydHoareUtils.createInvariantResults leaves out every invariant that is true, see useKInductionProof
@@ -692,9 +696,9 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 	}
 
 	private SolverSettings solverSettings(final WorkerType workerType, final String filename) {
-		return ParallelNwaCegarLoop.getSolverSettings(mServices, mPref, workerType,
-				() -> ParallelNwaCegarLoop.externalSolverCommand(mPref, mLogger, workerType,
-						() -> ParallelNwaCegarLoop.bitwuzlaRejectsProgram(mAbstraction.getVpAlphabet()),
+		return WorkerSolverSettings.getSolverSettings(mServices, mPref, workerType,
+				() -> WorkerSolverSettings.externalSolverCommand(mPref, mLogger, workerType,
+						() -> WorkerSolverSettings.bitwuzlaRejectsProgram(mAbstraction.getVpAlphabet()),
 						mLoggedZ3InsteadOfBitwuzla),
 				filename);
 	}
@@ -702,7 +706,7 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 	@Override
 	protected void finish() {
 		// k-induction's copy of the abstraction attached a copy of every edge to the locations of the ICFG.
-		ParallelNwaCegarLoop.detachTransferredEdges(mOriginalLocations, mOriginalEdges, mLogger);
+		TransferBetweenMainAndWorker.detachTransferredEdges(mOriginalLocations, mOriginalEdges, mLogger);
 		super.finish();
 	}
 }
