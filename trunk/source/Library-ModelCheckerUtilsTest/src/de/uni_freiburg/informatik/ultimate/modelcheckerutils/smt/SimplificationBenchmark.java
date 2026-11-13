@@ -70,7 +70,7 @@ public class SimplificationBenchmark {
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:12000 -memory:2024 -smt2 -in";
 	// private static final String SOLVER_COMMAND = "INTERNAL_SMTINTERPOL:10000";
 
-	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA2;
+	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.POLY_PAC;
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
