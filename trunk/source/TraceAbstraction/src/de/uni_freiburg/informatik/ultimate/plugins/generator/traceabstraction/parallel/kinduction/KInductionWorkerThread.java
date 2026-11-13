@@ -392,8 +392,9 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 	 * without values. Nothing here confirms the violation, the model of k-induction is the only evidence.
 	 * <p>
 	 * The model proves the violation by itself, so the verdict never depends on the witness: if the letters cannot be
-	 * backtranslated, only the target is reported, and if that fails too, or the target is not known, an empty
-	 * execution at the error location. Each step down is logged with its reason.
+	 * backtranslated, only the target is reported, and if that fails too, or no letter leads into the error state, an
+	 * empty execution at the error location, for which no witness is written, since a violation witness needs a
+	 * target. Each step down is logged with its reason.
 	 *
 	 * @param services
 	 *            the services k-induction ran with, for the trial backtranslation
@@ -427,7 +428,7 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 				throw e;
 			} catch (final RuntimeException e) {
 				logger.warn("KInduction: the target %s cannot be reported (%s), reporting the violation without a "
-						+ "waypoint", target, e);
+						+ "witness", target, e);
 				level = Level.EMPTY;
 			}
 		}

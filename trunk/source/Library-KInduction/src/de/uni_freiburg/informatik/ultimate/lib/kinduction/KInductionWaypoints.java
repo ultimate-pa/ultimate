@@ -88,11 +88,13 @@ public final class KInductionWaypoints<LETTER extends IAction, STATE> {
 		FULL,
 		/**
 		 * Only the target: a chain could not be read or its letters not be named, so no other letter is known to be
-		 * safe.
+		 * safe. If the model does not name the target either, it is any letter into {@link #getErrorState()}, see
+		 * {@link #isTargetGuessed()}.
 		 */
 		TARGET_ONLY,
 		/**
-		 * No letter: the target is not known. The violation is reported at {@link #getErrorState()} without a waypoint.
+		 * No letter: no letter leads into {@link #getErrorState()}. The violation is reported there without a witness,
+		 * since a violation witness needs a target.
 		 */
 		EMPTY
 	}
@@ -103,6 +105,7 @@ public final class KInductionWaypoints<LETTER extends IAction, STATE> {
 	private final LETTER mTarget;
 	private final STATE mErrorState;
 	private final boolean mErrorStateGuessed;
+	private final boolean mTargetGuessed;
 	private final Level mLevel;
 	private final RuntimeException mDegradeCause;
 	private int mNumSuppressedStates;
@@ -149,13 +152,21 @@ public final class KInductionWaypoints<LETTER extends IAction, STATE> {
 			mErrorState = someErrorState();
 			mErrorStateGuessed = true;
 		}
+		// A violation witness needs a target. If the model does not name it, any letter into the error state is better
+		// than no witness at all.
+		if (target == null) {
+			target = anyLetterInto(mErrorState);
+			mTargetGuessed = target != null;
+		} else {
+			mTargetGuessed = false;
+		}
 		mTarget = target;
 
 		final List<LETTER> letters = new ArrayList<>();
 		Level level = Level.FULL;
 		if (target == null) {
 			level = Level.EMPTY;
-		} else if (chainFailure != null) {
+		} else if (cause != null) {
 			level = Level.TARGET_ONLY;
 		} else if (!onlyTarget) {
 			try {
@@ -282,6 +293,14 @@ public final class KInductionWaypoints<LETTER extends IAction, STATE> {
 		return result;
 	}
 
+	/** @return the letter of some internal transition into {@code state}, null if there is none */
+	private LETTER anyLetterInto(final STATE state) {
+		for (final IncomingInternalTransition<LETTER, STATE> in : mAbstraction.internalPredecessors(state)) {
+			return in.getLetter();
+		}
+		return null;
+	}
+
 	private String locationOf(final LETTER letter) {
 		if (!(letter instanceof IElement)) {
 			throw new KInductionCounterexampleException("the letter " + letter + " has no location");
@@ -300,7 +319,7 @@ public final class KInductionWaypoints<LETTER extends IAction, STATE> {
 		return mLetters;
 	}
 
-	/** @return the letter into the error state, null at {@link Level#EMPTY} */
+	/** @return the letter into the error state, null at {@link Level#EMPTY}; see {@link #isTargetGuessed()} */
 	public LETTER getTargetLetter() {
 		return mTarget;
 	}
@@ -316,6 +335,15 @@ public final class KInductionWaypoints<LETTER extends IAction, STATE> {
 	 */
 	public boolean isErrorStateGuessed() {
 		return mErrorStateGuessed;
+	}
+
+	/**
+	 * @return true if the model did not name the letter into the error state, so that {@link #getTargetLetter()} is
+	 *         just one of the letters into {@link #getErrorState()}: a witness with it may name another error than the
+	 *         one the model reaches
+	 */
+	public boolean isTargetGuessed() {
+		return mTargetGuessed;
 	}
 
 	public Level getLevel() {

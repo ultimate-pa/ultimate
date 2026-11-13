@@ -172,19 +172,6 @@ public class YamlViolationWitnessGenerator {
 		return new Location(filename, line, column, function);
 	}
 
-	/**
-	 * @return a violation witness for the program {@code filename} with no segment: it claims a violation, but names no
-	 *         waypoint, not even the target
-	 */
-	public String makeEmptyYamlString(final String filename) {
-		if (mWriter != null || !mSegments.isEmpty()) {
-			throw new IllegalStateException("Segments were added, the witness is not empty");
-		}
-		mWriter = createWriter(filename);
-		mLogger.info("Generated YAML witness without waypoints.");
-		return mWriter.toString(new Witness(List.of(new ViolationSequence(mSegments))));
-	}
-
 	public String makeYamlString() {
 		if (mWriter == null) {
 			throw new IllegalStateException("Add a non-empty execution before generating the witness");

@@ -293,6 +293,10 @@ public class KInduction<LETTER extends IAction, STATE> {
 					mLogger.warn("KInduction: the model does not say which error state it reaches, reporting %s",
 							mWaypoints.getErrorState());
 				}
+				if (mWaypoints.isTargetGuessed()) {
+					mLogger.warn("KInduction: the model does not name the letter into the error state, the target "
+							+ "is %s", mWaypoints.getTargetLetter());
+				}
 				mLogger.info("KInduction: %d waypoint letter(s) from the model, %d state(s) without one",
 						mWaypoints.getLetters().size(), mWaypoints.getNumSuppressedStates());
 			}
