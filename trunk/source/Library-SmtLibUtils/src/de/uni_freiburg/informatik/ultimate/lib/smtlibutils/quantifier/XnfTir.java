@@ -47,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Relati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.ExplicitLhsPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation.IntricateOperation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation.TransformInequality;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.SolveForSubjectUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -193,7 +193,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				} else {
 					throw new AssertionError("unknown quantifier");
 				}
-				final PolynomialRelation polyRel = PolynomialRelation.of(script, term, transform);
+				final IPolynomialRelation polyRel = IPolynomialRelation.of(script, term, transform);
 				if (polyRel == null) {
 					// no chance to eliminate the variable
 					return null;
@@ -318,7 +318,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 
 		final Rational coeff;
 		{
-			final PolynomialRelation origPolyRel = PolynomialRelation.of(script, originalTerm);
+			final IPolynomialRelation origPolyRel = IPolynomialRelation.of(script, originalTerm);
 			final ExplicitLhsPolynomialRelation elpr =
 					ExplicitLhsPolynomialRelation.moveMonomialToLhs(script, eliminatee, origPolyRel);
 			coeff = elpr.getLhsCoefficient();
@@ -350,7 +350,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		final BinaryNumericRelation bnr = BinaryNumericRelation.convert(originalTerm);
 
 		final BinaryNumericRelation lowerBoundBnr = bnr.changeRelationSymbol(lowerRelationSymbol);
-		final PolynomialRelation relLower = PolynomialRelation.of(script, lowerBoundBnr.toTerm(script), transform);
+		final IPolynomialRelation relLower = IPolynomialRelation.of(script, lowerBoundBnr.toTerm(script), transform);
 		final ExplicitLhsPolynomialRelation elprLower =
 				ExplicitLhsPolynomialRelation.moveMonomialToLhs(script, eliminatee, relLower);
 		assert (coeff.equals(elprLower.getLhsCoefficient()));
@@ -359,7 +359,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				elprLower.divideByIntegerCoefficientForInequalities(script, Collections.emptySet());
 
 		final BinaryNumericRelation upperBoundBnr = bnr.changeRelationSymbol(upperRelationSymbol);
-		final PolynomialRelation relUpper = PolynomialRelation.of(script, upperBoundBnr.toTerm(script), transform);
+		final IPolynomialRelation relUpper = IPolynomialRelation.of(script, upperBoundBnr.toTerm(script), transform);
 		final ExplicitLhsPolynomialRelation elprUpper =
 				ExplicitLhsPolynomialRelation.moveMonomialToLhs(script, eliminatee, relUpper);
 		assert (coeff.equals(elprUpper.getLhsCoefficient()));
@@ -413,7 +413,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		}
 		final String symbol = isStrict ? "<" : "<=";
 		final Term term = script.term(symbol, lowerBound.getTerm(), upperBound.getTerm());
-		final PolynomialRelation polyRel = PolynomialRelation.of(script, term);
+		final IPolynomialRelation polyRel = IPolynomialRelation.of(script, term);
 		if (polyRel == null) {
 			throw new AssertionError("should be affine");
 		}

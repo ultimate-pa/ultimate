@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Auxiliary methods for {@link PolynomialRelation#solveForSubject}
+ * Auxiliary methods for {@link IPolynomialRelation#solveForSubject}
  *
  * @author Leonard Fichtner
  * @author Max Barth
@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class SolveForSubjectUtils {
 
 	static MultiCaseSolvedBinaryRelation solveForSubject(final ManagedScript mgdScript, final Term subject,
-			final MultiCaseSolvedBinaryRelation.Xnf xnf, final PolynomialRelation polyRel,
+			final MultiCaseSolvedBinaryRelation.Xnf xnf, final IPolynomialRelation polyRel,
 			final Set<TermVariable> bannedForDivCapture, final boolean allowDivModBasedSolutions) {
 		MultiCaseSolvedBinaryRelation res;
 		if (allowDivModBasedSolutions && SmtSortUtils.isNumericSort(subject.getSort())) {
@@ -93,7 +93,7 @@ public class SolveForSubjectUtils {
 	}
 
 	private static MultiCaseSolvedBinaryRelation solveForSubjectWithoutTreatableDivMod(final Script script,
-			final Term subject, final PolynomialRelation polyRel, final MultiCaseSolvedBinaryRelation.Xnf xnf,
+			final Term subject, final IPolynomialRelation polyRel, final MultiCaseSolvedBinaryRelation.Xnf xnf,
 			final Set<TermVariable> bannedForDivCapture) throws AssertionError {
 
 		final ExplicitLhsPolynomialRelation elpr =
@@ -214,7 +214,7 @@ public class SolveForSubjectUtils {
 			final HashSet<TermVariable> bannedForDivCaptureWithAuxiliary = new HashSet<>(bannedForDivCapture);
 			bannedForDivCaptureWithAuxiliary.add(auxDiv);
 			bannedForDivCaptureWithAuxiliary.add(auxMod);
-			solvedComparison = PolynomialRelation.of(mgdScript.getScript(), subtermSumComparison)
+			solvedComparison = IPolynomialRelation.of(mgdScript.getScript(), subtermSumComparison)
 					.solveForSubject(mgdScript, subject, xnf, bannedForDivCaptureWithAuxiliary, true);
 			if (solvedComparison == null) {
 				return null;
@@ -481,7 +481,7 @@ public class SolveForSubjectUtils {
 	 * ((divident - 1) / divisor) + postDivisionOffset
 	 * </pre>
 	 *
-	 * which is required for LESS, GREATER, LEQ, and GEQ. See {@link PolynomialRelation#constructRhsIntegerQuotient}
+	 * which is required for LESS, GREATER, LEQ, and GEQ. See {@link IPolynomialRelation#constructRhsIntegerQuotient}
 	 *
 	 * @param postDivisionOffset
 	 *            value that is added after the division and that is determined from the relation symbol and the sign of

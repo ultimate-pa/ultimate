@@ -1349,6 +1349,16 @@ public class SimplificationTest {
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void bitvectorInequality() {
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "x"),
+				new FunDecl(QuantifierEliminationTest::getBitvectorSort32, "y"), };
+		final String formulaAsString = "(and (= (bvadd x y) (_ bv7 32)) (bvsle (bvadd x y) (_ bv13 32)))";
+		final String simplified = "(= (_ bv7 32) (bvadd x y))";
+		runSimplificationTest(funDecls, formulaAsString, simplified, SimplificationTechnique.POLY_PAC, mServices,
+				mLogger, mMgdScript, mCsvWriter);
+	}
+
 	static void runSimplificationTest(final FunDecl[] funDecls, final String eliminationInputAsString,
 			final String expectedResultAsString, final SimplificationTechnique simplificationTechnique,
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
