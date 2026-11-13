@@ -119,7 +119,7 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
  */
 public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L, INestedWordAutomaton<L, IPredicate>> {
 
-	public enum AutomatonType {
+	protected enum AutomatonType {
 		FLOYD_HOARE, ERROR;
 	}
 

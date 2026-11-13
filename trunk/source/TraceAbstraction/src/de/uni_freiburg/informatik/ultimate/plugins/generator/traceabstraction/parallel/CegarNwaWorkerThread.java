@@ -75,12 +75,11 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.AutomatonType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopResultBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop.AutomatonType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
@@ -336,7 +335,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 			submitInterpolants();
 		}
 
-		final AbstractCegarLoop.AutomatonType automatonType = processFeasibilityCheckResult(strategy,
+		final AutomatonType automatonType = processFeasibilityCheckResult(strategy,
 				isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
 		constructRefinementAutomaton(automatonType);
 		mThreadResult = refineAbstractionInternally();
@@ -464,7 +463,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	 *
 	 * @param strategy
 	 */
-	private AbstractCegarLoop.AutomatonType processFeasibilityCheckResult(final ITARefinementStrategy<L> strategy,
+	private AutomatonType processFeasibilityCheckResult(final ITARefinementStrategy<L> strategy,
 			final LBool isCounterexampleFeasible, final IProgramExecution<L, Term> programExecution,
 			final IcfgLocation currentErrorLoc) {
 		if (isCounterexampleFeasible == Script.LBool.SAT) {
@@ -472,10 +471,10 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 			if (mPref.stopAfterFirstViolation()) {
 				mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
 			}
-			return AbstractCegarLoop.AutomatonType.ERROR;
+			return AutomatonType.ERROR;
 		}
 		if (isCounterexampleFeasible != Script.LBool.UNKNOWN) {
-			return AbstractCegarLoop.AutomatonType.INTERPOLANT;
+			return AutomatonType.INTERPOLANT;
 		}
 		Result actualResult;
 		if (programExecution != null) {
@@ -497,7 +496,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 			mResultBuilder.addResultForAllRemaining(actualResult);
 		}
 
-		return AbstractCegarLoop.AutomatonType.UNKNOWN;
+		return AutomatonType.UNKNOWN;
 	}
 
 	/**
@@ -506,7 +505,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	 * @param automatonType
 	 * @throws AutomataOperationCanceledException
 	 */
-	private void constructRefinementAutomaton(final AbstractCegarLoop.AutomatonType automatonType)
+	private void constructRefinementAutomaton(final AutomatonType automatonType)
 			throws AutomataOperationCanceledException {
 		switch (automatonType) {
 		case ERROR:
@@ -551,7 +550,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 			subtrahend = mErrorGeneralizationEngine.getResultAfterEnhancement();
 
 		} else {
-			automatonType = AutomatonType.FLOYD_HOARE;
+			automatonType = AutomatonType.INTERPOLANT;
 			useErrorAutomaton = false;
 			exploitSigmaStarConcatOfIa = !mComputeHoareAnnotation;
 			subtrahendBeforeEnhancement = mInterpolAutomaton;

@@ -86,6 +86,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IsEmptyParallel;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
@@ -400,7 +401,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			// has no subtrahend and no error automaton, so there is nothing to refine with. This must be checked
 			// BEFORE the safe sentinel below, which a refutation would otherwise match (it too has no subtrahend)
 			// and be reported as SAFE.
-			if (workerResult.getAutomatonType() == AutomatonType.ERROR
+			if (workerResult.getAutomatonType() == AbstractCegarLoop.AutomatonType.ERROR
 					&& workerResult.mWorkerType.equals(WorkerType.KINDUCTION)) {
 				mLogger.info("Main: %s refuted the program", workerResult.mWorkerType);
 				// Fills only the error locations that have no result yet; the refuted one keeps its UNSAFE.
@@ -423,7 +424,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				return true;
 			}
 			// If Error automaton terminate immediately
-			if (mPref.stopAfterFirstViolation() && workerResult.getAutomatonType() == AutomatonType.ERROR) {
+			if (mPref.stopAfterFirstViolation()
+					&& workerResult.getAutomatonType() == AbstractCegarLoop.AutomatonType.ERROR) {
 				shutDownAndDestroy(mDestroyEverything);
 				updateAndPrintStatistics(true);
 				return true;
@@ -466,10 +468,11 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		}
 		switch (result.getWorkerType()) {
 		case KINDUCTION:
-			return result.getAutomatonType() == AutomatonType.ERROR
+			return result.getAutomatonType() == AbstractCegarLoop.AutomatonType.ERROR
 					|| result.getSubtrahend() == null && result.getAutomatonType() == null;
 		case TA:
-			return mPref.stopAfterFirstViolation() && result.getAutomatonType() == AutomatonType.ERROR;
+			return mPref.stopAfterFirstViolation()
+					&& result.getAutomatonType() == AbstractCegarLoop.AutomatonType.ERROR;
 		default:
 			return false;
 		}
@@ -1176,8 +1179,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			final PowersetDeterminizer<L, IPredicate> psd =
 					new PowersetDeterminizer<>(subtrahend, true, mPredicateFactoryInterpolantAutomata);
 			// As in NwaCegarLoop: a proof needs the states that the sigma-star exploitation would skip.
-			final boolean exploitSigmaStarConcatOfIa = workerResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE)
-					&& (mProofUpdater == null || mProofUpdater.exploitSigmaStarConcatOfIa());
+			final boolean exploitSigmaStarConcatOfIa =
+					workerResult.getAutomatonType().equals(AbstractCegarLoop.AutomatonType.INTERPOLANT)
+							&& (mProofUpdater == null || mProofUpdater.exploitSigmaStarConcatOfIa());
 			IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
 			try {
 				if (mPref.differenceSenwa()) {
