@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.pea2boogie.testgen;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -178,8 +179,8 @@ public class Req2CauseTrackingCDD {
 		return newGuard;
 	}
 
-	public static Set<String> getAllVariables(final PatternType<?> pattern) {
-		final List<CounterTrace> cts = pattern.constructCounterTrace();
+	public static Set<String> getAllVariables(final PatternType<?> pattern, final ILogger logger) {
+		final List<CounterTrace> cts = pattern.constructCounterTrace(Collections.singletonList(pattern), logger);
 		final Set<String> variables = new HashSet<>();
 
 		for (final CounterTrace ct : cts) {
@@ -201,8 +202,8 @@ public class Req2CauseTrackingCDD {
 		return cdds.get(0);
 	}
 
-	public static Set<String> getEffectVariables(final PatternType<?> pattern) {
-		final List<CounterTrace> cts = pattern.constructCounterTrace();
+	public static Set<String> getEffectVariables(final PatternType<?> pattern, final ILogger logger) {
+		final List<CounterTrace> cts = pattern.constructCounterTrace(Collections.singletonList(pattern), logger);
 		final Set<String> variables = new HashSet<>();
 
 		for (final CounterTrace ct : cts) {

@@ -82,6 +82,7 @@ public class Req2Pea implements IReq2Pea {
 		mResultUtil = new PeaResultUtil(mLogger, mServices);
 
 		final List<PatternType<?>> requirements = replacePrev(reqs);
+
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mServices, mLogger);
 
 		mDurations = new Durations();
@@ -153,7 +154,7 @@ public class Req2Pea implements IReq2Pea {
 					mLogger.info("Transforming " + pat.getId());
 				}
 				counter.compute(pat.getClass(), (a, b) -> b == null ? 1 : b + 1);
-				pea = pat.transformToPea(mLogger, durations);
+				pea = pat.transformToPea(mLogger, durations, patterns);
 			} catch (final Exception ex) {
 				final String reason = ex.getMessage() == null ? ex.getClass().toString() : ex.getMessage();
 				mResultUtil.transformationError(pat, reason);

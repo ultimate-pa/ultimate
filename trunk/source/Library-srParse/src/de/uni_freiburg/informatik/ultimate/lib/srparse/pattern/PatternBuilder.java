@@ -68,7 +68,13 @@ public class PatternBuilder {
 			DurationBoundLPattern.class, PersistencePattern.class, PrecedenceChain12Pattern.class,
 			PrecedenceChain21Pattern.class, PrecedencePattern.class, ResponseChain12Pattern.class,
 			ResponsePattern.class, UniversalityPattern.class, UniversalityDelayPattern.class,
-			InvarianceDelayPattern.class, ConditionalResponseBoundL1Pattern.class };
+			InvarianceDelayPattern.class, ConditionalResponseBoundL1Pattern.class,
+			// Automaton patterns
+			InitialLocPattern.class, TransitionPattern.class, TransitionGPattern.class,
+			TransitionLPattern.class, TransitionUPattern.class, TransitionEPattern.class,
+			TransitionLGPattern.class, TransitionUGPattern.class, TransitionGEPattern.class,
+			TransitionLEPattern.class, TransitionUEPattern.class,
+			TransitionLGEPattern.class, TransitionUGEPattern.class };
 
 	private static final Map<Class<? extends PatternType<?>>, PatternTypeConstructor> CONSTRUCTORS = new HashMap<>();
 
