@@ -15,9 +15,15 @@ source "${DIR}/makeBuild.sh"
 package_run() {
   for TOOLNAME in "${PRODUCTS[@]}"; do
     for OS in "${OSS[@]}"; do
-      print_heading "Package Ultimate ${TOOLNAME} [${OS} | ${ARCH}]"
-      exit_on_fail package_product "${TOOLNAME}" "${OS}"
-      print_newline
+      for ARCH in "${ARCHS[@]}"; do
+        # The aarch64 architecture is not supported for win32
+        if [ "${OS}" == "win32" ] && [ "${ARCH}" == "aarch64" ]; then
+          continue
+        fi
+        print_heading "Package Ultimate ${TOOLNAME} [${OS} | ${ARCH}]"
+        exit_on_fail package_product "${TOOLNAME}" "${OS}" "${ARCH}"
+        print_newline
+      done
     done
   done
 }

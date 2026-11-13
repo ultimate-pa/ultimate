@@ -14,9 +14,9 @@ relscripts="${root}/releaseScripts/default"
 target_dir="${relscripts}/WebFrontend"
 
 if is_linux ; then
-  ultdir="UAutomizer-linux"
+  ultdir="UAutomizer-linux-x86_64"
 elif is_windows ; then
-  ultdir="UAutomizer-win32"
+  ultdir="UAutomizer-win32-x86_64"
 else
   echo "Unsupported OS type $OSTYPE"
   exit 1

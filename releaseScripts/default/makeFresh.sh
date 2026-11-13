@@ -26,10 +26,16 @@ archive_init() {
 archive_run() {
   for TOOLNAME in "${PRODUCTS[@]}"; do
     for OS in "${OSS[@]}"; do
-      # makeZip.sh <toolname> <os>
-      print_heading "Archive Ultimate ${TOOLNAME} [${OS} | ${ARCH}]"
-      exit_on_fail bash makeZip.sh "${TOOLNAME}" "${OS}"
-      print_newline
+      for ARCH in "${ARCHS[@]}"; do
+        # The aarch64 architecture is not supported for win32
+        if [ "${OS}" == "win32" ] && [ "${ARCH}" == "aarch64" ]; then
+          continue
+        fi
+        # makeZip.sh <toolname> <os> <arch>
+        print_heading "Archive Ultimate ${TOOLNAME} [${OS} | ${ARCH}]"
+        exit_on_fail bash makeZip.sh "${TOOLNAME}" "${OS}" "${ARCH}"
+        print_newline
+      done
     done
   done
 }

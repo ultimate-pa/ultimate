@@ -8,7 +8,7 @@ The [official website](https://ultimate-pa.org/) includes a web interface which 
 
 The available documentation can be found in [our wiki](https://github.com/ultimate-pa/ultimate/wiki).
 
-You can download the [latest release from GitHub's release page](https://github.com/ultimate-pa/ultimate/releases/latest) or try our [nightly builds](https://ultimate-pa.org/nightly/).
+All analysis and verification tools of the framework are available for _**Linux**_ (x86\_64 and aarch64), _**MacOS**_ (x86\_64 and aarch64), and _**Windows**_ (x86\_64). You can download the binaries of the [latest release from GitHub's release page](https://github.com/ultimate-pa/ultimate/releases/latest) or try our [nightly builds](https://ultimate-pa.org/nightly/).
 
 ## Developers
 
