@@ -49,9 +49,7 @@ public class NaiveUnionNwa<L, S> implements INwaOutgoingLetterAndTransitionProvi
 			throw new IllegalArgumentException("At least one automaton is required.");
 		}
 
-		// automata has to be a list of total INwaOutgoingLetterAndTransitionProvider
 		mAutomata = List.copyOf(automata);
-		// all automata have to share the same alphabet
 		mVpAlphabet = mAutomata.getFirst().getVpAlphabet();
 
 		final List<UnionState<S>> initialStates = new ArrayList<>();
