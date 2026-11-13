@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel;
 
 import java.util.Collections;
 import java.util.Map;

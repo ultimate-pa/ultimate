@@ -344,7 +344,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		return !stillAccepted;
 	}
 
-	private void computeAutomataDifference(final INestedWordAutomaton<L, IPredicate> minuend,
+	protected void computeAutomataDifference(final INestedWordAutomaton<L, IPredicate> minuend,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahendBeforeEnhancement,
 			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,

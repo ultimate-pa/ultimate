@@ -210,6 +210,13 @@ public class WitnessPrinter implements IOutput {
 
 		for (final IResultWithFiniteTrace<?, ?> cex : cexResults) {
 			final IProgramExecution<?, ?> backtransPe = backtrans.translateProgramExecution(cex.getProgramExecution());
+			if (backtransPe.getLength() == 0) {
+				// The verifier knows that the error is reachable, but not how (k-induction, when no letter leads into
+				// the error state). A violation witness needs at least a target, so there is none.
+				mLogger.warn("The counterexample \"%s\" has no steps, writing no violation witness for it",
+						cex.getShortDescription());
+				continue;
+			}
 			if (createGraphML) {
 				final String witness =
 						new GraphMLViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeGraphMLString();

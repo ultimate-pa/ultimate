@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.icfg;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgSummaryTransition;
@@ -53,7 +54,7 @@ public class Summary extends CodeBlock implements IIcfgSummaryTransition<IcfgLoc
 	@Visualizable
 	private final boolean mCalledProcedureHasImplementation;
 
-	Summary(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+	public Summary(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final CallStatement st, final boolean calledProcedureHasImplementation, final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mCallStatement = st;
@@ -88,5 +89,9 @@ public class Summary extends CodeBlock implements IIcfgSummaryTransition<IcfgLoc
 	public void setTransitionFormula(final UnmodifiableTransFormula transFormula) {
 		assert TransFormulaUtils.hasInternalNormalForm(transFormula) : "Expected TF in internal normal form";
 		super.setTransitionFormula(transFormula);
+	}
+
+	public void setPayload(final IPayload payload) {
+		mPayload = payload;
 	}
 }

@@ -534,6 +534,8 @@ def create_cli_settings(prop, validate_witness, witness_type, architecture, inpu
             "--traceabstraction.positions.where.we.compute.the.hoare.annotation"
         )
         ret.append("None")
+        ret.append("--traceabstraction.use.sequential.cegar.loop.with.k-induction")
+        ret.append("false")
         # For YAML violation witnesses, disable procedure inlining and the aggressive block encoding
         if witness_type == "violation_witness" and any(i.endswith(".yml") for i in input_files):
             ret.append("--procedureinliner.inline.calls.to.implemented.procedures")

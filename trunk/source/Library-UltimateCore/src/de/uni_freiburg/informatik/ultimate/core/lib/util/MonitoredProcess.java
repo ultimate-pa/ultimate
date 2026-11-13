@@ -509,6 +509,17 @@ public final class MonitoredProcess implements IStorable, AutoCloseable {
 		return !mProcessOnExit.isDone();
 	}
 
+	/**
+	 * @return the operating system's id of the process
+	 */
+	public long pid() {
+		final Process process = mProcess;
+		if (process == null) {
+			throw new IllegalStateException(getLogStringPrefix() + " has no process any more");
+		}
+		return process.pid();
+	}
+
 	private String getLogStringPrefix() {
 		return "[MP " + mCommand + " (" + mID + ")]";
 	}

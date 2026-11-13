@@ -568,8 +568,106 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_PARALLEL_CEGAR_LOOP = "Use CEGAR loop for Parallel Trace Abstraction";
 	private static final boolean DEF_PARALLEL_CEGAR_LOOP = false;
 
-	public static final String LABEL_THREADLIMIT = "Threadlimit for Parallel CEGAR";
-	private static final Integer DEF_THREADLIMIT = 1;
+	public static final String LABEL_NUM_TA_WORKERS = "Number of TA workers in Parallel Trace Abstraction";
+	private static final String DESC_NUM_TA_WORKERS =
+			"How many TA workers check counterexamples. With 0, only k-induction runs, which "
+					+ "needs at least one k-induction worker. The parallel loop uses one thread per worker of any "
+					+ "kind.";
+	private static final Integer DEF_NUM_TA_WORKERS = 1;
+
+	public static final String LABEL_NUM_KINDUCTION_WORKERS =
+			"Number of K-Induction workers in Parallel Trace Abstraction";
+	private static final Integer DEF_NUM_KINDUCTION_WORKERS = 0;
+
+	public static final String LABEL_KINDUCTION_SOLVER_TIMEOUT = "Timeout in ms for each k-induction SMT query";
+	private static final String DESC_KINDUCTION_SOLVER_TIMEOUT =
+			"Per-check timeout the k-induction worker passes to its SMT solver, one hour by default. This is "
+					+ "deliberately generous: k-induction runs many increasingly large queries, and a short timeout "
+					+ "makes it give up at a low k and report no verdict. Use -1 to inherit whatever the configured "
+					+ "external solver command says instead. Supported for z3, cvc4, cvc5 and bitwuzla.";
+	private static final Integer DEF_KINDUCTION_SOLVER_TIMEOUT = 60 * 60 * 1000;
+
+	public static final String LABEL_KINDUCTION_WITNESS_TIMEOUT =
+			"Timeout in ms for the invariants of a k-induction proof";
+	private static final String DESC_KINDUCTION_WITNESS_TIMEOUT =
+			"How long the k-induction worker may spend, after it proved the program, on the invariants of its proof "
+					+ "for the correctness witness. The verdict waits for them at most this long (plus a short grace); "
+					+ "after that it is reported with the invariants found so far, possibly none.";
+	private static final Integer DEF_KINDUCTION_WITNESS_TIMEOUT = 20 * 1000;
+
+	public static final String LABEL_TA_RETIREMENT_HEAP = "Live heap at which a TA worker retires (% of max heap)";
+	private static final String DESC_TA_RETIREMENT_HEAP =
+			"When what is still in use after a garbage collection reaches this share of the JVM's maximum heap, a TA "
+					+ "worker of Parallel Trace Abstraction stops and retires, and so on until none is left. Then the "
+					+ "loop releases its abstraction and the invariant supplier, and only k-induction runs on, which "
+					+ "never retires. No worker has a memory limit of its own.";
+	private static final int DEF_TA_RETIREMENT_HEAP = 80;
+
+	public static final String LABEL_INVARIANT_PROBATION = "Probation of invariants for k-induction";
+	private static final String DESC_INVARIANT_PROBATION =
+			"The invariant supplier watches the queries of k-induction. If one runs much longer than the one of the "
+					+ "same kind before, the supplier asks it itself with earlier, weaker invariants. If one of them "
+					+ "answers within the limit, the supplier publishes it and interrupts k-induction, which takes "
+					+ "the supplier's answer (a violation is asked again, for its witness). Needs z3 as the solver "
+					+ "of k-induction and of the supplier, and SIGINT (not on Windows); otherwise k-induction runs "
+					+ "without probation.";
+	private static final boolean DEF_INVARIANT_PROBATION = true;
+
+	public static final String LABEL_PROBATION_FACTOR = "Probation limit of invariants: slowdown factor";
+	private static final String DESC_PROBATION_FACTOR =
+			"A query of k-induction is on probation once it runs longer than this many times the previous query of "
+					+ "the same kind (base or step), and at least the probation minimum.";
+	private static final int DEF_PROBATION_FACTOR = 2;
+
+	public static final String LABEL_PROBATION_MINIMUM = "Probation limit of invariants: minimum (s)";
+	private static final String DESC_PROBATION_MINIMUM =
+			"A query of k-induction is never on probation before it ran this long.";
+	private static final int DEF_PROBATION_MINIMUM = 10;
+
+	public static final String LABEL_KINDUCTION_SOLVER_RESTART =
+			"Restart the k-induction solver if an interrupt kills it";
+	private static final String DESC_KINDUCTION_SOLVER_RESTART =
+			"An interrupt of the invariant supplier that arrives just after the solver answered kills the solver. "
+					+ "If set, k-induction restarts it with its declarations and asks the query again; otherwise "
+					+ "k-induction crashes.";
+	private static final boolean DEF_KINDUCTION_SOLVER_RESTART = true;
+
+	public static final String LABEL_SEQUENTIAL_KINDUCTION_CEGAR_LOOP = "Use sequential CEGAR loop with k-induction";
+	private static final String DESC_SEQUENTIAL_KINDUCTION_CEGAR_LOOP =
+			"Runs trace abstraction for a limited time, then checks its interpolants for inductive invariants, then "
+					+ "runs k-induction with those invariants on the abstraction that trace abstraction refined so "
+					+ "far. All three run one after the other on the main thread. Takes precedence over the parallel "
+					+ "CEGAR loop.";
+	private static final boolean DEF_SEQUENTIAL_KINDUCTION_CEGAR_LOOP = false;
+
+	public static final String LABEL_SEQUENTIAL_TA_TIME_LIMIT =
+			"Time limit of trace abstraction before k-induction (s)";
+	private static final String DESC_SEQUENTIAL_TA_TIME_LIMIT =
+			"How much CPU time the sequential CEGAR loop with k-induction gives trace abstraction before it goes on "
+					+ "to the invariant synthesis and k-induction: that of the JVM, the garbage collector included, "
+					+ "and of the external solvers.";
+	private static final int DEF_SEQUENTIAL_TA_TIME_LIMIT = 400;
+
+	public static final String LABEL_SEQUENTIAL_INVARIANT_TIME_LIMIT =
+			"Time limit of invariant synthesis before k-induction (s)";
+	private static final String DESC_SEQUENTIAL_INVARIANT_TIME_LIMIT =
+			"How long the sequential CEGAR loop with k-induction checks the interpolants of trace abstraction for "
+					+ "inductive invariants before it starts k-induction. 0 skips the invariant synthesis.";
+	private static final int DEF_SEQUENTIAL_INVARIANT_TIME_LIMIT = 50;
+
+	public static final String LABEL_SEQUENTIAL_KINDUCTION_TIME_LIMIT = "Time limit of k-induction (s)";
+	private static final String DESC_SEQUENTIAL_KINDUCTION_TIME_LIMIT =
+			"How long the sequential CEGAR loop with k-induction runs k-induction. 0 means no limit but the time "
+					+ "limit of the whole toolchain.";
+	private static final int DEF_SEQUENTIAL_KINDUCTION_TIME_LIMIT = 0;
+
+	public static final String LABEL_INTERPOLANT_INVARIANTS =
+			"Check interpolants of TA workers for invariants for k-induction";
+	private static final String DESC_INTERPOLANT_INVARIANTS =
+			"If there is a k-induction worker, every TA worker hands the interpolants of each infeasible "
+					+ "counterexample to the invariant supplier. It checks which of them are inductive invariants of "
+					+ "the program and gives those to the k-induction workers while they run.";
+	private static final boolean DEF_INTERPOLANT_INVARIANTS = true;
 
 	public static final String LABEL_MINIMIZE_ABSTRACTION_PER_WORKER =
 			"Minimize Abstraction every time a worker is done";
@@ -788,7 +886,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_IF_ANALYZED_TOO_OFTEN, 0, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_STOP_MODE, PathProgramDumpStop.AFTER_FIRST_DUMP,
 						PreferenceType.Combo, PathProgramDumpStop.values()),
-				getConcurrencySettings(), getParallelCegarSettings() };
+				getConcurrencySettings(), getParallelCegarSettings(), getSequentialKInductionSettings() };
 	}
 
 	private static UltimatePreferenceItemContainer getConcurrencySettings() {
@@ -893,8 +991,28 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		return new UltimatePreferenceItemContainer("Parallel Trace Abstraction",
 				new UltimatePreferenceItem<>(LABEL_PARALLEL_CEGAR_LOOP, DEF_PARALLEL_CEGAR_LOOP,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_THREADLIMIT, DEF_THREADLIMIT, PreferenceType.Integer,
+				new UltimatePreferenceItem<>(LABEL_NUM_TA_WORKERS, DEF_NUM_TA_WORKERS, DESC_NUM_TA_WORKERS,
+						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_NUM_KINDUCTION_WORKERS, DEF_NUM_KINDUCTION_WORKERS,
+						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_KINDUCTION_SOLVER_TIMEOUT, DEF_KINDUCTION_SOLVER_TIMEOUT,
+						DESC_KINDUCTION_SOLVER_TIMEOUT, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_KINDUCTION_WITNESS_TIMEOUT, DEF_KINDUCTION_WITNESS_TIMEOUT,
+						DESC_KINDUCTION_WITNESS_TIMEOUT, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_TA_RETIREMENT_HEAP, DEF_TA_RETIREMENT_HEAP, DESC_TA_RETIREMENT_HEAP,
+						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100)),
+				new UltimatePreferenceItem<>(LABEL_INVARIANT_PROBATION, DEF_INVARIANT_PROBATION,
+						DESC_INVARIANT_PROBATION, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_PROBATION_FACTOR, DEF_PROBATION_FACTOR, DESC_PROBATION_FACTOR,
+						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 1000)),
+				new UltimatePreferenceItem<>(LABEL_PROBATION_MINIMUM, DEF_PROBATION_MINIMUM, DESC_PROBATION_MINIMUM,
+						PreferenceType.Integer, IUltimatePreferenceItemValidator.ONLY_POSITIVE),
+				new UltimatePreferenceItem<>(LABEL_KINDUCTION_SOLVER_RESTART, DEF_KINDUCTION_SOLVER_RESTART,
+						DESC_KINDUCTION_SOLVER_RESTART, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_INVARIANTS, DEF_INTERPOLANT_INVARIANTS,
+						DESC_INTERPOLANT_INVARIANTS, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SEARCH_LOOP_BOUND, DEF_SEARCH_LOOP_BOUND, DESC_SEARCH_LOOP_BOUND,
 						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(-1, 1_0000_000)),
 				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY, DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY,
@@ -902,6 +1020,28 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_MINIMIZE_ABSTRACTION_PER_WORKER, DEF_MINIMIZE_ABSTRACTION_PER_WORKER,
 						DESC_MINIMIZE_ABSTRACTION_PER_WORKER, PreferenceType.Boolean));
 
+	}
+
+	/**
+	 * The settings of the sequential CEGAR loop with k-induction, which runs trace abstraction, invariant synthesis and
+	 * k-induction one after the other. k-induction itself takes its other settings from
+	 * {@link #getParallelCegarSettings()}.
+	 */
+	private static UltimatePreferenceItemContainer getSequentialKInductionSettings() {
+		return new UltimatePreferenceItemContainer("Trace Abstraction with K-Induction",
+				new UltimatePreferenceItem<>(LABEL_SEQUENTIAL_KINDUCTION_CEGAR_LOOP,
+						DEF_SEQUENTIAL_KINDUCTION_CEGAR_LOOP, DESC_SEQUENTIAL_KINDUCTION_CEGAR_LOOP,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SEQUENTIAL_TA_TIME_LIMIT, DEF_SEQUENTIAL_TA_TIME_LIMIT,
+						DESC_SEQUENTIAL_TA_TIME_LIMIT, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, Integer.MAX_VALUE)),
+				new UltimatePreferenceItem<>(LABEL_SEQUENTIAL_INVARIANT_TIME_LIMIT, DEF_SEQUENTIAL_INVARIANT_TIME_LIMIT,
+						DESC_SEQUENTIAL_INVARIANT_TIME_LIMIT, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, Integer.MAX_VALUE)),
+				new UltimatePreferenceItem<>(LABEL_SEQUENTIAL_KINDUCTION_TIME_LIMIT,
+						DEF_SEQUENTIAL_KINDUCTION_TIME_LIMIT, DESC_SEQUENTIAL_KINDUCTION_TIME_LIMIT,
+						PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, Integer.MAX_VALUE)));
 	}
 
 	public static String getSuffixedLabel(final String label, final int index) {

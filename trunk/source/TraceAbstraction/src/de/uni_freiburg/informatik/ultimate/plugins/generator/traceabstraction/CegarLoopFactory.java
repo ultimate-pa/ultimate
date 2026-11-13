@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.pe
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.IndependenceProviderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.ParallelNwaCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
@@ -229,6 +230,10 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 				errorLocs, proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile,
 				mTransitionClazz, stateFactoryForRefinement);
 		case NONE -> {
+			if (mPrefs.isSequentialKInductionCegarLoop() && !IcfgUtils.isConcurrent(root)) {
+				yield new NwaCegarLoopWithKInduction<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
+						errorLocs, proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
+			}
 			if (mPrefs.isParallelCegarLoop() && !IcfgUtils.isConcurrent(root)) {
 				yield new ParallelNwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
 						errorLocs, proofProducer, services, mTransitionClazz, stateFactoryForRefinement);

@@ -103,8 +103,21 @@ public final class TAPreferences {
 	private final IndependenceSettings mLbeIndependenceSettings;
 
 	// Parallel Trace Abstraction Settings
-	private final int mThreadLimit;
 	private final boolean mParallelCegarLoop;
+	private final int mNumTaWorkers;
+	private final int mNumKInductionWorkers;
+	private final int mKInductionSolverTimeout;
+	private final int mKInductionWitnessTimeout;
+	private final int mTaRetirementHeap;
+	private final boolean mInvariantProbation;
+	private final int mProbationFactor;
+	private final int mProbationMinimum;
+	private final boolean mKInductionSolverRestart;
+	private final boolean mInterpolantInvariants;
+	private final boolean mSequentialKInductionCegarLoop;
+	private final int mSequentialTaTimeLimit;
+	private final int mSequentialInvariantTimeLimit;
+	private final int mSequentialKInductionTimeLimit;
 	private final boolean mConsiderOnlyActiveCounterexamplesInIsEmptyParallel;
 	private final boolean mMinimizeAbstractionPerWorker;
 	private final int mSearchLoopBound;
@@ -223,7 +236,25 @@ public final class TAPreferences {
 				IndependenceSettings.DEFAULT_SOLVER_TIMEOUT /* currently ignored; not exposed as setting */);
 
 		mParallelCegarLoop = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLEL_CEGAR_LOOP);
-		mThreadLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_THREADLIMIT);
+		mNumTaWorkers = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_NUM_TA_WORKERS);
+		mNumKInductionWorkers = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_NUM_KINDUCTION_WORKERS);
+		mKInductionSolverTimeout = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_SOLVER_TIMEOUT);
+		mKInductionWitnessTimeout =
+				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_WITNESS_TIMEOUT);
+		mTaRetirementHeap = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_TA_RETIREMENT_HEAP);
+		mInvariantProbation = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INVARIANT_PROBATION);
+		mProbationFactor = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_PROBATION_FACTOR);
+		mProbationMinimum = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_PROBATION_MINIMUM);
+		mKInductionSolverRestart =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_KINDUCTION_SOLVER_RESTART);
+		mInterpolantInvariants = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_INVARIANTS);
+		mSequentialKInductionCegarLoop =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEQUENTIAL_KINDUCTION_CEGAR_LOOP);
+		mSequentialTaTimeLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_SEQUENTIAL_TA_TIME_LIMIT);
+		mSequentialInvariantTimeLimit =
+				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_SEQUENTIAL_INVARIANT_TIME_LIMIT);
+		mSequentialKInductionTimeLimit =
+				mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_SEQUENTIAL_KINDUCTION_TIME_LIMIT);
 		mConsiderOnlyActiveCounterexamplesInIsEmptyParallel =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY);
 		mMinimizeAbstractionPerWorker =
@@ -654,12 +685,106 @@ public final class TAPreferences {
 		return new HoareProofSettings(getHoareAnnotationPositions(), getSimplificationTechnique());
 	}
 
-	public int getThreadLimit() {
-		return mThreadLimit;
-	}
-
 	public boolean isParallelCegarLoop() {
 		return mParallelCegarLoop;
+	}
+
+	/**
+	 * @return the number of trace abstraction workers of the parallel CEGAR loop; 0 if only the other workers run
+	 */
+	public int getNumTaWorkers() {
+		return mNumTaWorkers;
+	}
+
+	public int getNumKInductionWorkers() {
+		return mNumKInductionWorkers;
+	}
+
+	/**
+	 * @return the per-check timeout in ms that the k-induction worker passes to its SMT solver, or -1 to inherit the
+	 *         timeout of the configured external solver command.
+	 */
+	public int getKInductionSolverTimeout() {
+		return mKInductionSolverTimeout;
+	}
+
+	/**
+	 * @return how long in ms the k-induction worker may compute the invariants of its proof for a correctness witness
+	 */
+	public int getKInductionWitnessTimeout() {
+		return mKInductionWitnessTimeout;
+	}
+
+	/**
+	 * @return at how many percent of the JVM's maximum heap in use after a garbage collection a TA worker retires
+	 */
+	public int getTaRetirementHeap() {
+		return mTaRetirementHeap;
+	}
+
+	/**
+	 * @return whether the invariant supplier may interrupt a query of k-induction that an invariant made slow
+	 */
+	public boolean useInvariantProbation() {
+		return mInvariantProbation;
+	}
+
+	/**
+	 * @return how many times longer than the previous query of its kind a query of k-induction may run before it is on
+	 *         probation
+	 */
+	public int getProbationFactor() {
+		return mProbationFactor;
+	}
+
+	/**
+	 * @return how long (s) a query of k-induction runs at least before it is on probation
+	 */
+	public int getProbationMinimum() {
+		return mProbationMinimum;
+	}
+
+	/**
+	 * @return whether k-induction restarts its solver if an interrupt of the invariant supplier killed it
+	 */
+	public boolean restartKInductionSolverAfterInterrupt() {
+		return mKInductionSolverRestart;
+	}
+
+	/**
+	 * @return whether TA workers hand their interpolants to the invariant supplier
+	 */
+	public boolean submitInterpolantInvariants() {
+		return mInterpolantInvariants;
+	}
+
+	/**
+	 * @return whether the CEGAR loop runs trace abstraction, the invariant synthesis and k-induction one after the
+	 *         other, see {@code NwaCegarLoopWithKInduction}
+	 */
+	public boolean isSequentialKInductionCegarLoop() {
+		return mSequentialKInductionCegarLoop;
+	}
+
+	/**
+	 * @return how many seconds of CPU time the sequential CEGAR loop with k-induction gives trace abstraction
+	 */
+	public int getSequentialTaTimeLimit() {
+		return mSequentialTaTimeLimit;
+	}
+
+	/**
+	 * @return how many seconds the sequential CEGAR loop with k-induction runs the invariant synthesis; 0 skips it
+	 */
+	public int getSequentialInvariantTimeLimit() {
+		return mSequentialInvariantTimeLimit;
+	}
+
+	/**
+	 * @return how many seconds the sequential CEGAR loop with k-induction runs k-induction; 0 means no limit of its own
+	 */
+	public int getSequentialKInductionTimeLimit() {
+		return mSequentialKInductionTimeLimit;
 	}
 
 	public boolean minimizeAbstractionPerWorker() {

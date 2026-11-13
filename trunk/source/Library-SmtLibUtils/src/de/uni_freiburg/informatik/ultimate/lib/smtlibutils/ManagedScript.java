@@ -61,10 +61,28 @@ public class ManagedScript {
 	private Object mLockOwner;
 
 	public ManagedScript(final IUltimateServiceProvider services, final Script script) {
+		this(services, script, "");
+	}
+
+	/**
+	 * Like {@link #ManagedScript(IUltimateServiceProvider, Script)}, but every variable this instance mints with
+	 * {@link #constructFreshTermVariable(String, Sort)} carries {@code freshVarPrefix} in its name.
+	 * <p>
+	 * A {@link VariableManager} guarantees uniqueness only among the variables it constructed itself, not among the
+	 * symbols of its {@link Script} - so two {@link ManagedScript}s over scripts that share a symbol history (e.g. a
+	 * worker solver built by {@code CfgSmtToolkit#createFreshManagedScript}, onto which the main script's whole
+	 * declaration history is replayed) can mint the same name twice. The constant a {@link TransFormula} declares for
+	 * an aux var is derived from that name, so the second declaration is rejected with "Function c_aux_... is already
+	 * defined". A prefix that is unique per script makes the two name spaces disjoint.
+	 */
+	public ManagedScript(final IUltimateServiceProvider services, final Script script, final String freshVarPrefix) {
+		if (freshVarPrefix == null) {
+			throw new IllegalArgumentException("freshVarPrefix must not be null, use \"\" for no prefix");
+		}
 		mServices = services;
 		mScript = script;
 		mLogger = mServices.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
-		mVariableManager = new VariableManager();
+		mVariableManager = new VariableManager(freshVarPrefix);
 		mSkolemFunctionManager = new SkolemFunctionManager();
 	}
 
@@ -283,6 +301,13 @@ public class ManagedScript {
 	private class VariableManager {
 
 		/**
+		 * Inserted between the "v_" prefix and the basename of every variable this manager constructs, to keep the
+		 * names of two managers over scripts that share a symbol history apart. Usually empty, see
+		 * {@link ManagedScript#ManagedScript(IUltimateServiceProvider, Script, String)}.
+		 */
+		private final String mFreshVarPrefix;
+
+		/**
 		 * Counter for the construction of fresh variables.
 		 */
 		private final MultiElementCounter<String> mTvForBasenameCounter = new MultiElementCounter<>();
@@ -295,6 +320,10 @@ public class ManagedScript {
 		private final Map<TermVariable, String> mTv2Basename = new HashMap<>();
 
 		private final Set<String> mVariableNames = new HashSet<>();
+
+		private VariableManager(final String freshVarPrefix) {
+			mFreshVarPrefix = freshVarPrefix;
+		}
 
 		/**
 		 * Construct "fresh" TermVariables. In mathematical logics a variable is called "fresh" if the variable has not
@@ -314,7 +343,7 @@ public class ManagedScript {
 				throw new IllegalArgumentException("Name contains SMT quote characters " + name);
 			}
 			final Integer newIndex = mTvForBasenameCounter.increment(name);
-			final TermVariable result = mScript.variable("v_" + name + "_" + newIndex, sort);
+			final TermVariable result = mScript.variable("v_" + mFreshVarPrefix + name + "_" + newIndex, sort);
 			mTv2Basename.put(result, name);
 			return result;
 		}

@@ -123,7 +123,18 @@ public final class NwaHoareProofProducer<L extends IAction>
 
 	@Override
 	public boolean isReadyToComputeProof() {
-		return mFinalAbstraction != null;
+		return mFinalAbstraction != null || mProof != null;
+	}
+
+	/**
+	 * Uses an annotation that was computed elsewhere instead of extracting one from the final abstraction, e.g. the
+	 * invariants of a k-induction proof.
+	 *
+	 * @param annotation
+	 *            for some states of {@link #getProgram()} their annotation; the other states have none
+	 */
+	public void setProof(final Map<IPredicate, IPredicate> annotation) {
+		mProof = new FloydHoareMapping<>(mSpecification, annotation);
 	}
 
 	@Override

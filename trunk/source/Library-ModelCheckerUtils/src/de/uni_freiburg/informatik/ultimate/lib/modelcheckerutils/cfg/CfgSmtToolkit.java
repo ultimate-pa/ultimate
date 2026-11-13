@@ -101,8 +101,23 @@ public class CfgSmtToolkit {
 	 */
 	public ManagedScript createFreshManagedScript(final IUltimateServiceProvider services,
 			final SolverSettings solverSettings, final String solverId) {
+		return createFreshManagedScript(services, solverSettings, solverId, "");
+	}
+
+	/**
+	 * Like {@link #createFreshManagedScript(IUltimateServiceProvider, SolverSettings, String)}, but the new
+	 * {@link ManagedScript} mints its fresh variables with {@code freshVarPrefix} in their names.
+	 * <p>
+	 * {@link SmtFunctionsAndAxioms#transferAllSymbols} replays this toolkit's whole declaration history onto the new
+	 * script, which includes the constants that this toolkit's own {@link ManagedScript} declared for the auxiliary
+	 * variables it minted. The new {@link ManagedScript} starts counting at zero and can therefore mint a name whose
+	 * constant is already on the new script. A prefix that is unique per script rules that out; see
+	 * {@link ManagedScript#ManagedScript(IUltimateServiceProvider, Script, String)}.
+	 */
+	public ManagedScript createFreshManagedScript(final IUltimateServiceProvider services,
+			final SolverSettings solverSettings, final String solverId, final String freshVarPrefix) {
 		final Script tcSolver = SolverBuilder.buildAndInitializeSolver(services, solverSettings, solverId);
-		final ManagedScript mgdScriptTc = new ManagedScript(services, tcSolver);
+		final ManagedScript mgdScriptTc = new ManagedScript(services, tcSolver, freshVarPrefix);
 		getSmtFunctionsAndAxioms().transferAllSymbols(tcSolver);
 		return mgdScriptTc;
 	}

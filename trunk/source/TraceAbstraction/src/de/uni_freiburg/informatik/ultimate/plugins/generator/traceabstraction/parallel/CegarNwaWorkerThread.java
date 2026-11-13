@@ -25,10 +25,11 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -59,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
@@ -73,14 +75,23 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.AutomatonType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopResultBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.NwaCegarLoop.AutomatonType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TransferBetweenMainAndWorker.Mode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramCache;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.TransferBetweenMainAndWorker.TransferMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.WorkerThreadResult.WorkerType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.IInvariantSink;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.parallel.invariants.InvariantMessage.InterpolantSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IpTcStrategyModuleAcceleratedTraceCheck;
@@ -106,20 +117,32 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	private IRun<L, ?> mCounterexample = null;
 	private final TaCheckAndRefinementPreferences<L> mTaCheckAndRefinementPrefs;
 	private final PredicateFactoryRefinement mStateFactoryForRefinement;
+	// Whether the main thread computes a proof. The worker never builds Hoare states itself, but its difference
+	// decides which transitions of the subtrahend get computed, so it must explore what the main thread explores.
 	private final boolean mComputeHoareAnnotation;
 	private IcfgLocation mCurrentErrorLoc;
 	private final SimplificationTechnique mSimplificationTechnique;
 	protected static final boolean REMOVE_DEAD_ENDS = true;
+	// How often a worker waiting for a task looks whether it was retired
+	private static final long RETIREMENT_POLL_MILLIS = 200;
 	private final ParallelNwaCegarLoop<L, A> mMainThread;
-	private final INestedWordAutomaton<L, IPredicate> mAbstraction;
+	private INestedWordAutomaton<L, IPredicate> mAbstraction;
 	private StrategyFactory<L> mStrategyFactory;
 	// communication with controller
 	private WorkerThreadResult<L, A> mThreadResult = null;
 	private final BlockingQueue<WorkerThreadResult<L, A>> mBlockingQueueForResults;
-	private final BlockingQueue<IRun<L, ?>> mWorkerTaskQueue;
+	private final BlockingQueue<WorkerThreadTask<L>> mWorkerTaskQueue;
 	private final TransferBetweenMainAndWorker<L, IPredicate> mNwaCexTransferrer;
 
 	private final PathProgramCache<L> mProgramCache;
+	// the services of the counterexample check that is running, see run()
+	private TaskScopedServices mTaskServices;
+	// where the interpolants of every infeasible counterexample go, to be checked for invariants
+	private final IInvariantSink mInvariantSink;
+	// Expires when the HeapWatchdog retires this worker; mServices asks it, so it stops the running check.
+	private final RetirementTimer mRetirementTimer;
+	// The task whose counterexample is being checked, null while the worker waits for one
+	private WorkerThreadTask<L> mTask;
 
 	/**
 	 * CegarNwaWorkerThread is a runnable that will be executed by an executor service. It takes counterexamples from
@@ -144,15 +167,17 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean computeHoareAnnotation,
 			final ParallelNwaCegarLoop<L, A> mainThread,
 			final BlockingQueue<WorkerThreadResult<L, A>> blockingQueueForResults,
-			final BlockingQueue<IRun<L, ?>> workerTaskQueue,
-			final TransferBetweenMainAndWorker<L, IPredicate> transferWorkerUtils) throws InterruptedException {
+			final BlockingQueue<WorkerThreadTask<L>> workerTaskQueue,
+			final TransferBetweenMainAndWorker<L, IPredicate> transferWorkerUtils, final IInvariantSink invariantSink,
+			final RetirementTimer retirementTimer) {
 
 		mLogger = logger;
 		mPref = pref;
 		mIteration = id;
 		mResultBuilder = resultBuilder;
-		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
-		mServices = services;
+		mRetirementTimer = retirementTimer;
+		mServices = services.getProgressMonitorService().registerChildTimer(services, retirementTimer);
+		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(mServices);
 		mCfgSmtToolkit = cfgSmtToolkit;
 		mTaCheckAndRefinementPrefs = taCheckAndRefinementPrefs;
 		mPredicateFactory = predicateFactory;
@@ -166,16 +191,16 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 		mNwaCexTransferrer = transferWorkerUtils;
 		mAbstraction = (INestedWordAutomaton<L, IPredicate>) getAbstraction();
 		mProgramCache = new PathProgramCache<>(mLogger);
+		mInvariantSink = invariantSink;
 
 		final Thread.UncaughtExceptionHandler exhandler = (th, ex) -> {
-			mThreadResult = new WorkerThreadResult<>(null, null, null, false, null, false, AutomatonType.ERROR, null,
-					mCounterexample, null, true);
+			mThreadResult = new WorkerThreadResult<>(WorkerType.TA, null, null, null, mCounterexample, null, true);
 			try {
 				mBlockingQueueForResults.put(mThreadResult);
+				throw new AssertionError("Worker Thread failed due to " + ex);
 			} catch (final InterruptedException e) {
 				throw new AssertionError("Worker Thread failed due to " + e);
 			}
-			mMainThread.reportFailedContinuesWorkerThread();
 		};
 		Thread.currentThread().setUncaughtExceptionHandler(exhandler);
 
@@ -186,45 +211,155 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	 * seen). Checks feasibility, interpolates, creates an Error or Interpolant automaton. Calculates the difference to
 	 * generalize the interpolant automaton and then puts a @WorkerThreadResult into the blocking queue for results.
 	 *
-	 * Terminates if the Thread is interrupted (not used atm) or the Executioner service triggers a shutdown.
+	 * Terminates if the Thread is interrupted (not used atm) or the Executioner service triggers a shutdown. If the
+	 * check of a counterexample throws, the worker tells the main thread with a crashed result and takes no more tasks.
+	 * If the {@link HeapWatchdog} retires the worker, the check it runs is stopped and the worker tells the main thread
+	 * with a retired result, which hands back the counterexample.
 	 */
 	@Override
 	public void run() {
-		while (!Thread.currentThread().isInterrupted()) {
-			try {
-				mLogger.info("WorkerThread: " + Thread.currentThread() + " is Waiting for a Task");
-				mIteration += 1;
-				final IRun<L, ?> mainThreadCounterexample = mWorkerTaskQueue.take();
-				mProgramCache.copyProgramCache(mMainThread.getCurrentProgramCache());
-				mCounterexample =
-						mNwaCexTransferrer.transferRun((NestedRun<L, ?>) mainThreadCounterexample, Mode.MAIN2WORKER);
-
-				// set the programCount to x-1, because we will report it again later
-				mProgramCache.setPathProgramCount(mCounterexample.getWord(),
-						mProgramCache.getPathProgramCount(mainThreadCounterexample.getWord()) - 1);
-				final List<L> trace = mCounterexample.getWord().asList();
-				mCurrentErrorLoc = mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
-				final int traceHash = trace.hashCode();
-				mLogger.info("Starting Thread: " + Thread.currentThread().getId() + "# for Trace Check: " + traceHash);
-				Thread.currentThread().setName("Worker for " + traceHash);
-				try {
-					final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
-					final Counterexample<L> counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
-					final ITARefinementStrategy<L> strategy = setUpStrategy(counterexample);
-					final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible(strategy);
-
-					final AbstractCegarLoop.AutomatonType automatonType = processFeasibilityCheckResult(strategy,
-							isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
-					constructRefinementAutomaton(automatonType);
-					mThreadResult = refineAbstractionInternally();
-				} catch (AutomataLibraryException | ToolchainCanceledException | SMTLIBException e) {
-					throw new AssertionError("WorkerThread Failed: " + e);
+		try {
+			while (!Thread.currentThread().isInterrupted()) {
+				if (!checkNextCounterexample()) {
+					return;
 				}
-				mLogger.info("Done with Thread: " + Thread.currentThread().getId() + "#");
-				mBlockingQueueForResults.put(mThreadResult);
+			}
+		} finally {
+			mRetirementTimer.stopped();
+		}
+	}
+
+	/**
+	 * @return whether the worker takes another task
+	 */
+	private boolean checkNextCounterexample() {
+		// What the task constructs, above all the solvers of its trace checks, is destroyed when it is done.
+		mTaskServices = new TaskScopedServices(mServices);
+		try {
+			mLogger.info("WorkerThread: " + Thread.currentThread() + " is Waiting for a Task");
+			mIteration += 1;
+			mTask = takeTask();
+			if (mTask == null) {
+				return retire();
+			}
+			checkCounterexample(mTask);
+			mTask = null;
+			return true;
+		} catch (final InterruptedException e) {
+			Thread.currentThread().interrupt();
+			return false;
+		} catch (final Throwable t) {
+			if (mMainThread.isShuttingDown()) {
+				// Another worker decided and the main thread destroyed our solver under a running query.
+				mLogger.info("WorkerThread: stopping, shut down during a trace check (" + t + ")");
+				return false;
+			}
+			if (mRetirementTimer.isRetired()) {
+				// Whatever was thrown, a cancellation or an exception that wraps one, the retirement stopped it.
+				return retire();
+			}
+			mLogger.error("WorkerThread failed: " + t);
+			for (final StackTraceElement element : t.getStackTrace()) {
+				mLogger.error("\tat " + element);
+			}
+			try {
+				mBlockingQueueForResults.put(WorkerThreadResult.crashed(WorkerType.TA, t));
 			} catch (final InterruptedException e) {
 				Thread.currentThread().interrupt();
 			}
+			return false;
+		} finally {
+			mTaskServices.destroyAll(mLogger);
+			mTaskServices = null;
+		}
+	}
+
+	/**
+	 * Waits for the next task, but no longer than until the worker is retired.
+	 *
+	 * @return the task, or null if the worker was retired
+	 */
+	private WorkerThreadTask<L> takeTask() throws InterruptedException {
+		while (!mRetirementTimer.isRetired()) {
+			final WorkerThreadTask<L> task = mWorkerTaskQueue.poll(RETIREMENT_POLL_MILLIS, TimeUnit.MILLISECONDS);
+			if (task != null) {
+				return task;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Tells the main thread that this worker retired, with the counterexample it was checking, if any.
+	 *
+	 * @return false, the worker takes no more tasks
+	 */
+	private boolean retire() {
+		mLogger.info("WorkerThread: retired, %s", mRetirementTimer.getReason());
+		try {
+			mBlockingQueueForResults
+					.put(WorkerThreadResult.retired(WorkerType.TA, mTask == null ? null : mTask.getCounterexample()));
+		} catch (final InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
+		return false;
+	}
+
+	/**
+	 * Checks the counterexample of one task and puts the result into the queue for the main thread.
+	 */
+	private void checkCounterexample(final WorkerThreadTask<L> task)
+			throws AutomataLibraryException, InterruptedException {
+		final IRun<L, ?> mainThreadCounterexample = task.getCounterexample();
+		mProgramCache.copyProgramCache(mMainThread.getCurrentProgramCache());
+		mCounterexample =
+				mNwaCexTransferrer.transferRun((NestedRun<L, ?>) mainThreadCounterexample, TransferMode.MAIN2WORKER);
+		updateAbstractionIfSmaller();
+
+		// set the programCount to x-1, because we will report it again later
+		mProgramCache.setPathProgramCount(mCounterexample.getWord(), task.getPathProgramCount() - 1);
+		final List<L> trace = mCounterexample.getWord().asList();
+		mCurrentErrorLoc = mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
+		final int traceHash = trace.hashCode();
+		mLogger.info("Starting Thread: " + Thread.currentThread().threadId() + "# for Trace Check: " + traceHash);
+		Thread.currentThread().setName("Worker for " + traceHash);
+		final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
+		final Counterexample<L> counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
+		final ITARefinementStrategy<L> strategy = setUpStrategy(counterexample);
+		final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible(strategy);
+		if (isCexResult.getFirst() != LBool.SAT && mRetirementTimer.isRetired()) {
+			// An unknown answer may just be the retirement; it must not register a timeout for the error location.
+			throw new ToolchainCanceledException(getClass(), "trace check of a retired worker");
+		}
+		if (isCexResult.getFirst() == LBool.UNSAT) {
+			submitInterpolants();
+		}
+
+		final AutomatonType automatonType = processFeasibilityCheckResult(strategy,
+				isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
+		constructRefinementAutomaton(automatonType);
+		mThreadResult = refineAbstractionInternally();
+		mLogger.info("Done with Thread: " + Thread.currentThread().threadId() + "#");
+		mBlockingQueueForResults.put(mThreadResult);
+	}
+
+	/**
+	 * Hands every interpolant sequence of the infeasibility proof to the invariant supplier, which keeps what is
+	 * inductive. The interpolants are terms of this worker's script; the supplier copies them on its own thread.
+	 */
+	private void submitInterpolants() {
+		final List<QualifiedTracePredicates> sequences = mRefinementResult.getUsedTracePredicates();
+		if (sequences == null) {
+			return;
+		}
+		final List<IcfgLocation> locations = getIcfgLocationsFromRun(mCounterexample);
+		// The interpolants are those between two letters, i.e. at the states 1..n-1 of the run.
+		final List<IcfgLocation> inner = locations.subList(1, locations.size() - 1);
+		for (final QualifiedTracePredicates sequence : sequences) {
+			final List<Term> interpolants =
+					sequence.getPredicates().stream().map(IPredicate::getFormula).collect(Collectors.toList());
+			mInvariantSink.submit(new InterpolantSequence(mCfgSmtToolkit.getManagedScript(), inner, interpolants,
+					"TA " + sequence.getOrigin().getSimpleName()));
 		}
 	}
 
@@ -244,7 +379,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	 *
 	 * if (mStrategyFactory.getPathProgramCache().getPathProgramCount(mCounterexample.getWord()) == 7 ) { strategy =
 	 * mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction, new
-	 * SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration), mPredicateFactoryInterpolantAutomata,
+	 * SubtaskIterationIdentifier(mMainThread.getTaskIdentifier(), mIteration), mPredicateFactoryInterpolantAutomata,
 	 * getPreconditionProvider(), getPostconditionProvider(), RefinementStrategy.ACCELERATED_TRACE_CHECK); }
 	 *
 	 * Warning, we have shared (read and write) access to the PathProgramCache here. But the PathProgramCache uses
@@ -256,7 +391,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 
 		final ITARefinementStrategy<L> strategy;
 		strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
-				new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
+				new SubtaskIterationIdentifier(mMainThread.getTaskIdentifier(), mIteration),
 				mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
 				mPref.getRefinementStrategy());
 		return strategy;
@@ -268,8 +403,19 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> getAbstraction() {
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mainAbstraction = mMainThread.getAbstraction();
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> workerAbstraction = mNwaCexTransferrer
-				.transferAutomaton(mainAbstraction, mPredicateFactoryInterpolantAutomata, Mode.MAIN2WORKER);
+				.transferAutomaton(mainAbstraction, mPredicateFactoryInterpolantAutomata, TransferMode.MAIN2WORKER);
 		return workerAbstraction;
+	}
+
+	private void updateAbstractionIfSmaller() {
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mainAbstraction = mMainThread.getAbstraction();
+		if (mainAbstraction instanceof NestedWordAutomaton && mainAbstraction.size() < mAbstraction.size()) {
+			mLogger.info("Updating worker A, since main A " + mainAbstraction.size() + " is smaller than worker A "
+					+ mAbstraction.size());
+			mAbstraction = (INestedWordAutomaton<L, IPredicate>) mNwaCexTransferrer.transferAutomaton(mainAbstraction,
+					mPredicateFactoryInterpolantAutomata, TransferMode.MAIN2WORKER);
+		}
+
 	}
 
 	private IPreconditionProvider getPreconditionProvider() {
@@ -317,7 +463,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	 *
 	 * @param strategy
 	 */
-	private AbstractCegarLoop.AutomatonType processFeasibilityCheckResult(final ITARefinementStrategy<L> strategy,
+	private AutomatonType processFeasibilityCheckResult(final ITARefinementStrategy<L> strategy,
 			final LBool isCounterexampleFeasible, final IProgramExecution<L, Term> programExecution,
 			final IcfgLocation currentErrorLoc) {
 		if (isCounterexampleFeasible == Script.LBool.SAT) {
@@ -325,10 +471,10 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 			if (mPref.stopAfterFirstViolation()) {
 				mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
 			}
-			return AbstractCegarLoop.AutomatonType.ERROR;
+			return AutomatonType.ERROR;
 		}
 		if (isCounterexampleFeasible != Script.LBool.UNKNOWN) {
-			return AbstractCegarLoop.AutomatonType.INTERPOLANT;
+			return AutomatonType.INTERPOLANT;
 		}
 		Result actualResult;
 		if (programExecution != null) {
@@ -350,7 +496,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 			mResultBuilder.addResultForAllRemaining(actualResult);
 		}
 
-		return AbstractCegarLoop.AutomatonType.UNKNOWN;
+		return AutomatonType.UNKNOWN;
 	}
 
 	/**
@@ -359,7 +505,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	 * @param automatonType
 	 * @throws AutomataOperationCanceledException
 	 */
-	private void constructRefinementAutomaton(final AbstractCegarLoop.AutomatonType automatonType)
+	private void constructRefinementAutomaton(final AutomatonType automatonType)
 			throws AutomataOperationCanceledException {
 		switch (automatonType) {
 		case ERROR:
@@ -379,7 +525,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	}
 
 	protected IUltimateServiceProvider getServices() {
-		return mServices;
+		return mTaskServices != null ? mTaskServices : mServices;
 	}
 
 	private WorkerThreadResult<L, A> refineAbstractionInternally() throws AutomataLibraryException {
@@ -404,7 +550,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 			subtrahend = mErrorGeneralizationEngine.getResultAfterEnhancement();
 
 		} else {
-			automatonType = AutomatonType.FLOYD_HOARE;
+			automatonType = AutomatonType.INTERPOLANT;
 			useErrorAutomaton = false;
 			exploitSigmaStarConcatOfIa = !mComputeHoareAnnotation;
 			subtrahendBeforeEnhancement = mInterpolAutomaton;
@@ -417,15 +563,12 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 		computeAutomataDifference(mAbstraction, subtrahend, subtrahendBeforeEnhancement, predicateUnifier,
 				exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
 
-		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<>(
+		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<>(WorkerType.TA,
 				mNwaCexTransferrer.transferAutomaton(subtrahend, mPredicateFactoryInterpolantAutomata,
-						Mode.WORKER2MAIN),
-				mNwaCexTransferrer.transferAutomaton(subtrahendBeforeEnhancement, mPredicateFactoryInterpolantAutomata,
-						Mode.WORKER2MAIN),
-				predicateUnifier, exploitSigmaStarConcatOfIa, enhanceMode, useErrorAutomaton, automatonType,
-				mCfgSmtToolkit.getManagedScript(),
-				mNwaCexTransferrer.transferRun((NestedRun<L, ?>) mCounterexample, Mode.WORKER2MAIN), mPredicateFactory,
-				false);
+						TransferMode.WORKER2MAIN),
+				automatonType, mCfgSmtToolkit.getManagedScript(),
+				mNwaCexTransferrer.transferRun((NestedRun<L, ?>) mCounterexample, TransferMode.WORKER2MAIN),
+				mPredicateFactory, false);
 
 		// TODO missing a lot of stuff from NwaCegarLoop
 
@@ -474,9 +617,6 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 			}
 
 			if (REMOVE_DEAD_ENDS) {
-				if (mComputeHoareAnnotation) {
-					// TODO missing stuff
-				}
 				diff.removeDeadEnds();
 			}
 			return diff;

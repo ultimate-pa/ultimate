@@ -38,7 +38,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -59,10 +58,8 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopExitAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.lib.icfg.Return;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.UnknownState;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -96,6 +93,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	private int mLoopBound = -1;
 	// a -> b then state is a
 	private final List<Pair<STATE, LETTER>> mCurrentPrefix = new ArrayList<>();
+	/** The initial state that {@link #mCurrentPrefix} begins at. */
+	private STATE mCurrentStart;
 
 	/**
 	 * HashMap used for parallel trace abstraction Maps TraceHash to Trace, has an entry for every counterexample
@@ -161,8 +160,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	// unmark incase we backtrack or explore a return
 	private void unmarkCall(final STATE state, final STATE stateK) {
 		final List<STATE> callPreds = mVisitedCallPairs.get(state);
-		assert callPreds != null : "Call was not visited! " + state + " " + stateK;
-		callPreds.remove(stateK);
+		if (callPreds == null || !callPreds.remove(stateK)) {
+			throw new AssertionError("Call was not visited! " + state + " " + stateK);
+		}
 	}
 
 	@Override
@@ -184,59 +184,17 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		}
 	}
 
+	/**
+	 * The down states the call state {@code callState} was entered with. Only {@link #mVisitedCallPairs} tracks this
+	 * here; the pairs of the base class are cleared on every step of the search.
+	 */
 	@Override
 	protected Set<STATE> getCallStatesOfCallState(final STATE callState) {
-		Set<STATE> callStatesOfCallStates = mVisitedPairs.get(callState);
-		if (callStatesOfCallStates == null) {
-			callStatesOfCallStates = new HashSet<>(mVisitedCallPairs.get(callState));
-			if (callStatesOfCallStates == null) {
-				return Collections.emptySet();
-			}
+		final List<STATE> callPreds = mVisitedCallPairs.get(callState);
+		if (callPreds == null) {
+			throw new AssertionError("Call state " + callState + " was never entered by a call");
 		}
-		return callStatesOfCallStates;
-	}
-
-	private PQState getSuccFromSummary(final Entry<STATE, STATE> entry, final int position, final STATE state,
-			final ArrayList<Integer> counterexamples) {
-		final Map<STATE, LETTER> succ2ReturnSymbol = mSummaryReturnSymbol.get(state);
-		final ArrayList<Integer> activeCounterexamples = new ArrayList<>();
-		final STATE succ = entry.getKey();
-		if (!succ2ReturnSymbol.containsKey(succ)) {
-			throw new AssertionError("Getting Summary failed!");
-		}
-		final STATE returnPred = entry.getValue();
-		final LETTER symbol = succ2ReturnSymbol.get(succ);
-		int currentScore = 0;
-		for (final int cexHash : counterexamples) {
-			final NestedRun<LETTER, ?> counterexample = mActiveCounterexamples.get(cexHash);
-			if (counterexample.getLength() > position) {
-				IcfgLocation programPoint = null;
-				final STATE stateInCEx = (STATE) counterexample.getStateAtPosition(position);
-				if (stateInCEx instanceof Return || succ instanceof Return) {
-					if (symbol == counterexample.getSymbol(position - 1)) {
-						currentScore += 1;
-						activeCounterexamples.add(cexHash);
-					}
-				} else if (stateInCEx instanceof ISLPredicate && succ instanceof ISLPredicate) {
-					programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
-					if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
-						if (symbol == counterexample.getSymbol(position - 1)) {
-							currentScore += 1;
-							activeCounterexamples.add(cexHash);
-						}
-					} else {
-						if (!(succ instanceof UnknownState
-								|| !counterexample.getStateAtPosition(position).equals(succ))) {
-							throw new AssertionError("unexpected state in counterexample");
-						}
-					}
-				} else {
-					throw new AssertionError("unexpected state in counterexample");
-				}
-
-			}
-		}
-		return new PQState(currentScore, returnPred, symbol, succ, state, activeCounterexamples, false, true);
+		return new HashSet<>(callPreds);
 	}
 
 	private boolean increaseScore(final NestedRun<LETTER, ?> counterexample, final STATE state, final STATE succ,
@@ -398,18 +356,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			final ArrayList<Integer> counterexamples) {
 		final PriorityQueue<PQState> pq = new PriorityQueue<>(Comparator.comparingInt(PQState::getScore));
 
-		if (mSummaryReturnPred.containsKey(state)) {
-			if (!mSummaryReturnSymbol.containsKey(state)) {
-				throw new AssertionError("Summary Failed");
-			}
-			final Map<STATE, STATE> succ2ReturnPred = mSummaryReturnPred.get(state);
-			for (final Entry<STATE, STATE> entry : succ2ReturnPred.entrySet()) {
-				pq.add(getSuccFromSummary(entry, position, state, counterexamples));
-			}
-			// after we process a summary we must not process the return anymore!!
-			return pq;
-		}
-
+		// No summaries here: the run found is replayed as a waypoint prefix by IsEmptyHeuristic, which needs every
+		// letter of it, so a call is always explored as call, callee body and return.
 		boolean firstIteration = true;
 		final Iterator<OutgoingInternalTransition<LETTER, STATE>> internalIterator =
 				mOperand.internalSuccessors(state).iterator();
@@ -530,17 +478,13 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 		mVisitedPairs.clear(); // reset visited Pairs, then add start of subsearch
 		if (counterexamples.isEmpty()) {
-			final IsEmptyHeuristic<LETTER, STATE> runsearch;
-			if (mGoalStates != null) {
-				final Predicate<STATE> funIsForbiddenState = a -> false;
-				final Predicate<STATE> goals = a -> mGoalStates.contains(a);
-				final Set<STATE> startset = new HashSet<>(mStartStates);
-				runsearch = new IsEmptyHeuristic<>(mServices, mOperand, startset, funIsForbiddenState, goals,
-						IHeuristic.getHeuristic(AStarHeuristic.ZERO, null, 0), new ArrayList<>(mCurrentPrefix));
-			} else {
-				runsearch = new IsEmptyHeuristic<>(mServices, mOperand,
-						IHeuristic.getHeuristic(AStarHeuristic.ZERO, null, 0), new ArrayList<>(mCurrentPrefix));
-			}
+			// Only from the start being explored: no active counterexample begins there. An automaton with several
+			// initial states, e.g. a library without an entry procedure, has other starts that active ones begin at,
+			// and the shortest run from those would be one of them.
+			final Predicate<STATE> goals = mGoalStates != null ? mGoalStates::contains : mOperand::isFinal;
+			final IsEmptyHeuristic<LETTER, STATE> runsearch =
+					new IsEmptyHeuristic<>(mServices, mOperand, Collections.singleton(mCurrentStart), a -> false, goals,
+							IHeuristic.getHeuristic(AStarHeuristic.ZERO, null, 0), new ArrayList<>(mCurrentPrefix));
 			final NestedRun<LETTER, STATE> run = runsearch.getNestedRun();
 			if (run == null) {
 				return run;
@@ -590,7 +534,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 					// stateK is the hierarchical pre of state
 					// newStateK is the stateKK
 					unmarkCall(stateK, newStateK);
-					addSummary(newStateK, succ, newState, symbol);
 					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
 							new DoubleDecker<>(newStateK, succ), startpq.getCounterexamplesUnderConsideration());
 					markCallVisited(stateK, newStateK);
@@ -625,6 +568,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		while (!pqStart.isEmpty()) {
 			final PQState startpq = pqStart.poll();
 			final STATE start = startpq.getSucc();
+			mCurrentStart = start;
 			final NestedRun<LETTER, STATE> runToGoal = constructRunFromStateToNextBranch(0,
 					new DoubleDecker<>(mDummyEmptyStackState, start), startpq.getCounterexamplesUnderConsideration());
 
