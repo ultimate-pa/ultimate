@@ -148,7 +148,7 @@ public class Elim1Store {
 
 	private static final boolean DEBUG_DUMP_TEST_FOR_BUG = false;
 
-	public Elim1Store(final ManagedScript mgdScript, final IUltimateServiceProvider services, final int quantifier) {
+	public Elim1Store(final ManagedScript mgdScript, final IUltimateServiceProvider services) {
 		mScript = mgdScript.getScript();
 		mMgdScript = mgdScript;
 		mServices = services;
@@ -196,8 +196,7 @@ public class Elim1Store {
 
 		final long startTime = System.nanoTime();
 		final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation =
-				analyzeIndexEqualities(quantifier, selectIndices, stores, input.getContext().getCriticalConstraint(),
-						equalityInformation, eliminatee, mMgdScript, aiem);
+				analyzeIndexEqualities(selectIndices, stores, equalityInformation, eliminatee, mMgdScript, aiem);
 		final long durationMs = (System.nanoTime() - startTime) / 1_000_000;
 		if (durationMs > 100) {
 			mLogger.info("Index analysis took " + durationMs + " ms");
@@ -228,7 +227,7 @@ public class Elim1Store {
 
 		final Map<ArrayIndex, Term> oldCellMapping = constructOldCellValueMapping(selectIndexRepresentatives,
 				storeTermEquivalenceMapping, equalityInformation, indexMapping, auxVarConstructor, eliminatee,
-				quantifier, indexEqualityInformation, mScript);
+				indexEqualityInformation, mScript);
 		newAuxVars.addAll(auxVarConstructor.getConstructedAuxVars());
 
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
@@ -410,7 +409,7 @@ public class Elim1Store {
 		return result;
 	}
 
-	private Term computeHiddenWeakArrayEqualities(final Script script, final int quantifier,
+	private static Term computeHiddenWeakArrayEqualities(final Script script, final int quantifier,
 			final Map<MultiDimensionalNestedStore, Term> newArrayMapping) {
 		// add weak equality for each pair of stores
 		final List<Term> dualJuncts = new ArrayList<>();
@@ -426,7 +425,7 @@ public class Elim1Store {
 		return QuantifierUtils.applyDualFiniteConnective(script, quantifier, dualJuncts);
 	}
 
-	private Term computeHiddenWeakArrayEquality(final Script script, final int quantifier,
+	private static Term computeHiddenWeakArrayEquality(final Script script, final int quantifier,
 			final MultiDimensionalNestedStore store1, final Term array1, final MultiDimensionalNestedStore store2,
 			final Term array2) {
 		// If the store is nested the weakly equal arrays my differ at each index of a
@@ -518,15 +517,14 @@ public class Elim1Store {
 	 * @param newAuxArray
 	 * @param auxVarConstructor
 	 * @param eliminatee
-	 * @param quantifier
 	 * @param script
 	 */
 	private static Map<ArrayIndex, Term> constructOldCellValueMapping(final Set<ArrayIndex> selectIndexRepresentatives,
 			final Map<MultiDimensionalNestedStore, Term> newArrayMapping,
 			final ThreeValuedEquivalenceRelation<Term> equalityInformation,
 			final Map<ArrayIndex, ArrayIndex> indexMapping, final AuxVarConstructor auxVarConstructor,
-			final TermVariable eliminatee, final int quantifier,
-			final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation, final Script script) {
+			final TermVariable eliminatee, final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation,
+			final Script script) {
 		final IValueConstruction<MultiDimensionalSelect, TermVariable> valueConstruction = mds -> {
 			final TermVariable oldCell =
 					auxVarConstructor.constructAuxVar(AUX_VAR_ARRAYCELL, mds.toTerm(script).getSort());
@@ -592,10 +590,10 @@ public class Elim1Store {
 		return oldCellValue;
 	}
 
-	private static ThreeValuedEquivalenceRelation<ArrayIndex> analyzeIndexEqualities(final int mQuantifier,
+	private static ThreeValuedEquivalenceRelation<ArrayIndex> analyzeIndexEqualities(
 			final Set<ArrayIndex> selectIndices, final List<MultiDimensionalNestedStore> stores,
-			final Term preprocessedInput, final ThreeValuedEquivalenceRelation<Term> tver,
-			final TermVariable eliminatee, final ManagedScript mgdScript, final ArrayIndexEqualityManager aiem) {
+			final ThreeValuedEquivalenceRelation<Term> tver, final TermVariable eliminatee,
+			final ManagedScript mgdScript, final ArrayIndexEqualityManager aiem) {
 
 		mgdScript.getScript().echo(new QuotedObject("starting to analyze index equalities"));
 
