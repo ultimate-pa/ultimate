@@ -114,8 +114,12 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 	private static final long WATCH_INTERVAL_MILLIS = 1000;
 	/** How many earlier versions a probation tries, newest first. */
 	private static final int PROBED_VERSIONS = 3;
-	/** How many messages {@link #processPending()} processes, and publishes the result of, at a time. */
-	private static final int PENDING_BATCH_SIZE = 64;
+	/**
+	 * How many messages {@link #processPending()} processes at a time. The first round of a batch checks all of their
+	 * candidates in one Houdini run, which publishes nothing before it ends; small batches publish their first
+	 * invariants early.
+	 */
+	private static final int PENDING_BATCH_SIZE = 8;
 
 	/**
 	 * The settings of the probation.
@@ -329,9 +333,10 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 	/**
 	 * Processes the messages in the inbox and returns once it is empty, instead of waiting for more as {@link #run()}
 	 * does: for a CEGAR loop that runs the supplier after TA has produced all of its interpolants and before
-	 * k-induction starts, see {@code NwaCegarLoopWithKInduction}. The messages are processed in batches, each of which
-	 * publishes what it proved, so when the timer of the supplier's services runs out, what was proven before stays
-	 * published. Afterwards the supplier is stopped. Without probation only, which watches k-induction while it runs.
+	 * k-induction starts, see {@code NwaCegarLoopWithKInduction}. The messages are processed in batches of
+	 * {@link #PENDING_BATCH_SIZE}, and every round of a batch that proves something publishes it at once, so when the
+	 * timer of the supplier's services runs out or its solver is destroyed, what was proven before stays published.
+	 * Afterwards the supplier is stopped. Without probation only, which watches k-induction while it runs.
 	 */
 	public void processPending() {
 		if (mAbstraction == null) {
@@ -409,6 +414,10 @@ public final class InvariantSupplier<L extends IIcfgTransition<?>, A extends IAu
 			if (newlyProven == 0) {
 				break;
 			}
+			// Published at once: the next round may not end before the solver is destroyed, see processPending.
+			publish(changed);
+			changed.clear();
+			offerWitnessCandidates();
 			// What was just proven may be what a rejected candidate was missing.
 			round = new LinkedHashMap<>();
 		}

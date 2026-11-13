@@ -105,7 +105,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * refutes the program, that is the result, with the proof or counterexample of trace abstraction for the witness.</li>
  * <li><b>Invariant synthesis</b>: the {@link InvariantSupplier} checks the interpolants trace abstraction produced for
  * inductive invariants, for at most {@link TAPreferences#getSequentialInvariantTimeLimit()} seconds, on a thread of its
- * own that the main thread waits for.</li>
+ * own that the main thread waits for. It publishes what it proves as it goes, so what it proved before the time limit
+ * stays for k-induction when the main thread stops it.</li>
  * <li><b>k-induction</b> on the abstraction trace abstraction refined so far, with the invariants of the synthesis,
  * or on the initial abstraction if the time limit ended trace abstraction with an abstraction of at least as many
  * states as the initial one,
@@ -409,7 +410,8 @@ public class NwaCegarLoopWithKInduction<L extends IIcfgTransition<?>> extends Nw
 			done.get(limit + INVARIANT_GRACE_MILLIS, TimeUnit.MILLISECONDS);
 			mLogger.info("NwaCegarLoopWithKInduction: phase INV ends");
 		} catch (final TimeoutException e) {
-			// A query that does not notice the time limit: destroying its solver below ends it.
+			// A query that does not notice the time limit: destroying its solver below ends it. What the supplier
+			// published before, after every round that proved something, stays with the subscription.
 			mLogger.warn(
 					"NwaCegarLoopWithKInduction: phase INV did not end within its time limit, stopping its solver");
 		} catch (final ExecutionException e) {
