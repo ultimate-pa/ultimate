@@ -380,7 +380,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	 *
 	 * if (mStrategyFactory.getPathProgramCache().getPathProgramCount(mCounterexample.getWord()) == 7 ) { strategy =
 	 * mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction, new
-	 * SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration), mPredicateFactoryInterpolantAutomata,
+	 * SubtaskIterationIdentifier(mMainThread.getTaskIdentifier(), mIteration), mPredicateFactoryInterpolantAutomata,
 	 * getPreconditionProvider(), getPostconditionProvider(), RefinementStrategy.ACCELERATED_TRACE_CHECK); }
 	 *
 	 * Warning, we have shared (read and write) access to the PathProgramCache here. But the PathProgramCache uses
@@ -392,7 +392,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 
 		final ITARefinementStrategy<L> strategy;
 		strategy = mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
-				new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
+				new SubtaskIterationIdentifier(mMainThread.getTaskIdentifier(), mIteration),
 				mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
 				mPref.getRefinementStrategy());
 		return strategy;

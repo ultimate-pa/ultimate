@@ -122,7 +122,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	/**
 	 * Intermediate layer to encapsulate communication with SMT solvers.
 	 */
-	public final CfgSmtToolkit mCsToolkit;
+	protected final CfgSmtToolkit mCsToolkit;
 	protected final PredicateFactory mPredicateFactory;
 
 	/**
@@ -174,7 +174,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 
 	protected final DebugIdentifier mTaskDebugIdentifier;
 
-	public final TaskIdentifier mTaskIdentifier;
+	protected final TaskIdentifier mTaskIdentifier;
 
 	protected Dumper mDumper;
 
