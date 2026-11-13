@@ -218,7 +218,7 @@ public class ElimStorePlain {
 		final EliminationTask eTaskForStoreElimination = new EliminationTask(eTask.getQuantifier(),
 				Collections.singleton(eliminatee), termAfterSos, eTask.getContext());
 		final EliminationTask resOfStoreElimination =
-				new Elim1Store(mgdScript, services, eTask.getQuantifier()).elim1(eTaskForStoreElimination);
+				new Elim1Store(mgdScript, services).elim1(eTaskForStoreElimination);
 		// if (res.getEliminatees().contains(eliminatee)) {
 		// throw new AssertionError("elimination failed");
 		// }
