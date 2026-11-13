@@ -83,17 +83,7 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 
 	@Override
 	public EliminationResult tryToEliminate(final EliminationTask inputEt) {
-		final EliminationResult er = tryExhaustivelyToEliminate(inputEt);
-		return er;
-	}
-
-	public EliminationResult tryExhaustivelyToEliminate(final EliminationTask inputEt) {
-		final EliminationResult er = tryToEliminateOne(inputEt);
-		if (er == null) {
-			return null;
-		} else {
-			return er;
-		}
+		return tryToEliminateOne(inputEt);
 	}
 
 	private EliminationResult tryToEliminateOne(final EliminationTask inputEt) {
@@ -111,6 +101,7 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 						er.getNewEliminatees());
 			}
 		}
+		// No array eliminatee.
 		return null;
 	}
 
