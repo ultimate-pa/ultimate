@@ -118,16 +118,19 @@ public class ElimStorePlain {
 			// cannot eliminated this array
 			return null;
 		}
-		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJuncts(eTask.getQuantifier(), eTask.getTerm());
-		final Map<Boolean, List<Term>> part = Arrays.stream(dualJuncts).collect(Collectors
-				.partitioningBy(x -> QuantifierUtils.isCorrespondingFiniteJunction(eTask.getQuantifier(), x)));
-		final Term distributers =
-				QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), eTask.getQuantifier(), part.get(true));
-		final ArrayOccurrenceAnalysis resetAoa =
-				new ArrayOccurrenceAnalysis(mgdScript.getScript(), distributers, eliminatee);
-		if (!resetAoa.getDerRelations(eTask.getQuantifier()).isEmpty()
-				|| !resetAoa.getAntiDerRelations(eTask.getQuantifier()).isEmpty()) {
-			return null;
+		{
+			// 20261116 Matthias: I do not understand this check.
+			final Term[] dualJuncts = QuantifierUtils.getDualFiniteJuncts(eTask.getQuantifier(), eTask.getTerm());
+			final Map<Boolean, List<Term>> part = Arrays.stream(dualJuncts).collect(Collectors
+					.partitioningBy(x -> QuantifierUtils.isCorrespondingFiniteJunction(eTask.getQuantifier(), x)));
+			final Term distributers = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
+					eTask.getQuantifier(), part.get(true));
+			final ArrayOccurrenceAnalysis resetAoa =
+					new ArrayOccurrenceAnalysis(mgdScript.getScript(), distributers, eliminatee);
+			if (!resetAoa.getDerRelations(eTask.getQuantifier()).isEmpty()
+					|| !resetAoa.getAntiDerRelations(eTask.getQuantifier()).isEmpty()) {
+				return null;
+			}
 		}
 
 		final Set<TermVariable> newAuxVars = new LinkedHashSet<>();
