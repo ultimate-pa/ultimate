@@ -351,3 +351,6 @@ trunk/source/Library-Llvmir/src/de/uni_freiburg/informatik/ultimate/lib/llvmir/L
 trunk/source/Library-Llvmir/src/de/uni_freiburg/informatik/ultimate/lib/llvmir/LLVMIRLexer.tokens
 trunk/source/Library-Llvmir/src/de/uni_freiburg/informatik/ultimate/lib/llvmir/LLVMIRListener.java
 trunk/source/Library-Llvmir/src/de/uni_freiburg/informatik/ultimate/lib/llvmir/LLVMIRParser.java
+
+releaseScripts/default/svcomp/*token
+releaseScripts/default/svcomp/zulip_state.json
