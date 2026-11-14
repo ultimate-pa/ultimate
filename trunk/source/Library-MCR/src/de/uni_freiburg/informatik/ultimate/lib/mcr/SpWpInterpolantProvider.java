@@ -23,7 +23,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndexEqua
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverStoreEliminationUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -59,8 +58,8 @@ public abstract class SpWpInterpolantProvider<LETTER extends IIcfgTransition<?>>
 		mPredicateTransformer =
 				new PredicateTransformer<>(mManagedScript, new TermDomainOperationProvider(mServices, mManagedScript));
 		// ArrayIndexEqualityManager to eliminate stores with true as context (i.e. without any known equalities)
-		mAiem = new ArrayIndexEqualityManager(new ThreeValuedEquivalenceRelation<>(), mScript.term("true"),
-				QuantifiedFormula.EXISTS, mLogger, mManagedScript);
+		mAiem = new ArrayIndexEqualityManager(new ThreeValuedEquivalenceRelation<>(), mScript.term("true"), mLogger,
+				mManagedScript);
 		mAiem.unlockSolver();
 	}
 

@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimension
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionQuantifierElimination.EliminationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTask;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
@@ -148,22 +149,20 @@ public class Elim1Store {
 
 	private static final boolean DEBUG_DUMP_TEST_FOR_BUG = false;
 
-	public Elim1Store(final ManagedScript mgdScript, final IUltimateServiceProvider services, final int quantifier) {
+	public Elim1Store(final ManagedScript mgdScript, final IUltimateServiceProvider services) {
 		mScript = mgdScript.getScript();
 		mMgdScript = mgdScript;
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 	}
 
-	public EliminationTask elim1(final EliminationTask input) throws ElimStorePlainException {
+	public EliminationResult elim1(final EliminationTask input) throws ElimStorePlainException {
 		assert UltimateNormalFormUtils.respectsUltimateNormalForm(input.getTerm()) : "invalid input";
 		if (input.getEliminatees().size() != 1) {
 			throw new IllegalArgumentException("Can only eliminate one variable");
 		}
 		final int quantifier = input.getQuantifier();
 		final TermVariable eliminatee = input.getEliminatees().iterator().next();
-		final Term polarizedContext = QuantifierUtils.negateIfUniversal(mServices, mMgdScript, quantifier,
-				input.getContext().getCriticalConstraint());
 
 		final ArrayOccurrenceAnalysis aoa =
 				new ArrayOccurrenceAnalysis(mMgdScript.getScript(), input.getTerm(), eliminatee)
@@ -174,12 +173,12 @@ public class Elim1Store {
 		final List<MultiDimensionalNestedStore> stores = aoa.getNestedArrayStores();
 
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation =
-				ArrayIndexEqualityUtils.collectComplimentaryEqualityInformation(mMgdScript.getScript(), quantifier,
-						polarizedContext, selectTerms, stores);
+				ArrayIndexEqualityUtils.collectComplimentaryEqualityInformation(mMgdScript.getScript(),
+						input.getContext().getCriticalConstraint(), selectTerms, stores);
 		if (equalityInformation == null) {
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
-			return new EliminationTask(quantifier, Collections.emptySet(), absobingElement, input.getContext());
+			return new EliminationResult(input.update(absobingElement), Collections.emptySet());
 		}
 
 		final Set<ArrayIndex> selectIndices = new HashSet<>();
@@ -187,18 +186,18 @@ public class Elim1Store {
 			selectIndices.add(selectTerm.getIndex());
 		}
 
-		final ArrayIndexEqualityManager aiem =
-				new ArrayIndexEqualityManager(equalityInformation, polarizedContext, quantifier, mLogger, mMgdScript);
+		final ArrayIndexEqualityManager aiem = new ArrayIndexEqualityManager(equalityInformation,
+				input.getContext().getCriticalConstraint(), mLogger, mMgdScript);
 		if (aiem.contextIsAbsorbingElement()) {
 			aiem.unlockSolver();
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
-			return new EliminationTask(quantifier, Collections.emptySet(), absobingElement, input.getContext());
+			return new EliminationResult(input.update(absobingElement), Collections.emptySet());
 		}
 
 		final long startTime = System.nanoTime();
-		final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation = analyzeIndexEqualities(quantifier,
-				selectIndices, stores, polarizedContext, equalityInformation, eliminatee, mMgdScript, aiem);
+		final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation =
+				analyzeIndexEqualities(selectIndices, stores, equalityInformation, eliminatee, mMgdScript, aiem);
 		final long durationMs = (System.nanoTime() - startTime) / 1_000_000;
 		if (durationMs > 100) {
 			mLogger.info("Index analysis took " + durationMs + " ms");
@@ -210,7 +209,7 @@ public class Elim1Store {
 		// might be part of an index
 		inferCellEqualitiesViaCongruence(mMgdScript, eliminatee, indexEqualityInformation, equalityInformation);
 
-		final List<ArrayIndex> selectIndexRepresentatives = new ArrayList<>();
+		final Set<ArrayIndex> selectIndexRepresentatives = new HashSet<>();
 		for (final ArrayIndex selectIndex : selectIndices) {
 			final ArrayIndex selectIndexRepresentative = indexEqualityInformation.getRepresentative(selectIndex);
 			selectIndexRepresentatives.add(selectIndexRepresentative);
@@ -229,7 +228,7 @@ public class Elim1Store {
 
 		final Map<ArrayIndex, Term> oldCellMapping = constructOldCellValueMapping(selectIndexRepresentatives,
 				storeTermEquivalenceMapping, equalityInformation, indexMapping, auxVarConstructor, eliminatee,
-				quantifier, indexEqualityInformation, mScript);
+				indexEqualityInformation, mScript);
 		newAuxVars.addAll(auxVarConstructor.getConstructedAuxVars());
 
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
@@ -261,8 +260,8 @@ public class Elim1Store {
 		doubleCaseJuncts.addAll(wc.getSecond());
 
 		final Pair<List<Term>, List<Term>> cc =
-				constructIndexValueConnection(selectIndexRepresentatives, indexEqualityInformation, mMgdScript,
-						indexMapping, oldCellMapping, eliminatee, quantifier, equalityInformation, aiem);
+				constructIndexValueConnection(new ArrayList<>(selectIndexRepresentatives), indexEqualityInformation,
+						mMgdScript, indexMapping, oldCellMapping, eliminatee, quantifier, equalityInformation, aiem);
 		singleCaseJuncts.addAll(cc.getFirst());
 		doubleCaseJuncts.addAll(cc.getSecond());
 
@@ -353,7 +352,7 @@ public class Elim1Store {
 					new DAGSize().treesize(input.getTerm()), new DAGSize().treesize(result)));
 			mLogger.info(sb.toString());
 		}
-		final EliminationTask resultEt;
+		final EliminationResult resultEt;
 		if (APPLY_RESULT_SIMPLIFICATION) {
 			if (DEBUG_CRASH_ON_LARGE_SIMPLIFICATION_POTENTIAL) {
 				final ExtendedSimplificationResult esrQuick = SmtUtils.simplifyWithStatistics(mMgdScript, result, null,
@@ -376,13 +375,15 @@ public class Elim1Store {
 				mLogger.info(sizeMessage);
 			}
 			mLogger.info("treesize after simplification " + new DAGSize().treesize(simplified));
-			resultEt = new EliminationTask(quantifier, newAuxVars, simplified, input.getContext());
+			resultEt = new EliminationResult(input.update(simplified), newAuxVars);
 		} else {
-			resultEt = new EliminationTask(quantifier, newAuxVars, result, input.getContext());
+			resultEt = new EliminationResult(input.update(result), newAuxVars);
 		}
-		assert !DEBUG_EXTENDED_RESULT_CHECK || EliminationTask.areDistinct(mMgdScript.getScript(), resultEt,
-				new EliminationTask(quantifier, Collections.singleton(eliminatee), input.getTerm(),
-						input.getContext())) != LBool.SAT
+		resultEt.getEliminationTask();
+		assert !DEBUG_EXTENDED_RESULT_CHECK
+				|| EliminationTask.areDistinct(mMgdScript.getScript(), resultEt.getEliminationTask(),
+						new EliminationTask(quantifier, Collections.singleton(eliminatee), input.getTerm(),
+								input.getContext())) != LBool.SAT
 				: "Bug array QE Input: " + input.getTerm() + " Result:" + resultEt;
 		assert !mMgdScript.isLocked() : "Solver still locked";
 		return resultEt;
@@ -411,7 +412,7 @@ public class Elim1Store {
 		return result;
 	}
 
-	private Term computeHiddenWeakArrayEqualities(final Script script, final int quantifier,
+	private static Term computeHiddenWeakArrayEqualities(final Script script, final int quantifier,
 			final Map<MultiDimensionalNestedStore, Term> newArrayMapping) {
 		// add weak equality for each pair of stores
 		final List<Term> dualJuncts = new ArrayList<>();
@@ -427,7 +428,7 @@ public class Elim1Store {
 		return QuantifierUtils.applyDualFiniteConnective(script, quantifier, dualJuncts);
 	}
 
-	private Term computeHiddenWeakArrayEquality(final Script script, final int quantifier,
+	private static Term computeHiddenWeakArrayEquality(final Script script, final int quantifier,
 			final MultiDimensionalNestedStore store1, final Term array1, final MultiDimensionalNestedStore store2,
 			final Term array2) {
 		// If the store is nested the weakly equal arrays my differ at each index of a
@@ -519,15 +520,14 @@ public class Elim1Store {
 	 * @param newAuxArray
 	 * @param auxVarConstructor
 	 * @param eliminatee
-	 * @param quantifier
 	 * @param script
 	 */
-	private static Map<ArrayIndex, Term> constructOldCellValueMapping(final List<ArrayIndex> selectIndexRepresentatives,
+	private static Map<ArrayIndex, Term> constructOldCellValueMapping(final Set<ArrayIndex> selectIndexRepresentatives,
 			final Map<MultiDimensionalNestedStore, Term> newArrayMapping,
 			final ThreeValuedEquivalenceRelation<Term> equalityInformation,
 			final Map<ArrayIndex, ArrayIndex> indexMapping, final AuxVarConstructor auxVarConstructor,
-			final TermVariable eliminatee, final int quantifier,
-			final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation, final Script script) {
+			final TermVariable eliminatee, final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation,
+			final Script script) {
 		final IValueConstruction<MultiDimensionalSelect, TermVariable> valueConstruction = mds -> {
 			final TermVariable oldCell =
 					auxVarConstructor.constructAuxVar(AUX_VAR_ARRAYCELL, mds.toTerm(script).getSort());
@@ -554,19 +554,24 @@ public class Elim1Store {
 			final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation,
 			final Map<ArrayIndex, ArrayIndex> indexMapping, final ArrayIndex selectIndexRepresentative,
 			final Script script) {
+		for (final Entry<MultiDimensionalNestedStore, Term> entry : newArrayMapping.entrySet()) {
+			final MultiDimensionalNestedStore store = entry.getKey();
+			boolean disjointFromAllStoreIndices = true;
+			for (final ArrayIndex storeIndex : store.getIndices()) {
+				final ArrayIndex storeIndexRep = indexEqualityInformation.getRepresentative(storeIndex);
+				final EqualityStatus eq =
+						indexEqualityInformation.getEqualityStatus(selectIndexRepresentative, storeIndexRep);
+				if (eq != EqualityStatus.NOT_EQUAL) {
+					disjointFromAllStoreIndices = false;
+					break;
+				}
+			}
+			if (disjointFromAllStoreIndices) {
+				final ArrayIndex replacementSelectIndex = indexMapping.get(selectIndexRepresentative);
+				return new MultiDimensionalSelect(entry.getValue(), replacementSelectIndex).toTerm(script);
+			}
+		}
 		return null;
-		// for (final Entry<MultiDimensionalNestedStore, Term> entry : newArrayMapping.entrySet()) {
-		// final ArrayIndex storeIndex = entry.getKey().getIndex();
-		// if (indexEqualityInformation.getEqualityStatus(selectIndexRepresentative,
-		// storeIndex) == EqualityStatus.NOT_EQUAL) {
-		// final ArrayIndex replacementSelectIndex = indexMapping.get(selectIndexRepresentative);
-		// final Term newAuxArray = entry.getValue();
-		// final Term newSelect = new MultiDimensionalSelect(newAuxArray, replacementSelectIndex, script)
-		// .toTerm(script);
-		// return newSelect;
-		// }
-		// }
-		// return null;
 	}
 
 	private static Term constructOldCellValue(final ThreeValuedEquivalenceRelation<Term> equalityInformation,
@@ -588,10 +593,10 @@ public class Elim1Store {
 		return oldCellValue;
 	}
 
-	private static ThreeValuedEquivalenceRelation<ArrayIndex> analyzeIndexEqualities(final int mQuantifier,
+	private static ThreeValuedEquivalenceRelation<ArrayIndex> analyzeIndexEqualities(
 			final Set<ArrayIndex> selectIndices, final List<MultiDimensionalNestedStore> stores,
-			final Term preprocessedInput, final ThreeValuedEquivalenceRelation<Term> tver,
-			final TermVariable eliminatee, final ManagedScript mgdScript, final ArrayIndexEqualityManager aiem) {
+			final ThreeValuedEquivalenceRelation<Term> tver, final TermVariable eliminatee,
+			final ManagedScript mgdScript, final ArrayIndexEqualityManager aiem) {
 
 		mgdScript.getScript().echo(new QuotedObject("starting to analyze index equalities"));
 
@@ -905,7 +910,7 @@ public class Elim1Store {
 	 * @param aiem
 	 */
 	private static Pair<List<Term>, List<Term>> constructWriteConstraints2(
-			final List<ArrayIndex> selectIndexRepresentatives,
+			final Set<ArrayIndex> selectIndexRepresentatives,
 			final ThreeValuedEquivalenceRelation<ArrayIndex> indexEqualityInformation, final ManagedScript mgdScript,
 			final Map<ArrayIndex, ArrayIndex> indexMapping, final Map<ArrayIndex, Term> oldCellMapping,
 			final TermVariable eliminatee, final int quantifier,
@@ -1090,7 +1095,7 @@ public class Elim1Store {
 			final Term select1 = SmtUtils.select(mMgdScript.getScript(), mEliminatee, index1);
 			final Term select2 = SmtUtils.select(mMgdScript.getScript(), mEliminatee, index2);
 			final Term eq = SmtUtils.binaryEquality(mMgdScript.getScript(), select1, select2);
-			final Validity cellEqVal = mIncrementalPlicationChecker.checkPlication(eq);
+			final Validity cellEqVal = mIncrementalPlicationChecker.checkImplication(eq);
 			if (cellEqVal == Validity.VALID) {
 				final boolean distinguishworthy1 = processStoreIndex(index1, index2, select2);
 				final boolean distinguishworthy2 = processStoreIndex(index2, index1, select1);
@@ -1111,7 +1116,7 @@ public class Elim1Store {
 				final Term otherSelect) {
 			if (isStoreIndex(storeIndexCandidate)) {
 				final Term storeEq = SmtUtils.binaryEquality(mMgdScript.getScript(), mStoreValue, otherSelect);
-				final Validity storeEqVal = mIncrementalPlicationChecker.checkPlication(storeEq);
+				final Validity storeEqVal = mIncrementalPlicationChecker.checkImplication(storeEq);
 				if (storeEqVal == Validity.VALID) {
 					final Term storeCellEq = SmtUtils.binaryEquality(mMgdScript.getScript(), mStoreValue,
 							mOldCellMapping.get(otherIndex));
