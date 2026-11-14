@@ -83,61 +83,75 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 
 	@Override
 	public EliminationResult tryToEliminate(final EliminationTask inputEt) {
-		return tryToEliminateOne(inputEt);
+		return tryToEliminateSomeArrayEliminatee(inputEt);
 	}
 
-	private EliminationResult tryToEliminateOne(final EliminationTask inputEt) {
+	private EliminationResult tryToEliminateSomeArrayEliminatee(final EliminationTask inputEt) {
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
 			if (!SmtSortUtils.isArraySort(eliminatee.getSort())) {
 				continue;
 			}
+			// We new a new context in which all other eliminatees are considered bound by ancestors.
+			Context newContext;
+			{
+				final HashSet<TermVariable> boundByAncestors =
+						new HashSet<>(inputEt.getContext().getBoundByAncestors());
+				for (final TermVariable tv : inputEt.getEliminatees()) {
+					if (tv != eliminatee) {
+						boundByAncestors.add(tv);
+					}
+				}
+				newContext = new Context(inputEt.getContext().getCriticalConstraint(), boundByAncestors);
+			}
 			final EliminationTask singletonEliminationTask = new EliminationTask(inputEt.getQuantifier(),
-					Collections.singleton(eliminatee), inputEt.getTerm(), inputEt.getContext());
-			final EliminationResult er = tryToEliminateOne0(singletonEliminationTask);
+					Collections.singleton(eliminatee), inputEt.getTerm(), newContext);
+			final EliminationResult er = tryToEliminateArrayEliminateeStep1(singletonEliminationTask);
 			if (er != null) {
-				assert inputEt.getContext() == er.getEliminationTask().getContext() : "illegal change of context";
-				return new EliminationResult(
-						er.getEliminationTask().update(inputEt.getEliminatees(), er.getEliminationTask().getTerm()),
-						er.getNewEliminatees());
+				assert newContext == er.getEliminationTask().getContext() : "illegal change of context";
+				return new EliminationResult(new EliminationTask(inputEt.getQuantifier(), inputEt.getEliminatees(),
+						er.getEliminationTask().getTerm(), inputEt.getContext()), er.getNewEliminatees());
 			}
 		}
 		// No array eliminatee.
 		return null;
 	}
 
-	private EliminationResult tryToEliminateOne0(final EliminationTask inputEt) {
+	private EliminationResult tryToEliminateArrayEliminateeStep1(final EliminationTask inputEt) {
 		final Pair<Term, EliminationTask> pair = inputEt.makeTight(mServices, mMgdScript);
 		if (pair == null) {
-			return tryToEliminateOne1(inputEt);
-		} else {
-			final EliminationResult er = tryToEliminateOne1(pair.getSecond());
-			if (er == null) {
-				return null;
-			} else {
-				final Term resultTerm = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
-						pair.getFirst(), er.getEliminationTask().getTerm());
-				final EliminationTask resultEliminationTask = new EliminationTask(inputEt.getQuantifier(),
-						inputEt.getEliminatees(), resultTerm, inputEt.getContext());
-				return new EliminationResult(resultEliminationTask, er.getNewEliminatees());
-			}
+			// Unable to move out dualJuncts
+			return tryToEliminateArrayEliminateeStep2(inputEt);
 		}
+		final EliminationResult er = tryToEliminateArrayEliminateeStep2(pair.getSecond());
+		if (er == null) {
+			// Elimination failed
+			return null;
+		}
+		// Elimination succeeded. We have to prepend the dualJuncts that we moved out to the result.
+		final Term resultTerm = QuantifierUtils.applyDualFiniteConnective(mScript, inputEt.getQuantifier(),
+				pair.getFirst(), er.getEliminationTask().getTerm());
+		final EliminationTask resultEliminationTask = new EliminationTask(inputEt.getQuantifier(),
+				inputEt.getEliminatees(), resultTerm, inputEt.getContext());
+		return new EliminationResult(resultEliminationTask, er.getNewEliminatees());
 	}
 
-	private EliminationResult tryToEliminateOne1(final EliminationTask inputEt) {
+	private EliminationResult tryToEliminateArrayEliminateeStep2(final EliminationTask inputEt) {
 		final EliminationResult er;
 		if (PRENEX_NORMAL_FORM_FOR_INNERQUANTIFIERS) {
-			er = tryToEliminateOne2(inputEt);
+			er = tryToEliminateArrayEliminateeStep3(inputEt);
 		} else {
-			er = tryToEliminateOne3(inputEt);
+			er = tryToEliminateArrayEliminateeStep4(inputEt);
 		}
 		return er;
 	}
 
-	private EliminationResult tryToEliminateOne2(final EliminationTask inputEt) {
+	// TODO 20261114 Matthias: Fix bound by ancestor handling for calls. Find out how we put together the result for
+	// alternating quantifiers.
+	private EliminationResult tryToEliminateArrayEliminateeStep3(final EliminationTask inputEt) {
 		final Term pnf = new PrenexNormalForm(mMgdScript).transform(inputEt.getTerm());
 		final QuantifierSequence qs = new QuantifierSequence(mMgdScript, pnf);
 		final EliminationTask et = inputEt.update(qs.getInnerTerm());
-		final EliminationResult res = tryToEliminateOne3(et);
+		final EliminationResult res = tryToEliminateArrayEliminateeStep4(et);
 		if (res == null) {
 			return null;
 		} else {
@@ -157,7 +171,7 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 		}
 	}
 
-	private EliminationResult tryToEliminateOne3(final EliminationTask inputEt) {
+	private EliminationResult tryToEliminateArrayEliminateeStep4(final EliminationTask inputEt) {
 		final EliminationTask res = tryToEliminate(inputEt.getQuantifier(), inputEt.getTerm(), inputEt.getContext(),
 				inputEt.getEliminatees().iterator().next());
 		if (res == null) {
