@@ -327,6 +327,16 @@ public class QuantifierUtils {
 		}
 	}
 
+	public static String getDualFiniteConnective(final int quantifier) {
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			return "and";
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			return "or";
+		} else {
+			throw new AssertionError(UNKNOWN_QUANTIFIER);
+		}
+	}
+
 	public static String getDualBooleanConnective(final String booleanConnective) {
 		if (booleanConnective.equals("and")) {
 			return "or";

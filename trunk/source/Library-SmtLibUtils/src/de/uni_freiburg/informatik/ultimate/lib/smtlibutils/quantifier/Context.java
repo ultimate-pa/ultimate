@@ -154,9 +154,9 @@ public class Context {
 	}
 
 	public Context constructChildContextForConDis(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final FunctionSymbol symb, final List<Term> otherParams) {
-		final Term criticalConstraint = buildCriticalConstraintForConDis(services, mgdScript, mCriticalConstraint, symb,
-				otherParams, mCcTransformation);
+			final ManagedScript mgdScript, final String connective, final List<Term> otherParams) {
+		final Term criticalConstraint = buildCriticalConstraintForConDis(services, mgdScript, mCriticalConstraint,
+				connective, otherParams, mCcTransformation);
 		return new Context(criticalConstraint, mBoundByAncestors);
 	}
 
@@ -196,17 +196,17 @@ public class Context {
 			final List<Term> allParams, final int selectedParam, final CcTransformation ccTransformation) {
 		final List<Term> otherParams = new ArrayList<>(allParams);
 		otherParams.remove(selectedParam);
-		return buildCriticalConstraintForConDis(services, mgdScript, parentCriticalConstraint, symb, otherParams,
-				ccTransformation);
+		return buildCriticalConstraintForConDis(services, mgdScript, parentCriticalConstraint,
+				symb.getApplicationString(), otherParams, ccTransformation);
 	}
 
 	private static Term buildCriticalConstraintForConDis(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final Term parentCriticalConstraint, final FunctionSymbol symb,
+			final ManagedScript mgdScript, final Term parentCriticalConstraint, final String connective,
 			final List<Term> otherParams, final CcTransformation ccTransformation) {
 		final Term tmp;
-		if (symb.getName().equals("and")) {
+		if (connective.equals("and")) {
 			tmp = SmtUtils.and(mgdScript.getScript(), otherParams);
-		} else if (symb.getName().equals("or")) {
+		} else if (connective.equals("or")) {
 			final List<Term> otherParamsNegated;
 			switch (ccTransformation) {
 			case NONE:
@@ -240,12 +240,12 @@ public class Context {
 
 			}
 			tmp = SmtUtils.and(mgdScript.getScript(), otherParamsNegated);
-		} else if (symb.getName().equals("=")) {
+		} else if (connective.equals("=")) {
 			// TODO 20210516 Matthias: Decide whether we really want to support non-NNF
 			// terms here.
 			tmp = mgdScript.getScript().term("true");
 		} else {
-			throw new AssertionError("Supported: conjunction and disjunction. Got: " + symb);
+			throw new AssertionError("Supported: conjunction and disjunction. Got: " + connective);
 		}
 		final Term tmpWithParent = SmtUtils.and(mgdScript.getScript(), tmp, parentCriticalConstraint);
 		final Term result;
