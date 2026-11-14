@@ -37,7 +37,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -155,17 +154,15 @@ public class EliminationTask {
 		}
 		if (dualJunctsWithoutEliminatee.isEmpty()) {
 			return null;
-		} else {
-			final Term dualJunctionWithoutEliminatee = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
-					getQuantifier(), dualJunctsWithoutEliminatee);
-			final Term dualJunctionWithEliminatee = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
-					getQuantifier(), dualJunctsWithEliminatee);
-
-			final Context newContext = getContext().constructChildContextForConDis(services, mgdScript,
-					((ApplicationTerm) getTerm()).getFunction(), dualJunctsWithoutEliminatee);
-			return new Pair<>(dualJunctionWithoutEliminatee,
-					new EliminationTask(getQuantifier(), getEliminatees(), dualJunctionWithEliminatee, newContext));
 		}
+		final Term dualJunctionWithoutEliminatee = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
+				getQuantifier(), dualJunctsWithoutEliminatee);
+		final Term dualJunctionWithEliminatee = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(),
+				getQuantifier(), dualJunctsWithEliminatee);
+		final Context newContext = getContext().constructChildContextForConDis(services, mgdScript,
+				QuantifierUtils.getDualFiniteConnective(getQuantifier()), dualJunctsWithoutEliminatee);
+		return new Pair<>(dualJunctionWithoutEliminatee,
+				new EliminationTask(getQuantifier(), getEliminatees(), dualJunctionWithEliminatee, newContext));
 	}
 
 	@Override
