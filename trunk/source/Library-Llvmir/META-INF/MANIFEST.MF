@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-Llvmir
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.llvmir
-Bundle-Version: 0.3.0
+Bundle-Version: 0.3.2
 Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
  org.antlr.antlr4-runtime
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.llvmir

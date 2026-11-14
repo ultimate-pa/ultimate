@@ -7,11 +7,11 @@
 	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.3.0</version>
+		<version>0.3.2</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 	
 	<artifactId>de.uni_freiburg.informatik.ultimate.llvmir.parser</artifactId>
-	<version>0.3.0</version>
+	<version>0.3.2</version>
 	<packaging>eclipse-plugin</packaging>
 </project>

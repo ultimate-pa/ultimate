@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: LlvmirParser
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.llvmir.parser;singleton:=true
-Bundle-Version: 0.3.0
+Bundle-Version: 0.3.2
 Bundle-Vendor: Ultimate Program Analysis Team
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-21
