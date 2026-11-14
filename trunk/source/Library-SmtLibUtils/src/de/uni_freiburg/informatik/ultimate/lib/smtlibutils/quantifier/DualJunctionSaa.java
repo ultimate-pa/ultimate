@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -172,25 +171,9 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 	}
 
 	private EliminationResult tryToEliminateArrayEliminateeStep4(final EliminationTask inputEt) {
-		final EliminationTask res = tryToEliminate(inputEt.getQuantifier(), inputEt.getTerm(), inputEt.getContext(),
-				inputEt.getEliminatees().iterator().next());
-		if (res == null) {
-			return null;
-		} else {
-			final Set<TermVariable> newEliminatees = new HashSet<>(res.getEliminatees());
-			newEliminatees.removeAll(inputEt.getEliminatees());
-			return new EliminationResult(new EliminationTask(res.getQuantifier(), inputEt.getEliminatees(),
-					res.getTerm(), inputEt.getContext()), newEliminatees);
-		}
-	}
-
-	private EliminationTask tryToEliminate(final int quantifier, final Term term, final Context context,
-			final TermVariable eliminatee) {
-		final EliminationTask inputEtp =
-				new EliminationTask(quantifier, Collections.singleton(eliminatee), term, context);
-		EliminationTask res1;
+		EliminationResult res1;
 		try {
-			res1 = ElimStorePlain.applyComplexEliminationRules(mServices, mLogger, mMgdScript, inputEtp);
+			res1 = ElimStorePlain.applyComplexEliminationRules(mServices, mLogger, mMgdScript, inputEt);
 		} catch (final SMTLIBException e) {
 			throw new AssertionError(e);
 		} catch (final ElimStorePlainException e) {
@@ -205,8 +188,9 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 				throw new AssertionError(e);
 			}
 		}
-		if ((res1 != null) && Arrays.asList(res1.getTerm().getFreeVars()).contains(eliminatee)) {
-			throw new AssertionError("Var not eliminated: " + eliminatee + " " + inputEtp.toTerm(mScript));
+		final TermVariable eliminatee = inputEt.getEliminatees().iterator().next();
+		if ((res1 != null) && Arrays.asList(res1.getEliminationTask().getTerm().getFreeVars()).contains(eliminatee)) {
+			throw new AssertionError("Var not eliminated: " + eliminatee + " " + inputEt.toTerm(mScript));
 		}
 		return res1;
 	}

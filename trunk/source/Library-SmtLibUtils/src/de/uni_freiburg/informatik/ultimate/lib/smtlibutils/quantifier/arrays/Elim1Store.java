@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimension
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.DualJunctionQuantifierElimination.EliminationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EliminationTask;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
@@ -155,7 +156,7 @@ public class Elim1Store {
 		mLogger = mServices.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 	}
 
-	public EliminationTask elim1(final EliminationTask input) throws ElimStorePlainException {
+	public EliminationResult elim1(final EliminationTask input) throws ElimStorePlainException {
 		assert UltimateNormalFormUtils.respectsUltimateNormalForm(input.getTerm()) : "invalid input";
 		if (input.getEliminatees().size() != 1) {
 			throw new IllegalArgumentException("Can only eliminate one variable");
@@ -177,7 +178,7 @@ public class Elim1Store {
 		if (equalityInformation == null) {
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
-			return new EliminationTask(quantifier, Collections.emptySet(), absobingElement, input.getContext());
+			return new EliminationResult(input.update(absobingElement), Collections.emptySet());
 		}
 
 		final Set<ArrayIndex> selectIndices = new HashSet<>();
@@ -191,7 +192,7 @@ public class Elim1Store {
 			aiem.unlockSolver();
 			final Term absobingElement = QuantifierUtils.getNeutralElement(mScript, quantifier);
 			mLogger.warn("Array PQE input equivalent to " + absobingElement);
-			return new EliminationTask(quantifier, Collections.emptySet(), absobingElement, input.getContext());
+			return new EliminationResult(input.update(absobingElement), Collections.emptySet());
 		}
 
 		final long startTime = System.nanoTime();
@@ -351,7 +352,7 @@ public class Elim1Store {
 					new DAGSize().treesize(input.getTerm()), new DAGSize().treesize(result)));
 			mLogger.info(sb.toString());
 		}
-		final EliminationTask resultEt;
+		final EliminationResult resultEt;
 		if (APPLY_RESULT_SIMPLIFICATION) {
 			if (DEBUG_CRASH_ON_LARGE_SIMPLIFICATION_POTENTIAL) {
 				final ExtendedSimplificationResult esrQuick = SmtUtils.simplifyWithStatistics(mMgdScript, result, null,
@@ -374,13 +375,15 @@ public class Elim1Store {
 				mLogger.info(sizeMessage);
 			}
 			mLogger.info("treesize after simplification " + new DAGSize().treesize(simplified));
-			resultEt = new EliminationTask(quantifier, newAuxVars, simplified, input.getContext());
+			resultEt = new EliminationResult(input.update(simplified), newAuxVars);
 		} else {
-			resultEt = new EliminationTask(quantifier, newAuxVars, result, input.getContext());
+			resultEt = new EliminationResult(input.update(result), newAuxVars);
 		}
-		assert !DEBUG_EXTENDED_RESULT_CHECK || EliminationTask.areDistinct(mMgdScript.getScript(), resultEt,
-				new EliminationTask(quantifier, Collections.singleton(eliminatee), input.getTerm(),
-						input.getContext())) != LBool.SAT
+		resultEt.getEliminationTask();
+		assert !DEBUG_EXTENDED_RESULT_CHECK
+				|| EliminationTask.areDistinct(mMgdScript.getScript(), resultEt.getEliminationTask(),
+						new EliminationTask(quantifier, Collections.singleton(eliminatee), input.getTerm(),
+								input.getContext())) != LBool.SAT
 				: "Bug array QE Input: " + input.getTerm() + " Result:" + resultEt;
 		assert !mMgdScript.isLocked() : "Solver still locked";
 		return resultEt;
