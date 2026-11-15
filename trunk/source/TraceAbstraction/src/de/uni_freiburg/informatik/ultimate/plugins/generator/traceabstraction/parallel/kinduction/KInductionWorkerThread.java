@@ -332,7 +332,8 @@ public class KInductionWorkerThread<L extends IIcfgTransition<?>, A extends IAut
 			invariants = kInduction.getBestWitnessInvariants();
 		}
 		if (invariants == null) {
-			logger.warn("KInduction: no correctness witness invariants for the proof at k=%d", kInduction.getProvedK());
+			logger.warn("KInduction: no correctness witness invariants for the %s proof at k=%d",
+					kInduction.getProofKind(), kInduction.getProvedK());
 			return null;
 		}
 		return invariants;
