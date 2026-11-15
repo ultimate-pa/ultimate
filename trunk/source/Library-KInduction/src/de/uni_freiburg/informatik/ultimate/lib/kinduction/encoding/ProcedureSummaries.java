@@ -36,6 +36,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -171,6 +172,12 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	 * locals need a copy per activation.
 	 */
 	private final Map<String, Set<String>> mCycleOf = new LinkedHashMap<>();
+	/** Per procedure on a call cycle: the locals live at each of its states, see {@link #liveLocals}. */
+	private final Map<String, Map<STATE, Set<IProgramVar>>> mLiveLocals = new HashMap<>();
+	/** For the log: the locals the stacked calls save, and how many they would save if they saved all of them. */
+	private long mNumSavedLocals;
+	private long mNumLocalsOfSavingCallers;
+	private final Set<IProgramVar> mSavedLocals = new LinkedHashSet<>();
 	/** Null exactly if {@link #mStacked} is empty, i.e. if no call needs an activation record. */
 	private CallStack mCallStack;
 	/** Hands out the id that tells a stacked return which call site it has to go back to. */
@@ -336,6 +343,9 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		if (mCallStack != null) {
 			mLogger.info("KInduction: stack-encoded procedure(s) %s, using %d extra variable(s)", mStacked,
 					mCallStack.getVariables().size());
+			mLogger.info("KInduction: the stacked calls save %d local(s) live after their return, of the %d their "
+					+ "callers have; %d distinct local(s) are saved at all", mNumSavedLocals, mNumLocalsOfSavingCallers,
+					mSavedLocals.size());
 		}
 	}
 
@@ -936,10 +946,18 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		// Only a caller that can be re-entered while the callee runs needs a copy of its locals, and that is exactly
 		// a caller on a call cycle with the callee. A caller that cannot be re-entered still needs the return site
 		// pushed, or the callee would not know where to go back to.
+		// Of those, only the locals that are read after the return before they are written again: the others need no
+		// copy, and a local that no call saves has no stack array at all, which would be framed in every step.
 		final Set<String> cycle = mCycleOf.get(caller);
-		final Collection<IProgramVar> toSave =
-				cycle != null && cycle.contains(callee) ? localsOf(Collections.singleton(caller))
-						: Collections.emptyList();
+		final Collection<IProgramVar> toSave;
+		if (cycle != null && cycle.contains(callee)) {
+			toSave = liveAfterReturns(caller, callSite.getState(), callee);
+			mNumSavedLocals += toSave.size();
+			mNumLocalsOfSavingCallers += localsOf(Collections.singleton(caller)).size();
+			mSavedLocals.addAll(toSave);
+		} else {
+			toSave = Collections.emptyList();
+		}
 
 		final CallNode<STATE> entryNode = CallNode.root(call.getSucc());
 		addAlternative(alternatives, callSite, entryNode,
@@ -974,6 +992,127 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	/** Every local variable, in- and outparams included, of each of {@code procedures}. */
+	/**
+	 * The locals of {@code caller} that are live at a return site of the call of {@code callee} at {@code callSite}.
+	 */
+	private Set<IProgramVar> liveAfterReturns(final String caller, final STATE callSite, final String callee) {
+		final Map<STATE, Set<IProgramVar>> live = liveLocals(caller);
+		final Set<IProgramVar> result = new LinkedHashSet<>();
+		for (final STATE exit : ProcedureCallGraph.computeExitStates(mAbstraction, ownStates(callee),
+				Collections.singleton(callSite))) {
+			for (final OutgoingReturnTransition<LETTER, STATE> ret : liveReturns(exit, callSite)) {
+				result.addAll(live.getOrDefault(ret.getSucc(), Collections.emptySet()));
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Which locals of {@code procedure} are live at each of its states: read on some path within the activation before
+	 * they are written. The usual backward fixed point over the procedure's own transitions, where a call is a step
+	 * from the call site to its return sites that reads the arguments and writes what the return assigns; the callee
+	 * cannot change the caller's locals, since its activation has its own. A return out of the procedure reads its
+	 * out-parameters. Over-approximating: every invar counts as read, only an outvar other than the invar as written.
+	 */
+	private Map<STATE, Set<IProgramVar>> liveLocals(final String procedure) {
+		final Map<STATE, Set<IProgramVar>> cached = mLiveLocals.get(procedure);
+		if (cached != null) {
+			return cached;
+		}
+		final Set<STATE> own = ownStates(procedure);
+		final Set<IProgramVar> locals = localsOf(Collections.singleton(procedure));
+		/** A step from a state to {@code target} that reads {@code reads} and writes {@code writes}. */
+		record Flow<S>(S target, Set<IProgramVar> reads, Set<IProgramVar> writes) {
+		}
+		final Map<STATE, List<Flow<STATE>>> flows = new HashMap<>();
+		final Map<STATE, Set<IProgramVar>> live = new HashMap<>();
+		final Map<STATE, List<STATE>> predecessors = new HashMap<>();
+		for (final STATE state : own) {
+			final Set<IProgramVar> gen = new LinkedHashSet<>();
+			final List<Flow<STATE>> out = new ArrayList<>();
+			for (final OutgoingInternalTransition<LETTER, STATE> t : mAbstraction.internalSuccessors(state)) {
+				if (own.contains(t.getSucc())) {
+					final UnmodifiableTransFormula tf = t.getLetter().getTransformula();
+					out.add(new Flow<>(t.getSucc(), readLocals(tf, locals), writtenLocals(tf, locals)));
+				}
+			}
+			for (final OutgoingCallTransition<LETTER, STATE> call : liveCalls(state)) {
+				// The arguments are read even if the call never returns.
+				final Set<IProgramVar> arguments =
+						readLocals(asCallAction(call.getLetter()).getLocalVarsAssignment(), locals);
+				gen.addAll(arguments);
+				final String callee = call.getLetter().getSucceedingProcedure();
+				for (final STATE exit : ProcedureCallGraph.computeExitStates(mAbstraction, ownStates(callee),
+						Collections.singleton(state))) {
+					for (final OutgoingReturnTransition<LETTER, STATE> ret : liveReturns(exit, state)) {
+						if (own.contains(ret.getSucc())) {
+							out.add(new Flow<>(ret.getSucc(), arguments, writtenLocals(
+									asReturnAction(ret.getLetter()).getAssignmentOfReturn(), locals)));
+						}
+					}
+				}
+			}
+			for (final OutgoingReturnTransition<LETTER, STATE> ret : mAbstraction.returnSuccessors(state)) {
+				gen.addAll(readLocals(asReturnAction(ret.getLetter()).getAssignmentOfReturn(), locals));
+			}
+			flows.put(state, out);
+			live.put(state, gen);
+			for (final Flow<STATE> flow : out) {
+				predecessors.computeIfAbsent(flow.target(), k -> new ArrayList<>()).add(state);
+			}
+		}
+		final Deque<STATE> worklist = new ArrayDeque<>(own);
+		final Set<STATE> queued = new HashSet<>(own);
+		while (!worklist.isEmpty()) {
+			final STATE state = worklist.poll();
+			queued.remove(state);
+			final Set<IProgramVar> here = live.get(state);
+			boolean changed = false;
+			for (final Flow<STATE> flow : flows.get(state)) {
+				changed |= here.addAll(flow.reads());
+				for (final IProgramVar pv : live.get(flow.target())) {
+					if (!flow.writes().contains(pv)) {
+						changed |= here.add(pv);
+					}
+				}
+			}
+			if (changed) {
+				for (final STATE predecessor : predecessors.getOrDefault(state, Collections.emptyList())) {
+					if (queued.add(predecessor)) {
+						worklist.add(predecessor);
+					}
+				}
+			}
+		}
+		mLiveLocals.put(procedure, live);
+		return live;
+	}
+
+	/** The variables of {@code locals} that {@code tf} reads; every invar counts, which over-approximates. */
+	private static Set<IProgramVar> readLocals(final UnmodifiableTransFormula tf, final Set<IProgramVar> locals) {
+		final Set<IProgramVar> result = new LinkedHashSet<>();
+		for (final IProgramVar pv : tf.getInVars().keySet()) {
+			if (locals.contains(pv)) {
+				result.add(pv);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The variables of {@code locals} that {@code tf} certainly writes: those with an outvar other than their invar.
+	 * One that is only havoced may count as not written, which only makes more locals live.
+	 */
+	private static Set<IProgramVar> writtenLocals(final UnmodifiableTransFormula tf, final Set<IProgramVar> locals) {
+		final Set<IProgramVar> result = new LinkedHashSet<>();
+		for (final Map.Entry<IProgramVar, TermVariable> out : tf.getOutVars().entrySet()) {
+			if (locals.contains(out.getKey()) && tf.getInVars().get(out.getKey()) != out.getValue()) {
+				result.add(out.getKey());
+			}
+		}
+		return result;
+	}
+
 	private Set<IProgramVar> localsOf(final Collection<String> procedures) {
 		final Set<IProgramVar> result = new LinkedHashSet<>();
 		for (final String procedure : procedures) {
