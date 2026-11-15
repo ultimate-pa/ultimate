@@ -523,7 +523,13 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	 * </ul>
 	 * A maximal chain of removable states becomes one edge, the sequential composition of its edges, from the state
 	 * before it to the state after it; edges between the same two states are united. Each formula is composed into
-	 * exactly one other, so none grows beyond the sum of the formulas it is made of. The heads of a loop stay: a head
+	 * exactly one other, so none grows beyond the sum of the formulas it is made of. Chains are only recorded as
+	 * {@link Pending} and composed at the end, each final edge by one composition: a sequence of if-then-else joins
+	 * becomes a chain one join at a time, and composing at every step would compose its whole prefix again each time,
+	 * which is quadratic in the number of joins. Composing still costs the size of a union's alternatives once per
+	 * union around them, which is quadratic for an if-else-if cascade whose branches join again: so a chain is only
+	 * contracted if its edge nests at most {@link #MAX_UNION_DEPTH} unions. A deeper cascade stays a graph, which
+	 * {@link PcTransitionSystem} encodes with its subformulas shared. The heads of a loop stay: a head
 	 * is entered from outside the loop and from inside it, so it has two predecessors, unless it is an initial or an
 	 * entry state. A removed state can still lie on a counterexample; {@link #getComposedEdges()} tells the waypoints
 	 * of a violation which edges were composed through removed states.
@@ -534,18 +540,26 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 		keep.addAll(ProcedureCallGraph.intersect(mAbstraction.getInitialStates(), own));
 		keep.addAll(mEntryStates.getOrDefault(procedure, Collections.emptySet()));
 		keep.addAll(ProcedureCallGraph.intersect(mAbstraction.getFinalStates(), own));
-		final Map<STATE, Map<STATE, List<UnmodifiableTransFormula>>> succ = new LinkedHashMap<>();
+		final Map<STATE, Map<STATE, List<UnmodifiableTransFormula>>> edges = new LinkedHashMap<>();
 		final Set<STATE> folded = new LinkedHashSet<>();
 		for (final STATE state : own) {
 			if (mAbstraction.returnSuccessors(state).iterator().hasNext()) {
 				keep.add(state);
 			}
-			addInternalTransitions(state, own, succ);
-			foldCalls(procedure, state, own, succ, keep, folded);
+			addInternalTransitions(state, own, edges);
+			foldCalls(procedure, state, own, edges, keep, folded);
+		}
+		final Map<STATE, Map<STATE, List<Pending>>> succ = new LinkedHashMap<>();
+		for (final Map.Entry<STATE, Map<STATE, List<UnmodifiableTransFormula>>> from : edges.entrySet()) {
+			for (final Map.Entry<STATE, List<UnmodifiableTransFormula>> to : from.getValue().entrySet()) {
+				for (final UnmodifiableTransFormula formula : to.getValue()) {
+					addPending(succ, from.getKey(), to.getKey(), Pending.leaf(formula));
+				}
+			}
 		}
 
 		final Map<STATE, Set<STATE>> pred = new LinkedHashMap<>();
-		for (final Map.Entry<STATE, Map<STATE, List<UnmodifiableTransFormula>>> from : succ.entrySet()) {
+		for (final Map.Entry<STATE, Map<STATE, List<Pending>>> from : succ.entrySet()) {
 			for (final STATE to : from.getValue().keySet()) {
 				pred.computeIfAbsent(to, k -> new LinkedHashSet<>()).add(from.getKey());
 			}
@@ -578,17 +592,18 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 				throw new ToolchainCanceledException(ProcedureSummaries.class,
 						String.format("reducing procedure %s to its cut points", procedure));
 			}
-			final List<UnmodifiableTransFormula> sequence = new ArrayList<>();
+			final List<Pending> sequence = new ArrayList<>();
 			STATE from = before;
 			for (final STATE to : chain) {
-				sequence.add(LoopTreeFormulaBuilder.combineAlternatives(mLogger, mServices, mMgdScript,
-						succ.get(from).get(to)));
+				sequence.add(Pending.union(succ.get(from).get(to)));
 				from = to;
 			}
-			sequence.add(LoopTreeFormulaBuilder.combineAlternatives(mLogger, mServices, mMgdScript,
-					succ.get(from).get(after)));
-			final UnmodifiableTransFormula composed = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-					mMgdScript, false, false, false, SimplificationTechnique.NONE, sequence);
+			sequence.add(Pending.union(succ.get(from).get(after)));
+			final Pending composed = Pending.sequence(sequence);
+			if (composed.mUnionDepth > MAX_UNION_DEPTH) {
+				// Its neighbours are united already; this chain becomes a candidate again only if they change.
+				continue;
+			}
 			succ.get(before).remove(chain.getFirst());
 			pred.get(after).remove(chain.getLast());
 			for (final STATE inner : chain) {
@@ -596,7 +611,7 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 				pred.remove(inner);
 				removed.add(inner);
 			}
-			addAlternative(succ, before, after, composed);
+			addPending(succ, before, after, composed);
 			mComposedEdges.computeIfAbsent(before, k -> new LinkedHashSet<>()).add(after);
 			pred.computeIfAbsent(after, k -> new LinkedHashSet<>()).add(before);
 			// Both may have lost a neighbour, if they were already joined directly.
@@ -606,7 +621,110 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 
 		final Set<STATE> nodes = new LinkedHashSet<>(own);
 		nodes.removeAll(removed);
-		return new ReducedProcedure(nodes, combine(succ), folded);
+		final Map<STATE, Map<STATE, UnmodifiableTransFormula>> reduced = new LinkedHashMap<>();
+		for (final Map.Entry<STATE, Map<STATE, List<Pending>>> fromEntry : succ.entrySet()) {
+			final Map<STATE, UnmodifiableTransFormula> combined = new LinkedHashMap<>();
+			for (final Map.Entry<STATE, List<Pending>> to : fromEntry.getValue().entrySet()) {
+				combined.put(to.getKey(), compose(Pending.union(to.getValue()), procedure));
+			}
+			reduced.put(fromEntry.getKey(), combined);
+		}
+		return new ReducedProcedure(nodes, reduced, folded);
+	}
+
+	/**
+	 * How many unions an edge of {@link #reduce} may nest. Composing costs the size of every union's alternatives once
+	 * per union around it, so this bounds the cost by a constant factor of the edge's size.
+	 */
+	private static final int MAX_UNION_DEPTH = 8;
+
+	private static <N> void addPending(final Map<N, Map<N, List<Pending>>> succ, final N from, final N to,
+			final Pending pending) {
+		succ.computeIfAbsent(from, k -> new LinkedHashMap<>()).computeIfAbsent(to, k -> new ArrayList<>())
+				.add(pending);
+	}
+
+	/**
+	 * Composes what {@link #reduce} recorded for one edge: a union of alternatives by
+	 * {@link LoopTreeFormulaBuilder#combineAlternatives}, a sequence by one sequential composition of all its parts.
+	 */
+	private UnmodifiableTransFormula compose(final Pending pending, final String procedure) {
+		if (pending.mFormula != null) {
+			return pending.mFormula;
+		}
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			throw new ToolchainCanceledException(ProcedureSummaries.class,
+					String.format("reducing procedure %s to its cut points", procedure));
+		}
+		final List<UnmodifiableTransFormula> parts = new ArrayList<>(pending.mParts.size());
+		for (final Pending part : pending.mParts) {
+			parts.add(compose(part, procedure));
+		}
+		if (pending.mSequence) {
+			return TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, false, false, false,
+					SimplificationTechnique.NONE, parts);
+		}
+		return LoopTreeFormulaBuilder.combineAlternatives(mLogger, mServices, mMgdScript, parts);
+	}
+
+	/**
+	 * A formula of {@link #reduce} that is not composed yet: a transition formula, or the sequence or the union of
+	 * pending formulas. A sequence of sequences and a union of unions are flattened, so that a chain that grows one
+	 * state at a time ends up as a single sequential composition.
+	 */
+	private static final class Pending {
+		/** The formula of a leaf, {@code null} for a sequence or a union. */
+		private final UnmodifiableTransFormula mFormula;
+		private final boolean mSequence;
+		private final List<Pending> mParts;
+		/** The most unions on a path from here to a leaf, 0 for a leaf. */
+		private final int mUnionDepth;
+
+		private Pending(final UnmodifiableTransFormula formula, final boolean sequence, final List<Pending> parts) {
+			mFormula = formula;
+			mSequence = sequence;
+			mParts = parts;
+			int depth = 0;
+			if (parts != null) {
+				for (final Pending part : parts) {
+					depth = Math.max(depth, part.mUnionDepth);
+				}
+				if (!sequence) {
+					depth++;
+				}
+			}
+			mUnionDepth = depth;
+		}
+
+		private static Pending leaf(final UnmodifiableTransFormula formula) {
+			return new Pending(formula, false, null);
+		}
+
+		private static Pending sequence(final List<Pending> parts) {
+			return flatten(parts, true);
+		}
+
+		private static Pending union(final List<Pending> alternatives) {
+			return flatten(alternatives, false);
+		}
+
+		private static Pending flatten(final List<Pending> parts, final boolean sequence) {
+			if (parts.isEmpty()) {
+				throw new IllegalArgumentException("nothing to combine");
+			}
+			if (parts.size() == 1) {
+				return parts.get(0);
+			}
+			final List<Pending> flat = new ArrayList<>();
+			for (final Pending part : parts) {
+				if (part.mFormula == null && part.mSequence == sequence) {
+					flat.addAll(part.mParts);
+				} else {
+					flat.add(part);
+				}
+			}
+			return new Pending(null, sequence, flat);
+		}
 	}
 
 	/**
@@ -627,14 +745,14 @@ public final class ProcedureSummaries<LETTER extends IAction, STATE> {
 	}
 
 	private boolean isRemovable(final STATE state, final Set<STATE> keep, final Set<STATE> removed,
-			final Map<STATE, Map<STATE, List<UnmodifiableTransFormula>>> succ, final Map<STATE, Set<STATE>> pred) {
+			final Map<STATE, ? extends Map<STATE, ?>> succ, final Map<STATE, Set<STATE>> pred) {
 		if (keep.contains(state) || removed.contains(state)) {
 			return false;
 		}
 		final Set<STATE> before = pred.get(state);
-		final Map<STATE, List<UnmodifiableTransFormula>> after = succ.get(state);
-		return before != null && before.size() == 1 && !before.contains(state) && after != null && after.size() == 1
-				&& !after.containsKey(state);
+		final Map<STATE, ?> after = succ.get(state);
+		return before != null && before.size() == 1 && !before.contains(state) && after != null
+				&& after.size() == 1 && !after.containsKey(state);
 	}
 
 	/**
