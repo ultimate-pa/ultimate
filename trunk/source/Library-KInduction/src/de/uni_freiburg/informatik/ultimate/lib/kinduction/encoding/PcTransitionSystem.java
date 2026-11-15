@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.kinduction.encoding;
 
+import java.util.AbstractSet;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +42,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.IntPredicate;
@@ -290,13 +292,11 @@ public class PcTransitionSystem<STATE> {
 				computeLiveness(liveAtPc, liveAtNode, stateVars);
 			}
 			computeVersions(liveAtPc, liveAtNode);
+			// Views of the bit sets: copying them into sets of program variables costs a hash per variable and pc
+			// value, which on large programs (thousands of pc values, tens of thousands of variables) dominated.
 			final List<Set<IProgramVar>> liveVars = new ArrayList<>(liveAtPc.length);
 			for (final BitSet live : liveAtPc) {
-				final Set<IProgramVar> vars = new LinkedHashSet<>();
-				for (int i = live.nextSetBit(0); i >= 0; i = live.nextSetBit(i + 1)) {
-					vars.add(mIndexedVars.get(i));
-				}
-				liveVars.add(Collections.unmodifiableSet(vars));
+				liveVars.add(new IndexedVarSet(live, mIndexedVars, mVarIndex));
 			}
 			final Set<Version> innerVersions = new LinkedHashSet<>();
 			for (final EdgeCode code : mEdgeCode.values()) {
@@ -318,33 +318,73 @@ public class PcTransitionSystem<STATE> {
 			for (int pc = 0; pc < liveAtPc.length; pc++) {
 				liveAtPc[pc] = (BitSet) alwaysLive.clone();
 			}
-			boolean changed = true;
-			while (changed) {
-				changed = false;
-				for (int position = mDagNodes.size() - 1; position >= 0; position--) {
-					final DagNode node = mDagNodes.get(position);
-					final BitSet live = new BitSet();
-					for (final int pc : node.mTargetPcs) {
-						live.or(liveAtPc[pc]);
+			// A worklist instead of passes over all nodes until nothing changes: what is live at a pc value reaches
+			// the sources of the next pc value in the next pass only, so a chain of pc values (sequential loops, the
+			// unfolded copies of a procedure) took one pass over the whole graph per link.
+			final List<List<DagNode>> targetsOfPc = new ArrayList<>(liveAtPc.length);
+			for (int pc = 0; pc < liveAtPc.length; pc++) {
+				targetsOfPc.add(new ArrayList<>());
+			}
+			for (final DagNode node : mDagNodes) {
+				for (final int pc : node.mTargetPcs) {
+					targetsOfPc.get(pc).add(node);
+				}
+			}
+			final Deque<DagNode> worklist = new ArrayDeque<>(mDagNodes.size());
+			final boolean[] queued = new boolean[mDagNodes.size()];
+			// Successors first, as every cut graph is ordered before its successors.
+			for (int position = mDagNodes.size() - 1; position >= 0; position--) {
+				worklist.add(mDagNodes.get(position));
+				queued[position] = true;
+			}
+			final BitSet scratch = new BitSet();
+			while (!worklist.isEmpty()) {
+				final DagNode node = worklist.poll();
+				final int position = node.mPosition;
+				queued[position] = false;
+				final BitSet live = new BitSet();
+				for (final int pc : node.mTargetPcs) {
+					live.or(liveAtPc[pc]);
+				}
+				for (final DagEdge edge : node.mOutgoing) {
+					scratch.clear();
+					final BitSet atTarget = liveAtNode[edge.mTarget.mPosition];
+					if (atTarget != null) {
+						scratch.or(atTarget);
 					}
-					for (final DagEdge edge : node.mOutgoing) {
-						final BitSet behind = (BitSet) liveAtNode[edge.mTarget.mPosition].clone();
-						if (edge.mFormulaIndex >= 0) {
-							behind.andNot(mWrites.get(edge.mFormulaIndex));
-							behind.or(mReads.get(edge.mFormulaIndex));
+					if (edge.mFormulaIndex >= 0) {
+						scratch.andNot(mWrites.get(edge.mFormulaIndex));
+						scratch.or(mReads.get(edge.mFormulaIndex));
+					}
+					live.or(scratch);
+				}
+				if (live.equals(liveAtNode[position])) {
+					continue;
+				}
+				liveAtNode[position] = live;
+				for (final DagEdge edge : node.mIncoming) {
+					enqueue(edge.mSource, worklist, queued);
+				}
+				if (node.mSourcePc >= 0) {
+					final BitSet atPc = liveAtPc[node.mSourcePc];
+					scratch.clear();
+					scratch.or(live);
+					scratch.and(stateVars);
+					scratch.andNot(atPc);
+					if (!scratch.isEmpty()) {
+						atPc.or(scratch);
+						for (final DagNode target : targetsOfPc.get(node.mSourcePc)) {
+							enqueue(target, worklist, queued);
 						}
-						live.or(behind);
-					}
-					liveAtNode[position] = live;
-					if (node.mSourcePc >= 0) {
-						final BitSet atPc = liveAtPc[node.mSourcePc];
-						final int before = atPc.cardinality();
-						final BitSet stateVarsHere = (BitSet) live.clone();
-						stateVarsHere.and(stateVars);
-						atPc.or(stateVarsHere);
-						changed |= atPc.cardinality() != before;
 					}
 				}
+			}
+		}
+
+		private void enqueue(final DagNode node, final Deque<DagNode> worklist, final boolean[] queued) {
+			if (!queued[node.mPosition]) {
+				queued[node.mPosition] = true;
+				worklist.add(node);
 			}
 		}
 
@@ -446,10 +486,61 @@ public class PcTransitionSystem<STATE> {
 	}
 
 	/**
-	 * What a formula writes: what it has an outVar of that is not its inVar, and what it only has an inVar of. The
-	 * latter means the variable is havoced, see {@code TransFormulaUtils#computeAssignedVars}:
-	 * {@code TransFormulaBuilder} drops the outVar of an assigned variable whose new value the formula does not
-	 * constrain. An old variable that is only an inVar is only read, since only a call changes the snapshot.
+	 * The program variables of a bit set over the variable indices of an {@link EncodingBuilder}, in the order of their
+	 * indices, as an unmodifiable view. The bit set must not change any more.
+	 */
+	private static final class IndexedVarSet extends AbstractSet<IProgramVar> {
+		private final BitSet mBits;
+		private final List<IProgramVar> mVars;
+		private final Map<IProgramVar, Integer> mIndex;
+		private final int mSize;
+
+		private IndexedVarSet(final BitSet bits, final List<IProgramVar> vars, final Map<IProgramVar, Integer> index) {
+			mBits = bits;
+			mVars = vars;
+			mIndex = index;
+			mSize = bits.cardinality();
+		}
+
+		@Override
+		public boolean contains(final Object o) {
+			final Integer i = mIndex.get(o);
+			return i != null && mBits.get(i);
+		}
+
+		@Override
+		public int size() {
+			return mSize;
+		}
+
+		@Override
+		public Iterator<IProgramVar> iterator() {
+			return new Iterator<>() {
+				private int mNext = mBits.nextSetBit(0);
+
+				@Override
+				public boolean hasNext() {
+					return mNext >= 0;
+				}
+
+				@Override
+				public IProgramVar next() {
+					if (mNext < 0) {
+						throw new NoSuchElementException();
+					}
+					final IProgramVar result = mVars.get(mNext);
+					mNext = mBits.nextSetBit(mNext + 1);
+					return result;
+				}
+			};
+		}
+	}
+
+	/**
+	 * What a formula writes: what it has an outVar of that is not its inVar, and what it only has an inVar of. The latter
+	 * means the variable is havoced, see {@code TransFormulaUtils#computeAssignedVars}: {@code TransFormulaBuilder} drops
+	 * the outVar of an assigned variable whose new value the formula does not constrain. An old variable that is only an
+	 * inVar is only read, since only a call changes the snapshot.
 	 */
 	private static Set<IProgramVar> assignedVars(final UnmodifiableTransFormula tf) {
 		final Set<IProgramVar> result = new LinkedHashSet<>();
