@@ -84,6 +84,11 @@ public final class DataRaceAnnotation extends ModernAnnotations {
 		return ModelUtils.getAnnotation(node, KEY, DataRaceAnnotation.class::cast);
 	}
 
+	@Override
+	public String toString() {
+		return mRaces.toString();
+	}
+
 	public static final class Race {
 		private final boolean mIsWrite;
 		private final String mAccessPath;
@@ -146,6 +151,11 @@ public final class DataRaceAnnotation extends ModernAnnotations {
 
 		public ILocation getOriginalLocation() {
 			return mOriginalLocation;
+		}
+
+		@Override
+		public String toString() {
+			return (mIsWrite ? "write" : "read") + "(" + mAccessPath + ")";
 		}
 	}
 }
