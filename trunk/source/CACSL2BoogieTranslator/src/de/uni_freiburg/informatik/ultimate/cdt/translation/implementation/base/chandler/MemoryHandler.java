@@ -2271,7 +2271,8 @@ public class MemoryHandler {
 															IASTBinaryExpression.op_greaterThan),
 													newLockCounter, zero),
 											inputPtr, rwLockArray),
-									Collections.emptySet()),
+									Collections.singleton(
+											(VariableLHS) CTranslationUtil.convertExpressionToLHS(rwLockArray))),
 							// we assume that function is always successful and returns 0
 							ensuresSuccess(tuLoc, res) };
 				});
