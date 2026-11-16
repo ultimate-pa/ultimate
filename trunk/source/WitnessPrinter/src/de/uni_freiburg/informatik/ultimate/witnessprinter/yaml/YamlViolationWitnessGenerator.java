@@ -92,6 +92,11 @@ public class YamlViolationWitnessGenerator {
 
 	public <TE, E> YamlViolationWitnessGenerator addSegments(final IProgramExecution<TE, E> execution,
 			final SegmentType segmentType, final Set<Integer> targetIndices) {
+		return addSegments(execution, segmentType, targetIndices, true);
+	}
+
+	public <TE, E> YamlViolationWitnessGenerator addSegments(final IProgramExecution<TE, E> execution,
+			final SegmentType segmentType, final Set<Integer> targetIndices, final boolean addFunctionCalls) {
 		final IBacktranslationValueProvider<TE, E> stringProvider = execution.getBacktranslationValueProvider();
 		if (mWriter == null && execution.getLength() > 0) {
 			final String filename = stringProvider.getFileNameFromStep(execution.getTraceElement(0).getStep());
@@ -128,16 +133,18 @@ public class YamlViolationWitnessGenerator {
 				mSegments.add(new Segment(new WaypointBranching("true", getLocation(currentATE, false, stringProvider),
 						getThreadId(currentATE)), segmentType));
 			}
-			if (currentATE.hasStepInfo(StepInfo.PROC_CALL)) {
+			if (addFunctionCalls && currentATE.hasStepInfo(StepInfo.PROC_CALL)) {
 				mSegments.add(new Segment(new WaypointFunctionEnter(getLocation(currentATE, false, stringProvider),
 						getThreadId(currentATE)), segmentType));
 			}
-			if (currentATE.hasStepInfo(StepInfo.PROC_RETURN)) {
+			if (addFunctionCalls && currentATE.hasStepInfo(StepInfo.PROC_RETURN)) {
 				mSegments.add(new Segment(new WaypointFunctionReturn(
 						programStatePrinter.stateAsExpression(execution.getProgramState(i), "\\result"::equals),
 						getLocation(currentATE, false, stringProvider), getThreadId(currentATE)), segmentType));
 			}
 			if (currentATE.hasAnyStepInfo(StepInfo.FORK)) {
+				// These function_enter waypoints are important, since they determine the thread ID.
+				// Therefore, always add them, independent of the parameter addFunctionCalls.
 				mSegments.add(new Segment(new WaypointFunctionEnter(getLocation(currentATE, false, stringProvider),
 						getThreadId(currentATE)), segmentType));
 			}

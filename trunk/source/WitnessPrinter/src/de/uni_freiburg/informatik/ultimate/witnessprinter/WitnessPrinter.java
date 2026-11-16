@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.icfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgGraphProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment.SegmentType;
@@ -223,9 +224,11 @@ public class WitnessPrinter implements IOutput {
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
 			if (createYaml) {
-				final String witness = new YamlViolationWitnessGenerator(mLogger, mServices)
-						.addSegments(backtransPe, SegmentType.FOLLOW, getReachabilityWitnessTargets(cex, backtransPe))
-						.makeYamlString();
+				final String witness =
+						new YamlViolationWitnessGenerator(mLogger, mServices)
+								.addSegments(backtransPe, SegmentType.FOLLOW,
+										getReachabilityWitnessTargets(cex, backtransPe), !IcfgUtils.isConcurrent(root))
+								.makeYamlString();
 				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
 			}
 		}
