@@ -224,6 +224,7 @@ public class WitnessPrinter implements IOutput {
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
 			if (createYaml) {
+				// For concurrent programs, don't create any function_enter and function_return waypoints.
 				final String witness =
 						new YamlViolationWitnessGenerator(mLogger, mServices)
 								.addSegments(backtransPe, SegmentType.FOLLOW,
