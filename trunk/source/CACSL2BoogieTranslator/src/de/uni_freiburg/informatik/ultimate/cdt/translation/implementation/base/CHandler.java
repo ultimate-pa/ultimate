@@ -178,6 +178,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.PostProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.SetjmpHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
@@ -307,6 +308,8 @@ public class CHandler {
 	private final StaticObjectsHandler mStaticObjectsHandler;
 
 	private final FunctionHandler mFunctionHandler;
+
+	private final SetjmpHandler mSetjmpHandler;
 
 	private final PostProcessor mPostProcessor;
 
@@ -496,6 +499,8 @@ public class CHandler {
 				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer, mMemoryPointer);
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
 				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler, mMemoryPointer);
+		mSetjmpHandler = new SetjmpHandler(mProcedureManager, mNameHandler, mTypeHandler, mStaticObjectsHandler,
+				mMemoryHandler, mExpressionTranslation, mAuxVarInfoBuilder);
 		mLibraryModelHandler = new LibraryModelHandler(mLogger, functionTable, mSymbolTable,
 				mSettings.checkErrorFunction(), mLocationFactory, getLibraryModels());
 		mTypeHandler.addLibraryTypes(mLibraryModelHandler.getTypeModels());
@@ -590,6 +595,8 @@ public class CHandler {
 
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
 				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler, mMemoryPointer);
+		mSetjmpHandler = new SetjmpHandler(prerunCHandler.mSetjmpHandler, procedureManager, mNameHandler, mTypeHandler,
+				mStaticObjectsHandler, mMemoryHandler, mExpressionTranslation, mAuxVarInfoBuilder);
 		mLibraryModelHandler = new LibraryModelHandler(mLogger, prerunCHandler.mFunctionTable, mSymbolTable,
 				mSettings.checkErrorFunction(), mLocationFactory, getLibraryModels());
 		mTypeHandler.addLibraryTypes(mLibraryModelHandler.getTypeModels());
@@ -644,7 +651,8 @@ public class CHandler {
 				new PthreadLibraryModel(helper, mSymbolTable, mAuxVarInfoBuilder, mExprResultTransformer,
 						mExpressionTranslation, mMemoryHandler, mTypeHandler, mTypeSizes, mProcedureManager,
 						mMemoryPointer),
-				new SetjmpLibraryModel(helper, mExpressionTranslation), new SocketLibraryModel(helper),
+				new SetjmpLibraryModel(helper, mExprResultTransformer, mExpressionTranslation, mSetjmpHandler),
+				new SocketLibraryModel(helper),
 				new StdioLibraryModel(helper, mExprResultTransformer, mAuxVarInfoBuilder, mExpressionTranslation,
 						mTypeSizes, mMemoryHandler, mDataRaceChecker, mTypeHandler),
 				new StdlibLibraryModel(helper, mExprResultTransformer, mTypeSizes, mTypeSizeComputer,
@@ -660,6 +668,10 @@ public class CHandler {
 						mExprResultTransformer, mAuxVarInfoBuilder),
 				new StdintLibraryModel(), new LimitsLibraryModel(mTypeSizes, helper), new StdboolLibraryModel(helper),
 				new ErrnoLibraryModel(helper));
+	}
+
+	public SetjmpHandler getSetjmpHandler() {
+		return mSetjmpHandler;
 	}
 
 	/**
