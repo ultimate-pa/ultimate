@@ -72,7 +72,12 @@ public final class KInductionQuery<STATE> {
 		 */
 		BASE,
 		/** Can {@code k} transitions from a non-INIT state without error reach an error? UNSAT: inductive. */
-		STEP
+		STEP,
+		/**
+		 * The forward condition: are there {@code k} transitions from {@code pc = INIT} that do not reach FINAL? UNSAT:
+		 * every run ends or reaches an error within {@code k}, see {@link KInductionQuery#prepareForward}.
+		 */
+		FORWARD
 	}
 
 	/** A step term as it is sent to the solver, with its DAG size. */
@@ -231,6 +236,33 @@ public final class KInductionQuery<STATE> {
 				mBaseCaseStartBuilt = true;
 			}
 		}
+		return invariantAssertions(k, invariants);
+	}
+
+	/**
+	 * Declares what the forward condition for {@code k} needs, which are the first {@code k} steps of the base case of
+	 * {@code k + 1}: so it has to be asked right after that base case, before the next {@link #prepare}. Must be called
+	 * before the {@code push} of the query.
+	 * <p>
+	 * If the forward condition for {@code k} is unsat, no run from INIT takes {@code k} transitions without reaching
+	 * FINAL. A run that ends, or is cut off, at a state that is no pc value takes no transition there: only FINAL has a
+	 * stutter. With the base cases {@code 1..k} unsat as well, no run reaches an error at all.
+	 *
+	 * @param invariants
+	 *            pc node of a loop head -> its invariant
+	 * @return the invariant assertions for the states {@code 0..k}
+	 */
+	public List<Term> prepareForward(final int k, final Map<Integer, Invariant> invariants) {
+		if (k < 1 || mNumMiddleSteps != k || !mBaseCaseStartBuilt) {
+			throw new IllegalStateException("the forward condition for k=" + k
+					+ " is only defined right after the base case of k+1, but the steps are those of k="
+					+ (mNumMiddleSteps + 1));
+		}
+		return invariantAssertions(k, invariants);
+	}
+
+	/** @return the invariant assertions for the states {@code 0..k}, see {@link #prepare} */
+	private List<Term> invariantAssertions(final int k, final Map<Integer, Invariant> invariants) {
 		for (int j = 0; j <= k; j++) {
 			mConstants.pc(j);
 		}
@@ -267,21 +299,32 @@ public final class KInductionQuery<STATE> {
 
 	/**
 	 * Asserts the query of {@code kind} for {@code k}. Must be called inside the query's {@code push}, after
-	 * {@link #prepare}.
+	 * {@link #prepare}, or after {@link #prepareForward} for {@link Kind#FORWARD}.
 	 * <p>
-	 * Both queries ask for a run that reaches FINAL exactly at its end, so each step holds only the transitions that
+	 * The base and the step case ask for a run that reaches FINAL exactly at its end, so each step holds only the transitions that
 	 * can be taken at its place. That FINAL is not reached earlier, and that the step case does not start in INIT, is
 	 * therefore implied. Nothing is lost by the base case not looking for an earlier error: the queries of smaller
 	 * {@code k} have ruled that out already.
 	 *
 	 * @param invariantAssertions
-	 *            what {@link #prepare} returned for {@code k}
+	 *            what {@link #prepare} or {@link #prepareForward} returned for {@code k}
 	 */
 	public void assertQuery(final Kind kind, final int k, final List<Term> invariantAssertions) {
-		assert !mKeepStepsInSolver || mNumMiddleSteps == k - 1 : "k must not decrease with the steps in the solver";
 		final Script script = mMgdScript.getScript();
 		final Term init = mSystem.pcValue(script, PcTransitionSystem.INIT);
 		final Term fin = mSystem.pcValue(script, PcTransitionSystem.FINAL);
+		if (kind == Kind.FORWARD) {
+			// Step 0 from INIT into anything but FINAL, then steps that are neither from INIT nor into FINAL: k
+			// transitions without an error, and no constraint on where the last one ends.
+			mMgdScript.assertTerm(mLock, SmtUtils.binaryEquality(script, mConstants.pc(0), init));
+			mBaseCaseStart.assertSteps(1);
+			mMiddle.assertSteps(k - 1);
+			for (final Term invariant : invariantAssertions) {
+				mMgdScript.assertTerm(mLock, invariant);
+			}
+			return;
+		}
+		assert !mKeepStepsInSolver || mNumMiddleSteps == k - 1 : "k must not decrease with the steps in the solver";
 		if (kind == Kind.BASE) {
 			mMgdScript.assertTerm(mLock, SmtUtils.binaryEquality(script, mConstants.pc(0), init));
 		}
