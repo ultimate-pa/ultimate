@@ -15,7 +15,6 @@ Usage:
 
 import argparse
 import glob
-import os
 import random
 import re
 import sys
@@ -200,11 +199,32 @@ def resolve_patterns(c_dir, patterns, set_file):
     return sorted(tasks)
 
 
+def normalize_property_name(prop_file, c_dir):
+    """Map a property file to the name of the standard property it belongs to.
+
+    Some tasks (e.g. ECA/RERS) declare per-task sub-properties like
+    'unreach-call-0.prp' or 'unreach-call-a.prp'; these are mapped to the base
+    property if the corresponding standard property file exists in the
+    'c/properties' folder.
+    """
+    name = PurePosixPath(prop_file.replace("\\", "/")).name
+    if name.endswith(".prp"):
+        name = name[: -len(".prp")]
+    if (c_dir / "properties" / f"{name}.prp").is_file():
+        return name
+    base = re.sub(r"-[A-Za-z0-9]+$", "", name)
+    if base and base != name and (c_dir / "properties" / f"{base}.prp").is_file():
+        return base
+    return name
+
+
 def parse_task_yml(c_dir, rel_path):
     """Parse a task .yml file, returning the properties as {property_name: expected_verdict}.
 
-    Properties without an expected verdict are ignored. Returns None if the file
-    cannot be parsed.
+    Properties without an expected verdict are ignored. If a task declares
+    several property files that map to the same property (e.g. the standard
+    property plus RERS sub-properties), the verdict of the exact standard
+    property file wins. Returns None if the file cannot be parsed.
     """
     try:
         with open(c_dir / rel_path, encoding="utf-8") as f:
@@ -214,18 +234,21 @@ def parse_task_yml(c_dir, rel_path):
         return None
     if not isinstance(content, dict):
         return None
-    properties = {}
+    entries = []
     for prop in content.get("properties") or []:
         if not isinstance(prop, dict):
             continue
         prop_file = prop.get("property_file")
         if not prop_file:
             continue
-        prop_name = PurePosixPath(prop_file.replace("\\", "/")).name
-        if prop_name.endswith(".prp"):
-            prop_name = prop_name[: -len(".prp")]
-        properties[prop_name] = prop.get("expected_verdict")
-    return properties
+        prop_name = normalize_property_name(prop_file, c_dir)
+        is_exact = PurePosixPath(prop_file.replace("\\", "/")).name == f"{prop_name}.prp"
+        entries.append((is_exact, prop_name, prop.get("expected_verdict")))
+    properties = {}
+    for is_exact, prop_name, verdict in entries:
+        if prop_name not in properties or (is_exact and not properties[prop_name][0]):
+            properties[prop_name] = (is_exact, verdict)
+    return {prop_name: verdict for prop_name, (_, verdict) in properties.items()}
 
 
 def select_tasks(pool_true, pool_false, num_tasks):
