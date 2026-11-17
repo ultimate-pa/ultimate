@@ -129,7 +129,7 @@ public class PolyPoNe {
 	private final HashRelation<Term, BitvectorInequalityRelation> mBvInequalityRels = new HashRelation<>();
 	private boolean mInconsistent = false;
 
-	PolyPoNe(final Script script, final Junction junction) {
+	public PolyPoNe(final Script script, final Junction junction) {
 		mScript = script;
 		mJunction = junction;
 	}
@@ -138,7 +138,7 @@ public class PolyPoNe {
 		return mInconsistent;
 	}
 
-	void add(final Collection<Term> params, final boolean negate) {
+	public void add(final Collection<Term> params, final boolean negate) {
 		for (final Term param : params) {
 			// TODO 20201123 Matthias: For bitvectors distinct and equality are polynomial,
 			// the other inequalities not, hence distinct and equality should also be added
