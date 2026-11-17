@@ -897,6 +897,10 @@ public class PostProcessor {
 			startStmt.add(StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], entryFunction,
 					args.toArray(new Expression[args.size()])));
 		}
+		if (mCHandler.getSetjmpHandler().isActive()) {
+			mLogger.warn("Program uses longjmp. We do not check for the undefined behavior of a longjmp to a setjmp "
+					+ "whose function has already returned or to an uninitialized jmp_buf (C11 7.13.2.1).");
+		}
 
 		final Body startBody =
 				mProcedureManager.constructBody(loc, startDecl.toArray(new VariableDeclaration[startDecl.size()]),
