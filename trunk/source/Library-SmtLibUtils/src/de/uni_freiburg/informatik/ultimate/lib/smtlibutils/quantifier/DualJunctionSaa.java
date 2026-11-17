@@ -26,13 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayOccurrenceAnalysis;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays.ElimStorePlain.ElimStorePlainException;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -86,7 +90,17 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 	}
 
 	private EliminationResult tryToEliminateSomeArrayEliminatee(final EliminationTask inputEt) {
+		final ArrayList<Pair<TermVariable, Integer>> arrayEliminateesList = new ArrayList<>();
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
+			if (SmtSortUtils.isArraySort(eliminatee.getSort())) {
+				arrayEliminateesList
+						.add(new Pair<>(eliminatee, new ArrayOccurrenceAnalysis(mScript, inputEt.getTerm(), eliminatee)
+								.computeSimpleEliminationCostEstimation()));
+			}
+		}
+		arrayEliminateesList.sort(Comparator.comparing(Pair<TermVariable, Integer>::getSecond));
+		final List<TermVariable> arrayEliminatees = arrayEliminateesList.stream().map(Pair::getFirst).toList();
+		for (final TermVariable eliminatee : arrayEliminatees) {
 			if (!SmtSortUtils.isArraySort(eliminatee.getSort())) {
 				continue;
 			}
