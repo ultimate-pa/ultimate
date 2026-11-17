@@ -35,8 +35,10 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +47,7 @@ import java.util.Set;
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
+import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTElaboratedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier.IASTEnumerator;
@@ -131,6 +134,10 @@ public class TypeHandler implements ITypeHandler {
 	private final LinkedHashSet<String> mIncompleteType;
 
 	private final Map<String, CStructOrUnion> mIncompleteCStructOrUnionObjects = new HashMap<>();
+	/**
+	 * Struct and union types whose layout depends on an {@code aligned} attribute, see {@link #hasExplicitAlignment}.
+	 */
+	private final Set<CStructOrUnion> mExplicitlyAlignedTypes;
 	private final HashRelation<String, CEnum> mIncompleteCEnumObjects = new HashRelation<>();
 
 	/**
@@ -173,6 +180,7 @@ public class TypeHandler implements ITypeHandler {
 		mTranslationSettings = translationSettings;
 		mLocationFactory = locationFactory;
 		mStaticObjectsHandler = staticObjectsHandler;
+		mExplicitlyAlignedTypes = new HashSet<>();
 		mMemoryPointer = MemoryPointerFactory.createMemoryPointer(mTranslationSettings,
 				(BoogieType) cType2AstType(null, translationSettings.getCTypeOfPointerComponents()).getBoogieType(),
 				typeSizes);
@@ -192,6 +200,7 @@ public class TypeHandler implements ITypeHandler {
 		mMemoryPointer = prerunTypeHandler.mMemoryPointer;
 		mDefinedTypes = prerunTypeHandler.mDefinedTypes;
 		mIncompleteType = prerunTypeHandler.mIncompleteType;
+		mExplicitlyAlignedTypes = prerunTypeHandler.mExplicitlyAlignedTypes;
 	}
 
 	@Override
@@ -419,7 +428,11 @@ public class TypeHandler implements ITypeHandler {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		// TODO : include inactives? what are inactives?
 		final ArrayList<Member> members = new ArrayList<>();
+		boolean explicitlyAligned = hasAlignmentAttribute(node);
 		for (final IASTDeclaration dec : node.getDeclarations(false)) {
+			if (dec instanceof final IASTSimpleDeclaration simple && hasAlignmentAttribute(simple)) {
+				explicitlyAligned = true;
+			}
 			if (isAnonymousMember(dec)) {
 				// anonymous struct / union member, see C11 6.7.2.1.13
 				final Result anonResult = main.dispatch(((IASTSimpleDeclaration) dec).getDeclSpecifier());
@@ -472,6 +485,12 @@ public class TypeHandler implements ITypeHandler {
 		}
 
 		final CStructOrUnion cvar = new CStructOrUnion(isStructOrUnion, rslvName, members);
+		if (explicitlyAligned || members.stream().anyMatch(m -> hasExplicitAlignment(m.type()))) {
+			mExplicitlyAlignedTypes.add(cvar);
+			if (mIncompleteCStructOrUnionObjects.containsKey(rslvName)) {
+				mExplicitlyAlignedTypes.add(mIncompleteCStructOrUnionObjects.get(rslvName));
+			}
+		}
 
 		// TODO : boogie type
 		final NamedType namedType = new NamedType(loc, BoogieType.TYPE_ERROR, identifier, new ASTType[0]);
@@ -919,5 +938,48 @@ public class TypeHandler implements ITypeHandler {
 	@Override
 	public IMemoryPointer getMemoryPointer() {
 		return mMemoryPointer;
+	}
+
+	/**
+	 * Our computation of sizes and offsets ({@link TypeSizeAndOffsetComputer}) ignores {@code aligned} attributes (and
+	 * adds no padding at all), so the size of such a type is not the size that GCC computes, e.g. for
+	 * {@code struct { char c; int i; } __attribute__((aligned(8)))} (SV-COMP 2027,
+	 * firmware-common-simple/packed_aligned.c). We cannot refuse these attributes in general, they are e.g. in
+	 * {@code max_align_t} of every program that includes {@code stddef.h}.
+	 */
+	@Override
+	public boolean hasExplicitAlignment(final ICType cType) {
+		ICType type = cType.getUnderlyingType();
+		while (type instanceof final CArray array) {
+			type = array.getValueType().getUnderlyingType();
+		}
+		return type instanceof final CStructOrUnion struct && mExplicitlyAlignedTypes.contains(struct);
+	}
+
+	/**
+	 * @return true iff the struct or union specifier, the declaration of a member, or (for a typedef) the declaration
+	 *         of the type name has an {@code aligned} attribute
+	 */
+	private static boolean hasAlignmentAttribute(final IASTCompositeTypeSpecifier node) {
+		if (CTranslationUtil.hasAlignmentAttribute(node)) {
+			return true;
+		}
+		// typedef struct { ... } __attribute__((aligned(8))) T; the attribute may also end up at the declarator of T
+		return node.getParent() instanceof final IASTSimpleDeclaration declaration
+				&& declaration.getDeclSpecifier() == node
+				&& node.getStorageClass() == IASTDeclSpecifier.sc_typedef && hasAlignmentAttribute(declaration);
+	}
+
+	private static boolean hasAlignmentAttribute(final IASTSimpleDeclaration declaration) {
+		return CTranslationUtil.hasAlignmentAttribute(declaration.getDeclSpecifier())
+				|| Arrays.stream(declaration.getDeclarators()).anyMatch(TypeHandler::hasAlignmentAttribute);
+	}
+
+	private static boolean hasAlignmentAttribute(final IASTDeclarator declarator) {
+		if (CTranslationUtil.hasAlignmentAttribute(declarator)) {
+			return true;
+		}
+		final IASTDeclarator nested = declarator.getNestedDeclarator();
+		return nested != null && hasAlignmentAttribute(nested);
 	}
 }

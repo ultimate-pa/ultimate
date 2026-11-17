@@ -455,6 +455,14 @@ public class CTranslationUtil {
 	}
 
 	/**
+	 * Returns true iff the given {@code owner} has an {@code aligned} attribute, i.e., {@code __attribute__((aligned))}
+	 * or {@code __attribute__((aligned(n)))}.
+	 */
+	public static boolean hasAlignmentAttribute(final IASTAttributeOwner owner) {
+		return hasAttribute(owner, "aligned") || hasAttribute(owner, "__aligned__");
+	}
+
+	/**
 	 * Returns true iff the given {@code owner} has an attribute with the given {@code attributeName}, i.e., is preceded
 	 * by {@code __attribute__((attributeName))}.
 	 */
