@@ -11,6 +11,10 @@ that lists the selected tasks explicitly instead of via <includesfile>.
 Usage:
     python3 create_reduced_svcomp_benchmark_definition.py <sv-benchmarks-dir> \
                                                           <num-tasks> [options]
+
+By default, num_tasks tasks are sampled per set file (category). With
+--per-entry, num_tasks tasks are sampled per entry of each set file instead,
+i.e. per wildcard to a subfolder (e.g. each 'subfolder/*.yml' line).
 """
 
 import argparse
@@ -89,6 +93,12 @@ def parse_args():
         "num_tasks",
         type=positive_int,
         help="Number of tasks to select per category",
+    )
+    parser.add_argument(
+        "--per-entry",
+        action="store_true",
+        help="Sample num_tasks tasks per entry of each set file (i.e. per wildcard to a "
+        "subfolder) instead of per set file",
     )
     parser.add_argument(
         "--output",
@@ -171,12 +181,18 @@ def parse_set_file(set_file):
 
 
 def resolve_patterns(c_dir, patterns, set_file):
-    """Resolve the glob patterns of a set file to task (.yml) files relative to the 'c' folder."""
-    tasks = set()
+    """Resolve the glob patterns of a set file to task (.yml) files relative to the 'c' folder.
+
+    Returns a list of (pattern, tasks) tuples, one per pattern, preserving the
+    order of the patterns in the set file. Tasks are deduplicated per set file.
+    """
+    entries = []
+    seen = set()
     for pattern in patterns:
         matches = sorted(glob.glob(str(c_dir / pattern)))
         if not matches:
             print(f"Warning: pattern '{pattern}' of {set_file.name} matches nothing", file=sys.stderr)
+        tasks = []
         for match in matches:
             path = Path(match)
             if path.is_dir():
@@ -199,8 +215,12 @@ def resolve_patterns(c_dir, patterns, set_file):
             if "witnesses" in rel.parts:
                 # Skip witness validation tasks; they are not verification tasks.
                 continue
-            tasks.add(rel.as_posix())
-    return sorted(tasks)
+            rel_posix = rel.as_posix()
+            if rel_posix not in seen:
+                seen.add(rel_posix)
+                tasks.append(rel_posix)
+        entries.append((pattern, tasks))
+    return entries
 
 
 def normalize_property_name(prop_file, c_dir):
@@ -328,33 +348,59 @@ def main():
         print(f"Error: no .set files found in '{c_dir}'", file=sys.stderr)
         sys.exit(1)
 
-    # pools[prop][stem][verdict] = list of task paths (relative to 'c')
+    # pools[prop][stem] = list of entry pools, where each entry pool maps
+    # verdict -> list of task paths (relative to 'c'); one entry per set-file
+    # pattern (subfolder wildcard) if --per-entry is given, otherwise a single
+    # entry pool per set file.
     pools = {}
     for set_file in set_files:
         stem = set_file.name[: -len(".set")]
         patterns = parse_set_file(set_file)
-        rel_tasks = resolve_patterns(c_dir, patterns, set_file)
-        for rel_task in rel_tasks:
-            properties = parse_task_yml(c_dir, rel_task)
-            if properties is None:
+        entries = resolve_patterns(c_dir, patterns, set_file)
+        if not args.per_entry:
+            entries = [("all", [task for _, tasks in entries for task in tasks])]
+        for pattern, rel_tasks in entries:
+            # properties per task and property, per verdict
+            entry_tasks = []  # (rel_task, {prop_name: verdict})
+            for rel_task in rel_tasks:
+                properties = parse_task_yml(c_dir, rel_task)
+                if properties is None:
+                    continue
+                # Exclude invalid tasks: tasks whose def-behavior property is set to false.
+                if properties.get(DEF_BEHAVIOR_PROPERTY) is False:
+                    continue
+                entry_tasks.append((rel_task, properties))
+            if not entry_tasks:
                 continue
-            # Exclude invalid tasks: tasks whose def-behavior property is set to false.
-            if properties.get(DEF_BEHAVIOR_PROPERTY) is False:
-                continue
-            for prop_name, verdict in properties.items():
-                if verdict in (True, False) and prop_name != DEF_BEHAVIOR_PROPERTY:
-                    pools.setdefault(prop_name, {}).setdefault(stem, {True: [], False: []})[verdict].append(rel_task)
+            # Register the entry pool for every property occurring in it.
+            for prop_name in sorted({p for _, properties in entry_tasks for p in properties}):
+                pool = {True: [], False: []}
+                for rel_task, properties in entry_tasks:
+                    verdict = properties.get(prop_name)
+                    if verdict in (True, False) and prop_name != DEF_BEHAVIOR_PROPERTY:
+                        pool[verdict].append(rel_task)
+                if pool[True] or pool[False]:
+                    pools.setdefault(prop_name, {}).setdefault(stem, []).append(pool)
 
     # Sample per (property, category) with a balanced split between true and false.
     total_selected = 0
     for prop, stems in pools.items():
-        for stem in list(stems):
-            pool_true, pool_false = stems[stem][True], stems[stem][False]
-            selected_true, selected_false = select_tasks(pool_true, pool_false, args.num_tasks)
-            if len(selected_true) + len(selected_false) < args.num_tasks:
+        for stem, entry_pools in stems.items():
+            pool_true = [task for pool in entry_pools for task in pool[True]]
+            pool_false = [task for pool in entry_pools for task in pool[False]]
+            if args.per_entry:
+                selected_true, selected_false = [], []
+                for pool in entry_pools:
+                    entry_true, entry_false = select_tasks(pool[True], pool[False], args.num_tasks)
+                    selected_true += entry_true
+                    selected_false += entry_false
+            else:
+                selected_true, selected_false = select_tasks(pool_true, pool_false, args.num_tasks)
+            expected = args.num_tasks * len(entry_pools)
+            if len(selected_true) + len(selected_false) < expected:
                 print(
                     f"Warning: C.{prop}.{stem} has only {len(pool_true)} true and {len(pool_false)} false "
-                    f"tasks; selected {len(selected_true) + len(selected_false)} instead of {args.num_tasks}",
+                    f"tasks; selected {len(selected_true) + len(selected_false)} instead of {expected}",
                     file=sys.stderr,
                 )
             stems[stem] = {True: selected_true, False: selected_false}
