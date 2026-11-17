@@ -97,10 +97,14 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * states, but an error in the last one. UNSAT together with the base case for k proves that no error is reachable at
  * all (<i>safe</i>). INIT can be excluded in the first state because it has no incoming transition, so every error at a
  * step {@code > k} is preceded by k non-INIT states, and errors at steps {@code <= k} are found by the base case.
+ * <li><b>Forward condition</b>, asked for {@code k - 1} right after the base case of k: {@code pc_0 = INIT} and
+ * {@code k - 1} transitions without an error. UNSAT means that every run ends, or reaches an error, within
+ * {@code k - 1} transitions, and the base cases up to k have ruled out the error: <i>safe</i>. This proves programs
+ * whose runs are all bounded, e.g. by loops with constant bounds, even if they are not k-inductive.
  * </ul>
  * Since the whole program, including all loop heads, is one system, a SAFE result is a genuine proof also for several
- * and for nested loops; there is no per-loop or per-path approximation. A program that is not k-inductive for any k
- * runs until the timeout; otherwise the only incompleteness is the solver returning unknown.
+ * and for nested loops; there is no per-loop or per-path approximation. A program that has unbounded runs and is not
+ * k-inductive for any k runs until the timeout; otherwise the only incompleteness is the solver returning unknown.
  * <p>
  * <b>Procedures.</b> The transition system is flat and has no call stack, so it never contains a call or a return. If
  * the abstraction has any, {@link ProcedureSummaries} resolves every call site first: a callee whose graph is loop-free
@@ -152,6 +156,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 	private boolean mSolverReturnedUnknown;
 	private boolean mSafe;
 	private int mProvedK = -1;
+	// What proved the program, null unless it was proven safe
+	private ProofKind mProofKind;
 	private Inconclusive mInconclusive;
 
 	private final IInvariantSupplier<CallNode<STATE>> mInvariantSupplier;
@@ -169,7 +175,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 	private KInductionQuery<CallNode<STATE>> mQuery;
 	// pc node of a loop head -> its invariant, over the program variables' term variables
 	private final Map<Integer, Invariant> mInjectedInvariants = new LinkedHashMap<>();
-	// The injected invariants the deciding step case assumed, null unless the program was proven safe
+	// The injected invariants the deciding step case or forward condition assumed, null unless proven safe
 	private Map<Integer, Invariant> mProofInvariants;
 	// Whether the invariant supplier may interrupt a query, see answer(), and whether a solver that died of such an
 	// interrupt is restarted, see restartSolverAfterInterrupt().
@@ -232,6 +238,14 @@ public class KInduction<LETTER extends IAction, STATE> {
 		final ManagedScript mgdScript = csToolkit.getManagedScript();
 		return PcTransitionSystemFactory.build(services, logger, csToolkit, mgdScript, abstraction,
 				CounterSort.forProgram(mgdScript.getScript(), csToolkit));
+	}
+
+	/** What proved a program safe. */
+	public enum ProofKind {
+		/** The step case of {@link KInduction#getProvedK()} was unsat. */
+		INDUCTION,
+		/** The forward condition of {@link KInduction#getProvedK()} was unsat: no run is that long. */
+		FORWARD
 	}
 
 	private enum Verdict {
@@ -323,6 +337,19 @@ public class KInduction<LETTER extends IAction, STATE> {
 				mInconclusive = Inconclusive.solverUnknown(k, "base");
 				return Verdict.UNKNOWN;
 			}
+			if (k > 1) {
+				// Uses just the steps the base case of k declared, see KInductionQuery.prepareForward.
+				final LBool forward = askForward(k - 1);
+				mLogger.info("KInduction: k=%d - forward condition: %s", k - 1, forward);
+				if (forward == LBool.UNSAT) {
+					mProvedK = k - 1;
+					mProofKind = ProofKind.FORWARD;
+					mProofInvariants = new LinkedHashMap<>(mInjectedInvariants);
+					return Verdict.SAFE;
+				}
+				// unknown proves nothing, but the forward condition only adds to plain k-induction: go on with the
+				// step case
+			}
 			// The step case of k is larger than the base case of k, so check the deadline again.
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throw new ToolchainCanceledException(getClass(), "k-induction at k=" + k + ", before the step case");
@@ -333,6 +360,7 @@ public class KInduction<LETTER extends IAction, STATE> {
 					mQuery.getLastStepDagSize(), mIndexedConstantsWorkerScript.size(), mQuery.getAssertedDagSize());
 			if (step == LBool.UNSAT) {
 				mProvedK = k;
+				mProofKind = ProofKind.INDUCTION;
 				// What the deciding step case assumed: a correctness witness has to assume it too.
 				mProofInvariants = new LinkedHashMap<>(mInjectedInvariants);
 				return Verdict.SAFE;
@@ -381,10 +409,11 @@ public class KInduction<LETTER extends IAction, STATE> {
 	 * @return the answer, or {@code null} if the invariant supplier aborted the query
 	 */
 	private LBool ask(final Kind kind, final int k) {
-		final List<Term> invariants = mQuery.prepare(k, mInjectedInvariants);
+		final List<Term> invariants = kind == Kind.FORWARD ? mQuery.prepareForward(k, mInjectedInvariants)
+				: mQuery.prepare(k, mInjectedInvariants);
 		mWorkerMgdScript.push(mKILock, 1);
 		mQuery.assertQuery(kind, k, invariants);
-		if (kind == Kind.BASE && mStackPointer != null) {
+		if (kind != Kind.STEP && mStackPointer != null) {
 			// A run starts with an empty stack, see CallStack. The probation's base case does without: its unsat holds
 			// here as well, and its sat is asked again here.
 			final Script script = mWorkerMgdScript.getScript();
@@ -399,6 +428,23 @@ public class KInduction<LETTER extends IAction, STATE> {
 		}
 		mWorkerMgdScript.pop(mKILock, 1);
 		return result;
+	}
+
+	/**
+	 * Asks the forward condition for {@code k}, right after the base case of {@code k + 1}. The invariant supplier is
+	 * not told about it, so its probation does not interrupt it; an interrupt meant for a query before is answered by
+	 * asking again.
+	 */
+	private LBool askForward(final int k) {
+		while (true) {
+			final LBool result = ask(Kind.FORWARD, k);
+			if (result != null) {
+				return result;
+			}
+			mLogger.info("KInduction: an interrupt hit the forward condition at k=%d, asking it again", k);
+			// If the interrupt restarted the solver, the steps of the base case of k + 1 have to be sent again.
+			mQuery.prepare(k + 1, mInjectedInvariants);
+		}
 	}
 
 	/**
@@ -689,10 +735,11 @@ public class KInduction<LETTER extends IAction, STATE> {
 		final long start = System.nanoTime();
 		final Map<Integer, Set<Term>> injected = injectedCandidates();
 		final Map<Integer, Set<Term>> candidates = suppliedCandidates(injected);
-		mLogger.info("KInduction witness: proof at k=%d, %d injected and %d supplied candidate conjunct(s)", mProvedK,
-				countConjuncts(injected), countConjuncts(candidates) - countConjuncts(injected));
+		mLogger.info("KInduction witness: %s proof at k=%d, %d injected and %d supplied candidate conjunct(s)",
+				mProofKind, mProvedK, countConjuncts(injected), countConjuncts(candidates) - countConjuncts(injected));
+		final boolean induction = mProofKind == ProofKind.INDUCTION;
 		WitnessInvariants<STATE> result = null;
-		if (mProvedK == 1 && injected.isEmpty()) {
+		if (induction && mProvedK == 1 && injected.isEmpty()) {
 			// The step case of k = 1 assumed nothing, so true at every loop head is inductive and proves the program.
 			mLogger.info("KInduction witness: k=1 without injected invariants, every loop head gets true");
 			result = publishWitness(Collections.emptyMap(), true, inScope, start);
@@ -704,7 +751,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 		ExternalSolverInterrupter.findScriptor(mWorkerMgdScript.getScript());
 
 		// Without candidates there is nothing to check: true everywhere is inductive, and for k > 1 it does not prove
-		// the program, or the step case of k = 1 would have.
+		// the program, or the step case of k = 1 would have. Nor does it for a proof by the forward condition, which
+		// does not make the step case of k = 1 unsat either.
 		final InductiveAnnotation checked;
 		try {
 			checked = candidates.isEmpty() ? new InductiveAnnotation(Collections.emptyMap(), false)
@@ -721,7 +769,8 @@ public class KInduction<LETTER extends IAction, STATE> {
 			return Optional.ofNullable(result);
 		}
 		result = publishWitness(checked.invariants(), checked.safe(), inScope, start);
-		if (checked.safe() || mProvedK == 1) {
+		// noErrorWithinK says nothing beyond the proof's k transitions, and a forward condition's k may be large
+		if (checked.safe() || mProvedK == 1 || !induction) {
 			return Optional.of(result);
 		}
 		final Map<Integer, Set<Term>> strengthened =
@@ -750,9 +799,17 @@ public class KInduction<LETTER extends IAction, STATE> {
 		return mBestWitnessInvariants;
 	}
 
-	/** @return the k of the deciding step case, -1 unless the program was proven safe */
+	/**
+	 * @return the k of the deciding step case or forward condition, see {@link #getProofKind}; -1 unless the program
+	 *         was proven safe
+	 */
 	public int getProvedK() {
 		return mProvedK;
+	}
+
+	/** @return what proved the program, null unless it was proven safe */
+	public ProofKind getProofKind() {
+		return mProofKind;
 	}
 
 	/**
