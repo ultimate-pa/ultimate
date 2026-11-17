@@ -95,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -127,17 +128,28 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		if (root instanceof IIcfg<?>) {
 			mIcfgs.add((IIcfg<?>) root);
 		}
-		if (root instanceof WitnessNode && mCurrentGraphType.getType() == Type.VIOLATION_WITNESS) {
+		if (mCurrentGraphType.getType() == Type.VIOLATION_WITNESS
+				&& (root instanceof WitnessNode || root instanceof Witness)) {
 			if (mWitnessTransformer != null) {
-				throw new UnsupportedOperationException("two witness models");
+				throw new UnsupportedOperationException("Found multiple violation witnesses");
 			}
-			mLogger.warn(
-					"Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
-			final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton =
-					new WitnessModelToAutomatonTransformer((WitnessNode) root, mServices).getResult();
-			mWitnessTransformer =
-					(automaton, predicateFactory) -> WitnessUtils.constructGraphMLWitnessProduct(mServices, automaton,
-							extendWitnessAutomaton(witnessAutomaton), predicateFactory, mLogger, Property.TERMINATION);
+			if (root instanceof WitnessNode) {
+				mLogger.warn(
+						"Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
+				final INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton =
+						new WitnessModelToAutomatonTransformer((WitnessNode) root, mServices).getResult();
+				mWitnessTransformer =
+						(automaton, predicateFactory) -> WitnessUtils.constructGraphMLWitnessProduct(mServices,
+								automaton, extendWitnessAutomaton(witnessAutomaton), predicateFactory, mLogger,
+								Property.TERMINATION);
+			}
+			if (root instanceof Witness) {
+				mLogger.warn(
+						"Found a witness in the YAML format. I will only consider traces that are accepted by the witness");
+				mWitnessTransformer =
+						(automaton, predicateFactory) -> WitnessUtils.constructYamlWitnessProduct(mServices, automaton,
+								(Witness) root, predicateFactory, mLogger, Property.TERMINATION);
+			}
 		}
 		if (root instanceof AutomataTestFileAST) {
 			mAutomataTestFileAsts.add((AutomataTestFileAST) root);

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.w
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Location;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Segment.SegmentType;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.ViolationSequence;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Waypoint;
 import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WaypointAssumption;
@@ -122,16 +124,18 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		// A product state is accepting, if the underlying state is accepting, the the witness was fully read, and the
 		// previous waypoint was a target.
 		final ProductPredicate<?> productState = (ProductPredicate<?>) state;
-		if (productState.getSegmentCounter() == 0) {
-			// Therefore we cannot accept, if no segment was read.
+		if (productState.getSegmentCounter() == 0 || !mAbstraction.isFinal(productState.getUnderlying())) {
+			// Therefore we cannot accept, if no segment was read, or if the underlying state is not accepting.
 			return false;
 		}
 		final ViolationSequence violationSequence =
 				(ViolationSequence) mWitness.getEntries().get(productState.getViolationSequenceCounter());
 		final Segment previousSegment = violationSequence.getSegments().get(productState.getSegmentCounter() - 1);
-		return previousSegment.getFollowOrCycleWaypoints().stream().allMatch(WaypointTarget.class::isInstance)
-				&& mAbstraction.isFinal(productState.getUnderlying())
-				&& productState.getSegmentCounter() == violationSequence.getSegments().size();
+		// Check if the previous segment consists either of target waypoints or of cycle waypoints
+		final boolean isTarget =
+				previousSegment.getFollowOrCycleWaypoints().stream().allMatch(WaypointTarget.class::isInstance);
+		final boolean isCycle = previousSegment.getType() == SegmentType.CYCLE;
+		return (isTarget || isCycle) && productState.getSegmentCounter() == violationSequence.getSegments().size();
 	}
 
 	@Override
@@ -193,7 +197,14 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		final List<Segment> segments =
 				((ViolationSequence) mWitness.getEntries().get(productState.getViolationSequenceCounter()))
 						.getSegments();
-		for (int sCounter = productState.getSegmentCounter(); sCounter < segments.size(); sCounter++) {
+		int sCounter = productState.getSegmentCounter();
+		// If the last waypoint was matched, go back to the first cycle waypoint (if any)
+		final OptionalInt firstCycleWaypoint = IntStream.range(0, segments.size())
+				.filter(i -> segments.get(i).getType() == SegmentType.CYCLE).findFirst();
+		if (sCounter == segments.size() && firstCycleWaypoint.isPresent()) {
+			sCounter = firstCycleWaypoint.getAsInt();
+		}
+		while (sCounter < segments.size()) {
 			final Segment currentSegment = segments.get(sCounter);
 			// check if an Avoid Waypoint of the segment matches (Assumption Waypoints are ignored)
 			if (currentSegment.getAvoidWaypoints().stream().anyMatch(x -> matchesWaypoint(letter, x))) {
@@ -206,6 +217,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 			if (currentFollowWaypoint instanceof WaypointAssumption
 					&& (!CHECK_ASSUMPTION_LOCATIONS || matchesStartLocation(letter, currentFollowWaypoint))) {
 				mMatchedFollowWaypoints.add(currentFollowWaypoint);
+				sCounter++;
 				continue;
 			}
 			if (matchesWaypoint(letter, currentFollowWaypoint)) {
