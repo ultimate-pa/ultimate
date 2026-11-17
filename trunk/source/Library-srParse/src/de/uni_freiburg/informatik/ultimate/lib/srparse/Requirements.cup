@@ -331,29 +331,29 @@ rtpattern ::= ONCE expression:r BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST d
 autpattern ::=
 		  LOCATION expression:r IS AN INITIAL LOCATION
 			{: RESULT = new PatternBuilder().setType(InitialLocPattern.class).addCdd(r); :}
-		| IF IN LOCATION expression:r THEN TRANSITION TO expression:s IS ENABLED
+		| IF IN LOCATION expression:r COMMA? THEN TRANSITION TO expression:s IS ENABLED
 			{: RESULT = new PatternBuilder().setType(TransitionPattern.class).addCdd(s,r); :}
-		| IF IN LOCATION expression:r THEN TRANSITION TO expression:s IS ENABLED IF GUARD expression:v HOLDS
+		| IF IN LOCATION expression:r COMMA? THEN TRANSITION TO expression:s IS ENABLED IF GUARD expression:v HOLDS
 			{: RESULT = new PatternBuilder().setType(TransitionGPattern.class).addCdd(v,s,r); :}
-		| IF IN LOCATION expression:r FOR AT LEAST duration:t TRANSITION TO expression:s IS ENABLED
+		| IF IN LOCATION expression:r FOR AT LEAST duration:t COMMA? TRANSITION TO expression:s IS ENABLED
 			{: RESULT = new PatternBuilder().setType(TransitionLPattern.class).addCdd(s,r).addDuration(t); :}
-		| IF IN LOCATION expression:r FOR AT MOST duration:t TRANSITION TO expression:s IS ENABLED
+		| IF IN LOCATION expression:r FOR AT MOST duration:t COMMA? TRANSITION TO expression:s IS ENABLED
 			{: RESULT = new PatternBuilder().setType(TransitionUPattern.class).addCdd(s,r).addDuration(t); :}
-		| IF IN LOCATION expression:r THEN TRANSITION TO expression:s IF EVENT expression:u FIRES
+		| IF IN LOCATION expression:r COMMA? THEN TRANSITION TO expression:s IF EVENT expression:u FIRES
 			{: RESULT = new PatternBuilder().setType(TransitionEPattern.class).addCdd(u,s,r); :}
-		| IF IN LOCATION expression:r FOR AT LEAST duration:t TRANSITION TO expression:s IS ENABLED IF GUARD expression:v HOLDS
+		| IF IN LOCATION expression:r FOR AT LEAST duration:t COMMA? TRANSITION TO expression:s IS ENABLED IF GUARD expression:v HOLDS
 			{: RESULT = new PatternBuilder().setType(TransitionLGPattern.class).addCdd(v,s,r).addDuration(t); :}
-		| IF IN LOCATION expression:r FOR AT MOST duration:t TRANSITION TO expression:s IS ENABLED IF GUARD expression:v HOLDS
+		| IF IN LOCATION expression:r FOR AT MOST duration:t COMMA? TRANSITION TO expression:s IS ENABLED IF GUARD expression:v HOLDS
 			{: RESULT = new PatternBuilder().setType(TransitionUGPattern.class).addCdd(v,s,r).addDuration(t); :}
-		| IF IN LOCATION expression:r THEN TRANSITION TO expression:s IF EVENT expression:u FIRES AND GUARD expression:v HOLDS
+		| IF IN LOCATION expression:r COMMA? THEN TRANSITION TO expression:s IF EVENT expression:u FIRES AND GUARD expression:v HOLDS
 			{: RESULT = new PatternBuilder().setType(TransitionGEPattern.class).addCdd(v,u,s,r); :}
-		| IF IN LOCATION expression:r FOR AT LEAST duration:t TRANSITION TO expression:s IF EVENT expression:u FIRES
+		| IF IN LOCATION expression:r FOR AT LEAST duration:t COMMA? TRANSITION TO expression:s IF EVENT expression:u FIRES
 			{: RESULT = new PatternBuilder().setType(TransitionLEPattern.class).addCdd(u,s,r).addDuration(t); :}
-		| IF IN LOCATION expression:r FOR AT MOST duration:t TRANSITION TO expression:s IF EVENT expression:u FIRES
+		| IF IN LOCATION expression:r FOR AT MOST duration:t COMMA? TRANSITION TO expression:s IF EVENT expression:u FIRES
 			{: RESULT = new PatternBuilder().setType(TransitionUEPattern.class).addCdd(u,s,r).addDuration(t); :}
-		| IF IN LOCATION expression:r FOR AT LEAST duration:t TRANSITION TO expression:s IF EVENT expression:u FIRES AND GUARD expression:v HOLDS
+		| IF IN LOCATION expression:r FOR AT LEAST duration:t COMMA? TRANSITION TO expression:s IF EVENT expression:u FIRES AND GUARD expression:v HOLDS
 			{: RESULT = new PatternBuilder().setType(TransitionLGEPattern.class).addCdd(v,u,s,r).addDuration(t); :}
-		| IF IN LOCATION expression:r FOR AT MOST duration:t TRANSITION TO expression:s IF EVENT expression:u FIRES AND GUARD expression:v HOLDS
+		| IF IN LOCATION expression:r FOR AT MOST duration:t COMMA? TRANSITION TO expression:s IF EVENT expression:u FIRES AND GUARD expression:v HOLDS
 			{: RESULT = new PatternBuilder().setType(TransitionUGEPattern.class).addCdd(v,u,s,r).addDuration(t); :}
 		;
 
