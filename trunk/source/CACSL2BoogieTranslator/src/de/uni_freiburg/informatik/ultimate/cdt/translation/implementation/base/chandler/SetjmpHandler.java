@@ -90,8 +90,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * control jumps to the label of the site (where the ghost return value becomes the value of {@code setjmp}),
  * otherwise the stack variables of the procedure are freed and the procedure returns. This unwinding code follows
  * every {@code longjmp} and every call of a C function.
- * <li>If the flag is still set when the entry function returns, the target activation was not alive any more
- * (undefined behavior), which is reported as unsupported feature.
+ * <li>If the flag is still set when the entry function returns, the target activation was not alive any more or
+ * {@code env} was not initialized by {@code setjmp} (undefined behavior, C11 7.13.2.1). We do not check this, the
+ * program then just terminates.
  * </ul>
  * Local variables keep the values they had at the time of the {@code longjmp} (C11 7.13.2.1 makes non-volatile locals
  * that were changed indeterminate, we choose the value they have).
@@ -364,21 +365,6 @@ public class SetjmpHandler {
 						lhs(ignoreLoc, FRAME_COUNTER, ghostType(), null),
 						mExpressionTranslation.constructArithmeticExpression(ignoreLoc,
 								IASTBinaryExpression.op_plus, counter, GHOST_INT, integer(ignoreLoc, 1), GHOST_INT)));
-	}
-
-	/**
-	 * @return the statements that follow the call of the entry function: a longjmp that is still pending targets an
-	 *         activation that is not alive any more (undefined behavior), which we do not support.
-	 */
-	public List<Statement> constructCheckAfterEntryFunction(final ILocation loc) {
-		if (!isActive()) {
-			return Collections.emptyList();
-		}
-		final ILocation ignoreLoc = ghostLocation();
-		return List.of(new IfStatement(ignoreLoc, id(ignoreLoc, PENDING, BoogieType.TYPE_BOOL, null),
-				new Statement[] { ExpressionTranslation.modelUnsupportedFeature(loc,
-						"longjmp to a setjmp whose function has already returned") },
-				new Statement[0]));
 	}
 
 	/**

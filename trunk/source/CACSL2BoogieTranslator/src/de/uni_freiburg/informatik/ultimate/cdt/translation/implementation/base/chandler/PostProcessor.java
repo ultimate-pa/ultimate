@@ -897,7 +897,6 @@ public class PostProcessor {
 			startStmt.add(StatementFactory.constructCallStatement(loc, false, new VariableLHS[0], entryFunction,
 					args.toArray(new Expression[args.size()])));
 		}
-		startStmt.addAll(mCHandler.getSetjmpHandler().constructCheckAfterEntryFunction(loc));
 
 		final Body startBody =
 				mProcedureManager.constructBody(loc, startDecl.toArray(new VariableDeclaration[startDecl.size()]),
