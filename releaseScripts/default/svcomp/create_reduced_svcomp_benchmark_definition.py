@@ -195,7 +195,11 @@ def resolve_patterns(c_dir, patterns, set_file):
                     continue
             if path.suffix != ".yml":
                 continue
-            tasks.add(path.relative_to(c_dir).as_posix())
+            rel = path.relative_to(c_dir)
+            if "witnesses" in rel.parts:
+                # Skip witness validation tasks; they are not verification tasks.
+                continue
+            tasks.add(rel.as_posix())
     return sorted(tasks)
 
 
