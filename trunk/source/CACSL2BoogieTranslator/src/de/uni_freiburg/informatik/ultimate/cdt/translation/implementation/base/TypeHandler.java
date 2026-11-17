@@ -315,8 +315,14 @@ public class TypeHandler implements ITypeHandler {
 				// TODO Frank 2022-11-22: rex might contain statements (e.g. overflow-assertions), but they are ignored
 				// here! We should probably crash instead. But we could try to remove trivial assertions additionally.
 				specifiedValue = rex.getLrValue().getValue();
+				checkEnumValueFitsInt(loc, fNames[i], mTypeSizes.extractIntegerValue(specifiedValue,
+						rex.getLrValue().getCType().getUnderlyingType()));
 			} else {
 				specifiedValue = null;
+				if (valueOfPrecedingEnumConstant != null) {
+					final BigInteger preceding = mTypeSizes.extractIntegerValue(valueOfPrecedingEnumConstant, intType);
+					checkEnumValueFitsInt(loc, fNames[i], preceding == null ? null : preceding.add(BigInteger.ONE));
+				}
 			}
 			final Expression value = constructEnumValue(loc, specifiedValue, valueOfPrecedingEnumConstant);
 			final Pair<ConstDeclaration, Axiom> cd = handleEnumerationConstant(loc, enumId, fNames[i], value, node);
@@ -765,6 +771,30 @@ public class TypeHandler implements ITypeHandler {
 						DeclarationInformation.DECLARATIONINFO_GLOBAL, node, false, value));
 		return new Pair<>(cd, new Axiom(loc, new Attribute[0],
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, identifier, value)));
+	}
+
+	/**
+	 * We translate every enumeration type and every enumeration constant to {@code int}. C11 6.7.2.2.2 requires the
+	 * value of an enumeration constant to be representable as an {@code int}; values outside of this range are a GNU
+	 * extension (standardized in C23) for which GCC chooses a larger underlying type, e.g. a 64-bit unsigned integer.
+	 * Our translation would then treat the type as {@code int} and, e.g., not reduce the value on a conversion to
+	 * {@code int}, which led to unsound results (SV-COMP 2027, firmware-common-simple/enum_int_cast.bug.c). Hence we
+	 * refuse such programs.
+	 *
+	 * @param value
+	 *            the value of the enumeration constant, or null if it is unknown
+	 */
+	private void checkEnumValueFitsInt(final ILocation loc, final String enumerator, final BigInteger value) {
+		if (value == null) {
+			return;
+		}
+		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
+		if (value.compareTo(mTypeSizes.getMinValueOfPrimitiveType(intType)) < 0
+				|| value.compareTo(mTypeSizes.getMaxValueOfPrimitiveType(intType)) > 0) {
+			throw new UnsupportedSyntaxException(loc,
+					"Value " + value + " of enumeration constant " + enumerator + " is not representable as int; "
+							+ "enumeration types with an underlying type other than int are not supported");
+		}
 	}
 
 	/**
