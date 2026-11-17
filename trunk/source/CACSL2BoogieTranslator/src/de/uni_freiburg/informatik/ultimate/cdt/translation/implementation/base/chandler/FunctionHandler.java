@@ -388,6 +388,10 @@ public class FunctionHandler {
 			 * to new body (4)
 			 */
 			final ExpressionResultBuilder bodyResultBuilder = new ExpressionResultBuilder();
+			// activation id for setjmp/longjmp
+			final SetjmpHandler setjmpHandler = mCHandler.getSetjmpHandler();
+			setjmpHandler.constructEntryDeclarations(loc).forEach(bodyResultBuilder::addDeclaration);
+			bodyResultBuilder.addStatements(setjmpHandler.constructEntryStatements(loc));
 
 			// 1)
 			handleFunctionsInParams(main, loc, memoryHandler, bodyResultBuilder, node, isInLibraryMode);
@@ -787,7 +791,7 @@ public class FunctionHandler {
 			calleeProcInfo.resetDeclaration(newProc);
 		}
 
-		return createFunctionCall(loc, calleeName, functionCallExpressionResultBuilder, translatedParams);
+		return createFunctionCall(loc, calleeName, functionCallExpressionResultBuilder, translatedParams, true);
 	}
 
 	private static void checkNumberOfArguments(final ILocation loc, final String calleeName,
@@ -1105,11 +1109,16 @@ public class FunctionHandler {
 
 	public ExpressionResult createFunctionCall(final ILocation loc, final String methodName,
 			final List<Expression> parameters) {
-		return createFunctionCall(loc, methodName, new ExpressionResultBuilder(), parameters);
+		return createFunctionCall(loc, methodName, new ExpressionResultBuilder(), parameters, false);
 	}
 
+	/**
+	 * @param unwindLongjmp
+	 *            true iff a pending longjmp is propagated after the call (see {@link SetjmpHandler}). Not needed if the
+	 *            caller returns directly after the call anyway (e.g., the dispatch procedures for function pointers).
+	 */
 	private ExpressionResult createFunctionCall(final ILocation loc, final String methodName,
-			final ExpressionResultBuilder builder, final List<Expression> parameters) {
+			final ExpressionResultBuilder builder, final List<Expression> parameters, final boolean unwindLongjmp) {
 		final Expression returnedValue;
 		final Statement call;
 		final BoogieProcedureInfo procInfo;
@@ -1161,6 +1170,9 @@ public class FunctionHandler {
 			builder.addStatement(new AtomicStatement(loc, new Statement[] { call }));
 		} else {
 			builder.addStatement(call);
+		}
+		if (unwindLongjmp) {
+			builder.addStatements(mCHandler.getSetjmpHandler().constructUnwinding(loc));
 		}
 
 		final ICType returnCType = mProcedureManager.isCalledBeforeDeclared(procInfo) ? new CPrimitive(CPrimitives.INT)

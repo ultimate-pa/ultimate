@@ -5,7 +5,8 @@
  * Copyright (C) 2013-2022 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2021-2024 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Copyright (C) 2022-2025 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
- * Copyright (C) 2013-2025 University of Freiburg
+ * Copyright (C) 2013-2026 University of Freiburg
+ * Copyright (C) 2026 Max Barth (Max.Barth@lmu.de)
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
  *
@@ -37,14 +38,18 @@ import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.SetjmpHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -53,11 +58,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public class SetjmpLibraryModel implements ILibraryModel {
 	private final FunctionModelHelper mHelper;
+	private final ExpressionResultTransformer mExprResultTransformer;
 	private final ExpressionTranslation mExpressionTranslation;
+	private final SetjmpHandler mSetjmpHandler;
 
-	public SetjmpLibraryModel(final FunctionModelHelper helper, final ExpressionTranslation expressionTranslation) {
+	public SetjmpLibraryModel(final FunctionModelHelper helper, final ExpressionResultTransformer exprResultTransformer,
+			final ExpressionTranslation expressionTranslation, final SetjmpHandler setjmpHandler) {
 		mHelper = helper;
+		mExprResultTransformer = exprResultTransformer;
 		mExpressionTranslation = expressionTranslation;
+		mSetjmpHandler = setjmpHandler;
 	}
 
 	@Override
@@ -65,29 +75,56 @@ public class SetjmpLibraryModel implements ILibraryModel {
 		final List<FunctionModel> result = new ArrayList<>();
 
 		// longjmp https://en.cppreference.com/w/c/program/longjmp
-		// We cannot handle restoring the environment, so we just check if the function is reachable and create an
-		// overraproximation for that case
-		result.add(new FunctionModel("longjmp", (main, node, loc, name) -> mHelper
-				.handleUnsupportedFunctionByOverapproximation(main, loc, name, new CPrimitive(CPrimitives.VOID))));
+		for (final String name : List.of("longjmp", "_longjmp", "siglongjmp", "__longjmp_chk")) {
+			result.add(new FunctionModel(name, this::handleLongjmp));
+		}
 
 		// setjmp https://en.cppreference.com/w/c/program/setjmp
-		result.add(new FunctionModel("_setjmp", this::handleSetjmp));
-		result.add(new FunctionModel("setjmp", this::handleSetjmp));
+		// (sigsetjmp has a second argument that only affects the signal mask)
+		result.add(new FunctionModel("setjmp", (main, node, loc, name) -> handleSetjmp(main, node, loc, name, 1)));
+		result.add(new FunctionModel("_setjmp", (main, node, loc, name) -> handleSetjmp(main, node, loc, name, 1)));
+		result.add(new FunctionModel("sigsetjmp", (main, node, loc, name) -> handleSetjmp(main, node, loc, name, 2)));
+		result.add(
+				new FunctionModel("__sigsetjmp", (main, node, loc, name) -> handleSetjmp(main, node, loc, name, 2)));
 
 		return result;
 	}
 
-	// For now we do not handle setjmp properly. We crash on longjmp, so it is sufficient to always return 0 for setjmp.
 	private Result handleSetjmp(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name, final int numberOfArgs) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, numberOfArgs, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult env = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc,
+				arguments[0]);
+		for (int i = 1; i < arguments.length; i++) {
+			builder.addAllExceptLrValue(
+					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]));
+		}
+		final ExpressionResult setjmp = mSetjmpHandler.handleSetjmp(loc, node, env);
+		return builder.addAllIncludingLrValue(setjmp).build();
+	}
+
+	private Result handleLongjmp(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
-		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
-		return new ExpressionResult(new RValue(
-				mExpressionTranslation.constructLiteralForIntegerType(loc, returnType, BigInteger.ZERO), returnType));
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, 2, name, arguments);
+		final ExpressionResult env = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc,
+				arguments[0]);
+		final ExpressionResult val = mExprResultTransformer.performImplicitConversion(
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]),
+				new CPrimitive(CPrimitives.INT), loc);
+		return mSetjmpHandler.handleLongjmp(loc, env, val);
 	}
 
 	@Override
 	public Collection<TypeModel> getTypeModels() {
-		// Model jmp_buf just with some arbitrary type, we cannot handle it properly anyways.
-		return List.of(new TypeModel("jmp_buf", CPointer.voidPointer()));
+		// Only used if the program has no typedef for jmp_buf. We only need the address of a jmp_buf (as key for the
+		// stored environment), so we model it as an array of one long (which decays to a pointer like jmp_buf).
+		final CPrimitive boundType = mExpressionTranslation.getCTypeOfPointerComponents();
+		final CArray jmpBuf = new CArray(mExpressionTranslation.constructLiteralForIntegerType(
+				LocationFactory.createIgnoreCLocation(), boundType, BigInteger.ONE), boundType,
+				new CPrimitive(CPrimitives.LONG));
+		return List.of(new TypeModel("jmp_buf", jmpBuf));
 	}
 }
