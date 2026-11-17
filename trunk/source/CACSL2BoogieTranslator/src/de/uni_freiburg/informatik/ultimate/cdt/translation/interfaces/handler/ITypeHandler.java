@@ -191,10 +191,4 @@ public interface ITypeHandler {
 	void addLibraryTypes(Map<String, ICType> libraryTypes);
 
 	IMemoryPointer getMemoryPointer();
-
-	/**
-	 * @return true iff the layout of {@code cType} depends on an {@code aligned} attribute (of a struct or union type
-	 *         or of one of their members, also nested), which our computation of sizes and offsets ignores
-	 */
-	boolean hasExplicitAlignment(ICType cType);
 }

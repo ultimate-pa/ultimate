@@ -2763,19 +2763,6 @@ public class CHandler {
 		return null;
 	}
 
-	/**
-	 * The size we compute for a type whose layout depends on an {@code aligned} attribute may differ from the size
-	 * GCC computes, see {@link ITypeHandler#hasExplicitAlignment}. Hence such a size is an overapproximation: a
-	 * counterexample that depends on it is not reported as a violation.
-	 */
-	private ExpressionResultBuilder addOverapproxIfExplicitlyAligned(final ExpressionResultBuilder builder,
-			final ICType cType, final ILocation loc) {
-		if (mTypeHandler.hasExplicitAlignment(cType)) {
-			builder.addOverapprox(new Overapprox("sizeof of a type with an aligned attribute", loc));
-		}
-		return builder;
-	}
-
 	public Result visit(final IDispatcher main, final IASTTypeIdExpression node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		switch (node.getOperator()) {
@@ -2787,10 +2774,9 @@ public class CHandler {
 			// TypesResult checked = checkForPointer(main,
 			// node.getTypeId().getAbstractDeclarator().getPointerOperators(), rt, false);
 
-			final ICType sizeOfType = dr.getDeclaration().getType();
-			final var rVal = new RValue(mMemoryHandler.calculateSizeOf(loc, sizeOfType), mTypeSizeComputer.getSizeT());
-			return addOverapproxIfExplicitlyAligned(
-					new ExpressionResultBuilder().addAllSideEffects(dr).setLrValue(rVal), sizeOfType, loc).build();
+			final var rVal = new RValue(mMemoryHandler.calculateSizeOf(loc, dr.getDeclaration().getType()),
+					mTypeSizeComputer.getSizeT());
+			return new ExpressionResultBuilder().addAllSideEffects(dr).setLrValue(rVal).build();
 		}
 		case IASTTypeIdExpression.op_typeof: {
 			final TypesResult rt = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
@@ -2845,9 +2831,9 @@ public class CHandler {
 			return operand;
 		case IASTUnaryExpression.op_sizeof:
 			final ICType operandType = operand.getCType().getUnderlyingType();
-			return addOverapproxIfExplicitlyAligned(new ExpressionResultBuilder().setLrValue(
-					new RValue(mMemoryHandler.calculateSizeOf(loc, operandType), mTypeSizeComputer.getSizeT())),
-					operandType, loc).build();
+			return new ExpressionResult(
+					new RValue(mMemoryHandler.calculateSizeOf(loc, operandType), mTypeSizeComputer.getSizeT()),
+					Collections.emptySet());
 		case IASTUnaryExpression.op_star: {
 			return handleIndirectionOperator(operand, loc, node);
 		}
