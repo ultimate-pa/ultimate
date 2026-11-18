@@ -59,7 +59,14 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracechec
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
+/**
+ * Postprocessor for stongest postcondition sequences that removes irrelevant conjuncts from the predicates. <br />
+ * TODO: Improve documentation.
+ *
+ */
 public class HoareCoreBackwardPostprocessor<L extends IAction> {
+
+	private static final boolean DEBUG_EXTENSIVE_OUTPUT = false;
 
 	private final CfgSmtToolkit mCsToolkit;
 	private final IPredicate mPrecondition;
@@ -115,10 +122,10 @@ public class HoareCoreBackwardPostprocessor<L extends IAction> {
 		final HoareCoreBackwardPostprocessor<L> postprocessor = new HoareCoreBackwardPostprocessor<>(csToolkit,
 				precondition, postcondition, logger, trace, pendingContexts, predicateFactory, rtf, mgdScript, services,
 				simplificationTechnique, symbolTable, modifiedGlobals);
-		return postprocessor.doWork(input, postprocs);
+		return postprocessor.doPostprocessing(input, postprocs);
 	}
 
-	TracePredicates doWork(final TracePredicates input, final List<IPredicatePostprocessor> postprocs) {
+	TracePredicates doPostprocessing(final TracePredicates input, final List<IPredicatePostprocessor> postprocs) {
 		mOverallSizeReduction = 0;
 		mOverallUnknowns = 0;
 		mOverallConjuncts = 0;
@@ -226,8 +233,6 @@ public class HoareCoreBackwardPostprocessor<L extends IAction> {
 								// No need to simplify, the conjunction is a subset of an existing conjunction.
 								hierPre = mPredicateFactory.and(SimplificationTechnique.NONE, relevantPreconditions);
 							}
-//							hierPre = applyPostprocessors(postprocs, callPos, hierPre);
-//							predicates.set(callPos, hierPre);
 						}
 					}
 
@@ -249,7 +254,7 @@ public class HoareCoreBackwardPostprocessor<L extends IAction> {
 
 		predicates.remove(0);
 		predicates.remove(predicates.size() - 1);
-		mLogger.warn(String.format(
+		mLogger.info(String.format(
 				"Backward Hoare core postprocessing reduced overall conjuncts from %s to %s. %s IPredicates, %s allowed reduction, %s trivial, %s solver unknowns",
 				mOverallConjuncts, mOverallConjuncts - mOverallSizeReduction, predicates.size(),
 				mOverallPositionsWithReduction, mOverallTrivial, mOverallUnknowns));
@@ -392,20 +397,13 @@ public class HoareCoreBackwardPostprocessor<L extends IAction> {
 			// return already disallowed reduction.
 			return predecessor;
 		}
-		if (!SmtUtils.isTrueLiteral(successor.getFormula())) {
-//			throw new AssertionError("Successor not true literal, but " + successor.getFormula().toString());
-			successor.getFormula().toString();
-		}
 		final PrecondRelevanceResult checkResult = checker.checkCall(predecessorConjuncts, callAction, successor);
 		final List<IPredicate> relevantPreconditions = handleRelevanceResult(pos, checkResult);
 		if (relevantPreconditions == null) {
 			return predecessor;
 		}
 		final Set<IPredicate> union = new HashSet<>(hierPredRelevantConjunctsFromReturn);
-		final boolean test = union.addAll(relevantPreconditions);
-		if (test) {
-			throw new AssertionError("Wow, the call has an influence.");
-		}
+		union.addAll(relevantPreconditions);
 		return handleRelevantPreconditions(union, predecessorConjuncts, predecessor, pos);
 	}
 
@@ -434,14 +432,15 @@ public class HoareCoreBackwardPostprocessor<L extends IAction> {
 			return predecessor;
 		}
 		assert sizeReduction > 0 : "Size reduction must be positive";
-		mOverallSizeReduction += sizeReduction;
-		mOverallPositionsWithReduction++;
-		mLogger.warn(String.format("Reduced conjuncts from %s to %s for position %s", predecessorConjuncts.size(),
-				relevantPreconditions.size(), pos));
-		final HashSet<IPredicate> irrelevantConjuncts = new HashSet<>(predecessorConjuncts);
-		irrelevantConjuncts.removeAll(relevantPreconditions);
-		mLogger.warn(String.format("Irrelevant conjuncts for position %s: %s", pos, irrelevantConjuncts));
-
+		if (DEBUG_EXTENSIVE_OUTPUT) {
+			mOverallSizeReduction += sizeReduction;
+			mOverallPositionsWithReduction++;
+			mLogger.warn(String.format("Reduced conjuncts from %s to %s for position %s", predecessorConjuncts.size(),
+					relevantPreconditions.size(), pos));
+			final HashSet<IPredicate> irrelevantConjuncts = new HashSet<>(predecessorConjuncts);
+			irrelevantConjuncts.removeAll(relevantPreconditions);
+			mLogger.warn(String.format("Irrelevant conjuncts for position %s: %s", pos, irrelevantConjuncts));
+		}
 		// No need to simplify, the conjunction is a subset of an existing conjunction.
 		return mPredicateFactory.and(SimplificationTechnique.NONE, relevantPreconditions);
 	}
@@ -453,7 +452,9 @@ public class HoareCoreBackwardPostprocessor<L extends IAction> {
 		case UNKNOWN:
 			// Cannot simplify because we did not get an unsat core.
 			mOverallUnknowns++;
-			mLogger.warn("Hoare triple for position " + pos + " is unknown");
+			if (DEBUG_EXTENSIVE_OUTPUT) {
+				mLogger.warn("Hoare triple for position " + pos + " is unknown");
+			}
 			return null;
 		case VALID:
 			return checkResult.relevantPreconditions();
@@ -480,6 +481,4 @@ public class HoareCoreBackwardPostprocessor<L extends IAction> {
 		return postprocessed;
 	}
 
-	record PredicateReductionResult(IPredicate result, byte solverReturnedUnknown, int sizeReduction) {
-	}
 }
