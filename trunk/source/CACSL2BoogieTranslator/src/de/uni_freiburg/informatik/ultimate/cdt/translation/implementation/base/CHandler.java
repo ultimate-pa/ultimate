@@ -110,13 +110,9 @@ import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdInitializerExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
-import org.eclipse.cdt.core.dom.ast.IArrayType;
 import org.eclipse.cdt.core.dom.ast.IBinding;
 import org.eclipse.cdt.core.dom.ast.IFunction;
-import org.eclipse.cdt.core.dom.ast.IPointerType;
 import org.eclipse.cdt.core.dom.ast.IProblemBinding;
-import org.eclipse.cdt.core.dom.ast.IQualifierType;
-import org.eclipse.cdt.core.dom.ast.IType;
 import org.eclipse.cdt.core.dom.ast.ITypedef;
 import org.eclipse.cdt.core.dom.ast.IVariable;
 import org.eclipse.cdt.core.dom.ast.c.ICASTCompositeTypeSpecifier;
@@ -1185,70 +1181,7 @@ public class CHandler {
 		}
 
 		exprWithType = mExprResultTransformer.rexBoolToInt(exprWithType, loc);
-		final ExpressionResult converted = mExprResultTransformer.performImplicitConversion(exprWithType, newCType, loc);
-		if (newCType.getUnderlyingType() instanceof CPointer
-				&& isBitwiseOperationOnPointerToIntegerCast(node.getOperand())) {
-			return new ExpressionResultBuilder(converted)
-					.addOverapprox(new Overapprox("cast of a bitwise operation on a pointer to a pointer", loc)).build();
-		}
-		return converted;
-	}
-
-	/**
-	 * Our pointer-integer conversions are not inverse to each other: an integer becomes a pointer with base address 0
-	 * (resp. base address n), so a pointer that is converted to an integer, modified by a bitwise operation, and
-	 * converted back is a different pointer even if the bitwise operation does not change the value, e.g.
-	 * {@code (char*)((uintptr_t)p & mask) == p} does not hold for any valid pointer {@code p} (SV-COMP 2027,
-	 * aws-c-common/aws_byte_cursor_advance_nospec_harness). The conversion of such an expression back to a pointer is
-	 * hence an overapproximation. Other integer-to-pointer conversions, e.g. of nondeterministic values or of
-	 * {@code (unsigned long)p + offset} as in CIL-generated code, keep the precise translation: overapproximating every
-	 * conversion turned many correct violations of LDV tasks into UNKNOWN.
-	 *
-	 * @return true iff {@code operand} (without parentheses) is a bitwise operation and one of its subexpressions is a
-	 *         cast of a pointer (or array) to an integer
-	 */
-	private static boolean isBitwiseOperationOnPointerToIntegerCast(final IASTExpression operand) {
-		IASTExpression expr = operand;
-		while (expr instanceof final IASTUnaryExpression unary
-				&& unary.getOperator() == IASTUnaryExpression.op_bracketedPrimary) {
-			expr = unary.getOperand();
-		}
-		final boolean isBitwise;
-		if (expr instanceof final IASTBinaryExpression binary) {
-			isBitwise = switch (binary.getOperator()) {
-			case IASTBinaryExpression.op_binaryAnd, IASTBinaryExpression.op_binaryOr, IASTBinaryExpression.op_binaryXor,
-					IASTBinaryExpression.op_shiftLeft, IASTBinaryExpression.op_shiftRight -> true;
-			default -> false;
-			};
-		} else {
-			isBitwise = expr instanceof final IASTUnaryExpression unary
-					&& unary.getOperator() == IASTUnaryExpression.op_tilde;
-		}
-		return isBitwise && containsPointerToIntegerCast(expr);
-	}
-
-	private static boolean containsPointerToIntegerCast(final IASTNode node) {
-		if (node instanceof final IASTCastExpression cast && isPointerOrArrayType(cast.getOperand().getExpressionType())
-				&& !isPointerOrArrayType(cast.getExpressionType())) {
-			return true;
-		}
-		for (final IASTNode child : node.getChildren()) {
-			if (containsPointerToIntegerCast(child)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private static boolean isPointerOrArrayType(final IType type) {
-		IType current = type;
-		while (current instanceof final ITypedef typedef) {
-			current = typedef.getType();
-		}
-		while (current instanceof final IQualifierType qualified) {
-			current = qualified.getType();
-		}
-		return current instanceof IPointerType || current instanceof IArrayType;
+		return mExprResultTransformer.performImplicitConversion(exprWithType, newCType, loc);
 	}
 
 	private void checkIfNecessaryMemoryStructureAdaption(final ILocation loc, final ICType castTargetType,
