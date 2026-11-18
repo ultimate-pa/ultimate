@@ -703,10 +703,11 @@ public class MemoryHandler {
 			mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
 			return determineReadProcedureForPointer();
 		}
-		if (ut instanceof CEnum) {
-			// enum is treated like an int
-			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(CPrimitives.INT);
-			return determineReadProcedureForPrimitive(CPrimitives.INT);
+		if (ut instanceof final CEnum cEnum) {
+			// enum is treated like the integer type it is compatible with
+			final CPrimitives integerType = cEnum.getIntegerType().getType();
+			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(integerType);
+			return determineReadProcedureForPrimitive(integerType);
 		}
 		throw new UnsupportedOperationException("unsupported type " + ut);
 	}
@@ -747,7 +748,7 @@ public class MemoryHandler {
 
 		final List<Statement> result = switch (realValueType) {
 		case final CPrimitive primitive -> getWriteCallPrimitive(loc, hlv, value, primitive, writeMode);
-		case final CEnum enumType -> getWriteCallEnum(loc, hlv, value, writeMode);
+		case final CEnum enumType -> getWriteCallEnum(loc, hlv, value, enumType, writeMode);
 		case final CPointer pointer -> getWriteCallPointer(loc, hlv, value, writeMode);
 		case final CStructOrUnion structOrUnion -> getWriteCallStruct(loc, hlv, value, structOrUnion, writeMode);
 		case final CArray array -> getWriteCallArray(loc, hlv, value, array, writeMode);
@@ -2076,9 +2077,9 @@ public class MemoryHandler {
 	}
 
 	private List<Statement> getWriteCallEnum(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final HeapWriteMode writeMode) {
-		// treat like INT
-		return getWriteCallPrimitive(loc, hlv, value, new CPrimitive(CPrimitives.INT), writeMode);
+			final CEnum enumType, final HeapWriteMode writeMode) {
+		// treat like the integer type of the enum
+		return getWriteCallPrimitive(loc, hlv, value, enumType.getIntegerType(), writeMode);
 	}
 
 	private List<Statement> getWriteCallPrimitive(final ILocation loc, final HeapLValue hlv, final Expression value,
@@ -2396,8 +2397,8 @@ public class MemoryHandler {
 				final HeapDataArray hda = mMemoryModel.getDataHeapArray(primitive);
 				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(primitive);
 				relevantHeapArrays.add(hda);
-			} else if (baseType instanceof CEnum) {
-				final CPrimitives primitive = CPrimitives.INT;
+			} else if (baseType instanceof final CEnum cEnum) {
+				final CPrimitives primitive = cEnum.getIntegerType().getType();
 				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitive);
 				final HeapDataArray hda = mMemoryModel.getDataHeapArray(primitive);
 				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(primitive);

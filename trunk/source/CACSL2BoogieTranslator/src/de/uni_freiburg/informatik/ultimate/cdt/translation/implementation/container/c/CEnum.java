@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 import java.util.Arrays;
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
 /**
@@ -53,26 +54,38 @@ public final class CEnum implements ICType, ICPossibleIncompleteType<CEnum> {
 	private final boolean mIsComplete;
 
 	/**
+	 * The integer type this enumerated type is compatible with (C11 6.7.2.2.4), i.e., the type in which we represent
+	 * values of this enumerated type.
+	 */
+	private final CPrimitive mIntegerType;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param fNames
-	 *            field names.
-	 * @param cDeclSpec
-	 *            the C declaration used.
 	 * @param id
 	 *            this enums identifier.
+	 * @param fNames
+	 *            field names.
+	 * @param integerType
+	 *            the integer type this enumerated type is compatible with
 	 */
-	public CEnum(final String id, final String[] fNames) {
+	public CEnum(final String id, final String[] fNames, final CPrimitive integerType) {
 		assert id != null;
+		assert integerType.getGeneralType() == CPrimitiveCategory.INTTYPE;
 		mIdentifier = id;
 		mNames = fNames;
 		mIsComplete = true;
+		mIntegerType = integerType;
 	}
 
+	/**
+	 * Constructor for an incomplete enumerated type. Until it is completed, we use int as its integer type.
+	 */
 	public CEnum(final String id) {
 		mIdentifier = id;
 		mIsComplete = false;
 		mNames = null;
+		mIntegerType = new CPrimitive(CPrimitives.INT);
 	}
 
 	/**
@@ -118,27 +131,33 @@ public final class CEnum implements ICType, ICPossibleIncompleteType<CEnum> {
 
 	@Override
 	public CEnum complete(final CEnum cEnum) {
-		return new CEnum(getName(), cEnum.getFieldIds());
+		return new CEnum(getName(), cEnum.getFieldIds(), cEnum.getIntegerType());
 	}
 
 	/**
-	 * Replace CEnum types by signed int, other types are untouched. According to C11 6.4.4.3.2 an identifier declared
-	 * as an enumeration constant has type int.
+	 * @return the integer type this enumerated type is compatible with (C11 6.7.2.2.4)
+	 */
+	public CPrimitive getIntegerType() {
+		return mIntegerType;
+	}
+
+	/**
+	 * Replace a CEnum type by the integer type it is compatible with, other types are untouched.
 	 *
 	 * @param cType
 	 *            a given C-type
-	 * @return either cType itself or int if it is an enum
+	 * @return either cType itself or the integer type of the enum
 	 */
-	public static ICType replaceEnumWithInt(final ICType cType) {
-		if (cType.getUnderlyingType() instanceof CEnum) {
-			return new CPrimitive(CPrimitives.INT);
+	public static ICType replaceEnumWithIntegerType(final ICType cType) {
+		if (cType.getUnderlyingType() instanceof final CEnum cEnum) {
+			return cEnum.getIntegerType();
 		}
 		return cType;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mIdentifier, mIsComplete, Arrays.hashCode(mNames));
+		return Objects.hash(mIdentifier, mIsComplete, Arrays.hashCode(mNames), mIntegerType);
 	}
 
 	@Override
@@ -151,7 +170,7 @@ public final class CEnum implements ICType, ICPossibleIncompleteType<CEnum> {
 		}
 		final CEnum other = (CEnum) obj;
 		return Objects.equals(mIdentifier, other.mIdentifier) && mIsComplete == other.mIsComplete
-				&& Arrays.equals(mNames, other.mNames);
+				&& Arrays.equals(mNames, other.mNames) && Objects.equals(mIntegerType, other.mIntegerType);
 	}
 
 	@Override

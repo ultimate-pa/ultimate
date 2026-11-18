@@ -155,8 +155,8 @@ public final class CompatibleTypes {
 	private static boolean isCompatiblePrimitiveForEnum(final CEnum enum1, final CPrimitive primitive2) {
 		// C11 6.7.2.2 §4: Each enumerated type shall be compatible with char, a signed integer type, or an
 		// unsigned integer type. The choice of type is implementation-defined
-		// (Note: In Ultimate, enumeration types are always compatible with int.)
-		return primitive2.getType() == CPrimitives.INT;
+		// (Note: In Ultimate, see TypeHandler#determineIntegerTypeOfEnum.)
+		return primitive2.getType() == enum1.getIntegerType().getType();
 	}
 
 	private static boolean areCompatibleFunctionTypes(final CFunction function1, final CFunction function2,

@@ -340,9 +340,8 @@ public class CExpressionTranslator {
 				if (inputType instanceof CPointer) {
 					rhsOfComparison = mMemoryPointer.constructNullPointer(loc,
 							mExpressionTranslation.getCTypeOfPointerComponents());
-				} else if (inputType instanceof CEnum) {
-					final CPrimitive intType = new CPrimitive(CPrimitives.INT);
-					rhsOfComparison = mExpressionTranslation.constructZero(loc, intType);
+				} else if (inputType instanceof final CEnum cEnum) {
+					rhsOfComparison = mExpressionTranslation.constructZero(loc, cEnum.getIntegerType());
 				} else if (inputType instanceof CPrimitive) {
 					rhsOfComparison = mExpressionTranslation.constructZero(loc, inputType);
 				} else {

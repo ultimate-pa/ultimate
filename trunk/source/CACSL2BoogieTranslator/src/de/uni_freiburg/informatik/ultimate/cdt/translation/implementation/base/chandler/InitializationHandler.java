@@ -952,8 +952,8 @@ public class InitializationHandler {
 			case FLOATTYPE -> mExpressionTranslation.constructLiteralForFloatingType(loc, cPrimitive, BigDecimal.ZERO);
 			case VOID -> throw new AssertionError("cannot initialize something that has type void");
 			};
-		} else if (cType instanceof CEnum) {
-			return mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
+		} else if (cType instanceof final CEnum cEnum) {
+			return mTypeSizes.constructLiteralForIntegerType(loc, cEnum.getIntegerType(), BigInteger.ZERO);
 		} else if (cType instanceof CPointer) {
 			return mMemoryPointer.constructNullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
 		} else {

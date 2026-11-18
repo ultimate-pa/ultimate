@@ -305,7 +305,7 @@ public abstract class ExpressionTranslation {
 	 */
 	ExpressionResult convertToBool(final ILocation loc, final ExpressionResult expr) {
 		ICType underlyingType = expr.getLrValue().getCType().getUnderlyingType();
-		underlyingType = CEnum.replaceEnumWithInt(underlyingType);
+		underlyingType = CEnum.replaceEnumWithIntegerType(underlyingType);
 		final Expression zeroInputType = constructZero(loc, underlyingType);
 		final Expression isZero;
 		if (underlyingType instanceof CPointer) {
@@ -465,7 +465,7 @@ public abstract class ExpressionTranslation {
 	}
 
 	public Expression toBool(final ILocation loc, final Expression intExpr, final ICType cType) {
-		final ICType underlyingType = CEnum.replaceEnumWithInt(cType.getUnderlyingType());
+		final ICType underlyingType = CEnum.replaceEnumWithIntegerType(cType.getUnderlyingType());
 		final Expression zero = constructZero(loc, underlyingType);
 
 		if (underlyingType instanceof CPrimitive) {

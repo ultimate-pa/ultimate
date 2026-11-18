@@ -628,7 +628,8 @@ public class AtomicLibraryModel implements ILibraryModel {
 				new TypeModel("atomic_llong", CPrimitive.constructAtomicType(CPrimitives.LONGLONG)),
 				new TypeModel("atomic_ullong", CPrimitive.constructAtomicType(CPrimitives.ULONGLONG)),
 				new TypeModel("memory_order", new CEnum("memory_order",
-						Arrays.stream(MemoryOrder.values()).map(MemoryOrder::getFieldName).toArray(String[]::new))));
+						Arrays.stream(MemoryOrder.values()).map(MemoryOrder::getFieldName).toArray(String[]::new),
+						new CPrimitive(CPrimitives.INT))));
 	}
 
 	@Override

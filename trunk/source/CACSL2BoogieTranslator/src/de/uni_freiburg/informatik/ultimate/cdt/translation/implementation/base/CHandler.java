@@ -2013,7 +2013,7 @@ public class CHandler {
 				&& ((IASTUnaryExpression) node.getParent()).getOperator() == IASTUnaryExpression.op_amper;
 		// catch simple case
 		if (!isAddressTaken && (cType instanceof CPrimitive || cType instanceof CEnum)) {
-			final CPrimitive cPrim = (CPrimitive) cType;
+			final CPrimitive cPrim = (CPrimitive) CEnum.replaceEnumWithIntegerType(cType);
 			final ExpressionResult exprRes =
 					mExprResultTransformer.switchToRValue(InitializerResult.getFirstValueInInitializer(ir), loc, node);
 			assert exprRes.hasLRValue();
@@ -3019,7 +3019,7 @@ public class CHandler {
 				final int bitfieldWidth = hlv.getBitfieldInformation().getNumberOfBits();
 				rhsWithBitfieldTreatment = mExpressionTranslation.eraseBits(loc,
 						rightHandSideValueWithConversionsApplied.getValue(),
-						(CPrimitive) CEnum.replaceEnumWithInt(hlv.getCType().getUnderlyingType()), bitfieldWidth);
+						(CPrimitive) CEnum.replaceEnumWithIntegerType(hlv.getCType().getUnderlyingType()), bitfieldWidth);
 			} else {
 				rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 			}
@@ -3075,7 +3075,7 @@ public class CHandler {
 			final int bitfieldWidth = lValue.getBitfieldInformation().getNumberOfBits();
 			rhsWithBitfieldTreatment = mExpressionTranslation.eraseBits(loc,
 					rightHandSideValueWithConversionsApplied.getValue(),
-					(CPrimitive) CEnum.replaceEnumWithInt(lValue.getCType().getUnderlyingType()), bitfieldWidth);
+					(CPrimitive) CEnum.replaceEnumWithIntegerType(lValue.getCType().getUnderlyingType()), bitfieldWidth);
 		} else {
 			rhsWithBitfieldTreatment = rightHandSideValueWithConversionsApplied.getValue();
 		}

@@ -35,6 +35,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -296,35 +297,56 @@ public class TypeHandler implements ITypeHandler {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		final String cId = node.getName().toString();
 		final String rslvName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
-		// values of enum have type int
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final String enumId = mNameHandler.getUniqueIdentifier(node, node.getName().toString(),
 				mSymboltable.getCScopeId(node), false, intType, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		final int nrFields = node.getEnumerators().length;
 		final String[] fNames = new String[nrFields];
-		Expression valueOfPrecedingEnumConstant = null;
-
-		final List<Pair<ConstDeclaration, Axiom>> constDecls = new ArrayList<>();
+		final BigInteger[] values = new BigInteger[nrFields];
+		final SymbolTableValue[] symbols = new SymbolTableValue[nrFields];
+		CPrimitive typeOfPrecedingEnumConstant = null;
 
 		for (int i = 0; i < nrFields; i++) {
 			final IASTEnumerator e = node.getEnumerators()[i];
 			fNames[i] = e.getName().toString();
-			final Expression specifiedValue;
+			final CPrimitive type;
 			if (e.getValue() != null) {
 				final ExpressionResult rex = (ExpressionResult) main.dispatch(e.getValue());
 				// TODO Frank 2022-11-22: rex might contain statements (e.g. overflow-assertions), but they are ignored
 				// here! We should probably crash instead. But we could try to remove trivial assertions additionally.
-				specifiedValue = rex.getLrValue().getValue();
+				final ICType typeOfValue =
+						CEnum.replaceEnumWithIntegerType(rex.getLrValue().getCType().getUnderlyingType());
+				values[i] = extractValueOfEnumConstant(rex.getLrValue().getValue(), typeOfValue);
+				type = determineTypeOfEnumConstantDuringProcessing(values[i], typeOfValue);
+			} else if (i == 0) {
+				values[i] = BigInteger.ZERO;
+				type = intType;
 			} else {
-				specifiedValue = null;
+				values[i] = values[i - 1].add(BigInteger.ONE);
+				type = determineTypeOfEnumConstantDuringProcessing(values[i], typeOfPrecedingEnumConstant);
 			}
-			final Expression value = constructEnumValue(loc, specifiedValue, valueOfPrecedingEnumConstant);
-			final Pair<ConstDeclaration, Axiom> cd = handleEnumerationConstant(loc, enumId, fNames[i], value, node);
-			constDecls.add(cd);
-			valueOfPrecedingEnumConstant = value;
+			symbols[i] = constructEnumerationConstant(loc, enumId, fNames[i], values[i], type, node);
+			mSymboltable.storeCSymbol(node, fNames[i], symbols[i]);
+			typeOfPrecedingEnumConstant = type;
 		}
-		final CEnum cEnum = new CEnum(enumId, fNames);
-		final ASTType at = cPrimitive2AstType(loc, intType);
+
+		final CPrimitive integerType = determineIntegerTypeOfEnum(loc, values);
+		final CEnum cEnum = new CEnum(enumId, fNames, integerType);
+		final List<Pair<ConstDeclaration, Axiom>> constDecls = new ArrayList<>();
+		for (int i = 0; i < nrFields; i++) {
+			// C23 6.7.2.2.11: Upon completion of the enumerator list, each enumeration constant whose value is
+			// representable as int has type int, all others have the enumerated type.
+			final CPrimitive type = fitsInto(values[i], intType) ? intType : integerType;
+			if (!type.equals(symbols[i].getCType())) {
+				final SymbolTableValue completed =
+						constructEnumerationConstant(loc, enumId, fNames[i], values[i], type, node);
+				mSymboltable.updateCSymbolFromOccurence(node, fNames[i], symbols[i], completed);
+				symbols[i] = completed;
+			}
+			constDecls.add(new Pair<>((ConstDeclaration) symbols[i].getBoogieDecl(),
+					constructEnumerationConstantAxiom(loc, symbols[i])));
+		}
+		final ASTType at = cPrimitive2AstType(loc, integerType);
 		final TypesResult result = new TypesResult(at, false, false, cEnum);
 		for (int i = 0; i < nrFields; i++) {
 			final String fId = fNames[i];
@@ -611,8 +633,8 @@ public class TypeHandler implements ITypeHandler {
 			return new NamedType(loc, boogieType, cNamed.getName(), new ASTType[0]);
 		} else if (cType instanceof CFunction) {
 			return constructPointerType(loc);
-		} else if (cType instanceof CEnum) {
-			return cPrimitive2AstType(loc, new CPrimitive(CPrimitives.INT));
+		} else if (cType instanceof final CEnum cEnum) {
+			return cPrimitive2AstType(loc, cEnum.getIntegerType());
 		}
 		throw new UnsupportedSyntaxException(loc, "unknown type");
 	}
@@ -712,8 +734,8 @@ public class TypeHandler implements ITypeHandler {
 			};
 		} else if (cType instanceof CPointer) {
 			return getBoogiePointerType();
-		} else if (cType instanceof CEnum) {
-			return getBoogieTypeForCType(new CPrimitive(CPrimitives.INT));
+		} else if (cType instanceof final CEnum cEnum) {
+			return getBoogieTypeForCType(cEnum.getIntegerType());
 		} else if (cType instanceof final CArray cArrayType) {
 			final BoogieType[] indexTypes =
 					{ getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents()) };
@@ -743,67 +765,112 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	/**
+	 * Construct the symbol table entry of an enumeration constant: a Boogie constant of the given type whose value is
+	 * known.
+	 *
 	 * @param enumConstId
 	 *            Identifier of the enumeration constant as is appears in the C code.
 	 */
-	private Pair<ConstDeclaration, Axiom> handleEnumerationConstant(final ILocation loc, final String enumId,
-			final String enumConstId, final Expression value, final IASTEnumerationSpecifier node) {
-		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.CPrimitives.INT);
-		// C standard says: "The identifiers in an enumerator list are declared
-		// as constants that have type int ..."
-		final ASTType enumAstType = cType2AstType(loc, typeOfEnumIdentifiers);
+	private SymbolTableValue constructEnumerationConstant(final ILocation loc, final String enumId,
+			final String enumConstId, final BigInteger value, final CPrimitive type,
+			final IASTEnumerationSpecifier node) {
+		final ASTType astType = cType2AstType(loc, type);
 		final String boogieId = enumId + "~" + enumConstId;
-		final VarList vl = new VarList(loc, new String[] { boogieId }, enumAstType);
+		final VarList vl = new VarList(loc, new String[] { boogieId }, astType);
 		final ConstDeclaration cd = new ConstDeclaration(loc, new Attribute[0], false, vl, null, false);
+		final Expression literal = mTypeSizes.constructLiteralForIntegerType(loc, type, value);
+		return new SymbolTableValue(boogieId, cd, astType,
+				new CDeclaration(type, enumConstId, CHandler.scConstant2StorageClass(node.getStorageClass())),
+				DeclarationInformation.DECLARATIONINFO_GLOBAL, node, false, literal);
+	}
 
+	private Axiom constructEnumerationConstantAxiom(final ILocation loc, final SymbolTableValue enumConst) {
 		final Expression identifier = ExpressionFactory.constructIdentifierExpression(loc,
-				getBoogieTypeForBoogieASTType(enumAstType), boogieId, DeclarationInformation.DECLARATIONINFO_GLOBAL);
-		mSymboltable.storeCSymbol(node, enumConstId,
-				new SymbolTableValue(boogieId, cd, enumAstType,
-						new CDeclaration(typeOfEnumIdentifiers, enumConstId,
-								CHandler.scConstant2StorageClass(node.getStorageClass())),
-						DeclarationInformation.DECLARATIONINFO_GLOBAL, node, false, value));
-		return new Pair<>(cd, new Axiom(loc, new Attribute[0],
-				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, identifier, value)));
+				getBoogieTypeForBoogieASTType(enumConst.getAstType()), enumConst.getBoogieName(),
+				DeclarationInformation.DECLARATIONINFO_GLOBAL);
+		return new Axiom(loc, new Attribute[0], ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
+				identifier, enumConst.getConstantValue()));
 	}
 
 	/**
-	 * Construct an {@link Expression} that represents the value of an enumeration constant according to C11 6.7.2.2.3.
-	 * If the value of the enumeration constant is explicitly given in the C code, the argument for the parameter
-	 * specifiedValue of this method is not null. Otherwise the argument is null and the value is determined by the
-	 * value of the preceding enumeration constant in the list of this enumeration specifier.
+	 * The value of the integer constant expression that defines the value of an enumeration constant.
 	 */
-	private Expression constructEnumValue(final ILocation loc, final Expression specifiedValue,
-			final Expression valueOfPrecedingEnumConstant) {
-		final CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitives.INT);
-		if (specifiedValue != null) {
-			// case where the value of the enumeration constant is explicitly defined by an integer constant expression
-			if (specifiedValue instanceof IntegerLiteral) {
-				return specifiedValue;
-			}
-			final BigInteger intValue;
-			if (specifiedValue instanceof BooleanLiteral) {
-				intValue = ((BooleanLiteral) specifiedValue).getValue() ? BigInteger.ONE : BigInteger.ZERO;
-			} else {
-				intValue = mTypeSizes.extractIntegerValue(specifiedValue, typeOfEnumIdentifiers);
-			}
-			if (intValue == null) {
-				throw new AssertionError("not an integer constant: " + specifiedValue);
-			}
-			return mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers, intValue);
+	private BigInteger extractValueOfEnumConstant(final Expression specifiedValue, final ICType typeOfValue) {
+		if (specifiedValue instanceof final BooleanLiteral bool) {
+			return bool.getValue() ? BigInteger.ONE : BigInteger.ZERO;
 		}
-		// case where the value of the enumeration constant is not explicitly defined by an integer constant expression
-		// and hence the value of the preceding enumeration constant in the list defines the value of this enumeration
-		// constant (see C11 6.7.2.2.3)
-		if (valueOfPrecedingEnumConstant == null) {
-			// case where this is the first enumeration constant in the list
-			return mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers, BigInteger.ZERO);
+		final BigInteger value = mTypeSizes.extractIntegerValue(specifiedValue, typeOfValue);
+		if (value == null) {
+			throw new AssertionError("not an integer constant: " + specifiedValue);
 		}
-		final BigInteger intValue = mTypeSizes.extractIntegerValue(valueOfPrecedingEnumConstant, typeOfEnumIdentifiers);
-		if (intValue == null) {
-			throw new AssertionError("not an integer constant: " + valueOfPrecedingEnumConstant);
+		return value;
+	}
+
+	/**
+	 * The type of an enumeration constant while the enumerator list is processed (C23 6.7.2.2.10): int if the value
+	 * is representable as int, otherwise the type of the integer constant expression that defines it (or of the
+	 * preceding enumeration constant if there is none), or, if the value does not fit into this type either, the
+	 * smallest integer type that can represent the value.
+	 *
+	 * @param candidate
+	 *            the type of the defining expression or of the preceding enumeration constant
+	 */
+	private CPrimitive determineTypeOfEnumConstantDuringProcessing(final BigInteger value, final ICType candidate) {
+		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
+		if (fitsInto(value, intType)) {
+			return intType;
 		}
-		return mTypeSizes.constructLiteralForIntegerType(loc, typeOfEnumIdentifiers, intValue.add(BigInteger.ONE));
+		if (candidate instanceof final CPrimitive cPrimitive
+				&& cPrimitive.getGeneralType() == CPrimitiveCategory.INTTYPE && cPrimitive.getType() != CPrimitives.BOOL
+				&& fitsInto(value, cPrimitive)) {
+			return cPrimitive;
+		}
+		for (final CPrimitives primitive : new CPrimitives[] { CPrimitives.UINT, CPrimitives.LONG, CPrimitives.ULONG,
+				CPrimitives.LONGLONG, CPrimitives.ULONGLONG }) {
+			if (fitsInto(value, new CPrimitive(primitive))) {
+				return new CPrimitive(primitive);
+			}
+		}
+		// determineIntegerTypeOfEnum reports this enumeration as incorrect
+		return new CPrimitive(value.signum() < 0 ? CPrimitives.LONGLONG : CPrimitives.ULONGLONG);
+	}
+
+	/**
+	 * Determine the integer type that an enumerated type is compatible with (C11 6.7.2.2.4, implementation-defined).
+	 * We follow GCC whenever a value of the enumeration is not representable as int: GCC chooses unsigned int if there
+	 * is no negative value and all values fit, otherwise the smallest signed (if there is a negative value) or unsigned
+	 * 64-bit type that can represent all values. Values that do not fit into 64 bits are an error in GCC ("enumeration
+	 * values exceed range of largest integer").
+	 *
+	 * If all values are representable as int, we use int. GCC would use unsigned int if no value is negative, but
+	 * this makes a difference only if a value outside the range of the enumeration constants is stored in an object of
+	 * the enumerated type.
+	 */
+	private CPrimitive determineIntegerTypeOfEnum(final ILocation loc, final BigInteger[] values) {
+		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
+		if (values.length == 0) {
+			return intType;
+		}
+		final BigInteger min = Arrays.stream(values).min(BigInteger::compareTo).orElseThrow();
+		final BigInteger max = Arrays.stream(values).max(BigInteger::compareTo).orElseThrow();
+		if (fitsInto(min, intType) && fitsInto(max, intType)) {
+			return intType;
+		}
+		final CPrimitives[] candidates = min.signum() >= 0
+				? new CPrimitives[] { CPrimitives.UINT, CPrimitives.ULONG, CPrimitives.ULONGLONG }
+				: new CPrimitives[] { CPrimitives.LONG, CPrimitives.LONGLONG };
+		for (final CPrimitives candidate : candidates) {
+			final CPrimitive cPrimitive = new CPrimitive(candidate);
+			if (fitsInto(min, cPrimitive) && fitsInto(max, cPrimitive)) {
+				return cPrimitive;
+			}
+		}
+		throw new IncorrectSyntaxException(loc, "enumeration values exceed range of largest integer");
+	}
+
+	private boolean fitsInto(final BigInteger value, final CPrimitive type) {
+		return value.compareTo(mTypeSizes.getMinValueOfPrimitiveType(type)) >= 0
+				&& value.compareTo(mTypeSizes.getMaxValueOfPrimitiveType(type)) <= 0;
 	}
 
 	/**

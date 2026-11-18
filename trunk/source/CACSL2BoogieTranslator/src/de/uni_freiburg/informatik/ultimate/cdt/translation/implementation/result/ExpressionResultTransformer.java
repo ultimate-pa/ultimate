@@ -233,7 +233,7 @@ public class ExpressionResultTransformer {
 		}
 		switch (lrVal) {
 		case final RValue rValue:
-			return replaceEnumByInt(replaceCFunctionByCPointer(expr));
+			return replaceEnumByIntegerType(replaceCFunctionByCPointer(expr));
 		case final LocalLValue localLValue: {
 			final ICType underlyingType = localLValue.getCType().getUnderlyingType();
 			mCHandler.moveArrayAndStructIdsOnHeap(underlyingType, localLValue.getValue(), hook);
@@ -243,8 +243,8 @@ public class ExpressionResultTransformer {
 				resultType = new CPointer(cArray.getValueType());
 			} else if (underlyingType instanceof CFunction) {
 				resultType = new CPointer(underlyingType);
-			} else if (underlyingType instanceof CEnum) {
-				resultType = new CPrimitive(CPrimitives.INT);
+			} else if (underlyingType instanceof final CEnum cEnum) {
+				resultType = cEnum.getIntegerType();
 			} else {
 				resultType = underlyingType;
 			}
@@ -256,10 +256,8 @@ public class ExpressionResultTransformer {
 			return erb.build();
 		}
 		case final HeapLValue hlv: {
-			ICType underlyingType = expr.getLrValue().getCType().getUnderlyingType();
-			if (underlyingType instanceof CEnum) {
-				underlyingType = new CPrimitive(CPrimitives.INT);
-			}
+			final ICType underlyingType =
+					CEnum.replaceEnumWithIntegerType(expr.getLrValue().getCType().getUnderlyingType());
 
 			final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(expr);
 			final RValue newValue;
@@ -576,20 +574,19 @@ public class ExpressionResultTransformer {
 	}
 
 	/**
-	 * If the CType of this {@link ExpressionResult}'s {@link RValue} has CType enum, then replace it by CType int. If
-	 * an enum variable occurs as an RValue we use this method to replace its type by int.
+	 * If the CType of this {@link ExpressionResult}'s {@link RValue} has CType enum, then replace it by the integer type
+	 * of the enum. If an enum variable occurs as an RValue we use this method to replace its type by an integer type.
 	 *
 	 */
-	private static ExpressionResult replaceEnumByInt(final ExpressionResult old) {
+	private static ExpressionResult replaceEnumByIntegerType(final ExpressionResult old) {
 		if (old.getLrValue() instanceof final RValue oldRValue) {
-			if (oldRValue.getCType().getUnderlyingType() instanceof CEnum) {
-				final CPrimitive intType = new CPrimitive(CPrimitives.INT);
-				return new ExpressionResultBuilder(old).setOrResetLrValue(new RValue(oldRValue.getValue(), intType,
-						oldRValue.isBoogieBool(), oldRValue.isIntFromPointer())).build();
+			if (oldRValue.getCType().getUnderlyingType() instanceof final CEnum cEnum) {
+				return new ExpressionResultBuilder(old).setOrResetLrValue(new RValue(oldRValue.getValue(),
+						cEnum.getIntegerType(), oldRValue.isBoogieBool(), oldRValue.isIntFromPointer())).build();
 			}
 			return old;
 		}
-		throw new UnsupportedOperationException("replaceEnumByInt only applicable for RValues");
+		throw new UnsupportedOperationException("replaceEnumByIntegerType only applicable for RValues");
 	}
 
 	/**
@@ -671,9 +668,8 @@ public class ExpressionResultTransformer {
 		// could happen e.g. for COMPLEX_FLOAT etc
 		case final CPrimitive cPrimitive -> throw new AssertionError("unknown primitive type " + cPrimitive.getType());
 
-		// C standard 6.4.4.3.2
-		// An identifier declared as an enumeration constant has type int.
-		case final CEnum cEnum -> convertToIntegerType(loc, expr, new CPrimitive(CPrimitives.INT));
+		// A value of an enumerated type is represented in the integer type the enumerated type is compatible with.
+		case final CEnum cEnum -> convertToIntegerType(loc, expr, cEnum.getIntegerType());
 
 		case final CPointer cPointer -> convertToPointer(loc, expr, cPointer);
 
@@ -867,7 +863,7 @@ public class ExpressionResultTransformer {
 	 * performed (because we don't have a smaller integer type), the operand is returned.
 	 */
 	public final ExpressionResult promoteToIntegerIfNecessary(final ILocation loc, final ExpressionResult operand) {
-		final ICType ctype = CEnum.replaceEnumWithInt(operand.getLrValue().getCType().getUnderlyingType());
+		final ICType ctype = CEnum.replaceEnumWithIntegerType(operand.getLrValue().getCType().getUnderlyingType());
 		if ((ctype instanceof final CPrimitive cPrimitive) && integerPromotionNeeded(cPrimitive)) {
 			final CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
 			return mExprTrans.convertIntToInt(loc, operand, promotedType);

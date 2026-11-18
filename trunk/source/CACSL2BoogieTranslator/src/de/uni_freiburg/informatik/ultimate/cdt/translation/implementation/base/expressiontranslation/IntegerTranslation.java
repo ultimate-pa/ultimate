@@ -426,7 +426,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 			// only integer types can be out of range
 			return Optional.empty();
 		}
-		final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType.getUnderlyingType());
+		final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithIntegerType(cType.getUnderlyingType());
 		if (mTypeSizes.isUnsigned(cPrimitive)) {
 			// only signed types can be out of range
 			return Optional.empty();

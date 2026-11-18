@@ -284,7 +284,7 @@ public class TypeSizes {
 	public BigInteger extractIntegerValue(final Expression expr, final ICType cType) {
 		if (expr instanceof IntegerLiteral) {
 			final BigInteger value = new BigInteger(((IntegerLiteral) expr).getValue());
-			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
+			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithIntegerType(cType);
 			if (!isUnsigned(cPrimitive)) {
 				return value;
 			}
@@ -296,7 +296,7 @@ public class TypeSizes {
 		}
 		if (expr instanceof BitvecLiteral) {
 			final BigInteger value = new BigInteger(((BitvecLiteral) expr).getValue());
-			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
+			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithIntegerType(cType);
 			if (isUnsigned(cPrimitive)) {
 				if (getMinValueOfPrimitiveType(cPrimitive).compareTo(value) > 0) {
 					throw new AssertionError("Value too small for type " + cType);

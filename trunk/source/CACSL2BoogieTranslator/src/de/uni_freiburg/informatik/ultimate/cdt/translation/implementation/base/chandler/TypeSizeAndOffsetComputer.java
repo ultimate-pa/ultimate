@@ -169,9 +169,9 @@ public class TypeSizeAndOffsetComputer {
 			}
 			return mTypeSizePointer;
 		}
-		if (underlyingType instanceof CEnum) {
-			// an Enum contains constants of type int
-			return computeSize(loc, new CPrimitive(CPrimitives.INT));
+		if (underlyingType instanceof final CEnum cEnum) {
+			// an enum has the size of the integer type it is compatible with
+			return computeSize(loc, cEnum.getIntegerType());
 		}
 		SizeTValue sizeTValue = mTypeSizeCache.get(underlyingType);
 		if (sizeTValue == null) {
