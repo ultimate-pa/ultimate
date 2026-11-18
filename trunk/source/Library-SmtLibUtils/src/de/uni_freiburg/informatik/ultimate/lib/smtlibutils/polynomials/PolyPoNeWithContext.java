@@ -115,7 +115,7 @@ public class PolyPoNeWithContext extends PolyPoNe {
 	}
 
 	@Override
-	protected final boolean addPolyRel(final Script script, final IPolynomialRelation polyRel,
+	public final boolean addPolyRel(final Script script, final IPolynomialRelation polyRel,
 			final boolean removeExpliedPolyRels) {
 		if (isInconsistent()) {
 			throw new AssertionError("must not add if already inconsistent");

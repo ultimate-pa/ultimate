@@ -173,12 +173,12 @@ public class PolyPoNe {
 		}
 	}
 
-	Term and(final List<Term> params) {
+	public Term and(final List<Term> params) {
 		add(params, false);
 		return and();
 	}
 
-	Term or(final List<Term> params) {
+	public Term or(final List<Term> params) {
 		add(params, true);
 		return or();
 	}
@@ -282,7 +282,7 @@ public class PolyPoNe {
 		return null;
 	}
 
-	protected boolean addPolyRel(final Script script, final IPolynomialRelation polyRel,
+	public boolean addPolyRel(final Script script, final IPolynomialRelation polyRel,
 			final boolean removeExpliedPolyRels) {
 		if (mInconsistent) {
 			throw new AssertionError("must not add if already inconsistent");

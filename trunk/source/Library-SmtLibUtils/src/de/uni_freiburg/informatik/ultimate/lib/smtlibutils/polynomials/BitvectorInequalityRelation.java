@@ -173,7 +173,7 @@ public class BitvectorInequalityRelation implements IPolynomialRelation {
 	 *         fuse with "x != c", and only this shape can collapse at the sort boundary or be solved for the
 	 *         variable.
 	 */
-	boolean isBareVariableVsBareConstant() {
+	public boolean isBareVariableVsBareConstant() {
 		return (isBareVariable(mLhs) && mRhs.isConstant()) || (isBareVariable(mRhs) && mLhs.isConstant());
 	}
 
@@ -182,7 +182,7 @@ public class BitvectorInequalityRelation implements IPolynomialRelation {
 	 *         example {@code x + y}. {@link PolyPoNe} compares such relations by treating that expression as one
 	 *         unknown value and comparing only the constants.
 	 */
-	boolean isPolynomialVsConstant() {
+	public boolean isPolynomialVsConstant() {
 		return mLhs.isConstant() != mRhs.isConstant();
 	}
 
