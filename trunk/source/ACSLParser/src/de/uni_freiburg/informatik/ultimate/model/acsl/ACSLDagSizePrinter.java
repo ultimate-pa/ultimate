@@ -95,8 +95,8 @@ public class ACSLDagSizePrinter {
 	 *            the expression whose computed DAG size is printed
 	 * @return printed number of distinct expression nodes
 	 */
-	public static String print(final Expression expression) {
-		return String.valueOf(compute(expression));
+	public static int print(final Expression expression) {
+		return compute(expression);
 	}
 
 }

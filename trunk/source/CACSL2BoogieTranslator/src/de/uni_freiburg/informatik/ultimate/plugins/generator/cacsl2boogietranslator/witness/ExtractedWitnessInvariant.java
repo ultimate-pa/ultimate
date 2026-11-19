@@ -109,9 +109,10 @@ public abstract class ExtractedWitnessInvariant implements IExtractedWitnessEntr
 		} catch (final Exception e) {
 			throw new AssertionError(e);
 		}
-		logDagSizeOfAcslExpression(acslNode);
+		logStringSizeOfAcslInvariant(mInvariant);
+		logDagSizeOfAcslExpression(mInvariant, acslNode);
 		final ExpressionResult assertResult = (ExpressionResult) dispatcher.dispatch(acslNode, mMatchedAstNode);
-		logDagSizeOfBoogieExpression(assertResult);
+		logDagSizeOfBoogieExpression(mInvariant, assertResult);
 		if (checkValidity) {
 			return assertResult;
 		}
@@ -119,18 +120,24 @@ public abstract class ExtractedWitnessInvariant implements IExtractedWitnessEntr
 				.resetStatements(AssertReplacer.replaceAsserts(assertResult.getStatements())).build();
 	}
 
-	private void logDagSizeOfAcslExpression(final ACSLNode acslNode) {
+	private void logStringSizeOfAcslInvariant(final String invariant) {
+		if (mLogger != null) {
+			mLogger.info("String size of ACSL expression of witness invariant %s: %d", invariant, invariant.length());
+		}
+	}
+
+	private void logDagSizeOfAcslExpression(final String invariant, final ACSLNode acslNode) {
 		if (((acslNode instanceof final CodeAnnotStmt stmt)
 				&& (stmt.getCodeStmt() instanceof final Assertion assertion)) && (mLogger != null)) {
-			mLogger.info("DAG size of ACSL expression of witness invariant %s: %s", mInvariant,
+			mLogger.info("DAG size of ACSL expression of witness invariant %s: %d", invariant,
 					ACSLDagSizePrinter.print(assertion.getFormula()));
 		}
 	}
 
-	private void logDagSizeOfBoogieExpression(final ExpressionResult assertResult) {
+	private void logDagSizeOfBoogieExpression(final String invariant, final ExpressionResult assertResult) {
 		for (final Statement statement : assertResult.getStatements()) {
 			if ((statement instanceof final AssertStatement assertStatement) && (mLogger != null)) {
-				mLogger.info("DAG size of Boogie expression of witness invariant %s: %s", mInvariant,
+				mLogger.info("DAG size of Boogie expression of witness invariant %s: %d", invariant,
 						BoogieDagSizePrinter.print(assertStatement.getFormula()));
 			}
 		}
