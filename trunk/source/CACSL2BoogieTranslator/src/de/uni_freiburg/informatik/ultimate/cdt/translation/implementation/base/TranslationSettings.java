@@ -83,7 +83,6 @@ public final class TranslationSettings {
 	private final boolean mUseStoreChains;
 	private final boolean mEnableFesetround;
 	private final FloatingPointRoundingMode mInitialRoundingMode;
-	private final boolean mAdaptMemoryStructureResolutionOnPointerCasts;
 	private final int mStringOverapproximationThreshold;
 	private final UndefinedFunctionBehaviour mUndefinedFunctionBehaviour;
 	private final boolean mEnforceIfForConditional;
@@ -140,8 +139,6 @@ public final class TranslationSettings {
 		mEnableFesetround = ups.getBoolean(CACSLPreferenceInitializer.LABEL_FP_ROUNDING_MODE_ENABLE_FESETROUND);
 		mInitialRoundingMode =
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_FP_ROUNDING_MODE_INITIAL, FloatingPointRoundingMode.class);
-		mAdaptMemoryStructureResolutionOnPointerCasts =
-				ups.getBoolean(CACSLPreferenceInitializer.LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS);
 		mStringOverapproximationThreshold =
 				ups.getInt(CACSLPreferenceInitializer.LABEL_STRING_OVERAPPROXIMATION_THRESHOLD);
 		mUndefinedFunctionBehaviour = ups.getEnum(CACSLPreferenceInitializer.LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS,
@@ -165,10 +162,9 @@ public final class TranslationSettings {
 			final Set<String> functionsCheckedForMemoryNeutrality, final CheckMode checkSignedIntegerBounds,
 			final boolean checkDataRaces, final boolean useConstantArrays, final boolean useStoreChains,
 			final boolean enableFesetround, final FloatingPointRoundingMode initialRoundingMode,
-			final boolean adaptMemoryStructureResolutionOnPointerCasts, final int stringOverapproximationThreshold,
-			final UndefinedFunctionBehaviour undefinedFunctionBehaviour, final boolean enforceIfForConditional,
-			final MemoryAddressing memoryAddressingPreference, final boolean fixedAddressesForInitialization,
-			final boolean assumeHeapAllocationAlwaysSucceeds) {
+			final int stringOverapproximationThreshold, final UndefinedFunctionBehaviour undefinedFunctionBehaviour,
+			final boolean enforceIfForConditional, final MemoryAddressing memoryAddressingPreference,
+			final boolean fixedAddressesForInitialization, final boolean assumeHeapAllocationAlwaysSucceeds) {
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
 		mBitvectorTranslation = bitvectorTranslation;
@@ -194,7 +190,6 @@ public final class TranslationSettings {
 		mUseStoreChains = useStoreChains;
 		mEnableFesetround = enableFesetround;
 		mInitialRoundingMode = initialRoundingMode;
-		mAdaptMemoryStructureResolutionOnPointerCasts = adaptMemoryStructureResolutionOnPointerCasts;
 		mStringOverapproximationThreshold = stringOverapproximationThreshold;
 		mUndefinedFunctionBehaviour = undefinedFunctionBehaviour;
 		mEnforceIfForConditional = enforceIfForConditional;
@@ -315,10 +310,6 @@ public final class TranslationSettings {
 		return mInitialRoundingMode;
 	}
 
-	public boolean isAdaptMemoryStructureResolutionOnPointerCasts() {
-		return mAdaptMemoryStructureResolutionOnPointerCasts;
-	}
-
 	public int getStringOverapproximationThreshold() {
 		return mStringOverapproximationThreshold;
 	}
@@ -351,9 +342,8 @@ public final class TranslationSettings {
 				mSmtBoolArraysWorkaround, mEntryFunction, mCheckErrorFunction, mCheckAssertions, mCheckAcsl,
 				mIsSvcompMemtrackCompatibilityMode, mFunctionsCheckedForMemoryNeutrality, mCheckSignedIntegerBounds,
 				mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround, mInitialRoundingMode,
-				mAdaptMemoryStructureResolutionOnPointerCasts, mStringOverapproximationThreshold,
-				mUndefinedFunctionBehaviour, mEnforceIfForConditional, mMemoryAddressing,
-				mFixedAddressesForInitialization, mAssumeHeapAllocationAlwaysSucceeds);
+				mStringOverapproximationThreshold, mUndefinedFunctionBehaviour, mEnforceIfForConditional,
+				mMemoryAddressing, mFixedAddressesForInitialization, mAssumeHeapAllocationAlwaysSucceeds);
 	}
 
 	/**

@@ -1176,7 +1176,7 @@ public class CHandler {
 		exprWithType = mExprResultTransformer.makeRepresentationReadyForConversion(exprWithType, loc, newCType, node);
 		checkUnsupportedPointerCast(exprWithType, loc, newCType);
 
-		if (mSettings.isAdaptMemoryStructureResolutionOnPointerCasts() && mIsPrerun) {
+		if (mIsPrerun) {
 			checkIfNecessaryMemoryStructureAdaption(loc, newCType, exprWithType);
 		}
 

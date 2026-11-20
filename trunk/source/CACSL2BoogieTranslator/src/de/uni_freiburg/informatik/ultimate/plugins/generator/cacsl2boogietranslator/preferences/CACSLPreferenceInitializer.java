@@ -142,13 +142,6 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			"Use SMT constant arrays for default initialization of variables.";
 	public static final String LABEL_USE_STORE_CHAINS = "Use store chains";
 
-	public static final String LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS =
-			"Adapt memory model on pointer casts if necessary";
-	public static final String DESC_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS = "When a pointer to a value with a small type "
-			+ "(e.g. char) is cast to a larger pointer type (e.g. int*), and the memory model resolution is larger than "
-			+ "the values's pointed to type size (for char: 1 Byte), the memory model is unsound. When this setting is "
-			+ "on we attempt to detect this case, and automatically set the memory model to a higher resolution.";
-
 	public static final String LABEL_STRING_OVERAPPROXIMATION_THRESHOLD = "String overapproximation threshold";
 	public static final String DESC_STRING_OVERAPPROXIMATION_THRESHOLD = "String literals that require this number of "
 			+ "bytes or more are overapproximated, i.e., Ultimate assumes that the string can contain arbitrary bytes.";
@@ -359,8 +352,6 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 								MemoryStructure.values()),
 						new UltimatePreferenceItem<>(LABEL_MEMORY_ADDRESSING, MemoryAddressing.Two_Dimensional,
 								DESC_MEMOY_ADDRESSING, PreferenceType.Combo, MemoryAddressing.values()),
-						new UltimatePreferenceItem<>(LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, false,
-								DESC_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_REPORT_UNSOUNDNESS_WARNING, true, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_BITPRECISE_BITFIELDS, false, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_ASSUME_NONDET_VALUES_IN_RANGE, true, PreferenceType.Boolean),
