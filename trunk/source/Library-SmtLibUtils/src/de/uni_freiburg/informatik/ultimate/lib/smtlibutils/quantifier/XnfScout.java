@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -148,7 +148,7 @@ public class XnfScout extends CondisTermTransducer<XnfScout.Result> {
 				return Occurrence.ELIMINABLE;
 			}
 		} else {
-			final PolynomialRelation polyRel = PolynomialRelation.of(script, term);
+			final IPolynomialRelation polyRel = IPolynomialRelation.of(script, term);
 			if (polyRel == null) {
 				return Occurrence.OTHER_OCCURRENCE;
 			}

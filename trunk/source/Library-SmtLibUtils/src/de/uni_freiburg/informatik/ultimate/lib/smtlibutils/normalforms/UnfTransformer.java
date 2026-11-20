@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -96,7 +96,7 @@ public class UnfTransformer extends TermTransformer {
 		final String appString = fun.getApplicationString();
 		Term result = SmtUtils.unfTerm(mScript, fun, newArgs);
 		if (mRelationSymbols.contains(appString)) {
-			final PolynomialRelation polyPolyRel = PolynomialRelation.of(mScript, result);
+			final IPolynomialRelation polyPolyRel = IPolynomialRelation.of(mScript, result);
 			if (polyPolyRel != null) {
 				result = polyPolyRel.toTerm(mScript);
 			}
