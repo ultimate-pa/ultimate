@@ -117,8 +117,8 @@ public final class DataRaceAnnotation extends ModernAnnotations {
 			if (!isCheck()) {
 				throw new UnsupportedOperationException("Conflicting accesses can only be found for data race checks");
 			}
-			if ((!isWrite() && !other.isWrite()) || mTwinAccesses.contains(other)) {
-				// accesses do not conflict because both are reads, or they are twins
+			if (!isWrite() && !other.isWrite()) {
+				// Two reads do not conflict
 				return Optional.of(false);
 			}
 			if (other.isCheck()) {

@@ -106,14 +106,25 @@ public class DataRaceFoundResult<ELEM extends IElement, TE extends IElement, E> 
 		// TODO see if program states can help rule out more conflicts
 
 		final HashRelation<Race, Race> result = new HashRelation<>();
+		final AtomicTraceElement<TE> checkStep = execution.getTraceElement(execution.getLength() - 1);
 		for (int i = execution.getLength() - 2; i >= 0; i--) {
-			final DataRaceAnnotation current = DataRaceAnnotation.getAnnotation(execution.getTraceElement(i).getStep());
+			final AtomicTraceElement<TE> accessStep = execution.getTraceElement(i);
+			final boolean knownThreads = checkStep.hasThreadId() && accessStep.hasThreadId();
+			if (knownThreads && checkStep.getThreadId() == accessStep.getThreadId()) {
+				continue;
+			}
+			final DataRaceAnnotation current = DataRaceAnnotation.getAnnotation(accessStep.getStep());
 			if (current == null) {
 				continue;
 			}
 			for (final Race race : annotation.getRaces()) {
 				for (final Race other : current.getRaces()) {
 					final Optional<Boolean> conflict = race.isConflictingAccess(other);
+					// Twins represent the same access, but may be executed by different threads.
+					if (!knownThreads && race.isTwin(other) && conflict.orElse(false)) {
+						result.addPair(race, other);
+						continue;
+					}
 					if (conflict.orElse(false)) {
 						final HashRelation<Race, Race> definite = new HashRelation<>();
 						definite.addPair(race, other);
