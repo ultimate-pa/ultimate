@@ -233,8 +233,8 @@ public class CExpressionTranslator {
 			right = newOps.getSecond();
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
 			typeOfResult = left.getLrValue().getCType();
-			assert typeOfResult.equals(right.getLrValue().getCType());
 			final CPrimitive primitiveTypeOfResult = (CPrimitive) typeOfResult.getUnderlyingType();
+			assert primitiveTypeOfResult.equals(right.getLrValue().getCType());
 
 			addIntegerBoundsCheck(loc, builder, primitiveTypeOfResult, op, left.getLrValue().getValue(),
 					right.getLrValue().getValue());
