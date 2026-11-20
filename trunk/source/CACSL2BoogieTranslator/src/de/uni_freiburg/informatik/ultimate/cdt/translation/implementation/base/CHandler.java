@@ -1244,13 +1244,7 @@ public class CHandler {
 		final BigInteger castTargetByteSize =
 				mTypeSizes.extractIntegerValue(castTargetByteSizeExp, mTypeSizeComputer.getSizeT());
 
-		// TODO 2022-02-25 Matthias: Currently we omit a change of the memory model if
-		// the bytesize to which we cast is smaller that the bytesize of the operand.
-		// The example "SubwordAccess.c" in our repository shows that this in unsound.
-		// We should probably change the "<=" in the line below to "==". This change
-		// will however cost performance and maybe we want make a decision only after we
-		// saw real-world examples where this is a problem.
-		if (castTargetByteSize.compareTo(operandTypeByteSize) <= 0) {
+		if (castTargetByteSize.equals(operandTypeByteSize)) {
 			// type sizes are already compatible
 			return;
 		}
