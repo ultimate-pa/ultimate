@@ -14,8 +14,8 @@ hs_err_pid*
 /releaseScripts/default/UDeltaDebugger-win32/*
 /releaseScripts/default/UAutomizer-linux/*
 /releaseScripts/default/UAutomizer-win32/*
-/releaseScripts/default/UDebug-E4-linux/*
-/releaseScripts/default/UDebug-E4-win32/*
+/releaseScripts/default/UDebugUI-linux/*
+/releaseScripts/default/UDebugUI-win32/*
 /releaseScripts/default/UEliminator-linux/*
 /releaseScripts/default/UEliminator-win32/*
 /releaseScripts/default/UGemCutter-linux/*
