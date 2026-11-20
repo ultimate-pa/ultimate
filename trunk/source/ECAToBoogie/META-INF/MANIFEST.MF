@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: EcaToBoogie
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.eca2boogie;singleton:=true
+Bundle-Vendor: Ultimate Program Analysis Team
+Bundle-Version: 0.1.0
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Require-Bundle: de.uni_freiburg.informatik.ultimate.ecaparser,
+ de.uni_freiburg.informatik.ultimate.lib.boogieast,
+ de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
+ de.uni_freiburg.informatik.ultimate.lib.core
+Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.eca2boogie

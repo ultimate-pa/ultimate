@@ -10,7 +10,8 @@ Require-Bundle: com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.astbuilder
-Export-Package: de.uni_freiburg.informatik.ultimate.eca.parser.lexer.generated,
+Export-Package: de.uni_freiburg.informatik.ultimate.eca.parser,
+ de.uni_freiburg.informatik.ultimate.eca.parser.lexer.generated,
  de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated,
  de.uni_freiburg.informatik.ultimate.eca.parser.cup.generated
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.ecaparser

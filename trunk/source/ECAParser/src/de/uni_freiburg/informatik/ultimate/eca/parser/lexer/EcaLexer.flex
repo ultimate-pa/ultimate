@@ -64,6 +64,10 @@ NaturalNumber = 0|[1-9][0-9]*
     "ms"|"s"|"min"|"h"|"month"|"months"|"year"|"years"
                           { return symbol(EcaSymbols.TIME_UNIT, yytext()); }
 
+    /* Reserved action-status constants (not valid declaration names). */
+    "PENDING"|"ACTIVE"|"DONE"|"ACTIVE_DONE"
+                          { return symbol(EcaSymbols.STATUS_LITERAL, yytext()); }
+
     /* Boolean literals and programming-language operators. */
     "true"                { return symbol(EcaSymbols.TRUE); }
     "false"               { return symbol(EcaSymbols.FALSE); }

@@ -39,8 +39,9 @@ import de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.TrueExternal
 /**
  * A small type checker for the eca language which is applied on an EcaFile after parsing. Rejects duplicate
  * declarations, checks that named events have the required internal or external kind and that actions refer to declared
- * internal events. Conditions must be Boolean, variables and event occurrences are typed using their declarations,
- * Boogie's type-checking helpers check the permitted expressions.
+ * internal events. Conditions must be Boolean: ordinary variables retain their declared types, internal action names
+ * have type status, and external event names are forbidden. The four reserved status constants also have type status.
+ * Boogie's type-checking helpers check the permitted expressions; event-occurrence flags are not condition variables.
  */
 public final class EcaTypeChecker {
 	public record Diagnostic(ILocation location, String message) {
@@ -63,6 +64,9 @@ public final class EcaTypeChecker {
 		for (final Declaration declaration : file.getDeclarations()) {
 			// Store declarations in a symbol table and throw type error if there are duplicate declarations
 			final String name = declaration.getName();
+			if (EcaStatus.isLiteral(name)) {
+				error(declaration.getLocation(), "Reserved status constant '" + name + "' cannot be declared");
+			}
 			final Declaration previous = mDeclarations.putIfAbsent(name, declaration);
 			if (previous != null) {
 				error(declaration.getLocation(), "Duplicate declaration of '" + name + "'");
@@ -152,10 +156,18 @@ public final class EcaTypeChecker {
 
 	private BoogieType typeOfIdentifier(final IdentifierExpression identifier) {
 		final String name = identifier.getIdentifier();
+		if (EcaStatus.isLiteral(name)) {
+			return EcaStatus.TYPE;
+		}
 		return switch (mDeclarations.get(name)) {
 		case final IntegerDeclaration ignored -> BoogieType.TYPE_INT;
 		case final BooleanDeclaration ignored -> BoogieType.TYPE_BOOL;
-		case final EventDeclaration ignored -> BoogieType.TYPE_BOOL; // True if the event has occurred, false otherwise
+		case final InternalEventDeclaration ignored -> EcaStatus.TYPE;
+		case final ExternalEventDeclaration ignored -> {
+			error(identifier.getLocation(), "External event '" + name
+					+ "' is not allowed in conditions; only internal action names have a status");
+			yield BoogieType.TYPE_ERROR;
+		}
 		case null -> {
 			error(identifier.getLocation(), "Undeclared identifier '" + name + "' in condition");
 			yield BoogieType.TYPE_ERROR;
@@ -264,11 +276,11 @@ public final class EcaTypeChecker {
 			}
 			case COMPEQ -> {
 				operator = "==";
-				requiredTypes = "operands of the same type (both integer or both Boolean)";
+				requiredTypes = "operands of the same type (both integer, both Boolean, or both status)";
 			}
 			case COMPNEQ -> {
 				operator = "!=";
-				requiredTypes = "operands of the same type (both integer or both Boolean)";
+				requiredTypes = "operands of the same type (both integer, both Boolean, or both status)";
 			}
 			default -> throw new IllegalStateException("Unexpected ECA operator: " + binary.getOperator());
 			}

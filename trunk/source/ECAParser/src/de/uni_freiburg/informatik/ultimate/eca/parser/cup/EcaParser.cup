@@ -102,7 +102,7 @@ action code {:
     }
 :}
 
-/* Keep terminal order aligned with the existing temporary EcaSymbols.java. */
+/* EcaSymbols is generated together with this parser. */
 terminal VAR, EVENT, TYPE_INTEGER, TYPE_BOOL, ON, IF, DO, INTERN, EXTERN, ONETIME;
 terminal REPEAT, EVERY, UNTIL, AFTER, FOR, PAR, ROR;
 terminal String TIME_UNIT;
@@ -110,6 +110,7 @@ terminal TRUE, FALSE, AND, OR, NOT, IMPLIES, EQ, NEQ, LE, GE, LT, GT;
 terminal PLUS, MINUS, TIMES, DIVIDE, MOD;
 terminal LPAR, RPAR, LBRACKET, RBRACKET, COLON, SEMI, COMMA;
 terminal String NATURAL_NUMBER, ID;
+terminal String STATUS_LITERAL;
 
 non terminal EcaFile ecaFile;
 non terminal List<Declaration> declarations;
@@ -246,9 +247,11 @@ duration ::= NATURAL_NUMBER:n TIME_UNIT:u
              checkedUpper(lower, upper)), unit(u)); :}
     ;
 
-/* The final type checker must distinguish Boolean, Integer and AA names. */
+/* Names and status constants remain Boogie expressions; semantic checking resolves their types. */
 expression ::= ID:name
     {: RESULT = new IdentifierExpression(at(nameleft, nameright), name); :}
+    | STATUS_LITERAL:value
+    {: RESULT = new IdentifierExpression(at(valueleft, valueright), value); :}
     | NATURAL_NUMBER:n
     {: RESULT = new IntegerLiteral(at(nleft, nright), n); :} %prec PLUS
     | TRUE:t
