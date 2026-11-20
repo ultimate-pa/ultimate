@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 2.3//EN" "https://www.sosy-lab.org/benchexec/benchmark-2.3.dtd">
+<benchmark tool="ultimategemcutter" displayName="UGemCutter" timelimit="120 s" hardtimelimit="150 s" memlimit="4 GB" cpuCores="1">
+
+  <resultfiles>**/witness.*</resultfiles>
+
+  <option name="--full-output" />
+  <option name="--witness-type" />
+  <option name="correctness_witness" />
+
+  <rundefinition name="validation">
+    <tasks name="test">
+      <requiredfiles>../../adds/examples/svcomp_test.yml</requiredfiles>
+      <option name="--validate">../adds/examples/svcomp_test.yml</option>
+      <include>../../adds/examples/example.yml</include>
+      <propertyfile>../../adds/examples/unreach-call.prp</propertyfile>
+    </tasks>
+  </rundefinition>
+
+</benchmark>
