@@ -11,9 +11,9 @@ source "${DIR}/makeProducts.sh"
 source "${DIR}/semver2.sh"
 
 # Default operating systems for the build of all Ultimate products
-OSS=("linux" "win32")
-# Default architecture for the build of all Ultimate products
-ARCH="x86_64"
+OSS=("linux" "win32" "macosx")
+# Default architectures for the build of all Ultimate products
+ARCHS=("x86_64" "aarch64")
 # Default selection of Ultimate products to build, package and archive;
 # empty means all products (see build_parseopts)
 PRODUCTS=()
@@ -25,16 +25,22 @@ MEM_HEAP_SIZE_MAX="15G"
 MEM_STACK_SIZE_MAX="1M"
 
 _print_help() {
-  printf 'Usage: %s [-i <size>] [-m <size>] [-s <size>] [-o all|linux|win32] [-p <product>[,<product>...]|all] [-h]\n' "${0}"
+  printf 'Usage: %s [-i <size>] [-m <size>] [-s <size>] [-o all|linux|win32|macosx] [-a all|x86_64|aarch64] [-p <product>[,<product>...]|all] [-h]\n' "${0}"
   print_newline
   printf 'Options:\n'
   printf '  -i    Set initial heap  memory size for Ultimate products (default: %s)\n' "${MEM_HEAP_SIZE_INIT}"
   printf '  -m    Set maximum heap  memory size for Ultimate products (default: %s)\n' "${MEM_HEAP_SIZE_MAX}"
   printf '  -s    Set maximum stack memory size for Ultimate products (default: %s)\n' "${MEM_STACK_SIZE_MAX}"
   printf '  -o    Specify operating systems to build for:\n'
-  printf '          all    build for Linux and Windows (default)\n'
+  printf '          all    build for Linux, Windows and macOS (default)\n'
   printf '          linux  build only for Linux\n'
   printf '          win32  build only for Windows\n'
+  printf '          macosx build only for macOS\n'
+  printf '  -a    Specify architectures to build for:\n'
+  printf '          all      build for all architectures (default)\n'
+  printf '          x86_64   build only for the x86_64 architecture\n'
+  printf '          aarch64  build only for the aarch64 architecture\n'
+  printf '                   (skipped for win32)\n'
   printf '  -p    Specify Ultimate products to build, package and archive:\n'
   printf '          all            use all products (default)\n'
   printf '          <product>...   comma-separated list of products, e.g. Taipan,Automizer;\n'
@@ -57,7 +63,7 @@ _validate_memory_size() {
 }
 
 build_parseopts() {
-  while getopts "i:m:s:p:o:h" OPT; do
+  while getopts "i:m:s:p:o:a:h" OPT; do
     case "${OPT}" in
       i)
         _validate_memory_size "-i" "${OPTARG}"
@@ -82,8 +88,30 @@ build_parseopts() {
           win32)
             OSS=("win32")
             ;;
+          macosx)
+            OSS=("macosx")
+            ;;
           *)
             printf '%s: invalid option for -o -- %s\n' "${0}" "${OPTARG}"
+            print_newline
+            _print_help
+            exit 1
+            ;;
+        esac
+        ;;
+      a)
+        case "${OPTARG}" in
+          all)
+            # Use all architectures by default
+            ;;
+          x86_64)
+            ARCHS=("x86_64")
+            ;;
+          aarch64)
+            ARCHS=("aarch64")
+            ;;
+          *)
+            printf '%s: invalid option for -a -- %s\n' "${0}" "${OPTARG}"
             print_newline
             _print_help
             exit 1
