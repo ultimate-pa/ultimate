@@ -120,9 +120,10 @@ public abstract class PatternType<T extends PatternType<?>> {
 		return mScope;
 	}
 
-	public ReqPeas transformToPea(final ILogger logger, final Durations durations) {
+	public ReqPeas transformToPea(final ILogger logger, final Durations durations,
+			final List<PatternType<?>> allPatterns) {
 		if (mPEAs == null) {
-			final List<CounterTrace> cts = constructCounterTrace();
+			final List<CounterTrace> cts = constructCounterTrace(allPatterns, logger);
 			final String name = getId();
 
 			final List<Entry<CounterTrace, PhaseEventAutomata>> peas = new ArrayList<>(cts.size());
@@ -138,15 +139,16 @@ public abstract class PatternType<T extends PatternType<?>> {
 		return mPEAs;
 	}
 
-	public List<CounterTrace> constructCounterTrace() {
+	public List<CounterTrace> constructCounterTrace(final List<PatternType<?>> allPatterns, final ILogger logger) {
 		final CDD[] cdds = getCddsAsArray();
 		final int[] durations = getDurationsAsIntArray();
 		assert cdds.length == getExpectedCddSize() : "Wrong number of observables for pattern " + getName();
 		assert durations.length == getExpectedDurationSize() : "Wrong number of durations for pattern " + getName();
-		return transform(cdds, durations);
+		return transform(cdds, durations, allPatterns, logger);
 	}
 
-	protected abstract List<CounterTrace> transform(CDD[] cdds, int[] durations);
+	protected abstract List<CounterTrace> transform(CDD[] cdds, int[] durations, final List<PatternType<?>> allPatterns,
+			final ILogger logger);
 
 	public abstract int getExpectedCddSize();
 
