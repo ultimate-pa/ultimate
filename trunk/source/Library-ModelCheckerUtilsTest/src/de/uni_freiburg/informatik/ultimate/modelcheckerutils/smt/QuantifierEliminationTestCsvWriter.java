@@ -38,6 +38,7 @@ import java.util.Date;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
@@ -59,20 +60,22 @@ public class QuantifierEliminationTestCsvWriter {
 
 	public QuantifierEliminationTestCsvWriter(final String testfileId) {
 		mTestfileId = testfileId;
-		final List<String> list =
-				Arrays.asList("TestId", "InputTreesize", "OutputTreesize", "Runtime", "check-sat time", "#check-sat");
+		final List<String> list = Arrays.asList("TestId", "InputTreesize", "OutputTreesize", "Runtime",
+				"check-sat time", "#check-sat", "ExpectQF", "ResultQF");
 		mCsv = new SimpleCsvProvider<>(list);
 
 	}
 
-	public void reportEliminationBegin(final Term eliminationInput, final String testId) {
+	public void reportEliminationBegin(final Term eliminationInput, final String testId,
+			final boolean expectQuantifierFreeResult) {
 		if (mCurrentEliminationData == null) {
-			mCurrentEliminationData = new String[6];
+			mCurrentEliminationData = new String[8];
 			mCurrentEliminationData[0] = testId;
 			final long treesize = new DAGSize().treesize(eliminationInput);
 			assert mCurrentEliminationData[1] == null;
 			mCurrentEliminationData[1] = String.valueOf(treesize);
 			mCurrentEliminationStartTime = System.nanoTime();
+			mCurrentEliminationData[6] = String.valueOf(expectQuantifierFreeResult);
 		} else {
 			throw new AssertionError("Writing PQE benchmarks failed: old data");
 		}
@@ -104,6 +107,8 @@ public class QuantifierEliminationTestCsvWriter {
 				mCurrentEliminationData[4] = String.valueOf(statScript.getCheckSatTime() / 1000000);
 				mCurrentEliminationData[5] = String.valueOf(statScript.getNumberOfCheckSatCommands());
 			}
+			final boolean resultIsQuantifierFree = QuantifierUtils.isQuantifierFree(eliminationOutput);
+			mCurrentEliminationData[7] = String.valueOf(resultIsQuantifierFree);
 			mCsv.addRow(Arrays.asList(mCurrentEliminationData));
 			mCurrentEliminationData = null;
 		} else {
