@@ -29,13 +29,11 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.arrays;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.EqualityInformation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
@@ -48,70 +46,31 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class ArrayIndexEqualityUtils {
 
-	/**
-	 * Add equality information for term that are obtained from context by only looking at (dis)eqality terms.
-	 *
-	 * @return
-	 * @return true if an inconsitency was detected
-	 */
-	public static boolean addComplimentaryEqualityInformation(final Script script, final int quantifier,
-			final Term[] context, final Term term, final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
-		equalityInformation.addElement(term);
-		final Pair<Set<Term>, Set<Term>> indexEqual = EqualityInformation.getEqTerms(script, term, context, null);
-		Set<Term> derTerms;
-		Set<Term> antiDerTerms;
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			derTerms = indexEqual.getFirst();
-			antiDerTerms = indexEqual.getSecond();
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			derTerms = indexEqual.getSecond();
-			antiDerTerms = indexEqual.getFirst();
-		} else {
-			throw new AssertionError("unknown quantifier");
-		}
-		for (final Term equal : derTerms) {
-			equalityInformation.addElement(equal);
-			equalityInformation.reportEquality(term, equal);
-			if (equalityInformation.isInconsistent()) {
-				return true;
-			}
-		}
-		for (final Term disequal : antiDerTerms) {
-			equalityInformation.addElement(disequal);
-			equalityInformation.reportDisequality(term, disequal);
-			if (equalityInformation.isInconsistent()) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	static ThreeValuedEquivalenceRelation<Term> collectComplimentaryEqualityInformation(final Script script,
-			final int quantifier, final Term preprocessedInput, final List<MultiDimensionalSelect> selectTerms,
+			final Term preprocessedInput, final List<MultiDimensionalSelect> selectTerms,
 			final List<MultiDimensionalNestedStore> stores) {
 		final ThreeValuedEquivalenceRelation<Term> equalityInformation = new ThreeValuedEquivalenceRelation<>();
-		final Term[] context = QuantifierUtils.getDualFiniteJuncts(quantifier, preprocessedInput);
+		final Term[] context = SmtUtils.getConjuncts(preprocessedInput);
 		boolean inconsistencyDetected = false;
 		for (final MultiDimensionalSelect selectTerm : selectTerms) {
 			for (final Term entry : selectTerm.getIndex()) {
 				inconsistencyDetected |=
-						addComplimentaryEqualityInformation(script, quantifier, context, entry, equalityInformation);
+						addComplimentaryEqualityInformation(script, context, entry, equalityInformation);
 				if (inconsistencyDetected) {
 					return null;
 				}
 			}
-			inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context,
-					selectTerm.toTerm(script), equalityInformation);
+			inconsistencyDetected |= addComplimentaryEqualityInformation(script, context, selectTerm.toTerm(script),
+					equalityInformation);
 			if (inconsistencyDetected) {
 				return null;
 			}
-
 		}
 		for (final MultiDimensionalNestedStore arrayStore : stores) {
 			for (final ArrayIndex ai : arrayStore.getIndices()) {
 				for (final Term entry : ai) {
-					inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context, entry,
-							equalityInformation);
+					inconsistencyDetected |=
+							addComplimentaryEqualityInformation(script, context, entry, equalityInformation);
 					if (inconsistencyDetected) {
 						return null;
 					}
@@ -119,7 +78,7 @@ public class ArrayIndexEqualityUtils {
 			}
 			for (final Term value : arrayStore.getValues()) {
 				inconsistencyDetected |=
-						addComplimentaryEqualityInformation(script, quantifier, context, value, equalityInformation);
+						addComplimentaryEqualityInformation(script, context, value, equalityInformation);
 				if (inconsistencyDetected) {
 					return null;
 				}
@@ -128,21 +87,31 @@ public class ArrayIndexEqualityUtils {
 		return equalityInformation;
 	}
 
-	static ThreeValuedEquivalenceRelation<Term> analyzeIndexEqualities(final Script script,
-			final ArrayIndex selectIndex, final ArrayIndex storeIndex, final int quantifier, final Term[] context) {
-		final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
-		for (final Term term : selectIndex) {
-			addComplimentaryEqualityInformation(script, quantifier, context, term, tver);
+	/**
+	 * Add equality information for term that are obtained from context by only looking at (dis)eqality terms.
+	 *
+	 * @return true if an inconsistency was detected
+	 */
+	private static boolean addComplimentaryEqualityInformation(final Script script, final Term[] critConstr,
+			final Term term, final ThreeValuedEquivalenceRelation<Term> equalityInformation) {
+		equalityInformation.addElement(term);
+		final Pair<Set<Term>, Set<Term>> indexEqual = EqualityInformation.getEqTerms(script, term, critConstr, null);
+		final Set<Term> derTerms = indexEqual.getFirst();
+		for (final Term equal : derTerms) {
+			equalityInformation.addElement(equal);
+			equalityInformation.reportEquality(term, equal);
+			if (equalityInformation.isInconsistent()) {
+				return true;
+			}
 		}
-		for (final Term term : storeIndex) {
-			addComplimentaryEqualityInformation(script, quantifier, context, term, tver);
+		final Set<Term> antiDerTerms = indexEqual.getSecond();
+		for (final Term disequal : antiDerTerms) {
+			equalityInformation.addElement(disequal);
+			equalityInformation.reportDisequality(term, disequal);
+			if (equalityInformation.isInconsistent()) {
+				return true;
+			}
 		}
-		return tver;
-	}
-
-	private static Term getIndexOfSelect(final ApplicationTerm appTerm) {
-		assert (appTerm.getParameters().length == 2) : "no select";
-		assert (appTerm.getFunction().getName().equals("select")) : "no select";
-		return appTerm.getParameters()[1];
+		return false;
 	}
 }

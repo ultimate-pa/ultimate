@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Simplificati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.FormulaClassification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils.IQuantifierEliminator;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -236,7 +235,8 @@ public class QuantifierPushUtilsForSubsetPush {
 		Context context =
 				parentContext.constructChildContextForQuantifiedFormula(mgdScript.getScript(), nonMinionEliminatees);
 		context = context.constructChildContextForConDis(services, mgdScript,
-				((ApplicationTerm) et.getTerm()).getFunction(), parti.getFiniteDualJunctsWithoutEliminatee());
+				QuantifierUtils.getDualFiniteConnective(et.getQuantifier()),
+				parti.getFiniteDualJunctsWithoutEliminatee());
 		// Evaluate success: return null if there was not progress.
 		final Term pushed = qe.eliminate(services, mgdScript, applyDistributivity, pqeTechniques,
 				simplificationTechnique, context, quantified);

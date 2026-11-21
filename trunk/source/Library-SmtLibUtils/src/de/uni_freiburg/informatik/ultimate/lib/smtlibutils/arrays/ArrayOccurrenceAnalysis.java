@@ -139,6 +139,28 @@ public class ArrayOccurrenceAnalysis {
 		return mIsValueOfStore;
 	}
 
+	public int computeSimpleEliminationCostEstimation() {
+		if (!getOtherFunctionApplications().isEmpty()) {
+			return Integer.MAX_VALUE;
+		}
+		if (!getValueOfStore().isEmpty()) {
+			return Integer.MAX_VALUE;
+		}
+
+		int cost = 0;
+		for (final MultiDimensionalSelectOverNestedStore asos : getArraySelectOverStores()) {
+			cost += asos.getNestedStore().getIndices().size();
+		}
+		for (final MultiDimensionalNestedStore nas : getNestedArrayStores()) {
+			cost += nas.getIndices().size();
+		}
+		cost += getArraySelects().size();
+		cost += getArrayEqualities().size();
+		cost += getArrayDisequalities().size();
+		cost *= new MultiDimensionalSort(mWantedArray.getSort()).getDimension();
+		return cost;
+	}
+
 	/**
 	 * Returns subterms that our algorithm needs for elimination of anti-DER terms. These are the subterms where the
 	 * wanted array occurs on one side (i.e., it is not sufficient that it is just a subterm on one side).
