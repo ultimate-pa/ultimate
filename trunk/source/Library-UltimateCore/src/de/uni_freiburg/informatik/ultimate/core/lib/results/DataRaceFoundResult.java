@@ -173,7 +173,7 @@ public class DataRaceFoundResult<ELEM extends IElement, TE extends IElement, E> 
 			sb.append("(on the heap)");
 		} else {
 			sb.append("on ");
-			sb.append(access.getVariable());
+			sb.append(check.getVariable());
 		}
 		sb.append(" between ");
 		sb.append(CoreUtil.getPlatformLineSeparator());
