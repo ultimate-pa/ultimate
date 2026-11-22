@@ -367,7 +367,7 @@ public class Req2TestReqSymbolTable implements IReqSymbolTable, ITerm2Expression
 	}
 
 	@Override
-	public String getTestCaseClockName() {
+	public String getTestScenarioClockName() {
 		return null;
 	}
 

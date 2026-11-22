@@ -37,6 +37,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
@@ -84,8 +85,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TestCaseNegativePattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TestCasePositivePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TestScenarioPattern;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
@@ -122,10 +122,9 @@ public class Req2BoogieTranslator {
 	private final IReqSymbolTable mSymboltable;
 	private IReq2PeaAnnotator mReqCheckAnnotator;
 	private final boolean mBuildHistoryVars;
-	private final boolean mTestCasesCheckWholeGraph;
-	private final int mTestCasesWholeGraphBatchSize;
-	private List<PatternType<?>> mTestCasePatterns = Collections.emptyList();
-	private PeaResultUtil mResultUtil;
+	private final boolean mTestScenariosCheckWholeGraph;
+	private final int mTestScenariosWholeGraphBatchSize;
+	private List<TestScenarioPattern<?>> mTestScenarioPatterns;
 
 	public Req2BoogieTranslator(final IUltimateServiceProvider services, final ILogger logger,
 			final List<PatternType<?>> patterns) {
@@ -139,13 +138,10 @@ public class Req2BoogieTranslator {
 
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mBuildHistoryVars = prefs.getBoolean(Pea2BoogiePreferences.LABEL_HISTORY_VARS);
-		mTestCasesCheckWholeGraph = prefs.getBoolean(Pea2BoogiePreferences.LABEL_TESTCASE_WHOLE_GRAPH);
-		mTestCasesWholeGraphBatchSize = prefs.getInt(Pea2BoogiePreferences.LABEL_TESTCASE_WHOLE_GRAPH_BATCH_SIZE);
-		mLogger.info("TestCases test the whole graph: " + mTestCasesCheckWholeGraph);
-		mLogger.info("TestCases whole-graph: TestCases per procedure: " + mTestCasesWholeGraphBatchSize);
+		mTestScenariosCheckWholeGraph = prefs.getBoolean(Pea2BoogiePreferences.LABEL_TESTSCENARIO_WHOLE_GRAPH);
+		mTestScenariosWholeGraphBatchSize = prefs.getInt(Pea2BoogiePreferences.LABEL_TESTSCENARIO_WHOLE_GRAPH_BATCH_SIZE);
 
 		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
-		mResultUtil = new PeaResultUtil(mLogger, mServices);
 
 		List<PatternType<?>> requirements =
 				patterns.stream().filter(a -> !(a instanceof DeclarationPattern)).collect(Collectors.toList());
@@ -155,8 +151,9 @@ public class Req2BoogieTranslator {
 				.collect(Collectors.toMap(k -> k, v -> 1, (v1, v2) -> v1 + v2)).entrySet().stream()
 				.filter(a -> a.getValue() > 1).collect(Collectors.toList());
 		if (!duplicates.isEmpty()) {
+			final PeaResultUtil resultUtil = new PeaResultUtil(mLogger, mServices);
 			for (final Entry<String, Integer> dupl : duplicates) {
-				mResultUtil.typeError(dupl.getKey(),
+				resultUtil.typeError(dupl.getKey(),
 						String.format("Requirement id \"%s\" occurs %s times", dupl.getKey(), dupl.getValue()));
 			}
 			mUnitLocation = null;
@@ -187,16 +184,17 @@ public class Req2BoogieTranslator {
 		mReqPeas = req2pea.getReqPeas();
 		mSymboltable = req2pea.getSymboltable();
 		mReqCheckAnnotator = req2pea.getAnnotator();
-		mTestCasePatterns = req2pea.getTestCasePatterns();
+		mTestScenarioPatterns = req2pea.getTestScenarioPatterns();
 		// TODO: Add locations to pattern type to generate meaningful boogie locations
 		mUnitLocation = new BoogieLocation("", -1, -1, -1, -1);
 
 		final List<Declaration> decls = new ArrayList<>(mSymboltable.getDeclarations());
-		// generates either myProcedure or all TestCase Procedures (if there are TestCases present)
-		if (mTestCasePatterns.isEmpty()) {
+		// TestScenarios are checked in their own procedures instead of myProcedure: a file with TestScenarios gets no
+		// consistency, vacuity or rt-inconsistency checks
+		if (mTestScenarioPatterns.isEmpty()) {
 			decls.add(generateProcedure(init));
 		} else {
-			decls.addAll(generateTestCaseProcedures());
+			decls.addAll(generateTestScenarioProcedures());
 		}
 		mUnit = new Unit(mUnitLocation, decls.toArray(new Declaration[decls.size()]));
 		annotateContainedPatternSet(mUnit, mReqPeas, init);
@@ -279,152 +277,226 @@ public class Req2BoogieTranslator {
 		return stmts;
 	}
 
-	// Generates one procedure per TestCase pattern, unless whole-graph is on: then every pattern drives the same
-	// graph, so mTestCasesWholeGraphBatchSize patterns are packed together per procedure (1 = separate procedures,
-	// >= pattern count = a single procedure for everything).
-	private List<Declaration> generateTestCaseProcedures() {
-		final List<PatternType<?>> validPatterns = new ArrayList<>();
-		for (final PatternType<?> pattern : mTestCasePatterns) {
-			if (!hasUndeclaredVariables(pattern)) {
-				validPatterns.add(pattern);
-			}
-		}
-		if (validPatterns.isEmpty()) {
-			return Collections.emptyList();
-		}
-		if (!mTestCasesCheckWholeGraph) {
-			final List<Declaration> result = new ArrayList<>();
-			for (final PatternType<?> pattern : validPatterns) {
-				result.add(generateTestCaseProcedure(pattern));
-			}
-			return result;
-		}
-		final int batchSize = Math.max(1, mTestCasesWholeGraphBatchSize);
-		if (batchSize == 1) {
-			final List<Declaration> result = new ArrayList<>();
-			for (final PatternType<?> pattern : validPatterns) {
-				result.add(generateWholeGraphSeparateProcedure(pattern));
-			}
-			return result;
-		}
+	// Target of a TestScenario that belongs to no single requirement: "TestScenario for ALL, trace ..."
+	private static final String TESTSCENARIO_TARGET_ALL = "ALL";
+	private static final String TESTSCENARIO_SELECTOR_NAME = "testScenarioSelector";
+
+	// One procedure per TestScenario that is checked against its target only. The ones checked against all requirements
+	// share procedures (mTestScenariosWholeGraphBatchSize per procedure).
+	private List<Declaration> generateTestScenarioProcedures() {
 		final List<Declaration> result = new ArrayList<>();
-		for (int i = 0; i < validPatterns.size(); i += batchSize) {
-			final List<PatternType<?>> batch = validPatterns.subList(i, Math.min(i + batchSize, validPatterns.size()));
-			final String procName =
-					validPatterns.size() <= batchSize ? "testCase_ALL" : "testCase_ALL_" + (i / batchSize + 1);
-			result.add(generateCombinedTestCaseProcedure(batch, procName));
+		final List<TestScenarioPattern<?>> wholeGraph = new ArrayList<>();
+		for (final TestScenarioPattern<?> pattern : mTestScenarioPatterns) {
+			if (hasUndeclaredVariables(pattern)) {
+				continue;
+			}
+			final List<ReqPeas> target = getTargetReqPeas(pattern);
+			if (target == null) {
+				wholeGraph.add(pattern);
+			} else {
+				result.add(generateTestScenarioProcedure(List.of(pattern), target, "testScenario_" + pattern.getId()));
+			}
+		}
+		final int batchSize = mTestScenariosWholeGraphBatchSize;
+		for (int i = 0; i < wholeGraph.size(); i += batchSize) {
+			final List<TestScenarioPattern<?>> batch = wholeGraph.subList(i, Math.min(i + batchSize, wholeGraph.size()));
+			final String procName;
+			if (batchSize == 1) {
+				procName = "testScenario_" + batch.get(0).getId();
+			} else {
+				procName = wholeGraph.size() <= batchSize ? "testScenario_ALL" : "testScenario_ALL_" + (i / batchSize + 1);
+			}
+			result.add(generateTestScenarioProcedure(batch, mReqPeas, procName));
 		}
 		return result;
 	}
 
-	// Checks the TestCase's own trace CDDs against the whole symbol table (not just its target requirement's vars).
-	// Reports an error and causes this TestCase to be skipped if it references anything undeclared.
-	private boolean hasUndeclaredVariables(final PatternType<?> pattern) {
-		final Set<String> declared = new LinkedHashSet<>(mSymboltable.getStateVars());
-		declared.addAll(mSymboltable.getEventVars());
-		declared.addAll(mSymboltable.getClockVars());
-		declared.addAll(mSymboltable.getPcVars());
-		declared.addAll(mSymboltable.getConstVars());
-
-		final Set<String> undeclared = new LinkedHashSet<>();
-		for (final CDD cdd : pattern.getCdds()) {
-			for (final String var : getVariablesUsedIn(cdd)) {
-				if (!declared.contains(var)) {
-					undeclared.add(var);
-				}
-			}
+	// The requirements a TestScenario is checked against, null for all of them: if the preference says so, for
+	// "TestScenario for ALL", and for a target that matches no requirement. A requirement matches if its id is the target
+	// or starts with target + "_" (one requirement can have several formalizations: R1_0, R1_1, ...).
+	private List<ReqPeas> getTargetReqPeas(final TestScenarioPattern<?> pattern) {
+		final String target = pattern.getTargetReqId();
+		if (mTestScenariosCheckWholeGraph || TESTSCENARIO_TARGET_ALL.equals(target)) {
+			return null;
 		}
+		final List<ReqPeas> result = mReqPeas.stream()
+				.filter(r -> r.getPattern().getId().equals(target) || r.getPattern().getId().startsWith(target + "_"))
+				.collect(Collectors.toList());
+		if (result.isEmpty()) {
+			mLogger.warn("TestScenario " + pattern.getId() + ": no requirement matches target " + target
+					+ " - checked against all requirements");
+			return null;
+		}
+		return result;
+	}
+
+	// Reports an error (the TestScenario is skipped) if its trace uses a variable that is not declared.
+	private boolean hasUndeclaredVariables(final TestScenarioPattern<?> pattern) {
+		final Set<String> undeclared = new LinkedHashSet<>();
+		pattern.getCdds().forEach(cdd -> undeclared.addAll(getVariablesUsedIn(cdd)));
+		undeclared.removeAll(mSymboltable.getStateVars());
+		undeclared.removeAll(mSymboltable.getEventVars());
+		undeclared.removeAll(mSymboltable.getConstVars());
 		if (undeclared.isEmpty()) {
 			return false;
 		}
-		mResultUtil.transformationError(pattern,
-				"TestCase " + pattern.getId() + " references undeclared variable(s) " + undeclared + " - skipped");
+		new PeaResultUtil(mLogger, mServices).transformationError(pattern,
+				"TestScenario " + pattern.getId() + " references undeclared variable(s) " + undeclared + " - skipped");
 		return true;
 	}
 
-	// One procedure per pattern, driving only that pattern's target requirement(s).
-	private Declaration generateTestCaseProcedure(final PatternType<?> pattern) {
-		final List<ReqPeas> relevant = getRelevantReqPeas(pattern);
-		return buildTestCaseProcedure(Collections.singletonList(pattern), relevant, getRelevantClockNames(relevant),
-				getRelevantPrimedVars(relevant, pattern), getRelevantEventVars(relevant),
-				getRelevantStateVars(relevant, pattern), "testCase_" + pattern.getId(),
-				buildTestCaseModifiesSpecificationArray(mUnitLocation, relevant, pattern));
+	private static Set<String> getVariablesUsedIn(final CDD cdd) {
+		final Set<String> vars = new LinkedHashSet<>();
+		for (final List<Pair<Decision<?>, int[]>> conjunction : cdd.getDecisionsDNF()) {
+			for (final Pair<Decision<?>, int[]> entry : conjunction) {
+				final Decision<?> decision = entry.getFirst();
+				if (decision instanceof final BoogieBooleanExpressionDecision boogieDecision) {
+					vars.addAll(boogieDecision.getVars().keySet());
+				} else {
+					vars.add(decision.getVar());
+				}
+			}
+		}
+		return vars;
 	}
 
-	// One procedure per pattern, but driving the WHOLE graph, used when whole-graph is on with batch size 1.
-	private Declaration generateWholeGraphSeparateProcedure(final PatternType<?> pattern) {
-		return buildTestCaseProcedure(Collections.singletonList(pattern), mReqPeas, mSymboltable.getClockVars(),
-				mSymboltable.getPrimedVars(), mSymboltable.getEventVars(), mSymboltable.getStateVars(),
-				"testCase_" + pattern.getId(), buildModifiesSpecificationArray(mUnitLocation));
-	}
-
-	// One procedure shared by several patterns, all driving the WHOLE graph. A "testCaseSelector" local variable,
-	// fixed once per run, decides which pattern's assumes/assert are active.
-	private Declaration generateCombinedTestCaseProcedure(final List<PatternType<?>> patterns, final String procName) {
-		return buildTestCaseProcedure(patterns, mReqPeas, mSymboltable.getClockVars(), mSymboltable.getPrimedVars(),
-				mSymboltable.getEventVars(), mSymboltable.getStateVars(), procName,
-				buildModifiesSpecificationArray(mUnitLocation));
-	}
-
-	private static final String TESTCASE_SELECTOR_NAME = "testCaseSelector";
-
-	private Declaration buildTestCaseProcedure(final List<PatternType<?>> patterns, final List<ReqPeas> reqPeas,
-			final Collection<String> clockVars, final Collection<String> primedVars, final Collection<String> eventVars,
-			final Collection<String> stateVars, final String procName, final ModifiesSpecification[] modifies) {
+	/**
+	 * Like {@link #generateProcedure(List)}, but only for reqPeas and with the traces of the TestScenarios assumed. The
+	 * assert at the end of a trace is violated iff the trace is possible. If there are several patterns, a selector
+	 * variable decides which one is active.
+	 */
+	private Declaration generateTestScenarioProcedure(final List<TestScenarioPattern<?>> patterns,
+			final List<ReqPeas> reqPeas, final String procName) {
 		final BoogieLocation bl = mUnitLocation;
-		final VariableDeclaration[] localVars =
-				patterns.size() > 1 ? new VariableDeclaration[] { genSelectorVarDecl(bl) } : new VariableDeclaration[0];
-		final Body body = new Body(bl, localVars,
-				generateTestCaseBody(bl, patterns, reqPeas, clockVars, primedVars, eventVars, stateVars, procName));
-		return new Procedure(bl, new Attribute[0], procName, new String[0], new VarList[0], new VarList[0], modifies,
-				body);
-	}
-
-	private VariableDeclaration genSelectorVarDecl(final BoogieLocation bl) {
-		final ASTType intType = new PrimitiveType(bl, BoogieType.TYPE_INT, "int");
-		final VarList varList = new VarList(bl, new String[] { TESTCASE_SELECTOR_NAME }, intType);
-		return new VariableDeclaration(bl, new Attribute[0], new VarList[] { varList });
-	}
-
-	private IdentifierExpression genSelectorIdentifierExpression(final BoogieLocation bl, final String procName) {
-		final DeclarationInformation declInfo =
-				new DeclarationInformation(DeclarationInformation.StorageClass.LOCAL, procName);
-		return new IdentifierExpression(bl, BoogieType.TYPE_INT, TESTCASE_SELECTOR_NAME, declInfo);
-	}
-
-	// Init + (if patterns.size() > 1) the selector havoc/range-assume + the while loop.
-	private Statement[] generateTestCaseBody(final BoogieLocation bl, final List<PatternType<?>> patterns,
-			final List<ReqPeas> reqPeas, final Collection<String> clockVars, final Collection<String> primedVars,
-			final Collection<String> eventVars, final Collection<String> stateVars, final String procName) {
-		final List<Statement> stmts = new ArrayList<>(genInitialPhasesStmts(bl, reqPeas));
-		stmts.addAll(genClockInitStmts(clockVars));
-
-		IdentifierExpression selector = null;
-		if (patterns.size() > 1) {
-			selector = genSelectorIdentifierExpression(bl, procName);
-			stmts.add(new HavocStatement(bl, new VariableLHS[] { new VariableLHS(bl, TESTCASE_SELECTOR_NAME) }));
-			stmts.add(genSelectorRangeAssume(bl, selector, patterns.size()));
+		final Collection<String> clockVars;
+		final Collection<String> pcVars;
+		final Collection<String> stateVars;
+		final Collection<String> eventVars;
+		final Collection<String> primedVars;
+		if (reqPeas == mReqPeas) {
+			clockVars = mSymboltable.getClockVars();
+			pcVars = mSymboltable.getPcVars();
+			stateVars = mSymboltable.getStateVars();
+			eventVars = mSymboltable.getEventVars();
+			primedVars = mSymboltable.getPrimedVars();
+		} else {
+			// only the variables of these requirements and of the traces
+			final Set<String> clocks = new LinkedHashSet<>(List.of(mSymboltable.getTestScenarioClockName()));
+			final Set<String> pcs = new LinkedHashSet<>();
+			final Set<String> used = new LinkedHashSet<>();
+			for (final ReqPeas reqpea : reqPeas) {
+				for (final Entry<CounterTrace, PhaseEventAutomata> ct2pea : reqpea.getCounterTrace2Pea()) {
+					clocks.addAll(ct2pea.getValue().getClocks());
+					pcs.add(mSymboltable.getPcName(ct2pea.getValue()));
+					used.addAll(ct2pea.getValue().getVariables().keySet());
+				}
+			}
+			patterns.forEach(p -> p.getCdds().forEach(cdd -> used.addAll(getVariablesUsedIn(cdd))));
+			clockVars = clocks;
+			pcVars = pcs;
+			stateVars = used.stream().filter(mSymboltable.getStateVars()::contains).collect(Collectors.toList());
+			eventVars = used.stream().filter(mSymboltable.getEventVars()::contains).collect(Collectors.toList());
+			primedVars = Stream.of(stateVars, clockVars, pcVars).flatMap(Collection::stream)
+					.map(mSymboltable::getPrimedVarId).collect(Collectors.toList());
 		}
 
+		final List<String> modifiedVars = new ArrayList<>(clockVars);
+		modifiedVars.addAll(pcVars);
+		modifiedVars.add(mSymboltable.getDeltaVarName());
+		modifiedVars.addAll(stateVars);
+		modifiedVars.addAll(primedVars);
+		if (mBuildHistoryVars) {
+			Stream.concat(stateVars.stream(), pcVars.stream()).map(mSymboltable::getHistoryVarId)
+					.forEach(modifiedVars::add);
+		}
+		modifiedVars.addAll(eventVars);
+		final ModifiesSpecification[] modifies = { new ModifiesSpecification(bl, false,
+				modifiedVars.stream().map(v -> new VariableLHS(bl, v)).toArray(VariableLHS[]::new)) };
+
+		final List<Statement> stmts = new ArrayList<>(genInitialPhasesStmts(bl, reqPeas));
+		stmts.addAll(genClockInitStmts(clockVars));
+		VariableDeclaration[] localVars = {};
+		IdentifierExpression selector = null;
+		if (patterns.size() > 1) {
+			final ASTType intType = new PrimitiveType(bl, BoogieType.TYPE_INT, "int");
+			localVars = new VariableDeclaration[] { new VariableDeclaration(bl, new Attribute[0],
+					new VarList[] { new VarList(bl, new String[] { TESTSCENARIO_SELECTOR_NAME }, intType) }) };
+			selector = new IdentifierExpression(bl, BoogieType.TYPE_INT, TESTSCENARIO_SELECTOR_NAME,
+					new DeclarationInformation(DeclarationInformation.StorageClass.LOCAL, procName));
+			stmts.add(new HavocStatement(bl, new VariableLHS[] { new VariableLHS(bl, TESTSCENARIO_SELECTOR_NAME) }));
+			stmts.add(new AssumeStatement(bl, ExpressionFactory.newBinaryExpression(bl, Operator.LOGICAND,
+					ExpressionFactory.newBinaryExpression(bl, Operator.COMPLEQ,
+							ExpressionFactory.createIntegerLiteral(bl, "1"), selector),
+					ExpressionFactory.newBinaryExpression(bl, Operator.COMPLEQ, selector,
+							ExpressionFactory.createIntegerLiteral(bl, Integer.toString(patterns.size()))))));
+		}
 		stmts.add(new WhileStatement(bl, new WildcardExpression(bl), new LoopInvariantSpecification[0],
-				genTestCaseLoopBody(bl, patterns, reqPeas, primedVars, eventVars, clockVars, stateVars, selector)));
+				genTestScenarioLoopBody(bl, patterns, reqPeas, clockVars, stateVars, eventVars, primedVars, selector)));
+
+		return new Procedure(bl, new Attribute[0], procName, new String[0], new VarList[0], new VarList[0], modifies,
+				new Body(bl, localVars, stmts.toArray(new Statement[stmts.size()])));
+	}
+
+	/**
+	 * Like {@link #genWhileLoopBody(BoogieLocation)}, plus per pattern (guarded by "selector == i ==>" if there are
+	 * several): delta stops at each boundary of the trace, and each trace segment is assumed while it lasts. The assert
+	 * is violated once the whole trace has elapsed.
+	 */
+	private Statement[] genTestScenarioLoopBody(final BoogieLocation bl, final List<TestScenarioPattern<?>> patterns,
+			final List<ReqPeas> reqPeas, final Collection<String> clockVars, final Collection<String> stateVars,
+			final Collection<String> eventVars, final Collection<String> primedVars,
+			final IdentifierExpression selector) {
+		final IdentifierExpression clock = mSymboltable.getIdentifierExpression(mSymboltable.getTestScenarioClockName());
+		final IdentifierExpression delta = mSymboltable.getIdentifierExpression(mSymboltable.getDeltaVarName());
+		final Expression clockPlusDelta = bin(bl, Operator.ARITHPLUS, clock, delta);
+		final CDDTranslator cddTranslator = new CDDTranslator();
+
+		final List<Statement> stmts = new ArrayList<>(genHavocStmts(primedVars));
+		stmts.addAll(genHavocStmts(eventVars));
+		stmts.addAll(genHavocStmts(Collections.singleton(mSymboltable.getDeltaVarName())));
+		stmts.add(new AssumeStatement(bl, bin(bl, Operator.COMPGT, delta, new RealLiteral(bl, DOUBLE_ZERO))));
+
+		final List<Statement> asserts = new ArrayList<>();
+		for (int i = 0; i < patterns.size(); i++) {
+			final TestScenarioPattern<?> pattern = patterns.get(i);
+			final Expression guard = selector == null ? null
+					: ExpressionFactory.newBinaryExpression(bl, Operator.COMPEQ, selector,
+							ExpressionFactory.createIntegerLiteral(bl, Integer.toString(i + 1)));
+			final List<CDD> cdds = pattern.getCdds();
+			Rational lower = Rational.ZERO;
+			for (int j = 0; j < cdds.size(); j++) {
+				final Rational upper = lower.add(pattern.getDurations().get(j));
+				final Expression upperLit = new RealLiteral(bl, toDoubleString(upper));
+				// clock < upper ==> clock + delta <= upper
+				stmts.add(new AssumeStatement(bl, guardedBy(bl, guard, bin(bl, Operator.LOGICIMPLIES,
+						bin(bl, Operator.COMPLT, clock, upperLit), bin(bl, Operator.COMPLEQ, clockPlusDelta, upperLit)))));
+				// clock < upper && clock + delta > lower ==> segment j
+				final Expression overlap = bin(bl, Operator.LOGICAND, bin(bl, Operator.COMPLT, clock, upperLit),
+						bin(bl, Operator.COMPGT, clockPlusDelta, new RealLiteral(bl, toDoubleString(lower))));
+				stmts.add(new AssumeStatement(bl, guardedBy(bl, guard,
+						bin(bl, Operator.LOGICIMPLIES, overlap, cddTranslator.toBoogie(cdds.get(j), bl)))));
+				lower = upper;
+			}
+			final Expression notYetElapsed = bin(bl, Operator.COMPLT, clock, new RealLiteral(bl, toDoubleString(lower)));
+			asserts.addAll(mReqCheckAnnotator.getTestScenarioCheck(bl, pattern, guardedBy(bl, guard, notYetElapsed)));
+		}
+
+		stmts.addAll(genClockPlusDelta(clockVars));
+		for (final ReqPeas reqpea : reqPeas) {
+			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
+				stmts.addAll(genInvariantGuards(reqpea.getPattern(), pea.getValue(),
+						mSymboltable.getPcName(pea.getValue()), bl));
+			}
+		}
+		stmts.addAll(asserts);
+		for (final ReqPeas reqpea : reqPeas) {
+			for (final Entry<CounterTrace, PhaseEventAutomata> ct2pea : reqpea.getCounterTrace2Pea()) {
+				final PhaseEventAutomata pea = ct2pea.getValue();
+				stmts.add(generateTransition(pea, mSymboltable.getPcName(pea), bl));
+			}
+		}
+		stmts.addAll(genStateVarsAssign(stateVars));
 		return stmts.toArray(new Statement[stmts.size()]);
-	}
-
-	private AssumeStatement genSelectorRangeAssume(final BoogieLocation bl, final IdentifierExpression selector,
-			final int numPatterns) {
-		final Expression lower = ExpressionFactory.newBinaryExpression(bl, Operator.COMPLEQ,
-				ExpressionFactory.createIntegerLiteral(bl, "1"), selector);
-		final Expression upper = ExpressionFactory.newBinaryExpression(bl, Operator.COMPLEQ, selector,
-				ExpressionFactory.createIntegerLiteral(bl, Integer.toString(numPatterns)));
-		return new AssumeStatement(bl, ExpressionFactory.newBinaryExpression(bl, Operator.LOGICAND, lower, upper));
-	}
-
-	// selector == idx (1-based)
-	private static Expression selectorEquals(final BoogieLocation bl, final IdentifierExpression selector,
-			final int idx1Based) {
-		return ExpressionFactory.newBinaryExpression(bl, Operator.COMPEQ, selector,
-				ExpressionFactory.createIntegerLiteral(bl, Integer.toString(idx1Based)));
 	}
 
 	// guard ==> expr, or just expr if guard is null.
@@ -434,264 +506,6 @@ public class Req2BoogieTranslator {
 
 	private static Expression bin(final BoogieLocation bl, final Operator op, final Expression a, final Expression b) {
 		return new BinaryExpression(bl, op, a, b);
-	}
-
-	// Shared loop body for all TestCase procedure variants. Per pattern (guarded by "selector == idx ==>" if
-	// selector != null): delta bound + trace CDD assumes, then the reachability assert.
-	private Statement[] genTestCaseLoopBody(final BoogieLocation bl, final List<PatternType<?>> patterns,
-			final List<ReqPeas> reqPeas, final Collection<String> primedVars, final Collection<String> eventVars,
-			final Collection<String> clockVars, final Collection<String> stateVars,
-			final IdentifierExpression selector) {
-		final IdentifierExpression clock = mSymboltable.getIdentifierExpression(mSymboltable.getTestCaseClockName());
-		final IdentifierExpression delta = mSymboltable.getIdentifierExpression(mSymboltable.getDeltaVarName());
-		final Expression clockPlusDelta = bin(bl, Operator.ARITHPLUS, clock, delta);
-		final CDDTranslator cddTranslator = new CDDTranslator();
-
-		final List<Statement> stmts = new ArrayList<>(genHavocStmts(primedVars));
-		stmts.addAll(genHavocStmts(eventVars));
-		stmts.addAll(genHavocStmts(Collections.singleton(mSymboltable.getDeltaVarName())));
-		stmts.add(new AssumeStatement(bl, bin(bl, Operator.COMPGT, delta, new RealLiteral(bl, "0.0"))));
-
-		for (int idx = 0; idx < patterns.size(); idx++) {
-			final PatternType<?> pattern = patterns.get(idx);
-			final Expression guard = selector == null ? null : selectorEquals(bl, selector, idx + 1);
-			final List<Rational> boundaries = computeBoundaries(pattern);
-
-			for (final Rational boundary : boundaries) {
-				final Expression lit = new RealLiteral(bl, toDoubleString(boundary));
-				final Expression notYetPast = bin(bl, Operator.COMPLT, clock, lit);
-				final Expression mustNotOvershoot = bin(bl, Operator.COMPLEQ, clockPlusDelta, lit);
-				stmts.add(new AssumeStatement(bl,
-						guardedBy(bl, guard, bin(bl, Operator.LOGICIMPLIES, notYetPast, mustNotOvershoot))));
-			}
-
-			final List<CDD> cdds = pattern.getCdds();
-			Rational lower = Rational.ZERO;
-			for (int i = 0; i < cdds.size(); i++) {
-				final Rational upper = boundaries.get(i);
-				final Expression overlap = bin(bl, Operator.LOGICAND,
-						bin(bl, Operator.COMPLT, clock, new RealLiteral(bl, toDoubleString(upper))),
-						bin(bl, Operator.COMPGT, clockPlusDelta, new RealLiteral(bl, toDoubleString(lower))));
-				final Expression segmentExpr = cddTranslator.toBoogie(cdds.get(i), bl);
-				stmts.add(new AssumeStatement(bl,
-						guardedBy(bl, guard, bin(bl, Operator.LOGICIMPLIES, overlap, segmentExpr))));
-				lower = upper;
-			}
-		}
-
-		stmts.addAll(genClockPlusDelta(clockVars));
-
-		for (final ReqPeas reqpea : reqPeas) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
-				stmts.addAll(genInvariantGuards(reqpea.getPattern(), pea.getValue(),
-						mSymboltable.getPcName(pea.getValue()), bl));
-			}
-		}
-
-		// Reachability assert
-		for (int idx = 0; idx < patterns.size(); idx++) {
-			final PatternType<?> pattern = patterns.get(idx);
-			final Expression guard = selector == null ? null : selectorEquals(bl, selector, idx + 1);
-			final List<Rational> boundaries = computeBoundaries(pattern);
-			final Rational total = boundaries.isEmpty() ? Rational.ZERO : boundaries.get(boundaries.size() - 1);
-			final Expression notYetElapsed =
-					bin(bl, Operator.COMPLT, clock, new RealLiteral(bl, toDoubleString(total)));
-			stmts.addAll(mReqCheckAnnotator.getTestCaseCheck(bl, pattern, guardedBy(bl, guard, notYetElapsed)));
-		}
-
-		for (final ReqPeas reqpea : reqPeas) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> ct2pea : reqpea.getCounterTrace2Pea()) {
-				final PhaseEventAutomata pea = ct2pea.getValue();
-				stmts.add(generateTransition(pea, mSymboltable.getPcName(pea), bl));
-			}
-		}
-
-		stmts.addAll(genStateVarsAssign(stateVars));
-		return stmts.toArray(new Statement[stmts.size()]);
-	}
-
-	private List<Rational> computeBoundaries(final PatternType<?> pattern) {
-		final List<Rational> boundaries = new ArrayList<>();
-		Rational cumulative = Rational.ZERO;
-		for (final Rational d : pattern.getDurations()) {
-			cumulative = cumulative.add(d);
-			boundaries.add(cumulative);
-		}
-		return boundaries;
-	}
-
-	// modifies clause for myProcedure - always the full set, it drives every requirement.
-	private ModifiesSpecification[] buildModifiesSpecificationArray(final BoogieLocation bl) {
-		return buildModifiesSpecificationArray(bl, mSymboltable.getClockVars(), mSymboltable.getPcVars(),
-				mSymboltable.getStateVars(), mSymboltable.getEventVars(), mSymboltable.getPrimedVars());
-	}
-
-	// modifies clause for one TestCase procedure, restricted to relevantReqPeas instead of all requirements.
-	private ModifiesSpecification[] buildTestCaseModifiesSpecificationArray(final BoogieLocation bl,
-			final List<ReqPeas> relevantReqPeas, final PatternType<?> testCasePattern) {
-		return buildModifiesSpecificationArray(bl, getRelevantClockNames(relevantReqPeas),
-				getRelevantPcNames(relevantReqPeas), getRelevantStateVars(relevantReqPeas, testCasePattern),
-				getRelevantEventVars(relevantReqPeas), getRelevantPrimedVars(relevantReqPeas, testCasePattern));
-	}
-
-	private ModifiesSpecification[] buildModifiesSpecificationArray(final BoogieLocation bl,
-			final Collection<String> clockNames, final Collection<String> pcNames, final Collection<String> stateVars,
-			final Collection<String> eventVars, final Collection<String> primedVars) {
-		final List<String> modifiedVarsList = new ArrayList<>(clockNames);
-		modifiedVarsList.addAll(pcNames);
-		modifiedVarsList.add(mSymboltable.getDeltaVarName());
-		modifiedVarsList.addAll(stateVars);
-		modifiedVarsList.addAll(primedVars);
-		if (mBuildHistoryVars) {
-			for (final String stateVar : stateVars) {
-				modifiedVarsList.add(mSymboltable.getHistoryVarId(stateVar));
-			}
-		}
-		modifiedVarsList.addAll(eventVars);
-
-		final VariableLHS[] modifiedVars = new VariableLHS[modifiedVarsList.size()];
-		for (int i = 0; i < modifiedVars.length; i++) {
-			modifiedVars[i] = new VariableLHS(bl, modifiedVarsList.get(i));
-		}
-		return new ModifiesSpecification[] { new ModifiesSpecification(bl, false, modifiedVars) };
-	}
-
-	// Clocks used by reqPeas, plus testCaseClock (needed for the trace assumes).
-	private Set<String> getRelevantClockNames(final List<ReqPeas> reqPeas) {
-		final Set<String> clocks = new LinkedHashSet<>();
-		clocks.add(mSymboltable.getTestCaseClockName());
-		for (final ReqPeas reqpea : reqPeas) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> e : reqpea.getCounterTrace2Pea()) {
-				clocks.addAll(e.getValue().getClocks());
-			}
-		}
-		return clocks;
-	}
-
-	private Set<String> getRelevantPcNames(final List<ReqPeas> reqPeas) {
-		final Set<String> pcNames = new LinkedHashSet<>();
-		for (final ReqPeas reqpea : reqPeas) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> e : reqpea.getCounterTrace2Pea()) {
-				pcNames.add(mSymboltable.getPcName(e.getValue()));
-			}
-		}
-		return pcNames;
-	}
-
-	// State vars used by reqPeas's PEAs, unioned with whatever the TestCase's own trace CDDs reference directly.
-	private Set<String> getRelevantStateVars(final List<ReqPeas> reqPeas, final PatternType<?> testCasePattern) {
-		final Set<String> vars = new LinkedHashSet<>();
-		for (final ReqPeas reqpea : reqPeas) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> e : reqpea.getCounterTrace2Pea()) {
-				for (final Entry<String, String> varEntry : e.getValue().getVariables().entrySet()) {
-					final String type = varEntry.getValue();
-					if (type != null && !"event".equalsIgnoreCase(type)) {
-						vars.add(varEntry.getKey());
-					}
-				}
-			}
-		}
-		for (final CDD cdd : testCasePattern.getCdds()) {
-			vars.addAll(getVariablesUsedIn(cdd));
-		}
-		return filterKnownVars(vars, testCasePattern.getId() + " state vars");
-	}
-
-	private static Set<String> getVariablesUsedIn(final CDD cdd) {
-		final Set<String> vars = new LinkedHashSet<>();
-		for (final List<Pair<Decision<?>, int[]>> conjunction : cdd.getDecisionsDNF()) {
-			for (final Pair<Decision<?>, int[]> entry : conjunction) {
-				final Decision<?> decision = entry.getFirst();
-				if (decision instanceof BoogieBooleanExpressionDecision) {
-					vars.addAll(((BoogieBooleanExpressionDecision) decision).getVars().keySet());
-				} else {
-					vars.add(decision.getVar());
-				}
-			}
-		}
-		return vars;
-	}
-
-	// Drops CONST names and any name the symbol table doesn't recognize.
-	private Set<String> filterKnownVars(final Set<String> vars, final String context) {
-		final Set<String> known = new LinkedHashSet<>(mSymboltable.getStateVars());
-		known.addAll(mSymboltable.getEventVars());
-		known.addAll(mSymboltable.getClockVars());
-		known.addAll(mSymboltable.getPcVars());
-		final Set<String> notModifiable = new LinkedHashSet<>(vars);
-		notModifiable.removeAll(known);
-
-		final Set<String> consts = mSymboltable.getConstVars();
-		final Set<String> trulyUnknown = new LinkedHashSet<>(notModifiable);
-		trulyUnknown.removeAll(consts);
-		if (!trulyUnknown.isEmpty()) {
-			mLogger.warn(context + ": ignoring variable(s) unknown to the symbol table: " + trulyUnknown);
-		}
-
-		final Set<String> result = new LinkedHashSet<>(vars);
-		result.removeAll(notModifiable);
-		return result;
-	}
-
-	private Set<String> getRelevantEventVars(final List<ReqPeas> reqPeas) {
-		final Set<String> vars = new LinkedHashSet<>();
-		for (final ReqPeas reqpea : reqPeas) {
-			for (final Entry<CounterTrace, PhaseEventAutomata> e : reqpea.getCounterTrace2Pea()) {
-				for (final Entry<String, String> varEntry : e.getValue().getVariables().entrySet()) {
-					if ("event".equalsIgnoreCase(varEntry.getValue())) {
-						vars.add(varEntry.getKey());
-					}
-				}
-			}
-		}
-		return filterKnownVars(vars, "event vars");
-	}
-
-	// Primed versions of the relevant state vars, clocks, and pcs.
-	private Set<String> getRelevantPrimedVars(final List<ReqPeas> relevantReqPeas,
-			final PatternType<?> testCasePattern) {
-		final Set<String> primed = new LinkedHashSet<>();
-		for (final String v : getRelevantStateVars(relevantReqPeas, testCasePattern)) {
-			primed.add(mSymboltable.getPrimedVarId(v));
-		}
-		for (final String v : getRelevantClockNames(relevantReqPeas)) {
-			primed.add(mSymboltable.getPrimedVarId(v));
-		}
-		for (final String v : getRelevantPcNames(relevantReqPeas)) {
-			primed.add(mSymboltable.getPrimedVarId(v));
-		}
-		return primed;
-	}
-
-	// Whole-graph checkbox on -> all requirements. Off -> only requirements matching the "for R1" target.
-	private List<ReqPeas> getRelevantReqPeas(final PatternType<?> testCasePattern) {
-		if (mTestCasesCheckWholeGraph) {
-			return mReqPeas;
-		}
-		final String targetReqId = getTargetReqId(testCasePattern);
-		final List<ReqPeas> filtered = new ArrayList<>();
-		for (final ReqPeas reqpea : mReqPeas) {
-			if (matchesTarget(targetReqId, reqpea.getPattern().getId())) {
-				filtered.add(reqpea);
-			}
-		}
-		return filtered;
-	}
-
-	// A single natural-language requirement can be split into several formalizations sharing one base ID (e.g.
-	// ELS_2_0, ELS_2_1_1, ELS_2_2_2 all belong to ELS_2).
-	private static boolean matchesTarget(final String targetReqId, final String reqId) {
-		return reqId.equals(targetReqId) || reqId.startsWith(targetReqId + "_");
-	}
-
-	private static String getTargetReqId(final PatternType<?> pattern) {
-		if (pattern instanceof TestCasePositivePattern) {
-			return ((TestCasePositivePattern) pattern).getTargetReqId();
-		}
-		if (pattern instanceof TestCaseNegativePattern) {
-			return ((TestCaseNegativePattern) pattern).getTargetReqId();
-		}
-		return null;
 	}
 
 	private static String toDoubleString(final Rational r) {
@@ -1146,11 +960,28 @@ public class Req2BoogieTranslator {
 		final BoogieLocation bl = mUnitLocation;
 		final VariableDeclaration[] localVars = {};
 		final Body body = new Body(bl, localVars, generateProcedureBody(bl, init));
+		final List<String> modifiedVarsList = new ArrayList<>(mSymboltable.getClockVars());
+
+		modifiedVarsList.addAll(mSymboltable.getPcVars());
+		modifiedVarsList.add(mSymboltable.getDeltaVarName());
+		modifiedVarsList.addAll(mSymboltable.getStateVars());
+		modifiedVarsList.addAll(mSymboltable.getPrimedVars());
+		if (mBuildHistoryVars) {
+			modifiedVarsList.addAll(mSymboltable.getHistoryVars());
+		}
+		modifiedVarsList.addAll(mSymboltable.getEventVars());
+
+		final VariableLHS[] modifiedVars = new VariableLHS[modifiedVarsList.size()];
+		for (int i = 0; i < modifiedVars.length; i++) {
+			modifiedVars[i] = new VariableLHS(bl, modifiedVarsList.get(i));
+		}
+		final ModifiesSpecification mod = new ModifiesSpecification(bl, false, modifiedVars);
+		final ModifiesSpecification[] modArray = new ModifiesSpecification[1];
+		modArray[0] = mod;
 		final Attribute[] attribute = {};
 		final String[] typeParams = {};
 		final VarList[] inParams = {};
 		final VarList[] outParams = {};
-		return new Procedure(bl, attribute, PROCEDURE_NAME, typeParams, inParams, outParams,
-				buildModifiesSpecificationArray(bl), body);
+		return new Procedure(bl, attribute, PROCEDURE_NAME, typeParams, inParams, outParams, modArray, body);
 	}
 }

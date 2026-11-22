@@ -69,8 +69,8 @@ public class PatternBuilder {
 			DurationBoundLPattern.class, PersistencePattern.class, PrecedenceChain12Pattern.class,
 			PrecedenceChain21Pattern.class, PrecedencePattern.class, ResponseChain12Pattern.class,
 			ResponsePattern.class, UniversalityPattern.class, UniversalityDelayPattern.class,
-			InvarianceDelayPattern.class, ConditionalResponseBoundL1Pattern.class, TestCasePositivePattern.class,
-			TestCaseNegativePattern.class };
+			InvarianceDelayPattern.class, ConditionalResponseBoundL1Pattern.class, TestScenarioPositivePattern.class,
+			TestScenarioNegativePattern.class };
 
 	private static final Map<Class<? extends PatternType<?>>, PatternTypeConstructor> CONSTRUCTORS = new HashMap<>();
 
@@ -112,11 +112,11 @@ public class PatternBuilder {
 		return this;
 	}
 
-	public boolean isTestCase() {
-		return mClazz == TestCasePositivePattern.class || mClazz == TestCaseNegativePattern.class;
+	public boolean isTestScenario() {
+		return mClazz == TestScenarioPositivePattern.class || mClazz == TestScenarioNegativePattern.class;
 	}
 
-	/** Only for TestCasePositivePattern/TestCaseNegativePattern: unpacks a parsed trace into cdds/durations. */
+	/** Only for TestScenarioPositivePattern/TestScenarioNegativePattern: unpacks a parsed trace into cdds/durations. */
 	public PatternBuilder addTrace(final List<Pair<Rational, CDD>> trace) {
 		for (final Pair<Rational, CDD> segment : trace) {
 			addCdd(segment.getSecond());

@@ -1,0 +1,42 @@
+// Test scenarios on a small ignition example: test scenarios of one requirement and global ones
+//
+// Settings (Pea2Boogie): "TestScenarios test the whole graph" (default true) checks every test scenario against all
+// requirements, false checks the ones of a requirement only against it. The result is the same here.
+// A failed "trace is forbidden to hold" shows the run on which the trace happens, if the setting (TraceAbstraction)
+// "Compute trace for counterexample result" is on.
+//
+// Expected:  test scenario       result   why
+//            TS_IGN_1_POS_1      passed   starting with brake is possible
+//            TS_IGN_1_NEG_1      passed   IGN_1 forbids that the engine stays off for more than 2
+//            TS_IGN_3_NEG_1      FAILED   nothing forbids "tank empty, engine off" -> run
+//            TS_START_POS        passed   the normal start
+//            TS_NOBRAKE_NEG      FAILED   no requirement forbids a start without brake -> run
+//            TS_FUEL_POS         FAILED   IGN_3: the engine cannot run with an empty tank
+//            TS_CONFLICT_POS     FAILED   IGN_1 forces the engine on, IGN_3 off
+//            TS_NOKEY_POS        FAILED   IGN_2: without key the engine is off
+//            => Test scenarios: 3/8 passed
+
+Input key_inserted is bool
+Input key_turned is bool
+Input brake_pressed is bool
+Input fuel_empty is bool
+Input engine_on is bool
+
+IGN_1: Globally, it is always the case that if "key_inserted && key_turned && brake_pressed" holds, then "engine_on" holds after at most "2" time units
+IGN_2: Globally, it is always the case that if "!key_inserted" holds, then "!engine_on" holds as well
+IGN_3: Globally, it is always the case that if "fuel_empty" holds, then "!engine_on" holds as well
+IGN_4: Globally, it is never the case that "key_turned && !key_inserted" holds
+
+//Test scenarios of one requirement
+
+TS_IGN_1_POS_1: TestScenario for IGN_1, trace has to hold: (1.0, key_inserted && key_turned && brake_pressed && !engine_on), (1.0, key_inserted && key_turned && engine_on)
+TS_IGN_1_NEG_1: TestScenario for IGN_1, trace is forbidden to hold: (3.0, key_inserted && key_turned && brake_pressed && !engine_on)
+TS_IGN_3_NEG_1: TestScenario for IGN_3, trace is forbidden to hold: (1.0, fuel_empty && !engine_on)
+
+//Global test scenarios
+
+TS_START_POS: TestScenario for ALL, trace has to hold: (1.0, key_inserted && !key_turned && !fuel_empty && !engine_on), (1.0, key_inserted && key_turned && brake_pressed && !fuel_empty && !engine_on), (1.0, key_inserted && key_turned && !fuel_empty && engine_on)
+TS_NOBRAKE_NEG: TestScenario for ALL, trace is forbidden to hold: (1.0, key_inserted && key_turned && !brake_pressed && !fuel_empty && !engine_on), (1.0, key_inserted && key_turned && !brake_pressed && !fuel_empty && engine_on)
+TS_FUEL_POS: TestScenario for ALL, trace has to hold: (1.0, key_inserted && key_turned && brake_pressed && !fuel_empty && !engine_on), (2.0, key_inserted && key_turned && fuel_empty && engine_on)
+TS_CONFLICT_POS: TestScenario for ALL, trace has to hold: (3.0, key_inserted && key_turned && brake_pressed && fuel_empty)
+TS_NOKEY_POS: TestScenario for ALL, trace has to hold: (1.0, !key_inserted && engine_on)

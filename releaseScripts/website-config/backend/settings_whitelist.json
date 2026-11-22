@@ -80,5 +80,9 @@
 		"Check feasibility of abstract posts with an SMT solver",
 		"Interval Domain",
 		"Abstract domain"
+	],
+	"de.uni_freiburg.informatik.ultimate.pea2boogie": [
+		"TestScenarios test the whole graph",
+		"TestScenarios whole-graph: TestScenarios per procedure"
 	]
 }

@@ -100,6 +100,7 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckFailResult
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckRedundancyResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckRtInconsistentResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckSuccessResult;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.results.TestScenarioCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -175,10 +176,10 @@ public class VerificationResultTransformer {
 		final Spec spec = specs.iterator().next();
 		dieIfUnsupported(spec);
 
-		if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS || spec == Spec.REDUNDANCY || spec == Spec.TESTCASE_POS) {
+		if (spec == Spec.CONSISTENCY || spec == Spec.VACUOUS || spec == Spec.REDUNDANCY || spec == Spec.TESTSCENARIO_POS) {
 			// a counterexample for consistency and vacuity and redundancy means that the
 			// requirements are consistent or non-vacuous or non-redundant
-			// a counterexample for TESTCASE_POS ("... trace has to hold: ...") means the fixed example trace is
+			// a counterexample for TESTSCENARIO_POS ("... trace has to hold: ...") means the fixed example trace is
 			// possible together with the requirement automaton, i.e. the test passed
 			isPositive = !isPositive;
 		}
@@ -215,6 +216,10 @@ public class VerificationResultTransformer {
 			final String failurePath = formatTimeSequenceMap(delta2var2value);
 			return new ReqCheckRtInconsistentResult<>(element, plugin, failurePath);
 		}
+		if (spec == Spec.TESTSCENARIO_NEG && reqCheck instanceof final TestScenarioCheck testScenarioCheck) {
+			// the counterexample is a run on which the forbidden trace happens, shown in the TestScenario summary
+			testScenarioCheck.setFailurePath(generateTestScenarioFailurePath(oldRes));
+		}
 		// If no InvariantResult is present, fall through to generic FailResult
 		if (spec == Spec.REDUNDANCY && invResult != null) {
 			// Annotation needed for the result to know the respective Check
@@ -232,6 +237,33 @@ public class VerificationResultTransformer {
 
 		}
 		return new ReqCheckFailResult<>(element, plugin);
+	}
+
+	// The variable values per time interval of the counterexample of a failed TestScenario, null if there is none.
+	private String generateTestScenarioFailurePath(final AbstractResultAtElement<?> result) {
+		if (!(result instanceof CounterExampleResult<?, ?, ?>)) {
+			return null;
+		}
+		@SuppressWarnings("unchecked")
+		final IProgramExecution<?, Term> pe = ((CounterExampleResult<?, ?, Term>) result).getProgramExecution();
+		// no values if "Compute trace for counterexample result" is off: then there is no run to show
+		if (pe == null || !hasValues(pe)) {
+			return null;
+		}
+		final List<Entry<Rational, Map<Term, Term>>> delta2var2value = generateTimeSequenceMap(pe.getProgramStates());
+		// only the variables of the requirements: no primed (x') and history ('x) copies of them
+		final Set<String> shown = new HashSet<>(mReqSymbolTable.getStateVars());
+		shown.addAll(mReqSymbolTable.getEventVars());
+		shown.removeAll(mReqSymbolTable.getPrimedVars());
+		shown.removeAll(mReqSymbolTable.getHistoryVars());
+		for (final Entry<Rational, Map<Term, Term>> entry : delta2var2value) {
+			entry.getValue().keySet().removeIf(var -> !shown.contains(var.toString().replace("|", "")));
+		}
+		return delta2var2value.isEmpty() ? null : formatTimeSequenceMap(delta2var2value);
+	}
+
+	private static boolean hasValues(final IProgramExecution<?, Term> pe) {
+		return pe.getProgramStates().stream().filter(Objects::nonNull).anyMatch(s -> !s.getVariables().isEmpty());
 	}
 
 	private static Set<String> extractRedundancySet(final Expression invariant) {
@@ -608,8 +640,8 @@ public class VerificationResultTransformer {
 		case RTINCONSISTENT:
 		case COMPLEMENT:
 		case REDUNDANCY:
-		case TESTCASE_POS:
-		case TESTCASE_NEG:
+		case TESTSCENARIO_POS:
+		case TESTSCENARIO_NEG:
 			return;
 		default:
 			throw new UnsupportedOperationException("Unknown spec type " + spec);

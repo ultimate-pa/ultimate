@@ -65,8 +65,8 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityDelay
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TestCasePositivePattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TestCaseNegativePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TestScenarioPositivePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TestScenarioNegativePattern;
 
 parser ReqParser;
 option symbols = ReqSymbols;
@@ -172,7 +172,7 @@ terminal LE, GREATER, LTEQ, GTEQ, NEQ, EQ, PARTORDER;
 terminal PLUS, MINUS;
 terminal TIMES, DIVIDE, MOD;
 terminal TRUE, FALSE;
-terminal TESTCASE, TRACE, HAS, FORBIDDEN;
+terminal TESTSCENARIO, TRACE, HAS, FORBIDDEN;
 terminal String ID;
 terminal String TYPE;
 terminal String REALNUMBER;
@@ -193,7 +193,7 @@ non terminal Expression exprImplies, exprImpliesNI, exprAnd, exprAndNI, exprOr, 
 non terminal Expression expr1NI, expr2NI, expr3NI, expr5NI; 
 non terminal Expression expr6NI, expr7NI, expr9NI;
 
-non terminal List<Pair<Rational,CDD>> testCaseTrace;
+non terminal List<Pair<Rational,CDD>> testScenarioTrace;
 
 precedence left LOR;
 precedence left LAND;
@@ -206,8 +206,8 @@ patternset ::=
 	;
 
 property ::= propid?:id scope:s COMMA? pattern:p DOT?
-               {: if ((s instanceof SrParseScopeTestCase) != p.isTestCase()) {
-                      parser.report_error("\"TestCase for <ReqID>\" and \"trace ...\" can only be used together");
+               {: if ((s instanceof SrParseScopeTestScenario) != p.isTestScenario()) {
+                      parser.report_error("\"TestScenario for <ReqID>\" and \"trace ...\" can only be used together");
                       RESULT = null;
                   } else {
                       p.setScope(s).setId(id); RESULT = parser.registerNonInitPattern(p.build(parser.mDurations));
@@ -247,8 +247,8 @@ scope ::=
       {: RESULT = new SrParseScopeBetween(p,q); :}
   | AFTER expression:p UNTIL expression:q
       {: RESULT = new SrParseScopeAfterUntil(p,q); :}
-  | TESTCASE FOR ID:reqId
-      {: RESULT = new SrParseScopeTestCase(reqId); :}
+  | TESTSCENARIO FOR ID:reqId
+      {: RESULT = new SrParseScopeTestScenario(reqId); :}
   ;
   
 pattern ::=	IT IS NEVER THE CASE THAT expression:r HOLDS
@@ -269,10 +269,10 @@ pattern ::=	IT IS NEVER THE CASE THAT expression:r HOLDS
 			{: RESULT = r; :}
 	  	| IT IS ALWAYS THE CASE THAT rtpattern:r
 	  		{: RESULT = r; :}
-	  	| TRACE HAS TO HOLD IDSEP testCaseTrace:t
-	  		{: RESULT = new PatternBuilder(); RESULT.setType(TestCasePositivePattern.class); RESULT.addTrace(t); :}
-	  	| TRACE IS FORBIDDEN TO HOLD IDSEP testCaseTrace:t
-	  		{: RESULT = new PatternBuilder(); RESULT.setType(TestCaseNegativePattern.class); RESULT.addTrace(t); :}
+	  	| TRACE HAS TO HOLD IDSEP testScenarioTrace:t
+	  		{: RESULT = new PatternBuilder(); RESULT.setType(TestScenarioPositivePattern.class); RESULT.addTrace(t); :}
+	  	| TRACE IS FORBIDDEN TO HOLD IDSEP testScenarioTrace:t
+	  		{: RESULT = new PatternBuilder(); RESULT.setType(TestScenarioNegativePattern.class); RESULT.addTrace(t); :}
 	     ;
   
 opattern ::= IF expression:r HOLDS COMMA? THEN expression:s PREVIOUSLY HELD
@@ -331,9 +331,9 @@ rtpattern ::= ONCE expression:r BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST d
   			;
   			
   			
- testCaseTrace ::= LPAR num:n COMMA expr:e RPAR
+ testScenarioTrace ::= LPAR num:n COMMA expr:e RPAR
           {: RESULT = new ArrayList<Pair<Rational,CDD>>(); RESULT.add(new Pair<>(n,e)); :}
-        | testCaseTrace:l COMMA LPAR num:n COMMA expr:e RPAR
+        | testScenarioTrace:l COMMA LPAR num:n COMMA expr:e RPAR
           {: l.add(new Pair<>(n,e)); RESULT = l; :}
         ;
 

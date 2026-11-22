@@ -32,8 +32,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ITestScenarioCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DataRaceFoundResult;
@@ -70,22 +72,10 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 	private final BiConsumer<IcfgLocation, IResult> mReportFunction;
 	private final String mPluginId;
 	private final String mPluginName;
-	private final List<String> mFailedTests = new ArrayList<>();
-
-	private int mTestCount = 0;
-	private int mTestPassed = 0;
-
-	public int getPassedTests() {
-		return mTestPassed;
-	}
-
-	public int getTotalTests() {
-		return mTestCount;
-	}
-
-	public List<String> getFailedTests() {
-		return mFailedTests;
-	}
+	// outcome of the TestScenarios (Spec.TESTSCENARIO_POS/NEG), see reportTestScenarioSummary
+	private final List<String> mPassedTestScenarios = new ArrayList<>();
+	private final List<Check> mFailedTestScenarios = new ArrayList<>();
+	private final List<String> mNotAnalyzedTestScenarios = new ArrayList<>();
 
 	/**
 	 * Constructor s.t. the {@link CegarLoopResultReporter} reports all created results immediately to
@@ -149,7 +139,7 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 		final PositiveResult<IIcfgElement> pResult =
 				new PositiveResult<>(mPluginName, errorLoc, mServices.getBacktranslationService());
 		mReportFunction.accept(errorLoc, pResult);
-		checkRequirementTest(errorLoc, true);
+		recordTestScenario(errorLoc, true);
 	}
 
 	private void reportCounterexampleResult(final IcfgLocation errorLoc, final IProgramExecution<L, Term> pe) {
@@ -171,18 +161,20 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 			cexResult = new CounterExampleResult<>(errorLoc, mPluginName, mServices.getBacktranslationService(), pe);
 		}
 		mReportFunction.accept(errorLoc, cexResult);
-		checkRequirementTest(errorLoc, false);
+		recordTestScenario(errorLoc, false);
 	}
 
 	private void reportLimitResult(final IcfgLocation errorLoc, final CegarLoopLocalResult<L> result) {
 		final IResult res = constructLimitResult(mServices, result, errorLoc);
 		mReportFunction.accept(errorLoc, res);
+		recordNotAnalyzedTestScenario(errorLoc);
 	}
 
 	private void reportUnknownResult(final List<UnprovabilityReason> unprovabilityReasons, final IcfgLocation errorLoc,
 			final IProgramExecution<L, Term> programExecution) {
 		if (unprovabilityReasons.isEmpty()) {
 			mReportFunction.accept(errorLoc, new NotAnalyzedResult<>(mPluginId, errorLoc));
+			recordNotAnalyzedTestScenario(errorLoc);
 		} else {
 			reportUnproveableResult(errorLoc, programExecution, unprovabilityReasons);
 		}
@@ -194,6 +186,7 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 		final IResult res = new UnprovableResult<>(mPluginName, errorLoc, mServices.getBacktranslationService(), pe,
 				unprovabilityReasons);
 		mReportFunction.accept(errorLoc, res);
+		recordNotAnalyzedTestScenario(errorLoc);
 	}
 
 	private IResult constructLimitResult(final IUltimateServiceProvider services, final CegarLoopLocalResult<L> result,
@@ -235,33 +228,56 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 		return last.getTarget();
 	}
 
-	private void checkRequirementTest(final IcfgLocation errorLoc, final boolean propertyHolds) {
+	/**
+	 * Reports a {@link RequirementTestSummaryResult} if there were TestScenarios. Called after all results are reported.
+	 */
+	public void reportTestScenarioSummary() {
+		if (mPassedTestScenarios.isEmpty() && mFailedTestScenarios.isEmpty() && mNotAnalyzedTestScenarios.isEmpty()) {
+			return;
+		}
+		final List<String> failed =
+				mFailedTestScenarios.stream().map(CegarLoopResultReporter::getFailedMessage).collect(Collectors.toList());
+		reportResult(new RequirementTestSummaryResult(mPluginName, mPassedTestScenarios, failed,
+				mNotAnalyzedTestScenarios));
+	}
 
+	private static String getFailedMessage(final Check check) {
+		final StringBuilder sb = new StringBuilder(check.getNegativeMessage());
+		final String failurePath = check instanceof final ITestScenarioCheck tsc ? tsc.getFailurePath() : null;
+		if (failurePath != null && !failurePath.isBlank()) {
+			sb.append("\n      Run on which the forbidden trace holds:");
+			failurePath.lines().forEach(line -> sb.append("\n        ").append(line));
+		}
+		return sb.toString();
+	}
+
+	private static Check getTestScenarioCheck(final IcfgLocation errorLoc) {
 		final Check check = Check.getAnnotation(errorLoc);
+		if (check == null || !check.getSpec().contains(Spec.TESTSCENARIO_POS)
+				&& !check.getSpec().contains(Spec.TESTSCENARIO_NEG)) {
+			return null;
+		}
+		return check;
+	}
 
+	private void recordTestScenario(final IcfgLocation errorLoc, final boolean assertHolds) {
+		final Check check = getTestScenarioCheck(errorLoc);
 		if (check == null) {
 			return;
 		}
-
-		final boolean isTestCasePositive = check.getSpec().contains(Spec.TESTCASE_POS);
-		final boolean isTestCaseNegative = check.getSpec().contains(Spec.TESTCASE_NEG);
-
-		if (!isTestCasePositive && !isTestCaseNegative) {
-			return;
-		}
-
-		mTestCount++;
-
-		// TESTCASE_POS ("has to hold"): test passed iff the trace is possible, i.e. the reachability trap fires
-		// (propertyHolds == false, since propertyHolds refers to the assert never being violated).
-		// TESTCASE_NEG ("is forbidden to hold"): test passed iff the trace is impossible, i.e. propertyHolds == true.
-		final boolean passed = isTestCasePositive ? !propertyHolds : propertyHolds;
-
-		if (passed) {
-			mTestPassed++;
+		// "has to hold" passes iff its trace is possible, i.e. the assert is violated; "is forbidden to hold" passes iff
+		// the assert holds
+		if (check.getSpec().contains(Spec.TESTSCENARIO_POS) != assertHolds) {
+			mPassedTestScenarios.add(check.getPositiveMessage());
 		} else {
-			mFailedTests.add(check.getNegativeMessage());
+			mFailedTestScenarios.add(check);
 		}
 	}
 
+	private void recordNotAnalyzedTestScenario(final IcfgLocation errorLoc) {
+		final Check check = getTestScenarioCheck(errorLoc);
+		if (check instanceof final ITestScenarioCheck tsc) {
+			mNotAnalyzedTestScenarios.add("TestScenario " + tsc.getTestScenarioId() + " was not analyzed");
+		}
+	}
 }

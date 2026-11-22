@@ -169,7 +169,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		// Report results that were buffered because they may be overridden or amended.
 		reportLocationResults();
 		reportBenchmarkResults();
-		reportRequirementTestSummary();
+		mResultReporter.reportTestScenarioSummary();
 
 		logNumberOfWitnessInvariants(errNodesOfAllProc);
 		mResultReporter.reportAllSafeResultIfNecessary(results, numberOfErrorLocs);
@@ -640,17 +640,5 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		public IProof getProof() {
 			return mProof;
 		}
-	}
-
-	private void reportRequirementTestSummary() {
-
-		if (mResultReporter.getTotalTests() == 0) {
-			return;
-		}
-
-		final RequirementTestSummaryResult result = new RequirementTestSummaryResult(Activator.PLUGIN_NAME,
-				mResultReporter.getPassedTests(), mResultReporter.getTotalTests(), mResultReporter.getFailedTests());
-
-		mResultReporter.reportResult(result);
 	}
 }

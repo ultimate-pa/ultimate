@@ -50,7 +50,7 @@ public interface IReq2PeaAnnotator {
 
 	List<Statement> getPostTransitionChecks();
 
-	List<Statement> getTestCaseCheck(BoogieLocation bl, PatternType<?> pattern, Expression notYetElapsedExpr);
+	List<Statement> getTestScenarioCheck(BoogieLocation bl, PatternType<?> pattern, Expression notYetElapsedExpr);
 
 	PeaResultUtil getPeaResultUtil();
 

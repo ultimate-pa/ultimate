@@ -116,19 +116,17 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			require a previosu state to determine the successor state. Note: this will only work for the very first\
 			step independend of length or usefulness.""";
 
-	public static final String LABEL_TESTCASE_WHOLE_GRAPH = "TestCases test the whole graph";
-	private static final boolean DEF_TESTCASE_WHOLE_GRAPH = true;
-	private static final String DESC_TESTCASE_WHOLE_GRAPH = """
-			If enabled, each TestCase is checked against all requirements, not just its own target - more \
-			thorough, but more expensive.""";
+	public static final String LABEL_TESTSCENARIO_WHOLE_GRAPH = "TestScenarios test the whole graph";
+	private static final boolean DEF_TESTSCENARIO_WHOLE_GRAPH = true;
+	private static final String DESC_TESTSCENARIO_WHOLE_GRAPH = """
+			If enabled, each TestScenario is checked against all requirements, not just its own target. A TestScenario \
+			"for ALL", or for an ID that matches no requirement, is always checked against all requirements.""";
 
-	public static final String LABEL_TESTCASE_WHOLE_GRAPH_BATCH_SIZE = "TestCases whole-graph: TestCases per procedure";
-	private static final int DEF_TESTCASE_WHOLE_GRAPH_BATCH_SIZE = 1;
-	private static final String DESC_TESTCASE_WHOLE_GRAPH_BATCH_SIZE = """
-			Only relevant if "TestCases test the whole graph" is enabled. How many TestCases share one procedure: \
-			1 = a separate procedure per TestCase (largest file, fastest to verify); a high value, e.g. 1000, = \
-			all TestCases in one procedure (smallest file, slowest to verify). Values in between trade file size \
-			for verification speed.""";
+	public static final String LABEL_TESTSCENARIO_WHOLE_GRAPH_BATCH_SIZE = "TestScenarios whole-graph: TestScenarios per procedure";
+	private static final int DEF_TESTSCENARIO_WHOLE_GRAPH_BATCH_SIZE = 1;
+	private static final String DESC_TESTSCENARIO_WHOLE_GRAPH_BATCH_SIZE = """
+			How many TestScenarios that are checked against all requirements share one procedure (1 = one procedure \
+			each: larger file, faster to verify).""";
 
 	public enum PEATransformerMode {
 		REQ_CHECK, REQ_TEST, REQ_RED
@@ -171,10 +169,10 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_GUESS_INITIAL, DEF_GUESS_INITIAL, DESC_GUESS_INITIAL,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_TESTCASE_WHOLE_GRAPH, DEF_TESTCASE_WHOLE_GRAPH,
-						DESC_TESTCASE_WHOLE_GRAPH, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_TESTCASE_WHOLE_GRAPH_BATCH_SIZE, DEF_TESTCASE_WHOLE_GRAPH_BATCH_SIZE,
-						DESC_TESTCASE_WHOLE_GRAPH_BATCH_SIZE, PreferenceType.Integer,
+				new UltimatePreferenceItem<>(LABEL_TESTSCENARIO_WHOLE_GRAPH, DEF_TESTSCENARIO_WHOLE_GRAPH,
+						DESC_TESTSCENARIO_WHOLE_GRAPH, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_TESTSCENARIO_WHOLE_GRAPH_BATCH_SIZE, DEF_TESTSCENARIO_WHOLE_GRAPH_BATCH_SIZE,
+						DESC_TESTSCENARIO_WHOLE_GRAPH_BATCH_SIZE, PreferenceType.Integer,
 						IUltimatePreferenceItemValidator.ONLY_POSITIVE) };
 	}
 

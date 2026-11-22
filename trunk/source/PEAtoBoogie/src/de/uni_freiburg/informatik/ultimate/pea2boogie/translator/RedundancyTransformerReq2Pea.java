@@ -54,7 +54,6 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 	private boolean mHasErrors;
 	private final IUltimateServiceProvider mServices;
 	private final Durations mDurations;
-	private boolean mHasTestCasePatterns;
 
 	public RedundancyTransformerReq2Pea(final IUltimateServiceProvider services, final ILogger logger,
 			final List<DeclarationPattern> init) {
@@ -71,7 +70,6 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 		final IReqSymbolTable symbolTable = req2pea.getSymboltable();
 		mSymbolTable = symbolTable;
 		final Set<String> constVars = mSymbolTable.getConstVars();
-		mHasTestCasePatterns = !req2pea.getTestCasePatterns().isEmpty();
 
 		for (final DeclarationPattern p : mInitPattern) {
 			builder.addInitPattern(p);
@@ -121,7 +119,7 @@ public class RedundancyTransformerReq2Pea implements IReq2Pea {
 
 	@Override
 	public IReq2PeaAnnotator getAnnotator() {
-		return new ReqCheckAnnotator(mServices, mLogger, mReqPeas, mSymbolTable, mDurations, mHasTestCasePatterns);
+		return new ReqCheckAnnotator(mServices, mLogger, mReqPeas, mSymbolTable, mDurations);
 	}
 
 }

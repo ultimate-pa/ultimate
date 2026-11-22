@@ -219,19 +219,19 @@ public enum Spec {
 			"non-redundant",
 			"redundant"),
 	/**
-	 * TestCase pattern ("... trace has to hold: ..."): the fixed example trace has to be possible together with the
+	 * TestScenario pattern ("... trace has to hold: ..."): the fixed example trace has to be possible together with the
 	 * translated requirement automaton.
 	 */
-	TESTCASE_POS(Group.REQUIREMENT,
-			"possible (test case passed)",
-			"not possible (test case failed)"),
+	TESTSCENARIO_POS(Group.REQUIREMENT,
+			"possible, as required",
+			"not possible, though required (test scenario failed)"),
 	/**
-	 * TestCase pattern ("... trace is forbidden to hold: ..."): the fixed example trace has to be impossible
+	 * TestScenario pattern ("... trace is forbidden to hold: ..."): the fixed example trace has to be impossible
 	 * together with the translated requirement automaton.
 	 */
-	TESTCASE_NEG(Group.REQUIREMENT,
-			"not possible, as required (test case passed)",
-			"possible, though forbidden (test case failed)");
+	TESTSCENARIO_NEG(Group.REQUIREMENT,
+			"not possible, as required",
+			"possible, though forbidden (test scenario failed)");
 	// @formatter:on
 
 	/**

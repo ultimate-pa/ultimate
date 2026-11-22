@@ -74,11 +74,9 @@ public class ReqTestAnnotator implements IReq2PeaAnnotator {
 	}
 
 	@Override
-	public List<Statement> getTestCaseCheck(final BoogieLocation bl, final PatternType<?> pattern,
+	public List<Statement> getTestScenarioCheck(final BoogieLocation bl, final PatternType<?> pattern,
 			final Expression notYetElapsedExpr) {
-		final NamedAttribute[] attr =
-				{ new NamedAttribute(bl, TEST_ASSERTION_PREFIX + "TESTCASE_" + pattern.getId(), new Expression[] {}) };
-		return Collections.singletonList(new AssertStatement(bl, attr, notYetElapsedExpr));
+		return Collections.emptyList();
 	}
 
 	public static String getTrackingVar(final String ident) {

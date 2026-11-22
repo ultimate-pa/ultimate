@@ -110,7 +110,7 @@ RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
    "that"           { return symbol(ReqSymbols.THAT); }
    "the"            { return symbol(ReqSymbols.THE); }
    "then"           { return symbol(ReqSymbols.THEN); }
-   "TestCase"       { return symbol(ReqSymbols.TESTCASE); }
+   "TestScenario"       { return symbol(ReqSymbols.TESTSCENARIO); }
    "time"           { return symbol(ReqSymbols.TIME); }
    "to"             { return symbol(ReqSymbols.TO); }
    "toggles"        { return symbol(ReqSymbols.TOGGLES); }

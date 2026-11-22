@@ -62,9 +62,9 @@ public interface IReqSymbolTable {
 
 	/**
 	 * Name of a free-running clock, never reset by a PEA transition. Used by
-	 * TestCasePositivePattern/TestCaseNegativePattern. Returns null if no TestCase pattern requested it.
+	 * TestScenarioPositivePattern/TestScenarioNegativePattern. Returns null if no TestScenario pattern requested it.
 	 */
-	String getTestCaseClockName();
+	String getTestScenarioClockName();
 
 	VariableLHS getVariableLhs(String clockVar);
 

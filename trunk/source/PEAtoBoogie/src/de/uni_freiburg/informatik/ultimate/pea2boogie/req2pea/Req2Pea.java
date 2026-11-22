@@ -54,8 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TestCaseNegativePattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TestCasePositivePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.TestScenarioPattern;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
@@ -73,7 +72,7 @@ public class Req2Pea implements IReq2Pea {
 	private final IUltimateServiceProvider mServices;
 	private final PeaResultUtil mResultUtil;
 	private final List<ReqPeas> mPattern2Peas;
-	private final List<PatternType<?>> mTestCasePatterns;
+	private final List<TestScenarioPattern<?>> mTestScenarioPatterns;
 	private final IReqSymbolTable mSymbolTable;
 	private final boolean mHasErrors;
 	private final Durations mDurations;
@@ -92,26 +91,17 @@ public class Req2Pea implements IReq2Pea {
 			builder.addInitPattern(pattern);
 			mDurations.addInitPattern(pattern);
 		}
-		reqs.stream().filter(r -> !(r instanceof TestCasePositivePattern || r instanceof TestCaseNegativePattern))
-				.forEach(mDurations::addNonInitPattern);
+		reqs.stream().filter(r -> !(r instanceof TestScenarioPattern)).forEach(mDurations::addNonInitPattern);
 
-		// TestCase patterns carry an example trace, not a property to verify - kept separate, no real PEA is built for
-		// them
-		final List<PatternType<?>> testCasePatterns = new ArrayList<>();
-		final List<PatternType<?>> nonTestCaseRequirements = new ArrayList<>();
-		for (final PatternType<?> req : requirements) {
-			if (req instanceof TestCasePositivePattern || req instanceof TestCaseNegativePattern) {
-				testCasePatterns.add(req);
-			} else {
-				nonTestCaseRequirements.add(req);
-			}
+		// TestScenarios carry an example trace, not a property: no PEA is built for them (see Req2BoogieTranslator)
+		mTestScenarioPatterns = requirements.stream().filter(TestScenarioPattern.class::isInstance)
+				.map(r -> (TestScenarioPattern<?>) r).collect(Collectors.toList());
+		if (!mTestScenarioPatterns.isEmpty()) {
+			builder.declareTestScenarioClockVar();
 		}
-		mTestCasePatterns = Collections.unmodifiableList(testCasePatterns);
-		if (!mTestCasePatterns.isEmpty()) {
-			builder.declareTestCaseClockVar();
-		}
-
-		mPattern2Peas = generatePeas(nonTestCaseRequirements, mDurations);
+		mPattern2Peas = generatePeas(
+				requirements.stream().filter(r -> !(r instanceof TestScenarioPattern)).collect(Collectors.toList()),
+				mDurations);
 
 		for (final ReqPeas reqpea : mPattern2Peas) {
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : reqpea.getCounterTrace2Pea()) {
@@ -157,8 +147,8 @@ public class Req2Pea implements IReq2Pea {
 	}
 
 	@Override
-	public List<PatternType<?>> getTestCasePatterns() {
-		return mTestCasePatterns;
+	public List<TestScenarioPattern<?>> getTestScenarioPatterns() {
+		return mTestScenarioPatterns;
 	}
 
 	@Override
@@ -222,8 +212,7 @@ public class Req2Pea implements IReq2Pea {
 
 	@Override
 	public IReq2PeaAnnotator getAnnotator() {
-		return new ReqCheckAnnotator(mServices, mLogger, mPattern2Peas, mSymbolTable, mDurations,
-				!mTestCasePatterns.isEmpty());
+		return new ReqCheckAnnotator(mServices, mLogger, mPattern2Peas, mSymbolTable, mDurations);
 	}
 
 	@Override
