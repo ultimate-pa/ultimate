@@ -1,6 +1,6 @@
 [L3]               int a = 5;
 [L4]               int x = 0;
-       VAL         [\at(a, Pre)=9, \at(x, Pre)=8, a=5, x=0]
+       VAL         [\at(a, Pre)=1, \at(x, Pre)=-1, a=5, x=0]
 [L13]  EXPR        a++
        VAL         [\at(a, Pre)=5, \at(x, Pre)=0, a=6, x=0]
 [L13]  CALL, EXPR  f(a++)
