@@ -282,7 +282,10 @@ public class CDTParser implements ISource {
 		final String includes =
 				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.INCLUDE_PATHS);
 		for (final String includePath : includes.split(";")) {
-			if (!new File(includePath).exists()) {
+			// Starting with Java 25, the empty String is now treated as the home directory
+			// (see https://bugs.openjdk.org/browse/JDK-8350702). To keep the previous behavior (e.g., don't include
+			// anything if no path is specified), this case is handled here explicitly.
+			if (includePath.isEmpty() || !new File(includePath).exists()) {
 				continue;
 			}
 			mLogger.info("Adding includes from " + includePath + " as file ");
