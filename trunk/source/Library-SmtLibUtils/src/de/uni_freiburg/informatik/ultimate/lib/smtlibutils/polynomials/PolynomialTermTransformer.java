@@ -121,6 +121,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	private static boolean isPolynomialFunctionSymbol(final String funName) {
 		return (funName.equals("+") || funName.equals("-") || funName.equals("*") || funName.equals("/")
 				|| funName.equals("bvadd") || funName.equals("bvsub") || funName.equals("bvmul")
+				|| funName.equals("bvneg") || funName.equals("bvnot")
 				|| funName.equals("div") || funName.equals("mod"));
 	}
 
@@ -176,6 +177,13 @@ public class PolynomialTermTransformer extends TermTransformer {
 			} else {
 				return subtract(polynomialArgs);
 			}
+
+		case "bvneg":
+			return negate(polynomialArgs[0]);
+
+		case "bvnot":
+			// the bitwise complement is -x-1
+			return negate(polynomialArgs[0]).add(Rational.MONE);
 
 		case "div":
 		case "/":

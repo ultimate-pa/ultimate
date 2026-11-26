@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimension
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.IPolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -71,7 +71,7 @@ public final class SimplificationUtils {
 			if (!SmtUtils.isFunctionApplication(conjunct, "=")) {
 				continue;
 			}
-			final PolynomialRelation polyRel = PolynomialRelation.of(mgdScript.getScript(), conjunct);
+			final IPolynomialRelation polyRel = IPolynomialRelation.of(mgdScript.getScript(), conjunct);
 			if (polyRel != null) {
 				final SolvedBinaryRelation sbr = polyRel.isSimpleEquality(mgdScript.getScript());
 				if (sbr != null) {
