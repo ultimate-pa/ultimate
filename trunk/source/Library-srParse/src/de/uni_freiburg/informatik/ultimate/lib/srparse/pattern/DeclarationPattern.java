@@ -32,6 +32,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
@@ -107,7 +108,9 @@ public class DeclarationPattern extends PatternType<DeclarationPattern> {
 	}
 
 	@Override
-	protected List<CounterTrace> transform(final CDD[] cdds, final int[] durations) {
+	protected List<CounterTrace> transform(final CDD[] cdds, final int[] durations,
+			final List<PatternType<?>> allPatterns,
+			final ILogger logger) {
 		throw new UnsupportedOperationException();
 	}
 
