@@ -16,6 +16,11 @@
 # per-target subdirectory; the actual paths are printed at the end of the
 # run.
 #
+# The z3 version to build can be selected with '-v|--version' (git tag or
+# branch). By default, the latest z3 version is built; the latest version is
+# pinned in the script via the PINNED_Z3 variable, which is updated
+# automatically on every default run.
+#
 # For usage, see the -h flag.
 #
 # License: LGPLv3
@@ -56,12 +61,19 @@ MINGW_PREFIX="x86_64-w64-mingw32"
 # Arch: aarch64-linux-gnu-gcc)
 AARCH64_PREFIX="aarch64-linux-gnu"
 
+# Pinned z3 version, used by the '--pinned' option. It is updated
+# automatically to the latest version whenever the script runs in the
+# default '--latest' mode. Release tags are stored without their 'z3-'
+# prefix (e.g. '4.15.4' for the tag 'z3-4.15.4').
+PINNED_Z3="4.15.4"
+
 TARGET_LINUX_X86_64="linux-x86_64"
 TARGET_LINUX_AARCH64="linux-aarch64"
 TARGET_WINDOWS_X86_64="windows-x86_64"
 ALL_TARGETS=("${TARGET_LINUX_X86_64}" "${TARGET_LINUX_AARCH64}" "${TARGET_WINDOWS_X86_64}")
 
 SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd)"
+SCRIPT_PATH="${SCRIPT_DIR}/$(basename "${0}")"
 ROOT="$(pwd)"
 trap 'cd "${ROOT}"' EXIT
 
@@ -78,6 +90,11 @@ DONTREMOVE=false
 
 # Targets to build; empty means all targets (see ALL_TARGETS)
 SELECTED_TARGETS=()
+
+# Version selection: 'latest' (default), 'pinned' or an explicit version
+# (git tag or branch); set by the argument parsing.
+Z3_VERSION_MODE="latest"
+Z3_VERSION_REF=""
 
 # Target specific settings, set by configure_target()
 BIN=""
@@ -111,6 +128,17 @@ print_help()
     echo "                              (linux/x86_64, linux/aarch64, win32/x86_64)."
     echo "                              Default: ${OUT_DIR}"
     echo
+    echo "  -v|--version version        Git tag or branch of z3 to build. The"
+    echo "                              'z3-' prefix of a release tag"
+    echo "                              (e.g. z3-4.15.4) may be omitted."
+    echo "                              Default: the latest z3 version (git tag)."
+    echo
+    echo "  --latest                    Build the latest z3 version (default)."
+    echo "                              Updates PINNED_Z3 in the script."
+    echo
+    echo "  --pinned                    Build the z3 version pinned as"
+    echo "                              PINNED_Z3 in the script."
+    echo
     echo "  -j|--jobs number            Defines the number of parallel jobs"
     echo "                              that should be used when compiling z3."
     echo "                              Default: Number of CPUs + 1 on the current"
@@ -142,6 +170,19 @@ print_setup()
         echo
     fi
     echo -e "  Targets:\t\t\t${SELECTED_TARGETS[*]}"
+    local version_desc
+    case ${Z3_VERSION_MODE} in
+        latest)
+            version_desc="latest"
+            ;;
+        pinned)
+            version_desc="pinned (${PINNED_Z3})"
+            ;;
+        version)
+            version_desc="${Z3_VERSION_REF}"
+            ;;
+    esac
+    echo -e "  Z3 version:\t\t\t${version_desc}"
     echo -e "  Additional parameters:\t${CMAKE_FLAGS[*]}"
     echo -e "  CFLAGS and CXXFLAGS:\t\t${X86_FLAGS} (x86_64 targets), ${AARCH64_FLAGS} (aarch64 target)"
     echo -e "  Number of parallel jobs:\t${NUMCPUS}"
@@ -242,6 +283,89 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 EOF
 }
 
+# Resolves a version string to a git ref. Accepts tags, branches and bare
+# release versions ('4.15.4' for the release tag 'z3-4.15.4').
+resolve_version_ref()
+{
+    local ref="$1"
+
+    if [ "${ref#z3-}" != "${ref}" ] \
+        || git rev-parse -q --verify "${ref}^{commit}" > /dev/null 2>&1 ; then
+        echo "${ref}"
+        return
+    fi
+
+    if git rev-parse -q --verify "z3-${ref}^{commit}" > /dev/null 2>&1 ; then
+        echo "z3-${ref}"
+        return
+    fi
+
+    # unresolvable; select_version_z3 reports the error
+    echo "${ref}"
+}
+
+# Rewrites the pinned z3 version in this script. This is safe while the
+# script is running because sed -i replaces the file with a new inode.
+update_pin()
+{
+    local version="$1"
+
+    # store release tags without their 'z3-' prefix
+    version="${version#z3-}"
+
+    if [ "${version}" = "${PINNED_Z3}" ]; then
+        return
+    fi
+
+    sed -i "s|^PINNED_Z3=.*$|PINNED_Z3=\"${version}\"|" "${SCRIPT_PATH}"
+    echo "Updated PINNED_Z3 in the script to ${version}"
+    PINNED_Z3="${version}"
+}
+
+# Selects and checks out the z3 version to build; must be called inside the
+# z3 repository directory.
+select_version_z3()
+{
+    local ref
+
+    case ${Z3_VERSION_MODE} in
+        latest)
+            # newest release tag (z3-<version>), sorted by version; ignore
+            # moving or experimental tags like 'Nightly'
+            ref=$(git tag -l 'z3-*' | sort -V | tail -n 1)
+            if [ -z "${ref}" ]; then
+                ref=$(git describe --tags "$(git rev-list --tags --max-count=1)")
+            fi
+            echo "Using the latest z3 version: ${ref}"
+            update_pin "${ref}"
+            ;;
+        pinned)
+            if [ -z "${PINNED_Z3}" ]; then
+                echo "Error: No z3 version pinned in the script (PINNED_Z3 is empty)."
+                echo "       Run the script once with '--latest' to set the pin."
+                exit 1
+            fi
+            ref=$(resolve_version_ref "${PINNED_Z3}")
+            echo "Using the pinned z3 version: ${ref}"
+            ;;
+        version)
+            ref=$(resolve_version_ref "${Z3_VERSION_REF}")
+            echo "Using z3 version: ${ref}"
+            ;;
+        *)
+            echo "Error: Unknown version mode: ${Z3_VERSION_MODE}"
+            exit 1
+            ;;
+    esac
+
+    if ! git rev-parse -q --verify "${ref}^{commit}" > /dev/null ; then
+        echo "Error: z3 version '${ref}' not found in the repository."
+        exit 1
+    fi
+
+    git checkout "${ref}"
+}
+
 checkout_z3()
 {
     if [ ${DEFAULT_WORKING} = false ]; then
@@ -259,6 +383,7 @@ checkout_z3()
     mkdir "${WORKING_DIR}"
     cd "${WORKING_DIR}"
     git clone "${GIT_FETCH_URL}" .
+    select_version_z3
     cd "${ROOT}"
 }
 
@@ -283,16 +408,23 @@ update_z3()
 
     echo "Updating z3 in ${WORKING_DIR} ..."
 
-    git pull
+    git fetch --tags --prune origin
+    select_version_z3
+
+    # fast-forward a checked-out branch to its upstream
+    if [ "$(git rev-parse --abbrev-ref HEAD)" != "HEAD" ]; then
+        git pull --ff-only
+    fi
+
     cd "${ROOT}"
 }
 
 version_z3()
 {
     cd "${WORKING_DIR}"
-    TAG=$(git describe --tags "$(git rev-list --tags --max-count=1)")
+    TAG=$(git describe --tags 2> /dev/null || echo "unknown")
     VERSION_HASH=$(git rev-parse --short HEAD)
-    BRANCH=$(git branch | grep \* | cut -d ' ' -f2-)
+    BRANCH=$(git rev-parse --abbrev-ref HEAD)
     cd "${ROOT}/${BUILD_DIR}"
 
     Z3_VERSION="${TAG}-${BRANCH}-${VERSION_HASH}"
@@ -534,6 +666,32 @@ while [[ $# -gt 0 ]]; do
             OUT_DIR="$2"
             DEFAULT_OUT=false
             shift
+            shift
+            ;;
+        -v|--version)
+            if [ -z "${2}" ]; then
+                echo "Error: No version specified"
+                echo
+                print_help
+                exit 1
+            fi
+            if [[ ! ${2} =~ ^[A-Za-z0-9._/-]+$ ]]; then
+                echo "Error: Invalid version: ${2}"
+                echo
+                print_help
+                exit 1
+            fi
+            Z3_VERSION_MODE="version"
+            Z3_VERSION_REF="$2"
+            shift
+            shift
+            ;;
+        --latest)
+            Z3_VERSION_MODE="latest"
+            shift
+            ;;
+        --pinned)
+            Z3_VERSION_MODE="pinned"
             shift
             ;;
         -j|--jobs)
