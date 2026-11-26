@@ -87,11 +87,12 @@ public class QuantifierEliminationTest {
 	private static final long TEST_TIMEOUT_MILLISECONDS = 1_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final LogLevel LOG_LEVEL_SOLVER = LogLevel.INFO;
-	private static final String SOLVER_COMMAND =
-			String.format("z3 SMTLIB2_COMPLIANT=true -t:%s -memory:2024 -smt2 -in", TEST_TIMEOUT_MILLISECONDS);
+	private static final String SOLVER_COMMAND = String.format("z3 SMTLIB2_COMPLIANT=true -t:%s -memory:2024 -smt2 -in",
+			TEST_TIMEOUT_MILLISECONDS);
 	/**
-	 * If set to true we run the test not only for the given formula but also for its negation. This allows us to test
-	 * existential quantification and universal quantification within a single test.
+	 * If set to true we run the test not only for the given formula but also for
+	 * its negation. This allows us to test existential quantification and universal
+	 * quantification within a single test.
 	 */
 	private static final boolean CHECK_ALSO_NEGATED_INPUTS = false;
 
@@ -194,8 +195,8 @@ public class QuantifierEliminationTest {
 		mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + TEST_TIMEOUT_MILLISECONDS);
 		mLogger = mServices.getLoggingService().getLogger("lol");
 
-		final Script solverInstance =
-				new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL_SOLVER));
+		final Script solverInstance = new HistoryRecordingScript(
+				UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL_SOLVER));
 		if (WRITE_SMT_SCRIPTS_TO_FILE) {
 			mScript = new LoggingScript(solverInstance, "QuantifierEliminationTest.smt2", true);
 		} else {
@@ -230,8 +231,9 @@ public class QuantifierEliminationTest {
 	}
 
 	/**
-	 * Quantifier elimination use case that comes from using constant arrays to initialize array variables in the C to
-	 * Boogie translation. Variant where the helper function is inlined.
+	 * Quantifier elimination use case that comes from using constant arrays to
+	 * initialize array variables in the C to Boogie translation. Variant where the
+	 * helper function is inlined.
 	 *
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 */
@@ -242,29 +244,30 @@ public class QuantifierEliminationTest {
 						mScript, SmtSortUtils.getIntSort(mMgdScript), SmtSortUtils.getIntSort(mMgdScript))));
 		mScript.declareFun("i", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
 
-		final String formulaAsString =
-				"(exists ((v_a (Array Int (Array Int Int)))) " + "(= a (store v_a i ((as const (Array Int Int)) 0))))";
-		final Term formulaAsTerm =
-				CommuhashNormalFormTransformer.apply(mScript, TermParseUtils.parseTerm(mScript, formulaAsString));
+		final String formulaAsString = "(exists ((v_a (Array Int (Array Int Int)))) "
+				+ "(= a (store v_a i ((as const (Array Int Int)) 0))))";
+		final Term formulaAsTerm = CommuhashNormalFormTransformer.apply(mScript,
+				TermParseUtils.parseTerm(mScript, formulaAsString));
 		// mLogger.info("Input: " + formulaAsTerm.toStringDirect());
 		final Term result = PartialQuantifierElimination.eliminate(mServices, mMgdScript, formulaAsTerm,
-				SimplificationTechnique.SIMPLIFY_DDA);
+				SimplificationTechnique.SIMPLIFY_DDA2);
 		mLogger.info("Result: " + result.toStringDirect());
 		Assert.assertTrue(!(result instanceof QuantifiedFormula));
 	}
 
 	/**
-	 * Quantifier elimination use case that comes from using constant arrays to initialize array variables in the C to
-	 * Boogie translation. Variant where a helper function is used that is defined via define-function. (Perhaps this
+	 * Quantifier elimination use case that comes from using constant arrays to
+	 * initialize array variables in the C to Boogie translation. Variant where a
+	 * helper function is used that is defined via define-function. (Perhaps this
 	 * makes no difference.)
 	 *
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 */
 	@Test
 	public void constantArrayTest02() {
-		final Sort arrayFromIntToIntToInt =
-				SmtSortUtils.getArraySort(mScript, SmtSortUtils.getIntSort(mMgdScript), SmtSortUtils.getArraySort(
-						mScript, SmtSortUtils.getIntSort(mMgdScript), SmtSortUtils.getIntSort(mMgdScript)));
+		final Sort arrayFromIntToIntToInt = SmtSortUtils.getArraySort(mScript, SmtSortUtils.getIntSort(mMgdScript),
+				SmtSortUtils.getArraySort(mScript, SmtSortUtils.getIntSort(mMgdScript),
+						SmtSortUtils.getIntSort(mMgdScript)));
 
 		final String[] paramIds = { "a", "i" };
 		final Sort[] paramSorts = { arrayFromIntToIntToInt, SmtSortUtils.getIntSort(mMgdScript) };
@@ -277,8 +280,8 @@ public class QuantifierEliminationTest {
 
 		mScript.declareFun("b", new Sort[0], arrayFromIntToIntToInt);
 		mScript.declareFun("j", new Sort[0], SmtSortUtils.getIntSort(mMgdScript));
-		final String formulaAsString =
-				"(exists ((v_a (Array Int (Array Int Int)))) " + "(= b (~initToZeroAtPointerBaseAddress~int v_a j)))";
+		final String formulaAsString = "(exists ((v_a (Array Int (Array Int Int)))) "
+				+ "(= b (~initToZeroAtPointerBaseAddress~int v_a j)))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		mLogger.info("Before inlining: " + formulaAsTerm.toStringDirect());
 		final Term inlined = smtSymbols.inline(formulaAsTerm);
@@ -287,7 +290,7 @@ public class QuantifierEliminationTest {
 		mLogger.info("isDistinct     : " + isDistinct);
 		Assert.assertTrue(isDistinct == LBool.UNSAT);
 		final Term result = PartialQuantifierElimination.eliminate(mServices, mMgdScript, inlined,
-				SimplificationTechnique.SIMPLIFY_DDA);
+				SimplificationTechnique.SIMPLIFY_DDA2);
 		mLogger.info("Result         : " + result.toStringDirect());
 		Assert.assertTrue(!(result instanceof QuantifiedFormula));
 	}
@@ -340,9 +343,9 @@ public class QuantifierEliminationTest {
 			final boolean expectQuantifierFreeResult, final String testId, final IUltimateServiceProvider services,
 			final ILogger logger, final ManagedScript mgdScript, final QuantifierEliminationTestCsvWriter csvWriter) {
 
-		csvWriter.reportEliminationBegin(preprocessedInput, testId);
+		csvWriter.reportEliminationBegin(preprocessedInput, testId, expectQuantifierFreeResult);
 		final Term result = PartialQuantifierElimination.eliminate(services, mgdScript, preprocessedInput,
-				SimplificationTechnique.SIMPLIFY_DDA);
+				SimplificationTechnique.SIMPLIFY_DDA2);
 		logger.info("Elimination output: " + result);
 		if (Arrays.asList(preprocessedInput.getFreeVars()).isEmpty()
 				&& !Arrays.asList(result.getFreeVars()).isEmpty()) {
@@ -351,8 +354,8 @@ public class QuantifierEliminationTest {
 							+ Arrays.toString(result.getFreeVars()));
 		}
 		if (CHECK_SIMPLIFICATION_POSSIBILITY) {
-			final ExtendedSimplificationResult esr =
-					SmtUtils.simplifyWithStatistics(mgdScript, result, services, SimplificationTechnique.SIMPLIFY_DDA);
+			final ExtendedSimplificationResult esr = SmtUtils.simplifyWithStatistics(mgdScript, result, services,
+					SimplificationTechnique.SIMPLIFY_DDA2);
 			logger.info("Simplified elimination output: " + esr.getSimplifiedTerm());
 			logger.info(esr.buildSizeReductionMessage());
 			if (esr.getReductionOfTreeSize() > 0) {
@@ -399,8 +402,8 @@ public class QuantifierEliminationTest {
 	@Test
 	public void multidimensionalNestedStore() {
 		final Sort intSort = SmtSortUtils.getIntSort(mMgdScript);
-		final Sort intintintArraySort =
-				SmtSortUtils.getArraySort(mScript, intSort, SmtSortUtils.getArraySort(mScript, intSort, intSort));
+		final Sort intintintArraySort = SmtSortUtils.getArraySort(mScript, intSort,
+				SmtSortUtils.getArraySort(mScript, intSort, intSort));
 		mScript.declareFun("v_#memory_int_BEFORE_CALL_2", new Sort[0], intintintArraySort);
 		mScript.declareFun("nonMain_~dst~0.base", new Sort[0], intSort);
 		mScript.declareFun("v_#Ultimate.C_memcpy_#t~loopctr6_8", new Sort[0], intSort);
@@ -411,22 +414,21 @@ public class QuantifierEliminationTest {
 		mScript.declareFun("#memory_int", new Sort[0], intintintArraySort);
 		mScript.declareFun("nonMain_~src~0.base", new Sort[0], intSort);
 		mScript.declareFun("nonMain_~src~0.offset", new Sort[0], intSort);
-		final String formulaAsString =
-				"(store |v_#memory_int_BEFORE_CALL_2| nonMain_~dst~0.base (store (store (select |v_#memory_int_BEFORE_CALL_2| nonMain_~dst~0.base) (+ |v_#Ultimate.C_memcpy_#t~loopctr6_8| |#Ultimate.C_memcpy_dest.offset|) v_prenex_1) (+ |v_#Ultimate.C_memcpy_#t~loopctr6_9| |#Ultimate.C_memcpy_dest.offset|) |#Ultimate.C_memcpy_#t~mem7|))";
+		final String formulaAsString = "(store |v_#memory_int_BEFORE_CALL_2| nonMain_~dst~0.base (store (store (select |v_#memory_int_BEFORE_CALL_2| nonMain_~dst~0.base) (+ |v_#Ultimate.C_memcpy_#t~loopctr6_8| |#Ultimate.C_memcpy_dest.offset|) v_prenex_1) (+ |v_#Ultimate.C_memcpy_#t~loopctr6_9| |#Ultimate.C_memcpy_dest.offset|) |#Ultimate.C_memcpy_#t~mem7|))";
 		final Term formulaAsTerm = TermParseUtils.parseTerm(mScript, formulaAsString);
 		final MultiDimensionalNestedStore mdns = MultiDimensionalNestedStore.of(formulaAsTerm);
 		Assert.assertTrue(mdns.getDimension() == 2);
 	}
 
 	/**
-	 * Revealed bug that lead to unsound loop acceleration results. The variable `i` occurs quantified and free. The `i`
-	 * in the critical constraint was not quantified while descending into the subformula with the quantified `i`.
+	 * Revealed bug that lead to unsound loop acceleration results. The variable `i`
+	 * occurs quantified and free. The `i` in the critical constraint was not
+	 * quantified while descending into the subformula with the quantified `i`.
 	 */
 	@Test
 	public void avdiivkaOriginal() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
-		final String formulaAsString =
-				"(exists ((i Int)) (and (exists ((v_i_16 Int)) (and (<= v_i_16 0) (forall ((v_idx_1 Int)) (or (< i (+ v_idx_1 1)) (< v_idx_1 v_i_16) (= (select a v_idx_1) 42))))) (<= 1000000 i)))";
+		final String formulaAsString = "(exists ((i Int)) (and (exists ((v_i_16 Int)) (and (<= v_i_16 0) (forall ((v_idx_1 Int)) (or (< i (+ v_idx_1 1)) (< v_idx_1 v_i_16) (= (select a v_idx_1) 42))))) (<= 1000000 i)))";
 		final Term formulaAsTerm = prepareTestInput(funDecls, formulaAsString, mServices, mMgdScript);
 		final Script script = mMgdScript.getScript();
 		// (= i 1048)
@@ -443,8 +445,7 @@ public class QuantifierEliminationTest {
 	@Test
 	public void avdiivkaSimplified() {
 		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a", "b"), };
-		final String formulaAsString =
-				"(exists ((i Int)) (and (<= i 2023) (forall ((k Int)) (or (<= i k) (= (select a k) 42)))))";
+		final String formulaAsString = "(exists ((i Int)) (and (<= i 2023) (forall ((k Int)) (or (<= i k) (= (select a k) 42)))))";
 		final Term formulaAsTerm = prepareTestInput(funDecls, formulaAsString, mServices, mMgdScript);
 		final Script script = mMgdScript.getScript();
 		// (= i 1048)
