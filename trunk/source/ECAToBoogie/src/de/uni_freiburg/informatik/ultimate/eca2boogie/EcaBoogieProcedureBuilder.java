@@ -32,9 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * Builds one parameterless main or rule procedure. Its identifier must first be reserved in the symbol table. Locals
- * are obtained from that table, while a Boogie visitor collects writes and calls, including nested statements. As in
- * the C translator's ProcedureManager, modifies clauses include callee effects. No ECA translation rules are encoded
- * here. A successful build registers the resulting Procedure and closes the builder.
+ * are obtained from that table, while a Boogie visitor collects writes and calls, including nested statements.
  */
 public final class EcaBoogieProcedureBuilder {
 	private final String mProcedureId;
@@ -86,7 +84,9 @@ public final class EcaBoogieProcedureBuilder {
 		addStatements(List.of(statement));
 	}
 
-	/** Validates the whole collection before adding any statements or effects. Existing expression ASTs are retained. */
+	/**
+	 * Validates the whole collection before adding any statements or effects. Existing expression ASTs are retained.
+	 */
 	public void addStatements(final Collection<? extends Statement> statements) {
 		ensureOpen();
 		final List<Statement> copy = List.copyOf(statements);
@@ -140,7 +140,9 @@ public final class EcaBoogieProcedureBuilder {
 		return Collections.unmodifiableSet(new LinkedHashSet<>(mCallees));
 	}
 
-	/** Builds using completed callees (and self-recursion). For mutually dependent builders compute the closure first. */
+	/**
+	 * Builds using completed callees (and self-recursion). For mutually dependent builders compute the closure first.
+	 */
 	public Procedure build() {
 		ensureOpen();
 		return build(computeEffectiveModifiedGlobals(List.of(this)).get(mProcedureId));
@@ -161,12 +163,13 @@ public final class EcaBoogieProcedureBuilder {
 		}
 		final List<Specification> specifications = new ArrayList<>(mSpecifications);
 		if (!modified.isEmpty()) {
-			final VariableLHS[] lhs = modified.values().stream().map(v -> mSymbols.lhs(v, mLocation))
-					.toArray(VariableLHS[]::new);
+			final VariableLHS[] lhs =
+					modified.values().stream().map(v -> mSymbols.lhs(v, mLocation)).toArray(VariableLHS[]::new);
 			specifications.add(new ModifiesSpecification(mLocation, false, lhs));
 		}
-		final Body body = new Body(mLocation, mSymbols.localDeclarations(mProcedureId).toArray(VariableDeclaration[]::new),
-				mStatements.toArray(Statement[]::new));
+		final Body body =
+				new Body(mLocation, mSymbols.localDeclarations(mProcedureId).toArray(VariableDeclaration[]::new),
+						mStatements.toArray(Statement[]::new));
 		final Procedure result = new Procedure(mLocation, new Attribute[0], mProcedureId, new String[0], new VarList[0],
 				new VarList[0], specifications.toArray(Specification[]::new), body);
 		mSymbols.registerProcedure(result);
@@ -175,8 +178,8 @@ public final class EcaBoogieProcedureBuilder {
 	}
 
 	/** Computes a fixed point of global writes over the call graph, including recursive calls. */
-	public static Map<String, Set<VariableInfo>> computeEffectiveModifiedGlobals(
-			final Collection<EcaBoogieProcedureBuilder> builders) {
+	public static Map<String, Set<VariableInfo>>
+			computeEffectiveModifiedGlobals(final Collection<EcaBoogieProcedureBuilder> builders) {
 		final Map<String, EcaBoogieProcedureBuilder> byId = new LinkedHashMap<>();
 		final Map<String, Set<VariableInfo>> result = new LinkedHashMap<>();
 		EcaBoogieSymbolTable symbols = null;
@@ -197,10 +200,12 @@ public final class EcaBoogieProcedureBuilder {
 				for (final String callee : builder.getCallees()) {
 					Set<VariableInfo> effects = result.get(callee);
 					if (effects == null) {
-						final Procedure procedure = builder.mSymbols.lookupProcedure(callee).orElseThrow(
-								() -> new IllegalArgumentException("No builder or completed procedure for callee '" + callee + "'"));
+						final Procedure procedure =
+								builder.mSymbols.lookupProcedure(callee).orElseThrow(() -> new IllegalArgumentException(
+										"No builder or completed procedure for callee '" + callee + "'"));
 						if (procedure.getSpecification() == null) {
-							throw new IllegalArgumentException("Callee '" + callee + "' has no procedure specification");
+							throw new IllegalArgumentException(
+									"Callee '" + callee + "' has no procedure specification");
 						}
 						effects = new LinkedHashSet<>();
 						for (final Specification specification : procedure.getSpecification()) {
@@ -234,7 +239,8 @@ public final class EcaBoogieProcedureBuilder {
 	private void validateGlobal(final VariableInfo variable) {
 		Objects.requireNonNull(variable);
 		if (mSymbols.lookupGlobal(variable.getName()).orElse(null) != variable) {
-			throw new IllegalArgumentException("Variable '" + variable.getName() + "' is not a global in this symbol table");
+			throw new IllegalArgumentException(
+					"Variable '" + variable.getName() + "' is not a global in this symbol table");
 		}
 	}
 
@@ -271,10 +277,12 @@ public final class EcaBoogieProcedureBuilder {
 					() -> new IllegalArgumentException("Unknown assignment target '" + lhs.getIdentifier() + "'"));
 			if (lhs.getDeclarationInformation() != null
 					&& !lhs.getDeclarationInformation().equals(variable.getDeclarationInformation())) {
-				throw new IllegalArgumentException("Assignment target '" + lhs.getIdentifier() + "' has conflicting scope");
+				throw new IllegalArgumentException(
+						"Assignment target '" + lhs.getIdentifier() + "' has conflicting scope");
 			}
 			if (lhs.getType() != null && !lhs.getType().equals(variable.getType())) {
-				throw new IllegalArgumentException("Assignment target '" + lhs.getIdentifier() + "' has conflicting type");
+				throw new IllegalArgumentException(
+						"Assignment target '" + lhs.getIdentifier() + "' has conflicting type");
 			}
 			if (variable.getDeclarationInformation().getStorageClass() == StorageClass.GLOBAL) {
 				mGlobals.put(variable.getName(), variable);

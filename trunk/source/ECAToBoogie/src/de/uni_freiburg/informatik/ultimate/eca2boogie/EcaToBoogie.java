@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
-/** Plugin entry point for the future ECA-to-Boogie translation. */
+/** Plugin entry point for the ECA-to-Boogie translation. */
 public final class EcaToBoogie implements IGenerator {
 	private static final String PLUGIN_ID = EcaToBoogie.class.getPackageName();
 	private static final String PLUGIN_NAME = "ECA to Boogie";
@@ -19,12 +19,12 @@ public final class EcaToBoogie implements IGenerator {
 
 	@Override
 	public void init() {
-		// Nothing to initialize yet.
+		// Nothing to initialize
 	}
 
 	@Override
 	public void finish() {
-		// Nothing to release yet.
+		// Nothing to release
 	}
 
 	@Override

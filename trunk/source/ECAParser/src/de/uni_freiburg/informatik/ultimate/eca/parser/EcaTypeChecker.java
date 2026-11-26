@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -37,13 +38,20 @@ import de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.RecurringUnt
 import de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.TrueExternalEvent;
 
 /**
- * A small type checker for the eca language which is applied on an EcaFile after parsing. Rejects duplicate
+ * A small type checker for the eca language which is applied on an EcaFile after parsing. Rejects Boogie-reserved and duplicate
  * declarations, checks that named events have the required internal or external kind and that actions refer to declared
  * internal events. Conditions must be Boolean: ordinary variables retain their declared types, internal action names
  * have type status, and external event names are forbidden. The four reserved status constants also have type status.
  * Boogie's type-checking helpers check the permitted expressions; event-occurrence flags are not condition variables.
  */
 public final class EcaTypeChecker {
+	// Keep aligned with BoogiePLParser's Boogie.flex. Source identifiers are emitted unchanged into Boogie.
+	private static final Set<String> BOOGIE_KEYWORDS = Set.of("type", "const", "function", "axiom", "var",
+			"procedure", "implementation", "finite", "unique", "complete", "returns", "where", "free", "ensures",
+			"requires", "modifies", "invariant", "assume", "assert", "havoc", "async", "call", "fork", "join", "if",
+			"then", "else", "while", "break", "return", "goto", "atomic", "assign", "old", "forall", "exists",
+			"bool", "int", "real", "false", "true");
+
 	public record Diagnostic(ILocation location, String message) {
 		@Override
 		public String toString() {
@@ -66,6 +74,10 @@ public final class EcaTypeChecker {
 			final String name = declaration.getName();
 			if (EcaStatus.isLiteral(name)) {
 				error(declaration.getLocation(), "Reserved status constant '" + name + "' cannot be declared");
+			}
+			if (BOOGIE_KEYWORDS.contains(name) || name.matches("bv(0|[1-9][0-9]*)")) {
+				error(declaration.getLocation(), "Identifier '" + name
+						+ "' is reserved by Boogie and cannot be used as an ECA declaration name");
 			}
 			final Declaration previous = mDeclarations.putIfAbsent(name, declaration);
 			if (previous != null) {

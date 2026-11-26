@@ -21,14 +21,14 @@ import de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.ExternalEven
 import de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.ExternalEventDeclaration;
 import de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.FalseEvent;
 import de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.InternalEvent;
+import de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.InternalEventDeclaration;
 import de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.TrueExternalEvent;
 
 /**
- * Encodes the fact that an event has occurred using a separate global Boolean flag, never its action-status variable.
- * Explicit initialization
- * starts a new history with all flags false. Internal occurrences set their flag true; external sampling may set an
- * external flag true. Neither operation resets history. The caller decides when initialization and sampling occur.
- * Original ECA condition expressions are not rewritten.
+ * Encodes the fact that an event has occurred using a separate global Boolean flag. Initialization sets all flags
+ * false. At each time step external flags are sampled afresh and internal flags are reset; internal occurrences then
+ * set their flag true. Status variables are never changed by this encoding. Original ECA condition expressions are not
+ * rewritten.
  */
 public final class EcaBoogieEventEncoding {
 	public record EventDescriptor(EventDeclaration declaration, VariableInfo variable) {
@@ -45,14 +45,26 @@ public final class EcaBoogieEventEncoding {
 	private final EcaBoogieSymbolTable mSymbols;
 	private final Map<String, EventDescriptor> mEvents = new LinkedHashMap<>();
 
+	/** Registers the file's used variable roles, and encodes only its referenced/emitted occurrence flags. */
 	public EcaBoogieEventEncoding(final EcaBoogieSymbolTable symbols, final EcaFile file) {
-		this(symbols, Objects.requireNonNull(file).getDeclarations().stream().filter(EventDeclaration.class::isInstance)
-				.map(EventDeclaration.class::cast).toList());
+		this(symbols, usedEvents(symbols, file), false);
 	}
 
-	/** Reuses registered event variables and registers missing events. Duplicate ECA event declarations are rejected. */
+	private static List<EventDeclaration> usedEvents(final EcaBoogieSymbolTable symbols, final EcaFile file) {
+		symbols.registerUsedDeclarations(Objects.requireNonNull(file));
+		return symbols.occurrenceEventDeclarations();
+	}
+
+	/**
+	 * Reuses registered event variables and registers missing events. Duplicate ECA event declarations are rejected.
+	 */
 	public EcaBoogieEventEncoding(final EcaBoogieSymbolTable symbols,
 			final Collection<? extends EventDeclaration> declarations) {
+		this(symbols, declarations, true);
+	}
+
+	private EcaBoogieEventEncoding(final EcaBoogieSymbolTable symbols,
+			final Collection<? extends EventDeclaration> declarations, final boolean createStatuses) {
 		mSymbols = Objects.requireNonNull(symbols);
 		final Map<String, EventDeclaration> byName = new LinkedHashMap<>();
 		for (final EventDeclaration declaration : List.copyOf(declarations)) {
@@ -60,19 +72,19 @@ public final class EcaBoogieEventEncoding {
 			if (name.isBlank() || byName.putIfAbsent(name, declaration) != null) {
 				throw new IllegalArgumentException("Invalid or duplicate event declaration '" + name + "'");
 			}
-			if (symbols.lookupGlobal(name).isPresent() && symbols.lookupEventVariable(name).isEmpty()) {
+			if (symbols.lookupGlobal(name).isPresent() && symbols.lookupEventDeclaration(name).isEmpty()) {
 				throw new IllegalArgumentException("Event '" + name + "' conflicts with an ordinary variable");
 			}
-			if (symbols.lookupEventVariable(name).isPresent()) {
-				final boolean internal = !(declaration instanceof ExternalEventDeclaration);
-				if (symbols.lookupActionStatusVariable(name).isPresent() != internal) {
-					throw new IllegalArgumentException("Event kind does not match registered event '" + name + "'");
-				}
+			if (symbols.lookupEventDeclaration(name).isPresent()
+					&& (symbols.lookupEventDeclaration(name).orElseThrow().getClass() != declaration.getClass())) {
+				throw new IllegalArgumentException("Event kind does not match registered event '" + name + "'");
 			}
 		}
 		for (final EventDeclaration declaration : byName.values()) {
-			final VariableInfo variable = symbols.lookupEventVariable(declaration.getName())
-					.orElseGet(() -> symbols.registerEvent(declaration));
+			if (createStatuses && declaration instanceof final InternalEventDeclaration internal) {
+				symbols.getOrCreateActionStatus(internal);
+			}
+			final VariableInfo variable = symbols.getOrCreateEvent(declaration);
 			mEvents.put(declaration.getName(), new EventDescriptor(declaration, variable));
 		}
 	}
@@ -97,7 +109,7 @@ public final class EcaBoogieEventEncoding {
 		};
 	}
 
-	/** Initializes all event-history flags to false. This is intended to be called once at program startup. */
+	/** Initializes all event-occurrence flags to false. This is intended to be called once at program startup. */
 	public void addInitialization(final EcaBoogieProcedureBuilder target) {
 		checkTarget(target);
 		final List<Statement> statements = new ArrayList<>();
@@ -108,37 +120,50 @@ public final class EcaBoogieEventEncoding {
 	}
 
 	/**
-	 * Adds one sampling step: independently for each external event, a nondeterministic branch may set its flag true.
-	 * Previously observed events remain true. Internal events are unaffected; no sampling schedule is imposed here.
+	 * Samples each external Boolean flag nondeterministically, allowing both true and false at every time step. No
+	 * integer 0/1 constraint is necessary for a Boolean variable. Internal flags are unaffected by this method.
 	 */
 	public void addExternalEventHandling(final EcaBoogieProcedureBuilder target) {
 		checkTarget(target);
-		final ILocation location = target.getLocation();
-		final List<Statement> statements = new ArrayList<>();
+		target.addStatements(externalEventStatements(target.getLocation()));
+	}
+
+	/** Statements for one main-loop iteration: sample external events, then reset internal occurrences. */
+	public List<Statement> timeStepStatements(final ILocation location) {
+		final List<Statement> statements = new ArrayList<>(externalEventStatements(location));
 		for (final EventDescriptor event : mEvents.values()) {
-			if (event.isExternal()) {
-				statements.add(StatementFactory.constructIfStatement(location,
-						ExpressionFactory.constructBooleanWildCardExpression(location),
-						new Statement[] { assignment(event, true, location) }, new Statement[0]));
+			if (!event.isExternal()) {
+				statements.add(assignment(event, false, EcaBoogieSymbolTable.sourceOrDefault(location)));
 			}
 		}
-		target.addStatements(statements);
+		return List.copyOf(statements);
+	}
+
+	private List<Statement> externalEventStatements(final ILocation location) {
+		return mEvents.values().stream().filter(EventDescriptor::isExternal)
+				.<Statement> map(event -> mSymbols.havoc(event.variable(), location)).toList();
 	}
 
 	/** Records an internal action event. External occurrences are supplied by addExternalEventHandling instead. */
 	public void addEventOccurrence(final String eventName, final EcaBoogieProcedureBuilder target) {
 		checkTarget(target);
+		target.addStatement(occurrenceStatement(eventName, target.getLocation()));
+	}
+
+	/** Builds an occurrence update for insertion into a larger atomic action block. */
+	public Statement occurrenceStatement(final String eventName, final ILocation location) {
 		final EventDescriptor event = requireEvent(eventName);
 		if (event.isExternal()) {
 			throw new IllegalArgumentException("Action '" + eventName + "' must refer to an internal event");
 		}
-		target.addStatement(assignment(event, true, target.getLocation()));
+		return assignment(event, true, EcaBoogieSymbolTable.sourceOrDefault(location));
 	}
 
 	private Expression namedCondition(final String name, final boolean external, final ILocation location) {
 		final EventDescriptor event = requireEvent(name);
 		if (event.isExternal() != external) {
-			throw new IllegalArgumentException("Event '" + name + "' must be declared " + (external ? "extern" : "intern"));
+			throw new IllegalArgumentException(
+					"Event '" + name + "' must be declared " + (external ? "extern" : "intern"));
 		}
 		return mSymbols.identifier(event.variable(), location);
 	}

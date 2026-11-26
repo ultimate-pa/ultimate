@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -26,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.eca.parser.EcaStatus;
 import de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.BooleanDeclaration;
 import de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.EcaEvent;
+import de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.EcaFile;
 import de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.EcaRule;
 import de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.EventDeclaration;
 import de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.ExternalEvent;
@@ -38,13 +40,14 @@ import de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.TrueExternal
 /**
  * Registers variables and procedures while constructing a Boogie program from an ECA file. Source variables and action
  * statuses retain their identifiers; event-occurrence flags have separate generated names. Procedure scopes are
- * explicit, and rule-to-procedure mappings use AST-node identity. This table constructs declarations and typed variable
- * references, but does not translate rules, initialize variables, or enforce integer intervals.
+ * explicit, and rule-to-procedure mappings use AST-node identity.
  */
 public final class EcaBoogieSymbolTable {
 	private final Map<DeclarationInformation, Map<String, VariableInfo>> mVariables = new LinkedHashMap<>();
 	private final Map<String, VariableInfo> mEventVariables = new LinkedHashMap<>();
 	private final Map<String, VariableInfo> mActionStatusVariables = new LinkedHashMap<>();
+	private final Map<String, VariableInfo> mActionTimestamps = new LinkedHashMap<>();
+	private final Map<String, EventDeclaration> mEventDeclarations = new LinkedHashMap<>();
 	private final Set<String> mProcedureIds = new LinkedHashSet<>();
 	private final Map<EcaRule, String> mRuleProcedureIds = new IdentityHashMap<>();
 	private final Map<String, Procedure> mProcedures = new LinkedHashMap<>();
@@ -59,19 +62,136 @@ public final class EcaBoogieSymbolTable {
 		if (mEventVariables.containsKey(name) || lookupGlobal(name).isPresent() || mProcedureIds.contains(name)) {
 			throw new IllegalArgumentException("Event '" + name + "' conflicts with an existing declaration");
 		}
-		if (declaration instanceof InternalEventDeclaration) {
-			mActionStatusVariables.put(name, registerGlobal(name, EcaStatus.TYPE, declaration.getLocation()));
+		rememberEvent(declaration);
+		if (declaration instanceof final InternalEventDeclaration internal) {
+			getOrCreateActionStatus(internal);
 		}
+		return constructEventFlag(declaration);
+	}
+
+	private VariableInfo constructEventFlag(final EventDeclaration declaration) {
+		final String name = declaration.getName();
 		// '$' cannot occur in source ECA identifiers, so future source declarations cannot collide with this flag.
-		final String prefix = "eca$event$" + name;
-		String id = prefix;
-		while (mUsedNames.contains(id)) {
-			id = prefix + "$" + mAuxiliaryCounter++;
-		}
+		final String id = freshGeneratedId("eca$event$" + name);
 		final VariableInfo variable = registerGlobal(id, BoogieType.TYPE_BOOL, declaration.getLocation());
 		mEventVariables.put(name, variable);
 		mUsedNames.add(name);
 		return variable;
+	}
+
+	public VariableInfo getOrCreateEvent(final EventDeclaration declaration) {
+		rememberEvent(declaration);
+		final VariableInfo existing = mEventVariables.get(declaration.getName());
+		return existing == null ? constructEventFlag(declaration) : existing;
+	}
+
+	public VariableInfo getOrCreateActionStatus(final InternalEventDeclaration declaration) {
+		rememberEvent(declaration);
+		return mActionStatusVariables.computeIfAbsent(declaration.getName(), name -> registerVariable(name,
+				EcaStatus.TYPE, DeclarationInformation.DECLARATIONINFO_GLOBAL, declaration.getLocation(), true));
+	}
+
+	/** One global last-occurrence timestamp per executed action name, shared across parallel rules. */
+	public VariableInfo getOrCreateActionTimestamp(final InternalEventDeclaration declaration) {
+		rememberEvent(declaration);
+		return mActionTimestamps.computeIfAbsent(declaration.getName(),
+				name -> registerGlobal(freshGeneratedId("eca$actionTime$" + name), BoogieType.TYPE_INT,
+						declaration.getLocation()));
+	}
+
+	public Optional<VariableInfo> lookupActionTimestamp(final String actionName) {
+		return Optional.ofNullable(mActionTimestamps.get(actionName));
+	}
+
+	public List<VariableInfo> getActionTimestamps() {
+		return List.copyOf(mActionTimestamps.values());
+	}
+
+	public Optional<EventDeclaration> lookupEventDeclaration(final String name) {
+		return Optional.ofNullable(mEventDeclarations.get(name));
+	}
+
+	public List<EventDeclaration> occurrenceEventDeclarations() {
+		return mEventVariables.keySet().stream().map(mEventDeclarations::get).toList();
+	}
+
+	private void rememberEvent(final EventDeclaration declaration) {
+		Objects.requireNonNull(declaration);
+		checkName(declaration.getName());
+		if (mProcedureIds.contains(declaration.getName())) {
+			throw new IllegalArgumentException("Event conflicts with procedure '" + declaration.getName() + "'");
+		}
+		final EventDeclaration previous = mEventDeclarations.get(declaration.getName());
+		if (previous != null && previous.getClass() != declaration.getClass()) {
+			throw new IllegalArgumentException("Conflicting event kind for '" + declaration.getName() + "'");
+		}
+		if (lookupGlobal(declaration.getName()).isPresent()
+				&& !mActionStatusVariables.containsKey(declaration.getName())) {
+			throw new IllegalArgumentException("Event conflicts with variable '" + declaration.getName() + "'");
+		}
+		mEventDeclarations.putIfAbsent(declaration.getName(), declaration);
+		mUsedNames.add(declaration.getName());
+	}
+
+	private String freshGeneratedId(final String prefix) {
+		String id = prefix;
+		while (mUsedNames.contains(id)) {
+			id = prefix + "$" + mAuxiliaryCounter++;
+		}
+		return id;
+	}
+
+	/** Registers only referenced roles of declarations in an already checked file. Safe to call again. */
+	public void registerUsedDeclarations(final EcaFile file) {
+		final EcaBoogieUsageAnalysis usage = EcaBoogieUsageAnalysis.analyze(file);
+		final Set<String> conditions = usage.conditionNames();
+		final Set<String> events = usage.eventNames();
+		final Set<String> actions = usage.actionNames();
+		final Set<String> declared = new LinkedHashSet<>();
+		for (final var declaration : file.getDeclarations()) {
+			final String name = declaration.getName();
+			// Reserve even unused source names for fresh-name generation, without emitting their declarations.
+			mUsedNames.add(name);
+			if (!declared.add(name)) {
+				throw new IllegalArgumentException("Duplicate ECA declaration '" + name + "'");
+			}
+			if (conditions.contains(name)) {
+				if (declaration instanceof final InternalEventDeclaration internal) {
+					getOrCreateActionStatus(internal);
+				} else if (declaration instanceof final de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.VariableDeclaration variable) {
+					getOrCreateSourceVariable(variable);
+				} else {
+					throw new IllegalArgumentException("External events cannot occur in conditions: " + name);
+				}
+			}
+			if (actions.contains(name)) {
+				if (!(declaration instanceof final InternalEventDeclaration internal)) {
+					throw new IllegalArgumentException("Action must name a declared internal event: " + name);
+				}
+				getOrCreateActionStatus(internal);
+				getOrCreateActionTimestamp(internal);
+			}
+			if (events.contains(name)) {
+				if (!(declaration instanceof final EventDeclaration event)) {
+					throw new IllegalArgumentException("Event must name an event declaration: " + name);
+				}
+				getOrCreateEvent(event);
+			}
+		}
+	}
+
+	public VariableInfo getOrCreateSourceVariable(
+			final de.uni_freiburg.informatik.ultimate.eca.parser.ast.generated.VariableDeclaration declaration) {
+		final VariableInfo existing = lookupGlobal(declaration.getName()).orElse(null);
+		if (existing == null) {
+			return registerSourceVariable(declaration);
+		}
+		final BoogieType expected =
+				declaration instanceof IntegerDeclaration ? BoogieType.TYPE_INT : BoogieType.TYPE_BOOL;
+		if (!expected.equals(existing.getType()) || mEventDeclarations.containsKey(declaration.getName())) {
+			throw new IllegalArgumentException("Conflicting variable declaration '" + declaration.getName() + "'");
+		}
+		return existing;
 	}
 
 	/** Constructs and registers a global variable with the ECA declaration's original identifier and type. */
@@ -109,12 +229,18 @@ public final class EcaBoogieSymbolTable {
 		return registerVariable(id, type, scope, location);
 	}
 
-	private VariableInfo registerGlobal(final String id, final BoogieType type, final ILocation location) {
+	/** Registers a global variable, rejecting an existing declaration rather than silently replacing it. */
+	public VariableInfo registerGlobal(final String id, final BoogieType type, final ILocation location) {
 		return registerVariable(id, type, DeclarationInformation.DECLARATIONINFO_GLOBAL, location);
 	}
 
 	private VariableInfo registerVariable(final String id, final BoogieType type, final DeclarationInformation scope,
 			final ILocation location) {
+		return registerVariable(id, type, scope, location, false);
+	}
+
+	private VariableInfo registerVariable(final String id, final BoogieType type, final DeclarationInformation scope,
+			final ILocation location, final boolean actionStatus) {
 		checkName(id);
 		checkType(type);
 		checkScope(scope);
@@ -125,7 +251,7 @@ public final class EcaBoogieSymbolTable {
 		if (scope.getStorageClass() == StorageClass.GLOBAL && mProcedureIds.contains(id)) {
 			throw new IllegalArgumentException("Global variable '" + id + "' conflicts with a registered procedure");
 		}
-		if (scope.getStorageClass() == StorageClass.GLOBAL && mEventVariables.containsKey(id)) {
+		if (scope.getStorageClass() == StorageClass.GLOBAL && mEventDeclarations.containsKey(id) && !actionStatus) {
 			throw new IllegalArgumentException("Global variable '" + id + "' conflicts with a registered event");
 		}
 		final VariableDeclaration declaration = constructVariableDeclaration(id, type, sourceOrDefault(location));
@@ -147,7 +273,7 @@ public final class EcaBoogieSymbolTable {
 		if (mProcedureIds.contains(procedureId)) {
 			throw new IllegalArgumentException("Procedure '" + procedureId + "' is already registered");
 		}
-		if (lookupGlobal(procedureId).isPresent() || mEventVariables.containsKey(procedureId)) {
+		if (lookupGlobal(procedureId).isPresent() || mEventDeclarations.containsKey(procedureId)) {
 			throw new IllegalArgumentException("Procedure '" + procedureId + "' conflicts with a global variable");
 		}
 		mProcedureIds.add(procedureId);
@@ -248,6 +374,11 @@ public final class EcaBoogieSymbolTable {
 				variable.getName(), variable.getDeclarationInformation());
 	}
 
+	/** Boogie's nondeterministic assignment, applicable to Boolean, integer, and status variables. */
+	public HavocStatement havoc(final VariableInfo variable, final ILocation useLocation) {
+		return new HavocStatement(sourceOrDefault(useLocation), new VariableLHS[] { lhs(variable, useLocation) });
+	}
+
 	/** Returns variables only. Use declarations() when assembling a Unit, to include the status type and constants. */
 	public List<VariableDeclaration> globalDeclarations() {
 		return declarations(DeclarationInformation.DECLARATIONINFO_GLOBAL);
@@ -255,9 +386,8 @@ public final class EcaBoogieSymbolTable {
 
 	/** All global declarations, including the exact four-valued status type and constants. Include once per Unit. */
 	public List<de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration> declarations() {
-		final List<de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration> result = new ArrayList<>();
-		// Conditions can contain status constants even when there are no internal action declarations.
-		result.addAll(EcaBoogieStatusEncoding.declarations());
+		final List<de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration> result =
+				new ArrayList<>(EcaBoogieStatusEncoding.declarations());
 		result.addAll(globalDeclarations());
 		return List.copyOf(result);
 	}
