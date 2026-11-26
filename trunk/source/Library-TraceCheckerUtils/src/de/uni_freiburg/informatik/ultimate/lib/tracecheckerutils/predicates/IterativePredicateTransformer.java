@@ -36,6 +36,7 @@ import java.util.SortedMap;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -89,6 +90,7 @@ public class IterativePredicateTransformer<L extends IAction> {
 	private final IPredicate mTruePredicate;
 
 	private final IIcfgSymbolTable mSymbolTable;
+	private final CfgSmtToolkit mCsToolkit;
 
 	private static final boolean INTERPROCEDURAL_POST = true;
 	private static final boolean TRANSFORM_SUMMARY_TO_CNF = true;
@@ -104,6 +106,16 @@ public class IterativePredicateTransformer<L extends IAction> {
 			final NestedWord<L> trace, final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final IPredicate truePredicate,
 			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable) {
+		this(predicateFactory, mgdScript, modifiableGlobalsTable, services, trace, precondition, postcondition,
+				pendingContexts, truePredicate, simplificationTechnique, symbolTable, null);
+	}
+
+	public IterativePredicateTransformer(final BasicPredicateFactory predicateFactory, final ManagedScript mgdScript,
+			final ModifiableGlobalsTable modifiableGlobalsTable, final IUltimateServiceProvider services,
+			final NestedWord<L> trace, final IPredicate precondition, final IPredicate postcondition,
+			final SortedMap<Integer, IPredicate> pendingContexts, final IPredicate truePredicate,
+			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable,
+			final CfgSmtToolkit csToolkit) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(TraceCheckerUtils.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
@@ -118,6 +130,7 @@ public class IterativePredicateTransformer<L extends IAction> {
 		mPendingContexts = pendingContexts;
 		mTruePredicate = truePredicate;
 		mSymbolTable = symbolTable;
+		mCsToolkit = csToolkit;
 	}
 
 	@FunctionalInterface
@@ -196,8 +209,11 @@ public class IterativePredicateTransformer<L extends IAction> {
 				spSequence[i] = postprocessed;
 			}
 		}
+
 		if (computePostcondition) {
-			return new TracePredicates(mPrecondition, computedPostcondition, Arrays.asList(spSequence));
+			final TracePredicates result =
+					new TracePredicates(mPrecondition, computedPostcondition, Arrays.asList(spSequence));
+			return result;
 		}
 		return ipp;
 	}
