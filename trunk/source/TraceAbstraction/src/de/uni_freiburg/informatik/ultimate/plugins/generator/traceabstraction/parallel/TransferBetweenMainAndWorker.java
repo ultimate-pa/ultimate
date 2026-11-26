@@ -95,6 +95,8 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	private final HashMap<LETTER, LETTER> mEdgeCache = new HashMap<>(); // Bidirectional
 	private final HashMap<IProgramVar, IProgramVar> mProgramVarBackTranslationCache = new HashMap<>(); // Maps worker ->
 																										// main
+	// Maps worker -> main
+	private final HashMap<IProgramConst, IProgramConst> mProgramConstBackTranslationCache = new HashMap<>();
 	private final AutomataLibraryServices mServices;
 	private final IUltimateServiceProvider mIUltiamteServices;
 	private final TermTransferrer mWorker2main;
@@ -301,11 +303,11 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 	private UnmodifiableTransFormula transferTransformula(final UnmodifiableTransFormula inTF,
 			final TermTransferrer transferrer, final ManagedScript targetScript) {
 
+		final Set<IProgramConst> nonTheoryConsts = transferConsts(inTF.getNonTheoryConsts());
 		final TransFormulaBuilder transferredTF = new TransFormulaBuilder(transferMap(transferrer, inTF.getInVars()),
-				transferMap(transferrer, inTF.getOutVars()), inTF.getNonTheoryConsts().isEmpty(),
-				inTF.getNonTheoryConsts(), inTF.getBranchEncoders().isEmpty(),
+				transferMap(transferrer, inTF.getOutVars()), nonTheoryConsts.isEmpty(),
+				nonTheoryConsts.isEmpty() ? null : nonTheoryConsts, inTF.getBranchEncoders().isEmpty(),
 				transferSet(transferrer, inTF.getBranchEncoders()), inTF.getAuxVars().isEmpty());
-		assert inTF.getNonTheoryConsts().isEmpty();
 		transferredTF.setFormula(transferrer.transform(inTF.getFormula()));
 
 		transferredTF.addAuxVarsButRenameToFreshCopies(transferSet(transferrer, inTF.getAuxVars()), targetScript);
@@ -354,6 +356,35 @@ public class TransferBetweenMainAndWorker<LETTER, STATE> {
 			transferredMap.put(transferredProgramVar, (TermVariable) transferrer.transform(entry.getValue()));
 		}
 		return transferredMap;
+	}
+
+	/**
+	 * The formula of a transferred {@link UnmodifiableTransFormula} speaks about the constants of the target script, so
+	 * its non-theory constants must be the target's {@link IProgramConst}s, too: whoever matches them against the
+	 * formula (e.g. {@code TransFormulaUtils#addConstantsIfInFormula}) would otherwise silently drop them. Towards the
+	 * worker we use the same cache that built the worker's symbol table, so both share the same objects.
+	 */
+	private Set<IProgramConst> transferConsts(final Set<IProgramConst> consts) {
+		final Set<IProgramConst> result = new HashSet<>();
+		for (final IProgramConst c : consts) {
+			final IProgramConst transferred;
+			switch (mMode) {
+			case MAIN2WORKER -> {
+				transferred = mVarTransfer.getOrConstruct(c);
+				mProgramConstBackTranslationCache.put(transferred, c);
+			}
+			case WORKER2MAIN -> {
+				transferred = mProgramConstBackTranslationCache.get(c);
+				if (transferred == null) {
+					throw new IllegalStateException(
+							"The worker constant " + c + " was never transferred from the main script");
+				}
+			}
+			default -> throw new AssertionError("Unexpected transferrer mode: " + mMode);
+			}
+			result.add(transferred);
+		}
+		return result;
 	}
 
 	public static Set<TermVariable> transferSet(final TermTransferrer transferrer, final Set<TermVariable> inputSet) {
