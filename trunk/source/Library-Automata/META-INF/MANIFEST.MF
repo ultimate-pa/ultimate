@@ -18,6 +18,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
    de.uni_freiburg.informatik.ultimate.util.csv,
    de.uni_freiburg.informatik.ultimate.core.model.models,
    de.uni_freiburg.informatik.ultimate.automata.nestedword",
+ de.uni_freiburg.informatik.ultimate.automata.afa,
  de.uni_freiburg.informatik.ultimate.automata.alternating;
   uses:="de.uni_freiburg.informatik.ultimate.automata.statefactory,
    de.uni_freiburg.informatik.ultimate.automata,

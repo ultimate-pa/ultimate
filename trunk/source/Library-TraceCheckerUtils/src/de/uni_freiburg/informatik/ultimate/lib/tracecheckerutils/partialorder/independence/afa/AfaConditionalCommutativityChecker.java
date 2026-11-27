@@ -72,6 +72,7 @@ public class AfaConditionalCommutativityChecker<L extends IAction> {
 		mIndependenceRelation = independenceRelation;
 	}
 
+	// TODO: do we even need the control configurations? We don't have sleep sets.
 	public Result<L> checkCommutativity(final NestedWord<L> trace, final int index, final IPredicate state,
 			final List<?> controlConfigurations, final L templateLetter) {
 
@@ -133,7 +134,7 @@ public class AfaConditionalCommutativityChecker<L extends IAction> {
 			if (!result.somePerfectSequenceFound()) {
 				yield new Result<>(ResultType.PROOF_IMPERFECT);
 			}
-			yield new Result<>(result);
+			yield new Result<>(result, differenceLetter);
 		}
 		};
 	}
@@ -141,16 +142,20 @@ public class AfaConditionalCommutativityChecker<L extends IAction> {
 	public static final class Result<L extends IAction> {
 		private final ResultType mType;
 		private final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> mRefinementResult;
+		private final L mDifferenceLetter;
 
 		private Result(final ResultType type) {
 			mType = type;
 			mRefinementResult = null;
+			mDifferenceLetter = null;
 			assert !isSuccess() : "successful result must have refinement result";
 		}
 
-		private Result(final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> refinementResult) {
+		private Result(final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> refinementResult,
+				final L differenceLetter) {
 			mType = ResultType.SUCCESS;
 			mRefinementResult = Objects.requireNonNull(refinementResult);
+			mDifferenceLetter = Objects.requireNonNull(differenceLetter);
 		}
 
 		public boolean isSuccess() {
@@ -164,6 +169,14 @@ public class AfaConditionalCommutativityChecker<L extends IAction> {
 		public IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> getRefinementResult() {
 			assert mRefinementResult != null : "No proof of commutativity found";
 			return mRefinementResult;
+		}
+
+		// we later need to access the difference letter to construct the independence automaton
+		public L getDifferenceLetter() {
+			if (mDifferenceLetter == null) {
+				throw new IllegalStateException("No successful commutativity proof");
+			}
+			return mDifferenceLetter;
 		}
 	}
 

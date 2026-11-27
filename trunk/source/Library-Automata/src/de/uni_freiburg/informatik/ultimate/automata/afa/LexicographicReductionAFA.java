@@ -198,6 +198,7 @@ public class LexicographicReductionAFA<L, S1, S2> implements IAlternatingFiniteA
 	}
 
 	// method to ensure that the order automaton is total and deterministic
+	// should later be ensured by the order automaton instead
 	private S2 getUniqueOrderSuccessor(final S2 state, final L letter) {
 		final Iterator<OutgoingInternalTransition<L, S2>> iterator =
 				mOrderAutomaton.internalSuccessors(state, letter).iterator();
