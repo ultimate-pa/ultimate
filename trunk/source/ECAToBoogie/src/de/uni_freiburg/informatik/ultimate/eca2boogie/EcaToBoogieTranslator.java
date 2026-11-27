@@ -120,11 +120,10 @@ public final class EcaToBoogieTranslator {
 		final List<Statement> step = new ArrayList<>();
 		step.add(call(CLOCK_PROCEDURE));
 		final List<Statement> updates = sourceVariableUpdates();
+		updates.addAll(events.timeStepStatements(mLocation));
 		if (!updates.isEmpty()) {
-			// Do not expose havoced values before their interval constraints have been applied.
 			step.add(StatementFactory.constructAtomicStatement(mLocation, updates));
 		}
-		step.addAll(events.timeStepStatements(mLocation));
 		main.addStatement(new WhileStatement(mLocation, ExpressionFactory.createBooleanLiteral(mLocation, true),
 				new LoopInvariantSpecification[0], step.toArray(Statement[]::new)));
 		main.build();

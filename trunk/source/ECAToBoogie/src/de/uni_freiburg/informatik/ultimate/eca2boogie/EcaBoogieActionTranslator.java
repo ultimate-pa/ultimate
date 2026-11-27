@@ -59,8 +59,10 @@ public final class EcaBoogieActionTranslator {
 		case final RepeatAction repeat -> context.repeat(repeat.getRepetitions());
 		case final ContinuousUntilAction until -> context.continuousUntil(until.getUntilEvent());
 		case final ContinuousForAction duration -> context.continuousFor(duration.getDuration());
-		case final RecurringUntilAction recurring -> context.recurring(recurring.getPeriod(), recurring.getUntilEvent(), null);
-		case final RecurringCountAction recurring -> context.recurring(recurring.getPeriod(), null, recurring.getRepetitions());
+		case final RecurringUntilAction recurring ->
+				context.recurring(recurring.getPeriod(), recurring.getUntilEvent(), null);
+		case final RecurringCountAction recurring ->
+				context.recurring(recurring.getPeriod(), null, recurring.getRepetitions());
 		case final DelayedAction delayed -> context.delayed(delayed.getDelay());
 		};
 	}
@@ -109,8 +111,9 @@ public final class EcaBoogieActionTranslator {
 			final VariableInfo done = local("actionDone", BoogieType.TYPE_BOOL);
 			final List<Statement> finish = new ArrayList<>(List.of(set(done, bool(true)), status(EcaStatus.DONE)));
 			finish.addAll(occurrence());
-			return List.of(atomic(List.of(assume(binary(Operator.COMPEQ, ref(mTime), ref(mStart))), set(done, bool(false)),
-					activateContinuous())),
+			return List.of(
+					atomic(List.of(assume(binary(Operator.COMPEQ, ref(mTime), ref(mStart))), set(done, bool(false)),
+							activateContinuous())),
 					loop(not(ref(done)), atomic(List.of(when(mEvents.condition(until), finish, List.of())))));
 		}
 
@@ -124,9 +127,9 @@ public final class EcaBoogieActionTranslator {
 			initialize.add(activateContinuous());
 			final List<Statement> finish = new ArrayList<>(List.of(set(active, bool(false)), status(EcaStatus.DONE)));
 			finish.addAll(occurrence());
-			return List.of(atomic(initialize), loop(ref(active), atomic(List.of(
-					assume(binary(Operator.COMPLEQ, ref(mTime), ref(deadline))),
-					when(binary(Operator.COMPLT, ref(mTime), ref(deadline)), List.of(), finish)))));
+			return List.of(atomic(initialize),
+					loop(ref(active), atomic(List.of(assume(binary(Operator.COMPLEQ, ref(mTime), ref(deadline))),
+							when(binary(Operator.COMPLT, ref(mTime), ref(deadline)), List.of(), finish)))));
 		}
 
 		/** Shared recurring-until/count schedule; only the termination predicate and optional counter differ. */
@@ -137,12 +140,13 @@ public final class EcaBoogieActionTranslator {
 			final VariableInfo done = local("actionDone", BoogieType.TYPE_BOOL);
 			final VariableInfo deadline = local("deadline", BoogieType.TYPE_INT);
 			final VariableInfo counter = count == null ? null : local("repeatCount", BoogieType.TYPE_INT);
-			final List<Statement> initialize = new ArrayList<>(List.of(set(done, bool(false)), set(deadline, ref(mStart))));
+			final List<Statement> initialize =
+					new ArrayList<>(List.of(set(done, bool(false)), set(deadline, ref(mStart))));
 			if (counter != null) {
 				initialize.add(set(counter, integer(BigInteger.ZERO)));
 			}
-			final Expression stop = count == null ? mEvents.condition(until)
-					: binary(Operator.COMPGEQ, ref(counter), integer(count));
+			final Expression stop =
+					count == null ? mEvents.condition(until) : binary(Operator.COMPGEQ, ref(counter), integer(count));
 			final List<Statement> emit = new ArrayList<>(List.of(status(EcaStatus.ACTIVE_DONE)));
 			final Expression delay = chooseDuration(period, true, emit);
 			emit.add(set(deadline, binary(Operator.ARITHPLUS, ref(deadline), delay)));
@@ -151,8 +155,9 @@ public final class EcaBoogieActionTranslator {
 			}
 			emit.addAll(occurrence());
 			final Statement deadlineCheck = assume(binary(Operator.COMPLEQ, ref(mTime), ref(deadline)));
-			return List.of(atomic(initialize), loop(not(ref(done)), atomic(List.of(deadlineCheck,
-					when(stop, List.of(set(done, bool(true)), status(EcaStatus.DONE)),
+			return List.of(atomic(initialize),
+					loop(not(ref(done)), atomic(List.of(deadlineCheck, when(stop,
+							List.of(set(done, bool(true)), status(EcaStatus.DONE)),
 							List.of(when(binary(Operator.COMPEQ, ref(mTime), ref(deadline)), emit, List.of())))))));
 		}
 
@@ -160,14 +165,15 @@ public final class EcaBoogieActionTranslator {
 			final EcaBoogieTimeEncoding.Bounds bounds = EcaBoogieTimeEncoding.bounds(duration, false);
 			final Expression lower = binary(Operator.ARITHPLUS, ref(mStart), integer(bounds.lowerMillis()));
 			final Expression upper = binary(Operator.ARITHPLUS, ref(mStart), integer(bounds.upperMillis()));
-			final List<Statement> block = new ArrayList<>(List.of(assume(binary(Operator.LOGICAND,
-					binary(Operator.COMPGEQ, ref(mTime), lower), binary(Operator.COMPLEQ, ref(mTime), upper))),
-					status(EcaStatus.DONE)));
+			final List<Statement> block = new ArrayList<>(
+					List.of(assume(binary(Operator.LOGICAND, binary(Operator.COMPGEQ, ref(mTime), lower),
+							binary(Operator.COMPLEQ, ref(mTime), upper))), status(EcaStatus.DONE)));
 			block.addAll(occurrence());
 			return List.of(atomic(block));
 		}
 
-		private Expression chooseDuration(final Duration duration, final boolean positive, final List<Statement> block) {
+		private Expression chooseDuration(final Duration duration, final boolean positive,
+				final List<Statement> block) {
 			final EcaBoogieTimeEncoding.Bounds bounds = EcaBoogieTimeEncoding.bounds(duration, positive);
 			if (duration.getValue() instanceof ExactDurationValue) {
 				return integer(bounds.lowerMillis());
@@ -181,9 +187,13 @@ public final class EcaBoogieActionTranslator {
 
 		private Statement activateContinuous() {
 			// Called once per invocation: continued execution must not create completion history.
-			return when(binary(Operator.COMPEQ, ref(mStatus), EcaBoogieStatusEncoding.literal(EcaStatus.PENDING, mLocation)),
+			return when(
+					binary(Operator.COMPEQ, ref(mStatus),
+							EcaBoogieStatusEncoding.literal(EcaStatus.PENDING, mLocation)),
 					List.of(status(EcaStatus.ACTIVE)),
-					List.of(when(binary(Operator.COMPEQ, ref(mStatus), EcaBoogieStatusEncoding.literal(EcaStatus.DONE, mLocation)),
+					List.of(when(
+							binary(Operator.COMPEQ, ref(mStatus),
+									EcaBoogieStatusEncoding.literal(EcaStatus.DONE, mLocation)),
 							List.of(status(EcaStatus.ACTIVE_DONE)), List.of())));
 		}
 
@@ -220,7 +230,8 @@ public final class EcaBoogieActionTranslator {
 		}
 
 		private Statement set(final VariableInfo variable, final Expression value) {
-			return StatementFactory.constructSingleAssignmentStatement(mLocation, mSymbols.lhs(variable, mLocation), value);
+			return StatementFactory.constructSingleAssignmentStatement(mLocation, mSymbols.lhs(variable, mLocation),
+					value);
 		}
 
 		private Statement assume(final Expression expression) {
@@ -231,13 +242,15 @@ public final class EcaBoogieActionTranslator {
 			return StatementFactory.constructAtomicStatement(mLocation, statements);
 		}
 
-		private Statement when(final Expression condition, final List<Statement> thenPart, final List<Statement> elsePart) {
+		private Statement when(final Expression condition, final List<Statement> thenPart,
+				final List<Statement> elsePart) {
 			return StatementFactory.constructIfStatement(mLocation, condition, thenPart.toArray(Statement[]::new),
 					elsePart.toArray(Statement[]::new));
 		}
 
 		private Statement loop(final Expression condition, final Statement body) {
-			return new WhileStatement(mLocation, condition, new LoopInvariantSpecification[0], new Statement[] { body });
+			return new WhileStatement(mLocation, condition, new LoopInvariantSpecification[0],
+					new Statement[] { body });
 		}
 	}
 

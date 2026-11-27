@@ -49,14 +49,15 @@ public final class EcaBoogieStatusEncoding {
 				new DeclarationInformation(StorageClass.QUANTIFIED, null));
 		Expression alternatives = null;
 		for (final EcaStatus status : EcaStatus.values()) {
-			final Expression equality = ExpressionFactory.newBinaryExpression(location, Operator.COMPEQ, bound,
-					literal(status, location));
+			final Expression equality =
+					ExpressionFactory.newBinaryExpression(location, Operator.COMPEQ, bound, literal(status, location));
 			alternatives = alternatives == null ? equality
 					: ExpressionFactory.newBinaryExpression(location, Operator.LOGICOR, alternatives, equality);
 		}
-		final Axiom exhaustive = new Axiom(location, new Attribute[0], ExpressionFactory.quantifier(location, true,
-				List.of(new VarList(location, new String[] { boundName }, EcaStatus.TYPE.toASTType(location))),
-				alternatives));
+		final Axiom exhaustive = new Axiom(location, new Attribute[0],
+				ExpressionFactory.quantifier(location, true,
+						List.of(new VarList(location, new String[] { boundName }, EcaStatus.TYPE.toASTType(location))),
+						alternatives));
 		return List.of(type, constants, exhaustive);
 	}
 
