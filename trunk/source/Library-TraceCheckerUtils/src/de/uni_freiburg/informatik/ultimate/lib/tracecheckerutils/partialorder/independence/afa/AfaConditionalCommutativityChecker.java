@@ -134,7 +134,7 @@ public class AfaConditionalCommutativityChecker<L extends IAction> {
 			if (!result.somePerfectSequenceFound()) {
 				yield new Result<>(ResultType.PROOF_IMPERFECT);
 			}
-			yield new Result<>(result, differenceLetter);
+			yield new Result<>(result, modifiedTrace, differenceLetter);
 		}
 		};
 	}
@@ -142,6 +142,7 @@ public class AfaConditionalCommutativityChecker<L extends IAction> {
 	public static final class Result<L extends IAction> {
 		private final ResultType mType;
 		private final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> mRefinementResult;
+		private NestedWord<L> mTrace;
 		private final L mDifferenceLetter;
 
 		private Result(final ResultType type) {
@@ -152,9 +153,10 @@ public class AfaConditionalCommutativityChecker<L extends IAction> {
 		}
 
 		private Result(final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> refinementResult,
-				final L differenceLetter) {
+				final NestedWord<L> trace, final L differenceLetter) {
 			mType = ResultType.SUCCESS;
 			mRefinementResult = Objects.requireNonNull(refinementResult);
+			mTrace = Objects.requireNonNull(trace);
 			mDifferenceLetter = Objects.requireNonNull(differenceLetter);
 		}
 
@@ -169,6 +171,10 @@ public class AfaConditionalCommutativityChecker<L extends IAction> {
 		public IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> getRefinementResult() {
 			assert mRefinementResult != null : "No proof of commutativity found";
 			return mRefinementResult;
+		}
+
+		public NestedWord<L> getTrace() {
+			return mTrace;
 		}
 
 		// we later need to access the difference letter to construct the independence automaton

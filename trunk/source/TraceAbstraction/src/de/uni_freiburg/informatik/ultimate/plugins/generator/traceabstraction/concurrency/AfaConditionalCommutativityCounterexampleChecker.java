@@ -129,7 +129,7 @@ public class AfaConditionalCommutativityCounterexampleChecker<L extends IAction,
 					switch (checkResult.getType()) {
 					case SUCCESS:
 						mLogger.info("Successfully proved commutativity.Constructing proof automaton...");
-						return buildAutomaton(trace, checkResult.getRefinementResult());
+						return buildAutomaton(checkResult.getTrace(), checkResult.getRefinementResult());
 					case ALREADY_INDEPENDENT:
 						mLogger.warn("Statements were already independent.");
 						break;
@@ -141,6 +141,7 @@ public class AfaConditionalCommutativityCounterexampleChecker<L extends IAction,
 						mLogger.info("Commutativity condition check yielded %s.", checkResult.getType());
 						break;
 					}
+					// searching for another c is pointless so we skip to the next pair
 					break;
 				}
 			}
