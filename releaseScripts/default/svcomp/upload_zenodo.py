@@ -510,7 +510,7 @@ def get_available_licenses():
 
 def upload_tools(args, tools):
     # it is enough to use Automizer's version
-    automizer_py = Path(tools["Automizer"]).parent / "UAutomizer-linux" / "Ultimate.py"
+    automizer_py = Path(tools["Automizer"]).parent / "UAutomizer-linux-x86_64" / "Ultimate.py"
     if not automizer_py.exists():
         logger.fatal(
             "Did not find Automizer's directory relative to .zip file."
