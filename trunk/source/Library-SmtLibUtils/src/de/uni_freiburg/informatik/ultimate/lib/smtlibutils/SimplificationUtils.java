@@ -215,8 +215,8 @@ public final class SimplificationUtils {
 			if (i > 0 && isEquivalentToSelectIndex == LBool.UNSAT) {
 				// We can remove all preceding stores, because the select reads from this position.
 				// So we remove the elements from 0 to i-1 (inclusive) from the lists.
-				storeIndices.subList(0, i - 1).clear();
-				storeValues.subList(0, i - 1).clear();
+				storeIndices.subList(0, i).clear();
+				storeValues.subList(0, i).clear();
 				break;
 			}
 		}
