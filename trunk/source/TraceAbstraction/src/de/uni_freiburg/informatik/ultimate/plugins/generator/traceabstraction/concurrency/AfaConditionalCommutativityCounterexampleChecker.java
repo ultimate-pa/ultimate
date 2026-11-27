@@ -69,8 +69,6 @@ public class AfaConditionalCommutativityCounterexampleChecker<L extends IAction,
 	private final INwaOutgoingLetterAndTransitionProvider<L, S2> mOrderAutomaton;
 	private final IDfsOrder<L, S2> mOrder;
 
-	// TODO: implement class similar to ConditionalCommutativityCounterexampleChecker but for AFAs
-
 	public AfaConditionalCommutativityCounterexampleChecker(final IUltimateServiceProvider services,
 			final AfaConditionalCommutativityChecker<L> checker, final IDfsOrder<L, S2> order,
 			final INwaOutgoingLetterAndTransitionProvider<L, S2> orderAutomaton,

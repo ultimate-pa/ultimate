@@ -72,7 +72,6 @@ public class AfaConditionalCommutativityChecker<L extends IAction> {
 		mIndependenceRelation = independenceRelation;
 	}
 
-	// TODO: do we even need the control configurations? We don't have sleep sets.
 	public Result<L> checkCommutativity(final NestedWord<L> trace, final int index, final IPredicate state,
 			final List<?> controlConfigurations, final L templateLetter) {
 
