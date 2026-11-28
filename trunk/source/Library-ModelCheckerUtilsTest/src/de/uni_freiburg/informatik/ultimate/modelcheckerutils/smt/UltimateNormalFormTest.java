@@ -630,6 +630,16 @@ public class UltimateNormalFormTest {
 		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
 	}
 
+	@Test
+	public void selectOverConstArray() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "z") };
+		final String formulaAsString = "(= z (select ((as const (Array Int Int)) 7) i))";
+		final String expected = "(= z 7)";
+
+		runUnfTest(funDecls, formulaAsString, expected, mMgdScript);
+	}
+
+
 	static void runUnfTest(final FunDecl[] funDecls, final String eliminationInputAsString,
 			final String expectedResultAsString, final ManagedScript mgdScript) {
 		for (final FunDecl funDecl : funDecls) {
