@@ -80,6 +80,10 @@ public final class UltimateNormalFormUtils {
 				assert false : "select-over-store with same index should have been removed";
 				return false;
 			}
+			if (SmtUtils.getValueOfConstantArray(array) != null) {
+				assert false : "select over constant array should have been replaced by the value of the array";
+				return false;
+			}
 		}
 		if (term.getFunction().getName().equals("store")) {
 			final Term array = term.getParameters()[0];

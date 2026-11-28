@@ -2020,7 +2020,7 @@ public class QuantifierEliminationRegressionTest {
 				new FunDecl(SmtSortUtils::getIntSort, "a"),
 			};
 		final String formulaAsString = "(exists ((x Int)) (< a (mod x 133)))";
-		final String expectedResult = formulaAsString;
+		final String expectedResult = "(<= a 131)";
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 

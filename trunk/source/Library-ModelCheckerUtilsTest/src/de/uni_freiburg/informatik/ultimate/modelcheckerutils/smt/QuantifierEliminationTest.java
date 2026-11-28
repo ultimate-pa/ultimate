@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubTermFinder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
@@ -67,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.TermParseUtils;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
@@ -94,6 +96,17 @@ public class QuantifierEliminationTest {
 	 * existential quantification and universal quantification within a single test.
 	 */
 	private static final boolean CHECK_ALSO_NEGATED_INPUTS = false;
+	/**
+	 * If {@link #CHECK_ALSO_NEGATED_INPUTS} is set, we compare the elimination result for the input with the elimination
+	 * result for the negated input. Ideally, both are dual to each other. We report an asymmetry if the number of
+	 * quantified variables differs or if the tree sizes differ by more than the factor
+	 * {@link #POLARITY_ASYMMETRY_SIZE_FACTOR} and by at least {@link #POLARITY_ASYMMETRY_MIN_SIZE_DIFFERENCE} (small
+	 * differences are expected, e.g., the dual of `(<= a b)` is `(<= (+ b 1) a)` for integers). If this variable is
+	 * set, an asymmetry lets the test fail, otherwise we only log a warning.
+	 */
+	private static final boolean FAIL_ON_POLARITY_ASYMMETRY = false;
+	private static final double POLARITY_ASYMMETRY_SIZE_FACTOR = 1.1;
+	private static final long POLARITY_ASYMMETRY_MIN_SIZE_DIFFERENCE = 10;
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
@@ -304,8 +317,8 @@ public class QuantifierEliminationTest {
 			expectedResultAsTerm = TermParseUtils.parseTerm(mgdScript.getScript(), expectedResultAsString);
 		}
 		final String testId = ReflectionUtil.getCallerMethodName(3);
-		runQuantifierEliminationTest(preprocessedInput, expectedResultAsTerm, expectQuantifierFreeResult, testId,
-				services, logger, mgdScript, csvWriter);
+		final Term result = runQuantifierEliminationTest(preprocessedInput, expectedResultAsTerm,
+				expectQuantifierFreeResult, testId, services, logger, mgdScript, csvWriter);
 		if (CHECK_ALSO_NEGATED_INPUTS) {
 			final Term negatedInput = NnfTransformer.apply(services, mgdScript, QuantifierHandling.KEEP,
 					SmtUtils.not(mgdScript.getScript(), preprocessedInput));
@@ -316,9 +329,48 @@ public class QuantifierEliminationTest {
 				negatedExpectedResult = NnfTransformer.apply(services, mgdScript, QuantifierHandling.KEEP,
 						SmtUtils.not(mgdScript.getScript(), expectedResultAsTerm));
 			}
-			runQuantifierEliminationTest(negatedInput, negatedExpectedResult, expectQuantifierFreeResult,
-					testId + "_negated", services, logger, mgdScript, csvWriter);
+			final Term negatedResult = runQuantifierEliminationTest(negatedInput, negatedExpectedResult,
+					expectQuantifierFreeResult, testId + "_negated", services, logger, mgdScript, csvWriter);
+			checkPolaritySymmetry(testId, result, negatedResult, services, logger, mgdScript);
 		}
+	}
+
+	/**
+	 * Compare the elimination result for the input with the elimination result for the negated input. We compare the
+	 * result with the negation of the negated result (in NNF) because otherwise the additional negations would distort
+	 * the comparison of the sizes.
+	 */
+	private static void checkPolaritySymmetry(final String testId, final Term result, final Term negatedResult,
+			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript) {
+		final Term dualOfNegatedResult = NnfTransformer.apply(services, mgdScript, QuantifierHandling.KEEP,
+				SmtUtils.not(mgdScript.getScript(), negatedResult));
+		final int quantifiedVars = countQuantifiedVariables(result);
+		final int quantifiedVarsNegated = countQuantifiedVariables(dualOfNegatedResult);
+		final long size = new DAGSize().treesize(result);
+		final long sizeNegated = new DAGSize().treesize(dualOfNegatedResult);
+		final double sizeFactor = (double) Math.max(size, sizeNegated) / Math.max(1, Math.min(size, sizeNegated));
+		final boolean sizesDiffer = sizeFactor > POLARITY_ASYMMETRY_SIZE_FACTOR
+				&& Math.abs(size - sizeNegated) >= POLARITY_ASYMMETRY_MIN_SIZE_DIFFERENCE;
+		if (quantifiedVars == quantifiedVarsNegated && !sizesDiffer) {
+			return;
+		}
+		final String message = String.format(
+				"Polarity asymmetry in %s: quantified variables %s vs. %s (negated), tree size %s vs. %s (negated)",
+				testId, quantifiedVars, quantifiedVarsNegated, size, sizeNegated);
+		if (FAIL_ON_POLARITY_ASYMMETRY) {
+			Assert.fail(message);
+		} else {
+			logger.warn(message);
+		}
+	}
+
+	/**
+	 * @return the number of variables that are bound by quantifiers in the given term, where each quantified formula
+	 *         is counted only once even if it occurs several times in the DAG
+	 */
+	private static int countQuantifiedVariables(final Term term) {
+		return SubTermFinder.find(term, x -> (x instanceof QuantifiedFormula), false).stream()
+				.mapToInt(x -> ((QuantifiedFormula) x).getVariables().length).sum();
 	}
 
 	private static Term prepareTestInput(final FunDecl[] funDecls, final String eliminationInputAsString,
@@ -336,7 +388,7 @@ public class QuantifierEliminationTest {
 		return preprocessedInput;
 	}
 
-	private static void runQuantifierEliminationTest(final Term preprocessedInput, final Term expectedResult,
+	private static Term runQuantifierEliminationTest(final Term preprocessedInput, final Term expectedResult,
 			final boolean expectQuantifierFreeResult, final String testId, final IUltimateServiceProvider services,
 			final ILogger logger, final ManagedScript mgdScript, final QuantifierEliminationTestCsvWriter csvWriter) {
 
@@ -371,6 +423,7 @@ public class QuantifierEliminationTest {
 			assert checkLogicalEquivalence(mgdScript.getScript(), result, expectedResult);
 		}
 		csvWriter.reportEliminationSuccess(result, testId, (StatisticsScript) mgdScript.getScript());
+		return result;
 	}
 
 	private static boolean checkLogicalEquivalence(final Script script, final Term result, final Term expectedResult) {
