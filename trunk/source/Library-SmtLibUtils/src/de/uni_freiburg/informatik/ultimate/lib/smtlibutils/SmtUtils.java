@@ -82,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -1631,9 +1632,21 @@ public final class SmtUtils {
 		return result;
 	}
 
+	/**
+	 * Construct select term from the array theory. Applies the following lightweight simplifications.
+	 * <ul>
+	 * <li>A select over a constant array `(select ((as const (Array I E)) v) i)` is replaced by `v`.
+	 * <li>A select over a store is replaced by the stored value if the indices are (syntactically) equal and the store
+	 * is dropped if the indices are (syntactically) distinct.
+	 * </ul>
+	 */
 	public static Term select(final Script script, final Term array, final Term index) {
 		final Term result;
 		if (FLATTEN_ARRAY_TERMS) {
+			final Term constantArrayValue = getValueOfConstantArray(array);
+			if (constantArrayValue != null) {
+				return constantArrayValue;
+			}
 			final ArrayStore as = ArrayStore.of(array);
 			if (as != null) {
 				result = selectOverStore(script, as, index);
@@ -1644,6 +1657,21 @@ public final class SmtUtils {
 			result = script.term("select", array, index);
 		}
 		return result;
+	}
+
+	/**
+	 * @return the value `v` if the input is a constant array `((as const (Array I E)) v)`, null otherwise
+	 */
+	public static Term getValueOfConstantArray(final Term term) {
+		if (!(term instanceof ApplicationTerm)) {
+			return null;
+		}
+		final ApplicationTerm appTerm = (ApplicationTerm) term;
+		if (!appTerm.getFunction().getName().equals(SMTLIBConstants.CONST)
+				|| !appTerm.getFunction().isIntern() || appTerm.getParameters().length != 1) {
+			return null;
+		}
+		return appTerm.getParameters()[0];
 	}
 
 	private static Term selectOverStore(final Script script, final ArrayStore as, final Term index) {

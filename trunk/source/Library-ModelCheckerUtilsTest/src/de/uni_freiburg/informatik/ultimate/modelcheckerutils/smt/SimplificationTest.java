@@ -1349,6 +1349,30 @@ public class SimplificationTest {
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	// The select-over-store simplification removes the store, the select over the constant array returns the
+	// constant. See {@link QuantifierEliminationRegressionTest#substitutionProblem01}.
+	public void selectOverConstArray01() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "k", "z"), };
+		final String formulaAsString =
+				"(and (= z (select (store ((as const (Array Int Int)) 7) k 100) i)) (distinct i k))";
+		final String expectedResultAsString = "(and (= z 7) (not (= i k)))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.POLY_PAC,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	// The inner select over the two-dimensional constant array returns a one-dimensional constant array, the outer
+	// select over this array returns the constant.
+	public void selectOverConstArray02() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "j", "z"), };
+		final String formulaAsString =
+				"(= z (select (select ((as const (Array Int (Array Int Int))) ((as const (Array Int Int)) 7)) i) j))";
+		final String expectedResultAsString = "(= z 7)";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.POLY_PAC,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	static void runSimplificationTest(final FunDecl[] funDecls, final String eliminationInputAsString,
 			final String expectedResultAsString, final SimplificationTechnique simplificationTechnique,
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
